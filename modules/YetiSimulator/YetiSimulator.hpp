@@ -57,16 +57,15 @@ public:
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
-    // insert your public definitions here
-    void reset_module_state();
-    Everest::MqttProvider& get_mqtt() const;
-    state::ModuleState& get_module_state() const;
-    const ModuleInfo& get_info() const;
-    evse_board_supportImplBase& get_board_support() const;
-    ev_board_supportImplBase& get_ev_board_support() const;
-    powermeterImplBase& get_powermeter() const;
-    ac_rcdImplBase& get_ac_rcd() const;
-    connector_lockImplBase& get_connector_lock() const;
+    std::unique_ptr<state::ModuleState> module_state;
+
+    void reset_module_state() {
+        module_state = std::make_unique<state::ModuleState>();
+    }
+
+    void pwm_on(const double dutycycle);
+    void pwm_off();
+    void pwm_f();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -80,42 +79,34 @@ private:
     void ready();
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
-    // insert your private definitions here
     void run_telemetry_slow() const;
     void run_telemetry_fast() const;
-    void start_simulation(int sleep_time_ms);
-    [[noreturn]] void run_simulation(int sleep_time_ms) const;
-    void simulation_step() const;
-    void check_error_rcd() const;
-    void read_from_car() const;
-    void simulation_statemachine() const;
-    void add_noise() const;
-    void simulate_powermeter() const;
+    [[noreturn]] void run_simulation(int sleep_time_ms);
+    void simulation_step();
+    void check_error_rcd();
+    void read_from_car();
+    void simulation_statemachine();
+    void add_noise();
+    void simulate_powermeter();
     void publish_ev_board_support() const;
-    void publish_powermeter() const;
-    void publish_telemetry() const;
-    void publish_keepalive() const;
+    void publish_powermeter();
+    void publish_telemetry();
+    void publish_keepalive();
     void drawPower(int l1, int l2, int l3, int n) const;
     static void clear_disconnect_errors(ErrorHandler& error_handler, const evse_board_supportImplBase& board_support);
-    void powerOn(evse_board_supportImplBase& board_support) const;
-    void powerOff(evse_board_supportImplBase& board_support) const;
+    void powerOn();
+    void powerOff();
     void reset_powermeter() const;
     [[nodiscard]] types::board_support_common::ProximityPilot read_pp_ampacity() const;
 
-    std::unique_ptr<state::ModuleState> module_state;
+    void publish_event(state::State event);
+
     std::unique_ptr<MqttHandler> mqtt_handler;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
-// insert other definitions here
-types::powermeter::Powermeter power_meter_external(const state::PowermeterData& powermeter_data);
-double duty_cycle_to_amps(double dc);
-bool is_voltage_in_range(const double voltage, double center);
-void publish_event(evse_board_supportImplBase& board_support, state::State event);
-static types::board_support_common::BspEvent event_to_enum(state::State event);
-static std::string event_to_string(state::State state);
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module

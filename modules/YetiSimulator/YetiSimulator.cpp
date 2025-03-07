@@ -6,6 +6,130 @@
 
 namespace module {
 
+namespace {
+
+types::powermeter::Powermeter power_meter_external(const state::PowermeterData& powermeter_data) {
+    const auto current_iso_time_string = util::get_current_iso_time_string();
+    const auto& [time_stamp, totalWattHr, wattL1, vrmsL1, irmsL1, wattHrL1, tempL1, freqL1, wattL2, vrmsL2, irmsL2,
+                 wattHrL2, tempL2, freqL2, wattL3, vrmsL3, irmsL3, wattHrL3, tempL3, freqL3, irmsN] = powermeter_data;
+
+    // TODO(SL): Change back to C++17
+    return {
+        .timestamp = current_iso_time_string,
+        .energy_Wh_import =
+            {
+                .total = static_cast<float>(totalWattHr),
+                .L1 = static_cast<float>(wattHrL1),
+                .L2 = static_cast<float>(wattHrL2),
+                .L3 = static_cast<float>(wattHrL3),
+            },
+        .meter_id = "YETI_POWERMETER",
+        .phase_seq_error = false,
+        .power_W =
+            types::units::Power{
+                .total = static_cast<float>(wattL1 + wattL2 + wattL3),
+                .L1 = static_cast<float>(wattL1),
+                .L2 = static_cast<float>(wattL2),
+                .L3 = static_cast<float>(wattL3),
+            },
+        .voltage_V =
+            types::units::Voltage{
+                .L1 = vrmsL1,
+                .L2 = vrmsL2,
+                .L3 = vrmsL3,
+            },
+        .current_A =
+            types::units::Current{
+                .L1 = irmsL1,
+                .L2 = irmsL2,
+                .L3 = irmsL3,
+                .N = irmsN,
+            },
+        .frequency_Hz =
+            types::units::Frequency{
+                .L1 = static_cast<float>(freqL1),
+                .L2 = static_cast<float>(freqL2),
+                .L3 = static_cast<float>(freqL3),
+            },
+
+    };
+}
+
+double duty_cycle_to_amps(const double dc) {
+    if (dc < 8.0 / 100.0)
+        return 0;
+    if (dc < 85.0 / 100.0)
+        return dc * 100.0 * 0.6;
+    if (dc < 96.0 / 100.0)
+        return (dc * 100.0 - 64) * 2.5;
+    if (dc < 97.0 / 100.0)
+        return 80;
+    return 0;
+}
+
+bool is_voltage_in_range(const double voltage, const double center) {
+    constexpr auto interval = 1.1;
+    return voltage > center - interval and voltage < center + interval;
+}
+
+std::string event_to_string(state::State state) {
+    using state::State;
+
+    switch (state) {
+    case State::STATE_A:
+        return "A";
+    case State::STATE_B:
+        return "B";
+    case State::STATE_C:
+        return "C";
+    case State::STATE_D:
+        return "D";
+    case State::STATE_E:
+        return "E";
+    case State::STATE_F:
+        return "F";
+    case State::STATE_DISABLED:
+        return "F";
+    case State::Event_PowerOn:
+        return "PowerOn";
+    case State::Event_PowerOff:
+        return "PowerOff";
+    default:
+        return "invalid";
+    }
+}
+
+types::board_support_common::BspEvent event_to_enum(state::State event) {
+    using state::State;
+    using types::board_support_common::Event;
+
+    switch (event) {
+    case State::STATE_A:
+        return {Event::A};
+    case State::STATE_B:
+        return {Event::B};
+    case State::STATE_C:
+        return {Event::C};
+    case State::STATE_D:
+        return {Event::D};
+    case State::STATE_E:
+        return {Event::E};
+    case State::STATE_F:
+        return {Event::F};
+    case State::STATE_DISABLED:
+        return {Event::F};
+    case State::Event_PowerOn:
+        return {Event::PowerOn};
+    case State::Event_PowerOff:
+        return {Event::PowerOff};
+    default:
+        EVLOG_error << "Invalid event : " << event_to_string(event);
+        return {Event::Disconnected}; // TODO: correct default value
+    }
+}
+
+} // namespace
+
 void YetiSimulator::init() {
     invoke_init(*p_powermeter);
     invoke_init(*p_board_support);
@@ -29,45 +153,12 @@ void YetiSimulator::ready() {
 
     module_state->pubCnt = 0;
 
-    start_simulation(250);
+    std::thread(&YetiSimulator::run_simulation, this, 250).detach();
+
     if (info.telemetry_enabled) {
         std::thread(&YetiSimulator::run_telemetry_slow, this).detach();
         std::thread(&YetiSimulator::run_telemetry_fast, this).detach();
     }
-}
-
-state::ModuleState& YetiSimulator::get_module_state() const {
-    return *module_state;
-}
-
-evse_board_supportImplBase& YetiSimulator::get_board_support() const {
-    return *p_board_support;
-}
-
-ev_board_supportImplBase& YetiSimulator::get_ev_board_support() const {
-    return *p_ev_board_support;
-}
-
-ac_rcdImplBase& YetiSimulator::get_ac_rcd() const {
-    return *p_rcd;
-}
-
-connector_lockImplBase& YetiSimulator::get_connector_lock() const {
-    return *p_connector_lock;
-}
-
-Everest::MqttProvider& YetiSimulator::get_mqtt() const {
-    return mqtt;
-}
-const ModuleInfo& YetiSimulator::get_info() const {
-    return info;
-}
-powermeterImplBase& YetiSimulator::get_powermeter() const {
-    return *p_powermeter;
-}
-
-void YetiSimulator::reset_module_state() {
-    module_state = std::make_unique<state::ModuleState>();
 }
 
 void YetiSimulator::run_telemetry_slow() const {
@@ -150,11 +241,7 @@ void YetiSimulator::run_telemetry_fast() const {
                        {"error", rcd.error}});
 }
 
-void YetiSimulator::start_simulation(const int sleep_time_ms) {
-    std::thread(&YetiSimulator::run_simulation, this, sleep_time_ms).detach();
-}
-
-[[noreturn]] void YetiSimulator::run_simulation(const int sleep_time_ms) const {
+[[noreturn]] void YetiSimulator::run_simulation(const int sleep_time_ms) {
     while (true) {
         if (module_state->simulation_enabled) {
             simulation_step();
@@ -178,7 +265,7 @@ void YetiSimulator::start_simulation(const int sleep_time_ms) {
     }
 }
 
-void YetiSimulator::simulation_step() const {
+void YetiSimulator::simulation_step() {
     check_error_rcd();
     read_from_car();
     simulation_statemachine();
@@ -187,33 +274,27 @@ void YetiSimulator::simulation_step() const {
     publish_ev_board_support();
 }
 
-void YetiSimulator::check_error_rcd() const {
+void YetiSimulator::check_error_rcd() {
     using Everest::error::Severity;
-    auto& board_support = get_board_support();
-    auto& rcd = get_ac_rcd();
 
     if (module_state->simulation_data.rcd_current > 5.0) {
         if (not module_state->rcd_error_reported) {
             const auto error =
-                board_support.error_factory->create_error("ac_rcd/DC", "", "Simulated fault event", Severity::High);
-            board_support.raise_error(error);
+                p_board_support->error_factory->create_error("ac_rcd/DC", "", "Simulated fault event", Severity::High);
+            p_board_support->raise_error(error);
             module_state->rcd_error_reported = true;
         }
     } else {
         if (module_state->rcd_error_reported) {
-            board_support.clear_error("ac_rcd/DC");
+            p_board_support->clear_error("ac_rcd/DC");
         }
         module_state->rcd_error_reported = false;
     }
-    rcd.publish_rcd_current_mA(module_state->simulation_data.rcd_current);
+    p_rcd->publish_rcd_current_mA(module_state->simulation_data.rcd_current);
 }
 
-void YetiSimulator::read_from_car() const {
-    auto error_handler = ErrorHandler{&get_board_support(), &get_ac_rcd(), &get_connector_lock()};
-
-    auto amps1 = double{};
-    auto amps2 = double{};
-    auto amps3 = double{};
+void YetiSimulator::read_from_car() {
+    auto error_handler = ErrorHandler{p_board_support.get(), p_rcd.get(), p_connector_lock.get()};
 
     auto hlc_active = false;
     if (module_state->pwm_duty_cycle >= 0.03 and module_state->pwm_duty_cycle <= 0.07)
@@ -223,20 +304,15 @@ void YetiSimulator::read_from_car() const {
     if (amps > module_state->ev_max_current or hlc_active == true)
         amps = module_state->ev_max_current;
 
-    if (module_state->relais_on == true and module_state->ev_three_phases > 0)
-        amps1 = amps;
-    else
-        amps1 = 0;
-    if (module_state->relais_on == true and module_state->ev_three_phases > 1 and
-        module_state->use_three_phases_confirmed)
-        amps2 = amps;
-    else
-        amps2 = 0;
-    if (module_state->relais_on == true and module_state->ev_three_phases > 2 and
-        module_state->use_three_phases_confirmed)
-        amps3 = amps;
-    else
-        amps3 = 0;
+    double amps1 = (module_state->relais_on == true and module_state->ev_three_phases > 0) ? amps : 0.0;
+    double amps2 = (module_state->relais_on == true and module_state->ev_three_phases > 1 and
+                    module_state->use_three_phases_confirmed)
+                       ? amps
+                       : 0.0;
+    double amps3 = (module_state->relais_on == true and module_state->ev_three_phases > 2 and
+                    module_state->use_three_phases_confirmed)
+                       ? amps
+                       : 0.0;
 
     if (module_state->pwm_running) {
         module_state->pwm_voltage_hi = module_state->simulation_data.cp_voltage;
@@ -274,7 +350,7 @@ void YetiSimulator::read_from_car() const {
     } else if (is_voltage_in_range(cpHi, 12.0)) {
         // +12V State A IDLE (open circuit)
         // clear all errors that clear on disconnection
-        clear_disconnect_errors(error_handler, get_board_support());
+        clear_disconnect_errors(error_handler, *p_board_support);
         module_state->current_state = state::State::STATE_A;
         drawPower(0, 0, 0, 0);
     } else if (is_voltage_in_range(cpHi, 9.0)) {
@@ -292,30 +368,28 @@ void YetiSimulator::read_from_car() const {
     }
 }
 
-void YetiSimulator::simulation_statemachine() const {
-    auto& board_support = get_board_support();
+void YetiSimulator::simulation_statemachine() {
 
     if (module_state->last_state not_eq module_state->current_state) {
-        publish_event(board_support, module_state->current_state);
+        publish_event(module_state->current_state);
     }
 
     switch (module_state->current_state) {
     case state::State::STATE_DISABLED:
-        powerOff(board_support);
+        powerOff();
         module_state->power_on_allowed = false;
         break;
 
     case state::State::STATE_A: {
         module_state->use_three_phases_confirmed = module_state->use_three_phases;
-        const auto* _board_support = dynamic_cast<board_support::evse_board_supportImpl*>(&board_support);
-        _board_support->pwm_off();
+        pwm_off();
         reset_powermeter();
         module_state->simplified_mode = false;
 
         if (module_state->last_state not_eq state::State::STATE_A and
             module_state->last_state not_eq state::State::STATE_DISABLED and
             module_state->last_state not_eq state::State::STATE_F) {
-            powerOff(board_support);
+            powerOff();
 
             // If car was unplugged, reset RCD flag.
             module_state->simdata_setting.rcd_current = 0.1;
@@ -331,7 +405,7 @@ void YetiSimulator::simulation_statemachine() const {
         if (module_state->last_state not_eq state::State::STATE_A and
             module_state->last_state not_eq state::State::STATE_B) {
             // Need to switch off according to Table A.6 Sequence 8.1 within
-            powerOff(board_support);
+            powerOff();
         }
 
         // Table A.6: Sequence 1.1 Plug-in
@@ -351,11 +425,11 @@ void YetiSimulator::simulation_statemachine() const {
             // if PWM stops. Stop within 6 seconds (E.g. Kona1!)
             // This is implemented in EvseManager
             if (not module_state->power_on_allowed)
-                powerOff(board_support);
+                powerOff();
         } else if (module_state->power_on_allowed) { // C2
             // Table A.6: Sequence 4 EV ready to charge.
             // Must enable power within 3 seconds.
-            powerOn(board_support);
+            powerOn();
         }
         break;
     case state::State::STATE_D:
@@ -371,22 +445,21 @@ void YetiSimulator::simulation_statemachine() const {
                 startTimer(6000);
             if (timerElapsed()) { */
             // force power off under load
-            powerOff(board_support);
+            powerOff();
             // }
         } else if (module_state->power_on_allowed and not module_state->relais_on and module_state->has_ventilation) {
             // Table A.6: Sequence 4 EV ready to charge.
             // Must enable power within 3 seconds.
-            powerOn(board_support);
+            powerOn();
         }
         break;
     case state::State::STATE_E: {
-        powerOff(board_support);
-        const auto* _board_support = dynamic_cast<board_support::evse_board_supportImpl*>(&board_support);
-        _board_support->pwm_off();
+        powerOff();
+        pwm_off();
         break;
     }
     case state::State::STATE_F:
-        powerOff(board_support);
+        powerOff();
         break;
     default:
         break;
@@ -395,7 +468,7 @@ void YetiSimulator::simulation_statemachine() const {
     module_state->last_pwm_running = module_state->pwm_running;
 }
 
-void YetiSimulator::add_noise() const {
+void YetiSimulator::add_noise() {
     const auto random_number_between_0_and_1 = [] {
         return static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
     };
@@ -427,7 +500,7 @@ void YetiSimulator::add_noise() const {
     module_state->simulation_data.error_e = module_state->simdata_setting.error_e;
 }
 
-void YetiSimulator::simulate_powermeter() const {
+void YetiSimulator::simulate_powermeter() {
     using namespace std::chrono;
 
     const auto time_stamp = time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count();
@@ -476,22 +549,14 @@ void YetiSimulator::simulate_powermeter() const {
 }
 
 void YetiSimulator::publish_ev_board_support() const {
-    auto& ev_board_support = get_ev_board_support();
-
     const auto pp = read_pp_ampacity();
 
-    ev_board_support.publish_bsp_measurement(
-        {.proximity_pilot = pp,
-         .cp_pwm_duty_cycle = static_cast<float>(module_state->pwm_duty_cycle * 100),
-         .rcd_current_mA = module_state->simulation_data.rcd_current});
+    p_ev_board_support->publish_bsp_measurement(
+        {pp, static_cast<float>(module_state->pwm_duty_cycle * 100), module_state->simulation_data.rcd_current});
 }
 
-void YetiSimulator::publish_powermeter() const {
-    auto& powermeter = get_powermeter();
-    auto& mqtt = get_mqtt();
-    auto& info = get_info();
-
-    powermeter.publish_powermeter(power_meter_external(module_state->powermeter_data));
+void YetiSimulator::publish_powermeter() {
+    p_powermeter->publish_powermeter(power_meter_external(module_state->powermeter_data));
 
     // Deprecated external stuff
     mqtt.publish("/external/powermeter/vrmsL1", module_state->powermeter_data.vrmsL1);
@@ -519,19 +584,17 @@ void YetiSimulator::publish_powermeter() const {
                      1000.0);
 }
 
-void YetiSimulator::publish_telemetry() const {
-    auto& board_support = get_board_support();
-
-    board_support.publish_telemetry({.evse_temperature_C = static_cast<float>(module_state->powermeter_data.tempL1),
-                                     .fan_rpm = 1500.,
-                                     .supply_voltage_12V = 12.01,
-                                     .supply_voltage_minus_12V = -11.8,
-                                     .relais_on = module_state->relais_on});
+void YetiSimulator::publish_telemetry() {
+    // TODO(sl): Change back to C++17
+    p_board_support->publish_telemetry({.evse_temperature_C = static_cast<float>(module_state->powermeter_data.tempL1),
+                                        .fan_rpm = 1500.,
+                                        .supply_voltage_12V = 12.01,
+                                        .supply_voltage_minus_12V = -11.8,
+                                        .relais_on = module_state->relais_on});
 }
 
-void YetiSimulator::publish_keepalive() const {
+void YetiSimulator::publish_keepalive() {
     using namespace std::chrono;
-    auto& mqtt = get_mqtt();
 
     mqtt.publish(
         "/external/keepalive_json",
@@ -544,68 +607,6 @@ void YetiSimulator::publish_keepalive() const {
             {"time_stamp", {time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count() / 1000}},
         }
             .dump());
-}
-
-types::powermeter::Powermeter power_meter_external(const state::PowermeterData& powermeter_data) {
-    const auto current_iso_time_string = util::get_current_iso_time_string();
-    const auto& [time_stamp, totalWattHr, wattL1, vrmsL1, irmsL1, wattHrL1, tempL1, freqL1, wattL2, vrmsL2, irmsL2,
-                 wattHrL2, tempL2, freqL2, wattL3, vrmsL3, irmsL3, wattHrL3, tempL3, freqL3, irmsN] = powermeter_data;
-    return {
-        .timestamp = current_iso_time_string,
-        .energy_Wh_import =
-            {
-                .total = static_cast<float>(totalWattHr),
-                .L1 = static_cast<float>(wattHrL1),
-                .L2 = static_cast<float>(wattHrL2),
-                .L3 = static_cast<float>(wattHrL3),
-            },
-        .meter_id = "YETI_POWERMETER",
-        .phase_seq_error = false,
-        .power_W =
-            types::units::Power{
-                .total = static_cast<float>(wattL1 + wattL2 + wattL3),
-                .L1 = static_cast<float>(wattL1),
-                .L2 = static_cast<float>(wattL2),
-                .L3 = static_cast<float>(wattL3),
-            },
-        .voltage_V =
-            types::units::Voltage{
-                .L1 = vrmsL1,
-                .L2 = vrmsL2,
-                .L3 = vrmsL3,
-            },
-        .current_A =
-            types::units::Current{
-                .L1 = irmsL1,
-                .L2 = irmsL2,
-                .L3 = irmsL3,
-                .N = irmsN,
-            },
-        .frequency_Hz =
-            types::units::Frequency{
-                .L1 = static_cast<float>(freqL1),
-                .L2 = static_cast<float>(freqL2),
-                .L3 = static_cast<float>(freqL3),
-            },
-
-    };
-}
-
-double duty_cycle_to_amps(const double dc) {
-    if (dc < 8.0 / 100.0)
-        return 0;
-    if (dc < 85.0 / 100.0)
-        return dc * 100.0 * 0.6;
-    if (dc < 96.0 / 100.0)
-        return (dc * 100.0 - 64) * 2.5;
-    if (dc < 97.0 / 100.0)
-        return 80;
-    return 0;
-}
-
-bool is_voltage_in_range(const double voltage, const double center) {
-    constexpr auto interval = 1.1;
-    return voltage > center - interval and voltage < center + interval;
 }
 
 void YetiSimulator::drawPower(const int l1, const int l2, const int l3, const int n) const {
@@ -622,83 +623,44 @@ void YetiSimulator::clear_disconnect_errors(ErrorHandler& error_handler,
     }
 }
 
-void YetiSimulator::powerOn(evse_board_supportImplBase& board_support) const {
+void YetiSimulator::powerOn() {
     if (not module_state->relais_on) {
-        publish_event(board_support, state::State::Event_PowerOn);
+        publish_event(state::State::Event_PowerOn);
         module_state->relais_on = true;
         module_state->telemetry_data.power_switch.switching_count += 1;
     }
 }
 
-void YetiSimulator::powerOff(evse_board_supportImplBase& board_support) const {
+void YetiSimulator::powerOff() {
     if (module_state->relais_on) {
-        publish_event(board_support, state::State::Event_PowerOff);
+        publish_event(state::State::Event_PowerOff);
         module_state->telemetry_data.power_switch.switching_count++;
         module_state->relais_on = false;
     }
 }
 
-// NOLINTNEXTLINE
-void publish_event(evse_board_supportImplBase& board_support, state::State event) {
-    board_support.publish_event(event_to_enum(event));
+void YetiSimulator::publish_event(state::State event) {
+    p_board_support->publish_event(event_to_enum(event));
 }
 
-// NOLINTNEXTLINE
-static types::board_support_common::BspEvent event_to_enum(state::State event) {
-    using state::State;
-    using types::board_support_common::Event;
-
-    switch (event) {
-    case State::STATE_A:
-        return {.event = Event::A};
-    case State::STATE_B:
-        return {.event = Event::B};
-    case State::STATE_C:
-        return {.event = Event::C};
-    case State::STATE_D:
-        return {.event = Event::D};
-    case State::STATE_E:
-        return {.event = Event::E};
-    case State::STATE_F:
-        return {.event = Event::F};
-    case State::STATE_DISABLED:
-        return {.event = Event::F};
-    case State::Event_PowerOn:
-        return {.event = Event::PowerOn};
-    case State::Event_PowerOff:
-        return {.event = Event::PowerOff};
-    default:
-        EVLOG_error << "Invalid event : " << event_to_string(event);
-        return {.event = Event::Disconnected}; // TODO: correct default value
+void YetiSimulator::pwm_on(const double dutycycle) {
+    if (dutycycle > 0.0) {
+        module_state->pwm_duty_cycle = dutycycle;
+        module_state->pwm_running = true;
+        module_state->pwm_error_f = false;
+    } else {
+        pwm_off();
     }
 }
-
-// NOLINTNEXTLINE
-static std::string event_to_string(state::State state) {
-    using state::State;
-
-    switch (state) {
-    case State::STATE_A:
-        return "A";
-    case State::STATE_B:
-        return "B";
-    case State::STATE_C:
-        return "C";
-    case State::STATE_D:
-        return "D";
-    case State::STATE_E:
-        return "E";
-    case State::STATE_F:
-        return "F";
-    case State::STATE_DISABLED:
-        return "F";
-    case State::Event_PowerOn:
-        return "PowerOn";
-    case State::Event_PowerOff:
-        return "PowerOff";
-    default:
-        return "invalid";
-    }
+void YetiSimulator::pwm_off() {
+    module_state->pwm_duty_cycle = 1.0;
+    module_state->pwm_running = false;
+    module_state->pwm_error_f = false;
+}
+void YetiSimulator::pwm_f() {
+    module_state->pwm_duty_cycle = 1.0;
+    module_state->pwm_running = false;
+    module_state->pwm_error_f = true;
 }
 
 void YetiSimulator::reset_powermeter() const {
@@ -713,23 +675,23 @@ types::board_support_common::ProximityPilot YetiSimulator::read_pp_ampacity() co
 
     if (pp_resistor < 80.0 or pp_resistor > 2460) {
         EVLOG_error << "PP resistor value " << pp_resistor << " Ohm seems to be outside the allowed range.";
-        return {.ampacity = types::board_support_common::Ampacity::None};
+        return {types::board_support_common::Ampacity::None};
     }
 
     // PP resistor value in spec, use a conservative interpretation of the resistance ranges
     if (pp_resistor > 936.0 and pp_resistor <= 2460.0) {
-        return {.ampacity = types::board_support_common::Ampacity::A_13};
+        return {types::board_support_common::Ampacity::A_13};
     }
     if (pp_resistor > 308.0 && pp_resistor <= 936.0) {
-        return {.ampacity = types::board_support_common::Ampacity::A_20};
+        return {types::board_support_common::Ampacity::A_20};
     }
     if (pp_resistor > 140.0 && pp_resistor <= 308.0) {
-        return {.ampacity = types::board_support_common::Ampacity::A_32};
+        return {types::board_support_common::Ampacity::A_32};
     }
     if (pp_resistor > 80.0 && pp_resistor <= 140.0) {
-        return {.ampacity = types::board_support_common::Ampacity::A_63_3ph_70_1ph};
+        return {types::board_support_common::Ampacity::A_63_3ph_70_1ph};
     }
-    return {.ampacity = types::board_support_common::Ampacity::None};
+    return {types::board_support_common::Ampacity::None};
 }
 
 } // namespace module

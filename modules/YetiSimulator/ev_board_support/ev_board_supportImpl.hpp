@@ -56,11 +56,6 @@ private:
 };
 
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
-// insert other definitions here
-constexpr auto inline cp_voltage_a = 12.0;
-constexpr auto inline cp_voltage_b = 9.0;
-constexpr auto inline cp_voltage_c = 6.0;
-constexpr auto inline cp_voltage_d = 3.0;
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
 } // namespace module::ev_board_support
