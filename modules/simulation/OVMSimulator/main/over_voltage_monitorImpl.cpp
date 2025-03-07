@@ -30,7 +30,7 @@ void over_voltage_monitorImpl::handle_stop() {
 
 void over_voltage_monitorImpl::handle_reset_over_voltage_error() {
     EVLOG_info << "Over voltage monitoring: reset";
-    clear_error("over_voltage_monitor/MREC5OverVoltage", true);
+    clear_error("over_voltage_monitor/MREC5OverVoltage", "");
 }
 
 } // namespace main
