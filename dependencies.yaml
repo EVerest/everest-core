@@ -47,7 +47,7 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: v0.4.0
+  git_tag: b22242daf381d3ccef1408283136dad81f72e73f
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600 module
@@ -72,7 +72,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2024.10.0
+  git_tag: ff3efe50c41ac2c40ef24d61ea03ec5b7709704a
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # mbedtls
 ext-mbedtls:
