@@ -195,7 +195,7 @@ int main(int argc, char* argv[]) {
     charge_point->register_unlock_connector_callback([](int32_t connector) {
         std::cout << "Callback: "
                   << "Unlock connector#" << connector;
-        return true;
+        return ocpp::v16::UnlockStatus::Unlocked;
     });
 
     charge_point->register_upload_diagnostics_callback([](const ocpp::v16::GetDiagnosticsRequest& request) {

@@ -156,7 +156,7 @@ private:
     std::function<void(const std::string& id_token, std::vector<int32_t> referenced_connectors, bool prevalidated)>
         provide_token_callback;
     std::function<bool(int32_t connector, Reason reason)> stop_transaction_callback;
-    std::function<bool(int32_t connector)> unlock_connector_callback;
+    std::function<UnlockStatus(int32_t connector)> unlock_connector_callback;
     std::function<bool(int32_t connector, int32_t max_current)> set_max_current_callback;
     std::function<bool(const ResetType& reset_type)> is_reset_allowed_callback;
     std::function<void(const ResetType& reset_type)> reset_callback;
@@ -732,13 +732,14 @@ public:
     /// \param callback
     void register_cancel_reservation_callback(const std::function<bool(int32_t reservation_id)>& callback);
 
-    /// \brief registers a \p callback function that can be used to unlock the connector. The unlock_connector_callback
-    /// is called:
+    /// \brief registers a \p callback function that can be used to unlock the connector. In case a transaction is
+    // active at the specified connector, the \p callback shall stop the transaction before unlocking the connector. The
+    // unlock_connector_callback is called:
     /// - when receiving a UnlockConnector.req and
     /// - when a transaction has on_transaction_stopped is called and the configuration key
     /// UnlockConnectorOnEVSideDisconnect is true
     /// \param callback
-    void register_unlock_connector_callback(const std::function<bool(int32_t connector)>& callback);
+    void register_unlock_connector_callback(const std::function<UnlockStatus(int32_t connector)>& callback);
 
     /// \brief registers a \p callback function that can be used to trigger an upload of diagnostics. This callback
     /// should trigger a process of a diagnostics upload using the given parameters of the request. This process should

@@ -2306,19 +2306,9 @@ void ChargePointImpl::handleUnlockConnectorRequest(ocpp::Call<UnlockConnectorReq
     if (connector <= 0 or connector > this->configuration->getNumberOfConnectors()) {
         response.status = UnlockStatus::NotSupported;
     } else {
-        // this message is not intended to remotely stop a transaction, but if a transaction is still ongoing it is
-        // advised to stop it first
-        if (this->transaction_handler->transaction_active(connector)) {
-            EVLOG_info << "Received unlock connector request with active session for this connector.";
-            this->stop_transaction_callback(connector, Reason::UnlockCommand);
-        }
 
         if (this->unlock_connector_callback != nullptr) {
-            if (this->unlock_connector_callback(call.msg.connectorId)) {
-                response.status = UnlockStatus::Unlocked;
-            } else {
-                response.status = UnlockStatus::UnlockFailed;
-            }
+            response.status = this->unlock_connector_callback(call.msg.connectorId);
         } else {
             response.status = UnlockStatus::NotSupported;
         }
@@ -4495,7 +4485,8 @@ void ChargePointImpl::register_cancel_reservation_callback(const std::function<b
     this->cancel_reservation_callback = callback;
 }
 
-void ChargePointImpl::register_unlock_connector_callback(const std::function<bool(int32_t connector)>& callback) {
+void ChargePointImpl::register_unlock_connector_callback(
+    const std::function<UnlockStatus(int32_t connector)>& callback) {
     this->unlock_connector_callback = callback;
 }
 

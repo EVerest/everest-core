@@ -230,7 +230,7 @@ void ChargePoint::register_cancel_reservation_callback(const std::function<bool(
     this->charge_point->register_cancel_reservation_callback(callback);
 }
 
-void ChargePoint::register_unlock_connector_callback(const std::function<bool(int32_t connector)>& callback) {
+void ChargePoint::register_unlock_connector_callback(const std::function<UnlockStatus(int32_t connector)>& callback) {
     this->charge_point->register_unlock_connector_callback(callback);
 }
 
