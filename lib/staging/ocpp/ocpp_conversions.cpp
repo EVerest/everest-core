@@ -43,6 +43,10 @@ types::display_message::MessageStateEnum to_everest_display_message_state(const 
         return types::display_message::MessageStateEnum::Idle;
     case ocpp::v2::MessageStateEnum::Unavailable:
         return types::display_message::MessageStateEnum::Unavailable;
+    case ocpp::v2::MessageStateEnum::Suspended:
+        return types::display_message::MessageStateEnum::Suspending;
+    case ocpp::v2::MessageStateEnum::Discharging:
+        return types::display_message::MessageStateEnum::Discharging;
     }
     throw std::out_of_range("Could not convert ocpp::v2::MessageStateEnum to types::display_message::MessageStateEnum");
 }
@@ -57,6 +61,10 @@ ocpp::v2::MessageStateEnum to_ocpp_201_display_message_state(const types::displa
         return ocpp::v2::MessageStateEnum::Idle;
     case types::display_message::MessageStateEnum::Unavailable:
         return ocpp::v2::MessageStateEnum::Unavailable;
+    case types::display_message::MessageStateEnum::Suspending:
+        return ocpp::v2::MessageStateEnum::Suspended;
+    case types::display_message::MessageStateEnum::Discharging:
+        return ocpp::v2::MessageStateEnum::Discharging;
     }
     throw std::out_of_range("Could not convert types::display_message::MessageStateEnum to ocpp::v2::MessageStateEnum");
 }
@@ -72,6 +80,8 @@ to_everest_display_message_format(const ocpp::v2::MessageFormatEnum& message_for
         return types::display_message::MessageFormat::URI;
     case ocpp::v2::MessageFormatEnum::UTF8:
         return types::display_message::MessageFormat::UTF8;
+    case ocpp::v2::MessageFormatEnum::QRCODE:
+        return types::display_message::MessageFormat::QRCODE;
     }
     throw std::out_of_range("Could not convert ocpp::v2::MessageFormat to types::display_message::MessageFormatEnum");
 }
@@ -86,6 +96,8 @@ ocpp::v2::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display
         return ocpp::v2::MessageFormatEnum::URI;
     case types::display_message::MessageFormat::UTF8:
         return ocpp::v2::MessageFormatEnum::UTF8;
+    case types::display_message::MessageFormat::QRCODE:
+        return ocpp::v2::MessageFormatEnum::QRCODE;
     }
 
     throw std::out_of_range("Could not convert types::display_message::MessageFormat to ocpp::v2::MessageFormatEnum");
