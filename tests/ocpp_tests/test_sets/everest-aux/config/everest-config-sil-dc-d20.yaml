@@ -6,7 +6,7 @@ active_modules:
     connections:
       security:
         - module_id: evse_security
-          implementation_id: main
+          implementation_id: main      
   iso15118_car:
     module: PyEvJosev
     config_module:
@@ -127,6 +127,9 @@ active_modules:
       reservation:
         - module_id: auth
           implementation_id: reservation
+      extensions_15118:
+        - module_id: iso15118_charger
+          implementation_id: extensions
   system:
     module: System
   auth:

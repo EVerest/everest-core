@@ -58,7 +58,7 @@ class TestIso15118ExtenstionsOcppIntegration:
         test_utility: TestUtility,
     ):
         await asyncio.sleep(3)
-        test_controller.plug_in_ac_iso()
+        test_controller.plug_in_dc_iso()
 
         assert await wait_for_and_validate(
             test_utility,
