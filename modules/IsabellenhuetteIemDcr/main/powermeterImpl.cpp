@@ -91,9 +91,14 @@ void powermeterImpl::ready() {
 					}
 				}
 				
+				// Reset previous error (if active)
+                if (this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
+                                                               "Communication timed out")) {
+                    clear_error("powermeter/CommunicationFault", "Communication timed out");
+                }
 			} catch (HttpClientError& client_error) {
                 if (!this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
-                                                                "Communication timeout")) {
+                                                                "Communication timed out")) {
                     EVLOG_error << "Failed to communicate with the powermeter due to http error: "
                                 << client_error.what();
                     auto error =
