@@ -110,10 +110,7 @@ public:
 	void 											post_receipt(const std::string& TX);
     
     IsaIemDcrController() = delete;
-    explicit IsaIemDcrController(std::unique_ptr<HttpClientInterface> http_client, const SnapshotConfig& snapConfig) :
-        http_client(std::move(http_client)), snapshotConfig(snapConfig) {
-			//Member Initializer List is used
-    }
+    IsaIemDcrController(std::unique_ptr<HttpClientInterface> http_client, const SnapshotConfig& snapConfig);
     
     template <typename Callable>
     static auto call_with_retry(Callable func, int number_of_retries, int retry_wait_in_milliseconds,
@@ -149,7 +146,9 @@ private:
     const std::unique_ptr<HttpClientInterface> 	http_client;
     SnapshotConfig 								snapshotConfig;
     std::string									cachedPublicKey = "";
+    std::chrono::minutes 						zone_timeOffset;
     
+    std::chrono::minutes						helper_convert_timezone(std::string timezone);
     std::string 								helper_get_current_datetime();
     std::string 								helper_remove_first_and_last_char(const std::string& input);
     bool 										helper_get_bool_from_OCMFUserIdentificationStatus(types::powermeter::OCMFUserIdentificationStatus IS);

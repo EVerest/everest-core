@@ -20,7 +20,7 @@ void powermeterImpl::init() {
     // then move it into the controller as a constructor argument
     auto http_client =
         std::make_unique<HttpClient>(mod->config.ip_address, mod->config.port_http);
-        
+            
     //Create controller object
     this->controller = std::make_unique<IsaIemDcrController>(std::move(http_client), 
 			IsaIemDcrController::SnapshotConfig{mod->config.timezone, mod->config.datetime_resync_interval,
@@ -226,7 +226,11 @@ void powermeterImpl::check_config() {
 		throw std::runtime_error("port_http invalid. Please check configuration.");
 	}
     if(mod->config.timezone.length() != 5) {
-		EVLOG_error << "Incorrect module config: parameter timezone has invalid length. 5 characters expected." << std::endl;
+		EVLOG_error << "Incorrect module config: parameter timezone has invalid length. 5 characters expected, e.g. +0200" << std::endl;
+		throw std::runtime_error("Timezone invalid. Please check configuration.");
+	}
+	if(mod->config.timezone[0] != '+' && mod->config.timezone[0] != '-') {
+		EVLOG_error << "Incorrect module config: parameter timezone has invalid format. It must begin with + or - char." << std::endl;
 		throw std::runtime_error("Timezone invalid. Please check configuration.");
 	}
 	if(mod->config.datetime_resync_interval <= 0) {

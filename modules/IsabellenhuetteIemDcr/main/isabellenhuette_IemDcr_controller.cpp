@@ -5,6 +5,14 @@
 #include <stdexcept>
 namespace module::main {
 
+IsaIemDcrController::IsaIemDcrController(std::unique_ptr<HttpClientInterface> http_client, const SnapshotConfig& snapConfig) :
+	http_client(std::move(http_client)), snapshotConfig(snapConfig) {
+	//Member Initializer List is used
+	
+	//Further initialization
+	zone_timeOffset = helper_convert_timezone(snapshotConfig.timezone);
+}
+
 json IsaIemDcrController::get_gw() {
 	const std::string endpoint = "/counter/v1/ocmf/gw";
 	auto response = this->http_client->get(endpoint);
@@ -358,22 +366,24 @@ std::string IsaIemDcrController::helper_get_string_from_OCMFIdentificationType(t
     return result;
 }
 
+std::chrono::minutes IsaIemDcrController::helper_convert_timezone(std::string timezone) {
+	const char signChar = timezone[0];
+	const int offsetHours = std::stoi(timezone.substr(1, 2));
+	const int offsetMinutes = std::stoi(timezone.substr(3, 2));
+    const std::chrono::minutes timeOffset = std::chrono::hours(offsetHours) + std::chrono::minutes(offsetMinutes);
+    if(signChar == '+') {
+		return timeOffset;
+	}
+	else {
+		return -timeOffset;
+	}
+}
+
 std::string IsaIemDcrController::helper_get_current_datetime() {
 	//Get UTC time
 	auto now = std::chrono::system_clock::now();
 	//Add configured timezone information
-	char signChar = snapshotConfig.timezone[0];
-	int offsetHours = std::stoi(snapshotConfig.timezone.substr(1, 2));
-    int offsetMinutes = std::stoi(snapshotConfig.timezone.substr(3, 2));
-    auto timeOffset = std::chrono::hours(offsetHours) + std::chrono::minutes(offsetMinutes);
-    std::time_t nowWithOffset;
-	if(signChar == '+') {
-		nowWithOffset = std::chrono::system_clock::to_time_t(now + timeOffset);
-	} else if(signChar == '-') {
-		nowWithOffset = std::chrono::system_clock::to_time_t(now - timeOffset);
-	} else {
-		throw std::runtime_error("manifest.yaml: Format of timezone not supported. Expected: something like \"+0100\".");
-	}
+    const std::time_t nowWithOffset = std::chrono::system_clock::to_time_t(now + zone_timeOffset);
 	//Generate and return time in correct format
 	std::ostringstream ss;
 	ss << std::put_time(gmtime(&nowWithOffset), "%FT%T,000") << snapshotConfig.timezone;
