@@ -101,7 +101,7 @@ public:
     void 											post_datetime();
     void 											post_user(const types::powermeter::OCMFUserIdentificationStatus IS, 
 															const std::optional<types::powermeter::OCMFIdentificationLevel> IL, 
-															const std::vector<types::powermeter::OCMFIdentificationFlags> IF,
+															const std::vector<types::powermeter::OCMFIdentificationFlags>& IF,
 															const types::powermeter::OCMFIdentificationType& IT,
 															const std::optional<std::__cxx11::basic_string<char>>& ID,
 															const std::optional<std::__cxx11::basic_string<char>>& TT);
@@ -156,7 +156,7 @@ private:
 	std::string									helper_get_string_from_OCMFIdentificationLevel(std::optional<types::powermeter::OCMFIdentificationLevel> IL);
 	std::string									helper_get_string_from_OCMFIdentificationFlags(types::powermeter::OCMFIdentificationFlags idFlag);
 	std::string 								helper_get_string_from_OCMFIdentificationType(types::powermeter::OCMFIdentificationType IT);
-	types::units_signed::SignedMeterValue 		helper_get_signed_datatuple(std::string endpoint);
+	types::units_signed::SignedMeterValue 		helper_get_signed_datatuple(const std::string& endpoint);
     
 };
 

@@ -131,7 +131,7 @@ void IsaIemDcrController::post_datetime() {
 
 void IsaIemDcrController::post_user(const types::powermeter::OCMFUserIdentificationStatus IS, 
 										const std::optional<types::powermeter::OCMFIdentificationLevel> IL, 
-										const std::vector<types::powermeter::OCMFIdentificationFlags> IF,
+										const std::vector<types::powermeter::OCMFIdentificationFlags>& IF,
 										const types::powermeter::OCMFIdentificationType& IT,
 										const std::optional<std::__cxx11::basic_string<char>>& ID,
 										const std::optional<std::__cxx11::basic_string<char>>& TT) {
@@ -175,11 +175,13 @@ void IsaIemDcrController::post_user(const types::powermeter::OCMFUserIdentificat
 }
 
 types::units_signed::SignedMeterValue IsaIemDcrController::get_receipt() {
-	return helper_get_signed_datatuple("/counter/v1/ocmf/receipt");
+	const std::string endpoint = "/counter/v1/ocmf/receipt";
+	return helper_get_signed_datatuple(endpoint);
 }
 
 types::units_signed::SignedMeterValue IsaIemDcrController::get_transaction() {
-	return helper_get_signed_datatuple("/counter/v1/ocmf/transaction");
+	const std::string endpoint = "/counter/v1/ocmf/transaction";
+	return helper_get_signed_datatuple(endpoint);
 }
 
 void IsaIemDcrController::post_receipt(const std::string& TX) {
@@ -385,7 +387,7 @@ std::string IsaIemDcrController::helper_remove_first_and_last_char(const std::st
     return input.substr(1, input.length() - 1);
 }
 
-types::units_signed::SignedMeterValue IsaIemDcrController::helper_get_signed_datatuple(std::string endpoint) {
+types::units_signed::SignedMeterValue IsaIemDcrController::helper_get_signed_datatuple(const std::string& endpoint) {
 	auto response = this->http_client->get(endpoint);
 	types::units_signed::SignedMeterValue retVal;
 	if (response.status_code == 200) {
