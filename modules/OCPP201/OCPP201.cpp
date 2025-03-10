@@ -1314,22 +1314,42 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>
 
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
+        std::vector<types::energy::ScheduleSetpointEntry> schedule_setpoints;
 
         for (const auto& period : composite_schedule.chargingSchedulePeriod) {
+            // schedule import
             types::energy::ScheduleReqEntry schedule_req_entry;
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (composite_schedule.chargingRateUnit == ocpp::v2::ChargingRateUnitEnum::A) {
-                limits_req.ac_max_current_A = {period.limit, source_ext_limit};
+                limits_req.ac_max_current_A = {period.limit.value_or(0.0f), source_ext_limit};
                 if (period.numberPhases.has_value()) {
                     limits_req.ac_max_phase_count = {period.numberPhases.value(), source_ext_limit};
                 }
             } else {
-                limits_req.total_power_W = {period.limit, source_ext_limit};
+                limits_req.total_power_W = {period.limit.value_or(0.0f), source_ext_limit};
             }
             schedule_req_entry.limits_to_leaves = limits_req;
             schedule_import.push_back(schedule_req_entry);
+
+            // schedule setpoints
+            if (period.setpoint.has_value()) {
+                types::energy::ScheduleSetpointEntry schedule_setpoint_entry;
+                schedule_setpoint_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
+                types::energy::SetpointType setpoint;
+                if (composite_schedule.chargingRateUnit == ocpp::v2::ChargingRateUnitEnum::A) {
+                    setpoint.ac_current_A = period.setpoint.value();
+                    setpoint.total_power_W = period.setpoint.value() * 230 * 3;
+                } else {
+                    setpoint.total_power_W = period.setpoint.value();
+                    setpoint.ac_current_A = period.setpoint.value() / 230 / 3;
+                }
+                setpoint.source = source_ext_limit;
+                schedule_setpoint_entry.setpoint = setpoint;
+                limits.schedule_setpoints.push_back(schedule_setpoint_entry);
+            }
+            
         }
         limits.schedule_import = schedule_import;
 
