@@ -65,9 +65,9 @@ class TestIso15118ExtenstionsOcppIntegration:
             charge_point,
             "NotifyEVChargingNeeds",
             call201.NotifyEVChargingNeedsPayload(
-                vendor_id="org.openchargealliance.iso15118pnc",
-                message_id="NotifyEVChargingNeeds",
-                data=None,
+                evse_id="1",
+                charging_needs=None,
+                custom_data=None
             ),
             validate_notify_ev_charging_needs,
         )
