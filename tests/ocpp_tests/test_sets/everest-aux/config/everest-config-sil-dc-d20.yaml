@@ -45,12 +45,40 @@ active_modules:
       imd:
         - module_id: imd
           implementation_id: main
+  connector_2:
+    module: EvseManager
+    config_module:
+      connector_id: 2
+      has_ventilation: true
+      evse_id: "2"
+      session_logging: true
+      session_logging_xml: false
+      ac_hlc_enabled: false
+      ac_hlc_use_5percent: false
+      ac_enforce_hlc: false
+    connections:
+      bsp:
+        - module_id: yeti_driver_2
+          implementation_id: board_support
+      powermeter_grid_side:
+        - module_id: yeti_driver_2
+          implementation_id: powermeter
+      slac:
+        - module_id: slac
+          implementation_id: evse
+      hlc:
+        - module_id: iso15118_charger
+          implementation_id: charger
   powersupply_dc:
     module: DCSupplySimulator
   yeti_driver:
     module: JsYetiSimulator
     config_module:
       connector_id: 1
+  yeti_driver_2:
+    module: JsYetiSimulator
+    config_module:
+      connector_id: 2
   slac:
     module: SlacSimulator
   imd:
@@ -84,7 +112,9 @@ active_modules:
     connections:
       evse_manager:
         - module_id: evse_manager
-          implementation_id: evse        
+          implementation_id: evse
+        - module_id: connector_2
+          implementation_id: evse
       auth:
         - module_id: auth
           implementation_id: main
