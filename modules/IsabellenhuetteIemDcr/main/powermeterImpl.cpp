@@ -82,8 +82,8 @@ void powermeterImpl::ready() {
 				
 				//Update datetime in specified interval
 				if(transactionActive.load() == false) {
-					auto now = std::chrono::steady_clock::now();
-					auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - lastDateTimeSync.load());
+					const auto now = std::chrono::steady_clock::now();
+					const auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - lastDateTimeSync.load());
 					if (elapsed.count() >= dateTimeResyncInterval.load()) {
 						this->controller->post_datetime();
 						lastDateTimeSync.store(now);
