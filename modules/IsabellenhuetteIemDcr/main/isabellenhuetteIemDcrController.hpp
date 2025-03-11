@@ -4,7 +4,7 @@
 #ifndef EVEREST_CORE_MODULE_ISAIEMDCRCONTROLLER_H
 #define EVEREST_CORE_MODULE_ISAIEMDCRCONTROLLER_H
 
-#include "http_client_interface.hpp"
+#include "httpClientInterface.hpp"
 #include <nlohmann/json.hpp>
 #include <functional>
 #include <generated/interfaces/powermeter/Implementation.hpp>
@@ -77,9 +77,9 @@ public:
 		public:
 			ThreadSafeString() : value("") {}
 
-			void store(const std::string& newValue) {
+			void store(const std::string& new_value) {
 				std::lock_guard<std::mutex> lock(mutex);
-				value = newValue;
+				value = new_value;
 			}
 
 			std::string load() const {
@@ -94,9 +94,9 @@ public:
     
     json 											get_gw();
     void 											post_gw();
-    void 											post_tariff(std::string tariffInfo);
+    void 											post_tariff(std::string tariff_info);
     std::tuple<types::powermeter::Powermeter, std::string, bool> get_metervalue();
-    std::string 									get_publickey(bool allowCachedValue);
+    std::string 									get_publickey(bool allow_cached_value);
     std::string 									get_datetime();
     void 											post_datetime();
     void 											post_user(const types::powermeter::OCMFUserIdentificationStatus IS, 
@@ -110,50 +110,50 @@ public:
 	void 											post_receipt(const std::string& TX);
     
     IsaIemDcrController() = delete;
-    IsaIemDcrController(std::unique_ptr<HttpClientInterface> http_client, const SnapshotConfig& snapConfig);
+    IsaIemDcrController(std::unique_ptr<HttpClientInterface> http_client, const SnapshotConfig& snap_config);
     
     template <typename Callable>
     static auto call_with_retry(Callable func, int number_of_retries, int retry_wait_in_milliseconds,
                                 bool retry_on_http_client_error = true, bool retry_on_iemdcr_reponse_error = true)
         -> decltype(func()) {
-        std::exception_ptr lastException = nullptr;
+        std::exception_ptr last_exception = nullptr;
         for (int attempt = 0; attempt < 1 + number_of_retries; ++attempt) {
             try {
                 return func();
             } catch (HttpClientError& http_client_error) {
-                lastException = std::current_exception();
+                last_exception = std::current_exception();
                 if (!retry_on_http_client_error) {
-                    std::rethrow_exception(lastException);
+                    std::rethrow_exception(last_exception);
                 }
                 EVLOG_warning << "HTTPClient request failed: " << http_client_error.what() << "; retry in "
                               << retry_wait_in_milliseconds << " milliseconds";
                 std::this_thread::sleep_for(std::chrono::milliseconds(retry_wait_in_milliseconds));
             } catch (IemDcrUnexpectedResponseException& iemdcr_error) {
-                lastException = std::current_exception();
+                last_exception = std::current_exception();
                 if (!retry_on_iemdcr_reponse_error) {
-                    std::rethrow_exception(lastException);
+                    std::rethrow_exception(last_exception);
                 }
                 EVLOG_warning << "Unexpected IEM-DCR response: " << iemdcr_error.what() << "; retry in "
                               << retry_wait_in_milliseconds << " milliseconds";
                 std::this_thread::sleep_for(std::chrono::milliseconds(retry_wait_in_milliseconds));
             }
         }
-        std::rethrow_exception(lastException);
+        std::rethrow_exception(last_exception);
     }
     
 private:
     
     const std::unique_ptr<HttpClientInterface> 	http_client;
-    SnapshotConfig 								snapshotConfig;
-    std::string									cachedPublicKey = "";
-    std::chrono::minutes 						zone_timeOffset;
+    SnapshotConfig 								snapshot_config;
+    std::string									cached_public_key = "";
+    std::chrono::minutes 						zone_time_offset;
     
     std::chrono::minutes						helper_convert_timezone(std::string timezone);
     std::string 								helper_get_current_datetime();
     std::string 								helper_remove_first_and_last_char(const std::string& input);
     bool 										helper_get_bool_from_OCMFUserIdentificationStatus(types::powermeter::OCMFUserIdentificationStatus IS);
 	std::string									helper_get_string_from_OCMFIdentificationLevel(std::optional<types::powermeter::OCMFIdentificationLevel> IL);
-	std::string									helper_get_string_from_OCMFIdentificationFlags(types::powermeter::OCMFIdentificationFlags idFlag);
+	std::string									helper_get_string_from_OCMFIdentificationFlags(types::powermeter::OCMFIdentificationFlags id_flag);
 	std::string 								helper_get_string_from_OCMFIdentificationType(types::powermeter::OCMFIdentificationType IT);
 	types::units_signed::SignedMeterValue 		helper_get_signed_datatuple(const std::string& endpoint);
     

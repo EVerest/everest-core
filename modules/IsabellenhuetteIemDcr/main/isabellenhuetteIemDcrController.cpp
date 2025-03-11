@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include "isabellenhuette_IemDcr_controller.hpp"
+#include "isabellenhuetteIemDcrController.hpp"
 #include <stdexcept>
 namespace module::main {
 
-IsaIemDcrController::IsaIemDcrController(std::unique_ptr<HttpClientInterface> http_client, const SnapshotConfig& snapConfig) :
-	http_client(std::move(http_client)), snapshotConfig(snapConfig) {
+IsaIemDcrController::IsaIemDcrController(std::unique_ptr<HttpClientInterface> http_client, const SnapshotConfig& snap_config) :
+	http_client(std::move(http_client)), snapshot_config(snap_config) {
 	//Member Initializer List is used
 	
 	//Further initialization
-	zone_timeOffset = helper_convert_timezone(snapshotConfig.timezone);
+	zone_time_offset = helper_convert_timezone(snapshot_config.timezone);
 }
 
 json IsaIemDcrController::get_gw() {
@@ -31,8 +31,8 @@ json IsaIemDcrController::get_gw() {
 
 void IsaIemDcrController::post_gw() {
     const std::string endpoint = "/counter/v1/ocmf/gw";
-    const std::string payload = nlohmann::ordered_json{{"CT", snapshotConfig.CT},
-                                      {"CI", snapshotConfig.CI},
+    const std::string payload = nlohmann::ordered_json{{"CT", snapshot_config.CT},
+                                      {"CI", snapshot_config.CI},
                                       {"TM", helper_get_current_datetime()}}
 									  .dump();
     auto response = this->http_client->post(endpoint, payload);
@@ -41,9 +41,9 @@ void IsaIemDcrController::post_gw() {
     }
 }
 
-void IsaIemDcrController::post_tariff(std::string tariffInfo) {
+void IsaIemDcrController::post_tariff(std::string tariff_info) {
     const std::string endpoint = "/counter/v1/ocmf/tariff";
-    const std::string payload = nlohmann::ordered_json{{"TT", tariffInfo}}
+    const std::string payload = nlohmann::ordered_json{{"TT", tariff_info}}
 									  .dump();
     auto response = this->http_client->post(endpoint, payload);
     if (response.status_code != 200) {
@@ -61,7 +61,7 @@ std::tuple<types::powermeter::Powermeter, std::string, bool> IsaIemDcrController
 		json data = json::parse(response.body);
 		
 		types::powermeter::Powermeter powermeter;
-		bool transactionActive = data.at("XT");
+		bool tmp_transaction_active = data.at("XT");
 		powermeter.timestamp = data.at("TM");
 		//Remove format specifier at the end (if available)
 		if(powermeter.timestamp.length() > 28) {
@@ -84,16 +84,16 @@ std::tuple<types::powermeter::Powermeter, std::string, bool> IsaIemDcrController
 		//Get status
 		std::string status = data.at("XC");
 		
-		return std::make_tuple(powermeter, status, transactionActive);
+		return std::make_tuple(powermeter, status, tmp_transaction_active);
 	} catch (json::exception& json_error) {
 		throw UnexpectedIemDcrResponseBody(
             endpoint, fmt::format("Json error {} for body {}", json_error.what(), response.body));
 	}
 }
 
-std::string IsaIemDcrController::get_publickey(bool allowCachedValue) {
-	if(allowCachedValue && cachedPublicKey.length() > 0) {
-		return cachedPublicKey;
+std::string IsaIemDcrController::get_publickey(bool allow_cached_value) {
+	if(allow_cached_value && cached_public_key.length() > 0) {
+		return cached_public_key;
 	} else {
 		const std::string endpoint = "/counter/v1/ocmf/publickey";
 		auto response = this->http_client->get(endpoint);
@@ -103,8 +103,8 @@ std::string IsaIemDcrController::get_publickey(bool allowCachedValue) {
 		}
 		try {
 			json data = json::parse(response.body);
-			cachedPublicKey = data.at("PK");
-			return cachedPublicKey;
+			cached_public_key = data.at("PK");
+			return cached_public_key;
 		} catch (json::exception& json_error) {
 			EVLOG_warning << "JSON error" << std::endl;
 			return "";
@@ -154,8 +154,8 @@ void IsaIemDcrController::post_user(const types::powermeter::OCMFUserIdentificat
     std::vector<std::string> vectIF;
     
     //Fill vectIF
-    for (const types::powermeter::OCMFIdentificationFlags& idFlag : IF) {
-        vectIF.push_back(helper_get_string_from_OCMFIdentificationFlags(idFlag));
+    for (const types::powermeter::OCMFIdentificationFlags& id_flag : IF) {
+        vectIF.push_back(helper_get_string_from_OCMFIdentificationFlags(id_flag));
     }
     
     if(strTT.length() > 0) {
@@ -164,7 +164,7 @@ void IsaIemDcrController::post_user(const types::powermeter::OCMFUserIdentificat
                                       {"IF", vectIF},
                                       {"IT", strIT},
                                       {"ID", strID},
-                                      {"US", snapshotConfig.US},
+                                      {"US", snapshot_config.US},
                                       {"TT", strTT}}
 									  .dump();
 	} else {
@@ -173,7 +173,7 @@ void IsaIemDcrController::post_user(const types::powermeter::OCMFUserIdentificat
                                       {"IF", vectIF},
                                       {"IT", strIT},
                                       {"ID", strID},
-                                      {"US", snapshotConfig.US}}
+                                      {"US", snapshot_config.US}}
 									  .dump();
 	}
     auto response = this->http_client->post(endpoint, payload);
@@ -206,10 +206,10 @@ bool IsaIemDcrController::helper_get_bool_from_OCMFUserIdentificationStatus(type
     return (IS == types::powermeter::OCMFUserIdentificationStatus::ASSIGNED);
 }
 
-std::string IsaIemDcrController::helper_get_string_from_OCMFIdentificationLevel(std::optional<types::powermeter::OCMFIdentificationLevel> optIL) {
+std::string IsaIemDcrController::helper_get_string_from_OCMFIdentificationLevel(std::optional<types::powermeter::OCMFIdentificationLevel> IL) {
     std::string result;
-    types::powermeter::OCMFIdentificationLevel IL = optIL.value_or(types::powermeter::OCMFIdentificationLevel::UNKNOWN);
-    switch(IL) {
+    types::powermeter::OCMFIdentificationLevel value_IL = IL.value_or(types::powermeter::OCMFIdentificationLevel::UNKNOWN);
+    switch(value_IL) {
 		case types::powermeter::OCMFIdentificationLevel::NONE:
 			result = "NONE";
 			break;
@@ -244,9 +244,9 @@ std::string IsaIemDcrController::helper_get_string_from_OCMFIdentificationLevel(
     return result;
 }
 
-std::string IsaIemDcrController::helper_get_string_from_OCMFIdentificationFlags(types::powermeter::OCMFIdentificationFlags idFlag) {
+std::string IsaIemDcrController::helper_get_string_from_OCMFIdentificationFlags(types::powermeter::OCMFIdentificationFlags id_flag) {
     std::string result;
-    switch(idFlag) {
+    switch(id_flag) {
 		case types::powermeter::OCMFIdentificationFlags::RFID_NONE:
 			result = "RFID_NONE";
 			break;
@@ -367,15 +367,15 @@ std::string IsaIemDcrController::helper_get_string_from_OCMFIdentificationType(t
 }
 
 std::chrono::minutes IsaIemDcrController::helper_convert_timezone(std::string timezone) {
-	const char signChar = timezone[0];
-	const int offsetHours = std::stoi(timezone.substr(1, 2));
-	const int offsetMinutes = std::stoi(timezone.substr(3, 2));
-    const std::chrono::minutes timeOffset = std::chrono::hours(offsetHours) + std::chrono::minutes(offsetMinutes);
-    if(signChar == '+') {
-		return timeOffset;
+	const char sign_char = timezone[0];
+	const int offset_hours = std::stoi(timezone.substr(1, 2));
+	const int offset_minutes = std::stoi(timezone.substr(3, 2));
+    const std::chrono::minutes time_offset = std::chrono::hours(offset_hours) + std::chrono::minutes(offset_minutes);
+    if(sign_char == '+') {
+		return time_offset;
 	}
 	else {
-		return -timeOffset;
+		return -time_offset;
 	}
 }
 
@@ -383,11 +383,11 @@ std::string IsaIemDcrController::helper_get_current_datetime() {
 	//Get UTC time
 	auto now = std::chrono::system_clock::now();
 	//Add configured timezone information
-    const std::time_t nowWithOffset = std::chrono::system_clock::to_time_t(now + zone_timeOffset);
+    const std::time_t now_with_offset = std::chrono::system_clock::to_time_t(now + zone_time_offset);
 	//Generate and return time in correct format
-	std::ostringstream ss;
-	ss << std::put_time(gmtime(&nowWithOffset), "%FT%T,000") << snapshotConfig.timezone;
-	return ss.str();
+	std::ostringstream oss;
+	oss << std::put_time(gmtime(&now_with_offset), "%FT%T,000") << snapshot_config.timezone;
+	return oss.str();
 }
 
 std::string IsaIemDcrController::helper_remove_first_and_last_char(const std::string& input) {
@@ -399,15 +399,15 @@ std::string IsaIemDcrController::helper_remove_first_and_last_char(const std::st
 
 types::units_signed::SignedMeterValue IsaIemDcrController::helper_get_signed_datatuple(const std::string& endpoint) {
 	auto response = this->http_client->get(endpoint);
-	types::units_signed::SignedMeterValue retVal;
+	types::units_signed::SignedMeterValue return_value;
 	if (response.status_code == 200) {
 		try {
-			retVal.signed_meter_data = response.body;
-			retVal.signing_method = "";
-			retVal.encoding_method = "OCMF";
-			retVal.public_key = get_publickey(true);
+			return_value.signed_meter_data = response.body;
+			return_value.signing_method = "";
+			return_value.encoding_method = "OCMF";
+			return_value.public_key = get_publickey(true);
 			
-			return retVal;
+			return return_value;
 		} catch (json::exception& json_error) {
 			throw UnexpectedIemDcrResponseBody(
             endpoint, fmt::format("Json error {} for body {}", json_error.what(), response.body));

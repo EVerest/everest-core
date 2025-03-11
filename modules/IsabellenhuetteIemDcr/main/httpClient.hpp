@@ -5,7 +5,7 @@
 #define EVEREST_CORE_MODULE_HTTPCLIENT_H
 
 #include "fmt/format.h"
-#include "http_client_interface.hpp"
+#include "httpClientInterface.hpp"
 #include <curl/curl.h>
 #include <everest/logging.hpp>
 #include <regex>

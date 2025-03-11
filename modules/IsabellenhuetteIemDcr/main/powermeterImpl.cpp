@@ -2,7 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "powermeterImpl.hpp"
-#include "http_client.hpp"
+#include "httpClient.hpp"
 #include <chrono>
 #include <string>
 #include <thread>
@@ -29,7 +29,7 @@ void powermeterImpl::init() {
             mod->config.CT, mod->config.CI, mod->config.TT_initial, mod->config.US});
             
     //Store datetime resync interval in a threadsafe manner
-    dateTimeResyncInterval.store(mod->config.datetime_resync_interval);
+    datetime_resync_interval.store(mod->config.datetime_resync_interval);
     
     //Check connection with polling REST node gw
     this->controller->call_with_retry([this]() { this->controller->get_gw(); }, 
@@ -39,11 +39,11 @@ void powermeterImpl::init() {
     //Send gw information
     try {
 		this->controller->post_gw();
-		lastDateTimeSync.store(std::chrono::steady_clock::now());
+		last_datetime_sync.store(std::chrono::steady_clock::now());
 	} catch (IsaIemDcrController::UnexpectedIemDcrResponseCode& error) {
 		EVLOG_warning << "Node /gw seems to be already set. If those values should be updated, please restart IEM-DCR and then also this system.";
 		//If gw is already set, not TM information is transfered here. So mark time as invalid for later update in ready function
-		lastDateTimeSync.store(std::chrono::steady_clock::now() - std::chrono::hours(48));
+		last_datetime_sync.store(std::chrono::steady_clock::now() - std::chrono::hours(48));
 	}
 	
 	//Send initial tariff information
@@ -68,25 +68,25 @@ void powermeterImpl::ready() {
 				this->publish_public_key_ocmf(this->controller->get_publickey(true));
 				
 				//Publish metervalue node (named powermeter in EVerest) and update status information
-				auto meterValueResponse = 		this->controller->get_metervalue();
-				types::powermeter::Powermeter 	tmpPowermeter;
-				std::string						tmpErrorState;
-				bool 							tmpTransactionActive;
-				std::tie(tmpPowermeter, tmpErrorState, tmpTransactionActive) = meterValueResponse;
-				this->publish_powermeter(tmpPowermeter);
-				errorState.store(tmpErrorState);
-				transactionActive.store(tmpTransactionActive);
+				auto meter_value_response       = this->controller->get_metervalue();
+				types::powermeter::Powermeter 	tmp_powermeter;
+				std::string						tmp_status;
+				bool 							tmp_transaction_active;
+				std::tie(tmp_powermeter, tmp_status, tmp_transaction_active) = meter_value_response;
+				this->publish_powermeter(tmp_powermeter);
+				dcr_status.store(tmp_status);
+				transaction_active.store(tmp_transaction_active);
 				
 				//Debug output :)
 				//EVLOG_info << this->controller->get_datetime();
 				
 				//Update datetime in specified interval
-				if(transactionActive.load() == false) {
+				if(transaction_active.load() == false) {
 					const auto now = std::chrono::steady_clock::now();
-					const auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - lastDateTimeSync.load());
-					if (elapsed.count() >= dateTimeResyncInterval.load()) {
+					const auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - last_datetime_sync.load());
+					if (elapsed.count() >= datetime_resync_interval.load()) {
 						this->controller->post_datetime();
-						lastDateTimeSync.store(now);
+						last_datetime_sync.store(now);
 						EVLOG_info << "DateTime resynchronized.";
 					}
 				}
@@ -116,28 +116,28 @@ void powermeterImpl::ready() {
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
     // your code for cmd start_transaction goes here
-    types::powermeter::TransactionStartResponse retVal;
+    types::powermeter::TransactionStartResponse return_value;
     
     EVLOG_info << "handle_start_transaction() called.";
     
     //Check preconditions
 	if(value.evse_id != mod->config.CI && value.evse_id.length() > 0) {
-		retVal.status = types::powermeter::TransactionRequestStatus::NOT_SUPPORTED;
-		retVal.error = "config: CI does not match evse_id. This is not allowed.";
-		EVLOG_error << "Aborted: " << *retVal.error;
-		return retVal;
+		return_value.status = types::powermeter::TransactionRequestStatus::NOT_SUPPORTED;
+		return_value.error = "config: CI does not match evse_id. This is not allowed.";
+		EVLOG_error << "Aborted: " << *return_value.error;
+		return return_value;
 	}
-	if(errorState.load() != "0x0000, 0x00000000, 0x00, 0x00") {
-		retVal.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
-		retVal.error = "IEM-DCR is in error state. XC: " + errorState.load();
-		EVLOG_error << "Aborted: " << *retVal.error;
-		return retVal;
+	if(dcr_status.load() != "0x0000, 0x00000000, 0x00, 0x00") {
+		return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
+		return_value.error = "IEM-DCR is in error state. XC: " + dcr_status.load();
+		EVLOG_error << "Aborted: " << *return_value.error;
+		return return_value;
 	}
     
     //Perform action
     try {
 		//Stop transaction (if a transaction is still running)
-		if(transactionActive) {
+		if(transaction_active) {
 			this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
 										mod->config.resilience_transaction_request_retries,
 										mod->config.resilience_transaction_request_retry_delay);
@@ -163,24 +163,24 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
 									mod->config.resilience_transaction_request_retries,
 									mod->config.resilience_transaction_request_retry_delay);
 		//Prepare positive response							
-		retVal.status = types::powermeter::TransactionRequestStatus::OK;
-		retVal.error = "";
+		return_value.status = types::powermeter::TransactionRequestStatus::OK;
+		return_value.error = "";
 	} catch (const std::exception& e) { 
-		retVal.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
-		retVal.error = e.what();
-		EVLOG_error << "Aborted: " << retVal.error.value_or("");
+		return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
+		return_value.error = e.what();
+		EVLOG_error << "Aborted: " << return_value.error.value_or("");
 	}     
     
-    return retVal;
+    return return_value;
 }
 
 types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     // your code for cmd stop_transaction goes here
-    types::powermeter::TransactionStopResponse retVal;
+    types::powermeter::TransactionStopResponse return_value;
     
     EVLOG_info << "handle_stop_transaction() called.";
     
-    if(transactionActive) {
+    if(transaction_active) {
 		try {
 			//Stop transaction
 			this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
@@ -189,31 +189,31 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
 			//Wait for signature calculation
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));	
 			//Read receipt
-			retVal.signed_meter_value = this->controller->call_with_retry([this]() { return this->controller->get_receipt(); },
-										mod->config.resilience_transaction_request_retries,
-										mod->config.resilience_transaction_request_retry_delay);
+			return_value.signed_meter_value = this->controller->call_with_retry([this]() { return this->controller->get_receipt(); },
+												mod->config.resilience_transaction_request_retries,
+												mod->config.resilience_transaction_request_retry_delay);
 			//Prepare positive response	
-			retVal.status = types::powermeter::TransactionRequestStatus::OK;
-			retVal.error = "";
+			return_value.status = types::powermeter::TransactionRequestStatus::OK;
+			return_value.error = "";
 		} catch (const std::exception& e) { 
-			retVal.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
-			retVal.error = e.what();
-			EVLOG_error << "Aborted: " << retVal.error.value_or("");
+			return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
+			return_value.error = e.what();
+			EVLOG_error << "Aborted: " << return_value.error.value_or("");
 		}     
 	} else {
 		//No transaction running. So return last transaction (if available)
 		try {
-			retVal.signed_meter_value = this->controller->get_transaction();
-			retVal.status = types::powermeter::TransactionRequestStatus::OK;
-			retVal.error = "";
+			return_value.signed_meter_value = this->controller->get_transaction();
+			return_value.status = types::powermeter::TransactionRequestStatus::OK;
+			return_value.error = "";
 		} catch (std::exception& e) {
-			retVal.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
-			retVal.error  = std::string(e.what()) + " Maybe no transaction to return?";
-			EVLOG_warning << "Aborted: " << retVal.error.value_or("");
+			return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
+			return_value.error  = std::string(e.what()) + " Maybe no transaction to return?";
+			EVLOG_warning << "Aborted: " << return_value.error.value_or("");
 		}
 	}
     
-    return retVal;
+    return return_value;
 }
 
 void powermeterImpl::check_config() {

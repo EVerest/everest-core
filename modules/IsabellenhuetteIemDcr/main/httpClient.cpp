@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include "http_client.hpp"
+#include "httpClient.hpp"
 #include <fmt/core.h>
 #include <stdexcept>
 
