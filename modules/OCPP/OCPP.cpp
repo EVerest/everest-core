@@ -800,7 +800,7 @@ void OCPP::ready() {
         });
 
     this->charge_point->register_security_event_callback([this](const std::string& type, const std::string& tech_info) {
-        EVLOG_info << "Security Event in OCPP occured: " << type;
+        EVLOG_info << "Security Event in OCPP occurred: " << type;
         types::ocpp::SecurityEvent event;
         event.type = type;
         event.info = tech_info;

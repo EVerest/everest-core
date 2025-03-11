@@ -1632,7 +1632,7 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
         if (rv == EINTR)
             rv = 0; /* restart */
         if (rv == ETIMEDOUT) {
-            dlog(DLOG_LEVEL_ERROR, "CertificateInstallationRes timeout occured");
+            dlog(DLOG_LEVEL_ERROR, "CertificateInstallationRes timeout occurred");
             conn->ctx->intl_emergency_shutdown = true; // [V2G2-918] Initiating emergency shutdown, response code faild
                                                        // will be set in iso_validate_response_code() function
         }

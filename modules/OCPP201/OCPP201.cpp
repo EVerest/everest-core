@@ -654,7 +654,7 @@ void OCPP201::ready() {
                                                const std::optional<ocpp::CiString<255>>& tech_info) {
         types::ocpp::SecurityEvent event;
         event.type = event_type.get();
-        EVLOG_info << "Security Event in OCPP occured: " << event.type;
+        EVLOG_info << "Security Event in OCPP occurred: " << event.type;
         if (tech_info.has_value()) {
             event.info = tech_info.value().get();
         }
