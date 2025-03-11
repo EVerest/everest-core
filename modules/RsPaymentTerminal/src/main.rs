@@ -32,9 +32,8 @@ include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 use anyhow::Result;
 use generated::types::{
     authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
-    bank_transaction::{BankSessionToken, BankTransactionSummary},
-    card_types::CardType,
     money::MoneyAmount,
+    payment_terminal::{BankSessionToken, BankTransactionSummary, CardType},
     session_cost::{SessionCost, SessionStatus},
 };
 use generated::{
