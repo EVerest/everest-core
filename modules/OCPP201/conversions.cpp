@@ -815,7 +815,7 @@ ocpp::v2::EnergyTransferModeEnum to_ocpp_energy_transfer_mode(const types::iso15
     case types::iso15118::EnergyTransferMode::DC_combo_core:
     case types::iso15118::EnergyTransferMode::DC_unique:
         return ocpp::v2::EnergyTransferModeEnum::DC;
-            
+
     case types::iso15118::EnergyTransferMode::AC_BPT:
     case types::iso15118::EnergyTransferMode::AC_BPT_DER:
     case types::iso15118::EnergyTransferMode::AC_DER:
