@@ -18,7 +18,6 @@
 IsabellenhuetteIemDcr
 *******************************************
 
-:ref:`Link <everest_modules_IsabellenhuetteIemDcr>` to the module's reference.
 Module implements Isabellenhuette IEM-DCR power meter driver, connecting via HTTP/REST.
 
 Implementation details
@@ -52,14 +51,16 @@ is in error state. Please refer to retrurned TransactionStartResponse.error for 
 transaction will engage POST /user and POST /receipt. Please note that IEM-DCR automatically handles signed data tuple pagination. So
 the only place for transaction id defined by the charging station is the OCMF ID attribute. It will be filled from this driver with  
 TransactionReq.identification_data. If this optional attribute is not given or empty, TransactionReq.transaction_id will be used
-instead.
+instead. Please note that a transaction cannot be started while the sensor unit detects a current above activation treshold.
+Please refer to operation manual for details.
 
 Stop transaction
 ------------
 If a transaction is in progress, it will be stopped and its signed data tuple returned. If no transaction is running, the last signed
 data tuple will be returned. Therefore input parameter transaction_id of this routine has no impact on its operation. Please note that
 TransactionRequestStatus::UNEXPECTED_ERROR may be returned, if no transaction is in progress and there has also been no transaction 
-before.
+before. Please also note that a transaction cannot be stopped while the sensor unit detects a current above activation treshold.
+Please refer to operation manual for details.
 
 References
 ============
