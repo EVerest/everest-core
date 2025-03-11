@@ -36,7 +36,7 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual types::bank_transaction::BankSessionToken handle_get_bank_session_token() override;
+    virtual types::payment_terminal::BankSessionToken handle_get_bank_session_token() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

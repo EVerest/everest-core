@@ -1,8 +1,0 @@
-description: Card Types
-types:
-  CardType:
-    description: types of cards for the payment terminal
-    type: string
-    enum: 
-        - BankCard
-        - RfidCard

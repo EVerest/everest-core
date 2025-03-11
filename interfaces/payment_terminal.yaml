@@ -9,7 +9,7 @@ cmds:
         type: array
         items:
             type: string
-            $ref: /card_types#/CardType
+            $ref: /payment_terminal#/CardType
       connector_id:
         description: Which connector
         type: integer
@@ -24,4 +24,4 @@ vars:
       Summary of a bank transaction. Depends on bank and the backend. Therefore
       it's mostly opaque data at the moment.
     type: object
-    $ref: /bank_transaction#/BankTransactionSummary
+    $ref: /payment_terminal#/BankTransactionSummary
