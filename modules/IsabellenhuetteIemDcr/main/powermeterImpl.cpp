@@ -137,7 +137,7 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
     //Perform action
     try {
 		//Stop transaction (if a transaction is still running)
-		if(transaction_active) {
+		if(transaction_active.load() == true) {
 			this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
 										mod->config.resilience_transaction_request_retries,
 										mod->config.resilience_transaction_request_retry_delay);
@@ -180,7 +180,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
     
     EVLOG_info << "handle_stop_transaction() called.";
     
-    if(transaction_active) {
+    if(transaction_active.load() == true) {
 		try {
 			//Stop transaction
 			this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
