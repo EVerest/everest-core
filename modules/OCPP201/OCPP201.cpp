@@ -870,8 +870,12 @@ void OCPP201::ready() {
             });
 
         extension->subscribe_charging_needs([this](const types::iso15118::ChargingNeeds& charging_needs) {
-            this->charge_point->on_ev_charging_needs(
-                conversions::to_ocpp_notify_ev_charging_needs_request(charging_needs));
+            try {
+                this->charge_point->on_ev_charging_needs(
+                    conversions::to_ocpp_notify_ev_charging_needs_request(charging_needs));
+            } catch (const std::out_of_range& e) {
+                EVLOG_warning << "Could not convert charging needs: " << e.what();
+            }
         });
 
         extensions_id++;
