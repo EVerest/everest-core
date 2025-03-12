@@ -6,7 +6,12 @@ active_modules:
     connections:
       security:
         - module_id: evse_security
-          implementation_id: main      
+          implementation_id: main
+    mapping:
+      implementations:
+        extensions:
+          evse: 1
+          connector: 1
   iso15118_car:
     module: PyEvJosev
     config_module:
