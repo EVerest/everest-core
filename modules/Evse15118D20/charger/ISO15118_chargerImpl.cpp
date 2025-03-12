@@ -247,12 +247,16 @@ void ISO15118_chargerImpl::ready() {
     const iso15118::TbdConfig tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
-            {},
-            path_chain,
-            certificate_info.key,
-            certificate_info.password,
-            mod->config.enable_ssl_logging,
-            mod->config.enable_tls_key_logging,
+            {},                                 ///< config_string
+            path_chain,                         ///< path_certificate_chain
+            certificate_info.key,               ///< path_certificate_key
+            certificate_info.password,          ///< private_key_password
+            {},                                 ///< path_certificate_v2g_root
+            {},                                 ///< path_certificate_mo_root
+            mod->config.enable_ssl_logging,     ///< enable_ssl_logging
+            mod->config.enable_tls_key_logging, ///< enable_tls_key_logging
+            false,                              ///< enforce_tls_1_3
+            {}                                  ///< tls_key_logging_path
         },
         mod->config.device,
         convert_tls_negotiation_strategy(mod->config.tls_negotiation_strategy),
@@ -298,7 +302,7 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 
             EnergyTransferMode requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
             if (service_category == dt::ServiceCategory::AC) {
-                if(ac_connector.has_value()) {
+                if (ac_connector.has_value()) {
                     if (ac_connector.value() == dt::AcConnector::SinglePhase) {
                         requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
                     } else if (ac_connector.value() == dt::AcConnector::ThreePhase) {
