@@ -68,7 +68,7 @@ active_modules:
     config_module:
       connector_id: 2
   slac:
-    module: JsSlacSimulator
+    module: SlacSimulator
   car_simulator_1:
     module: JsCarSimulator
     config_module:
