@@ -67,7 +67,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 6533694e8a25925985079bda33d5610f65c6d58f
+  git_tag: a26227aedea9c4cc61042c392f039a15097c2ca7
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:

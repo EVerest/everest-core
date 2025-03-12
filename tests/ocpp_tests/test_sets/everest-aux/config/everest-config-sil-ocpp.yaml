@@ -23,6 +23,9 @@ active_modules:
       powermeter_grid_side:
       - module_id: yeti_driver
         implementation_id: powermeter
+      connector_lock:
+      - module_id: yeti_driver
+        implementation_id: connector_lock
   yeti_driver:
     mapping:
       module:

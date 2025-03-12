@@ -850,6 +850,11 @@ class TestOcpp16CostAndPrice:
         # swipe id tag to finish transaction
         test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
 
+        # expect StopTransaction.req
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction",
+                                           call.StopTransactionPayload(0, "", 1, Reason.local),
+                                           validate_standard_stop_transaction)
+
         # expect StatusNotification with status finishing
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
                                            call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
@@ -860,13 +865,7 @@ class TestOcpp16CostAndPrice:
                                            call.MeterValuesPayload(1, meter_value=[{'sampledValue': [
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Energy.Active.Import.Register', 'unit': 'Wh',
-                                                'value': '1.00'}], 'timestamp': timestamp[:-9] + 'Z'}],
-                                                                   transaction_id=1))
-
-        # expect StopTransaction.req
-        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction",
-                                           call.StopTransactionPayload(0, "", 1, Reason.local),
-                                           validate_standard_stop_transaction)
+                                                'value': '1.00'}], 'timestamp': timestamp[:-9] + 'Z'}]))
 
         test_controller.plug_out()
 

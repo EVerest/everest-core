@@ -542,9 +542,12 @@ void OCPP::ready() {
     this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             EVLOG_info << "Executing unlock connector callback";
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_force_unlock(1);
+            // UnlockStatus::Failed is currently not supported by EVerest
+            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_force_unlock(1)
+                       ? ocpp::v16::UnlockStatus::Unlocked
+                       : ocpp::v16::UnlockStatus::NotSupported;
         } else {
-            return false;
+            return ocpp::v16::UnlockStatus::NotSupported;
         }
     });
 
