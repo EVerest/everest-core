@@ -287,10 +287,10 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
     };
 
     callbacks.notify_ev_charging_needs =
-        [this](const dt::ServiceCategory& service_category, const dt::AcConnector& ac_connector,
+        [this](const dt::ServiceCategory& service_category, const std::optional<dt::AcConnector>& ac_connector,
                const dt::ControlMode& control_mode, const dt::MobilityNeedsMode& mobility_needs_mode,
-               const feedback::EVSE_TransferLimits& evse_limits, const feedback::EV_TransferLimits& ev_limits,
-               const feedback::EV_SEControlMode& ev_control_mode) {
+               const feedback::EvseTransferLimits& evse_limits, const feedback::EvTransferLimits& ev_limits,
+               const feedback::EvSEControlMode& ev_control_mode) {
             // Everest types sent to OCPP
             using namespace types::iso15118;
 
@@ -298,10 +298,12 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 
             EnergyTransferMode requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
             if (service_category == dt::ServiceCategory::AC) {
-                if (ac_connector == dt::AcConnector::SinglePhase) {
-                    requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
-                } else if (ac_connector == dt::AcConnector::ThreePhase) {
-                    requested_energy_transfer = EnergyTransferMode::AC_three_phase_core;
+                if(ac_connector.has_value()) {
+                    if (ac_connector.value() == dt::AcConnector::SinglePhase) {
+                        requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
+                    } else if (ac_connector.value() == dt::AcConnector::ThreePhase) {
+                        requested_energy_transfer = EnergyTransferMode::AC_three_phase_core;
+                    }
                 }
             } else if (service_category == dt::ServiceCategory::AC_BPT) {
                 requested_energy_transfer = EnergyTransferMode::AC_BPT;
