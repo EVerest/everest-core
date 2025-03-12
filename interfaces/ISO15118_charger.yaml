@@ -344,4 +344,4 @@ vars:
     type: number
   meter_info_requested:
     description: The EV requested meter infos from the EVSE
-    type: "null"  
+    type: "null"

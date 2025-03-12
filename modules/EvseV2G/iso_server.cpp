@@ -285,7 +285,7 @@ static void publish_iso_charge_parameter_discovery_req(
     types::iso15118::ChargingNeeds charging_needs;
 
     // V2G values that can be published: DC_EVChargeParameter, MaxEntriesSAScheduleTuple
-    auto transfer_mode = static_cast<types::iso15118::EnergyTransferMode>(
+    const auto transfer_mode = static_cast<types::iso15118::EnergyTransferMode>(
         v2g_charge_parameter_discovery_req->RequestedEnergyTransferMode);
 
     charging_needs.requested_energy_transfer = transfer_mode;
@@ -303,36 +303,31 @@ static void publish_iso_charge_parameter_discovery_req(
         }
 
         // TODO(ioan): calc physical once
-        ctx->p_charger->publish_ac_eamount(
+        float ac_eamount =
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Multiplier));
-        ctx->p_charger->publish_ac_ev_max_voltage(
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Multiplier);
+        float ac_ev_max_voltage =
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Multiplier));
-        ctx->p_charger->publish_ac_ev_max_current(
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Multiplier);
+        float ac_ev_max_current =
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Multiplier));
-        ctx->p_charger->publish_ac_ev_min_current(
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Multiplier);
+        float ac_ev_min_current =
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Multiplier));
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Multiplier);
+
+        ctx->p_charger->publish_ac_eamount(ac_eamount);
+        ctx->p_charger->publish_ac_ev_max_voltage(ac_ev_max_voltage);
+        ctx->p_charger->publish_ac_ev_max_current(ac_ev_max_current);
+        ctx->p_charger->publish_ac_ev_min_current(ac_ev_min_current);
 
         auto& ac_charging_parameters = charging_needs.ac_charging_parameters.emplace();
 
         // We do not require to calc a min/max here
-        ac_charging_parameters.energy_amount =
-            calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Multiplier);
-
-        ac_charging_parameters.ev_max_voltage =
-            calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Multiplier);
-
-        ac_charging_parameters.ev_max_current =
-            calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Multiplier);
-        ac_charging_parameters.ev_min_current =
-            calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Multiplier);
+        ac_charging_parameters.energy_amount = ac_eamount;
+        ac_charging_parameters.ev_max_voltage = ac_ev_max_voltage;
+        ac_charging_parameters.ev_max_current = ac_ev_max_current;
+        ac_charging_parameters.ev_min_current = ac_ev_min_current;
 
     } else if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter_isUsed == (unsigned int)1) {
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DepartureTime_isUsed == (unsigned int)1) {
@@ -1397,9 +1392,6 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
                 // TODO: Signal closing contactor with MQTT if no timeout while waiting for state C or D
                 conn->ctx->p_charger->publish_ac_close_contactor(nullptr);
                 conn->ctx->session.is_charging = true;
-
-                // TODO(ioan): publish the ChargeNeedsType
-                // conn->ctx->p_charger->p_extensions->publish()
 
                 /* determine timeout for contactor */
                 clock_gettime(CLOCK_MONOTONIC, &ts_abs_timeout);
