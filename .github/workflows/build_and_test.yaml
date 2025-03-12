@@ -51,6 +51,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.BUILD_KIT_IMAGE_NAME }}
+          sep-tags: ","
       - name: Set output tag
         id: buildkit_tag
         shell: python3 {0}
