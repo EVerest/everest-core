@@ -1,9 +1,9 @@
 .. _everest_modules_handwritten_OCPP201:
 
-OCPP2 Module
+OCPP 2.1 and 2.0.1 Module
 ================
 
-This module implements and integrates OCPP 2.0.1 and OCPP2.1 within EVerest. A connection to a Charging Station Management System (CSMS) can be
+This module implements and integrates OCPP 2.0.1 and OCPP 2.1 within EVerest. A connection to a Charging Station Management System (CSMS) can be
 established by loading this module as part of the EVerest configuration. This module leverages `libocpp <https://github.com/EVerest/libocpp>`_,
 EVerest's OCPP library.
 
@@ -42,7 +42,7 @@ To add a custom component, you can simply add another JSON configuration file fo
 Configuring the OCPP2 version
 -----------------------------
 
-This module supports OCPP2.0.1 and OCPP2.1. The charging station and the CSMS agree on the protocol version to used during the websocket
+This module supports OCPP2.0.1 and OCPP2.1. The charging station and the CSMS agree on the protocol version to be used during the websocket
 handshake. The charging station indicates which versions it supports in the Sec-WebSocket-Protocol header. This header is set based on 
 the device model configuration **SupportedOcppVersions** of the **InternalCtrlr**. The CSMS then selects the version to use and reports
 it in the handshake response. Note that **SupportedOcppVersions** is a comma seperated list and allows you to specify the versions
