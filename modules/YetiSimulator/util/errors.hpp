@@ -3,36 +3,37 @@
 
 #pragma once
 
-#include "generated/interfaces/ac_rcd/Implementation.hpp"
-#include "generated/interfaces/connector_lock/Implementation.hpp"
-#include "generated/interfaces/evse_board_support/Implementation.hpp"
+#include <optional>
+#include <tuple>
 
-namespace module {
+#include <utils/error.hpp>
+#include <utils/error/error_factory.hpp>
+
+enum class ErrorTarget {
+    BoardSupport,
+    ConnectorLock,
+    Rcd,
+};
 
 struct ErrorDefinition {
     const char* type;
     const char* sub_type{""};
     const char* message{""};
     Everest::error::Severity severity{Everest::error::Severity::High};
-    enum class ErrorDestination : uint8_t {
-        board_support,
-        rcd,
-        connector_lock,
-    } error_destination;
+    ErrorTarget error_target;
 };
 
 Everest::error::Error create_error(const Everest::error::ErrorFactory& error_factory, const ErrorDefinition& def);
 
-class ErrorHandler {
-public:
-    ErrorHandler(evse_board_supportImplBase* p_board_support, ac_rcdImplBase* p_rcd,
-                 connector_lockImplBase* p_connector_lock);
+std::tuple<bool, std::optional<ErrorDefinition>> parse_error_type(const std::string& payload);
 
-private:
-    evse_board_supportImplBase* p_board_support;
-    ac_rcdImplBase* p_rcd;
-    connector_lockImplBase* p_connector_lock;
-};
+template <typename T> void forward_error(T& target, const Everest::error::Error& error, bool raise) {
+    if (raise) {
+        target->raise_error(error);
+    } else {
+        target->clear_error(error.type);
+    }
+}
 
 namespace error_definitions {
 inline const auto connector_lock_ConnectorLockUnexpectedClose =
@@ -109,6 +110,8 @@ inline const auto ac_rcd_AC = ErrorDefinition{"ac_rcd/AC", "", "Simulated fault 
 
 inline const auto ac_rcd_DC = ErrorDefinition{"ac_rcd/DC", "", "Simulated fault event"};
 
+inline const auto ac_rcd_MREC2GroundFailure = ErrorDefinition{"ac_rcd/MREC2GroundFailure", "", "Simulated fault event"};
+
 inline const auto connector_lock_ConnectorLockCapNotCharged =
     ErrorDefinition{"connector_lock/ConnectorLockCapNotCharged", "", "Simulated fault event"};
 
@@ -128,5 +131,3 @@ inline const auto connector_lock_VendorError =
     ErrorDefinition{"connector_lock/VendorError", "", "Simulated fault event"};
 
 } // namespace error_definitions
-
-} // namespace module

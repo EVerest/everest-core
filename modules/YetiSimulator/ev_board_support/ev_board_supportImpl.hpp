@@ -23,7 +23,7 @@ class ev_board_supportImpl : public ev_board_supportImplBase {
 public:
     ev_board_supportImpl() = delete;
     ev_board_supportImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiSimulator>& mod, Conf& config) :
-        ev_board_supportImplBase(ev, "ev_board_support"), mod(mod), config(config) {};
+        ev_board_supportImplBase(ev, "ev_board_support"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

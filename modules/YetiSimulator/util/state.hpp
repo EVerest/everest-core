@@ -211,7 +211,6 @@ struct ModuleState {
     bool has_ventilation = false;
 
     bool rcd_error = false;
-    bool rcd_error_reported = false;
 
     bool simulation_enabled = false;
     double pwm_duty_cycle = 0;

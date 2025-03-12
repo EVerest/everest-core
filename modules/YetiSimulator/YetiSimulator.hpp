@@ -17,9 +17,7 @@
 #include <generated/interfaces/powermeter/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
-// insert your custom include headers here
-#include "util/error_handler.hpp"
-#include "util/mqtt_handler.hpp"
+#include "util/errors.hpp"
 #include "util/state.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -93,15 +91,12 @@ private:
     void publish_telemetry();
     void publish_keepalive();
     void drawPower(int l1, int l2, int l3, int n) const;
-    static void clear_disconnect_errors(ErrorHandler& error_handler, const evse_board_supportImplBase& board_support);
     void powerOn();
     void powerOff();
     void reset_powermeter() const;
     [[nodiscard]] types::board_support_common::ProximityPilot read_pp_ampacity() const;
 
     void publish_event(state::State event);
-
-    std::unique_ptr<MqttHandler> mqtt_handler;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
