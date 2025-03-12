@@ -15,46 +15,41 @@ types::powermeter::Powermeter power_meter_external(const state::PowermeterData& 
     const auto& [time_stamp, totalWattHr, wattL1, vrmsL1, irmsL1, wattHrL1, tempL1, freqL1, wattL2, vrmsL2, irmsL2,
                  wattHrL2, tempL2, freqL2, wattL3, vrmsL3, irmsL3, wattHrL3, tempL3, freqL3, irmsN] = powermeter_data;
 
-    const std::vector<types::temperature::Temperature> temperatures = {{powermeter_data.tempL1, std::nullopt, "Body"}};
+    const std::vector<types::temperature::Temperature> temperatures = {
+        {static_cast<float>(powermeter_data.tempL1), std::nullopt, "Body"}};
 
-    // TODO(SL): Change back to C++17
-    return {.timestamp = current_iso_time_string,
-            .energy_Wh_import =
-                {
-                    .total = static_cast<float>(totalWattHr),
-                    .L1 = static_cast<float>(wattHrL1),
-                    .L2 = static_cast<float>(wattHrL2),
-                    .L3 = static_cast<float>(wattHrL3),
-                },
-            .meter_id = "YETI_POWERMETER",
-            .phase_seq_error = false,
-            .power_W =
-                types::units::Power{
-                    .total = static_cast<float>(wattL1 + wattL2 + wattL3),
-                    .L1 = static_cast<float>(wattL1),
-                    .L2 = static_cast<float>(wattL2),
-                    .L3 = static_cast<float>(wattL3),
-                },
-            .voltage_V =
-                types::units::Voltage{
-                    .L1 = vrmsL1,
-                    .L2 = vrmsL2,
-                    .L3 = vrmsL3,
-                },
-            .current_A =
-                types::units::Current{
-                    .L1 = irmsL1,
-                    .L2 = irmsL2,
-                    .L3 = irmsL3,
-                    .N = irmsN,
-                },
-            .frequency_Hz =
-                types::units::Frequency{
-                    .L1 = static_cast<float>(freqL1),
-                    .L2 = static_cast<float>(freqL2),
-                    .L3 = static_cast<float>(freqL3),
-                },
-            .temperatures = temperatures};
+    return {/*.timestamp = */ current_iso_time_string,
+            /*.energy_Wh_import = */
+            {
+                static_cast<float>(totalWattHr),
+                static_cast<float>(wattHrL1),
+                static_cast<float>(wattHrL2),
+                static_cast<float>(wattHrL3),
+            },
+            /*.meter_id= */ "YETI_POWERMETER",
+            /*.phase_seq_error = */ false,
+            /*.energy_Wh_export=*/{},
+            /*.power_W = */
+            types::units::Power{
+                static_cast<float>(wattL1 + wattL2 + wattL3),
+                static_cast<float>(wattL1),
+                static_cast<float>(wattL2),
+                static_cast<float>(wattL3),
+            },
+            /*.voltage_V = */ types::units::Voltage{vrmsL1, vrmsL2, vrmsL3},
+            /*.VAR = */ {},
+            /*.current_A = */ types::units::Current{irmsL1, irmsL2, irmsL3, irmsN},
+            /*.frequency_Hz= */
+            types::units::Frequency{static_cast<float>(freqL1), static_cast<float>(freqL2), static_cast<float>(freqL3)},
+            /*.energy_Wh_import_signed = */ {},
+            /*.energy_Wh_export_signed = */ {},
+            /*.power_W_signed = */ {},
+            /*.voltage_V_signed = */ {},
+            /*.VAR_signed = */ {},
+            /*.current_A_signed = */ {},
+            /*.frequency_Hz_signed = */ {},
+            /*.signed_meter_value = */ {},
+            /*.temperatures = */ temperatures};
 }
 
 double duty_cycle_to_amps(const double dc) {
@@ -619,12 +614,12 @@ void YetiSimulator::publish_powermeter() {
 }
 
 void YetiSimulator::publish_telemetry() {
-    // TODO(sl): Change back to C++17
-    p_board_support->publish_telemetry({.evse_temperature_C = static_cast<float>(module_state->powermeter_data.tempL1),
-                                        .fan_rpm = 1500.,
-                                        .supply_voltage_12V = 12.01,
-                                        .supply_voltage_minus_12V = -11.8,
-                                        .relais_on = module_state->relais_on});
+    p_board_support->publish_telemetry(
+        {/*.evse_temperature_C = */ static_cast<float>(module_state->powermeter_data.tempL1),
+         /*.fan_rpm = */ 1500.,
+         /*.supply_voltage_12V = */ 12.01,
+         /*.supply_voltage_minus_12V = */ -11.8,
+         /*.relais_on = */ module_state->relais_on});
 }
 
 void YetiSimulator::publish_keepalive() {
