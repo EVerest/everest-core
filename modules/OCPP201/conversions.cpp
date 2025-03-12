@@ -831,11 +831,9 @@ ocpp::v2::EnergyTransferModeEnum to_ocpp_energy_transfer_mode(const types::iso15
 
 ocpp::v2::NotifyEVChargingNeedsRequest
 to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs) {
+    // The evseId is calculated outside of this function in the required OCPP201 module
     ocpp::v2::NotifyEVChargingNeedsRequest _request;
     ocpp::v2::ChargingNeeds& _charging_needs = _request.chargingNeeds;
-
-    // TODO(ioan): missing 'evseId'?
-    _request.evseId = 1;
 
     _charging_needs.requestedEnergyTransfer = to_ocpp_energy_transfer_mode(charging_needs.requested_energy_transfer);
 

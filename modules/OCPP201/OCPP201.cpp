@@ -869,12 +869,21 @@ void OCPP201::ready() {
                 this->r_extensions_15118.at(extensions_id)->call_set_get_certificate_response(everest_response);
             });
 
-        extension->subscribe_charging_needs([this](const types::iso15118::ChargingNeeds& charging_needs) {
-            try {
-                this->charge_point->on_ev_charging_needs(
-                    conversions::to_ocpp_notify_ev_charging_needs_request(charging_needs));
-            } catch (const std::out_of_range& e) {
-                EVLOG_warning << "Could not convert charging needs: " << e.what();
+        extension->subscribe_charging_needs([this,
+                                             extensions_id](const types::iso15118::ChargingNeeds& charging_needs) {
+            const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
+            if (mapping.has_value()) {
+                try {
+                    auto charge_needs = conversions::to_ocpp_notify_ev_charging_needs_request(charging_needs);
+                    charge_needs.evseId = mapping.value().evse;
+
+                    this->charge_point->on_ev_charging_needs(charge_needs);
+                } catch (const std::out_of_range& e) {
+                    EVLOG_warning << "Could not convert iso15118 ChargingNeeds to OCPP NotifyEVChargingNeedsRequest: "
+                                  << e.what();
+                }
+            } else {
+                EVLOG_warning << "ISO15118 Extension interface mapping not set! Not sending 'ChargingNeeds'!";
             }
         });
 
