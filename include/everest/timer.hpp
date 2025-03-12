@@ -126,13 +126,13 @@ public:
                     return;
                 }
 
-                this->timer->expires_from_now(this->interval_nanoseconds);
+                this->timer->expires_after(this->interval_nanoseconds);
                 this->timer->async_wait(this->callback_wrapper);
 
                 this->callback();
             };
 
-            this->timer->expires_from_now(this->interval_nanoseconds);
+            this->timer->expires_after(this->interval_nanoseconds);
             this->timer->async_wait(this->callback_wrapper);
         }
     }
@@ -157,7 +157,7 @@ public:
 
         if (this->timer != nullptr) {
             // use asio timer
-            this->timer->expires_from_now(interval);
+            this->timer->expires_after(interval);
             this->timer->async_wait([this](const boost::system::error_code& e) {
                 if (e) {
                     return;

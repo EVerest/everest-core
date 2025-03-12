@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 project(everest-timer
-    VERSION 0.1
+    VERSION 0.1.2
     DESCRIPTION "EVerest timer library"
     LANGUAGES CXX C
 )
