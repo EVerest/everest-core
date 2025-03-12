@@ -85,9 +85,13 @@ void powermeterImpl::ready() {
 					const auto now = std::chrono::steady_clock::now();
 					const auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - last_datetime_sync.load());
 					if (elapsed.count() >= datetime_resync_interval.load()) {
-						this->controller->post_datetime();
-						last_datetime_sync.store(now);
-						EVLOG_info << "DateTime resynchronized.";
+						try {
+							this->controller->post_datetime();
+							last_datetime_sync.store(now);
+							EVLOG_info << "DateTime resynchronized.";
+						} catch(...) {
+							//On error: just retry in the next second
+						}
 					}
 				}
 				

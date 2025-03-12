@@ -188,8 +188,14 @@ types::units_signed::SignedMeterValue IsaIemDcrController::get_receipt() {
 }
 
 types::units_signed::SignedMeterValue IsaIemDcrController::get_transaction() {
-	const std::string endpoint = "/counter/v1/ocmf/transaction";
-	return helper_get_signed_datatuple(endpoint);
+	try {
+		const std::string endpoint = "/counter/v1/ocmf/transaction";
+		return helper_get_signed_datatuple(endpoint);
+	} catch (UnexpectedIemDcrResponseCode& resp_error) {
+		//Retry with newer api endpoint
+		const std::string endpoint_v2 = "/counter/v2/ocmf/transaction";
+		return helper_get_signed_datatuple(endpoint_v2);
+	}
 }
 
 void IsaIemDcrController::post_receipt(const std::string& TX) {
