@@ -149,7 +149,7 @@ private:
     std::string cached_public_key = "";
     std::chrono::minutes zone_time_offset;
 
-    std::chrono::minutes helper_convert_timezone(std::string timezone);
+    std::chrono::minutes helper_convert_timezone(std::string& timezone);
     std::string helper_get_current_datetime();
     std::string helper_remove_first_and_last_char(const std::string& input);
     bool helper_get_bool_from_OCMFUserIdentificationStatus(types::powermeter::OCMFUserIdentificationStatus IS);

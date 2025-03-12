@@ -367,7 +367,7 @@ IsaIemDcrController::helper_get_string_from_OCMFIdentificationType(types::powerm
     return result;
 }
 
-std::chrono::minutes IsaIemDcrController::helper_convert_timezone(std::string timezone) {
+std::chrono::minutes IsaIemDcrController::helper_convert_timezone(std::string& timezone) {
     const char sign_char = timezone[0];
     const int offset_hours = std::stoi(timezone.substr(1, 2));
     const int offset_minutes = std::stoi(timezone.substr(3, 2));
