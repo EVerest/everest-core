@@ -23,7 +23,7 @@ parameter **DeviceModelConfigPath**. It shall point to the directory where the c
 * standardized
 * custom
 
-The `device model setup from libocpp <https://github.com/EVerest/libocpp/tree/main/config/v201/component_config>`_ serves as a good example. 
+The `device model setup from libocpp <https://github.com/EVerest/libocpp/tree/main/config/v2/component_config>`_ serves as a good example. 
 The split between the directories only has semantic reasons. The **standardized** directory usually does not need to be modified since it contains
 standardized components and variables that the specification refers to in its functional requirements. The **custom** directory is meant to be used
 for components that are custom for your specific charging station. Especially the number of EVSE and Connector components, as well as their
@@ -113,8 +113,6 @@ This module makes use of the following commands of this interface:
   **PublishChargingScheduleDurationS** of this module. The configuration parameter **PublishChargingScheduleIntervalS** defines the interval to use to 
   periodically retrieve and publish the composite schedules. The configuration parameter **RequestCompositeScheduleUnit** can be used to specify the unit in
   which composite schedules are requested and shared within EVerest.
-* **set_get_certificate_response** to report that the charging station received a **Get15118EVCertificate.conf** from the CSMS (EV Contract installation
-for Plug&Charge)
 
 The interface is used to receive the following variables:
 
@@ -124,7 +122,6 @@ The interface is used to receive the following variables:
 * **limits** to obtain the current offered to the EV. If present, this is reported as part of a **MeterValues.req**
 * **session_event** to trigger **StatusNotification.req** and **TransactionEvent.req** based on the reported event. This signal drives the state machine and
   the transaction handling of libocpp.
-* **iso15118_certificate_request** to trigger a **DataTransfer.req(Get15118EVCertificateRequest)** as part of the Plug&Charge process
 * **waiting_for_external_ready** to obtain the information that a module implementing this interface is waiting for an external ready signal
 * **ready** to obtain a ready signal from a module implementing this interface
 
@@ -246,6 +243,23 @@ This module makes use of the following commands of this interface:
   (including cost and tariff data) message to the charging station.
 * **get_display_messages** to forward a **GetDisplayMessage.req** from the CSMS
 * **clear_display_message** to forward a **ClearDisplayMessage.req** from the CSMS
+
+Requires: extensions_15118
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Interface**: `iso15118_extensions <../../interfaces/iso15118_extensions.yaml>`_
+
+This module optionally requires (0-128) implementations of this interface in order to share data between ISO15118 and OCPP modules. One  
+connection represents one ISO15118 module. 
+
+This module makes use of the following commands of this interface:
+
+* **set_get_certificate_response** to report that the charging station received a **DataTransfer.conf(Get15118EVCertificateResponse)** from  
+  the CSMS (EV Contract installation for Plug&Charge)
+
+The interface is used to receive the following variables:
+
+* **iso15118_certificate_request** to trigger a **DataTransfer.req(Get15118EVCertificateRequest)** as part of the Plug&Charge process
 
 Error Handling
 --------------

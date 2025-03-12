@@ -95,6 +95,7 @@ private:
         ChargingPausedEV,
         ChargingPausedEVSE,
         Charging,
+        AuthTimeout,
         Finished
     } state;
 

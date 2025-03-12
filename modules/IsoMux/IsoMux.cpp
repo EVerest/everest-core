@@ -48,6 +48,7 @@ void IsoMux::init() {
     v2g_ctx->tls_server = &tls_server;
 
     invoke_init(*p_charger);
+    invoke_init(*p_extensions);
 }
 
 void IsoMux::ready() {
@@ -76,6 +77,7 @@ void IsoMux::ready() {
     }
 
     invoke_ready(*p_charger);
+    invoke_ready(*p_extensions);
 
     rv = sdp_listen(v2g_ctx);
 

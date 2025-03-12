@@ -24,6 +24,7 @@
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
+#include <generated/interfaces/iso15118_extensions/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
 #include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
@@ -43,7 +44,7 @@
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 using EvseConnectorMap = std::map<int32_t, std::map<int32_t, int32_t>>;
 using ClearedErrorId = std::string;
@@ -80,7 +81,8 @@ public:
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
          std::unique_ptr<systemIntf> r_system, std::unique_ptr<evse_securityIntf> r_security,
          std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer,
-         std::vector<std::unique_ptr<display_messageIntf>> r_display_message, Conf& config) :
+         std::vector<std::unique_ptr<display_messageIntf>> r_display_message,
+         std::vector<std::unique_ptr<iso15118_extensionsIntf>> r_extensions_15118, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -97,8 +99,8 @@ public:
         r_security(std::move(r_security)),
         r_data_transfer(std::move(r_data_transfer)),
         r_display_message(std::move(r_display_message)),
-        config(config) {
-    }
+        r_extensions_15118(std::move(r_extensions_15118)),
+        config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
@@ -115,6 +117,7 @@ public:
     const std::unique_ptr<evse_securityIntf> r_security;
     const std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer;
     const std::vector<std::unique_ptr<display_messageIntf>> r_display_message;
+    const std::vector<std::unique_ptr<iso15118_extensionsIntf>> r_extensions_15118;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

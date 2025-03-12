@@ -17,7 +17,7 @@ on:
 jobs:
   ci:
     name: Build, Lint and Test
-    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.4.4
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.4.6
     permissions:
       contents: read
     secrets:
@@ -61,6 +61,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.BUILD_KIT_IMAGE_NAME }}
+          sep-tags: ","
       - name: Set output tag
         id: buildkit_tag
         shell: python3 {0}

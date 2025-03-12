@@ -46,9 +46,9 @@ active_modules:
     config_module:
       connector_id: 1
   slac:
-    module: JsSlacSimulator
+    module: SlacSimulator
   car_simulator_1:
-    module: JsEvManager
+    module: EvManager
     config_module:
       connector_id: 1
       auto_enable: true
@@ -105,6 +105,9 @@ active_modules:
       security:
         - module_id: evse_security
           implementation_id: main
+      extensions_15118:
+        - module_id: iso15118_charger
+          implementation_id: extensions
   evse_security:
     module: EvseSecurity
     config_module:

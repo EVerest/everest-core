@@ -80,8 +80,7 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/emergency_stop", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(
-                                    types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
@@ -91,7 +90,7 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_malfunction", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_Malfunction);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Other;
@@ -101,8 +100,7 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_utility_int", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(
-                                    types::iso15118_charger::EvseError::Error_UtilityInterruptEvent);
+                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_UtilityInterruptEvent);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Other;
@@ -292,11 +290,6 @@ void evse_managerImpl::ready() {
             session_finished.meter_value = mod->get_latest_powermeter_data_billing();
             se.session_finished = session_finished;
             session_log.evse(false, fmt::format("Session Finished"));
-            // Cancel reservation, reservation might be stored when swiping rfid, but timed out, so we should not
-            // set the reservation id here.
-            if (mod->is_reserved()) {
-                mod->cancel_reservation(true);
-            }
             session_log.stopSession();
             mod->telemetry.publish("session", "events",
                                    {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
@@ -330,6 +323,11 @@ void evse_managerImpl::ready() {
 
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             this->mod->selected_protocol = "Unknown";
+        }
+
+        // Cancel reservations if charger is disabled
+        if (mod->is_reserved() and e == types::evse_manager::SessionEventEnum::Disabled) {
+            mod->cancel_reservation(true);
         }
 
         publish_selected_protocol(this->mod->selected_protocol);
@@ -421,6 +419,11 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
 };
 
 void evse_managerImpl::handle_withdraw_authorization() {
+    // reservation_id might have been stored when reserved id token has been authorized, but timed out, so
+    //  we can consider the reservation as consumed
+    if (mod->charger->get_authorized_eim() and mod->is_reserved()) {
+        mod->cancel_reservation(true);
+    }
     this->mod->charger->deauthorize();
 };
 
@@ -448,11 +451,6 @@ bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransact
     return mod->charger->cancel_transaction(request);
 };
 
-void evse_managerImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {
-    mod->r_hlc[0]->call_certificate_response(certificate_reponse);
-}
-
 bool evse_managerImpl::handle_external_ready_to_start_charging() {
     if (mod->config.external_ready_to_start_charging) {
         EVLOG_info << "Received external ready to start charging command.";
@@ -468,8 +466,14 @@ bool evse_managerImpl::handle_external_ready_to_start_charging() {
 }
 
 bool evse_managerImpl::handle_force_unlock(int& connector_id) {
-    mod->bsp->connector_force_unlock();
-    return true;
+    if (not mod->r_connector_lock.empty()) {
+        types::evse_manager::StopTransactionRequest request;
+        request.reason = types::evse_manager::StopTransactionReason::UnlockCommand;
+        mod->charger->cancel_transaction(request);
+        mod->bsp->connector_force_unlock();
+        return true;
+    }
+    return false;
 };
 
 } // namespace evse

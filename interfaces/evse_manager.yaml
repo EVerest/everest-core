@@ -100,18 +100,11 @@ cmds:
         description: Specifies the ID of the connector that should be unlocked
         type: integer
     result:
-      description: Returns true if unlocking sequence was successfully executed
+      description: >-
+        Returns true if unlocking command was accepted, or false if it is not supported.
+        It does not reflect the success/failure of the actual unlocking.
+        If unlocking fails, the connector_lock interface shall raise an error asynchronously.
       type: boolean
-  set_get_certificate_response:
-    description: >-
-      CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
-      and the corresponding encrypted private key. Should be forwared to EVCC.
-      This is an async response to a previously published iso15118_certificate_request
-    arguments:
-      certificate_response:
-        description: The response raw exi stream and the status from the CSMS system
-        type: object
-        $ref: /iso15118_charger#/ResponseExiStreamStatus
   external_ready_to_start_charging:
     description: >-
       There are situations where another module needs to do some initialization after evse manager is in principle ready to start charging.
@@ -154,13 +147,6 @@ vars:
     description: "Hardware capability/limits"
     type: object
     $ref: /evse_board_support#/HardwareCapabilities
-  iso15118_certificate_request:
-    description: >-
-      The vehicle requests the SECC to deliver the certificate that belong
-      to the currently valid contract of the vehicle.
-      Response will be reported async via set_get_certificate_response
-    type: object
-    $ref: /iso15118_charger#/RequestExiStreamSchema
   enforced_limits:
     description: Enforced limits for this node (coming from the EnergyManager)
     type: object

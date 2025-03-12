@@ -303,15 +303,18 @@ void OCPP::init_evse_subscriptions() {
 
             this->process_session_event(evse_id, session_event);
         });
+        evse_id++;
+    }
 
-        evse->subscribe_iso15118_certificate_request(
-            [this, evse_id](types::iso15118_charger::RequestExiStreamSchema request) {
+    int32_t extensions_id = 1;
+    for (auto& extension : this->r_extensions_15118) {
+        extension->subscribe_iso15118_certificate_request(
+            [this, extensions_id](types::iso15118::RequestExiStreamSchema request) {
                 this->charge_point->data_transfer_pnc_get_15118_ev_certificate(
-                    evse_id, request.exi_request, request.iso15118_schema_version,
+                    extensions_id, request.exi_request, request.iso15118_schema_version,
                     conversions::to_ocpp_certificate_action_enum(request.certificate_action));
             });
-
-        evse_id++;
+        extensions_id++;
     }
 }
 
@@ -539,9 +542,12 @@ void OCPP::ready() {
     this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             EVLOG_info << "Executing unlock connector callback";
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_force_unlock(1);
+            // UnlockStatus::Failed is currently not supported by EVerest
+            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_force_unlock(1)
+                       ? ocpp::v16::UnlockStatus::Unlocked
+                       : ocpp::v16::UnlockStatus::NotSupported;
         } else {
-            return false;
+            return ocpp::v16::UnlockStatus::NotSupported;
         }
     });
 
@@ -780,18 +786,17 @@ void OCPP::ready() {
         [this](bool is_connected) { this->p_ocpp_generic->publish_is_connected(is_connected); });
 
     this->charge_point->register_get_15118_ev_certificate_response_callback(
-        [this](const int32_t connector_id, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
-               const ocpp::v201::CertificateActionEnum& certificate_action) {
-            types::iso15118_charger::ResponseExiStreamStatus response;
-            response.status = conversions::to_everest_iso15118_charger_status(certificate_response.status);
+        [this](const int32_t connector_id, const ocpp::v2::Get15118EVCertificateResponse& certificate_response,
+               const ocpp::v2::CertificateActionEnum& certificate_action) {
+            types::iso15118::ResponseExiStreamStatus response;
+            response.status = conversions::to_everest_iso15118_status(certificate_response.status);
             response.certificate_action = conversions::to_everest_certificate_action_enum(certificate_action);
             if (not certificate_response.exiResponse.get().empty()) {
                 // since exi_response is an optional in the EVerest type we only set it when not empty
                 response.exi_response.emplace(certificate_response.exiResponse.get());
             }
 
-            this->r_evse_manager.at(this->connector_evse_index_map.at(connector_id))
-                ->call_set_get_certificate_response(response);
+            this->r_extensions_15118.at(connector_id - 1)->call_set_get_certificate_response(response);
         });
 
     this->charge_point->register_security_event_callback([this](const std::string& type, const std::string& tech_info) {

@@ -8,6 +8,7 @@ filegroup(
 cmake(
     name = "libpugixml",
     cache_entries = {
+        "CMAKE_INSTALL_LIBDIR": "lib",
     },
     lib_source = "@pugixml//:all_srcs",
     visibility = ["//visibility:public"],

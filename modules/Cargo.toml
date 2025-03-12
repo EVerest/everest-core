@@ -9,5 +9,5 @@ members = [
 ]
 
 [workspace.dependencies]
-everestrs = { git = "https://github.com/everest/everest-framework.git", tag = "v0.19.1" }
-everestrs-build = { git = "https://github.com/everest/everest-framework.git", tag = "v0.19.1" }
+everestrs = { git = "https://github.com/everest/everest-framework.git", tag = "v0.20.2" }
+everestrs-build = { git = "https://github.com/everest/everest-framework.git", tag = "v0.20.2" }

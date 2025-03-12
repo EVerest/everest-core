@@ -155,8 +155,7 @@ class TestIso15118CertificateManagementOcppIntegration:
         "skip_implementation",
         [
             {
-                "ProbeModuleConnectorA": ["set_get_certificate_response"],
-                "ProbeModuleConnectorB": ["set_get_certificate_response"],
+                "ProbeModuleIso15118Extensions": ["set_get_certificate_response"],
             }
         ],
     )
@@ -194,17 +193,15 @@ class TestIso15118CertificateManagementOcppIntegration:
         Tests Error handling of M01 and M02
         Tested requirements: M01.FR.01, MR02.FR.01
         """
-        connectors = ["ProbeModuleConnectorA", "ProbeModuleConnectorB"]
 
         mock_cmd_set_get_certificate_response = {}
-        for connector_id in connectors:
-            mock_cmd_set_get_certificate_response[connector_id] = Mock()
-            mock_cmd_set_get_certificate_response[connector_id].return_value = None
-            probe_module.implement_command(
-                connector_id,
-                "set_get_certificate_response",
-                mock_cmd_set_get_certificate_response[connector_id],
-            )
+        mock_cmd_set_get_certificate_response["ProbeModuleIso15118Extensions"] = Mock()
+        mock_cmd_set_get_certificate_response["ProbeModuleIso15118Extensions"].return_value = None
+        probe_module.implement_command(
+            "ProbeModuleIso15118Extensions",
+            "set_get_certificate_response",
+            mock_cmd_set_get_certificate_response["ProbeModuleIso15118Extensions"],
+        )
 
         # start and ready probe module EvseManagers and wait for libocpp to connect
         probe_module.start()
@@ -213,74 +210,69 @@ class TestIso15118CertificateManagementOcppIntegration:
         probe_module.publish_variable("ProbeModuleConnectorB", "ready", True)
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
-        # Each connector sends an installation request
-        for connector_index, calling_connector_id in enumerate(connectors):
 
-            # Setup ChargePoint response
+        # Setup ChargePoint response
 
-            exi_response = f"mock exi response for {calling_connector_id}"
+        exi_response = f"mock exi response for ProbeModuleIso15118Extensions"
 
-            central_system.mock.on_get_15118_ev_certificate.side_effect = [
-                call_result201.Get15118EVCertificatePayload(
-                    status=response_status, exi_response=exi_response
-                )
-            ]
+        central_system.mock.on_get_15118_ev_certificate.side_effect = [
+            call_result201.Get15118EVCertificatePayload(
+                status=response_status, exi_response=exi_response
+            )
+        ]
 
-            # Act: Publish Install Certificate requeset
-            mock_certificate_installation_req = base64.b64encode(
-                f"{calling_connector_id} mock Raw CertificateInstallationReq or CertificateUpdateReq message as exi stream".encode(
-                    "utf-8"
-                )
-            ).decode("utf-8")
+        # Act: Publish Install Certificate requeset
+        mock_certificate_installation_req = base64.b64encode(
+            f"ProbeModuleIso15118Extensions mock Raw CertificateInstallationReq or CertificateUpdateReq message as exi stream".encode(
+                "utf-8"
+            )
+        ).decode("utf-8")
 
-            mock_iso15118_schema_version = f"{calling_connector_id} mock Schema Version"
+        mock_iso15118_schema_version = f"ProbeModuleIso15118Extensions mock Schema Version"
 
-            probe_module.publish_variable(
-                calling_connector_id,
-                "iso15118_certificate_request",
+        probe_module.publish_variable(
+            "ProbeModuleIso15118Extensions",
+            "iso15118_certificate_request",
+            {
+                "exi_request": mock_certificate_installation_req,
+                "iso15118_schema_version": mock_iso15118_schema_version,
+                "certificate_action": action,
+            },
+        )
+
+        # Verify: CSMS is called correctly
+        expected_cp_request = call201.Get15118EVCertificatePayload(
+            iso15118_schema_version=mock_iso15118_schema_version,
+            exi_request=mock_certificate_installation_req,
+            action=action,
+        )
+
+        assert await wait_for_and_validate(
+            test_utility,
+            chargepoint_with_pm,
+            exp_action="Get15118EVCertificate",
+            exp_payload=expected_cp_request,
+        )
+
+        # Verify: Certificate response forwarded to correct EVSE manager as commmand
+        called_mock = mock_cmd_set_get_certificate_response["ProbeModuleIso15118Extensions"]
+
+        await asyncio.wait_for(await_mock_called(called_mock), 3)
+
+        assert called_mock.mock_calls == [
+            mock_call(
                 {
-                    "exi_request": mock_certificate_installation_req,
-                    "iso15118_schema_version": mock_iso15118_schema_version,
-                    "certificate_action": action,
-                },
-            )
-
-            # Verify: CSMS is called correctly
-            expected_cp_request = call201.Get15118EVCertificatePayload(
-                iso15118_schema_version=mock_iso15118_schema_version,
-                exi_request=mock_certificate_installation_req,
-                action=action,
-            )
-
-            assert await wait_for_and_validate(
-                test_utility,
-                chargepoint_with_pm,
-                exp_action="Get15118EVCertificate",
-                exp_payload=expected_cp_request,
-            )
-
-            # Verify: Certificate response forwarded to correct EVSE manager as commmand
-            called_mock = mock_cmd_set_get_certificate_response[calling_connector_id]
-            other_connector_id = connectors[(connector_index + 1) % len(connectors)]
-            uncalled_mock = mock_cmd_set_get_certificate_response[other_connector_id]
-
-            await asyncio.wait_for(await_mock_called(called_mock), 3)
-
-            assert called_mock.mock_calls == [
-                mock_call(
-                    {
-                        "certificate_response": {
-                            "certificate_action": action,
-                            "exi_response": exi_response,
-                            "status": response_status,
-                        }
+                    "certificate_response": {
+                        "certificate_action": action,
+                        "exi_response": exi_response,
+                        "status": response_status,
                     }
-                )
-            ]
-            assert uncalled_mock.mock_calls == []
+                }
+            )
+        ]
 
-            for mock in mock_cmd_set_get_certificate_response.values():
-                mock.reset_mock()
+        for mock in mock_cmd_set_get_certificate_response.values():
+            mock.reset_mock()
 
     # ************************************************************************************************
     # Use Case M3:  Install CA certificate in a Charging Station

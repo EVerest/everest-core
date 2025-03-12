@@ -6,10 +6,13 @@
 #include <cstddef>
 #include <cstring>
 #include <openssl/bio.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl_util.hpp>
 #include <vector>
+
+#include <evse_security/crypto/openssl/openssl_provider.hpp>
 
 bool operator==(const ::openssl::certificate_ptr& lhs, const ::openssl::certificate_ptr& rhs) {
     using ::openssl::certificate_to_pem;
@@ -313,6 +316,35 @@ TEST(openssl, signVerify) {
     // std::cout << "signature size: " << sig_der_len << std::endl;
     EXPECT_TRUE(openssl::verify(pkey.get(), sig_der.data(), sig_der_len, digest.data(), digest.size()));
 }
+
+#ifdef USING_TPM2
+TEST(opensslTpm, signVerify) {
+    auto pkey = openssl::load_private_key("tpm_pki/server_priv.pem", nullptr);
+    ASSERT_TRUE(pkey);
+
+    // looks like sign/verify may not be supported
+    // TODO(james-ctc) investigation needed
+    // perhaps the public key needs to be extracted
+
+#if 0
+    if (EVP_PKEY_can_sign(pkey.get()) == 1) {
+        std::array<std::uint8_t, 256> sig_der{};
+        std::size_t sig_der_len{sig_der.size()};
+        openssl::sha_256_digest_t digest;
+        evse_security::OpenSSLProvider provider;
+        provider.set_global_mode(evse_security::OpenSSLProvider::mode_t::custom_provider);
+        EXPECT_TRUE(openssl::sha_256(&sign_test[0], openssl::sha_256_digest_size, digest));
+
+        EXPECT_TRUE(openssl::sign(pkey.get(), sig_der.data(), sig_der_len, digest.data(), digest.size()));
+        // std::cout << "signature size: " << sig_der_len << std::endl;
+
+        EXPECT_TRUE(openssl::verify(pkey.get(), sig_der.data(), sig_der_len, digest.data(), digest.size()));
+    } else {
+        std::cout << "sign/verify not supported" << std::endl;
+    }
+#endif
+}
+#endif
 
 TEST(openssl, signVerifyBn) {
     auto pkey = openssl::load_private_key("server_priv.pem", nullptr);

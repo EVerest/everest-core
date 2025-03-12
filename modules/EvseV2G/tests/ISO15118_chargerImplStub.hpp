@@ -23,21 +23,17 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
     virtual void ready() {
     }
 
-    virtual void
-    handle_setup(types::iso15118_charger::EVSEID& evse_id,
-                 std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
-                 types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    virtual void handle_setup(types::iso15118::EVSEID& evse_id,
+                              std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
+                              types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
         std::cout << "ISO15118_chargerImplBase::handle_setup called" << std::endl;
     }
-    virtual void handle_set_charging_parameters(types::iso15118_charger::SetupPhysicalValues& physical_values) {
+    virtual void handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
         std::cout << "ISO15118_chargerImplBase::handle_set_charging_parameters called" << std::endl;
     }
-    virtual void handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
+    virtual void handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
                                       bool& supported_certificate_service) {
         std::cout << "ISO15118_chargerImplBase::handle_session_setup called" << std::endl;
-    }
-    virtual void handle_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
-        std::cout << "ISO15118_chargerImplBase::handle_certificate_response called" << std::endl;
     }
     virtual void handle_authorization_response(types::authorization::AuthorizationStatus& authorization_status,
                                                types::authorization::CertificateStatus& certificate_status) {
@@ -61,23 +57,23 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
     virtual void handle_update_ac_max_current(double& max_current) {
         std::cout << "ISO15118_chargerImplBase::handle_update_ac_max_current called" << std::endl;
     }
-    virtual void handle_update_dc_maximum_limits(types::iso15118_charger::DcEvseMaximumLimits& maximum_limits) {
+    virtual void handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
         std::cout << "ISO15118_chargerImplBase::handle_update_dc_maximum_limits called" << std::endl;
     }
-    virtual void handle_update_dc_minimum_limits(types::iso15118_charger::DcEvseMinimumLimits& minimum_limits) {
+    virtual void handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) {
         std::cout << "ISO15118_chargerImplBase::handle_update_dc_minimum_limits called" << std::endl;
     }
-    virtual void handle_update_isolation_status(types::iso15118_charger::IsolationStatus& isolation_status) {
+    virtual void handle_update_isolation_status(types::iso15118::IsolationStatus& isolation_status) {
         std::cout << "ISO15118_chargerImplBase::handle_update_isolation_status called" << std::endl;
     }
     virtual void
-    handle_update_dc_present_values(types::iso15118_charger::DcEvsePresentVoltageCurrent& present_voltage_current) {
+    handle_update_dc_present_values(types::iso15118::DcEvsePresentVoltageCurrent& present_voltage_current) {
         std::cout << "ISO15118_chargerImplBase::handle_update_dc_present_values called" << std::endl;
     }
     virtual void handle_update_meter_info(types::powermeter::Powermeter& powermeter) {
         std::cout << "ISO15118_chargerImplBase::handle_update_meter_info called" << std::endl;
     }
-    virtual void handle_send_error(types::iso15118_charger::EvseError& error) {
+    virtual void handle_send_error(types::iso15118::EvseError& error) {
         std::cout << "ISO15118_chargerImplBase::handle_send_error called" << std::endl;
     }
     virtual void handle_reset_error() {

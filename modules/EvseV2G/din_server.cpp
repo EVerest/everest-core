@@ -133,8 +133,8 @@ static void publish_DIN_DcEvStatus(struct v2g_context* ctx, const struct din_DC_
         ctx->ev_v2g_data.din_dc_ev_status.EVReady = din_ev_status.EVReady;
         ctx->ev_v2g_data.din_dc_ev_status.EVRESSSOC = din_ev_status.EVRESSSOC;
 
-        types::iso15118_charger::DcEvStatus ev_status;
-        ev_status.dc_ev_error_code = static_cast<types::iso15118_charger::DcEvErrorCode>(din_ev_status.EVErrorCode);
+        types::iso15118::DcEvStatus ev_status;
+        ev_status.dc_ev_error_code = static_cast<types::iso15118::DcEvErrorCode>(din_ev_status.EVErrorCode);
         ev_status.dc_ev_ready = din_ev_status.EVReady;
         ev_status.dc_ev_ress_soc = static_cast<float>(din_ev_status.EVRESSSOC);
         ctx->p_charger->publish_dc_ev_status(ev_status);
@@ -176,7 +176,7 @@ static void publish_din_charge_parameter_discovery_req(
     struct v2g_context* ctx,
     struct din_ChargeParameterDiscoveryReqType const* const v2g_charge_parameter_discovery_req) {
     // V2G values that can be published: DC_EVChargeParameter, MaxEntriesSAScheduleTuple
-    ctx->p_charger->publish_requested_energy_transfer_mode(static_cast<types::iso15118_charger::EnergyTransferMode>(
+    ctx->p_charger->publish_requested_energy_transfer_mode(static_cast<types::iso15118::EnergyTransferMode>(
         v2g_charge_parameter_discovery_req->EVRequestedEnergyTransferType));
     if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter_isUsed == (unsigned int)1) {
 

@@ -287,7 +287,7 @@ void Charger::run_state_machine() {
             // If we have zero power, some cars will not like the ChargingParameter message.
             if (config_context.charge_mode == ChargeMode::DC) {
                 // Create a copy of the atomic struct
-                types::iso15118_charger::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
+                types::iso15118::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
                 if (not(evse_limit.evse_maximum_current_limit > 0 and evse_limit.evse_maximum_power_limit > 0)) {
                     if (not internal_context.no_energy_warning_printed) {
                         EVLOG_warning << "No energy available, still retrying...";
@@ -1326,7 +1326,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
                     float _soft_over_current_tolerance_percent, float _soft_over_current_measurement_noise_A,
                     const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
                     const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms,
-                    const bool fail_on_powermeter_errors) {
+                    const bool fail_on_powermeter_errors, const bool raise_mrec9) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1347,6 +1347,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
 
     config_context.state_F_after_fault_ms = _state_F_after_fault_ms;
     config_context.fail_on_powermeter_errors = fail_on_powermeter_errors;
+    config_context.raise_mrec9 = raise_mrec9;
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";
@@ -1430,6 +1431,9 @@ bool Charger::deauthorize_internal() {
             // We can safely remove auth as it is not in use right now
             if (not shared_context.authorized) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::PluginTimeout);
+                if (config_context.raise_mrec9) {
+                    error_handling->raise_authorization_timeout_error("No authorization was provided within timeout.");
+                }
                 return false;
             }
             shared_context.authorized = false;
@@ -1735,14 +1739,13 @@ void Charger::notify_currentdemand_started() {
     }
 }
 
-void Charger::inform_new_evse_max_hlc_limits(
-    const types::iso15118_charger::DcEvseMaximumLimits& _currentEvseMaxLimits) {
+void Charger::inform_new_evse_max_hlc_limits(const types::iso15118::DcEvseMaximumLimits& _currentEvseMaxLimits) {
     Everest::scoped_lock_timeout lock(state_machine_mutex,
                                       Everest::MutexDescription::Charger_inform_new_evse_max_hlc_limits);
     shared_context.current_evse_max_limits = _currentEvseMaxLimits;
 }
 
-types::iso15118_charger::DcEvseMaximumLimits Charger::get_evse_max_hlc_limits() {
+types::iso15118::DcEvseMaximumLimits Charger::get_evse_max_hlc_limits() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_evse_max_hlc_limits);
     return shared_context.current_evse_max_limits;
 }
@@ -1936,6 +1939,7 @@ void Charger::clear_errors_on_unplug() {
     error_handling->clear_overcurrent_error();
     error_handling->clear_internal_error();
     error_handling->clear_powermeter_transaction_start_failed_error();
+    error_handling->clear_authorization_timeout_error();
 }
 
 types::evse_manager::EnableDisableSource Charger::get_last_enable_disable_source() {

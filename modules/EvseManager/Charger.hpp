@@ -106,7 +106,7 @@ public:
                bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
                const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms,
-               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors);
+               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, const bool raise_mrec9);
 
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
@@ -182,8 +182,8 @@ public:
     EvseState get_current_state();
     sigslot::signal<EvseState> signal_state;
 
-    void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DcEvseMaximumLimits& l);
-    types::iso15118_charger::DcEvseMaximumLimits get_evse_max_hlc_limits();
+    void inform_new_evse_max_hlc_limits(const types::iso15118::DcEvseMaximumLimits& l);
+    types::iso15118::DcEvseMaximumLimits get_evse_max_hlc_limits();
 
     void dlink_pause();
     void dlink_error();
@@ -277,7 +277,7 @@ private:
         bool iec_allow_close_contactor{false};
         bool hlc_charging_active{false};
         HlcTerminatePause hlc_charging_terminate_pause;
-        types::iso15118_charger::DcEvseMaximumLimits current_evse_max_limits;
+        types::iso15118::DcEvseMaximumLimits current_evse_max_limits;
         bool pwm_running{false};
         std::optional<types::authorization::ProvidedIdToken>
             stop_transaction_id_token; // only set in case transaction was stopped locally
@@ -329,6 +329,8 @@ private:
         int state_F_after_fault_ms{300};
         // Fail on powermeter errors
         bool fail_on_powermeter_errors;
+        // Raise MREC9 authorization timeout error
+        bool raise_mrec9;
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking

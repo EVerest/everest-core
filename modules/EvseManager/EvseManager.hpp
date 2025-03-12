@@ -23,6 +23,7 @@
 #include <generated/interfaces/evse_board_support/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
+#include <generated/interfaces/over_voltage_monitor/Interface.hpp>
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/interfaces/slac/Interface.hpp>
@@ -103,6 +104,7 @@ struct Conf {
     bool lock_connector_in_state_b;
     int state_F_after_fault_ms;
     bool fail_on_powermeter_errors;
+    bool raise_mrec9;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -118,6 +120,7 @@ public:
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side,
                 std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
                 std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd,
+                std::vector<std::unique_ptr<over_voltage_monitorIntf>> r_over_voltage_monitor,
                 std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC,
                 std::vector<std::unique_ptr<kvsIntf>> r_store, Conf& config) :
         ModuleBase(info),
@@ -135,6 +138,7 @@ public:
         r_slac(std::move(r_slac)),
         r_hlc(std::move(r_hlc)),
         r_imd(std::move(r_imd)),
+        r_over_voltage_monitor(std::move(r_over_voltage_monitor)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
         config(config){};
@@ -153,6 +157,7 @@ public:
     const std::vector<std::unique_ptr<slacIntf>> r_slac;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;
+    const std::vector<std::unique_ptr<over_voltage_monitorIntf>> r_over_voltage_monitor;
     const std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC;
     const std::vector<std::unique_ptr<kvsIntf>> r_store;
     const Conf& config;
@@ -229,13 +234,13 @@ public:
         powersupply_capabilities = caps;
 
         // Inform HLC layer about update of physical values
-        types::iso15118_charger::SetupPhysicalValues setup_physical_values;
+        types::iso15118::SetupPhysicalValues setup_physical_values;
         setup_physical_values.dc_current_regulation_tolerance = powersupply_capabilities.current_regulation_tolerance_A;
         setup_physical_values.dc_peak_current_ripple = powersupply_capabilities.peak_current_ripple_A;
         setup_physical_values.dc_energy_to_be_delivered = 10000;
         r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-        types::iso15118_charger::DcEvseMinimumLimits evse_min_limits;
+        types::iso15118::DcEvseMinimumLimits evse_min_limits;
         evse_min_limits.evse_minimum_current_limit = powersupply_capabilities.min_export_current_A;
         evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_export_voltage_V;
         evse_min_limits.evse_minimum_power_limit =
@@ -249,7 +254,7 @@ public:
         // limits are not yet included in request.
 
         // Inform charger about new max limits
-        types::iso15118_charger::DcEvseMaximumLimits evse_max_limits;
+        types::iso15118::DcEvseMaximumLimits evse_max_limits;
         evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
         evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
         evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_export_voltage_V;
@@ -303,7 +308,7 @@ private:
 
     types::authorization::ProvidedIdToken autocharge_token;
 
-    void log_v2g_message(types::iso15118_charger::V2gMessages v2g_messages);
+    void log_v2g_message(types::iso15118::V2gMessages v2g_messages);
 
     // Reservations
     bool reserved;
@@ -328,6 +333,8 @@ private:
     bool wait_powersupply_DC_below_voltage(double target_voltage);
 
     bool cable_check_should_exit();
+
+    double get_over_voltage_threshold();
 
     // EV information
     Everest::timed_mutex_traceable ev_info_mutex;
