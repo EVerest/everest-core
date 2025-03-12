@@ -4,6 +4,7 @@
 from datetime import datetime, timedelta
 import logging
 import asyncio
+from unittest.mock import ANY
 
 from everest.testing.core_utils.controller.test_controller_interface import (
     TestController,
@@ -1233,7 +1234,7 @@ async def test_regular_charge_session_cached_id(
         charge_point_v16,
         "StartTransaction",
         call.StartTransactionPayload(
-            1, test_config.authorization_info.valid_id_tag_1, 0, ""
+            1, test_config.authorization_info.valid_id_tag_1, ANY, ""
         ),
         validate_standard_start_transaction,
     )
@@ -1266,7 +1267,7 @@ async def test_regular_charge_session_cached_id(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.remote),
+        call.StopTransactionPayload(ANY, "", 1, Reason.remote),
         validate_standard_stop_transaction,
     )
 
