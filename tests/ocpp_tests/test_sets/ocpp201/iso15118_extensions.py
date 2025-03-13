@@ -21,10 +21,6 @@ from everest.testing.ocpp_utils.fixtures import *
 
 log = logging.getLogger("iso15118ExtensionsTest")
 
-async def await_mock_called(mock):
-    while not mock.call_count:
-        await asyncio.sleep(0.1)
-
 def validate_notify_ev_charging_needs(meta_data, msg, exp_payload):
     return True
 
