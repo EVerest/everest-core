@@ -100,7 +100,10 @@ cmds:
         description: Specifies the ID of the connector that should be unlocked
         type: integer
     result:
-      description: Returns true if unlocking sequence was successfully executed
+      description: >-
+        Returns true if unlocking command was accepted, or false if it is not supported.
+        It does not reflect the success/failure of the actual unlocking.
+        If unlocking fails, the connector_lock interface shall raise an error asynchronously.
       type: boolean
   external_ready_to_start_charging:
     description: >-
