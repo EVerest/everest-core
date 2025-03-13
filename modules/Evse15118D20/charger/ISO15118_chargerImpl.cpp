@@ -191,13 +191,11 @@ types::iso15118::EnergyTransferMode get_energy_transfer_mode(const dt::ServiceCa
 
     EnergyTransferMode requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
 
-    if (service_category == dt::ServiceCategory::AC) {
-        if (ac_connector.has_value()) {
-            if (ac_connector.value() == dt::AcConnector::SinglePhase) {
-                requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
-            } else if (ac_connector.value() == dt::AcConnector::ThreePhase) {
-                requested_energy_transfer = EnergyTransferMode::AC_three_phase_core;
-            }
+    if (service_category == dt::ServiceCategory::AC && ac_connector.has_value()) {
+        if (ac_connector.value() == dt::AcConnector::SinglePhase) {
+            requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
+        } else if (ac_connector.value() == dt::AcConnector::ThreePhase) {
+            requested_energy_transfer = EnergyTransferMode::AC_three_phase_core;
         }
     } else if (service_category == dt::ServiceCategory::AC_BPT) {
         requested_energy_transfer = EnergyTransferMode::AC_BPT;
@@ -336,7 +334,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             } else if (control_mode == dt::ControlMode::Dynamic) {
                 charging_needs.control_mode = ControlMode::DynamicControl;
             } else {
-                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for control mode!"));
+                EVLOG_error << "Invalid value received for control mode! Not sending 'ChargingNeeds'.";
+                return;
             }
 
             if (mobility_needs_mode == dt::MobilityNeedsMode::ProvidedByEvcc) {
@@ -344,7 +343,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             } else if (mobility_needs_mode == dt::MobilityNeedsMode::ProvidedBySecc) {
                 charging_needs.mobility_needs_mode = MobilityNeedsMode::EVCC_SECC;
             } else {
-                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for mobility needs mode!"));
+                EVLOG_error << "Invalid value received for mobility needs mode! Not sending 'ChargingNeeds'.";
+                return;
             }
 
             // For dash20 the data we will publish will be the v2xChargingParameters
@@ -358,7 +358,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                     fill_v2x_charging_parameters(v2x_charging_parameters, *dc_evse_limits, *dc_ev_limits);
                 }
             } else {
-                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid type received for EVSE limits!"));
+                EVLOG_error << "Invalid type received for EVSE limits! Not sending 'ChargingNeeds'.";
+                return;
             }
 
             if (const auto* ev_se_control_mode = std::get_if<dt::Scheduled_SEReqControlMode>(&ev_control_mode)) {
@@ -366,7 +367,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             } else if (const auto* ev_se_control_mode = std::get_if<dt::Dynamic_SEReqControlMode>(&ev_control_mode)) {
                 fill_v2x_charging_parameters(v2x_charging_parameters, *ev_se_control_mode);
             } else {
-                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid type received for EV Control Mode!"));
+                EVLOG_error << "Invalid type received for EV Control Mode! Not sending 'ChargingNeeds'.";
+                return;
             }
 
             // Publish charging needs through the extensions

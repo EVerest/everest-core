@@ -22,6 +22,6 @@ vars:
     description: >-
       The ISO15118-20 bidirectional charging is required to send this message for OCPP 2.1
       during the 'ScheduleExchangeReq' state machine. For ISO15118-2 and OCPP 2.1 this message
-      has to be sent during the 'iso_charge_parameter_discovery_req' state machine
+      has to be sent during the 'ChargeParameterDiscoveryReq' state machine
     type: object
     $ref: /iso15118#/ChargingNeeds
