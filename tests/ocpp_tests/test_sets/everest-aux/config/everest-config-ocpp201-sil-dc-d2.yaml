@@ -15,7 +15,7 @@ active_modules:
     module: PyEvJosev
     config_module:
       device: auto
-      supported_DIN70121: true
+      supported_DIN70121: false
       supported_ISO15118_2: true
   evse_manager:
     module: EvseManager
