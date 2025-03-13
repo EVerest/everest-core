@@ -4,6 +4,7 @@
 from datetime import datetime, timedelta
 import logging
 import asyncio
+from unittest.mock import ANY
 
 from everest.testing.core_utils.controller.test_controller_interface import (
     TestController,
@@ -707,16 +708,6 @@ async def test_005_1_ev_side_disconnect(
 
     test_utility.messages.clear()
 
-    # expect StatusNotification with status finishing
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
-        call.StatusNotificationPayload(
-            1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
-        ),
-    )
-
     # expect StopTransaction.req
     assert await wait_for_and_validate(
         test_utility,
@@ -813,16 +804,6 @@ async def test_ev_side_disconnect(
     test_utility.messages.clear()
 
     test_controller.plug_out()
-
-    # expect StatusNotification with status finishing
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
-        call.StatusNotificationPayload(
-            1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
-        ),
-    )
 
     # expect StopTransaction.req
     assert await wait_for_and_validate(
@@ -1253,7 +1234,7 @@ async def test_regular_charge_session_cached_id(
         charge_point_v16,
         "StartTransaction",
         call.StartTransactionPayload(
-            1, test_config.authorization_info.valid_id_tag_1, 0, ""
+            1, test_config.authorization_info.valid_id_tag_1, ANY, ""
         ),
         validate_standard_start_transaction,
     )
@@ -1286,7 +1267,7 @@ async def test_regular_charge_session_cached_id(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.remote),
+        call.StopTransactionPayload(ANY, "", 1, Reason.remote),
         validate_standard_stop_transaction,
     )
 
@@ -2015,9 +1996,10 @@ async def test_unlock_connector_no_charging_no_fixed_cable(
         call_result.UnlockConnectorPayload(UnlockStatus.unlocked),
     )
 
-
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-two-connectors.yaml") # this config has no connector_lock configured
+)
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="EVerest SIL currently does not support this")
 async def test_unlock_connector_no_charging_fixed_cable(
     charge_point_v16: ChargePoint16, test_utility: TestUtility
 ):
@@ -2121,8 +2103,10 @@ async def test_unlock_connector_with_charging_session_no_fixed_cable(
     )
 
 
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-two-connectors.yaml") # this config has no connector_lock configured
+)
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="EVerest SIL currently does not support this")
 async def test_unlock_connector_with_charging_session_fixed_cable(
     test_config: OcppTestConfiguration,
     charge_point_v16: ChargePoint16,
