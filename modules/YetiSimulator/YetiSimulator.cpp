@@ -18,38 +18,36 @@ types::powermeter::Powermeter power_meter_external(const state::PowermeterData& 
     const std::vector<types::temperature::Temperature> temperatures = {
         {static_cast<float>(powermeter_data.tempL1), std::nullopt, "Body"}};
 
-    return {/*.timestamp = */ current_iso_time_string,
-            /*.energy_Wh_import = */
+    return {current_iso_time_string, // timestamp
             {
                 static_cast<float>(totalWattHr),
                 static_cast<float>(wattHrL1),
                 static_cast<float>(wattHrL2),
                 static_cast<float>(wattHrL3),
-            },
-            /*.meter_id= */ "YETI_POWERMETER",
-            /*.phase_seq_error = */ false,
-            /*.energy_Wh_export=*/{},
-            /*.power_W = */
+            },                 // energy_Wh_import
+            "YETI_POWERMETER", // meter_id
+            false,             // phase_seq_error
+            {},                // energy_Wh_export
             types::units::Power{
                 static_cast<float>(wattL1 + wattL2 + wattL3),
                 static_cast<float>(wattL1),
                 static_cast<float>(wattL2),
                 static_cast<float>(wattL3),
-            },
-            /*.voltage_V = */ types::units::Voltage{vrmsL1, vrmsL2, vrmsL3},
-            /*.VAR = */ {},
-            /*.current_A = */ types::units::Current{irmsL1, irmsL2, irmsL3, irmsN},
-            /*.frequency_Hz= */
-            types::units::Frequency{static_cast<float>(freqL1), static_cast<float>(freqL2), static_cast<float>(freqL3)},
-            /*.energy_Wh_import_signed = */ {},
-            /*.energy_Wh_export_signed = */ {},
-            /*.power_W_signed = */ {},
-            /*.voltage_V_signed = */ {},
-            /*.VAR_signed = */ {},
-            /*.current_A_signed = */ {},
-            /*.frequency_Hz_signed = */ {},
-            /*.signed_meter_value = */ {},
-            /*.temperatures = */ temperatures};
+            },                                                    // power_W
+            types::units::Voltage{vrmsL1, vrmsL2, vrmsL3},        // voltage_V
+            {},                                                   // VAR
+            types::units::Current{irmsL1, irmsL2, irmsL3, irmsN}, // current_A
+            types::units::Frequency{static_cast<float>(freqL1), static_cast<float>(freqL2),
+                                    static_cast<float>(freqL3)}, // frequency_Hz
+            {},                                                  // energy_Wh_import_signed
+            {},                                                  // energy_Wh_export_signed
+            {},                                                  // power_W_signed
+            {},                                                  // voltage_V_signed
+            {},                                                  // VAR_signed
+            {},                                                  // current_A_signed
+            {},                                                  // frequency_Hz_signed
+            {},                                                  // signed_meter_value
+            temperatures};                                       // temperatures
 }
 
 double duty_cycle_to_amps(const double dc) {
@@ -121,7 +119,7 @@ types::board_support_common::BspEvent event_to_enum(state::State event) {
         return {Event::PowerOff};
     default:
         EVLOG_error << "Invalid event : " << event_to_string(event);
-        return {Event::Disconnected}; // TODO: correct default value
+        return {Event::F};
     }
 }
 
@@ -201,8 +199,8 @@ void YetiSimulator::run_telemetry_fast() const {
     const auto current_iso_time_string = util::get_current_iso_time_string();
     auto& p_p_c = module_state->telemetry_data.power_path_controller;
     p_p_c.timestamp = current_iso_time_string;
-    p_p_c.cp_voltage_high = module_state->pwm_voltage_hi; // TODO: check if this is the correct value
-    p_p_c.cp_voltage_low = module_state->pwm_voltage_lo;  // TODO: same here
+    p_p_c.cp_voltage_high = module_state->pwm_voltage_hi;
+    p_p_c.cp_voltage_low = module_state->pwm_voltage_lo;
     p_p_c.cp_pwm_duty_cycle = module_state->pwm_duty_cycle * 100.0;
     p_p_c.cp_state = state_to_string(*module_state);
 
@@ -614,12 +612,11 @@ void YetiSimulator::publish_powermeter() {
 }
 
 void YetiSimulator::publish_telemetry() {
-    p_board_support->publish_telemetry(
-        {/*.evse_temperature_C = */ static_cast<float>(module_state->powermeter_data.tempL1),
-         /*.fan_rpm = */ 1500.,
-         /*.supply_voltage_12V = */ 12.01,
-         /*.supply_voltage_minus_12V = */ -11.8,
-         /*.relais_on = */ module_state->relais_on});
+    p_board_support->publish_telemetry({static_cast<float>(module_state->powermeter_data.tempL1), // evse_temperature_C
+                                        1500.,                                                    // fan_rpm
+                                        12.01,                                                    // supply_voltage_12V
+                                        -11.8,                     // supply_voltage_minus_12V
+                                        module_state->relais_on}); // relais_on
 }
 
 void YetiSimulator::publish_keepalive() {

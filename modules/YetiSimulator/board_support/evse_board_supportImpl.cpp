@@ -8,17 +8,17 @@ namespace module::board_support {
 
 namespace {
 types::evse_board_support::HardwareCapabilities set_default_capabilities() {
-    return {/*.max_current_A_import =*/32.0,
-            /*.min_current_A_import =*/6.0,
-            /*.max_phase_count_import =*/3,
-            /*.min_phase_count_import =*/1,
-            /*.max_current_A_export =*/16.0,
-            /*.min_current_A_export =*/0.0,
-            /*.max_phase_count_export =*/3,
-            /*.min_phase_count_export =*/1,
-            /*.supports_changing_phases_during_charging =*/true,
-            /*.connector_type =*/types::evse_board_support::Connector_type::IEC62196Type2Cable,
-            /*.max_plug_temperature_C = */ std::nullopt};
+    return {32.0,                                                          // max_current_A_import
+            6.0,                                                           // min_current_A_import
+            3,                                                             // max_phase_count_import
+            1,                                                             // min_phase_count_import
+            16.0,                                                          // max_current_A_export
+            0.0,                                                           // min_current_A_export
+            3,                                                             // max_phase_count_export
+            1,                                                             // min_phase_count_export
+            true,                                                          // supports_changing_phases_during_charging
+            types::evse_board_support::Connector_type::IEC62196Type2Cable, // connector_type
+            std::nullopt};                                                 // max_plug_temperature_C
 }
 } // namespace
 
@@ -91,7 +91,6 @@ types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_re
 }
 
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
-    // TODO: intentional?
 }
 
 } // namespace module::board_support
