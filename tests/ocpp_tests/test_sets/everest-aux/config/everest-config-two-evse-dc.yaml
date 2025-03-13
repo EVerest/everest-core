@@ -69,13 +69,13 @@ active_modules:
     config_module:
       connector_id: 1
   slac_1:
-    module: JsSlacSimulator
+    module: SlacSimulator
   powersupply_dc:
-    module: JsDCSupplySimulator
+    module: DCSupplySimulator
   imd:
-    module: JsIMDSimulator
+    module: IMDSimulator
   car_simulator_1:
-  module: JsEvManager
+  module: EvManager
   config_module:
     connector_id: 1
     auto_enable: true
@@ -92,7 +92,7 @@ active_modules:
       - module_id: slac
         implementation_id: ev
   car_simulator_2:
-    module: JsEvManager
+    module: EvManager
     config_module:
       connector_id: 2
       auto_enable: true
