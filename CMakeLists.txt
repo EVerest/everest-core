@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2025.1.0
+    VERSION 2025.2.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
