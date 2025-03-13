@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/NotifyChargingLimit.hpp>
@@ -23,9 +23,6 @@ void to_json(json& j, const NotifyChargingLimitRequest& k) {
         {"chargingLimit", k.chargingLimit},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.chargingSchedule) {
         j["chargingSchedule"] = json::array();
         for (auto val : k.chargingSchedule.value()) {
@@ -35,6 +32,9 @@ void to_json(json& j, const NotifyChargingLimitRequest& k) {
     if (k.evseId) {
         j["evseId"] = k.evseId.value();
     }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
+    }
 }
 
 void from_json(const json& j, NotifyChargingLimitRequest& k) {
@@ -42,9 +42,6 @@ void from_json(const json& j, NotifyChargingLimitRequest& k) {
     k.chargingLimit = j.at("chargingLimit");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("chargingSchedule")) {
         json arr = j.at("chargingSchedule");
         std::vector<ChargingSchedule> vec;
@@ -55,6 +52,9 @@ void from_json(const json& j, NotifyChargingLimitRequest& k) {
     }
     if (j.contains("evseId")) {
         k.evseId.emplace(j.at("evseId"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

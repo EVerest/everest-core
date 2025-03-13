@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/UpdateFirmware.hpp>
@@ -24,14 +24,14 @@ void to_json(json& j, const UpdateFirmwareRequest& k) {
         {"firmware", k.firmware},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.retries) {
         j["retries"] = k.retries.value();
     }
     if (k.retryInterval) {
         j["retryInterval"] = k.retryInterval.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -41,14 +41,14 @@ void from_json(const json& j, UpdateFirmwareRequest& k) {
     k.firmware = j.at("firmware");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("retries")) {
         k.retries.emplace(j.at("retries"));
     }
     if (j.contains("retryInterval")) {
         k.retryInterval.emplace(j.at("retryInterval"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -69,11 +69,11 @@ void to_json(json& j, const UpdateFirmwareResponse& k) {
         {"status", conversions::update_firmware_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -82,11 +82,11 @@ void from_json(const json& j, UpdateFirmwareResponse& k) {
     k.status = conversions::string_to_update_firmware_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

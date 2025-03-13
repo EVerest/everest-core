@@ -1,4 +1,4 @@
-{% if action.is_request %}
+{% if action.is_request or action.is_send %}
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
@@ -33,7 +33,7 @@ namespace {{namespace}} {
 {%- for property in type.properties %}
 {%- if property.required %}{"{{property.name}}",
     {%- if property.enum %}
- conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}})
+ {{ conversions_namespace_prefix }}conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}})
     {%- else %}
         {%- if property.type == 'ocpp::DateTime' %}
 k.{{property.name}}.to_rfc3339()
@@ -67,14 +67,14 @@ if (j.size() == 0) {
 {% endif %}
             for (auto val : k.{{property.name}}.value()) {
                 {%- if property.type.endswith('Enum>') %}
-                j["{{property.name}}"].push_back(conversions::{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}_to_string(val));
+                j["{{property.name}}"].push_back({{ conversions_namespace_prefix }}conversions::{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}_to_string(val));
                 {%- else%}
                 j["{{property.name}}"].push_back(val);
                 {%- endif%}
             }
 {% else %}
 {% if property.enum %}
-j["{{property.name}}"] = conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}}.value());
+j["{{property.name}}"] = {{ conversions_namespace_prefix }}conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}}.value());
 {% else %}
 {% if property.type == 'ocpp::DateTime' %}
 j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
@@ -102,7 +102,7 @@ j["{{property.name}}"] = k.{{property.name}}.value();
 {% else %}
         k.{{property.name}} =
     {%- if property.enum %}
- conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}"))
+ {{ conversions_namespace_prefix }}conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}"))
     {%- else %}
         {%- if property.type == 'ocpp::DateTime' %}
  ocpp::DateTime(std::string(j.at("{{property.name}}")))
@@ -123,7 +123,7 @@ j["{{property.name}}"] = k.{{property.name}}.value();
             {{property.type}} vec;
             for (auto val : arr) {
                 {%- if property.type.endswith('Enum>') %}
-                vec.push_back(conversions::string_to_{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}(val));
+                vec.push_back({{ conversions_namespace_prefix }}conversions::string_to_{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}(val));
                 {%- else %}
                 vec.push_back(val);
                 {%- endif %}
@@ -131,7 +131,7 @@ j["{{property.name}}"] = k.{{property.name}}.value();
             k.{{property.name}}.emplace(vec);
 {% else %}
 {% if property.enum %}
-            k.{{property.name}}.emplace(conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}")));
+            k.{{property.name}}.emplace({{ conversions_namespace_prefix }}conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}")));
 {% else %}
 {% if property.type == 'ocpp::DateTime' %}
             k.{{property.name}}.emplace(ocpp::DateTime(std::string(j.at("{{property.name}}"))));
@@ -162,7 +162,7 @@ std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k) {
 {% endif %}
 {% endfor %}
 
-{% if not action.is_request %}
+{% if not action.is_request or action.is_send %}
 } // namespace {{namespace}}
 } // namespace ocpp
 

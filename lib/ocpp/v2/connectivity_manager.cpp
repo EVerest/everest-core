@@ -6,6 +6,7 @@
 #include <everest/logging.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/utils.hpp>
 
 namespace {
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
@@ -336,8 +337,11 @@ ConnectivityManager::get_ws_connection_options(const int32_t configuration_slot)
             this->device_model.get_value<std::string>(ControllerComponentVariables::SecurityCtrlrIdentity),
             network_connection_profile.securityProfile);
 
+        const auto ocpp_versions = utils::get_ocpp_protocol_versions(
+            this->device_model.get_value<std::string>(ControllerComponentVariables::SupportedOcppVersions));
+
         WebsocketConnectionOptions connection_options{
-            {OcppProtocolVersion::v201},
+            ocpp_versions,
             uri,
             network_connection_profile.securityProfile,
             this->device_model.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword),

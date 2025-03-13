@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/CustomerInformation.hpp>
@@ -25,9 +25,6 @@ void to_json(json& j, const CustomerInformationRequest& k) {
         {"clear", k.clear},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.customerCertificate) {
         j["customerCertificate"] = k.customerCertificate.value();
     }
@@ -36,6 +33,9 @@ void to_json(json& j, const CustomerInformationRequest& k) {
     }
     if (k.customerIdentifier) {
         j["customerIdentifier"] = k.customerIdentifier.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -46,9 +46,6 @@ void from_json(const json& j, CustomerInformationRequest& k) {
     k.clear = j.at("clear");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("customerCertificate")) {
         k.customerCertificate.emplace(j.at("customerCertificate"));
     }
@@ -57,6 +54,9 @@ void from_json(const json& j, CustomerInformationRequest& k) {
     }
     if (j.contains("customerIdentifier")) {
         k.customerIdentifier.emplace(j.at("customerIdentifier"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -77,11 +77,11 @@ void to_json(json& j, const CustomerInformationResponse& k) {
         {"status", conversions::customer_information_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -90,11 +90,11 @@ void from_json(const json& j, CustomerInformationResponse& k) {
     k.status = conversions::string_to_customer_information_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

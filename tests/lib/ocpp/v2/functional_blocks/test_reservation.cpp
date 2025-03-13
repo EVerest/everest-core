@@ -11,6 +11,7 @@
 #include <evse_manager_fake.hpp>
 #include <message_dispatcher_mock.hpp>
 
+#include <device_model_test_helper.hpp>
 #include <ocpp/v2/functional_blocks/reservation.hpp>
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
@@ -22,10 +23,6 @@
 #include <ocpp/v2/messages/ReservationStatusUpdate.hpp>
 #include <ocpp/v2/messages/ReserveNow.hpp>
 #include <ocpp/v2/messages/Reset.hpp>
-
-const static std::string MIGRATION_FILES_PATH = "./resources/v2/device_model_migration_files";
-const static std::string CONFIG_PATH = "./resources/example_config/v2/component_config";
-const static std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=shared";
 const static uint32_t NR_OF_EVSES = 2;
 
 using namespace ocpp::v2;
@@ -48,7 +45,7 @@ protected: // Functions
             *functional_block_context, reserve_now_callback_mock.AsStdFunction(),
             cancel_reservation_callback_mock.AsStdFunction(), is_reservation_for_token_callback_mock.AsStdFunction());
         default_test_token.idToken = "SOME_TOKEN";
-        default_test_token.type = IdTokenEnum::ISO14443;
+        default_test_token.type = IdTokenEnumStringType::ISO14443;
     }
 
     ///
@@ -139,7 +136,7 @@ protected: // Functions
     ///
     ocpp::EnhancedMessage<MessageType>
     create_example_reserve_now_request(const std::optional<int32_t> evse_id = std::nullopt,
-                                       const std::optional<ConnectorEnum> connector_type = std::nullopt) {
+                                       const std::optional<ocpp::CiString<20>> connector_type = std::nullopt) {
         ReserveNowRequest request;
         request.connectorType = connector_type;
         request.evseId = evse_id;
@@ -184,8 +181,8 @@ protected: // Members
     std::unique_ptr<DeviceModel> device_model;
     MockFunction<ReserveNowStatusEnum(const ReserveNowRequest& request)> reserve_now_callback_mock;
     MockFunction<bool(const int32_t reservationId)> cancel_reservation_callback_mock;
-    MockFunction<ocpp::ReservationCheckStatus(const int32_t evse_id, const ocpp::CiString<36> idToken,
-                                              const std::optional<ocpp::CiString<36>> groupIdToken)>
+    MockFunction<ocpp::ReservationCheckStatus(const int32_t evse_id, const ocpp::CiString<255> idToken,
+                                              const std::optional<ocpp::CiString<255>> groupIdToken)>
         is_reservation_for_token_callback_mock;
     std::unique_ptr<FunctionalBlockContext> functional_block_context;
     // Make reservation a unique ptr so we can create it after creating the device model.
@@ -307,7 +304,7 @@ TEST_F(ReservationTest, handle_reserve_now_evse_not_existing) {
 TEST_F(ReservationTest, handle_reserve_now_connector_not_existing) {
     // Try to make a reservation for a connector type that does not exist. This should reject the request.
     EvseMock& m1 = evse_manager.get_mock(1);
-    EXPECT_CALL(m1, does_connector_exist(ConnectorEnum::Pan)).WillOnce(Return(false));
+    EXPECT_CALL(m1, does_connector_exist(ConnectorEnumStringType::Pan)).WillOnce(Return(false));
 
     EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
         auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<ReserveNowResponse>();
@@ -317,7 +314,8 @@ TEST_F(ReservationTest, handle_reserve_now_connector_not_existing) {
         EXPECT_EQ(response.statusInfo.value().additionalInfo.value(), "Connector type does not exist");
     }));
 
-    const ocpp::EnhancedMessage<MessageType> request = create_example_reserve_now_request(1, ConnectorEnum::Pan);
+    const ocpp::EnhancedMessage<MessageType> request =
+        create_example_reserve_now_request(1, ConnectorEnumStringType::Pan);
     this->reservation->handle_message(request);
 }
 
@@ -325,10 +323,10 @@ TEST_F(ReservationTest, handle_reserve_now_connectors_not_existing) {
     // Try to make a  non evse specific reservation for a connector type that does not exist. This should reject the
     // request.
     EvseMock& m1 = evse_manager.get_mock(1);
-    ON_CALL(m1, does_connector_exist(ConnectorEnum::cG105)).WillByDefault(Return(false));
+    ON_CALL(m1, does_connector_exist(ConnectorEnumStringType::cG105)).WillByDefault(Return(false));
 
     EvseMock& m2 = evse_manager.get_mock(2);
-    ON_CALL(m2, does_connector_exist(ConnectorEnum::cG105)).WillByDefault(Return(false));
+    ON_CALL(m2, does_connector_exist(ConnectorEnumStringType::cG105)).WillByDefault(Return(false));
 
     EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
         auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<ReserveNowResponse>();
@@ -339,7 +337,7 @@ TEST_F(ReservationTest, handle_reserve_now_connectors_not_existing) {
     }));
 
     const ocpp::EnhancedMessage<MessageType> request =
-        create_example_reserve_now_request(std::nullopt, ConnectorEnum::cG105);
+        create_example_reserve_now_request(std::nullopt, ConnectorEnumStringType::cG105);
     this->reservation->handle_message(request);
 }
 
@@ -347,13 +345,13 @@ TEST_F(ReservationTest, handle_reserve_now_one_connector_not_existing) {
     // Try to make a non evse specific reservation. One connector does not have the given connector, but the other does,
     // so the reservation request should be accepted.
     const ocpp::EnhancedMessage<MessageType> request =
-        create_example_reserve_now_request(std::nullopt, ConnectorEnum::cTesla);
+        create_example_reserve_now_request(std::nullopt, ConnectorEnumStringType::cTesla);
 
     EvseMock& m1 = evse_manager.get_mock(1);
-    EXPECT_CALL(m1, does_connector_exist(ConnectorEnum::cTesla)).WillOnce(Return(false));
+    EXPECT_CALL(m1, does_connector_exist(ConnectorEnumStringType::cTesla)).WillOnce(Return(false));
 
     EvseMock& m2 = evse_manager.get_mock(2);
-    EXPECT_CALL(m2, does_connector_exist(ConnectorEnum::cTesla)).WillOnce(Return(true));
+    EXPECT_CALL(m2, does_connector_exist(ConnectorEnumStringType::cTesla)).WillOnce(Return(true));
 
     EXPECT_CALL(reserve_now_callback_mock, Call(_)).WillOnce(Return(ReserveNowStatusEnum::Accepted));
 
@@ -370,13 +368,13 @@ TEST_F(ReservationTest, handle_reserve_now_all_connectors_not_available) {
     // we try to do the request and it can be accepted anyway (or at least the correct reason for not accepting the
     // reservation can be returned, if this is a real scenario).
     const ocpp::EnhancedMessage<MessageType> request =
-        create_example_reserve_now_request(std::nullopt, ConnectorEnum::cTesla);
+        create_example_reserve_now_request(std::nullopt, ConnectorEnumStringType::cTesla);
 
     EvseMock& m1 = evse_manager.get_mock(1);
-    EXPECT_CALL(m1, does_connector_exist(ConnectorEnum::cTesla)).WillOnce(Return(true));
+    EXPECT_CALL(m1, does_connector_exist(ConnectorEnumStringType::cTesla)).WillOnce(Return(true));
 
     EvseMock& m2 = evse_manager.get_mock(2);
-    EXPECT_CALL(m2, does_connector_exist(ConnectorEnum::cTesla)).Times(0);
+    EXPECT_CALL(m2, does_connector_exist(ConnectorEnumStringType::cTesla)).Times(0);
 
     EXPECT_CALL(reserve_now_callback_mock, Call(_)).WillOnce(Return(ReserveNowStatusEnum::Accepted));
 
@@ -391,10 +389,10 @@ TEST_F(ReservationTest, handle_reserve_now_all_connectors_not_available) {
 TEST_F(ReservationTest, handle_reserve_now_non_specific_evse_successful) {
     // Try to make a non evse specific reservation which is accepted.
     const ocpp::EnhancedMessage<MessageType> request =
-        create_example_reserve_now_request(std::nullopt, ConnectorEnum::cTesla);
+        create_example_reserve_now_request(std::nullopt, ConnectorEnumStringType::cTesla);
 
     EvseMock& m1 = evse_manager.get_mock(1);
-    EXPECT_CALL(m1, does_connector_exist(ConnectorEnum::cTesla)).WillOnce(Return(true));
+    EXPECT_CALL(m1, does_connector_exist(ConnectorEnumStringType::cTesla)).WillOnce(Return(true));
 
     ON_CALL(reserve_now_callback_mock, Call(_)).WillByDefault(Invoke([](const ReserveNowRequest reserve_now_request) {
         EXPECT_FALSE(reserve_now_request.evseId.has_value());
@@ -411,12 +409,12 @@ TEST_F(ReservationTest, handle_reserve_now_non_specific_evse_successful) {
 
 TEST_F(ReservationTest, handle_reserve_now_specific_evse_successful) {
     // Try to make a reservation for an existing evse, which is accepted.
-    std::optional<ConnectorEnum> tesla_connector_type = ConnectorEnum::cTesla;
+    std::optional<ocpp::CiString<20>> tesla_connector_type = ConnectorEnumStringType::cTesla;
 
     const ocpp::EnhancedMessage<MessageType> request = create_example_reserve_now_request(2, tesla_connector_type);
 
     EvseMock& m2 = evse_manager.get_mock(2);
-    ON_CALL(m2, does_connector_exist(ConnectorEnum::cTesla)).WillByDefault(Return(true));
+    ON_CALL(m2, does_connector_exist(ConnectorEnumStringType::cTesla)).WillByDefault(Return(true));
 
     ON_CALL(reserve_now_callback_mock, Call(_)).WillByDefault(Invoke([](const ReserveNowRequest reserve_now_request) {
         EXPECT_TRUE(reserve_now_request.evseId.has_value());
@@ -434,12 +432,12 @@ TEST_F(ReservationTest, handle_reserve_now_specific_evse_successful) {
 
 TEST_F(ReservationTest, handle_reserve_now_specific_evse_occupied) {
     // Try to make a reservation for a non specific evse, but all evse's are occupied.
-    std::optional<ConnectorEnum> tesla_connector_type = ConnectorEnum::cTesla;
+    std::optional<ocpp::CiString<20>> tesla_connector_type = ConnectorEnumStringType::cTesla;
 
     const ocpp::EnhancedMessage<MessageType> request = create_example_reserve_now_request(2, tesla_connector_type);
 
     EvseMock& m2 = evse_manager.get_mock(2);
-    ON_CALL(m2, does_connector_exist(ConnectorEnum::cTesla)).WillByDefault(Return(true));
+    ON_CALL(m2, does_connector_exist(ConnectorEnumStringType::cTesla)).WillByDefault(Return(true));
 
     EXPECT_CALL(reserve_now_callback_mock, Call(_)).WillOnce(Return(ReserveNowStatusEnum::Occupied));
 
@@ -549,7 +547,7 @@ TEST_F(ReservationTest, handle_reserve_now_no_evses) {
                   is_reservation_for_token_callback_mock.AsStdFunction()};
 
     const ocpp::EnhancedMessage<MessageType> request =
-        create_example_reserve_now_request(std::nullopt, ConnectorEnum::cTesla);
+        create_example_reserve_now_request(std::nullopt, ConnectorEnumStringType::cTesla);
 
     EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
         auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<ReserveNowResponse>();

@@ -54,8 +54,7 @@ public:
                 (override));
     MOCK_METHOD(void, transaction_delete, (const std::string& transaction_id));
     MOCK_METHOD(void, insert_or_update_charging_profile,
-                (const int evse_id, const ChargingProfile& profile,
-                 const ChargingLimitSourceEnum charging_limit_source),
+                (const int evse_id, const ChargingProfile& profile, const CiString<20> charging_limit_source),
                 (override));
     MOCK_METHOD(bool, delete_charging_profile, (const int profile_id));
     MOCK_METHOD(void, delete_charging_profile_by_transaction_id, (const std::string& transaction_id));
@@ -69,7 +68,7 @@ public:
     MOCK_METHOD(std::vector<ChargingProfile>, get_all_charging_profiles, ());
     typedef std::map<int32_t, std::vector<ChargingProfile>> charging_profiles_grouped_by_evse;
     MOCK_METHOD(charging_profiles_grouped_by_evse, get_all_charging_profiles_group_by_evse, ());
-    MOCK_METHOD(ChargingLimitSourceEnum, get_charging_limit_source_for_profile, (const int profile_id));
+    MOCK_METHOD(CiString<20>, get_charging_limit_source_for_profile, (const int profile_id));
     MOCK_METHOD(std::unique_ptr<common::SQLiteStatementInterface>, new_statement, (const std::string& sql));
 };
 } // namespace ocpp::v2

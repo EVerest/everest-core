@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #ifndef OCPP_V2_RESERVENOW_HPP
@@ -20,10 +20,10 @@ struct ReserveNowRequest : public ocpp::Message {
     int32_t id;
     ocpp::DateTime expiryDateTime;
     IdToken idToken;
-    std::optional<CustomData> customData;
-    std::optional<ConnectorEnum> connectorType;
+    std::optional<CiString<20>> connectorType;
     std::optional<int32_t> evseId;
     std::optional<IdToken> groupIdToken;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ReserveNow message as a human readable string
     /// \returns the message type as a human readable string
@@ -43,8 +43,8 @@ std::ostream& operator<<(std::ostream& os, const ReserveNowRequest& k);
 /// \brief Contains a OCPP ReserveNowResponse message
 struct ReserveNowResponse : public ocpp::Message {
     ReserveNowStatusEnum status;
-    std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ReserveNowResponse message as a human readable string
     /// \returns the message type as a human readable string

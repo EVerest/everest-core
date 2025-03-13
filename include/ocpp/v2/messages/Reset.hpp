@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #ifndef OCPP_V2_RESET_HPP
@@ -18,8 +18,8 @@ namespace v2 {
 /// \brief Contains a OCPP Reset message
 struct ResetRequest : public ocpp::Message {
     ResetEnum type;
-    std::optional<CustomData> customData;
     std::optional<int32_t> evseId;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this Reset message as a human readable string
     /// \returns the message type as a human readable string
@@ -39,8 +39,8 @@ std::ostream& operator<<(std::ostream& os, const ResetRequest& k);
 /// \brief Contains a OCPP ResetResponse message
 struct ResetResponse : public ocpp::Message {
     ResetStatusEnum status;
-    std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ResetResponse message as a human readable string
     /// \returns the message type as a human readable string

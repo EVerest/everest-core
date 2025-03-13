@@ -1,10 +1,34 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
+#pragma once
 
 #include "everest/logging.hpp"
+#include "ocpp/v2/functional_blocks/smart_charging.hpp"
 #include "ocpp/v2/ocpp_types.hpp"
 #include "ocpp/v2/profile.hpp"
 #include "ocpp/v2/utils.hpp"
+#include <ocpp/v2/messages/ClearChargingProfile.hpp>
+#include <ocpp/v2/messages/GetChargingProfiles.hpp>
+#include <ocpp/v2/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v2/messages/SetChargingProfile.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
+
+#include "connectivity_manager_mock.hpp"
+#include "database_handler_mock.hpp"
+#include "device_model_test_helper.hpp"
+#include "lib/ocpp/common/database_testing_utils.hpp"
+#include "message_dispatcher_mock.hpp"
+#include "mocks/database_handler_fake.hpp"
+#include <component_state_manager_mock.hpp>
+#include <evse_manager_fake.hpp>
+#include <evse_mock.hpp>
+#include <evse_security_mock.hpp>
+#include <gmock/gmock.h>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
+
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <chrono>
 #include <filesystem>
 #include <iomanip>
@@ -15,224 +39,126 @@
 #include <sstream>
 #include <vector>
 
+using ::testing::MockFunction;
 namespace ocpp::v2 {
 
 static const std::string BASE_JSON_PATH = std::string(TEST_PROFILES_LOCATION_V2) + "/json";
 
-inline bool operator==(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b) {
-    auto diff = std::abs(a.startPeriod - b.startPeriod);
-    bool bRes = diff < 10; // allow for a small difference
-    bRes = bRes && (a.limit == b.limit);
-    bRes = bRes && (a.numberPhases == b.numberPhases);
-    bRes = bRes && (a.phaseToUse == b.phaseToUse);
-    return bRes;
-}
+constexpr int NR_OF_EVSES = 1;
+constexpr int NR_OF_TWO_EVSES = 2;
+constexpr int STATION_WIDE_ID = 0;
+constexpr int DEFAULT_EVSE_ID = 1;
+constexpr int DEFAULT_PROFILE_ID = 1;
+constexpr int DEFAULT_STACK_LEVEL = 1;
+constexpr int DEFAULT_REQUEST_ID = 1;
+constexpr int32_t DEFAULT_LIMIT_AMPERE = 57;
+constexpr int32_t DEFAULT_LIMIT_WATT = 55612;
+constexpr int32_t DEFAULT_NR_PHASES = 3;
+static const std::string DEFAULT_TX_ID = "10c75ff7-74f5-44f5-9d01-f649f3ac7b78";
 
-inline bool operator!=(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b) {
-    return (!(a == b));
-}
+// Operator overloads
+bool operator==(const V2XFreqWattPoint& a, const V2XFreqWattPoint& b);
+bool operator==(const V2XSignalWattPoint& a, const V2XSignalWattPoint& b);
+bool operator==(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b);
+bool operator!=(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b);
+bool operator==(const CompositeSchedule& a, const CompositeSchedule& b);
+bool operator!=(const CompositeSchedule& a, const CompositeSchedule& b);
+bool operator==(const LimitAtSoC& a, const LimitAtSoC& b);
+bool operator==(const ChargingSchedule& a, const ChargingSchedule& b);
+bool operator!=(const ChargingSchedule& a, const ChargingSchedule& b);
+bool operator==(const period_entry_t& a, const period_entry_t& b);
+bool operator!=(const period_entry_t& a, const period_entry_t& b);
+bool operator==(const std::vector<period_entry_t>& a, const std::vector<period_entry_t>& b);
 
-inline bool operator==(const CompositeSchedule& a, const CompositeSchedule& b) {
-    bool bRes = true;
+std::string to_string(const period_entry_t& entry);
+std::ostream& operator<<(std::ostream& os, const period_entry_t& entry);
+ocpp::DateTime dt(const std::string& dt_string);
 
-    if (a.chargingSchedulePeriod.size() != b.chargingSchedulePeriod.size()) {
-        return false;
-    }
+ChargingProfile
+create_charging_profile(int32_t charging_profile_id, ChargingProfilePurposeEnum charging_profile_purpose,
+                        const std::vector<ChargingSchedule>& charging_schedules,
+                        std::optional<std::string> transaction_id = {},
+                        ChargingProfileKindEnum charging_profile_kind = ChargingProfileKindEnum::Absolute,
+                        int stack_level = DEFAULT_STACK_LEVEL, std::optional<ocpp::DateTime> validFrom = {},
+                        std::optional<ocpp::DateTime> validTo = {});
+ChargingProfile
+create_charging_profile(int32_t charging_profile_id, ChargingProfilePurposeEnum charging_profile_purpose,
+                        ChargingSchedule charging_schedule, std::optional<std::string> transaction_id = {},
+                        ChargingProfileKindEnum charging_profile_kind = ChargingProfileKindEnum::Absolute,
+                        int stack_level = DEFAULT_STACK_LEVEL, std::optional<ocpp::DateTime> validFrom = {},
+                        std::optional<ocpp::DateTime> validTo = {});
+ChargingSchedule create_charge_schedule(ChargingRateUnitEnum charging_rate_unit);
+ChargingSchedule create_charge_schedule(ChargingRateUnitEnum charging_rate_unit,
+                                        const std::vector<ChargingSchedulePeriod>& charging_schedule_period,
+                                        std::optional<ocpp::DateTime> start_schedule = std::nullopt);
+std::vector<ChargingSchedulePeriod>
+create_charging_schedule_periods(int32_t start_period, std::optional<int32_t> number_phases = std::nullopt,
+                                 std::optional<int32_t> phase_to_use = std::nullopt);
+std::vector<ChargingSchedulePeriod> create_charging_schedule_periods(const std::vector<int32_t>& start_periods);
+std::vector<ChargingSchedulePeriod>
+create_charging_schedule_periods_with_phases(int32_t start_period, int32_t numberPhases, int32_t phaseToUse);
+ChargingProfileCriterion
+create_charging_profile_criteria(std::optional<std::vector<ocpp::CiString<20>>> sources = std::nullopt,
+                                 std::optional<std::vector<int32_t>> ids = std::nullopt,
+                                 std::optional<ChargingProfilePurposeEnum> purpose = std::nullopt,
+                                 std::optional<int32_t> stack_level = std::nullopt);
+GetChargingProfilesRequest create_get_charging_profile_request(int32_t request_id, ChargingProfileCriterion criteria,
+                                                               std::optional<int32_t> evse_id = std::nullopt);
+ClearChargingProfileRequest
+create_clear_charging_profile_request(std::optional<int32_t> id = std::nullopt,
+                                      std::optional<ClearChargingProfile> criteria = std::nullopt);
+ClearChargingProfile create_clear_charging_profile(std::optional<int32_t> evse_id = std::nullopt,
+                                                   std::optional<ChargingProfilePurposeEnum> purpose = std::nullopt,
+                                                   std::optional<int32_t> stack_level = std::nullopt);
+namespace SmartChargingTestUtils {
+std::vector<ChargingProfile> get_charging_profiles_from_directory(const std::string& path);
+ChargingProfile get_charging_profile_from_path(const std::string& path);
+ChargingProfile get_charging_profile_from_file(const std::string& filename);
+std::vector<ChargingProfile> get_charging_profiles_from_file(const std::string& filename);
+std::vector<ChargingProfile> get_baseline_profile_vector();
+std::string to_string(std::vector<ChargingProfile>& profiles);
+bool validate_profile_result(const std::vector<period_entry_t>& result);
+} // namespace SmartChargingTestUtils
 
-    for (std::uint32_t i = 0; bRes && i < a.chargingSchedulePeriod.size(); i++) {
-        bRes = a.chargingSchedulePeriod[i] == b.chargingSchedulePeriod[i];
-    }
-
-    bRes = bRes && (a.evseId == b.evseId);
-    bRes = bRes && (a.duration == b.duration);
-    bRes = bRes && (a.scheduleStart == b.scheduleStart);
-    bRes = bRes && (a.chargingRateUnit == b.chargingRateUnit);
-
-    return bRes;
-}
-
-inline bool operator!=(const CompositeSchedule& a, const CompositeSchedule& b) {
-    return (!(a == b));
-}
-
-inline bool operator==(const ChargingSchedule& a, const ChargingSchedule& b) {
-    bool bRes = true;
-
-    if (a.chargingSchedulePeriod.size() != b.chargingSchedulePeriod.size()) {
-        return false;
-    }
-
-    for (std::uint32_t i = 0; bRes && i < a.chargingSchedulePeriod.size(); i++) {
-        bRes = a.chargingSchedulePeriod[i] == b.chargingSchedulePeriod[i];
-    }
-
-    bRes = bRes && (a.chargingRateUnit == b.chargingRateUnit);
-    bRes = bRes && (a.startSchedule == b.startSchedule);
-    bRes = bRes && (a.duration == b.duration);
-    bRes = bRes && (a.minChargingRate == b.minChargingRate);
-
-    return bRes;
-}
-
-inline bool operator!=(const ChargingSchedule& a, const ChargingSchedule& b) {
-    return !(a == b);
-}
-
-inline bool operator==(const period_entry_t& a, const period_entry_t& b) {
-    bool bRes = (a.start == b.start) && (a.end == b.end) && (a.limit == b.limit) && (a.stack_level == b.stack_level) &&
-                (a.charging_rate_unit == b.charging_rate_unit);
-    if (a.number_phases && b.number_phases) {
-        bRes = bRes && a.number_phases.value() == b.number_phases.value();
-    }
-    if (a.min_charging_rate && b.min_charging_rate) {
-        bRes = bRes && a.min_charging_rate.value() == b.min_charging_rate.value();
-    }
-    return bRes;
-}
-
-inline bool operator!=(const period_entry_t& a, const period_entry_t& b) {
-    return !(a == b);
-}
-
-inline bool operator==(const std::vector<period_entry_t>& a, const std::vector<period_entry_t>& b) {
-    bool bRes = a.size() == b.size();
-    if (bRes) {
-        for (std::uint8_t i = 0; i < a.size(); i++) {
-            bRes = a[i] == b[i];
-            if (!bRes) {
-                break;
-            }
-        }
-    }
-    return bRes;
-}
-
-inline std::string to_string(const period_entry_t& entry) {
-    std::string result = "Period Entry: {";
-    result += "Start: " + entry.start.to_rfc3339() + ", ";
-    result += "End: " + entry.end.to_rfc3339() + ", ";
-    result += "Limit: " + std::to_string(entry.limit) + ", ";
-    if (entry.number_phases.has_value()) {
-        result += "Number of Phases: " + std::to_string(entry.number_phases.value()) + ", ";
-    }
-    result += "Stack Level: " + std::to_string(entry.stack_level) + ", ";
-    result += "ChargingRateUnit:" + conversions::charging_rate_unit_enum_to_string(entry.charging_rate_unit);
-
-    if (entry.min_charging_rate.has_value()) {
-        result += ", Min Charging Rate: " + std::to_string(entry.min_charging_rate.value());
-    }
-
-    result += "}";
-    return result;
-}
-
-inline std::ostream& operator<<(std::ostream& os, const period_entry_t& entry) {
-    os << to_string(entry);
-    return os;
-}
-
-static ocpp::DateTime dt(const std::string& dt_string) {
-    ocpp::DateTime dt;
-
-    if (dt_string.length() == 4) {
-        dt = ocpp::DateTime("2024-01-01T0" + dt_string + ":00Z");
-    } else if (dt_string.length() == 5) {
-        dt = ocpp::DateTime("2024-01-01T" + dt_string + ":00Z");
-    } else if (dt_string.length() == 7) {
-        dt = ocpp::DateTime("2024-01-0" + dt_string + ":00Z");
-    } else if (dt_string.length() == 8) {
-        dt = ocpp::DateTime("2024-01-" + dt_string + ":00Z");
-    } else if (dt_string.length() == 11) {
-        dt = ocpp::DateTime("2024-" + dt_string + ":00Z");
-    } else if (dt_string.length() == 16) {
-        dt = ocpp::DateTime(dt_string + ":00Z");
-    }
-
-    return dt;
-}
-
-class SmartChargingTestUtils {
+class TestSmartCharging : public SmartCharging {
 public:
-    static std::vector<ChargingProfile> get_charging_profiles_from_directory(const std::string& path) {
-        EVLOG_debug << "get_charging_profiles_from_directory: " << path;
-        std::vector<ChargingProfile> profiles;
-        for (const auto& entry : fs::directory_iterator(path)) {
-            if (!entry.is_directory()) {
-                fs::path path = entry.path();
-                if (path.extension() == ".json") {
-                    ChargingProfile profile = get_charging_profile_from_path(path);
-                    std::cout << path << std::endl;
-                    profiles.push_back(profile);
-                }
-            }
-        }
+    using SmartCharging::add_profile;
+    using SmartCharging::calculate_composite_schedule;
+    using SmartCharging::clear_profiles;
+    using SmartCharging::get_reported_profiles;
+    using SmartCharging::get_valid_profiles;
+    using SmartCharging::SmartCharging;
+    using SmartCharging::validate_charging_station_max_profile;
+    using SmartCharging::validate_evse_exists;
+    using SmartCharging::validate_profile_schedules;
+    using SmartCharging::validate_tx_default_profile;
+    using SmartCharging::validate_tx_profile;
+    using SmartCharging::verify_no_conflicting_external_constraints_id;
+};
 
-        // Sort profiles by id in ascending order
-        std::sort(profiles.begin(), profiles.end(),
-                  [](const ChargingProfile& a, const ChargingProfile& b) { return a.id < b.id; });
+class CompositeScheduleTestFixtureV2 : public DatabaseTestingUtils {
+protected:
+    void SetUp() override;
+    void TearDown() override;
+    void load_charging_profiles_for_evse(const std::filesystem::path& path, int32_t evse_id);
+    std::unique_ptr<TestSmartCharging> create_smart_charging_handler();
 
-        EVLOG_debug << "get_charging_profiles_from_directory END";
-        return profiles;
-    }
+public:
+    CompositeScheduleTestFixtureV2();
+    void reconfigure_for_nr_of_evses(int32_t nr_of_evses);
 
-    static ChargingProfile get_charging_profile_from_path(const std::string& path) {
-        EVLOG_debug << "get_charging_profile_from_path: " << path;
-        std::ifstream f(path.c_str());
-        json data = json::parse(f);
-
-        ChargingProfile cp;
-        from_json(data, cp);
-        return cp;
-    }
-
-    static ChargingProfile get_charging_profile_from_file(const std::string& filename) {
-        const std::string full_path = BASE_JSON_PATH + "/" + filename;
-
-        return get_charging_profile_from_path(full_path);
-    }
-
-    static std::vector<ChargingProfile> get_charging_profiles_from_file(const std::string& filename) {
-        std::vector<ChargingProfile> profiles;
-        profiles.push_back(get_charging_profile_from_file(filename));
-        return profiles;
-    }
-
-    /// \brief Returns a vector of ChargingProfiles to be used as a baseline for testing core functionality
-    /// of generating an EnhancedChargingSchedule.
-    static std::vector<ChargingProfile> get_baseline_profile_vector() {
-        return get_charging_profiles_from_directory(BASE_JSON_PATH + "/" + "baseline/");
-    }
-
-    static std::string to_string(std::vector<ChargingProfile>& profiles) {
-        std::string s;
-        json cp_json;
-        for (auto& profile : profiles) {
-            if (!s.empty())
-                s += ", ";
-            to_json(cp_json, profile);
-            s += cp_json.dump(4);
-        }
-
-        return "[" + s + "]";
-    }
-
-    /// \brief Validates that there is no overlap in the submitted period_entry_t collection
-    /// \param period_entry_t collection
-    /// \note If there are any overlapping period_entry_t entries the function returns false
-    static bool validate_profile_result(const std::vector<period_entry_t>& result) {
-        bool bRes{true};
-        DateTime last{"1900-01-01T00:00:00Z"};
-        for (const auto& i : result) {
-            // ensure no overlaps
-            bRes = i.start < i.end;
-            bRes = bRes && i.start >= last;
-            last = i.end;
-            if (!bRes) {
-                break;
-            }
-        }
-        return bRes;
-    }
+    std::unique_ptr<EvseManagerFake> evse_manager;
+    DeviceModelTestHelper device_model_test_helper;
+    MockMessageDispatcher mock_dispatcher;
+    DeviceModel* device_model;
+    ::testing::NiceMock<ConnectivityManagerMock> connectivity_manager;
+    ocpp::EvseSecurityMock evse_security;
+    ComponentStateManagerMock component_state_manager;
+    std::unique_ptr<FunctionalBlockContext> functional_block_context;
+    std::unique_ptr<DatabaseHandlerFake> database_handler;
+    MockFunction<void()> set_charging_profiles_callback_mock;
+    std::unique_ptr<TestSmartCharging> handler;
+    boost::uuids::random_generator uuid_generator;
 };
 
 } // namespace ocpp::v2

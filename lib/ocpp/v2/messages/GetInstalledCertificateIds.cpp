@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/GetInstalledCertificateIds.hpp>
@@ -21,9 +21,6 @@ void to_json(json& j, const GetInstalledCertificateIdsRequest& k) {
     // the required parts of the message
     j = json({}, true);
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.certificateType) {
         if (j.size() == 0) {
             j = json{{"certificateType", json::array()}};
@@ -34,15 +31,15 @@ void to_json(json& j, const GetInstalledCertificateIdsRequest& k) {
             j["certificateType"].push_back(conversions::get_certificate_id_use_enum_to_string(val));
         }
     }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
+    }
 }
 
 void from_json(const json& j, GetInstalledCertificateIdsRequest& k) {
     // the required parts of the message
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("certificateType")) {
         json arr = j.at("certificateType");
         std::vector<GetCertificateIdUseEnum> vec;
@@ -50,6 +47,9 @@ void from_json(const json& j, GetInstalledCertificateIdsRequest& k) {
             vec.push_back(conversions::string_to_get_certificate_id_use_enum(val));
         }
         k.certificateType.emplace(vec);
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -70,9 +70,6 @@ void to_json(json& j, const GetInstalledCertificateIdsResponse& k) {
         {"status", conversions::get_installed_certificate_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
     }
@@ -82,6 +79,9 @@ void to_json(json& j, const GetInstalledCertificateIdsResponse& k) {
             j["certificateHashDataChain"].push_back(val);
         }
     }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
+    }
 }
 
 void from_json(const json& j, GetInstalledCertificateIdsResponse& k) {
@@ -89,9 +89,6 @@ void from_json(const json& j, GetInstalledCertificateIdsResponse& k) {
     k.status = conversions::string_to_get_installed_certificate_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
     }
@@ -102,6 +99,9 @@ void from_json(const json& j, GetInstalledCertificateIdsResponse& k) {
             vec.push_back(val);
         }
         k.certificateHashDataChain.emplace(vec);
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

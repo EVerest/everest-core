@@ -4,6 +4,7 @@ target_include_directories(libocpp_unit_tests PUBLIC
 
 target_sources(libocpp_unit_tests PRIVATE
         device_model_test_helper.cpp
+        smart_charging_test_utils.cpp
         test_charge_point.cpp
         test_database_handler.cpp
         test_database_migration_files.cpp

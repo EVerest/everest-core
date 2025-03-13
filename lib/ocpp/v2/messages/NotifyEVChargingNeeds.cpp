@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/NotifyEVChargingNeeds.hpp>
@@ -20,29 +20,35 @@ std::string NotifyEVChargingNeedsRequest::get_type() const {
 void to_json(json& j, const NotifyEVChargingNeedsRequest& k) {
     // the required parts of the message
     j = json{
-        {"chargingNeeds", k.chargingNeeds},
         {"evseId", k.evseId},
+        {"chargingNeeds", k.chargingNeeds},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.maxScheduleTuples) {
         j["maxScheduleTuples"] = k.maxScheduleTuples.value();
+    }
+    if (k.timestamp) {
+        j["timestamp"] = k.timestamp.value().to_rfc3339();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
 void from_json(const json& j, NotifyEVChargingNeedsRequest& k) {
     // the required parts of the message
-    k.chargingNeeds = j.at("chargingNeeds");
     k.evseId = j.at("evseId");
+    k.chargingNeeds = j.at("chargingNeeds");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("maxScheduleTuples")) {
         k.maxScheduleTuples.emplace(j.at("maxScheduleTuples"));
+    }
+    if (j.contains("timestamp")) {
+        k.timestamp.emplace(ocpp::DateTime(std::string(j.at("timestamp"))));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -63,11 +69,11 @@ void to_json(json& j, const NotifyEVChargingNeedsResponse& k) {
         {"status", conversions::notify_evcharging_needs_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -76,11 +82,11 @@ void from_json(const json& j, NotifyEVChargingNeedsResponse& k) {
     k.status = conversions::string_to_notify_evcharging_needs_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

@@ -426,25 +426,6 @@ TEST_F(InitDeviceModelDbTest, default_device_model_config) {
     EXPECT_NO_THROW(db.initialize_database(CONFIG_PATH_DEFAULT, true));
 }
 
-TEST_F(InitDeviceModelDbTest, missing_required_values) {
-    // Test if initializing fails when there is a missing required value.
-    InitDeviceModelDb db(DATABASE_PATH, MIGRATION_FILES_PATH);
-    try {
-        db.initialize_database(CONFIGS_PATH_REQUIRED_NO_VALUE, true);
-        FAIL() << "Expected InitDeviceModelDbError, but no exception was thrown";
-    } catch (const InitDeviceModelDbError& exception) {
-        EXPECT_EQ(std::string(exception.what()), "Check integrity failed:\n"
-                                                 "- Component UnitTestCtrlr, evse 2, connector 3\n"
-                                                 "  - Variable UnitTestPropertyAName, errors:\n"
-                                                 "    - No value set for Actual attribute for required variable.\n"
-                                                 "  - Variable UnitTestPropertyCName, errors:\n"
-                                                 "    - Could not find required Actual attribute.\n");
-    } catch (const std::exception& exception) {
-        FAIL() << "Expected InitDeviceModelDbError, but exception of type " << typeid(exception).name()
-               << " was thrown";
-    }
-}
-
 TEST_F(InitDeviceModelDbTest, wrong_type) {
     // Test if initializing fails when there is a missing required value.
     InitDeviceModelDb db(DATABASE_PATH, MIGRATION_FILES_PATH);

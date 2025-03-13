@@ -17,3 +17,21 @@ python3 generate_cpp.py --schemas ~/ocpp-schemas/v16/ --out ~/checkout/everest-w
 ```bash
 python3 generate_cpp.py --schemas ~/ocpp-schemas/v2/ --out ~/checkout/everest-workspace/libocpp --version v2 
 ```
+
+```bash
+python3 generate_cpp.py --schemas ~/ocpp-schemas/v21/ --out ~/checkout/everest-workspace/libocpp --version v21 
+```
+
+## YAML code generator for EVerest types
+
+The script [generate_everest_types.py](common/generate_cpp.py) can be used to generate EVerest YAML type definitions using OCPP2.0.1 and OCPP2.1 JSON schemas.
+
+```bash
+python3 generate_everest_types.py --schemas <json-schema-dir> --out <outfile> --types <comma-seperated-list-of-ocpp-types>
+```
+
+e.g.
+
+```bash
+python3 generate_everest_types.py --schemas ~/ocpp-schemas/v21/ --out ocpp.yaml --types ChargingNeedsType,ChargingScheduleType
+```

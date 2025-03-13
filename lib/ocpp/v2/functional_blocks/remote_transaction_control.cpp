@@ -140,7 +140,7 @@ void RemoteTransactionControl::handle_remote_start_transaction_request(Call<Requ
                 if (charging_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
 
                     const auto add_profile_response = this->smart_charging.conform_validate_and_add_profile(
-                        msg.chargingProfile.value(), evse_id, ChargingLimitSourceEnum::CSO,
+                        msg.chargingProfile.value(), evse_id, ChargingLimitSourceEnumStringType::CSO,
                         AddChargingProfileSource::RequestStartTransactionRequest);
                     if (add_profile_response.status == ChargingProfileStatusEnum::Accepted) {
                         EVLOG_debug << "Accepting SetChargingProfileRequest";
@@ -287,6 +287,8 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
 
     case MessageTriggerEnum::PublishFirmwareStatusNotification:
     case MessageTriggerEnum::SignCombinedCertificate:
+    case MessageTriggerEnum::SignV2G20Certificate:
+    case MessageTriggerEnum::CustomTrigger:
         response.status = TriggerMessageStatusEnum::NotImplemented;
         break;
     }
@@ -388,6 +390,8 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
 
     case MessageTriggerEnum::PublishFirmwareStatusNotification:
     case MessageTriggerEnum::SignCombinedCertificate:
+    case MessageTriggerEnum::SignV2G20Certificate:
+    case MessageTriggerEnum::CustomTrigger:
         EVLOG_error << "Sent a TriggerMessageResponse::Accepted while not following up with a message";
         break;
     }

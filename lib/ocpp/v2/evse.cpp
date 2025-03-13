@@ -86,13 +86,13 @@ uint32_t Evse::get_number_of_connectors() const {
     return static_cast<uint32_t>(this->id_connector_map.size());
 }
 
-bool Evse::does_connector_exist(const ConnectorEnum connector_type) const {
+bool Evse::does_connector_exist(const CiString<20> connector_type) const {
     const uint32_t number_of_connectors = this->get_number_of_connectors();
     if (number_of_connectors == 0) {
         return false;
     }
 
-    if (connector_type == ConnectorEnum::Unknown) {
+    if (connector_type == ConnectorEnumStringType::Unknown) {
         return true;
     }
 
@@ -110,8 +110,8 @@ bool Evse::does_connector_exist(const ConnectorEnum connector_type) const {
             continue;
         }
 
-        const ConnectorEnum type = this->get_evse_connector_type(i).value_or(ConnectorEnum::Unknown);
-        if (type == ConnectorEnum::Unknown || type == connector_type) {
+        const CiString<20> type = this->get_evse_connector_type(i).value_or(ConnectorEnumStringType::Unknown);
+        if (type == ConnectorEnumStringType::Unknown || type == connector_type) {
             return true;
         }
     }
@@ -119,7 +119,7 @@ bool Evse::does_connector_exist(const ConnectorEnum connector_type) const {
     return false;
 }
 
-std::optional<ConnectorStatusEnum> Evse::get_connector_status(std::optional<ConnectorEnum> connector_type) {
+std::optional<ConnectorStatusEnum> Evse::get_connector_status(std::optional<CiString<20>> connector_type) {
     bool type_found = false;
     ConnectorStatusEnum found_status = ConnectorStatusEnum::Unavailable;
     const uint32_t number_of_connectors = this->get_number_of_connectors();
@@ -143,10 +143,11 @@ std::optional<ConnectorStatusEnum> Evse::get_connector_status(std::optional<Conn
 
         const ConnectorStatusEnum connector_status = connector->get_effective_connector_status();
 
-        const ConnectorEnum evse_connector_type = this->get_evse_connector_type(i).value_or(ConnectorEnum::Unknown);
-        const ConnectorEnum input_connector_type = connector_type.value_or(ConnectorEnum::Unknown);
-        const bool connector_type_unknown =
-            evse_connector_type == ConnectorEnum::Unknown || input_connector_type == ConnectorEnum::Unknown;
+        const CiString<20> evse_connector_type =
+            this->get_evse_connector_type(i).value_or(ConnectorEnumStringType::Unknown);
+        const CiString<20> input_connector_type = connector_type.value_or(ConnectorEnumStringType::Unknown);
+        const bool connector_type_unknown = evse_connector_type == ConnectorEnumStringType::Unknown ||
+                                            input_connector_type == ConnectorEnumStringType::Unknown;
 
         if (connector_type_unknown || evse_connector_type == input_connector_type) {
             type_found = true;
@@ -205,7 +206,7 @@ void Evse::delete_database_transaction() {
     }
 }
 
-std::optional<ConnectorEnum> Evse::get_evse_connector_type(const uint32_t connector_id) const {
+std::optional<CiString<20>> Evse::get_evse_connector_type(const uint32_t connector_id) const {
 
     auto connector = this->get_connector(static_cast<int32_t>(connector_id));
     if (connector == nullptr) {
@@ -221,12 +222,7 @@ std::optional<ConnectorEnum> Evse::get_evse_connector_type(const uint32_t connec
         return std::nullopt;
     }
 
-    try {
-        return conversions::string_to_connector_enum(connector_type.value());
-    } catch (const StringToEnumException& e) {
-        EVLOG_warning << "Could not convert to ConnectorEnum: " << connector_type.value();
-        return std::nullopt;
-    }
+    return connector_type.value();
 }
 
 void Evse::open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,

@@ -6,6 +6,7 @@
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/utils.hpp>
 
 namespace ocpp {
 
@@ -15,7 +16,9 @@ using DatabaseException = ocpp::common::DatabaseException;
 
 /// \brief For AlignedDataInterval, SampledDataTxUpdatedInterval and SampledDataTxEndedInterval, zero is allowed
 static bool allow_zero(const Component& component, const Variable& variable) {
-    ComponentVariable component_variable = {component, std::nullopt, variable};
+    ComponentVariable component_variable;
+    component_variable.component = component;
+    component_variable.variable = variable;
     return component_variable == ControllerComponentVariables::AlignedDataInterval or
            component_variable == ControllerComponentVariables::SampledDataTxUpdatedInterval or
            component_variable == ControllerComponentVariables::SampledDataTxEndedInterval;
@@ -88,7 +91,8 @@ bool DeviceModel::component_criteria_match(const Component& component,
         return false;
     }
     for (const auto& criteria : component_criteria) {
-        const Variable variable = {conversions::component_criterion_enum_to_string(criteria)};
+        Variable variable;
+        variable.name = conversions::component_criterion_enum_to_string(criteria);
 
         const auto response = this->request_value<bool>(component, variable, AttributeEnum::Actual);
         auto value = response.value;
@@ -117,6 +121,67 @@ bool DeviceModel::component_variables_match(const std::vector<ComponentVariable>
                           (!v.component.evse.has_value() and (component.name == v.component.name) and
                            (component.instance == v.component.instance) and (variable == v.variable)); // B08.FR.23
                }) != component_variables.end();
+}
+
+void DeviceModel::check_variable_has_value(const ComponentVariable& component_variable, const AttributeEnum attribute) {
+    std::string value;
+    const auto response = this->request_value_internal(component_variable.component,
+                                                       component_variable.variable.value(), attribute, value, true);
+
+    if (response != GetVariableStatusEnum::Accepted) {
+        throw DeviceModelError("Required variable " + component_variable.variable->name.get() + " of component " +
+                               component_variable.component.name.get() + " does not have a value in the device model");
+    }
+}
+
+void DeviceModel::check_required_variable(const RequiredComponentVariable& required_variable,
+                                          const std::vector<OcppProtocolVersion>& supported_versions) {
+    if (supported_versions.empty()) {
+        throw DeviceModelError("Could not find supported ocpp versions in the InternalCtrlr.");
+    }
+
+    bool required = false;
+    for (auto& supported_version : supported_versions) {
+        if (required_variable.required_for.count(supported_version) > 0) {
+            required = true;
+        }
+    }
+
+    // For the current supported ocpp protocol versions, this variable is not required. So skip further checks.
+    if (!required) {
+        return;
+    }
+
+    if (!required_variable.variable.has_value()) {
+        throw DeviceModelError("Required variable does not exist.");
+    }
+
+    check_variable_has_value(required_variable);
+}
+
+void DeviceModel::check_required_variables() {
+    const auto supported_versions = utils::get_ocpp_protocol_versions(
+        this->get_value<std::string>(ControllerComponentVariables::SupportedOcppVersions));
+
+    if (supported_versions.empty()) {
+        throw DeviceModelError("Could not find supported ocpp versions in the InternalCtrlr.");
+    }
+
+    for (const auto& required_variable : required_variables) {
+        check_required_variable(required_variable, supported_versions);
+    }
+
+    for (const auto& available_required : required_component_available_variables) {
+        std::optional<bool> available = this->get_optional_value<bool>(available_required.first);
+        if (!available.value_or(false)) {
+            // Component not available, skip required checks.
+            continue;
+        }
+
+        for (const auto& required_variable : available_required.second) {
+            check_required_variable(required_variable, supported_versions);
+        }
+    }
 }
 
 bool validate_value(const VariableCharacteristics& characteristics, const std::string& value, bool allow_zero) {
@@ -356,7 +421,9 @@ std::vector<ReportData> DeviceModel::get_base_report_data(const ReportBaseEnum& 
             report_data.component = component;
             report_data.variable = variable;
 
-            ComponentVariable cv = {component, std::nullopt, variable};
+            ComponentVariable cv;
+            cv.component = component;
+            cv.variable = variable;
 
             // request the variable attribute from the device model
             const auto variable_attributes = this->device_model->get_variable_attributes(component, variable);
@@ -423,6 +490,7 @@ DeviceModel::get_custom_report_data(const std::optional<std::vector<ComponentVar
 void DeviceModel::check_integrity(const std::map<int32_t, int32_t>& evse_connector_structure) {
     EVLOG_debug << "Checking integrity of device model in storage";
     try {
+        this->check_required_variables();
         this->device_model->check_integrity();
 
         int32_t nr_evse_components = 0;
@@ -454,21 +522,47 @@ void DeviceModel::check_integrity(const std::map<int32_t, int32_t>& evse_connect
             }
 
             // check if all relevant EVSE and Connector components can be found
-            EVSE evse = {evse_id};
-            Component evse_component = {"EVSE", std::nullopt, evse};
+            EVSE evse;
+            evse.id = evse_id;
+            Component evse_component;
+            evse_component.name = "EVSE";
+            evse_component.evse = evse;
             if (!this->device_model_map.count(evse_component)) {
                 throw DeviceModelError("Could not find required EVSE component in device model");
             }
+
+            for (const auto& required_variable : required_evse_variables) {
+                const auto& variable = EvseComponentVariables::get_component_variable(evse_id, required_variable);
+                check_variable_has_value(variable);
+            }
+
+            const auto& variable =
+                EvseComponentVariables::get_component_variable(evse_id, EvseComponentVariables::Power);
+            std::map<Variable, VariableMetaData>& v = device_model_map[evse_component];
+            if (!v.count(EvseComponentVariables::Power)) {
+                throw DeviceModelError("Could not find required 'Power' variable in EVSE component in device model");
+            }
+
+            if (!v[EvseComponentVariables::Power].characteristics.maxLimit.has_value()) {
+                throw DeviceModelError("maxLimit of 'Power' not set");
+            }
+
             for (size_t connector_id = 1; connector_id <= nr_of_connectors; connector_id++) {
                 evse_component.name = "Connector";
                 evse_component.evse.value().connectorId = connector_id;
                 if (!this->device_model_map.count(evse_component)) {
                     throw DeviceModelError("Could not find required Connector component in device model");
                 }
+
+                for (const auto& required_variable : required_connector_variables) {
+                    const auto& variable =
+                        ConnectorComponentVariables::get_component_variable(evse_id, connector_id, required_variable);
+                    check_variable_has_value(variable);
+                }
             }
         }
     } catch (const DeviceModelError& e) {
-        EVLOG_error << "Integrity check in Device Model failed:" << e.what();
+        EVLOG_error << "Integrity check in Device Model failed: " << e.what();
         throw e;
     }
 }

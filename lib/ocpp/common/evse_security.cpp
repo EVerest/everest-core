@@ -19,6 +19,8 @@ ocpp::v2::GetCertificateIdUseEnum to_ocpp_v2(ocpp::CertificateType other) {
         return ocpp::v2::GetCertificateIdUseEnum::V2GCertificateChain;
     case ocpp::CertificateType::MFRootCertificate:
         return ocpp::v2::GetCertificateIdUseEnum::ManufacturerRootCertificate;
+    case ocpp::CertificateType::OEMRootCertificate:
+        return ocpp::v2::GetCertificateIdUseEnum::OEMRootCertificate;
     }
 
     throw EnumConversionException("Could not convert CertificateType to GetCertificateIdUseEnum");
@@ -34,6 +36,8 @@ ocpp::v2::InstallCertificateUseEnum to_ocpp_v2(ocpp::CaCertificateType other) {
         return ocpp::v2::InstallCertificateUseEnum::CSMSRootCertificate;
     case ocpp::CaCertificateType::MF:
         return ocpp::v2::InstallCertificateUseEnum::ManufacturerRootCertificate;
+    case ocpp::CaCertificateType::OEM:
+        return ocpp::v2::InstallCertificateUseEnum::OEMRootCertificate;
     }
 
     throw EnumConversionException("Could not convert CaCertificateType to InstallCertificateUseEnum");
@@ -144,6 +148,8 @@ ocpp::CertificateType from_ocpp_v2(ocpp::v2::GetCertificateIdUseEnum other) {
         return ocpp::CertificateType::CSMSRootCertificate;
     case ocpp::v2::GetCertificateIdUseEnum::ManufacturerRootCertificate:
         return ocpp::CertificateType::MFRootCertificate;
+    case ocpp::v2::GetCertificateIdUseEnum::OEMRootCertificate:
+        return ocpp::CertificateType::OEMRootCertificate;
     }
 
     throw EnumConversionException("Could not convert GetCertificateIdUseEnum to CertificateType");
@@ -167,6 +173,8 @@ ocpp::CaCertificateType from_ocpp_v2(ocpp::v2::InstallCertificateUseEnum other) 
         return ocpp::CaCertificateType::CSMS;
     case ocpp::v2::InstallCertificateUseEnum::ManufacturerRootCertificate:
         return ocpp::CaCertificateType::MF;
+    case ocpp::v2::InstallCertificateUseEnum::OEMRootCertificate:
+        return ocpp::CaCertificateType::OEM;
     }
 
     throw EnumConversionException("Could not convert CaCertificateType to InstallCertificateUseEnum");
@@ -178,6 +186,8 @@ ocpp::CertificateSigningUseEnum from_ocpp_v2(ocpp::v2::CertificateSigningUseEnum
         return ocpp::CertificateSigningUseEnum::ChargingStationCertificate;
     case ocpp::v2::CertificateSigningUseEnum::V2GCertificate:
         return ocpp::CertificateSigningUseEnum::V2GCertificate;
+    case ocpp::v2::CertificateSigningUseEnum::V2G20Certificate:
+        return ocpp::CertificateSigningUseEnum::V2G20Certificate;
     }
 
     throw EnumConversionException("Could not convert CertificateSigningUseEnum to CertificateSigningUseEnum");

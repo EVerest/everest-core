@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/ReserveNow.hpp>
@@ -25,17 +25,17 @@ void to_json(json& j, const ReserveNowRequest& k) {
         {"idToken", k.idToken},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.connectorType) {
-        j["connectorType"] = conversions::connector_enum_to_string(k.connectorType.value());
+        j["connectorType"] = k.connectorType.value();
     }
     if (k.evseId) {
         j["evseId"] = k.evseId.value();
     }
     if (k.groupIdToken) {
         j["groupIdToken"] = k.groupIdToken.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -46,17 +46,17 @@ void from_json(const json& j, ReserveNowRequest& k) {
     k.idToken = j.at("idToken");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("connectorType")) {
-        k.connectorType.emplace(conversions::string_to_connector_enum(j.at("connectorType")));
+        k.connectorType.emplace(j.at("connectorType"));
     }
     if (j.contains("evseId")) {
         k.evseId.emplace(j.at("evseId"));
     }
     if (j.contains("groupIdToken")) {
         k.groupIdToken.emplace(j.at("groupIdToken"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -77,11 +77,11 @@ void to_json(json& j, const ReserveNowResponse& k) {
         {"status", conversions::reserve_now_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -90,11 +90,11 @@ void from_json(const json& j, ReserveNowResponse& k) {
     k.status = conversions::string_to_reserve_now_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

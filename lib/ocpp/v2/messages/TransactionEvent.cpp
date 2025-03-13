@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/TransactionEvent.hpp>
@@ -27,8 +27,8 @@ void to_json(json& j, const TransactionEventRequest& k) {
         {"transactionInfo", k.transactionInfo},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
+    if (k.costDetails) {
+        j["costDetails"] = k.costDetails.value();
     }
     if (k.meterValue) {
         j["meterValue"] = json::array();
@@ -48,11 +48,21 @@ void to_json(json& j, const TransactionEventRequest& k) {
     if (k.reservationId) {
         j["reservationId"] = k.reservationId.value();
     }
+    if (k.preconditioningStatus) {
+        j["preconditioningStatus"] =
+            conversions::preconditioning_status_enum_to_string(k.preconditioningStatus.value());
+    }
+    if (k.evseSleep) {
+        j["evseSleep"] = k.evseSleep.value();
+    }
     if (k.evse) {
         j["evse"] = k.evse.value();
     }
     if (k.idToken) {
         j["idToken"] = k.idToken.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -65,8 +75,8 @@ void from_json(const json& j, TransactionEventRequest& k) {
     k.transactionInfo = j.at("transactionInfo");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
+    if (j.contains("costDetails")) {
+        k.costDetails.emplace(j.at("costDetails"));
     }
     if (j.contains("meterValue")) {
         json arr = j.at("meterValue");
@@ -88,11 +98,21 @@ void from_json(const json& j, TransactionEventRequest& k) {
     if (j.contains("reservationId")) {
         k.reservationId.emplace(j.at("reservationId"));
     }
+    if (j.contains("preconditioningStatus")) {
+        k.preconditioningStatus.emplace(
+            conversions::string_to_preconditioning_status_enum(j.at("preconditioningStatus")));
+    }
+    if (j.contains("evseSleep")) {
+        k.evseSleep.emplace(j.at("evseSleep"));
+    }
     if (j.contains("evse")) {
         k.evse.emplace(j.at("evse"));
     }
     if (j.contains("idToken")) {
         k.idToken.emplace(j.at("idToken"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -111,9 +131,6 @@ void to_json(json& j, const TransactionEventResponse& k) {
     // the required parts of the message
     j = json({}, true);
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.totalCost) {
         j["totalCost"] = k.totalCost.value();
     }
@@ -123,8 +140,24 @@ void to_json(json& j, const TransactionEventResponse& k) {
     if (k.idTokenInfo) {
         j["idTokenInfo"] = k.idTokenInfo.value();
     }
+    if (k.transactionLimit) {
+        j["transactionLimit"] = k.transactionLimit.value();
+    }
     if (k.updatedPersonalMessage) {
         j["updatedPersonalMessage"] = k.updatedPersonalMessage.value();
+    }
+    if (k.updatedPersonalMessageExtra) {
+        if (j.size() == 0) {
+            j = json{{"updatedPersonalMessageExtra", json::array()}};
+        } else {
+            j["updatedPersonalMessageExtra"] = json::array();
+        }
+        for (auto val : k.updatedPersonalMessageExtra.value()) {
+            j["updatedPersonalMessageExtra"].push_back(val);
+        }
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -132,9 +165,6 @@ void from_json(const json& j, TransactionEventResponse& k) {
     // the required parts of the message
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("totalCost")) {
         k.totalCost.emplace(j.at("totalCost"));
     }
@@ -144,8 +174,22 @@ void from_json(const json& j, TransactionEventResponse& k) {
     if (j.contains("idTokenInfo")) {
         k.idTokenInfo.emplace(j.at("idTokenInfo"));
     }
+    if (j.contains("transactionLimit")) {
+        k.transactionLimit.emplace(j.at("transactionLimit"));
+    }
     if (j.contains("updatedPersonalMessage")) {
         k.updatedPersonalMessage.emplace(j.at("updatedPersonalMessage"));
+    }
+    if (j.contains("updatedPersonalMessageExtra")) {
+        json arr = j.at("updatedPersonalMessageExtra");
+        std::vector<MessageContent> vec;
+        for (auto val : arr) {
+            vec.push_back(val);
+        }
+        k.updatedPersonalMessageExtra.emplace(vec);
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

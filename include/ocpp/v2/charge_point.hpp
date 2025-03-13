@@ -248,7 +248,7 @@ public:
     /// \param certificate
     /// \param ocsp_request_data
     /// \return AuthorizeResponse containing the result of the validation
-    virtual AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+    virtual AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<10000>>& certificate,
                                              const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) = 0;
 
     /// \brief Data transfer mechanism initiated by charger
@@ -363,6 +363,8 @@ private:
 
     // states
     std::atomic<RegistrationStatusEnum> registration_status;
+    std::atomic<OcppProtocolVersion> ocpp_version =
+        OcppProtocolVersion::Unknown; // version that is currently in use, selected by CSMS in websocket handshake
     std::atomic<UploadLogStatusEnum> upload_log_status;
     std::atomic<int32_t> upload_log_status_id;
     BootReasonEnum bootreason;
@@ -400,7 +402,8 @@ private:
     // internal helper functions
     void initialize(const std::map<int32_t, int32_t>& evse_connector_structure, const std::string& message_log_path);
     void websocket_connected_callback(const int configuration_slot,
-                                      const NetworkConnectionProfile& network_connection_profile);
+                                      const NetworkConnectionProfile& network_connection_profile,
+                                      const OcppProtocolVersion ocpp_version);
     void websocket_disconnected_callback(const int configuration_slot,
                                          const NetworkConnectionProfile& network_connection_profile);
     void websocket_connection_failed(ConnectionFailedReason reason);
@@ -562,7 +565,7 @@ public:
 
     std::optional<std::string> get_evse_transaction_id(int32_t evse_id) override;
 
-    AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+    AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<10000>>& certificate,
                                      const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) override;
 
     void on_event(const std::vector<EventData>& events) override;

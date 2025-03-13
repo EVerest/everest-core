@@ -777,6 +777,8 @@ std::string ca_certificate_type_to_string(CaCertificateType e) {
         return "CSMS";
     case CaCertificateType::MF:
         return "MF";
+    case CaCertificateType::OEM:
+        return "OEM";
     }
 
     throw EnumToStringException{e, "CaCertificateType"};
@@ -791,6 +793,8 @@ CaCertificateType string_to_ca_certificate_type(const std::string& s) {
         return CaCertificateType::CSMS;
     } else if (s == "MF") {
         return CaCertificateType::MF;
+    } else if (s == "OEM") {
+        return CaCertificateType::OEM;
     }
     throw StringToEnumException{s, "CertificateType"};
 }
@@ -1103,6 +1107,8 @@ std::string certificate_signing_use_enum_to_string(CertificateSigningUseEnum e) 
         return "V2GCertificate";
     case CertificateSigningUseEnum::ManufacturerCertificate:
         return "ManufacturerCertificate";
+    case CertificateSigningUseEnum::V2G20Certificate:
+        return "V2G20Certificate";
     }
 
     throw EnumToStringException{e, "CertificateSigningUseEnum"};
@@ -1117,6 +1123,9 @@ CertificateSigningUseEnum string_to_certificate_signing_use_enum(const std::stri
     }
     if (s == "ManufacturerCertificate") {
         return CertificateSigningUseEnum::ManufacturerCertificate;
+    }
+    if (s == "V2G20Certificate") {
+        return CertificateSigningUseEnum::V2G20Certificate;
     }
 
     throw StringToEnumException{s, "CertificateSigningUseEnum"};
@@ -1141,6 +1150,8 @@ std::string certificate_type_to_string(CertificateType e) {
         return "V2GCertificateChain";
     case CertificateType::MFRootCertificate:
         return "MFRootCertificate";
+    case CertificateType::OEMRootCertificate:
+        return "OEMRootCertificate";
     }
 
     throw EnumToStringException{e, "CertificateType"};
@@ -1161,6 +1172,9 @@ CertificateType string_to_certificate_type(const std::string& s) {
     }
     if (s == "MFRootCertificate") {
         return CertificateType::MFRootCertificate;
+    }
+    if (s == "OEMRootCertificate") {
+        return CertificateType::OEMRootCertificate;
     }
 
     throw StringToEnumException{s, "CertificateType"};

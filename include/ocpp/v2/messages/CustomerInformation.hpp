@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #ifndef OCPP_V2_CUSTOMERINFORMATION_HPP
@@ -20,10 +20,10 @@ struct CustomerInformationRequest : public ocpp::Message {
     int32_t requestId;
     bool report;
     bool clear;
-    std::optional<CustomData> customData;
     std::optional<CertificateHashDataType> customerCertificate;
     std::optional<IdToken> idToken;
     std::optional<CiString<64>> customerIdentifier;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this CustomerInformation message as a human readable string
     /// \returns the message type as a human readable string
@@ -43,8 +43,8 @@ std::ostream& operator<<(std::ostream& os, const CustomerInformationRequest& k);
 /// \brief Contains a OCPP CustomerInformationResponse message
 struct CustomerInformationResponse : public ocpp::Message {
     CustomerInformationStatusEnum status;
-    std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this CustomerInformationResponse message as a human readable string
     /// \returns the message type as a human readable string

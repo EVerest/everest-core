@@ -1,4 +1,4 @@
-{% if action.is_request %}
+{% if action.is_request or action.is_send %}
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
@@ -15,9 +15,18 @@
 #include <ocpp/{{namespace}}/constants.hpp>
 {% endif %}
 {% if needs_enums %}
+{% if namespace == 'v21' %}
+#include <ocpp/v2/ocpp_enums.hpp>
+{% else %}
 #include <ocpp/{{namespace}}/ocpp_enums.hpp>
 {% endif %}
+{% endif %}
+{% if namespace == 'v21' %}
+#include <ocpp/v2/ocpp_types.hpp>
+using namespace ocpp::v2;
+{% else %}
 #include <ocpp/{{namespace}}/ocpp_types.hpp>
+{% endif %}
 {% if needs_types %}
 #include <ocpp/common/types.hpp>
 {% endif %}
@@ -59,7 +68,7 @@ std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k);
 {% endif %}
 {% endfor %}
 
-{% if not action.is_request %}
+{% if not action.is_request or action.is_send %}
 } // namespace {{namespace}}
 } // namespace ocpp
 

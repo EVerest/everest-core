@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/SendLocalList.hpp>
@@ -24,14 +24,14 @@ void to_json(json& j, const SendLocalListRequest& k) {
         {"updateType", conversions::update_enum_to_string(k.updateType)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.localAuthorizationList) {
         j["localAuthorizationList"] = json::array();
         for (auto val : k.localAuthorizationList.value()) {
             j["localAuthorizationList"].push_back(val);
         }
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -41,9 +41,6 @@ void from_json(const json& j, SendLocalListRequest& k) {
     k.updateType = conversions::string_to_update_enum(j.at("updateType"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("localAuthorizationList")) {
         json arr = j.at("localAuthorizationList");
         std::vector<AuthorizationData> vec;
@@ -51,6 +48,9 @@ void from_json(const json& j, SendLocalListRequest& k) {
             vec.push_back(val);
         }
         k.localAuthorizationList.emplace(vec);
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -71,11 +71,11 @@ void to_json(json& j, const SendLocalListResponse& k) {
         {"status", conversions::send_local_list_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -84,11 +84,11 @@ void from_json(const json& j, SendLocalListResponse& k) {
     k.status = conversions::string_to_send_local_list_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

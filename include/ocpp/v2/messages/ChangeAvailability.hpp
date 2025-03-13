@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #ifndef OCPP_V2_CHANGEAVAILABILITY_HPP
@@ -18,8 +18,8 @@ namespace v2 {
 /// \brief Contains a OCPP ChangeAvailability message
 struct ChangeAvailabilityRequest : public ocpp::Message {
     OperationalStatusEnum operationalStatus;
-    std::optional<CustomData> customData;
     std::optional<EVSE> evse;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ChangeAvailability message as a human readable string
     /// \returns the message type as a human readable string
@@ -39,8 +39,8 @@ std::ostream& operator<<(std::ostream& os, const ChangeAvailabilityRequest& k);
 /// \brief Contains a OCPP ChangeAvailabilityResponse message
 struct ChangeAvailabilityResponse : public ocpp::Message {
     ChangeAvailabilityStatusEnum status;
-    std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ChangeAvailabilityResponse message as a human readable string
     /// \returns the message type as a human readable string

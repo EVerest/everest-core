@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/ClearedChargingLimit.hpp>
@@ -20,27 +20,27 @@ std::string ClearedChargingLimitRequest::get_type() const {
 void to_json(json& j, const ClearedChargingLimitRequest& k) {
     // the required parts of the message
     j = json{
-        {"chargingLimitSource", conversions::charging_limit_source_enum_to_string(k.chargingLimitSource)},
+        {"chargingLimitSource", k.chargingLimitSource},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.evseId) {
         j["evseId"] = k.evseId.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
 void from_json(const json& j, ClearedChargingLimitRequest& k) {
     // the required parts of the message
-    k.chargingLimitSource = conversions::string_to_charging_limit_source_enum(j.at("chargingLimitSource"));
+    k.chargingLimitSource = j.at("chargingLimitSource");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("evseId")) {
         k.evseId.emplace(j.at("evseId"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

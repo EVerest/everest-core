@@ -11,8 +11,12 @@ namespace ocpp {
 namespace v2 {
 
 Transaction EnhancedTransaction::get_transaction() {
-    Transaction transaction = {this->transactionId,     std::nullopt,        this->chargingState,
-                               this->timeSpentCharging, this->stoppedReason, this->remoteStartId};
+    Transaction transaction;
+    transaction.transactionId = this->transactionId;
+    transaction.chargingState = this->chargingState;
+    transaction.timeSpentCharging = this->timeSpentCharging;
+    transaction.stoppedReason = this->stoppedReason;
+    transaction.remoteStartId = this->remoteStartId;
     return transaction;
 }
 

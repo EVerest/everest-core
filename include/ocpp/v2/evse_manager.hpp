@@ -37,7 +37,7 @@ public:
     /// \param evse_id          The evse id to check for.
     /// \param connector_type   The connector type.
     /// \return False if evse id does not exist or evse does not have the given connector type.
-    virtual bool does_connector_exist(const int32_t evse_id, ConnectorEnum connector_type) const = 0;
+    virtual bool does_connector_exist(const int32_t evse_id, const CiString<20> connector_type) const = 0;
 
     /// \brief Check if an evse with \p id exists
     virtual bool does_evse_exist(int32_t id) const = 0;
@@ -91,7 +91,7 @@ public:
     EvseInterface& get_evse(int32_t id) override;
     const EvseInterface& get_evse(const int32_t id) const override;
 
-    virtual bool does_connector_exist(const int32_t evse_id, const ConnectorEnum connector_type) const override;
+    virtual bool does_connector_exist(const int32_t evse_id, const CiString<20> connector_type) const override;
     bool does_evse_exist(const int32_t id) const override;
 
     bool are_all_connectors_effectively_inoperative() const override;

@@ -379,7 +379,7 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
 
     int index_to_override = -1;
     int index = 0;
-    for (const SetNetworkProfileRequest network_profile : network_connection_profiles) {
+    for (const SetNetworkProfileRequest& network_profile : network_connection_profiles) {
         if (network_profile.configurationSlot == msg.configurationSlot) {
             index_to_override = index;
         }
@@ -506,7 +506,7 @@ void Provisioning::handle_reset_req(Call<ResetRequest> call) {
 }
 
 void Provisioning::handle_variable_changed(const SetVariableData& set_variable_data) {
-    ComponentVariable component_variable = {set_variable_data.component, std::nullopt, set_variable_data.variable};
+    ComponentVariable component_variable = {set_variable_data.component, set_variable_data.variable, std::nullopt};
 
     if (set_variable_data.attributeType.has_value() and
         set_variable_data.attributeType.value() != AttributeEnum::Actual) {
@@ -593,7 +593,7 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
 }
 
 bool Provisioning::validate_set_variable(const SetVariableData& set_variable_data) {
-    ComponentVariable cv = {set_variable_data.component, std::nullopt, set_variable_data.variable};
+    ComponentVariable cv = {set_variable_data.component, set_variable_data.variable, std::nullopt};
     if (cv == ControllerComponentVariables::NetworkConfigurationPriority) {
         const auto network_configuration_priorities = ocpp::split_string(set_variable_data.attributeValue.get(), ',');
         const auto active_security_profile =

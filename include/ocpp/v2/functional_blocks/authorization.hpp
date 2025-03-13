@@ -21,7 +21,7 @@ public:
     }
 
     virtual void start_auth_cache_cleanup_thread() = 0;
-    virtual AuthorizeResponse authorize_req(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+    virtual AuthorizeResponse authorize_req(const IdToken id_token, const std::optional<CiString<10000>>& certificate,
                                             const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) = 0;
     virtual void trigger_authorization_cache_cleanup() = 0;
     ///\brief Calculate and update the authorization cache size in the device model
@@ -38,7 +38,7 @@ public:
     /// \param certificate
     /// \param ocsp_request_data
     /// \return AuthorizeResponse containing the result of the validation
-    virtual AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+    virtual AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<10000>>& certificate,
                                              const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) = 0;
 };
 
@@ -58,7 +58,7 @@ public:
     ~Authorization();
     void start_auth_cache_cleanup_thread() override;
     void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;
-    AuthorizeResponse authorize_req(const IdToken id_token, const std::optional<ocpp::CiString<5500>>& certificate,
+    AuthorizeResponse authorize_req(const IdToken id_token, const std::optional<ocpp::CiString<10000>>& certificate,
                                     const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) override;
     void trigger_authorization_cache_cleanup() override;
     void update_authorization_cache_size() override;
@@ -72,7 +72,7 @@ public:
     /// \param certificate
     /// \param ocsp_request_data
     /// \return AuthorizeResponse containing the result of the validation
-    AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+    AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<10000>>& certificate,
                                      const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) override;
 
 private: // Functions

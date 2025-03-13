@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/Authorize.hpp>
@@ -23,9 +23,6 @@ void to_json(json& j, const AuthorizeRequest& k) {
         {"idToken", k.idToken},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.certificate) {
         j["certificate"] = k.certificate.value();
     }
@@ -35,6 +32,9 @@ void to_json(json& j, const AuthorizeRequest& k) {
             j["iso15118CertificateHashData"].push_back(val);
         }
     }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
+    }
 }
 
 void from_json(const json& j, AuthorizeRequest& k) {
@@ -42,9 +42,6 @@ void from_json(const json& j, AuthorizeRequest& k) {
     k.idToken = j.at("idToken");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("certificate")) {
         k.certificate.emplace(j.at("certificate"));
     }
@@ -55,6 +52,9 @@ void from_json(const json& j, AuthorizeRequest& k) {
             vec.push_back(val);
         }
         k.iso15118CertificateHashData.emplace(vec);
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -75,11 +75,20 @@ void to_json(json& j, const AuthorizeResponse& k) {
         {"idTokenInfo", k.idTokenInfo},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.certificateStatus) {
         j["certificateStatus"] = conversions::authorize_certificate_status_enum_to_string(k.certificateStatus.value());
+    }
+    if (k.allowedEnergyTransfer) {
+        j["allowedEnergyTransfer"] = json::array();
+        for (auto val : k.allowedEnergyTransfer.value()) {
+            j["allowedEnergyTransfer"].push_back(conversions::energy_transfer_mode_enum_to_string(val));
+        }
+    }
+    if (k.tariff) {
+        j["tariff"] = k.tariff.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -88,12 +97,23 @@ void from_json(const json& j, AuthorizeResponse& k) {
     k.idTokenInfo = j.at("idTokenInfo");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("certificateStatus")) {
         k.certificateStatus.emplace(
             conversions::string_to_authorize_certificate_status_enum(j.at("certificateStatus")));
+    }
+    if (j.contains("allowedEnergyTransfer")) {
+        json arr = j.at("allowedEnergyTransfer");
+        std::vector<EnergyTransferModeEnum> vec;
+        for (auto val : arr) {
+            vec.push_back(conversions::string_to_energy_transfer_mode_enum(val));
+        }
+        k.allowedEnergyTransfer.emplace(vec);
+    }
+    if (j.contains("tariff")) {
+        k.tariff.emplace(j.at("tariff"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

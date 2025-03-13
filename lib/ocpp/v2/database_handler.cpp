@@ -453,9 +453,19 @@ void DatabaseHandler::transaction_metervalues_insert(const std::string& transact
 
             insert_stmt->bind_text("@signed_meter_data", signedMeterValue.signedMeterData.get(),
                                    SQLiteString::Transient);
-            insert_stmt->bind_text("@signing_method", signedMeterValue.signingMethod.get(), SQLiteString::Transient);
+            if (signedMeterValue.signingMethod.has_value()) {
+                insert_stmt->bind_text("@signing_method", signedMeterValue.signingMethod.value().get(),
+                                       SQLiteString::Transient);
+            } else {
+                insert_stmt->bind_null("@signing_method");
+            }
             insert_stmt->bind_text("@encoding_method", signedMeterValue.encodingMethod.get(), SQLiteString::Transient);
-            insert_stmt->bind_text("@public_key", signedMeterValue.publicKey.get(), SQLiteString::Transient);
+            if (signedMeterValue.publicKey.has_value()) {
+                insert_stmt->bind_text("@public_key", signedMeterValue.publicKey.value().get(),
+                                       SQLiteString::Transient);
+            } else {
+                insert_stmt->bind_null("@public_key");
+            }
         } else {
             insert_stmt->bind_null("@signed_meter_data");
             insert_stmt->bind_null("@signing_method");
@@ -730,7 +740,7 @@ void DatabaseHandler::transaction_delete(const std::string& transaction_id) {
 }
 
 void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const v2::ChargingProfile& profile,
-                                                        const ChargingLimitSourceEnum charging_limit_source) {
+                                                        const CiString<20> charging_limit_source) {
     // add or replace
     std::string sql =
         "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, EVSE_ID, STACK_LEVEL, CHARGING_PROFILE_PURPOSE, "
@@ -753,7 +763,7 @@ void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const
     }
 
     stmt->bind_text("@profile", json_profile.dump(), SQLiteString::Transient);
-    stmt->bind_text("@charging_limit_source", conversions::charging_limit_source_enum_to_string(charging_limit_source));
+    stmt->bind_text("@charging_limit_source", charging_limit_source.get());
 
     if (stmt->step() != SQLITE_DONE) {
         throw QueryExecutionException(this->database->get_error_message());
@@ -873,11 +883,10 @@ DatabaseHandler::get_charging_profiles_matching_criteria(const std::optional<int
         }
 
         while (stmt->step() != SQLITE_DONE) {
-            results.push_back(ReportedChargingProfile(
-                json::parse(stmt->column_text(1)),                                      // profile
-                stmt->column_int(0),                                                    // EVSE ID
-                conversions::string_to_charging_limit_source_enum(stmt->column_text(2)) // source
-                ));
+            results.push_back(ReportedChargingProfile(json::parse(stmt->column_text(1)), // profile
+                                                      stmt->column_int(0),               // EVSE ID
+                                                      CiString<20>(stmt->column_text(2)) // source
+                                                      ));
         }
         return results;
     }
@@ -892,9 +901,8 @@ DatabaseHandler::get_charging_profiles_matching_criteria(const std::optional<int
 
     if (criteria.chargingLimitSource.has_value() && !criteria.chargingLimitSource->empty()) {
         std::string sources = boost::algorithm::join(
-            criteria.chargingLimitSource.value() | boost::adaptors::transformed([](ChargingLimitSourceEnum source) {
-                return "'" + conversions::charging_limit_source_enum_to_string(source) + "'";
-            }),
+            criteria.chargingLimitSource.value() |
+                boost::adaptors::transformed([](CiString<20> source) { return "'" + source.get() + "'"; }),
             ", ");
 
         where_clauses.push_back("CHARGING_LIMIT_SOURCE IN (" + sources + ")");
@@ -921,11 +929,10 @@ DatabaseHandler::get_charging_profiles_matching_criteria(const std::optional<int
     }
 
     while (stmt->step() != SQLITE_DONE) {
-        results.push_back(
-            ReportedChargingProfile(json::parse(stmt->column_text(1)),                                      // profile
-                                    stmt->column_int(0),                                                    // EVSE ID
-                                    conversions::string_to_charging_limit_source_enum(stmt->column_text(2)) // source
-                                    ));
+        results.push_back(ReportedChargingProfile(json::parse(stmt->column_text(1)), // profile
+                                                  stmt->column_int(0),               // EVSE ID
+                                                  CiString<20>(stmt->column_text(2)) // source
+                                                  ));
     }
 
     return results;
@@ -983,7 +990,7 @@ std::map<int32_t, std::vector<v2::ChargingProfile>> DatabaseHandler::get_all_cha
     return map;
 }
 
-ChargingLimitSourceEnum DatabaseHandler::get_charging_limit_source_for_profile(const int profile_id) {
+CiString<20> DatabaseHandler::get_charging_limit_source_for_profile(const int profile_id) {
     std::string sql = "SELECT CHARGING_LIMIT_SOURCE FROM CHARGING_PROFILES WHERE ID = @profile_id;";
 
     auto stmnt = this->database->new_statement(sql);
@@ -994,7 +1001,7 @@ ChargingLimitSourceEnum DatabaseHandler::get_charging_limit_source_for_profile(c
         EVLOG_warning << "No record found for " << profile_id;
     }
 
-    auto res = conversions::string_to_charging_limit_source_enum(stmnt->column_text(0));
+    auto res = CiString<20>(stmnt->column_text(0));
 
     if (stmnt->step() != SQLITE_DONE) {
         throw QueryExecutionException(this->database->get_error_message());

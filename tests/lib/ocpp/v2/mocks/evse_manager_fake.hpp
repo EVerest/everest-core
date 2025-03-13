@@ -52,7 +52,7 @@ public:
         return *this->evses.at(id - 1);
     }
 
-    virtual bool does_connector_exist(const int32_t evse_id, ConnectorEnum connector_type) const override {
+    virtual bool does_connector_exist(const int32_t evse_id, const CiString<20> connector_type) const override {
         if (evse_id > this->evses.size()) {
             return false;
         }

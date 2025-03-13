@@ -43,7 +43,6 @@ namespace ocpp::v2 {
 /// \brief Class that holds a component.
 ///
 /// When the component is read from the database, the component id will be set.
-/// When the component is read from the component config file, the 'required' vector will be filled.
 ///
 struct ComponentKey {
     std::optional<uint64_t> db_id;       ///< \brief Component id in the database.
@@ -51,7 +50,6 @@ struct ComponentKey {
     std::optional<std::string> instance; ///< \brief Component instance.
     std::optional<int32_t> evse_id;      ///< \brief Component evse id.
     std::optional<int32_t> connector_id; ///< \brief Component connector id.
-    std::vector<std::string> required;   ///< \brief List of required variables.
 
     ///
     /// \brief operator <, needed to add this class as key in a map.
@@ -85,8 +83,6 @@ struct DeviceModelVariable {
     VariableCharacteristics characteristics;
     /// \brief Variable attributes
     std::vector<DbVariableAttribute> attributes;
-    /// \brief True if variable is required
-    bool required;
     /// \brief Variable instance
     std::optional<std::string> instance;
     /// \brief Default value, if this is set in the component config json
@@ -221,11 +217,9 @@ private: // Functions
     ///
     /// \brief Get all component properties (variables) from the given (component) json.
     /// \param component_properties The json component properties
-    /// \param required_properties  The vector of required properties of this component.
     /// \return A vector with all Variables belonging to this component.
     ///
-    std::vector<DeviceModelVariable> get_all_component_properties(const json& component_properties,
-                                                                  std::vector<std::string> required_properties);
+    std::vector<DeviceModelVariable> get_all_component_properties(const json& component_properties);
 
     ///
     /// \brief Insert variable characteristics

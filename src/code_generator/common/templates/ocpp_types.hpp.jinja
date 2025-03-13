@@ -43,7 +43,7 @@ struct {{type.name}} {
     /// \brief Conversion from a given json object \p j to a given {{ type.name }} \p k
     void from_json(const json& j, {{ type.name }}& k);
 
-    // \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
+    /// \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
     /// \returns an output stream with the {{ type.name }} written to
     std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k);
 
@@ -52,9 +52,6 @@ struct {{type.name}} {
 {% endfor %}
 {%- endif %}
 {% if last %}
-{% if namespace == "v2" %}
-    struct RequiredComponentVariable : ComponentVariable {};
-{% endif %}
 } // namespace {{namespace}}
 } // namespace ocpp
 

@@ -15,8 +15,15 @@ namespace v2 {
 
 class DeviceModel;
 
-using WebsocketConnectionCallback = std::function<void(
-    int configuration_slot, const NetworkConnectionProfile& network_connection_profile, OcppProtocolVersion version)>;
+/// \brief The result of a configuration of a network profile.
+struct ConfigNetworkResult {
+    std::optional<std::string> interface_address; ///< ip address or interface string
+    bool success;                                 ///< true if the configuration was successful
+};
+
+using WebsocketConnectionCallback =
+    std::function<void(int configuration_slot, const NetworkConnectionProfile& network_connection_profile,
+                       const OcppProtocolVersion version)>;
 using WebsocketConnectionFailedCallback = std::function<void(ConnectionFailedReason reason)>;
 using ConfigureNetworkConnectionProfileCallback = std::function<std::future<ConfigNetworkResult>(
     const int32_t configuration_slot, const NetworkConnectionProfile& network_connection_profile)>;

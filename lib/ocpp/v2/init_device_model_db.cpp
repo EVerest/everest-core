@@ -18,7 +18,6 @@ namespace ocpp::v2 {
 
 // Forward declarations.
 static void check_integrity(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs);
-static std::optional<std::string> check_integrity_required_value(const DeviceModelVariable& variable);
 static std::vector<std::string> check_integrity_value_type(const DeviceModelVariable& variable);
 static bool value_is_of_type(const std::string& value, const DataEnum& type);
 static bool is_same_component_key(const ComponentKey& component_key1, const ComponentKey& component_key2);
@@ -65,7 +64,7 @@ void InitDeviceModelDb::initialize_database(const std::filesystem::path& config_
     // Get component config files from the filesystem.
     std::map<ComponentKey, std::vector<DeviceModelVariable>> component_configs = get_all_component_configs(config_path);
 
-    // Check if the config is consistent (fe has a value when required).
+    // Check if the config is consistent.
     check_integrity(component_configs);
 
     // Remove components from db if they do not exist in the component config
@@ -217,8 +216,7 @@ InitDeviceModelDb::read_component_config(const std::vector<std::filesystem::path
             json data = json::parse(config_file);
             ComponentKey p = data;
             if (data.contains("properties")) {
-                std::vector<DeviceModelVariable> variables =
-                    get_all_component_properties(data.at("properties"), p.required);
+                std::vector<DeviceModelVariable> variables = get_all_component_properties(data.at("properties"));
                 components.insert({p, variables});
             } else {
                 EVLOG_warning << "Component " << data.at("name") << " does not contain any properties";
@@ -233,20 +231,13 @@ InitDeviceModelDb::read_component_config(const std::vector<std::filesystem::path
     return components;
 }
 
-std::vector<DeviceModelVariable>
-InitDeviceModelDb::get_all_component_properties(const json& component_properties,
-                                                std::vector<std::string> required_properties) {
+std::vector<DeviceModelVariable> InitDeviceModelDb::get_all_component_properties(const json& component_properties) {
     std::vector<DeviceModelVariable> variables;
 
     for (const auto& variable : component_properties.items()) {
         DeviceModelVariable v = variable.value();
         const std::string variable_key_name = variable.key();
 
-        // Check if this is a required variable and if it is, add that to the variable struct.
-        if (std::find(required_properties.begin(), required_properties.end(), variable_key_name) !=
-            required_properties.end()) {
-            v.required = true;
-        }
         variables.push_back(v);
     }
 
@@ -362,8 +353,8 @@ void InitDeviceModelDb::update_variable_characteristics(const VariableCharacteri
 
 void InitDeviceModelDb::insert_variable(const DeviceModelVariable& variable, const uint64_t& component_id) {
     static const std::string statement =
-        "INSERT OR REPLACE INTO VARIABLE (NAME, INSTANCE, COMPONENT_ID, REQUIRED, SOURCE) VALUES "
-        "(@name, @instance, @component_id, @required, @source)";
+        "INSERT OR REPLACE INTO VARIABLE (NAME, INSTANCE, COMPONENT_ID, SOURCE) VALUES "
+        "(@name, @instance, @component_id, @source)";
 
     std::unique_ptr<common::SQLiteStatementInterface> insert_variable_statement;
     try {
@@ -381,9 +372,6 @@ void InitDeviceModelDb::insert_variable(const DeviceModelVariable& variable, con
     } else {
         insert_variable_statement->bind_null("@instance");
     }
-
-    const uint8_t required_int = (variable.required ? 1 : 0);
-    insert_variable_statement->bind_int("@required", required_int);
 
     if (variable.source.has_value()) {
         insert_variable_statement->bind_text("@source", variable.source.value());
@@ -411,7 +399,7 @@ void InitDeviceModelDb::update_variable(const DeviceModelVariable& variable, con
     }
 
     static const std::string update_variable_statement =
-        "UPDATE VARIABLE SET NAME=@name, INSTANCE=@instance, COMPONENT_ID=@component_id, REQUIRED=@required, "
+        "UPDATE VARIABLE SET NAME=@name, INSTANCE=@instance, COMPONENT_ID=@component_id, "
         "SOURCE=@source WHERE ID=@variable_id";
 
     std::unique_ptr<common::SQLiteStatementInterface> update_statement;
@@ -430,9 +418,6 @@ void InitDeviceModelDb::update_variable(const DeviceModelVariable& variable, con
     } else {
         update_statement->bind_null("@instance");
     }
-
-    const uint8_t required_int = (variable.required ? 1 : 0);
-    update_statement->bind_int("@required", required_int);
 
     if (variable.source.has_value()) {
         update_statement->bind_text("@source", variable.source.value(), ocpp::common::SQLiteString::Transient);
@@ -814,7 +799,7 @@ std::map<ComponentKey, std::vector<DeviceModelVariable>> InitDeviceModelDb::get_
     const std::string statement =
         "SELECT "
             "c.ID, c.NAME, c.INSTANCE, c.EVSE_ID, c.CONNECTOR_ID, "
-            "v.ID, v.NAME, v.INSTANCE, v.REQUIRED, "
+            "v.ID, v.NAME, v.INSTANCE, "
             "vc.ID, vc.DATATYPE_ID, vc.MAX_LIMIT, vc.MIN_LIMIT, vc.SUPPORTS_MONITORING, vc.UNIT, vc.VALUES_LIST, "
             "va.ID, va.MUTABILITY_ID, va.PERSISTENT, va.CONSTANT, va.TYPE_ID, va.VALUE, va.VALUE_SOURCE,"
             "v.SOURCE "
@@ -872,45 +857,42 @@ std::map<ComponentKey, std::vector<DeviceModelVariable>> InitDeviceModelDb::get_
 
         if (!variable_exists) {
             // Variable does not exist, add extra information from database.
-            if (select_statement->column_type(8) != SQLITE_NULL) {
-                new_variable.required = (select_statement->column_int(8) == 1 ? true : false);
+            new_variable.variable_characteristics_db_id = select_statement->column_int(8);
+            new_variable.characteristics.dataType = static_cast<DataEnum>(select_statement->column_int(9));
+            if (select_statement->column_type(10) != SQLITE_NULL) {
+                new_variable.characteristics.maxLimit = select_statement->column_double(10);
             }
-            new_variable.variable_characteristics_db_id = select_statement->column_int(9);
-            new_variable.characteristics.dataType = static_cast<DataEnum>(select_statement->column_int(10));
             if (select_statement->column_type(11) != SQLITE_NULL) {
-                new_variable.characteristics.maxLimit = select_statement->column_double(11);
+                new_variable.characteristics.minLimit = select_statement->column_double(11);
             }
-            if (select_statement->column_type(12) != SQLITE_NULL) {
-                new_variable.characteristics.minLimit = select_statement->column_double(12);
-            }
-            new_variable.characteristics.supportsMonitoring = (select_statement->column_int(13) == 1 ? true : false);
-            new_variable.characteristics.unit = select_statement->column_text_nullable(14);
-            new_variable.characteristics.valuesList = select_statement->column_text_nullable(15);
+            new_variable.characteristics.supportsMonitoring = (select_statement->column_int(12) == 1 ? true : false);
+            new_variable.characteristics.unit = select_statement->column_text_nullable(13);
+            new_variable.characteristics.valuesList = select_statement->column_text_nullable(14);
 
             // Variable is new, set variable pointer to this new variable.
             variable = &new_variable;
         }
 
         DbVariableAttribute attribute;
-        attribute.db_id = select_statement->column_int(16);
+        attribute.db_id = select_statement->column_int(15);
+        if (select_statement->column_type(16) != SQLITE_NULL) {
+            attribute.variable_attribute.mutability = static_cast<MutabilityEnum>(select_statement->column_int(16));
+        }
         if (select_statement->column_type(17) != SQLITE_NULL) {
-            attribute.variable_attribute.mutability = static_cast<MutabilityEnum>(select_statement->column_int(17));
+            attribute.variable_attribute.persistent = (select_statement->column_int(17) == 1 ? true : false);
         }
         if (select_statement->column_type(18) != SQLITE_NULL) {
-            attribute.variable_attribute.persistent = (select_statement->column_int(18) == 1 ? true : false);
+            attribute.variable_attribute.constant = (select_statement->column_int(18) == 1 ? true : false);
         }
         if (select_statement->column_type(19) != SQLITE_NULL) {
-            attribute.variable_attribute.constant = (select_statement->column_int(19) == 1 ? true : false);
+            attribute.variable_attribute.type = static_cast<AttributeEnum>(select_statement->column_int(19));
         }
-        if (select_statement->column_type(20) != SQLITE_NULL) {
-            attribute.variable_attribute.type = static_cast<AttributeEnum>(select_statement->column_int(20));
-        }
-        attribute.variable_attribute.value = select_statement->column_text_nullable(21);
-        attribute.value_source = select_statement->column_text_nullable(22);
+        attribute.variable_attribute.value = select_statement->column_text_nullable(20);
+        attribute.value_source = select_statement->column_text_nullable(21);
 
-        if (select_statement->column_type(23) != SQLITE_NULL) {
+        if (select_statement->column_type(22) != SQLITE_NULL) {
             try {
-                variable->source = select_statement->column_text(23);
+                variable->source = select_statement->column_text(22);
             } catch (const std::out_of_range& e) {
                 EVLOG_error << e.what() << ": Variable Source will not be set (so default will be used)";
             }
@@ -1178,13 +1160,6 @@ void from_json(const json& j, ComponentKey& c) {
     if (j.contains("instance")) {
         c.instance = j.at("instance");
     }
-
-    if (j.contains("required")) {
-        json const& r = j.at("required");
-        for (auto it = r.begin(); it != r.end(); ++it) {
-            c.required.push_back(it->get<std::string>());
-        }
-    }
 }
 
 void from_json(const json& j, VariableMonitoringMeta& c) {
@@ -1218,12 +1193,6 @@ void from_json(const json& j, DeviceModelVariable& c) {
         c.instance = j.at("instance");
     }
 
-    // Required is normally not in the config here but somewhere else, but well, if it is occasionally or just later
-    // on, it will be added here as well.
-    if (j.contains("required")) {
-        c.required = j.at("required");
-    }
-
     if (j.contains("default")) {
         // I want the default value as string here as it is stored in the db as a string as well.
         const json& default_value = j.at("default");
@@ -1249,14 +1218,13 @@ void from_json(const json& j, DeviceModelVariable& c) {
     }
 }
 
-/* Below functions check the integrity of the component config, for example if the type is correct or if a value is set
- * when a variable is required.
+/* Below functions check the integrity of the component config, for example if the type is correct.
  */
 
 ///
 /// \brief Check integrity of config.
 ///
-/// This will do some checks if the config is correct, for example if all required attributes have a value.
+/// This will do some checks if the config is correct.
 /// It will print all found integrity errors in the logging.
 ///
 /// \param component_configs    Read config from the file system.
@@ -1270,12 +1238,6 @@ static void check_integrity(const std::map<ComponentKey, std::vector<DeviceModel
         std::string component_errors = "- Component " + get_component_name_for_logging(component_key) + '\n';
         for (const DeviceModelVariable& variable : variables) {
             std::vector<std::string> error_messages;
-            if (variable.required) {
-                std::optional<std::string> error_message = check_integrity_required_value(variable);
-                if (error_message.has_value()) {
-                    error_messages.push_back(error_message.value());
-                }
-            }
 
             std::vector<std::string> value_type_errors = check_integrity_value_type(variable);
             for (const std::string& error : value_type_errors) {
@@ -1301,46 +1263,6 @@ static void check_integrity(const std::map<ComponentKey, std::vector<DeviceModel
     if (has_error) {
         EVLOG_AND_THROW(InitDeviceModelDbError(final_error_message));
     }
-}
-
-///
-/// \brief Check if a required device model variable has a value set or a default value.
-/// \param variable The variable to check.
-/// \return std::nullopt if the required variable has a value or default value. Error message if it is not.
-///
-static std::optional<std::string> check_integrity_required_value(const DeviceModelVariable& variable) {
-    // Required value has a different source so it is correct that the value is not set here.
-    if (variable.source.has_value() && variable.source != "OCPP") {
-        return std::nullopt;
-    }
-
-    // For now, we assume that if a variable is required, it should have an 'Actual' value. But the spec is not clear
-    // about this. There are some implicit signs in favor of having always at least an 'Actual' value, but it is not
-    // explicitly stated. Robert asked OCA about this.
-    const auto& actual_attribute =
-        std::find_if(variable.attributes.begin(), variable.attributes.end(), [](const DbVariableAttribute& attribute) {
-            if (attribute.variable_attribute.type.has_value() &&
-                attribute.variable_attribute.type.value() == AttributeEnum::Actual) {
-                return true;
-            }
-            return false;
-        });
-
-    if (actual_attribute == variable.attributes.end()) {
-        return "Could not find required Actual attribute.";
-    }
-
-    if (variable.default_actual_value.has_value()) {
-        // There is a default value set, so for this required variable, we have a value (maybe there is a
-        // value set as well but since we also have a default value, we don't have to check that)
-        return std::nullopt;
-    }
-
-    if (!actual_attribute->variable_attribute.value.has_value()) {
-        return "No value set for Actual attribute for required variable.";
-    }
-
-    return std::nullopt;
 }
 
 ///
@@ -1423,7 +1345,6 @@ static bool is_same_component_key(const ComponentKey& component_key1, const Comp
     if ((component_key1.name == component_key2.name) && (component_key1.evse_id == component_key2.evse_id) &&
         (component_key1.connector_id == component_key2.connector_id) &&
         (component_key1.instance == component_key2.instance)) {
-        // We did not compare the 'required' here as that does not define a ComponentKey
         return true;
     }
 
@@ -1575,8 +1496,7 @@ static bool is_same_variable(const DeviceModelVariable& v1, const DeviceModelVar
 /// \return True if they are different.
 ///
 static bool is_variable_different(const DeviceModelVariable& v1, const DeviceModelVariable& v2) {
-    if (is_same_variable(v1, v2) && (v1.required == v2.required) &&
-        !is_characteristics_different(v1.characteristics, v2.characteristics) &&
+    if (is_same_variable(v1, v2) && !is_characteristics_different(v1.characteristics, v2.characteristics) &&
         variable_has_same_monitors(v1.monitors, v2.monitors) &&
         variable_has_same_attributes(v1.attributes, v2.attributes)) {
         return false;

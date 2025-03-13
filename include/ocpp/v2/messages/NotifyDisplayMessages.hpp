@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #ifndef OCPP_V2_NOTIFYDISPLAYMESSAGES_HPP
@@ -18,9 +18,9 @@ namespace v2 {
 /// \brief Contains a OCPP NotifyDisplayMessages message
 struct NotifyDisplayMessagesRequest : public ocpp::Message {
     int32_t requestId;
-    std::optional<CustomData> customData;
     std::optional<std::vector<MessageInfo>> messageInfo;
     std::optional<bool> tbc;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this NotifyDisplayMessages message as a human readable string
     /// \returns the message type as a human readable string

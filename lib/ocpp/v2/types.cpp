@@ -268,6 +268,114 @@ std::string messagetype_to_string(MessageType m) {
         return "UpdateFirmware";
     case MessageType::UpdateFirmwareResponse:
         return "UpdateFirmwareResponse";
+    case MessageType::AdjustPeriodicEventStream:
+        return "AdjustPeriodicEventStream";
+    case MessageType::AdjustPeriodicEventStreamResponse:
+        return "AdjustPeriodicEventStreamResponse";
+    case MessageType::AFRRSignal:
+        return "AFRRSignal";
+    case MessageType::AFRRSignalResponse:
+        return "AFRRSignalResponse";
+    case MessageType::BatterySwap:
+        return "BatterySwap";
+    case MessageType::BatterySwapResponse:
+        return "BatterySwapResponse";
+    case MessageType::ChangeTransactionTariff:
+        return "ChangeTransactionTariff";
+    case MessageType::ChangeTransactionTariffResponse:
+        return "ChangeTransactionTariffResponse";
+    case MessageType::ClearDERControl:
+        return "ClearDERControl";
+    case MessageType::ClearDERControlResponse:
+        return "ClearDERControlResponse";
+    case MessageType::ClearTariffs:
+        return "ClearTariffs";
+    case MessageType::ClearTariffsResponse:
+        return "ClearTariffsResponse";
+    case MessageType::ClosePeriodicEventStream:
+        return "ClosePeriodicEventStream";
+    case MessageType::ClosePeriodicEventStreamResponse:
+        return "ClosePeriodicEventStreamResponse";
+    case MessageType::GetCRL:
+        return "GetCRL";
+    case MessageType::GetCRLResponse:
+        return "GetCRLResponse";
+    case MessageType::GetDERControl:
+        return "GetDERControl";
+    case MessageType::GetDERControlResponse:
+        return "GetDERControlResponse";
+    case MessageType::GetPeriodicEventStream:
+        return "GetPeriodicEventStream";
+    case MessageType::GetPeriodicEventStreamResponse:
+        return "GetPeriodicEventStreamResponse";
+    case MessageType::GetTariffs:
+        return "GetTariffs";
+    case MessageType::GetTariffsResponse:
+        return "GetTariffsResponse";
+    case MessageType::NotifyAllowedEnergyTransfer:
+        return "NotifyAllowedEnergyTransfer";
+    case MessageType::NotifyAllowedEnergyTransferResponse:
+        return "NotifyAllowedEnergyTransferResponse";
+    case MessageType::NotifyCRL:
+        return "NotifyCRL";
+    case MessageType::NotifyCRLResponse:
+        return "NotifyCRLResponse";
+    case MessageType::NotifyDERAlarm:
+        return "NotifyDERAlarm";
+    case MessageType::NotifyDERAlarmResponse:
+        return "NotifyDERAlarmResponse";
+    case MessageType::NotifyDERStartStop:
+        return "NotifyDERStartStop";
+    case MessageType::NotifyDERStartStopResponse:
+        return "NotifyDERStartStopResponse";
+    case MessageType::NotifyPeriodicEventStream:
+        return "NotifyPeriodicEventStream";
+    case MessageType::NotifyPeriodicEventStreamResponse:
+        return "NotifyPeriodicEventStreamResponse";
+    case MessageType::NotifyPriorityCharging:
+        return "NotifyPriorityCharging";
+    case MessageType::NotifyPriorityChargingResponse:
+        return "NotifyPriorityChargingResponse";
+    case MessageType::NotifyQRCodeScanned:
+        return "NotifyQRCodeScanned";
+    case MessageType::NotifyQRCodeScannedResponse:
+        return "NotifyQRCodeScannedResponse";
+    case MessageType::NotifySettlement:
+        return "NotifySettlement";
+    case MessageType::NotifySettlementResponse:
+        return "NotifySettlementResponse";
+    case MessageType::OpenPeriodicEventStream:
+        return "OpenPeriodicEventStream";
+    case MessageType::OpenPeriodicEventStreamResponse:
+        return "OpenPeriodicEventStreamResponse";
+    case MessageType::PullDynamicScheduleUpdate:
+        return "PullDynamicScheduleUpdate";
+    case MessageType::PullDynamicScheduleUpdateResponse:
+        return "PullDynamicScheduleUpdateResponse";
+    case MessageType::RequestBatterySwap:
+        return "RequestBatterySwap";
+    case MessageType::RequestBatterySwapResponse:
+        return "RequestBatterySwapResponse";
+    case MessageType::SetDefaultTariff:
+        return "SetDefaultTariff";
+    case MessageType::SetDefaultTariffResponse:
+        return "SetDefaultTariffResponse";
+    case MessageType::SetDERControl:
+        return "SetDERControl";
+    case MessageType::SetDERControlResponse:
+        return "SetDERControlResponse";
+    case MessageType::UpdateDynamicSchedule:
+        return "UpdateDynamicSchedule";
+    case MessageType::UpdateDynamicScheduleResponse:
+        return "UpdateDynamicScheduleResponse";
+    case MessageType::UsePriorityCharging:
+        return "UsePriorityCharging";
+    case MessageType::UsePriorityChargingResponse:
+        return "UsePriorityChargingResponse";
+    case MessageType::VatNumberValidation:
+        return "VatNumberValidation";
+    case MessageType::VatNumberValidationResponse:
+        return "VatNumberValidationResponse";
     case MessageType::InternalError:
         return "InternalError";
     }
@@ -533,6 +641,114 @@ MessageType string_to_messagetype(const std::string& s) {
         return MessageType::UpdateFirmwareResponse;
     } else if (s == "InternalError") {
         return MessageType::InternalError;
+    } else if (s == "AdjustPeriodicEventStream") {
+        return MessageType::AdjustPeriodicEventStream;
+    } else if (s == "AdjustPeriodicEventStreamResponse") {
+        return MessageType::AdjustPeriodicEventStreamResponse;
+    } else if (s == "AFRRSignal") {
+        return MessageType::AFRRSignal;
+    } else if (s == "AFRRSignalResponse") {
+        return MessageType::AFRRSignalResponse;
+    } else if (s == "BatterySwap") {
+        return MessageType::BatterySwap;
+    } else if (s == "BatterySwapResponse") {
+        return MessageType::BatterySwapResponse;
+    } else if (s == "ChangeTransactionTariff") {
+        return MessageType::ChangeTransactionTariff;
+    } else if (s == "ChangeTransactionTariffResponse") {
+        return MessageType::ChangeTransactionTariffResponse;
+    } else if (s == "ClearDERControl") {
+        return MessageType::ClearDERControl;
+    } else if (s == "ClearDERControlResponse") {
+        return MessageType::ClearDERControlResponse;
+    } else if (s == "ClearTariffs") {
+        return MessageType::ClearTariffs;
+    } else if (s == "ClearTariffsResponse") {
+        return MessageType::ClearTariffsResponse;
+    } else if (s == "ClosePeriodicEventStream") {
+        return MessageType::ClosePeriodicEventStream;
+    } else if (s == "ClosePeriodicEventStreamResponse") {
+        return MessageType::ClosePeriodicEventStreamResponse;
+    } else if (s == "GetCRL") {
+        return MessageType::GetCRL;
+    } else if (s == "GetCRLResponse") {
+        return MessageType::GetCRLResponse;
+    } else if (s == "GetDERControl") {
+        return MessageType::GetDERControl;
+    } else if (s == "GetDERControlResponse") {
+        return MessageType::GetDERControlResponse;
+    } else if (s == "GetPeriodicEventStream") {
+        return MessageType::GetPeriodicEventStream;
+    } else if (s == "GetPeriodicEventStreamResponse") {
+        return MessageType::GetPeriodicEventStreamResponse;
+    } else if (s == "GetTariffs") {
+        return MessageType::GetTariffs;
+    } else if (s == "GetTariffsResponse") {
+        return MessageType::GetTariffsResponse;
+    } else if (s == "NotifyAllowedEnergyTransfer") {
+        return MessageType::NotifyAllowedEnergyTransfer;
+    } else if (s == "NotifyAllowedEnergyTransferResponse") {
+        return MessageType::NotifyAllowedEnergyTransferResponse;
+    } else if (s == "NotifyCRL") {
+        return MessageType::NotifyCRL;
+    } else if (s == "NotifyCRLResponse") {
+        return MessageType::NotifyCRLResponse;
+    } else if (s == "NotifyDERAlarm") {
+        return MessageType::NotifyDERAlarm;
+    } else if (s == "NotifyDERAlarmResponse") {
+        return MessageType::NotifyDERAlarmResponse;
+    } else if (s == "NotifyDERStartStop") {
+        return MessageType::NotifyDERStartStop;
+    } else if (s == "NotifyDERStartStopResponse") {
+        return MessageType::NotifyDERStartStopResponse;
+    } else if (s == "NotifyPeriodicEventStream") {
+        return MessageType::NotifyPeriodicEventStream;
+    } else if (s == "NotifyPeriodicEventStreamResponse") {
+        return MessageType::NotifyPeriodicEventStreamResponse;
+    } else if (s == "NotifyPriorityCharging") {
+        return MessageType::NotifyPriorityCharging;
+    } else if (s == "NotifyPriorityChargingResponse") {
+        return MessageType::NotifyPriorityChargingResponse;
+    } else if (s == "NotifyQRCodeScanned") {
+        return MessageType::NotifyQRCodeScanned;
+    } else if (s == "NotifyQRCodeScannedResponse") {
+        return MessageType::NotifyQRCodeScannedResponse;
+    } else if (s == "NotifySettlement") {
+        return MessageType::NotifySettlement;
+    } else if (s == "NotifySettlementResponse") {
+        return MessageType::NotifySettlementResponse;
+    } else if (s == "OpenPeriodicEventStream") {
+        return MessageType::OpenPeriodicEventStream;
+    } else if (s == "OpenPeriodicEventStreamResponse") {
+        return MessageType::OpenPeriodicEventStreamResponse;
+    } else if (s == "PullDynamicScheduleUpdate") {
+        return MessageType::PullDynamicScheduleUpdate;
+    } else if (s == "PullDynamicScheduleUpdateResponse") {
+        return MessageType::PullDynamicScheduleUpdateResponse;
+    } else if (s == "RequestBatterySwap") {
+        return MessageType::RequestBatterySwap;
+    } else if (s == "RequestBatterySwapResponse") {
+        return MessageType::RequestBatterySwapResponse;
+    } else if (s == "SetDefaultTariff") {
+        return MessageType::SetDefaultTariff;
+    } else if (s == "SetDefaultTariffResponse") {
+        return MessageType::SetDefaultTariffResponse;
+    } else if (s == "SetDERControl") {
+        return MessageType::SetDERControl;
+    } else if (s == "SetDERControlResponse") {
+        return MessageType::SetDERControlResponse;
+    } else if (s == "UpdateDynamicSchedule") {
+        return MessageType::UpdateDynamicSchedule;
+    } else if (s == "UpdateDynamicScheduleResponse") {
+        return MessageType::UpdateDynamicScheduleResponse;
+    } else if (s == "UsePriorityCharging") {
+        return MessageType::UsePriorityCharging;
+    } else if (s == "UsePriorityChargingResponse") {
+        return MessageType::UsePriorityChargingResponse;
+    } else if (s == "VatNumberValidation") {
+        return MessageType::VatNumberValidation;
+    } else if (s == "VatNumberValidationResponse") {
+        return MessageType::VatNumberValidationResponse;
     }
     throw StringToEnumException{s, "MessageType"};
 }

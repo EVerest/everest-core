@@ -56,8 +56,6 @@ if(LIBOCPP_ENABLE_V2)
 endif()
 
 add_custom_command(TARGET libocpp_unit_tests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/unittest_device_model.db ${CMAKE_CURRENT_BINARY_DIR}/resources/unittest_device_model.db
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/unittest_device_model_missing_required.db ${CMAKE_CURRENT_BINARY_DIR}/resources/unittest_device_model_missing_required.db
         COMMAND ${CMAKE_COMMAND} -E copy ${CONFIG_FILE_LOCATION_V16} ${CONFIG_FILE_RESOURCES_LOCATION_V16}
         COMMAND ${CMAKE_COMMAND} -E copy ${USER_CONFIG_FILE_LOCATION_V16} ${USER_CONFIG_FILE_RESOURCES_LOCATION_V16}
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${CONFIG_DIR_V16}

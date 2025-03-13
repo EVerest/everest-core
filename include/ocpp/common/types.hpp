@@ -442,7 +442,8 @@ enum class CaCertificateType {
     V2G,
     MO,
     CSMS,
-    MF
+    MF,
+    OEM
 };
 
 namespace conversions {
@@ -577,6 +578,7 @@ enum class CertificateType {
     CSMSRootCertificate,
     V2GCertificateChain,
     MFRootCertificate,
+    OEMRootCertificate,
 };
 
 namespace conversions {
@@ -633,7 +635,8 @@ std::ostream& operator<<(std::ostream& os, const OcppProtocolVersion& ocpp_proto
 enum class CertificateSigningUseEnum {
     ChargingStationCertificate,
     V2GCertificate,
-    ManufacturerCertificate
+    ManufacturerCertificate,
+    V2G20Certificate
 };
 
 namespace conversions {

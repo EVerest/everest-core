@@ -84,8 +84,8 @@ struct Callbacks {
     /// \brief Check if the current reservation for the given evse id is made for the id token / group id token.
     /// \return The reservation check status of this evse / id token.
     ///
-    std::function<ocpp::ReservationCheckStatus(const int32_t evse_id, const CiString<36> idToken,
-                                               const std::optional<CiString<36>> groupIdToken)>
+    std::function<ocpp::ReservationCheckStatus(const int32_t evse_id, const CiString<255> idToken,
+                                               const std::optional<CiString<255>> groupIdToken)>
         is_reservation_for_token_callback;
     std::function<UpdateFirmwareResponse(const UpdateFirmwareRequest& request)> update_firmware_request_callback;
     // callback to be called when a variable has been changed by the CSMS
@@ -145,7 +145,8 @@ struct Callbacks {
 
     /// \brief Callback function is called when the websocket connection status changes
     std::optional<std::function<void(const bool is_connected, const int configuration_slot,
-                                     const NetworkConnectionProfile& network_connection_profile)>>
+                                     const NetworkConnectionProfile& network_connection_profile,
+                                     const OcppProtocolVersion ocpp_version)>>
         connection_state_changed_callback;
 
     /// \brief Callback functions called for get / set / clear display messages

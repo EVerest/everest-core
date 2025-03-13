@@ -110,6 +110,7 @@ if(LIBOCPP_ENABLE_V2)
             ocpp/v2/functional_blocks/transaction.cpp
     )
     add_subdirectory(ocpp/v2/messages)
+    add_subdirectory(ocpp/v21/messages)
 endif()
 
 add_subdirectory(ocpp/common/websocket)

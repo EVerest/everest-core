@@ -4,10 +4,63 @@
 #ifndef OCPP_V2_CTRLR_COMPONENT_VARIABLES
 #define OCPP_V2_CTRLR_COMPONENT_VARIABLES
 
+#include <set>
+
 #include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 namespace v2 {
+///
+/// \brief Required ComponentVariable.
+///
+struct RequiredComponentVariable : ComponentVariable {
+    /// \brief Constructor
+    RequiredComponentVariable() : required_for({OcppProtocolVersion::v201, OcppProtocolVersion::v21}){};
+
+    ///
+    /// \brief RequiredComponentVariable
+    /// \param component    Component
+    /// \param variable     Variable
+    /// \param custom_data  Custom data (default nullopt)
+    /// \param required_for Required for which version. Multiple versions can be given.
+    ///
+    RequiredComponentVariable(const Component component, const std::optional<Variable> variable,
+                              const std::optional<CustomData> custom_data = std::nullopt,
+                              const std::set<OcppProtocolVersion>& required_for = {OcppProtocolVersion::v201,
+                                                                                   OcppProtocolVersion::v21}) :
+        ComponentVariable(), required_for(required_for) {
+        this->component = component;
+        this->variable = variable;
+        this->customData = custom_data;
+    };
+
+    /// \brief For which ocpp protocol version(s) this component variable is required.
+    std::set<OcppProtocolVersion> required_for;
+};
+
+///
+/// \brief Required variables per component.
+///
+/// First value is the 'available' variable from the specific component. Second value is a set of required variables.
+/// This makes it possible to check only for the required variables if a component is available.
+///
+extern const std::vector<std::pair<ComponentVariable, std::vector<RequiredComponentVariable>>>
+    required_component_available_variables;
+
+///
+/// \brief Required variables that should always exist, regardless of any available or not available controller.
+///
+extern const std::vector<RequiredComponentVariable> required_variables;
+
+///
+/// \brief Required variables of an EVSE.
+///
+extern const std::vector<Variable> required_evse_variables;
+
+///
+/// \brief Required variables of a connector.
+///
+extern const std::vector<Variable> required_connector_variables;
 
 namespace ControllerComponents {
 extern const Component InternalCtrlr;
@@ -88,6 +141,7 @@ extern const ComponentVariable MessageQueueSizeThreshold;
 extern const ComponentVariable MaxMessageSize;
 extern const ComponentVariable ResumeTransactionsOnBoot;
 extern const ComponentVariable AllowSecurityLevelZeroConnections;
+extern const RequiredComponentVariable SupportedOcppVersions;
 extern const ComponentVariable AlignedDataCtrlrEnabled;
 extern const ComponentVariable AlignedDataCtrlrAvailable;
 extern const RequiredComponentVariable AlignedDataInterval;

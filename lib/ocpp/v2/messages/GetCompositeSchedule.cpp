@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/GetCompositeSchedule.hpp>
@@ -24,11 +24,11 @@ void to_json(json& j, const GetCompositeScheduleRequest& k) {
         {"evseId", k.evseId},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.chargingRateUnit) {
         j["chargingRateUnit"] = conversions::charging_rate_unit_enum_to_string(k.chargingRateUnit.value());
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -38,11 +38,11 @@ void from_json(const json& j, GetCompositeScheduleRequest& k) {
     k.evseId = j.at("evseId");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("chargingRateUnit")) {
         k.chargingRateUnit.emplace(conversions::string_to_charging_rate_unit_enum(j.at("chargingRateUnit")));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -63,14 +63,14 @@ void to_json(json& j, const GetCompositeScheduleResponse& k) {
         {"status", conversions::generic_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
     }
     if (k.schedule) {
         j["schedule"] = k.schedule.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -79,14 +79,14 @@ void from_json(const json& j, GetCompositeScheduleResponse& k) {
     k.status = conversions::string_to_generic_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
     }
     if (j.contains("schedule")) {
         k.schedule.emplace(j.at("schedule"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

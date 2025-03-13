@@ -167,7 +167,7 @@ public:
     /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
     virtual void insert_or_update_charging_profile(
         const int evse_id, const v2::ChargingProfile& profile,
-        const ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO) = 0;
+        const CiString<20> charging_limit_source = ChargingLimitSourceEnumStringType::CSO) = 0;
 
     /// \brief Deletes the profile with the given \p profile_id
     virtual bool delete_charging_profile(const int profile_id) = 0;
@@ -196,7 +196,7 @@ public:
     /// \brief Retrieves all ChargingProfiles grouped by EVSE ID
     virtual std::map<int32_t, std::vector<v2::ChargingProfile>> get_all_charging_profiles_group_by_evse() = 0;
 
-    virtual ChargingLimitSourceEnum get_charging_limit_source_for_profile(const int profile_id) = 0;
+    virtual CiString<20> get_charging_limit_source_for_profile(const int profile_id) = 0;
 
     virtual std::unique_ptr<common::SQLiteStatementInterface> new_statement(const std::string& sql) = 0;
 };
@@ -270,7 +270,7 @@ public:
     /// charging profiles
     void insert_or_update_charging_profile(
         const int evse_id, const v2::ChargingProfile& profile,
-        const ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO) override;
+        const CiString<20> charging_limit_source = ChargingLimitSourceEnumStringType::CSO) override;
     bool delete_charging_profile(const int profile_id) override;
     void delete_charging_profile_by_transaction_id(const std::string& transaction_id) override;
     bool clear_charging_profiles() override;
@@ -282,7 +282,7 @@ public:
     std::vector<v2::ChargingProfile> get_charging_profiles_for_evse(const int evse_id) override;
     std::vector<v2::ChargingProfile> get_all_charging_profiles() override;
     virtual std::map<int32_t, std::vector<v2::ChargingProfile>> get_all_charging_profiles_group_by_evse() override;
-    ChargingLimitSourceEnum get_charging_limit_source_for_profile(const int profile_id) override;
+    CiString<20> get_charging_limit_source_for_profile(const int profile_id) override;
 
     std::unique_ptr<common::SQLiteStatementInterface> new_statement(const std::string& sql) override;
 };

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/ChangeAvailability.hpp>
@@ -23,11 +23,11 @@ void to_json(json& j, const ChangeAvailabilityRequest& k) {
         {"operationalStatus", conversions::operational_status_enum_to_string(k.operationalStatus)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.evse) {
         j["evse"] = k.evse.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -36,11 +36,11 @@ void from_json(const json& j, ChangeAvailabilityRequest& k) {
     k.operationalStatus = conversions::string_to_operational_status_enum(j.at("operationalStatus"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("evse")) {
         k.evse.emplace(j.at("evse"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -61,11 +61,11 @@ void to_json(json& j, const ChangeAvailabilityResponse& k) {
         {"status", conversions::change_availability_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -74,11 +74,11 @@ void from_json(const json& j, ChangeAvailabilityResponse& k) {
     k.status = conversions::string_to_change_availability_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

@@ -66,6 +66,7 @@ private: // Members
 
     /// \brief Callback function that can be called to clear customer information based on the given arguments
     std::optional<ClearCustomerInformationCallback> clear_customer_information_callback;
+    const bool is_monitoring_available;
 
 private: // Functions
     /* OCPP message requests */
@@ -104,5 +105,9 @@ private: // Functions
     void clear_customer_information(const std::optional<CertificateHashDataType> customer_certificate,
                                     const std::optional<IdToken> id_token,
                                     const std::optional<CiString<64>> customer_identifier);
+
+    /// \brief Check if monitoring is available and if not, throw.
+    /// \param type Message type to include in MessageTypeNotImplementedException when thrown.
+    void throw_when_monitoring_not_available(const MessageType type);
 };
 } // namespace ocpp::v2

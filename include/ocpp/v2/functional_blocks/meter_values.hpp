@@ -10,6 +10,7 @@
 
 namespace ocpp::v2 {
 struct FunctionalBlockContext;
+struct RequiredComponentVariable;
 
 class MeterValuesInterface : public MessageHandlerInterface {
 public:

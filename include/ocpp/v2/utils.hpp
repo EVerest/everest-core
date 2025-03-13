@@ -74,6 +74,9 @@ bool is_critical(const std::string& security_event);
 /// \brief Converts the given \p csl of ChargingProfilePurpose strings into a std::vector<ChargingProfilePurposeEnum>
 std::vector<ChargingProfilePurposeEnum> get_purposes_to_ignore(const std::string& csl, const bool is_offline);
 
+/// \brief Converts the given \p csl of OcppProtocolVersion strings into a std::vector<OcppProtocolVersion>
+std::vector<OcppProtocolVersion> get_ocpp_protocol_versions(const std::string& csl);
+
 } // namespace utils
 } // namespace v2
 } // namespace ocpp

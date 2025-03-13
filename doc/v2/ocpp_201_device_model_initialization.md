@@ -1,4 +1,4 @@
-# OCPP 2.0.1: Device model initialization and inserting of config values
+# OCPP 2.0.1 and 2.1: Device model initialization and inserting of config values
 
 If there is no custom database used for the device model, and 'initialize_device_model' is set to true in the 
 constructor of ChargePoint, the device model will be created or updated when ChargePoint is created. This document will
@@ -43,3 +43,15 @@ addition of a new one.
 Note: OCPP requires EVSE and Connector numbering starting from 1 counting upwards.
 
 Note: There should be no duplicate components or variables in the component config files.
+
+## Required variables
+
+There are some required Variables, which can be found in the OCPP spec.  
+Some `Variables` are only required if the `Component` is `Available`, for example `Reservation` and `Smart Charging`. 
+There are  some Components that are always required because that is how libocpp works: `AlignedDataCtrlr` and 
+`SampledDataCtrlr`.  
+When libocpp is started and initialized, all required Variables will be checked and an DeviceModelError is thrown if 
+one of the required Variables is not there.
+
+This also implies, that if you write code that needs a required `Variable`, when trying to get that variable with 
+`DeviceModel::get_value(...)`, you should first check if the Component that Variable belongs to is `Available`.

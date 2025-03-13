@@ -101,7 +101,7 @@ void DisplayMessageBlock::handle_set_display_message(const Call<SetDisplayMessag
          this->context.evse_manager.get_transaction_evseid(call.msg.message.transactionId.value()) != std::nullopt);
 
     // Check if display messages are available.
-    if (!display_message_available.has_value() or !display_message_available.value()) {
+    if (!display_message_available.value_or(false)) {
         error = true;
         response.status = DisplayMessageStatusEnum::Rejected;
     }

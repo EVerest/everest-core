@@ -14,37 +14,7 @@ import argparse
 from pathlib import Path
 import subprocess
 
-
-def snake_case(word: str) -> str:
-    """Convert capital case to snake case.
-    Only alphanumerical characters are allowed. Only inserts camelcase
-    between a consecutive lower and upper alphabetical character and
-    lowers first letter.
-    """
-
-    out = ''
-    if len(word) == 0:
-        return out
-    cur_char: str = ''
-    for i in range(len(word)):
-        if i == 0:
-            cur_char = word[i]
-            if not cur_char.isalnum():
-                raise Exception('Non legal character in: ' + word)
-            out += cur_char.lower()
-            continue
-        last_char: str = cur_char
-        cur_char = word[i]
-        if (last_char.islower() and last_char.isalpha() and
-                cur_char.isupper() and cur_char.isalpha):
-            out += '_'
-        if not cur_char.isalnum():
-            out += '_'
-        else:
-            out += cur_char.lower()
-
-    return out
-
+from utils import snake_case
 
 def remove_last(input_string: str, search: str) -> str:
     """Removes the last occurence of search"""
@@ -192,6 +162,43 @@ enum_types['ExtendedTriggerMessageResponse'] = dict()
 enum_types['ExtendedTriggerMessageResponse']['status'] = 'TriggerMessageStatusEnumType'
 
 
+# messages from OCPP 2.1
+v21_messages = ['AFRRSignal',
+                'AdjustPeriodicEventStream',
+                'BatterySwap',
+                'ChangeTransactionTariff',
+                'ClearDERControl',
+                'ClearTariffs',
+                'ClosePeriodicEventStream',
+                'GetCertificateChainStatus',
+                'GetCRL',
+                'GetDERControl',
+                'GetPeriodicEventStream',
+                'GetTariffs',
+                'NotifyAllowedEnergyTransfer',
+                'NotifyCRL',
+                'NotifyDERAlarm',
+                'NotifyDERStartStop',
+                'NotifyPeriodicEventStream',
+                'NotifyPriorityCharging',
+                'NotifyQRCodeScanned',
+                'NotifySettlement',
+                'NotifyWebPaymentStarted',
+                'OpenPeriodicEventStream',
+                'PullDynamicScheduleUpdate',
+                'ReportDERControl',
+                'RequestBatterySwap',
+                'SetDERControl',
+                'SetDefaultTariff',
+                'UpdateDynamicSchedule',
+                'UsePriorityCharging',
+                'VatNumberValidation',
+                ]
+
+
+send_messages = ['NotifyPeriodicEventStream']
+
+
 def object_exists(name: str) -> bool:
     """Check if an object (i.e. dataclass) already exists."""
     for el in parsed_types:
@@ -205,7 +212,8 @@ def add_enum_type(name: str, enums: Tuple[str]):
     """Add special class for enum types."""
     for el in parsed_enums:
         if el['name'] == name:
-            raise Exception('Warning: enum ' + name + ' already exists')
+            print(f'Warning: enum {name} already exists')
+            return
     print("Adding enum type: %s" % name)
     add = True
     for el in parsed_enums_unique:
@@ -351,11 +359,12 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
     schema_files = list(schema_dir.glob('*.json'))
     for schema_file in sorted(schema_files):
         print(f"Schema file: {schema_file}")
-        with open(schema_file, 'r') as schema_dump:
+        with open(schema_file, 'r', encoding='utf-8-sig') as schema_dump:
             schema = json.load(schema_dump)
             stripped_fn = schema_file.stem
             action = ''
             request = False
+            send = False
             if stripped_fn.endswith('Request'):
                 request = True
                 action = stripped_fn[0:-7]
@@ -365,24 +374,49 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                 request = True
                 action = stripped_fn
             else:
-                raise Exception('Invalid schema file', schema_file)
+                # check if this is one of the SEND messages that do not have a Response
+                if stripped_fn in send_messages:
+                    print(f'{stripped_fn} is one of the new OCPP 2.1 SEND messages')
+                    # not a Request or Response but a SEND message
+                    send = True
+                    action = stripped_fn
+                else:
+                    raise Exception('Invalid schema file', schema_file)
 
-            schemas.setdefault(action, {}).update(
-                {'req' if request else 'res': schema})
+            if request:
+                schemas.setdefault(action, {}).update({'req': schema})
+            else:
+                if send:
+                    schemas.setdefault(action, {}).update({'send': schema})
+                else:
+                    schemas.setdefault(action, {}).update({'res': schema})
 
     # check if for every action, the request and response exists
     for key, value in schemas.items():
         if 'req' not in value or 'res' not in value:
+            if 'send' in value:
+                print('Message is a SEND message')
+                continue
             raise Exception(
-                'Either response or request is missing for action: ' + key)
+                'Either response or request is missing for action: ' + key, value)
 
     generated_header_dir = generated_dir / 'include' / 'ocpp' / version
     generated_source_dir = generated_dir / 'lib' / 'ocpp' / version
+
+    generated_header_dir_v21 = generated_header_dir
+    generated_source_dir_v21 = generated_source_dir
+    if version == 'v2':
+        generated_header_dir_v21 = generated_dir / 'include' / 'ocpp' / 'v21'
+        generated_source_dir_v21 = generated_dir / 'lib' / 'ocpp' / 'v21'
 
     if not generated_header_dir.exists():
         generated_header_dir.mkdir(parents=True)
     if not generated_source_dir.exists():
         generated_source_dir.mkdir(parents=True)
+    if not generated_header_dir_v21.exists():
+        generated_header_dir_v21.mkdir(parents=True)
+    if not generated_source_dir_v21.exists():
+        generated_source_dir_v21.mkdir(parents=True)
 
     enums_hpp_fn = Path(generated_header_dir, 'ocpp_enums.hpp')
     enums_cpp_fn = Path(generated_source_dir, 'ocpp_enums.cpp')
@@ -391,24 +425,40 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
     messages_header_dir = generated_header_dir / 'messages'
     messages_source_dir = generated_source_dir / 'messages'
     messages_cmakelists_txt_fn = Path(messages_source_dir, 'CMakeLists.txt')
+    messages_header_dir_v21 = generated_header_dir_v21 / 'messages'
+    messages_source_dir_v21 = generated_source_dir_v21 / 'messages'
+    messages_cmakelists_txt_fn_v21 = Path(messages_source_dir_v21, 'CMakeLists.txt')
+
     message_files = []
+    message_files_v21 = []
     first = True
     for action, type_of_action in schemas.items():
-        message_files.append(action)
+        if action in v21_messages:
+            message_files_v21.append(action)
+        else:
+            message_files.append(action)
         if not messages_header_dir.exists():
             messages_header_dir.mkdir(parents=True)
         if not messages_source_dir.exists():
             messages_source_dir.mkdir(parents=True)
+        if not messages_header_dir_v21.exists():
+            messages_header_dir_v21.mkdir(parents=True)
+        if not messages_source_dir_v21.exists():
+            messages_source_dir_v21.mkdir(parents=True)
         writemode = dict()
         writemode['req'] = 'w'
         writemode['res'] = 'a+'
+        writemode['send'] = 'w'
 
         message_uses_optional = False
         message_needs_enums = False
         message_needs_types = False
         message_needs_constants = False
 
-        for (type_name, type_key) in (('Request', 'req'), ('Response', 'res')):
+        for (type_name, type_key) in (('Request', 'req'), ('Response', 'res'), ('', 'send')):
+            if not type_key in type_of_action:
+                print(f'{type_key} not available for {type_of_action}')
+                continue
             parsed_types.clear()
             parsed_enums.clear()
 
@@ -432,9 +482,9 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             for class_type in parsed_types:
                 insert_at: int = 0
                 for dep_class_type in class_type['depends_on']:
-                    for i in range(len(sorted_types)):
+                    for i, _type in enumerate(sorted_types):
                         # the new one depends on the current
-                        if sorted_types[i]['name'] == dep_class_type:
+                        if _type['name'] == dep_class_type:
                             insert_at = max(insert_at, i + 1)
                             break
 
@@ -449,7 +499,10 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             if action == 'Get15118EVCertificate':
                 message_needs_constants = True
 
-        for (type_name, type_key) in (('Request', 'req'), ('Response', 'res')):
+        for (type_name, type_key) in (('Request', 'req'), ('Response', 'res'), ('', 'send')):
+            if not type_key in type_of_action:
+                print(f'type key {type_key} not available, skipping.')
+                continue
             parsed_types.clear()
             parsed_enums.clear()
 
@@ -470,19 +523,30 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             for class_type in parsed_types:
                 insert_at: int = 0
                 for dep_class_type in class_type['depends_on']:
-                    for i in range(len(sorted_types)):
+                    for i, _type in enumerate(sorted_types):
                         # the new one depends on the current
-                        if sorted_types[i]['name'] == dep_class_type:
+                        if _type['name'] == dep_class_type:
                             insert_at = max(insert_at, i + 1)
                             break
 
                 sorted_types.insert(insert_at, class_type)
 
+            message_version = version
             generated_class_hpp_fn = Path(messages_header_dir, action + '.hpp')
+            generated_class_cpp_fn = Path(messages_source_dir, action + '.cpp')
+            conversions_namespace_prefix = ''
+
+            if action in v21_messages:
+                print(f'"{action}" is a OCPP 2.1 message')
+                message_version = 'v21'
+                generated_class_hpp_fn = Path(messages_header_dir_v21, action + '.hpp')
+                generated_class_cpp_fn = Path(messages_source_dir_v21, action + '.cpp')
+                conversions_namespace_prefix = 'ocpp::v2::'
+
             with open(generated_class_hpp_fn, writemode[type_key]) as out:
                 out.write(message_hpp_template.render({
                     'types': sorted_types,
-                    'namespace': version_path,
+                    'namespace': message_version,
                     'enum_types': parsed_enums,
                     'uses_optional': message_uses_optional,
                     'needs_enums': message_needs_enums,
@@ -492,23 +556,25 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                         'name': action,
                         'class_name': action_class_name,
                         'type_key': type_key,
-                        'is_request': (type_name == 'Request')
+                        'is_request': (type_name == 'Request'),
+                        'is_send': (type_key == 'send')
                     }
                 }))
-            generated_class_cpp_fn = Path(messages_source_dir, action + '.cpp')
             with open(generated_class_cpp_fn, writemode[type_key]) as out:
                 out.write(message_cpp_template.render({
                     'types': sorted_types,
-                    'namespace': version_path,
+                    'namespace': message_version,
                     'enum_types': parsed_enums,
                     'uses_optional': message_uses_optional,
                     'needs_enums': message_needs_enums,
                     'needs_types': message_needs_types,
+                    'conversions_namespace_prefix': conversions_namespace_prefix,
                     'action': {
                         'name': action,
                         'class_name': action_class_name,
                         'type_key': type_key,
-                        'is_request': (type_name == 'Request')
+                        'is_request': (type_name == 'Request'),
+                        'is_send': (type_key == 'send')
                     }
                 }))
             with open(enums_hpp_fn, 'w' if first else 'a+') as out:
@@ -560,6 +626,11 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                 }))
             first = False
 
+    if version == 'v2':
+        with open(messages_cmakelists_txt_fn_v21, 'w') as out:
+            out.write(messages_cmakelists_txt_template.render({
+                'messages': sorted(message_files_v21)
+            }))
     with open(messages_cmakelists_txt_fn, 'w') as out:
         out.write(messages_cmakelists_txt_template.render({
             'messages': sorted(message_files)
@@ -590,6 +661,10 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
         messages_header_dir)], cwd=messages_header_dir)
     subprocess.run(["sh", "-c", "find {} -regex '.*\\.\\(cpp\\|hpp\\)' -exec clang-format -style=file -i {{}} \\;".format(
         messages_source_dir)], cwd=messages_source_dir)
+    subprocess.run(["sh", "-c", "find {} -regex '.*\\.\\(cpp\\|hpp\\)' -exec clang-format -style=file -i {{}} \\;".format(
+        messages_header_dir_v21)], cwd=messages_header_dir_v21)
+    subprocess.run(["sh", "-c", "find {} -regex '.*\\.\\(cpp\\|hpp\\)' -exec clang-format -style=file -i {{}} \\;".format(
+        messages_source_dir_v21)], cwd=messages_source_dir_v21)
     subprocess.run(["clang-format", "-style=file",  "-i",
                    enums_hpp_fn, ocpp_types_hpp_fn], cwd=generated_header_dir)
     subprocess.run(["clang-format", "-style=file",  "-i",
@@ -606,14 +681,15 @@ if __name__ == "__main__":
     parser.add_argument("--out", metavar='OUT',
                         help="Dir in which the generated code will be put", required=True)
     parser.add_argument("--version", metavar='VERSION',
-                        help="Version of OCPP [1.6 or 2.0.1]", required=True)
+                        help="Version of OCPP [1.6, 2.0.1, or 2.1]", required=True)
 
     args = parser.parse_args()
     version = args.version
 
     if version == '1.6' or version == '16' or version == 'v16':
         version_path = 'v16'
-    elif version == '2.0.1' or version == '201' or version == 'v201':
+    elif version == '2.0.1' or version == '2' or version == '2.1' or version == '21' or \
+        version == '201' or version == 'v201' or version == 'v2' or version == 'v21':
         version_path = 'v2'
     else:
         raise ValueError(f"Version {version} not a valid ocpp version")

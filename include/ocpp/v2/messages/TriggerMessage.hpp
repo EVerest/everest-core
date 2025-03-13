@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #ifndef OCPP_V2_TRIGGERMESSAGE_HPP
@@ -18,8 +18,9 @@ namespace v2 {
 /// \brief Contains a OCPP TriggerMessage message
 struct TriggerMessageRequest : public ocpp::Message {
     MessageTriggerEnum requestedMessage;
-    std::optional<CustomData> customData;
     std::optional<EVSE> evse;
+    std::optional<CiString<50>> customTrigger;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this TriggerMessage message as a human readable string
     /// \returns the message type as a human readable string
@@ -39,8 +40,8 @@ std::ostream& operator<<(std::ostream& os, const TriggerMessageRequest& k);
 /// \brief Contains a OCPP TriggerMessageResponse message
 struct TriggerMessageResponse : public ocpp::Message {
     TriggerMessageStatusEnum status;
-    std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this TriggerMessageResponse message as a human readable string
     /// \returns the message type as a human readable string

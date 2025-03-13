@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/SecurityEventNotification.hpp>
@@ -24,11 +24,11 @@ void to_json(json& j, const SecurityEventNotificationRequest& k) {
         {"timestamp", k.timestamp.to_rfc3339()},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.techInfo) {
         j["techInfo"] = k.techInfo.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -38,11 +38,11 @@ void from_json(const json& j, SecurityEventNotificationRequest& k) {
     k.timestamp = ocpp::DateTime(std::string(j.at("timestamp")));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("techInfo")) {
         k.techInfo.emplace(j.at("techInfo"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

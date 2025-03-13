@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/DataTransfer.hpp>
@@ -23,14 +23,14 @@ void to_json(json& j, const DataTransferRequest& k) {
         {"vendorId", k.vendorId},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.messageId) {
         j["messageId"] = k.messageId.value();
     }
     if (k.data) {
         j["data"] = k.data.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -39,14 +39,14 @@ void from_json(const json& j, DataTransferRequest& k) {
     k.vendorId = j.at("vendorId");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("messageId")) {
         k.messageId.emplace(j.at("messageId"));
     }
     if (j.contains("data")) {
         k.data.emplace(j.at("data"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -67,14 +67,14 @@ void to_json(json& j, const DataTransferResponse& k) {
         {"status", conversions::data_transfer_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
     }
     if (k.data) {
         j["data"] = k.data.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -83,14 +83,14 @@ void from_json(const json& j, DataTransferResponse& k) {
     k.status = conversions::string_to_data_transfer_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
     }
     if (j.contains("data")) {
         k.data.emplace(j.at("data"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

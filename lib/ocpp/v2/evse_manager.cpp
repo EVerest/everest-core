@@ -43,7 +43,7 @@ const EvseInterface& EvseManager::get_evse(const int32_t id) const {
     return *this->evses.at(id - 1);
 }
 
-bool EvseManager::does_connector_exist(const int32_t evse_id, const ConnectorEnum connector_type) const {
+bool EvseManager::does_connector_exist(const int32_t evse_id, const CiString<20> connector_type) const {
     const EvseInterface* evse;
     try {
         evse = &this->get_evse(evse_id);

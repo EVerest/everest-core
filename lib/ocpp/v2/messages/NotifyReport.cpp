@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/NotifyReport.hpp>
@@ -25,9 +25,6 @@ void to_json(json& j, const NotifyReportRequest& k) {
         {"seqNo", k.seqNo},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.reportData) {
         j["reportData"] = json::array();
         for (auto val : k.reportData.value()) {
@@ -36,6 +33,9 @@ void to_json(json& j, const NotifyReportRequest& k) {
     }
     if (k.tbc) {
         j["tbc"] = k.tbc.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -46,9 +46,6 @@ void from_json(const json& j, NotifyReportRequest& k) {
     k.seqNo = j.at("seqNo");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("reportData")) {
         json arr = j.at("reportData");
         std::vector<ReportData> vec;
@@ -59,6 +56,9 @@ void from_json(const json& j, NotifyReportRequest& k) {
     }
     if (j.contains("tbc")) {
         k.tbc.emplace(j.at("tbc"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

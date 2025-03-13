@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #ifndef OCPP_V2_CERTIFICATESIGNED_HPP
@@ -18,8 +18,9 @@ namespace v2 {
 /// \brief Contains a OCPP CertificateSigned message
 struct CertificateSignedRequest : public ocpp::Message {
     CiString<10000> certificateChain;
-    std::optional<CustomData> customData;
     std::optional<CertificateSigningUseEnum> certificateType;
+    std::optional<int32_t> requestId;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this CertificateSigned message as a human readable string
     /// \returns the message type as a human readable string
@@ -39,8 +40,8 @@ std::ostream& operator<<(std::ostream& os, const CertificateSignedRequest& k);
 /// \brief Contains a OCPP CertificateSignedResponse message
 struct CertificateSignedResponse : public ocpp::Message {
     CertificateSignedStatusEnum status;
-    std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this CertificateSignedResponse message as a human readable string
     /// \returns the message type as a human readable string

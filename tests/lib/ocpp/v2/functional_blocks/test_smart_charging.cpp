@@ -50,34 +50,6 @@ using ::testing::Return;
 using ::testing::ReturnRef;
 
 namespace ocpp::v2 {
-
-static const int NR_OF_EVSES = 2;
-static const int STATION_WIDE_ID = 0;
-static const int DEFAULT_EVSE_ID = 1;
-static const int DEFAULT_PROFILE_ID = 1;
-static const int DEFAULT_STACK_LEVEL = 1;
-static const int DEFAULT_REQUEST_ID = 1;
-static const std::string DEFAULT_TX_ID = "10c75ff7-74f5-44f5-9d01-f649f3ac7b78";
-const static std::string MIGRATION_FILES_PATH = "./resources/v2/device_model_migration_files";
-const static std::string CONFIG_PATH = "./resources/example_config/v2/component_config";
-const static std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=shared";
-
-class TestSmartCharging : public SmartCharging {
-public:
-    using SmartCharging::add_profile;
-    using SmartCharging::clear_profiles;
-    using SmartCharging::get_reported_profiles;
-    using SmartCharging::get_valid_profiles;
-    using SmartCharging::validate_charging_station_max_profile;
-    using SmartCharging::validate_evse_exists;
-    using SmartCharging::validate_profile_schedules;
-    using SmartCharging::validate_tx_default_profile;
-    using SmartCharging::validate_tx_profile;
-    using SmartCharging::verify_no_conflicting_external_constraints_id;
-
-    using SmartCharging::SmartCharging;
-};
-
 class SmartChargingTest : public DatabaseTestingUtils {
 protected:
     void SetUp() override {
@@ -87,158 +59,6 @@ protected:
         // TODO: use in-memory db so we don't need to reset the db between tests
         this->database_handler->clear_charging_profiles();
     }
-
-    ChargingSchedule create_charge_schedule(ChargingRateUnitEnum charging_rate_unit) {
-        int32_t id;
-        std::vector<ChargingSchedulePeriod> charging_schedule_period;
-        std::optional<CustomData> custom_data;
-        std::optional<ocpp::DateTime> start_schedule;
-        std::optional<int32_t> duration;
-        std::optional<float> min_charging_rate;
-        std::optional<SalesTariff> sales_tariff;
-
-        return ChargingSchedule{
-            id,
-            charging_rate_unit,
-            charging_schedule_period,
-            custom_data,
-            start_schedule,
-            duration,
-            min_charging_rate,
-            sales_tariff,
-        };
-    }
-
-    ChargingSchedule create_charge_schedule(ChargingRateUnitEnum charging_rate_unit,
-                                            std::vector<ChargingSchedulePeriod> charging_schedule_period,
-                                            std::optional<ocpp::DateTime> start_schedule = std::nullopt) {
-        int32_t id;
-        std::optional<CustomData> custom_data;
-        std::optional<int32_t> duration;
-        std::optional<float> min_charging_rate;
-        std::optional<SalesTariff> sales_tariff;
-
-        return ChargingSchedule{
-            id,
-            charging_rate_unit,
-            charging_schedule_period,
-            custom_data,
-            start_schedule,
-            duration,
-            min_charging_rate,
-            sales_tariff,
-        };
-    }
-
-    std::vector<ChargingSchedulePeriod>
-    create_charging_schedule_periods(int32_t start_period, std::optional<int32_t> number_phases = std::nullopt,
-                                     std::optional<int32_t> phase_to_use = std::nullopt) {
-        ChargingSchedulePeriod charging_schedule_period;
-        charging_schedule_period.startPeriod = start_period;
-        charging_schedule_period.numberPhases = number_phases;
-        charging_schedule_period.phaseToUse = phase_to_use;
-
-        return {charging_schedule_period};
-    }
-
-    std::vector<ChargingSchedulePeriod> create_charging_schedule_periods(std::vector<int32_t> start_periods) {
-        auto charging_schedule_periods = std::vector<ChargingSchedulePeriod>();
-        for (auto start_period : start_periods) {
-            ChargingSchedulePeriod charging_schedule_period;
-            charging_schedule_period.startPeriod = start_period;
-
-            charging_schedule_periods.push_back(charging_schedule_period);
-        }
-
-        return charging_schedule_periods;
-    }
-
-    std::vector<ChargingSchedulePeriod>
-    create_charging_schedule_periods_with_phases(int32_t start_period, int32_t numberPhases, int32_t phaseToUse) {
-        ChargingSchedulePeriod charging_schedule_period;
-        charging_schedule_period.startPeriod = start_period;
-        charging_schedule_period.numberPhases = numberPhases;
-        charging_schedule_period.phaseToUse = phaseToUse;
-
-        return {charging_schedule_period};
-    }
-
-    ChargingProfile
-    create_charging_profile(int32_t charging_profile_id, ChargingProfilePurposeEnum charging_profile_purpose,
-                            std::vector<ChargingSchedule> charging_schedules,
-                            std::optional<std::string> transaction_id = {},
-                            ChargingProfileKindEnum charging_profile_kind = ChargingProfileKindEnum::Absolute,
-                            int stack_level = DEFAULT_STACK_LEVEL, std::optional<ocpp::DateTime> validFrom = {},
-                            std::optional<ocpp::DateTime> validTo = {}) {
-        auto recurrency_kind = RecurrencyKindEnum::Daily;
-        ChargingProfile charging_profile;
-        charging_profile.id = charging_profile_id;
-        charging_profile.stackLevel = stack_level;
-        charging_profile.chargingProfilePurpose = charging_profile_purpose;
-        charging_profile.chargingProfileKind = charging_profile_kind;
-        charging_profile.chargingSchedule = charging_schedules;
-        charging_profile.customData = {};
-        charging_profile.recurrencyKind = recurrency_kind;
-        charging_profile.validFrom = validFrom;
-        charging_profile.validTo = validTo;
-        charging_profile.transactionId = transaction_id;
-        return charging_profile;
-    }
-
-    ChargingProfile
-    create_charging_profile(int32_t charging_profile_id, ChargingProfilePurposeEnum charging_profile_purpose,
-                            ChargingSchedule charging_schedule, std::optional<std::string> transaction_id = {},
-                            ChargingProfileKindEnum charging_profile_kind = ChargingProfileKindEnum::Absolute,
-                            int stack_level = DEFAULT_STACK_LEVEL, std::optional<ocpp::DateTime> validFrom = {},
-                            std::optional<ocpp::DateTime> validTo = {}) {
-        return create_charging_profile(charging_profile_id, charging_profile_purpose,
-                                       std::vector<ChargingSchedule>{charging_schedule}, transaction_id,
-                                       charging_profile_kind, stack_level, validFrom, validTo);
-    }
-
-    ChargingProfileCriterion create_charging_profile_criteria(
-        std::optional<std::vector<ocpp::v2::ChargingLimitSourceEnum>> sources = std::nullopt,
-        std::optional<std::vector<int32_t>> ids = std::nullopt,
-        std::optional<ChargingProfilePurposeEnum> purpose = std::nullopt,
-        std::optional<int32_t> stack_level = std::nullopt) {
-        ChargingProfileCriterion criteria;
-        criteria.chargingLimitSource = sources;
-        criteria.chargingProfileId = ids;
-        criteria.chargingProfilePurpose = purpose;
-        criteria.stackLevel = stack_level;
-        return criteria;
-    }
-
-    GetChargingProfilesRequest create_get_charging_profile_request(int32_t request_id,
-                                                                   ChargingProfileCriterion criteria,
-                                                                   std::optional<int32_t> evse_id = std::nullopt) {
-        GetChargingProfilesRequest req;
-        req.requestId = request_id;
-        req.chargingProfile = criteria;
-        req.evseId = evse_id;
-        return req;
-    }
-
-    ClearChargingProfileRequest
-    create_clear_charging_profile_request(std::optional<int32_t> id = std::nullopt,
-                                          std::optional<ClearChargingProfile> criteria = std::nullopt) {
-        ClearChargingProfileRequest req;
-        req.chargingProfileId = id;
-        req.chargingProfileCriteria = criteria;
-        return req;
-    }
-
-    ClearChargingProfile create_clear_charging_profile(std::optional<int32_t> evse_id = std::nullopt,
-                                                       std::optional<ChargingProfilePurposeEnum> purpose = std::nullopt,
-                                                       std::optional<int32_t> stack_level = std::nullopt) {
-        ClearChargingProfile clear_charging_profile;
-        clear_charging_profile.customData = {};
-        clear_charging_profile.evseId = evse_id;
-        clear_charging_profile.chargingProfilePurpose = purpose;
-        clear_charging_profile.stackLevel = stack_level;
-        return clear_charging_profile;
-    }
-
     template <class T> void call_to_json(json& j, const ocpp::Call<T>& call) {
         j = json::array();
         j.push_back(ocpp::MessageTypeId::CALL);
@@ -312,7 +132,7 @@ protected:
     // Default values used within the tests
     DeviceModelTestHelper device_model_test_helper;
     MockMessageDispatcher mock_dispatcher;
-    std::unique_ptr<EvseManagerFake> evse_manager = std::make_unique<EvseManagerFake>(NR_OF_EVSES);
+    std::unique_ptr<EvseManagerFake> evse_manager = std::make_unique<EvseManagerFake>(NR_OF_TWO_EVSES);
 
     sqlite3* db_handle;
     std::shared_ptr<DatabaseHandler> database_handler;
@@ -638,7 +458,7 @@ TEST_F(SmartChargingTest, K01FR41_IfChargingProfileKindIsRelativeAndStartSchedul
 }
 
 TEST_F(SmartChargingTest, K01FR28_WhenEvseDoesNotExistThenReject) {
-    auto sut = smart_charging.validate_evse_exists(NR_OF_EVSES + 1);
+    auto sut = smart_charging.validate_evse_exists(NR_OF_TWO_EVSES + 1);
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::EvseDoesNotExist));
 }
 
@@ -972,7 +792,7 @@ TEST_F(SmartChargingTest, K01_ValidateProfile_IfEvseDoesNotExist_ThenProfileIsIn
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
                                            create_charge_schedule(ChargingRateUnitEnum::A), DEFAULT_TX_ID);
 
-    auto sut = smart_charging.conform_and_validate_profile(profile, NR_OF_EVSES + 1);
+    auto sut = smart_charging.conform_and_validate_profile(profile, NR_OF_TWO_EVSES + 1);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::EvseDoesNotExist));
 }
@@ -1288,7 +1108,7 @@ TEST_F(SmartChargingTest, K04FR01_AddProfile_OnlyAddsToOneEVSE) {
 }
 
 TEST_F(SmartChargingTest, AddProfile_StoresChargingLimitSource) {
-    auto charging_limit_source = ChargingLimitSourceEnum::SO;
+    auto charging_limit_source = ChargingLimitSourceEnumStringType::SO;
 
     auto periods = create_charging_schedule_periods({0, 1, 2});
     auto profile = create_charging_profile(
@@ -1303,11 +1123,11 @@ TEST_F(SmartChargingTest, AddProfile_StoresChargingLimitSource) {
 
     auto profiles = this->database_handler->get_charging_profiles_matching_criteria(DEFAULT_EVSE_ID, criteria);
     const auto [e, p, sut] = profiles[0];
-    EXPECT_THAT(sut, ChargingLimitSourceEnum::SO);
+    EXPECT_THAT(sut, ChargingLimitSourceEnumStringType::SO);
 }
 
 TEST_F(SmartChargingTest, ValidateAndAddProfile_StoresChargingLimitSource) {
-    auto charging_limit_source = ChargingLimitSourceEnum::SO;
+    auto charging_limit_source = ChargingLimitSourceEnumStringType::SO;
 
     auto periods = create_charging_schedule_periods({0, 1, 2});
 
@@ -1326,7 +1146,7 @@ TEST_F(SmartChargingTest, ValidateAndAddProfile_StoresChargingLimitSource) {
     auto profiles = this->database_handler->get_charging_profiles_matching_criteria(DEFAULT_EVSE_ID, criteria);
     ASSERT_THAT(profiles.size(), testing::Ge(1));
     const auto [e, p, sut] = profiles[0];
-    EXPECT_THAT(sut, ChargingLimitSourceEnum::SO);
+    EXPECT_THAT(sut, ChargingLimitSourceEnumStringType::SO);
 }
 
 TEST_F(SmartChargingTest, K01_ValidateAndAdd_RejectsInvalidProfilesWithReasonCode) {
@@ -1483,8 +1303,8 @@ TEST_F(SmartChargingTest, K09_GetChargingProfiles_EvseIdAndSource) {
     auto profiles = database_handler->get_all_charging_profiles();
     EXPECT_THAT(profiles, testing::SizeIs(1));
 
-    std::vector<ChargingLimitSourceEnum> requested_sources_cso{ChargingLimitSourceEnum::CSO};
-    std::vector<ChargingLimitSourceEnum> requested_sources_ems{ChargingLimitSourceEnum::EMS};
+    std::vector<CiString<20>> requested_sources_cso{ChargingLimitSourceEnumStringType::CSO};
+    std::vector<CiString<20>> requested_sources_ems{ChargingLimitSourceEnumStringType::EMS};
 
     auto reported_profiles = smart_charging.get_reported_profiles(create_get_charging_profile_request(
         DEFAULT_REQUEST_ID, create_charging_profile_criteria(requested_sources_cso), DEFAULT_EVSE_ID));
@@ -1530,7 +1350,7 @@ TEST_F(SmartChargingTest, K09_GetChargingProfiles_EvseIdAndPurposeAndStackLevel)
 }
 
 TEST_F(SmartChargingTest, K09_GetChargingProfiles_ReportsProfileWithSource) {
-    auto charging_limit_source = ChargingLimitSourceEnum::SO;
+    auto charging_limit_source = ChargingLimitSourceEnumStringType::SO;
 
     auto periods = create_charging_schedule_periods({0, 1, 2});
 
@@ -1548,7 +1368,7 @@ TEST_F(SmartChargingTest, K09_GetChargingProfiles_ReportsProfileWithSource) {
 
     auto reported_profile = reported_profiles.at(0);
     EXPECT_THAT(profile, testing::Eq(reported_profile.profile));
-    EXPECT_THAT(reported_profile.source, ChargingLimitSourceEnum::SO);
+    EXPECT_THAT(reported_profile.source, ChargingLimitSourceEnumStringType::SO);
 }
 
 TEST_F(SmartChargingTest, K10_ClearChargingProfile_ClearsId) {

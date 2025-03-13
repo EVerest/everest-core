@@ -456,36 +456,7 @@ int32_t DeviceModelStorageSqlite::clear_custom_variable_monitors() {
 }
 
 void DeviceModelStorageSqlite::check_integrity() {
-
-    // Check for required variables without actual values
-    std::stringstream query_stream;
-    query_stream << "SELECT c.NAME as 'COMPONENT_NAME', "
-                    "c.EVSE_ID as 'EVSE_ID', "
-                    "c.CONNECTOR_ID as 'CONNECTOR_ID', "
-                    "v.NAME as 'VARIABLE_NAME', "
-                    "v.INSTANCE as 'VARIABLE_INSTANCE' "
-                    "FROM VARIABLE_ATTRIBUTE va "
-                    "JOIN VARIABLE v ON v.ID = va.VARIABLE_ID "
-                    "JOIN COMPONENT c ON v.COMPONENT_ID = c.ID "
-                    "WHERE va.TYPE_ID = "
-                 << static_cast<int>(AttributeEnum::Actual)
-                 << " AND va.VALUE IS NULL"
-                    " AND v.REQUIRED = 1";
-    auto select_stmt = this->db->new_statement(query_stream.str());
-
-    if (select_stmt->step() != SQLITE_DONE) {
-        std::stringstream error;
-        error << "Corrupted device model: Missing the following required values for 'Actual' Variable Attributes:"
-              << std::endl;
-        do {
-            error << "(Component/EvseId/ConnectorId/Variable/Instance: " << select_stmt->column_text(0) << "/"
-                  << select_stmt->column_text_nullable(1).value_or("<null>") << "/"
-                  << select_stmt->column_text_nullable(2).value_or("<null>") << "/" << select_stmt->column_text(3)
-                  << "/" << select_stmt->column_text_nullable(4).value_or("<null>") << ")" << std::endl;
-        } while (select_stmt->step() == SQLITE_ROW);
-
-        throw DeviceModelError(error.str());
-    }
+    // Function is now empty because checks are already done elsewhere (for example the check for 'required' variables).
 }
 
 } // namespace v2

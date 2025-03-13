@@ -197,10 +197,9 @@ void SmartCharging::delete_transaction_tx_profiles(const std::string& transactio
     this->context.database_handler.delete_charging_profile_by_transaction_id(transaction_id);
 }
 
-SetChargingProfileResponse
-SmartCharging::conform_validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
-                                                ChargingLimitSourceEnum charging_limit_source,
-                                                AddChargingProfileSource source_of_request) {
+SetChargingProfileResponse SmartCharging::conform_validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
+                                                                           CiString<20> charging_limit_source,
+                                                                           AddChargingProfileSource source_of_request) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;
 
@@ -266,6 +265,11 @@ ProfileValidationResultEnum SmartCharging::conform_and_validate_profile(Charging
         // `SetChargingProfileRequest`, but that doesn't mean they're always
         // invalid. K01.FR.05 is the only thing that seems relevant.
         result = ProfileValidationResultEnum::Valid;
+        break;
+    case ChargingProfilePurposeEnum::PriorityCharging:
+    case ChargingProfilePurposeEnum::LocalGeneration:
+        // FIXME: handle missing cases
+        result = ProfileValidationResultEnum::InvalidProfileType;
         break;
     }
 
@@ -613,7 +617,7 @@ SmartCharging::verify_no_conflicting_external_constraints_id(const ChargingProfi
 }
 
 SetChargingProfileResponse SmartCharging::add_profile(ChargingProfile& profile, int32_t evse_id,
-                                                      ChargingLimitSourceEnum charging_limit_source) {
+                                                      CiString<20> charging_limit_source) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Accepted;
 
@@ -662,8 +666,8 @@ SmartCharging::get_valid_profiles(int32_t evse_id, const std::vector<ChargingPro
 }
 
 void SmartCharging::report_charging_profile_req(const int32_t request_id, const int32_t evse_id,
-                                                const ChargingLimitSourceEnum source,
-                                                const std::vector<ChargingProfile>& profiles, const bool tbc) {
+                                                const CiString<20> source, const std::vector<ChargingProfile>& profiles,
+                                                const bool tbc) {
     ReportChargingProfilesRequest req;
     req.requestId = request_id;
     req.evseId = evse_id;
@@ -775,11 +779,11 @@ void SmartCharging::handle_get_charging_profiles_req(Call<GetChargingProfilesReq
 
     // There are profiles to report.
     // Prepare ReportChargingProfileRequest(s). The message defines the properties evseId and
-    // chargingLimitSource as required, so we can not report all profiles in a single
-    // ReportChargingProfilesRequest. We need to prepare a single ReportChargingProfilesRequest for each
-    // combination of evseId and chargingLimitSource
-    std::set<int32_t> evse_ids;                // will contain all evse_ids of the profiles
-    std::set<ChargingLimitSourceEnum> sources; // will contain all sources of the profiles
+    // ChargingLimitSourceEnumStringType as required, so we can not report all profiles in a single
+    // ReportChargingProfilesRequest. We need to prepare a single ReportChargingProfilesRequest for each combination of
+    // evseId and ChargingLimitSourceEnumStringType
+    std::set<int32_t> evse_ids;     // will contain all evse_ids of the profiles
+    std::set<CiString<20>> sources; // will contain all sources of the profiles
 
     // fill evse_ids and sources sets
     for (const auto& profile : profiles_to_report) {

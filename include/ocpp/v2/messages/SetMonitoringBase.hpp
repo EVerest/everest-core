@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #ifndef OCPP_V2_SETMONITORINGBASE_HPP
@@ -38,8 +38,8 @@ std::ostream& operator<<(std::ostream& os, const SetMonitoringBaseRequest& k);
 /// \brief Contains a OCPP SetMonitoringBaseResponse message
 struct SetMonitoringBaseResponse : public ocpp::Message {
     GenericDeviceModelStatusEnum status;
-    std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetMonitoringBaseResponse message as a human readable string
     /// \returns the message type as a human readable string

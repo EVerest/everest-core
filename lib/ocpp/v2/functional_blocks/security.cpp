@@ -444,7 +444,11 @@ bool Security::should_allow_certificate_install(InstallCertificateUseEnum cert_t
     case InstallCertificateUseEnum::MORootCertificate:
     case InstallCertificateUseEnum::V2GRootCertificate:
         return true;
+    case InstallCertificateUseEnum::OEMRootCertificate:
+        // FIXME: Implement OEMRootCertificate
+        return false;
     }
+    return false;
 }
 
 void Security::scheduled_check_client_certificate_expiration() {

@@ -835,6 +835,24 @@
           "description": "If enabled we allow connections using security level 0. This does pose a security risk and is not allowed according to the OCPP spec",
           "default": false,
           "type": "boolean"
+      },
+      "SupportedOcppVersions": {
+          "variable_name": "SupportedOcppVersions",
+          "characteristics": {
+              "supportsMonitoring": true,
+              "dataType": "SequenceList",
+              "valuesList": "ocpp2.0.1,ocpp2.1"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly",
+                  "value": "ocpp2.1,ocpp2.0.1"
+              }
+          ],
+          "description": "List of supported OCPP versions in order of preference",
+          "default": "ocpp2.1,ocpp2.0.1",
+          "type": "string"
       }
   },
   "required": [
@@ -847,6 +865,7 @@
     "NetworkConnectionProfiles",
     "NumberOfConnectors",
     "SupportedCiphers12",
-    "SupportedCiphers13"
+    "SupportedCiphers13",
+    "SupportedOcppVersions"
   ]
 }

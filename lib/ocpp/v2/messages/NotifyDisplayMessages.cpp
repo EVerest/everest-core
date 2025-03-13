@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/NotifyDisplayMessages.hpp>
@@ -23,9 +23,6 @@ void to_json(json& j, const NotifyDisplayMessagesRequest& k) {
         {"requestId", k.requestId},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.messageInfo) {
         j["messageInfo"] = json::array();
         for (auto val : k.messageInfo.value()) {
@@ -35,6 +32,9 @@ void to_json(json& j, const NotifyDisplayMessagesRequest& k) {
     if (k.tbc) {
         j["tbc"] = k.tbc.value();
     }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
+    }
 }
 
 void from_json(const json& j, NotifyDisplayMessagesRequest& k) {
@@ -42,9 +42,6 @@ void from_json(const json& j, NotifyDisplayMessagesRequest& k) {
     k.requestId = j.at("requestId");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("messageInfo")) {
         json arr = j.at("messageInfo");
         std::vector<MessageInfo> vec;
@@ -55,6 +52,9 @@ void from_json(const json& j, NotifyDisplayMessagesRequest& k) {
     }
     if (j.contains("tbc")) {
         k.tbc.emplace(j.at("tbc"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

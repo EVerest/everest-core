@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v2/messages/GetMonitoringReport.hpp>
@@ -23,9 +23,6 @@ void to_json(json& j, const GetMonitoringReportRequest& k) {
         {"requestId", k.requestId},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.componentVariable) {
         j["componentVariable"] = json::array();
         for (auto val : k.componentVariable.value()) {
@@ -38,6 +35,9 @@ void to_json(json& j, const GetMonitoringReportRequest& k) {
             j["monitoringCriteria"].push_back(conversions::monitoring_criterion_enum_to_string(val));
         }
     }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
+    }
 }
 
 void from_json(const json& j, GetMonitoringReportRequest& k) {
@@ -45,9 +45,6 @@ void from_json(const json& j, GetMonitoringReportRequest& k) {
     k.requestId = j.at("requestId");
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("componentVariable")) {
         json arr = j.at("componentVariable");
         std::vector<ComponentVariable> vec;
@@ -63,6 +60,9 @@ void from_json(const json& j, GetMonitoringReportRequest& k) {
             vec.push_back(conversions::string_to_monitoring_criterion_enum(val));
         }
         k.monitoringCriteria.emplace(vec);
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 
@@ -83,11 +83,11 @@ void to_json(json& j, const GetMonitoringReportResponse& k) {
         {"status", conversions::generic_device_model_status_enum_to_string(k.status)},
     };
     // the optional parts of the message
-    if (k.customData) {
-        j["customData"] = k.customData.value();
-    }
     if (k.statusInfo) {
         j["statusInfo"] = k.statusInfo.value();
+    }
+    if (k.customData) {
+        j["customData"] = k.customData.value();
     }
 }
 
@@ -96,11 +96,11 @@ void from_json(const json& j, GetMonitoringReportResponse& k) {
     k.status = conversions::string_to_generic_device_model_status_enum(j.at("status"));
 
     // the optional parts of the message
-    if (j.contains("customData")) {
-        k.customData.emplace(j.at("customData"));
-    }
     if (j.contains("statusInfo")) {
         k.statusInfo.emplace(j.at("statusInfo"));
+    }
+    if (j.contains("customData")) {
+        k.customData.emplace(j.at("customData"));
     }
 }
 

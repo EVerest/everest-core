@@ -298,7 +298,7 @@ void TransactionBlock::handle_transaction_event_response(const EnhancedMessage<M
 
     // C03.FR.0x and C05.FR.01: We SHALL NOT store central information in the Authorization Cache
     // C10.FR.05
-    if (id_token.type != IdTokenEnum::Central and this->authorization.is_auth_cache_ctrlr_enabled()) {
+    if (id_token.type != IdTokenEnumStringType::Central and this->authorization.is_auth_cache_ctrlr_enabled()) {
         try {
             this->authorization.authorization_cache_insert_entry(utils::generate_token_hash(id_token),
                                                                  msg.idTokenInfo.value());

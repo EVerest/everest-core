@@ -91,7 +91,7 @@ public:
     ///
     virtual SetChargingProfileResponse conform_validate_and_add_profile(
         ChargingProfile& profile, int32_t evse_id,
-        ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO,
+        CiString<20> charging_limit_source = ChargingLimitSourceEnumStringType::CSO,
         AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) = 0;
 
     ///
@@ -138,7 +138,7 @@ public:
 
     SetChargingProfileResponse conform_validate_and_add_profile(
         ChargingProfile& profile, int32_t evse_id,
-        ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO,
+        CiString<20> charging_limit_source = ChargingLimitSourceEnumStringType::CSO,
         AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) override;
     ProfileValidationResultEnum conform_and_validate_profile(
         ChargingProfile& profile, int32_t evse_id,
@@ -191,9 +191,8 @@ protected:
     ///
     /// \brief Adds a given \p profile and associated \p evse_id to our stored list of profiles
     ///
-    SetChargingProfileResponse
-    add_profile(ChargingProfile& profile, int32_t evse_id,
-                ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO);
+    SetChargingProfileResponse add_profile(ChargingProfile& profile, int32_t evse_id,
+                                           CiString<20> charging_limit_source = ChargingLimitSourceEnumStringType::CSO);
 
     ///
     /// \brief Clears profiles from the system using the given \p request
@@ -214,9 +213,8 @@ protected:
 
 private: // Functions
     /* OCPP message requests */
-    void report_charging_profile_req(const int32_t request_id, const int32_t evse_id,
-                                     const ChargingLimitSourceEnum source, const std::vector<ChargingProfile>& profiles,
-                                     const bool tbc);
+    void report_charging_profile_req(const int32_t request_id, const int32_t evse_id, const CiString<20> source,
+                                     const std::vector<ChargingProfile>& profiles, const bool tbc);
     void report_charging_profile_req(const ReportChargingProfilesRequest& req);
 
     /* OCPP message handlers */
