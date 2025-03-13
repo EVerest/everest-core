@@ -53,7 +53,7 @@ private: // Members
     boost::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work;
     /// \brief io_context for the worker for the timers.
     boost::asio::io_context io_context;
-    /// \brief io service thread for the timers.
+    /// \brief io context thread for the timers.
     std::thread io_context_thread;
 
 public:
