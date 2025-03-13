@@ -1,0 +1,23 @@
+description: ...
+configuration:
+  connection_timeout:
+    description: >-
+      Defines how many seconds an authorization is valid before it is discarded.
+      Defines how many seconds a user can provide authorization after the plug in
+      of a car
+    type: integer
+    mutability: rw # autogenerate getter and setter
+    # visibility: hide
+    default: 10
+    unit: seconds
+  master_pass_group_id:
+    description: >-
+      IdTokens that have this id as groupId belong to the Master Pass Group. Meaning they can stop any ongoing
+      transaction, but cannot start transactions. This can, for example, be used by law enforcement personal to stop any
+      ongoing transaction when an EV has to be towed away. If left empty, master_pass_group_id is not used.
+    type: string
+    mutability: wo # autogenerate setter, and report that the key exists
+  selection_algorithm:
+    description: ... 
+    type: string
+    mutability: ro # autogenerate getter

@@ -54,6 +54,12 @@ config:
     type: string
     default: 'A'
 provides:
+  auth_config:
+    description: ...
+    configuration: auth
+  iso15118_config:
+    description: ...
+    configuration: iso15118_charger
   auth_validator:
     description: Validates the provided token using CSMS, AuthorizationList or AuthorizationCache
     interface: auth_token_validator
@@ -104,6 +110,10 @@ requires:
     max_connections: 1
   extensions_15118:
     interface: iso15118_extensions
+    min_connections: 0
+    max_connections: 128
+  device_model_extension:
+    interface: device_model_extension
     min_connections: 0
     max_connections: 128
 enable_external_mqtt: true

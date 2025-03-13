@@ -3,7 +3,7 @@ description: >-
   and custom configuration keys
 config:
   keys_to_monitor:
-    description: Commad seperated list of keys that should be monitored
+    description: Comma seperated list of keys that should be monitored
     type: string
     default: "HeartbeatInterval,SecurityProfile,ExampleConfigurationKey"
 provides:

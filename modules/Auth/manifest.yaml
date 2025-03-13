@@ -13,19 +13,6 @@ config:
       UserInput: Placeholder, not yet implemented
     type: string
     default: FindFirst
-  connection_timeout:
-    description: >-
-      Defines how many seconds an authorization is valid before it is discarded.
-      Defines how many seconds a user can provide authorization after the plug in
-      of a car
-    type: integer
-  master_pass_group_id:
-    description: >-
-      IdTokens that have this id as groupId belong to the Master Pass Group. Meaning they can stop any ongoing
-      transaction, but cannot start transactions. This can, for example, be used by law enforcement personal to stop any
-      ongoing transaction when an EV has to be towed away. If left empty, master_pass_group_id is not used.
-    type: string
-    default: ""
   prioritize_authorization_over_stopping_transaction:
     description: >-
       Boolean value to describe the handling of parent id tokens.
@@ -54,6 +41,9 @@ config:
     type: boolean
     default: false
 provides:
+  config:
+    description : ...
+    configuration: auth
   main:
     description: This implements the auth interface for EVerest
     interface: auth

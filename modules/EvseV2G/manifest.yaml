@@ -76,6 +76,9 @@ config:
     type: boolean
     default: true
 provides:
+  config:
+    description : ...
+    configuration: iso15118
   charger:
     interface: ISO15118_charger
     description: >-

@@ -4,6 +4,8 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
+    config:
+      contract_certification_enabled: true
     connections:
       security:
         - module_id: evse_security
@@ -139,8 +141,9 @@ active_modules:
   auth:
     module: Auth
     config_module:
-      connection_timeout: 10
       selection_algorithm: FindFirst
+    config:
+      connection_timeout: 25
     connections:
       token_provider:
         - module_id: token_provider_1
@@ -160,6 +163,12 @@ active_modules:
     config_module:
       ChargePointConfigPath: config-docker.json
     connections:
+      auth_config:
+        module_id: auth
+        configuration_id: config
+      iso15118_config:
+        module_id: iso15118_charger
+        configuration_id: config
       evse_manager:
         - module_id: evse_manager_1
           implementation_id: evse

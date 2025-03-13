@@ -1,0 +1,6 @@
+description: ...
+configuration:
+  contract_certification_enabled:
+    description: ...
+    type: bool
+    mutability: rw

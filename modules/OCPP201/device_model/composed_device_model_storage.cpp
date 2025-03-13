@@ -30,6 +30,8 @@ ComposedDeviceModelStorage::get_variable_attribute(const ocpp::v2::Component& co
                                                    const ocpp::v2::AttributeEnum& attribute_enum) {
     if (get_variable_source(component_id, variable_id) == VARIABLE_SOURCE_OCPP) {
         return libocpp_device_model_storage->get_variable_attribute(component_id, variable_id, attribute_enum);
+    } else {
+        this->r_device_model_extension->get_variable_attribute(...);
     }
 
     return everest_device_model_storage->get_variable_attribute(component_id, variable_id, attribute_enum);
