@@ -1315,6 +1315,14 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                                : (int)iso_ac_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY;
     }
 
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        next_event = V2G_EVENT_SEND_AND_TERMINATE; // [V2G2-539], [V2G2-034] Send response and terminate tcp-connection
+        res->DC_EVSEChargeParameter.EVSECurrentRegulationTolerance_isUsed = false;
+        res->DC_EVSEChargeParameter.EVSEEnergyToBeDelivered_isUsed = false;
+        res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
+        res->SAScheduleList_isUsed = false;
+    }
+
     return next_event;
 }
 
