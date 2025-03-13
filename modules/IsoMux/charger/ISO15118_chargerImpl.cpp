@@ -95,6 +95,17 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
+    mod->r_iso2->subscribe_start_pre_charge([this]() {
+        if (not mod->selected_iso20()) {
+            publish_start_pre_charge(nullptr);
+        }
+    });
+    mod->r_iso20->subscribe_start_pre_charge([this]() {
+        if (mod->selected_iso20()) {
+            publish_start_pre_charge(nullptr);
+        }
+    });
+
     mod->r_iso2->subscribe_dc_open_contactor([this]() {
         if (not mod->selected_iso20()) {
             publish_dc_open_contactor(nullptr);
