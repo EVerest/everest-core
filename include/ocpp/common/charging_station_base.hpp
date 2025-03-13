@@ -19,9 +19,9 @@ protected:
     std::shared_ptr<EvseSecurity> evse_security;
     std::shared_ptr<MessageLogging> logging;
 
-    boost::shared_ptr<boost::asio::io_service::work> work;
-    boost::asio::io_service io_service;
-    std::thread io_service_thread;
+    boost::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work;
+    boost::asio::io_context io_context;
+    std::thread io_context_thread;
 
 public:
     /// \brief Constructor for ChargingStationBase

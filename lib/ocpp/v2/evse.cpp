@@ -513,7 +513,7 @@ void Evse::set_meter_value_pricing_triggers(
     std::optional<double> trigger_metervalue_on_power_kw, std::optional<double> trigger_metervalue_on_energy_kwh,
     std::optional<DateTime> trigger_metervalue_at_time,
     std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function,
-    boost::asio::io_service& io_service) {
+    boost::asio::io_context& io_context) {
 
     EVLOG_debug << "Set metervalue pricing triggers: "
                 << (trigger_metervalue_at_time.has_value()
@@ -543,7 +543,7 @@ void Evse::set_meter_value_pricing_triggers(
     }
 
     // Start a timer for the trigger 'atTime'.
-    this->trigger_metervalue_at_time_timer = std::make_unique<Everest::SystemTimer>(&io_service, [this]() {
+    this->trigger_metervalue_at_time_timer = std::make_unique<Everest::SystemTimer>(&io_context, [this]() {
         EVLOG_error << "Sending metervalue in timer";
 
         const MeterValue meter_value = utils::get_meter_value_with_measurands_applied(

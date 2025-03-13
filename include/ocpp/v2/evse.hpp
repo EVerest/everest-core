@@ -156,13 +156,13 @@ public:
     /// \param trigger_metervalue_on_energy_kwh Send metervalues when this kwh is reached.
     /// \param trigger_metervalue_at_time       Send metervalues at a specific time.
     /// \param send_metervalue_function         Function used to send the metervalues.
-    /// \param io_service                       io service for the timers.
+    /// \param io_context                       io context for the timers.
     ///
     virtual void set_meter_value_pricing_triggers(
         std::optional<double> trigger_metervalue_on_power_kw, std::optional<double> trigger_metervalue_on_energy_kwh,
         std::optional<DateTime> trigger_metervalue_at_time,
         std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function,
-        boost::asio::io_service& io_service) = 0;
+        boost::asio::io_context& io_context) = 0;
 };
 
 /// \brief Represents an EVSE. An EVSE can contain multiple Connector objects, but can only supply energy to one of
@@ -186,7 +186,7 @@ private:
     std::unique_ptr<Everest::SystemTimer> trigger_metervalue_at_time_timer;
     std::optional<double> last_triggered_metervalue_power_kw;
     std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function;
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_context;
 
     /// \brief gets the active import energy meter value from meter_value, normalized to Wh.
     std::optional<float> get_active_import_register_meter_value();
@@ -294,13 +294,13 @@ public:
     /// \param trigger_metervalue_on_energy_kwh Trigger when amount of kwh is reached
     /// \param trigger_metervalue_at_time       Trigger for a specific time
     /// \param send_metervalue_function         Function to send metervalues when trigger 'fires'
-    /// \param io_service                       Io service needed for the timer
+    /// \param io_context                       Io service needed for the timer
     ///
     void set_meter_value_pricing_triggers(
         std::optional<double> trigger_metervalue_on_power_kw, std::optional<double> trigger_metervalue_on_energy_kwh,
         std::optional<DateTime> trigger_metervalue_at_time,
         std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function,
-        boost::asio::io_service& io_service);
+        boost::asio::io_context& io_context);
 };
 
 } // namespace v2

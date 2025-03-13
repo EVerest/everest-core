@@ -37,7 +37,7 @@ public:
     TariffAndCost(const FunctionalBlockContext& functional_block_context, MeterValuesInterface& meter_values,
                   std::optional<SetDisplayMessageCallback>& set_display_message_callback,
                   std::optional<SetRunningCostCallback>& set_running_cost_callback,
-                  boost::asio::io_service& io_service);
+                  boost::asio::io_context& io_context);
     void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;
 
     void handle_cost_and_tariff(const TransactionEventResponse& response,
@@ -49,7 +49,7 @@ private: // Members
     MeterValuesInterface& meter_values;
     std::optional<SetDisplayMessageCallback> set_display_message_callback;
     std::optional<SetRunningCostCallback> set_running_cost_callback;
-    boost::asio::io_service& io_service;
+    boost::asio::io_context& io_context;
 
 private: // Functions
     // Functional Block I: TariffAndCost

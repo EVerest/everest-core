@@ -50,7 +50,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     message_log_path(message_log_path.string()), // .string() for compatibility with boost::filesystem
     switch_security_profile_callback(nullptr) {
     this->configuration = std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path);
-    this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->heartbeat(); });
+    this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() { this->heartbeat(); });
     this->heartbeat_interval = this->configuration->getHeartbeatInterval();
     auto database_connection =
         std::make_unique<common::DatabaseConnection>(database_path / (this->configuration->getChargePointId() + ".db"));
@@ -92,16 +92,16 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     }
 
     this->boot_notification_timer =
-        std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->boot_notification(); });
+        std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() { this->boot_notification(); });
 
     for (int32_t connector = 0; connector < this->configuration->getNumberOfConnectors() + 1; connector++) {
-        this->status_notification_timers.push_back(std::make_unique<Everest::SteadyTimer>(&this->io_service));
+        this->status_notification_timers.push_back(std::make_unique<Everest::SteadyTimer>(&this->io_context));
     }
 
     this->clock_aligned_meter_values_timer =
-        std::make_unique<ClockAlignedTimer>(&this->io_service, [this]() { this->clock_aligned_meter_values_sample(); });
+        std::make_unique<ClockAlignedTimer>(&this->io_context, [this]() { this->clock_aligned_meter_values_sample(); });
 
-    this->client_certificate_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {
+    this->client_certificate_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() {
         EVLOG_info << "Checking if CSMS client certificate has expired";
         int expiry_days_count = this->evse_security->get_leaf_expiry_days_count(
             ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
@@ -115,7 +115,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
         this->client_certificate_timer->interval(CLIENT_CERTIFICATE_TIMER_INTERVAL);
     });
 
-    this->v2g_certificate_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {
+    this->v2g_certificate_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() {
         EVLOG_info << "Checking if V2GCertificate has expired";
         int expiry_days_count =
             this->evse_security->get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::V2GCertificate);
@@ -199,7 +199,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
             [this](ocpp::Call<ocpp::v16::DataTransferRequest> call) {
                 this->handle_data_transfer_install_certificate(call);
             };
-        this->ocsp_request_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {
+        this->ocsp_request_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() {
             this->update_ocsp_cache();
             this->ocsp_request_timer->interval(OCSP_REQUEST_TIMER_INTERVAL);
         });
@@ -3277,7 +3277,7 @@ void ChargePointImpl::set_connector_trigger_metervalue_timer(const DateTime& dat
     int32_t connector_id = connector->id;
 
     connector->trigger_metervalue_at_time_timer =
-        std::make_unique<Everest::SystemTimer>(&this->io_service, [this, connector_id]() {
+        std::make_unique<Everest::SystemTimer>(&this->io_context, [this, connector_id]() {
             const std::optional<MeterValue>& meter_value = get_latest_meter_value(
                 connector_id, {{Measurand::Energy_Active_Import_Register, std::nullopt}}, ReadingContext::Other);
             if (!meter_value.has_value()) {
@@ -3301,7 +3301,7 @@ void ChargePointImpl::set_time_offset_timer(const std::string& date_time) {
         return;
     }
 
-    this->change_time_offset_timer = std::make_unique<Everest::SystemTimer>(&this->io_service, [this]() {
+    this->change_time_offset_timer = std::make_unique<Everest::SystemTimer>(&this->io_context, [this]() {
         const std::optional<std::string> next_offset = this->configuration->getTimeOffsetNextTransition();
         if (next_offset.has_value()) {
             this->configuration->setDisplayTimeOffset(next_offset.value());
@@ -4147,7 +4147,7 @@ void ChargePointImpl::on_transaction_started(const int32_t& connector, const std
         this->status->submit_event(connector, FSMEvent::UsageInitiated, ocpp::DateTime());
     }
 
-    auto meter_values_sample_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this, connector]() {
+    auto meter_values_sample_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this, connector]() {
         const auto meter_value = this->get_latest_meter_value(
             connector, this->configuration->getMeterValuesSampledDataVector(), ReadingContext::Sample_Periodic);
         if (meter_value.has_value()) {

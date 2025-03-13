@@ -17,14 +17,15 @@ ChargingStationBase::ChargingStationBase(const std::shared_ptr<EvseSecurity> evs
         }
         this->evse_security = std::make_shared<EvseSecurityImpl>(security_configuration.value());
     }
-    this->work = boost::make_shared<boost::asio::io_service::work>(this->io_service);
-    this->io_service_thread = std::thread([this]() { this->io_service.run(); });
+    this->work = boost::make_shared<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(
+        boost::asio::make_work_guard(this->io_context));
+    this->io_context_thread = std::thread([this]() { this->io_context.run(); });
 }
 
 ChargingStationBase::~ChargingStationBase() {
-    work->get_io_context().stop();
-    io_service.stop();
-    io_service_thread.join();
+    work->get_executor().context().stop();
+    io_context.stop();
+    io_context_thread.join();
 }
 
 } // namespace ocpp

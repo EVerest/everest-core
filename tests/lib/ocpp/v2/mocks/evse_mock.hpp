@@ -45,6 +45,6 @@ public:
                  std::optional<double> trigger_metervalue_on_energy_kwh,
                  std::optional<DateTime> trigger_metervalue_at_time,
                  std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function,
-                 boost::asio::io_service& io_service));
+                 boost::asio::io_context& io_context));
 };
 } // namespace ocpp::v2

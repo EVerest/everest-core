@@ -17,12 +17,12 @@ namespace ocpp::v2 {
 TariffAndCost::TariffAndCost(const FunctionalBlockContext& functional_block_context, MeterValuesInterface& meter_values,
                              std::optional<SetDisplayMessageCallback>& set_display_message_callback,
                              std::optional<SetRunningCostCallback>& set_running_cost_callback,
-                             boost::asio::io_service& io_service) :
+                             boost::asio::io_context& io_context) :
     context(functional_block_context),
     meter_values(meter_values),
     set_display_message_callback(set_display_message_callback),
     set_running_cost_callback(set_running_cost_callback),
-    io_service(io_service) {
+    io_context(io_context) {
 }
 
 void TariffAndCost::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
@@ -250,7 +250,7 @@ void TariffAndCost::handle_costupdated_req(const Call<CostUpdatedRequest> call) 
         [this, evse_id](const std::vector<MeterValue>& meter_values) {
             this->meter_values.meter_values_req(evse_id, meter_values, false);
         },
-        this->io_service);
+        this->io_context);
 }
 
 bool TariffAndCost::is_multilanguage_enabled() const {
