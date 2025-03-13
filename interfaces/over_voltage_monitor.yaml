@@ -10,8 +10,8 @@ description: >-
   All other errors should be raised/cleared when they occur/are no longer active immediately.
   The var voltage_measurement_V should be published in regular intervals, e.g. 1 second. It is not
   used to compare it with the overvoltage threshold setting in EVerest, that has to be done in the OVM device itself.
-  It will only used to validate that the OVM and the IMD see the same voltage to ensure they are correctly wired to the same
-  charging port. If it is not availble in hardware, do not publish the voltage_measurement_V at all.
+  It will only be used to validate that the OVM and the IMD see the same voltage to ensure they are correctly wired to the same
+  charging port. If it is not available in hardware, do not publish the voltage_measurement_V at all.
 cmds:
   start:
     description: >-
