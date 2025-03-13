@@ -533,8 +533,19 @@ async def test_C13(
         },
     )
 
+    test_utility.messages.clear()
+
     test_controller.swipe(id_token_123.id_token)
     test_controller.plug_out()
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {
+            "eventType": "Ended"
+        },
+    )
 
     assert await wait_for_and_validate(
         test_utility,
@@ -547,6 +558,8 @@ async def test_C13(
     # Invalid token in local list may not be authorized
     # Check AuthList: Invalid, Cache: Valid
     # Expected result: No session started
+    test_utility.forbidden_actions.append("TransactionEvent")
+
     logging.info("disconnect the ws connection...")
     test_controller.disconnect_websocket()
 
@@ -559,9 +572,6 @@ async def test_C13(
 
     logging.info("connecting the ws connection")
     test_controller.connect_websocket()
-
-    test_utility.messages.clear()
-    test_utility.forbidden_actions.append("TransactionEvent")
 
     # wait for reconnect
     charge_point_v201 = await central_system_v201.wait_for_chargepoint(
