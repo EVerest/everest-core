@@ -72,7 +72,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: ff3efe50c41ac2c40ef24d61ea03ec5b7709704a
+  git_tag: 2025.2.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # mbedtls
 ext-mbedtls:
