@@ -34,7 +34,7 @@ use generated::types::{
     authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
     bank_transaction::{BankSessionToken, BankTransactionSummary},
     money::MoneyAmount,
-    session_cost::{SessionCost, SessionStatus},
+    session_cost::{SessionCost, SessionStatus, SessionCostMessage},
 };
 use generated::{
     get_config, AuthTokenProviderServiceSubscriber, BankSessionTokenProviderClientSubscriber,
@@ -305,6 +305,12 @@ impl SessionCostClientSubscriber for PaymentTerminalModule {
         match res {
             Ok(_) => log::debug!("Transaction successful"),
             Err(err) => log::error!("Transaction failed {err:}"),
+        }
+    }
+
+    fn on_session_cost_message(&self, _context: &Context, value: SessionCostMessage) {
+        for message in value.messages {
+            log::debug!("Received session cost message {0:}", message.content);
         }
     }
 }

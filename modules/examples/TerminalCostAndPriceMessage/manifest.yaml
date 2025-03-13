@@ -1,8 +1,8 @@
 description: Example cost and price message module
 provides:
-  display_message:
-    description: module to show a message
-    interface: display_message
+  main:
+    description: EVerest API
+    interface: empty
 requires:
   session_cost:
     interface: session_cost
