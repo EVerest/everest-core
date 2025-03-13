@@ -24,6 +24,8 @@ types:
       - Faulted
       - Idle
       - Unavailable
+      - Suspending
+      - Discharging
   DisplayMessageStatusEnum:
     description: Response on a display message request
     type: string
@@ -61,6 +63,7 @@ types:
       - HTML
       - URI
       - UTF8
+      - QRCODE
   DisplayMessage:
     description: Message to show on a display
     type: object
