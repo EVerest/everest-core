@@ -198,7 +198,6 @@ struct v2g_context {
     struct sockaddr_in6* local_tcp_addr;
     struct sockaddr_in6* local_tls_addr;
 
-    std::string certs_path;
     std::string tls_key_logging_path;
 
     uint32_t network_read_timeout;     /* in milli seconds */
