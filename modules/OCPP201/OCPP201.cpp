@@ -28,6 +28,7 @@ TxEvent get_tx_event(const ocpp::v2::ReasonEnum reason) {
     case ocpp::v2::ReasonEnum::Local:
     case ocpp::v2::ReasonEnum::MasterPass:
     case ocpp::v2::ReasonEnum::StoppedByEV:
+    case ocpp::v2::ReasonEnum::ReqEnergyTransferRejected:
         return TxEvent::DEAUTHORIZED;
     case ocpp::v2::ReasonEnum::EVDisconnected:
         return TxEvent::EV_DISCONNECTED;
@@ -121,6 +122,8 @@ ocpp::v2::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v2::R
         return ocpp::v2::TriggerReasonEnum::TimeLimitReached;
     case ocpp::v2::ReasonEnum::Timeout:
         return ocpp::v2::TriggerReasonEnum::EVConnectTimeout;
+    case ocpp::v2::ReasonEnum::ReqEnergyTransferRejected:
+        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     default:
         return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     }
@@ -449,8 +452,8 @@ void OCPP201::ready() {
         return conversions::to_ocpp_get_log_response(response);
     };
 
-    callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<36> idToken,
-                                                         const std::optional<ocpp::CiString<36>> groupIdToken) {
+    callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<255> idToken,
+                                                         const std::optional<ocpp::CiString<255>> groupIdToken) {
         if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
             return ocpp::ReservationCheckStatus::NotReserved;
         }
@@ -646,9 +649,8 @@ void OCPP201::ready() {
 
     callbacks.connection_state_changed_callback =
         [this](const bool is_connected, const int /*configuration_slot*/,
-               const ocpp::v2::NetworkConnectionProfile& /*network_connection_profile*/) {
-            this->p_ocpp_generic->publish_is_connected(is_connected);
-        };
+               const ocpp::v2::NetworkConnectionProfile& /*network_connection_profile*/,
+               const auto) { this->p_ocpp_generic->publish_is_connected(is_connected); };
 
     callbacks.security_event_callback = [this](const ocpp::CiString<50>& event_type,
                                                const std::optional<ocpp::CiString<255>>& tech_info) {
@@ -695,7 +697,8 @@ void OCPP201::ready() {
             reservation.parent_id_token = request.groupIdToken.value().idToken;
         }
         if (request.connectorType.has_value()) {
-            reservation.connector_type = conversions::to_everest_connector_type_enum(request.connectorType.value());
+            reservation.connector_type =
+                types::evse_manager::string_to_connector_type_enum(request.connectorType.value());
         }
 
         types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(reservation);
