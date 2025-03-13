@@ -9,10 +9,6 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 
 from ocpp.v201 import call as call201
 
-from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
-    GenericOCPP201ConfigAdjustment,
-)
-
 from test_sets.everest_test_utils import *  # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
 from everest.testing.ocpp_utils.charge_point_utils import (
     wait_for_and_validate,
@@ -49,7 +45,6 @@ class TestIso15118ExtenstionsOcppIntegration:
         test_config,
         test_utility: TestUtility,
     ):
-        await asyncio.sleep(3)
         test_controller.plug_in_dc_iso()
 
         assert await wait_for_and_validate(
@@ -65,7 +60,26 @@ class TestIso15118ExtenstionsOcppIntegration:
         )
 
         test_utility.messages.clear()
+
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point,
+            "TransactionEvent",
+            {
+                "eventType": "Updated",
+                "triggerReason": "ChargingStateChanged",
+                "transactionInfo": {"chargingState": "Charging"},
+            },
+        )
+
         test_controller.plug_out_iso()
+
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point,
+            "StatusNotification",
+            {"connectorStatus": "Available", "evseId": 1},
+        )
 
     @pytest.mark.everest_core_config("everest-config-ocpp201-sil-dc-d2.yaml")
     async def test_charge_params_sent_dc_evsev2g_d2(
@@ -77,7 +91,6 @@ class TestIso15118ExtenstionsOcppIntegration:
         test_config,
         test_utility: TestUtility,
     ):
-        await asyncio.sleep(3)
         test_controller.plug_in_dc_iso()
 
         assert await wait_for_and_validate(
@@ -92,6 +105,23 @@ class TestIso15118ExtenstionsOcppIntegration:
             validate_notify_ev_charging_needs,
         )
 
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point,
+            "TransactionEvent",
+            {
+                "eventType": "Updated",
+                "triggerReason": "ChargingStateChanged",
+                "transactionInfo": {"chargingState": "Charging"},
+            },
+        )
+
         test_utility.messages.clear()
         test_controller.plug_out_iso()
 
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point,
+            "StatusNotification",
+            {"connectorStatus": "Available", "evseId": 1},
+        )
