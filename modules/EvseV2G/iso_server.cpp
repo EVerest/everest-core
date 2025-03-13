@@ -1299,6 +1299,11 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         if ((unsigned int)1 == req->AC_EVChargeParameter_isUsed) {
             res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
         }
+        if (req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value < 0 ||
+            req->DC_EVChargeParameter.EVMaximumPowerLimit.Value < 0 ||
+            req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value < 0) {
+            res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
+        }
     }
 
     /* Check the current response code and check if no external error has occurred */
@@ -1772,7 +1777,7 @@ static enum v2g_event handle_iso_pre_charge(struct v2g_connection* conn) {
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_PRECHARGE_POWERDELIVERY; // [V2G-587]
 
-if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
         next_event = V2G_EVENT_SEND_AND_TERMINATE; // [V2G2-539], [V2G2-034] Send response and terminate tcp-connection
         res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
     }
