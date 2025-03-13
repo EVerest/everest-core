@@ -37,7 +37,6 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
-ev_register_test_target(${TEST_TARGET_NAME})
 
 # Copy the json files used for testing to the destination directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json_tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
