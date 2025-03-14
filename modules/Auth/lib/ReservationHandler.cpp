@@ -18,14 +18,15 @@ ReservationHandler::ReservationHandler(std::map<int, std::unique_ptr<module::EVS
                                        const std::string& id, kvsIntf* store) :
     evses(evses), kvs_store_key_id("reservation_" + id), store(store) {
     // Create this worker thread and io service etc here for the timer.
-    this->work = boost::make_shared<boost::asio::io_service::work>(this->io_service);
-    this->io_service_thread = std::thread([this]() { this->io_service.run(); });
+    this->work = boost::make_shared<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(
+        boost::asio::make_work_guard(this->io_context));
+    this->io_context_thread = std::thread([this]() { this->io_context.run(); });
 }
 
 ReservationHandler::~ReservationHandler() {
-    work->get_io_context().stop();
-    io_service.stop();
-    io_service_thread.join();
+    work->get_executor().context().stop();
+    io_context.stop();
+    io_context_thread.join();
 }
 
 void ReservationHandler::load_reservations() {
@@ -631,7 +632,7 @@ void ReservationHandler::set_reservation_timer(const types::reservation::Reserva
                                                const std::optional<uint32_t> evse_id) {
     std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id] =
-        std::make_unique<Everest::SteadyTimer>(&this->io_service);
+        std::make_unique<Everest::SteadyTimer>(&this->io_context);
 
     this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id]->at(
         [this, reservation, evse_id]() {

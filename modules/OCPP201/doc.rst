@@ -1,21 +1,25 @@
 .. _everest_modules_handwritten_OCPP201:
 
-OCPP2.0.1 Module
+OCPP 2.1 and 2.0.1 Module
 ================
 
-This module implements and integrates OCPP 2.0.1 within EVerest. A connection to a Charging Station Management System (CSMS) can be
+This module implements and integrates OCPP 2.0.1 and OCPP 2.1 within EVerest. A connection to a Charging Station Management System (CSMS) can be
 established by loading this module as part of the EVerest configuration. This module leverages `libocpp <https://github.com/EVerest/libocpp>`_,
 EVerest's OCPP library.
 
 The EVerest config `config-sil-ocpp201.yaml <../../config/config-sil-ocpp201.yaml>`_ serves as an example for how to add the OCPP201 module
 to your EVerest config.
 
+📌 **Note:**: This module can be used for OCPP2.0.1 and OCPP2.1 communication. The module name OCPP201 is kept for now to allow backwards 
+compatability with existing EVerest configurations. It will likely be renamed in the future. The following descriptions apply for both
+OCPP2.0.1 and OCPP2.1, referred by using the term **OCPP2**.
+
 Module configuration
 --------------------
 
-Like for every EVerest module, the configuration parameters are defined as part of the module `manifest <../manifest.yaml>`_. OCPP2.0.1 defines
+Like for every EVerest module, the configuration parameters are defined as part of the module `manifest <../manifest.yaml>`_. OCPP2 defines
 a device model structure and a lot of standardized variables that are used within the functional requirements of the protocol. Please see 
-Part 1 - Architecture & Topology of the OCPP2.0.1 specification for further information about the device model and how it is composed.
+Part 1 - Architecture & Topology of the OCPP2.0.1 or OCPP2.1 specification for further information about the device model and how it is composed.
 
 For this module, the device model is configured separately in a JSON format. This module initializes the device model based on the configuration
 parameter **DeviceModelConfigPath**. It shall point to the directory where the component configuration files are located in two subdirectories:
@@ -31,9 +35,18 @@ variables and values, need to be in line with the physical setup of the charging
 
 Each device model component is represented by a JSON component config file. This config specifies the component and all its variables,
 characteristics, attributes, and monitors. Please see `the documentation for the device model initialization 
-<https://github.com/EVerest/libocpp/blob/main/doc/ocpp_201_device_model_initialization.md>`_ for further information on how it is set up.
+<https://github.com/EVerest/libocpp/blob/main/doc/v2/ocpp_201_device_model_initialization.md>`_ for further information on how it is set up.
 
 To add a custom component, you can simply add another JSON configuration file for it, and it will automatically be applied and reported.
+
+Configuring the OCPP2 version
+-----------------------------
+
+This module supports OCPP2.0.1 and OCPP2.1. The charging station and the CSMS agree on the protocol version to be used during the websocket
+handshake. The charging station indicates which versions it supports in the Sec-WebSocket-Protocol header. This header is set based on 
+the device model configuration **SupportedOcppVersions** of the **InternalCtrlr**. The CSMS then selects the version to use and reports
+it in the handshake response. Note that **SupportedOcppVersions** is a comma seperated list and allows you to specify the versions
+in the order of preference.
 
 Integration in EVerest
 ----------------------
@@ -104,7 +117,7 @@ This module makes use of the following commands of this interface:
 * **stop_transaction** to stop a transaction in case the CSMS stops a transaction by e.g. a **RequestStopTransaction.req**
 * **force_unlock** to force the unlock of a connector in case the CSMS sends a **UnlockConnector.req**
 * **enable_disable** to set the EVSE to operative or inoperative, e.g. in case the CSMS sends a **ChangeAvailability.req**. This command can be called from
-  different sources. It therefore contains an argument **priority** in order to override the status if required. OCPP201 uses a priority of 5000, which is
+  different sources. It therefore contains an argument **priority** in order to override the status if required. OCPP2 uses a priority of 5000, which is
   mid-range.
 * **set_external_limits** to apply power or ampere limits at the EVSE received by the CSMS using the SmartCharging feature profile. Libocpp contains the
   business logic to calculate the composite schedule for received charging profiles. This module gets notified in case charging profiles are added,
@@ -213,7 +226,7 @@ This module makes use of the following commands of this interface:
   they expire soon
 
 Note that a lot of conversion between the libocpp types and the generated EVerest types are required for the given commands. Since the  
-conversion functionality is used by this OCPP201 module and the OCPP1.6 module, it is implemented as a
+conversion functionality is used by this OCPP2 module and the OCPP1.6 module, it is implemented as a
 `separate library <../../lib/staging/ocpp/>`_ .
 
 Requires: data_transfer
@@ -268,8 +281,8 @@ The **enable_global_errors** flag for this module is true in its manifest. This 
 therefore able to retrieve and process all reported errors from other
 modules that are loaded in the same EVerest configuration.
 
-The error reporting via OCPP2.0.1 follows the Minimum Required Error Codes (MRECS): https://inl.gov/chargex/mrec/ . This proposes a unified methodology 
-to define and classify a minimum required set of error codes and how to report them via OCPP2.0.1.
+The error reporting via OCPP2 follows the Minimum Required Error Codes (MRECS): https://inl.gov/chargex/mrec/ . This proposes a unified methodology 
+to define and classify a minimum required set of error codes and how to report them via OCPP2.
 
 StatusNotification
 ^^^^^^^^^^^^^^^^^^
@@ -278,12 +291,12 @@ In contrast to OCPP1.6, error information is not transmitted as part of the Stat
 A **StatusNotification.req** with status **Faulted** will be set to faulted only in case the error received is of the special type **evse_manager/Inoperative**.
 This indicates that the EVSE is inoperative (not ready for energy transfer).
 
-In OCPP2.0.1 errors can be reported using the **NotifyEventRequest.req**. This message is used to report all other errros received.  
+In OCPP2 errors can be reported using the **NotifyEventRequest.req**. This message is used to report all other errros received.  
 
 Current Limitation
 ^^^^^^^^^^^^^^^^^^
 
-In OCPP2.0.1 errors can be reported using the **NotifyEventRequest**
+In OCPP2 errors can be reported using the **NotifyEventRequest**
 message. The **eventData** property carries the relevant information.
 
 This format of reporting errors deviates from the mechanism used within
@@ -328,9 +341,9 @@ at every start up.
 Energy Management and Smart Charging Integration
 ------------------------------------------------
 
-OCPP2.0.1 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
+OCPP2 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
 This module integrates the composite schedule(s) within EVerest's energy management. For further information about smart charging and the
-composite schedule calculation please refer to the OCPP2.0.1 specification.
+composite schedule calculation please refer to the OCPP2.0.1 or OCPP2.1 specification.
 
 The integration of the composite schedules is implemented through the optional requirement(s) `evse_energy_sink` (interface: `external_energy_limits`) 
 of this module. Depending on the number of EVSEs configured, each composite limit is communicated via a seperate sink, including the composite schedule
@@ -352,7 +365,7 @@ than the value configured for `CompositeScheduleIntervalS` because otherwise tim
 Device model implementation details
 -----------------------------------
 
-For managing configuration and telemetry data of a charging station, the OCPP2.0.1 specification introduces
+For managing configuration and telemetry data of a charging station, the OCPP2 specification introduces
 a device model that is very different to the design of OCPP1.6. 
 The specified device model comes with these high-level requirements:
 
@@ -361,10 +374,10 @@ The specified device model comes with these high-level requirements:
 * Complex data structure for reporting and configuration of variables
 * Device model contains variables of the whole charging station, beyond OCPP business logic
 
-The device model of OCPP2.0.1 can contain various physical or logical components and
+The device model of OCPP2 can contain various physical or logical components and
 variables. While in OCPP1.6 almost all of the standardized configuration keys are used to influence the control flow of
-libocpp, in OCPP2.0.1 the configuration and telemetry variables that can be part of the device model go beyond the
-control or reporting capabilities of only libocpp. Still there is a large share of standardized variables in OCPP2.0.1
+libocpp, in OCPP2 the configuration and telemetry variables that can be part of the device model go beyond the
+control or reporting capabilities of only libocpp. Still there is a large share of standardized variables in OCPP2
 that do influence the control flow of libocpp.
 
 Internally and externally managed variables
@@ -385,7 +398,7 @@ Note that the EVerest config service is not yet implemented. Currently all compo
 by the libocpp device model storage implementation.
 
 Device Model Implementation of this module
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This module provides an implementation of device model API provided as part of libocpp (it implements
 `device_model_storage_interface.hpp`).
