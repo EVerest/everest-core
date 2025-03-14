@@ -25,7 +25,6 @@ namespace module {
 
 struct Conf {
     std::string device;
-    std::string certificate_path;
     std::string logging_path;
     std::string tls_negotiation_strategy;
     bool enable_ssl_logging;
