@@ -9,7 +9,7 @@ bool is_evse_sink_configured(const std::vector<std::unique_ptr<external_energy_l
                              const int32_t evse_id) {
     for (const auto& evse_sink : r_evse_energy_sink) {
         if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+            EVLOG_critical << "Please configure an evse mapping in your configuration file for the connected "
                               "r_evse_energy_sink with module_id: "
                            << evse_sink->module_id;
             throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
@@ -26,7 +26,7 @@ get_evse_sink_by_evse_id(const std::vector<std::unique_ptr<external_energy_limit
                          const int32_t evse_id) {
     for (const auto& evse_sink : r_evse_energy_sink) {
         if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+            EVLOG_critical << "Please configure an evse mapping in your configuration file for the connected "
                               "r_evse_energy_sink with module_id: "
                            << evse_sink->module_id;
             throw std::runtime_error("No mapping configured for evse_id: " + evse_id);

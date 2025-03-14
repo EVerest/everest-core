@@ -37,7 +37,7 @@ public:
             d = data;
             return true;
         } else {
-            // Timeout occured in wait_for
+            // Timeout occurred in wait_for
             return false;
         }
     };

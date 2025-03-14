@@ -283,7 +283,7 @@ void OCPP201::init() {
     // ensure all evse_energy_sink(s) that are connected have an evse id mapping
     for (const auto& evse_sink : this->r_evse_energy_sink) {
         if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+            EVLOG_critical << "Please configure an evse mapping in your configuration file for the connected "
                               "r_evse_energy_sink with module_id: "
                            << evse_sink->module_id;
             throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
@@ -656,7 +656,7 @@ void OCPP201::ready() {
                                                const std::optional<ocpp::CiString<255>>& tech_info) {
         types::ocpp::SecurityEvent event;
         event.type = event_type.get();
-        EVLOG_info << "Security Event in OCPP occured: " << event.type;
+        EVLOG_info << "Security Event in OCPP occurred: " << event.type;
         if (tech_info.has_value()) {
             event.info = tech_info.value().get();
         }

@@ -508,7 +508,7 @@ types:
       - event_notification_type
     properties:
       component_variable:
-        description: Identifier for which the event occured
+        description: Identifier for which the event occurred
         type: object
         $ref: /ocpp#/ComponentVariable
       event_id:
