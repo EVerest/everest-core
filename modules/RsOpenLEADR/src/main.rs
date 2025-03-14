@@ -5,8 +5,9 @@ include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 use chrono::{TimeDelta, Utc};
 use cron::Schedule;
-use generated::{get_config, Context, ExternalEnergyLimitsClientSubscriber, Module, ModuleConfig, ModulePublisher, OnReadySubscriber};
+use generated::{get_config, Context, EmptyServiceSubscriber, ExternalEnergyLimitsClientSubscriber, Module, ModuleConfig, ModulePublisher, OnReadySubscriber};
 use generated::types::energy::EnforcedLimits;
+use generated::types::energy::ExternalLimits;
 use openleadr_wire::program::ProgramId;
 use openleadr_wire::target::TargetType;
 use std::str::FromStr;
@@ -22,6 +23,8 @@ pub struct OpenleadrClient {
     program: Arc<ProgramClient>,
     rt: Arc<tokio::runtime::Runtime>,
 }
+
+impl EmptyServiceSubscriber for OpenleadrClient {}
 
 impl OnReadySubscriber for OpenleadrClient {
     fn on_ready(&self, publishers: &ModulePublisher) {
@@ -74,6 +77,13 @@ impl OnReadySubscriber for OpenleadrClient {
                 let timeline = program.as_ref().get_timeline(filter_data).await.unwrap();
 
                 // TODO: handle events from the timeline
+
+                log::info!("handle events from the timeline: {:?}", timeline);
+
+                // TODO: something like this?
+                // let lim = ExternalLimits{schedule_import: None, schedule_export: None};
+                // publisher.set_external_limits(lim);
+
             }
 
 
@@ -119,7 +129,7 @@ fn get_filter_from_config(config: &ModuleConfig) -> Option<(TargetType, Vec<Stri
 
 fn main() {
     let config = get_config();
-    let rt = tokio::runtime::Builder::new_current_thread().build().unwrap();
+    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
 
     // create openleadr-client
     let credentials = get_credentials_from_config(&config);
@@ -138,6 +148,7 @@ fn main() {
 
     // construct the module
     let _module = Module::new(
+        adr_client.clone(),
         adr_client.clone(),
         adr_client.clone(),
     );

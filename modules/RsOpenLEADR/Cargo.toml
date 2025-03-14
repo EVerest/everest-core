@@ -12,6 +12,7 @@ openleadr-wire = "0.0.4"
 tokio = "1.43.0"
 cron = "0.15.0"
 chrono = "0.4.39"
+log = "0.4.20"
 
 [build-dependencies]
 everestrs-build = { workspace = true }

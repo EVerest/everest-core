@@ -23,6 +23,9 @@ config:
     type: string
     default: "0 14 * * *"
 provides:
+  main:
+    description: OpenADR 3.0 integration
+    interface: empty
 requires:
   limits_iface:
     interface: external_energy_limits
