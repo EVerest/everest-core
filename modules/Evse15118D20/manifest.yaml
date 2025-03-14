@@ -20,7 +20,7 @@ config:
       - ENFORCE_NO_TLS
     default: ACCEPT_CLIENT_OFFER  
   enforce_tls_1_3:
-    description: Enforcing tls version 1.3 if the ev and secc supports tls
+    description: Enforcing tls version 1.3. Only applies if tls_negotiation_strategy is ENFORCE_TLS.
     type: boolean
     default: false
   enable_ssl_logging:
