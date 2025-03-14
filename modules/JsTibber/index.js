@@ -95,7 +95,7 @@ async function fetch_tibber_api_data(mod) {
 
     mod.provides.main.publish.energy_price_schedule(schedule);
   }).catch(() => {
-    evlog.error('Exception occured when contacting tibber API');
+    evlog.error('Exception occurred when contacting tibber API');
   }
   );
 };
