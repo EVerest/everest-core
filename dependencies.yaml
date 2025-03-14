@@ -47,7 +47,7 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: c675848d6855285d0d6869372e42817f571244d9
+  git_tag: 7c67bfd1766a8378143f33c4afafd9b56c66a353
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600 module
@@ -67,7 +67,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: c55d25816729a3a7d71317ace63f05b157b18da5
+  git_tag: 61eb22dadf988238365b33d05977d776a38e723e
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
