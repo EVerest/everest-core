@@ -9,6 +9,7 @@
  */
 
 #include "Charger.hpp"
+#include <algorithm>
 #include <generated/types/powermeter.hpp>
 #include <math.h>
 #include <string.h>
@@ -65,32 +66,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     hlc_use_5percent_current_session = false;
 
     // create thread for processing errors/error clearings
-    std::thread error_thread([this]() {
-        for (;;) {
-            auto events = this->error_handling_event_queue.wait();
-            if (!events.empty()) {
-                Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_loop);
-                for (auto& event : events) {
-                    switch (event) {
-                    case ErrorHandlingEvents::PreventCharging:
-                        shared_context.error_prevent_charging_flag = true;
-                        break;
-                    case ErrorHandlingEvents::AllErrorsPreventingChargingCleared:
-                        shared_context.error_prevent_charging_flag = false;
-                        break;
-                    case ErrorHandlingEvents::AllErrorCleared:
-                        shared_context.error_prevent_charging_flag = false;
-                        break;
-                    default:
-                        EVLOG_error << "ErrorHandlingEvents invalid value: "
-                                    << static_cast<std::underlying_type_t<ErrorHandlingEvents>>(event);
-                        break;
-                    }
-                }
-            }
-        }
-    });
-    error_thread.detach();
+    error_thread_handle = std::thread(&Charger::error_thread, this);
 
     // Register callbacks for errors/error clearings
     error_handling->signal_error.connect([this](const bool prevent_charging) {
@@ -111,6 +87,9 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
 
 Charger::~Charger() {
     pwm_F();
+    // need to send an event to wake up processing
+    error_handling_event_queue.push(ErrorHandlingEvents::PreventCharging);
+    error_thread_handle.stop();
 }
 
 void Charger::main_thread() {
@@ -136,6 +115,35 @@ void Charger::main_thread() {
             // Run our own state machine update (i.e. run everything that needs
             // to be done on regular intervals independent from events)
             run_state_machine();
+        }
+    }
+}
+
+void Charger::error_thread() {
+    for (;;) {
+        if (error_thread_handle.shouldExit()) {
+            break;
+        }
+        auto events = error_handling_event_queue.wait();
+        if (!events.empty()) {
+            Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_loop);
+            for (auto& event : events) {
+                switch (event) {
+                case ErrorHandlingEvents::PreventCharging:
+                    shared_context.error_prevent_charging_flag = true;
+                    break;
+                case ErrorHandlingEvents::AllErrorsPreventingChargingCleared:
+                    shared_context.error_prevent_charging_flag = false;
+                    break;
+                case ErrorHandlingEvents::AllErrorCleared:
+                    shared_context.error_prevent_charging_flag = false;
+                    break;
+                default:
+                    EVLOG_error << "ErrorHandlingEvents invalid value: "
+                                << static_cast<std::underlying_type_t<ErrorHandlingEvents>>(event);
+                    break;
+                }
+            }
         }
     }
 }
@@ -1455,43 +1463,66 @@ bool Charger::deauthorize_internal() {
 bool Charger::enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_disable);
 
-    // insert the new request into the table
-    bool replaced = false;
-    for (auto& entry : enable_disable_source_table) {
-        if (entry.enable_source == source.enable_source) {
-            // replace this entry as it is an update from the same source
-            entry = source;
-            replaced = true;
-        }
-    }
+    const auto last = active_enable_disable_source;
 
-    if (not replaced) {
-        // Add to the table
+    // add/update enable_disable_source_table with new source information
+    const auto enable_source = source.enable_source;
+    const auto fn = [enable_source](const auto& entry) { return entry.enable_source == enable_source; };
+    if (auto it = std::find_if(enable_disable_source_table.begin(), enable_disable_source_table.end(), fn);
+        it == enable_disable_source_table.end()) {
+        // add to table
         enable_disable_source_table.push_back(source);
-    }
-
-    // Find out if we are actually enabled or disabled at the moment
-    bool is_enabled = parse_enable_disable_source_table();
-
-    if (is_enabled) {
-        if (connector_id not_eq 0) {
-            shared_context.connector_enabled = true;
-        }
-
-        signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
-        if (shared_context.current_state == EvseState::Disabled) {
-            if (shared_context.connector_enabled) {
-                shared_context.current_state = EvseState::Idle;
-            }
-            return true;
-        }
     } else {
-        if (connector_id not_eq 0) {
-            shared_context.connector_enabled = false;
-        }
-        shared_context.current_state = EvseState::Disabled;
-        signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
+        // update in table
+        *it = source;
     }
+
+    // process the table to calculate the current state
+    // updates/recalculates active_enable_disable_source
+    const bool is_enabled = parse_enable_disable_source_table();
+
+    // update state to Idle only when applied to non-zero connector ID
+    // note Disable changes the state regardless of the connnector ID
+    if (connector_id != 0) {
+        shared_context.connector_enabled = is_enabled;
+    }
+
+    if (shared_context.current_state == EvseState::Disabled && shared_context.connector_enabled) {
+        // note this can change state when connector_id = 0 when the previous
+        // state is enabled
+        shared_context.current_state = EvseState::Idle;
+    }
+
+    // check for state change
+    // for this check Unassigned and Enabled are equivalent
+    // previous   current    result
+    // ========   =======    ======
+    // Unassigned Unassigned false
+    // Unassigned Enable     false
+    // Unassigned Disable    true
+    // Enable     Unassigned false
+    // Enable     Enable     false
+    // Enable     Disable    true
+    // Disable    Unassigned true
+    // Disable    Enable     true
+    // Disable    Disable    false
+    //
+    // simplifies to:
+    // (previous == Disable or current == Disable) and (previous != current)
+
+    using namespace types::evse_manager;
+    if ((active_enable_disable_source.enable_state == Enable_state::Disable ||
+         last.enable_state == Enable_state::Disable) &&
+        active_enable_disable_source.enable_state != last.enable_state) {
+        // the state has changed so process events
+        if (is_enabled) {
+            signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
+        } else {
+            shared_context.current_state = EvseState::Disabled;
+            signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
+        }
+    }
+
     return is_enabled;
 }
 

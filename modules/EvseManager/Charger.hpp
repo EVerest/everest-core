@@ -252,6 +252,7 @@ private:
     void run_state_machine();
 
     void main_thread();
+    void error_thread();
 
     void graceful_stop_charging();
 
@@ -380,6 +381,7 @@ private:
 
     // main Charger thread
     Everest::Thread main_thread_handle;
+    Everest::Thread error_thread_handle;
 
     const std::unique_ptr<IECStateMachine>& bsp;
     const std::unique_ptr<ErrorHandling>& error_handling;
@@ -428,8 +430,27 @@ private:
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};
     std::vector<types::evse_manager::EnableDisableSource> enable_disable_source_table;
     bool parse_enable_disable_source_table();
+
+protected:
+    // provide access for unit tests
+    constexpr const auto& get_shared_context() const {
+        return shared_context;
+    }
+    constexpr const auto& get_enable_disable_source_table() const {
+        return enable_disable_source_table;
+    }
 };
 
 } // namespace module
+
+namespace types::evse_manager {
+constexpr bool operator==(const EnableDisableSource& lhs, const EnableDisableSource& rhs) {
+    return lhs.enable_source == rhs.enable_source && lhs.enable_state == rhs.enable_state &&
+           lhs.enable_priority == rhs.enable_priority;
+}
+constexpr bool operator!=(const EnableDisableSource& lhs, const EnableDisableSource& rhs) {
+    return !operator==(lhs, rhs);
+}
+} // namespace types::evse_manager
 
 #endif // SRC_EVDRIVERS_CHARGER_H_
