@@ -227,7 +227,7 @@ types:
         type: string
         format: date-time
       meter_id:
-        description: A (user defined) meter if (e.g. id printed on the case)
+        description: A (user defined) meter id (e.g. id printed on the case)
         type: string
       phase_seq_error:
         description: "AC only: true for 3 phase rotation error (ccw)"

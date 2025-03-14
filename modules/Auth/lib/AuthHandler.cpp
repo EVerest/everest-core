@@ -457,12 +457,12 @@ int AuthHandler::select_evse(const std::vector<int>& selected_evses, std::unique
         if (this->get_latest_plugin(selected_evses) == -1) {
             // no EV has been plugged in yet at the referenced evses
             EVLOG_debug << "No evse in authorization queue. Waiting for a plug in...";
-            // blocks until respective plugin for evse occured or until timeout
+            // blocks until respective plugin for evse occurred or until timeout
             if (!this->cv.wait_for(lk, std::chrono::seconds(this->connection_timeout),
                                    [this, selected_evses] { return this->get_latest_plugin(selected_evses) != -1; })) {
                 return -1;
             }
-            EVLOG_debug << "Plug in at evse occured";
+            EVLOG_debug << "Plug in at evse occurred";
         }
         return this->get_latest_plugin(selected_evses);
     } else if (this->selection_algorithm == SelectionAlgorithm::FindFirst) {

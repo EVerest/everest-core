@@ -84,6 +84,6 @@ vars:
     type: object
     $ref: /ocpp#/KeyValue
   security_event:
-    description: Published when an internal security event occured
+    description: Published when an internal security event occurred
     type: object
     $ref: /ocpp#/SecurityEvent

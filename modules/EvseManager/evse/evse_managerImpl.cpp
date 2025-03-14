@@ -130,7 +130,7 @@ void evse_managerImpl::ready() {
         // external Nodered interface
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/temperature", mod->config.connector_id),
                           telemetry.evse_temperature_C);
-        // /external Nodered interface
+        // external Nodered interface
         publish_telemetry(telemetry);
     });
 

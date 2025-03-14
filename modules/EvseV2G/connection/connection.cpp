@@ -318,10 +318,10 @@ int connection_init(struct v2g_context* v2g_ctx) {
 }
 
 /*!
- * \brief is_sequence_timeout This function checks if a sequence timeout has occured.
+ * \brief is_sequence_timeout This function checks if a sequence timeout has occurred.
  * \param ts_start Is the time after waiting of the next request message.
  * \param ctx is the V2G context.
- * \return Returns \c true if a timeout has occured, otherwise \c false
+ * \return Returns \c true if a timeout has occurred, otherwise \c false
  */
 bool is_sequence_timeout(struct timespec ts_start, struct v2g_context* ctx) {
     struct timespec ts_current;
@@ -329,7 +329,7 @@ bool is_sequence_timeout(struct timespec ts_start, struct v2g_context* ctx) {
 
     if (((clock_gettime(CLOCK_MONOTONIC, &ts_current)) != 0) ||
         (timespec_to_ms(timespec_sub(ts_current, ts_start)) > sequence_timeout)) {
-        dlog(DLOG_LEVEL_ERROR, "Sequence timeout has occured (message: %s)", v2g_msg_type[ctx->current_v2g_msg]);
+        dlog(DLOG_LEVEL_ERROR, "Sequence timeout has occurred (message: %s)", v2g_msg_type[ctx->current_v2g_msg]);
         return true;
     }
     return false;
@@ -341,7 +341,7 @@ bool is_sequence_timeout(struct timespec ts_start, struct v2g_context* ctx) {
  * \param conn is the v2g connection context
  * \param buf is the buffer to store the v2g message
  * \param count is the number of bytes to read
- * \return Returns \c true if a timeout has occured, otherwise \c false
+ * \return Returns \c true if a timeout has occurred, otherwise \c false
  */
 ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t count) {
     struct timespec ts_start;
@@ -436,7 +436,7 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t 
  * \param conn is the v2g connection context
  * \param buf is the buffer where the v2g message is stored
  * \param count is the number of bytes to write
- * \return Returns \c true if a timeout has occured, otherwise \c false
+ * \return Returns \c true if a timeout has occurred, otherwise \c false
  */
 ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t count) {
     int bytes_written = 0;
