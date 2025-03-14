@@ -17,6 +17,7 @@
 #include <ocpp/v2/messages/Get15118EVCertificate.hpp>
 #include <ocpp/v2/messages/GetDisplayMessages.hpp>
 #include <ocpp/v2/messages/GetLog.hpp>
+#include <ocpp/v2/messages/NotifyEVChargingNeeds.hpp>
 #include <ocpp/v2/messages/SetDisplayMessage.hpp>
 #include <ocpp/v2/messages/TransactionEvent.hpp>
 #include <ocpp/v2/messages/UpdateFirmware.hpp>
@@ -116,6 +117,11 @@ ocpp::v2::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum 
 /// ocpp::v2::Get15118EVCertificateRequest
 ocpp::v2::Get15118EVCertificateRequest
 to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSchema& request);
+
+/// \brief Converts a given types::types::iso15118::ChargingNeeds to
+/// ocpp::v2::NotifyEVChargingNeedsRequest
+ocpp::v2::NotifyEVChargingNeedsRequest
+to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs);
 
 /// \brief Converts a given types::reservation::ReservationResult to ocpp::v2::ReserveNowStatusEnum
 ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
