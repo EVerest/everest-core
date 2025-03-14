@@ -19,7 +19,7 @@ void auth_token_validatorImpl::ready() {
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
     const auto id_token = conversions::to_ocpp_id_token(provided_token.id_token);
-    std::optional<ocpp::CiString<5500>> certificate_opt;
+    std::optional<ocpp::CiString<10000>> certificate_opt;
     if (provided_token.certificate.has_value()) {
         certificate_opt.emplace(provided_token.certificate.value());
     }

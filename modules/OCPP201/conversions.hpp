@@ -74,9 +74,6 @@ ocpp::v2::BootReasonEnum to_ocpp_boot_reason(types::system::BootReason reason);
 /// \brief Converts a given types::evse_manager::StopTransactionReason \p reason to an ocpp::v2::ReasonEnum.
 ocpp::v2::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason reason);
 
-/// \brief Converts a given types::authorization::IdTokenType \p id_token_type to an ocpp::v2::IdTokenEnum.
-ocpp::v2::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType id_token_type);
-
 /// \brief Converts a given types::authorization::IdToken \p id_token to an ocpp::v2::IdToken.
 ocpp::v2::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token);
 
@@ -157,9 +154,6 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
 /// types::authorization::AuthorizationStatus.
 types::authorization::AuthorizationStatus
 to_everest_authorization_status(const ocpp::v2::AuthorizationStatusEnum status);
-
-/// \brief Converts a given ocpp::v2::IdTokenEnum \p type to a types::authorization::IdTokenType.
-types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v2::IdTokenEnum& type);
 
 /// \brief Converts a given ocpp::v2::IdToken \p id_token to a types::authorization::IdToken.
 types::authorization::IdToken to_everest_id_token(const ocpp::v2::IdToken& id_token);
@@ -266,9 +260,6 @@ to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageRe
 
 ocpp::v2::ClearDisplayMessageResponse
 to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response);
-
-/// \brief Convert a given ocpp::v2::ConnectorEnum connector type to a types::evse_manager::ConnectorTypeEnum
-types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v2::ConnectorEnum& connector_type);
 
 } // namespace conversions
 } // namespace module

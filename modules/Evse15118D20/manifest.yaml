@@ -7,10 +7,6 @@ config:
       link-local and a MAC addr will work
     type: string
     default: eth0
-  certificate_path:
-    description: Path to certificate directories
-    type: string
-    default: ""
   logging_path:
     description: Path to logging directory (will be created if non existent)
     type: string

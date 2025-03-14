@@ -429,8 +429,10 @@ types::evse_security::CaCertificateType from_ocpp(ocpp::CaCertificateType other)
         return types::evse_security::CaCertificateType::CSMS;
     case ocpp::CaCertificateType::MF:
         return types::evse_security::CaCertificateType::MF;
+    case ocpp::CaCertificateType::OEM:
+        throw std::out_of_range("Could not convert ocpp::CaCertificateType::OEM to evse_security::CaCertificateType");
     }
-    throw std::out_of_range("Could not convert types::evse_security::CaCertificateType to ocpp::CaCertificateType");
+    throw std::out_of_range("Could not convert ocpp::CaCertificateType to evse_security::CaCertificateType");
 }
 
 types::evse_security::LeafCertificateType from_ocpp(ocpp::CertificateSigningUseEnum other) {
@@ -441,6 +443,9 @@ types::evse_security::LeafCertificateType from_ocpp(ocpp::CertificateSigningUseE
         return types::evse_security::LeafCertificateType::V2G;
     case ocpp::CertificateSigningUseEnum::ManufacturerCertificate:
         return types::evse_security::LeafCertificateType::MF;
+    case ocpp::CertificateSigningUseEnum::V2G20Certificate:
+        throw std::out_of_range("Could not convert ocpp::CertificateSigningUseEnum::V2G20Certificate to "
+                                "evse_security::LeafCertificateType");
     }
     throw std::out_of_range(
         "Could not convert ocpp::CertificateSigningUseEnum to types::evse_security::LeafCertificateType");
@@ -473,6 +478,9 @@ types::evse_security::CertificateType from_ocpp(ocpp::CertificateType other) {
         return types::evse_security::CertificateType::V2GCertificateChain;
     case ocpp::CertificateType::MFRootCertificate:
         return types::evse_security::CertificateType::MFRootCertificate;
+    case ocpp::CertificateType::OEMRootCertificate:
+        throw std::out_of_range("Could not convert ocpp::CertificateType::OEMRootCertificate to "
+                                "evse_security::CertificateType");
     }
     throw std::out_of_range("Could not convert ocpp::CertificateType to types::evse_security::CertificateType");
 }
