@@ -43,7 +43,8 @@
 /modules/YetiDriver/ @corneliusclaussen @hikinggrass
 /modules/examples/error-framework/ @corneliusclaussen @hikinggrass @pietfried @andistorm
 /modules/simulation/ @SebaLukas @pietfried @hikinggrass
-/modules/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
+/modules/simulation/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
+/modules/simulation/YetiSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
 /modules/rust_examples/ @SirVer @dorezyuk
 **/Cargo.toml @SirVer @dorezyuk @pietfried @hikinggrass
 **/Cargo.lock @SirVer @dorezyuk @pietfried @hikinggrass
