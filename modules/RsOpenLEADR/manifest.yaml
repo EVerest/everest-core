@@ -19,9 +19,9 @@ config:
     description: Target values of the OpenADR 3.0 events to retrieve
     type: string
   openadr_vtn_retrieve_schedule:
-    description: Duration in seconds to retrieve OpenADR 3.0 schedules
+    description: Cron style expression for retrieval of OpenADR 3.0 schedules
     type: string
-    default: "0 14 * * *"
+    default: "0 0 14 * * *"
 provides:
   main:
     description: OpenADR 3.0 integration
