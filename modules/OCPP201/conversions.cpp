@@ -606,6 +606,8 @@ ocpp::v2::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason r
         return ocpp::v2::ReasonEnum::TimeLimitReached;
     case types::evse_manager::StopTransactionReason::Timeout:
         return ocpp::v2::ReasonEnum::Timeout;
+    case types::evse_manager::StopTransactionReason::ReqEnergyTransferRejected:
+        return ocpp::v2::ReasonEnum::ReqEnergyTransferRejected;
     case types::evse_manager::StopTransactionReason::SoftReset:
     case types::evse_manager::StopTransactionReason::UnlockCommand:
         return ocpp::v2::ReasonEnum::Other;
@@ -613,30 +615,8 @@ ocpp::v2::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason r
     return ocpp::v2::ReasonEnum::Other;
 }
 
-ocpp::v2::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType id_token_type) {
-    switch (id_token_type) {
-    case types::authorization::IdTokenType::Central:
-        return ocpp::v2::IdTokenEnum::Central;
-    case types::authorization::IdTokenType::eMAID:
-        return ocpp::v2::IdTokenEnum::eMAID;
-    case types::authorization::IdTokenType::MacAddress:
-        return ocpp::v2::IdTokenEnum::MacAddress;
-    case types::authorization::IdTokenType::ISO14443:
-        return ocpp::v2::IdTokenEnum::ISO14443;
-    case types::authorization::IdTokenType::ISO15693:
-        return ocpp::v2::IdTokenEnum::ISO15693;
-    case types::authorization::IdTokenType::KeyCode:
-        return ocpp::v2::IdTokenEnum::KeyCode;
-    case types::authorization::IdTokenType::Local:
-        return ocpp::v2::IdTokenEnum::Local;
-    case types::authorization::IdTokenType::NoAuthorization:
-        return ocpp::v2::IdTokenEnum::NoAuthorization;
-    }
-    throw std::runtime_error("Could not convert IdTokenEnum");
-}
-
 ocpp::v2::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token) {
-    ocpp::v2::IdToken ocpp_id_token = {id_token.value, to_ocpp_id_token_enum(id_token.type)};
+    ocpp::v2::IdToken ocpp_id_token = {id_token.value, types::authorization::id_token_type_to_string(id_token.type)};
     if (id_token.additional_info.has_value()) {
         std::vector<ocpp::v2::AdditionalInfo> ocpp_additional_info;
         const auto& additional_info = id_token.additional_info.value();
@@ -698,6 +678,8 @@ types::evse_manager::StopTransactionReason to_everest_stop_transaction_reason(co
         return types::evse_manager::StopTransactionReason::TimeLimitReached;
     case ocpp::v2::ReasonEnum::Timeout:
         return types::evse_manager::StopTransactionReason::Timeout;
+    case ocpp::v2::ReasonEnum::ReqEnergyTransferRejected:
+        return types::evse_manager::StopTransactionReason::ReqEnergyTransferRejected;
     }
     return types::evse_manager::StopTransactionReason::Other;
 }
@@ -1018,32 +1000,10 @@ to_everest_authorization_status(const ocpp::v2::AuthorizationStatusEnum status) 
         "Could not convert ocpp::v2::AuthorizationStatusEnum to types::authorization::AuthorizationStatus");
 }
 
-types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v2::IdTokenEnum& type) {
-    switch (type) {
-    case ocpp::v2::IdTokenEnum::Central:
-        return types::authorization::IdTokenType::Central;
-    case ocpp::v2::IdTokenEnum::eMAID:
-        return types::authorization::IdTokenType::eMAID;
-    case ocpp::v2::IdTokenEnum::ISO14443:
-        return types::authorization::IdTokenType::ISO14443;
-    case ocpp::v2::IdTokenEnum::ISO15693:
-        return types::authorization::IdTokenType::ISO15693;
-    case ocpp::v2::IdTokenEnum::KeyCode:
-        return types::authorization::IdTokenType::KeyCode;
-    case ocpp::v2::IdTokenEnum::Local:
-        return types::authorization::IdTokenType::Local;
-    case ocpp::v2::IdTokenEnum::MacAddress:
-        return types::authorization::IdTokenType::MacAddress;
-    case ocpp::v2::IdTokenEnum::NoAuthorization:
-        return types::authorization::IdTokenType::NoAuthorization;
-    }
-    throw std::out_of_range("Could not convert ocpp::v2::IdTokenEnum to types::authorization::IdTokenType");
-}
-
 types::authorization::IdToken to_everest_id_token(const ocpp::v2::IdToken& id_token) {
     types::authorization::IdToken _id_token;
     _id_token.value = id_token.idToken.get();
-    _id_token.type = to_everest_id_token_type(id_token.type);
+    _id_token.type = types::authorization::string_to_id_token_type(id_token.type);
     return _id_token;
 }
 
@@ -1103,6 +1063,8 @@ types::display_message::MessageFormat to_everest_message_format(const ocpp::v2::
         return types::display_message::MessageFormat::URI;
     case ocpp::v2::MessageFormatEnum::UTF8:
         return types::display_message::MessageFormat::UTF8;
+    case ocpp::v2::MessageFormatEnum::QRCODE:
+        return types::display_message::MessageFormat::QRCODE;
     }
     throw std::out_of_range("Could not convert ocpp::v2::MessageFormatEnum to types::ocpp::MessageFormat");
 }
@@ -1307,9 +1269,13 @@ types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v2::Compo
 
 types::ocpp::ChargingSchedulePeriod
 to_everest_charging_schedule_period(const ocpp::v2::ChargingSchedulePeriod& period) {
+    if (not period.limit.has_value()) {
+        EVLOG_warning << "Received ChargingSchedulePeriod without a limit. Limit defaults to 0!";
+    }
+
     types::ocpp::ChargingSchedulePeriod _period;
     _period.start_period = period.startPeriod;
-    _period.limit = period.limit;
+    _period.limit = period.limit.value_or(0);
     _period.number_phases = period.numberPhases;
     _period.phase_to_use = period.phaseToUse;
     return _period;
@@ -1372,6 +1338,10 @@ to_everest_display_message_state_enum(const ocpp::v2::MessageStateEnum& message_
         return types::display_message::MessageStateEnum::Idle;
     case ocpp::v2::MessageStateEnum::Unavailable:
         return types::display_message::MessageStateEnum::Unavailable;
+    case ocpp::v2::MessageStateEnum::Suspended:
+        return types::display_message::MessageStateEnum::Suspending;
+    case ocpp::v2::MessageStateEnum::Discharging:
+        return types::display_message::MessageStateEnum::Discharging;
     }
 
     throw std::out_of_range("Could not convert display message state enum.");
@@ -1420,57 +1390,6 @@ to_ocpp_clear_display_message_response(const types::display_message::ClearDispla
     }
 
     return result_response;
-}
-
-types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v2::ConnectorEnum& connector_type) {
-    switch (connector_type) {
-    case ocpp::v2::ConnectorEnum::cCCS1:
-        return types::evse_manager::ConnectorTypeEnum::cCCS1;
-    case ocpp::v2::ConnectorEnum::cCCS2:
-        return types::evse_manager::ConnectorTypeEnum::cCCS2;
-    case ocpp::v2::ConnectorEnum::cG105:
-        return types::evse_manager::ConnectorTypeEnum::cG105;
-    case ocpp::v2::ConnectorEnum::cTesla:
-        return types::evse_manager::ConnectorTypeEnum::cTesla;
-    case ocpp::v2::ConnectorEnum::cType1:
-        return types::evse_manager::ConnectorTypeEnum::cType1;
-    case ocpp::v2::ConnectorEnum::cType2:
-        return types::evse_manager::ConnectorTypeEnum::cType2;
-    case ocpp::v2::ConnectorEnum::s309_1P_16A:
-        return types::evse_manager::ConnectorTypeEnum::s309_1P_16A;
-    case ocpp::v2::ConnectorEnum::s309_1P_32A:
-        return types::evse_manager::ConnectorTypeEnum::s309_1P_32A;
-    case ocpp::v2::ConnectorEnum::s309_3P_16A:
-        return types::evse_manager::ConnectorTypeEnum::s309_3P_16A;
-    case ocpp::v2::ConnectorEnum::s309_3P_32A:
-        return types::evse_manager::ConnectorTypeEnum::s309_3P_32A;
-    case ocpp::v2::ConnectorEnum::sBS1361:
-        return types::evse_manager::ConnectorTypeEnum::sBS1361;
-    case ocpp::v2::ConnectorEnum::sCEE_7_7:
-        return types::evse_manager::ConnectorTypeEnum::sCEE_7_7;
-    case ocpp::v2::ConnectorEnum::sType2:
-        return types::evse_manager::ConnectorTypeEnum::sType2;
-    case ocpp::v2::ConnectorEnum::sType3:
-        return types::evse_manager::ConnectorTypeEnum::sType3;
-    case ocpp::v2::ConnectorEnum::Other1PhMax16A:
-        return types::evse_manager::ConnectorTypeEnum::Other1PhMax16A;
-    case ocpp::v2::ConnectorEnum::Other1PhOver16A:
-        return types::evse_manager::ConnectorTypeEnum::Other1PhOver16A;
-    case ocpp::v2::ConnectorEnum::Other3Ph:
-        return types::evse_manager::ConnectorTypeEnum::Other3Ph;
-    case ocpp::v2::ConnectorEnum::Pan:
-        return types::evse_manager::ConnectorTypeEnum::Pan;
-    case ocpp::v2::ConnectorEnum::wInductive:
-        return types::evse_manager::ConnectorTypeEnum::wInductive;
-    case ocpp::v2::ConnectorEnum::wResonant:
-        return types::evse_manager::ConnectorTypeEnum::wResonant;
-    case ocpp::v2::ConnectorEnum::Undetermined:
-        return types::evse_manager::ConnectorTypeEnum::Undetermined;
-    case ocpp::v2::ConnectorEnum::Unknown:
-        return types::evse_manager::ConnectorTypeEnum::Unknown;
-    }
-
-    throw std::out_of_range("Could not convert ConnectorEnum");
 }
 
 } // namespace conversions
