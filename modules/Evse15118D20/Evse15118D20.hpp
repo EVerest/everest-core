@@ -27,8 +27,10 @@ struct Conf {
     std::string device;
     std::string logging_path;
     std::string tls_negotiation_strategy;
+    bool enforce_tls_1_3;
     bool enable_ssl_logging;
     bool enable_tls_key_logging;
+    std::string tls_key_logging_path;
     bool enable_sdp_server;
     bool supported_dynamic_mode;
     bool supported_mobility_needs_mode_provided_by_secc;
