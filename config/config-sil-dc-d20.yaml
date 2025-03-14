@@ -48,7 +48,7 @@ active_modules:
   powersupply_dc:
     module: DCSupplySimulator
   yeti_driver:
-    module: JsYetiSimulator
+    module: YetiSimulator
     config_module:
       connector_id: 1
   slac:
