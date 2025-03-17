@@ -286,7 +286,7 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
     if (running_cost.cost_messages.has_value()) {
         cost.message = std::vector<types::text_message::MessageContent>();
         for (const ocpp::DisplayMessageContent& message : running_cost.cost_messages.value()) {
-            types::text_message::MessageContent m = to_everest_display_message_content(message);
+            const auto m = to_everest_display_message_content(message);
             cost.message->push_back(m);
         }
     }
