@@ -8,7 +8,7 @@
 
 #include "ipv6_endpoint.hpp"
 
-#include <iso15118/detail/io/sha_hash.hpp>
+#include <iso15118/io/sha_hash.hpp>
 
 namespace iso15118::io {
 

@@ -7,8 +7,8 @@
 #include <optional>
 
 #include <iso15118/config.hpp>
-#include <iso15118/detail/io/sha_hash.hpp>
 #include <iso15118/io/poll_manager.hpp>
+#include <iso15118/io/sha_hash.hpp>
 
 namespace iso15118::io {
 

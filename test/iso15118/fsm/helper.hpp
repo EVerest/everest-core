@@ -10,7 +10,7 @@
 #include <iso15118/d20/control_event.hpp>
 #include <iso15118/d20/states.hpp>
 #include <iso15118/detail/cb_exi.hpp>
-#include <iso15118/detail/fsm/fsm.hpp>
+#include <iso15118/fsm/fsm.hpp>
 #include <iso15118/io/logging.hpp>
 #include <iso15118/io/sdp.hpp>
 #include <iso15118/io/stream_view.hpp>
