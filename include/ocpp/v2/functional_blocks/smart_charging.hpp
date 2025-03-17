@@ -19,6 +19,7 @@ struct GetCompositeScheduleRequest;
 struct ClearChargingProfileResponse;
 struct ClearChargingProfileRequest;
 struct ReportChargingProfilesRequest;
+struct NotifyEVChargingNeedsRequest;
 
 enum class ProfileValidationResultEnum {
     Valid,
@@ -117,6 +118,10 @@ public:
     /// \return the composite schedule if the operation was successful, otherwise nullopt
     virtual std::optional<CompositeSchedule> get_composite_schedule(int32_t evse_id, std::chrono::seconds duration,
                                                                     ChargingRateUnitEnum unit) = 0;
+
+    /// \brief Initiates a NotifyEvChargingNeeds.req message to the CSMS
+    /// \param req the request to send
+    virtual void notify_ev_charging_needs_req(const NotifyEVChargingNeedsRequest& req) = 0;
 };
 
 class SmartCharging : public SmartChargingInterface {
@@ -143,6 +148,7 @@ public:
     ProfileValidationResultEnum conform_and_validate_profile(
         ChargingProfile& profile, int32_t evse_id,
         AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) override;
+    void notify_ev_charging_needs_req(const NotifyEVChargingNeedsRequest& req) override;
 
 protected:
     ///

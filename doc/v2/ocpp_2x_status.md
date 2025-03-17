@@ -1417,24 +1417,24 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| K15.FR.01 |        |        |
-| K15.FR.02 |        |        |
-| K15.FR.03 |        |        |
-| K15.FR.04 |        |        |
-| K15.FR.05 |        |        |
-| K15.FR.06 |        |        |
-| K15.FR.07 |        |        |
-| K15.FR.08 |        |        |
-| K15.FR.09 |        |        |
+| K15.FR.01 | ✅     |        |
+| K15.FR.02 | 🌐     |        |
+| K15.FR.03 | 🌐     |        |
+| K15.FR.04 | 🌐     |        |
+| K15.FR.05 | 🌐     |        |
+| K15.FR.06 | ⛽️     |        |
+| K15.FR.07 | 🌐     |        |
+| K15.FR.08 | 🌐     |        |
+| K15.FR.09 | ⛽️     |        |
 | K15.FR.10 |        |        |
 | K15.FR.11 |        |        |
 | K15.FR.12 |        |        |
-| K15.FR.13 |        |        |
+| K15.FR.13 | 🌐     |        |
 | K15.FR.14 |        |        |
-| K15.FR.15 |        |        |
+| K15.FR.15 | ✅     |        |
 | K15.FR.16 |        |        |
 | K15.FR.17 |        |        |
-| K15.FR.18 |        |        |
+| K15.FR.18 | 🌐     |        |
 | K15.FR.19 |        |        |
 
 ## SmartCharging - Renegotiation initiated by CSMS

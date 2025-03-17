@@ -17,6 +17,7 @@
 #include <ocpp/v2/messages/ClearChargingProfile.hpp>
 #include <ocpp/v2/messages/GetChargingProfiles.hpp>
 #include <ocpp/v2/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v2/messages/NotifyEVChargingNeeds.hpp>
 #include <ocpp/v2/messages/ReportChargingProfiles.hpp>
 #include <ocpp/v2/messages/SetChargingProfile.hpp>
 
@@ -681,6 +682,16 @@ void SmartCharging::report_charging_profile_req(const int32_t request_id, const 
 
 void SmartCharging::report_charging_profile_req(const ReportChargingProfilesRequest& req) {
     ocpp::Call<ReportChargingProfilesRequest> call(req);
+    this->context.message_dispatcher.dispatch_call(call);
+}
+
+void SmartCharging::notify_ev_charging_needs_req(const NotifyEVChargingNeedsRequest& req) {
+    // TODO: req.timestamp = std::nullopt; // timestamp will be added with OCPP2.1 messages
+    // if (ocpp_version != OcppProtocolVersion::v21) {
+    //     req.timestamp = std::nullopt; // field is not present in OCPP2.0.1
+    // }
+
+    ocpp::Call<NotifyEVChargingNeedsRequest> call(req);
     this->context.message_dispatcher.dispatch_call(call);
 }
 

@@ -388,6 +388,10 @@ void ChargePoint::on_reservation_status(const int32_t reservation_id, const Rese
     }
 }
 
+void ChargePoint::on_ev_charging_needs(const NotifyEVChargingNeedsRequest& request) {
+    this->smart_charging->notify_ev_charging_needs_req(request);
+}
+
 void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_structure,
                              const std::string& message_log_path) {
     this->device_model->check_integrity(evse_connector_structure);
