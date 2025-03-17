@@ -51,6 +51,10 @@ Result DC_PreCharge::feed(Event ev) {
     const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_PreChargeRequest>()) {
+        if (not pre_charge_initiated) {
+            m_ctx.feedback.signal(session::feedback::Signal::PRE_CHARGE_STARTED);
+            pre_charge_initiated = true;
+        }
         const auto res = handle_request(*req, m_ctx.session, present_voltage);
 
         m_ctx.feedback.dc_pre_charge_target_voltage(message_20::datatypes::from_RationalNumber(req->target_voltage));

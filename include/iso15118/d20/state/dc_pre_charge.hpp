@@ -15,6 +15,7 @@ struct DC_PreCharge : public StateBase {
     Result feed(Event) final;
 
 private:
+    bool pre_charge_initiated{false};
     float present_voltage{0};
 };
 
