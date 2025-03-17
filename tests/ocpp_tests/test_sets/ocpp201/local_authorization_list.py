@@ -554,6 +554,8 @@ async def test_C13(
         {"connectorStatus": "Available", "evseId": 1},
     )
 
+    test_utility.messages.clear()
+
     # C13.FR.01
     # Invalid token in local list may not be authorized
     # Check AuthList: Invalid, Cache: Valid
