@@ -801,6 +801,68 @@ to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSch
     return _request;
 }
 
+ocpp::v2::EnergyTransferModeEnum to_ocpp_energy_transfer_mode(const types::iso15118::EnergyTransferMode transfer_mode) {
+    switch (transfer_mode) {
+    case types::iso15118::EnergyTransferMode::AC_single_phase_core:
+        return ocpp::v2::EnergyTransferModeEnum::AC_single_phase;
+    case types::iso15118::EnergyTransferMode::AC_two_phase:
+        return ocpp::v2::EnergyTransferModeEnum::AC_two_phase;
+    case types::iso15118::EnergyTransferMode::AC_three_phase_core:
+        return ocpp::v2::EnergyTransferModeEnum::AC_three_phase;
+    case types::iso15118::EnergyTransferMode::DC:
+    case types::iso15118::EnergyTransferMode::DC_core:
+    case types::iso15118::EnergyTransferMode::DC_extended:
+    case types::iso15118::EnergyTransferMode::DC_combo_core:
+    case types::iso15118::EnergyTransferMode::DC_unique:
+        return ocpp::v2::EnergyTransferModeEnum::DC;
+
+    case types::iso15118::EnergyTransferMode::AC_BPT:
+    case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+    case types::iso15118::EnergyTransferMode::AC_DER:
+    case types::iso15118::EnergyTransferMode::DC_BPT:
+    case types::iso15118::EnergyTransferMode::DC_ACDP:
+    case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+    case types::iso15118::EnergyTransferMode::WPT:
+        throw std::out_of_range("Could not convert EnergyTransferModeEnum: OCPP does not know this type");
+    }
+
+    throw std::out_of_range("Could not convert EnergyTransferMode");
+}
+
+ocpp::v2::NotifyEVChargingNeedsRequest
+to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs) {
+    // The evseId is calculated outside of this function in the required OCPP201 module
+    ocpp::v2::NotifyEVChargingNeedsRequest _request;
+    ocpp::v2::ChargingNeeds& _charging_needs = _request.chargingNeeds;
+
+    _charging_needs.requestedEnergyTransfer = to_ocpp_energy_transfer_mode(charging_needs.requested_energy_transfer);
+
+    // TODO(ioan): add v2x params
+    if (charging_needs.ac_charging_parameters.has_value()) {
+        const auto& ac = charging_needs.ac_charging_parameters.value();
+        auto& ac_charging_parameters = _charging_needs.acChargingParameters.emplace();
+
+        ac_charging_parameters.energyAmount = ac.energy_amount;
+        ac_charging_parameters.evMinCurrent = ac.ev_min_current;
+        ac_charging_parameters.evMaxCurrent = ac.ev_max_current;
+        ac_charging_parameters.evMaxVoltage = ac.ev_max_voltage;
+    } else if (charging_needs.dc_charging_parameters.has_value()) {
+        const auto& dc = charging_needs.dc_charging_parameters.value();
+        auto& dc_charging_parameters = _charging_needs.dcChargingParameters.emplace();
+
+        dc_charging_parameters.evMaxCurrent = dc.ev_max_current;
+        dc_charging_parameters.evMaxVoltage = dc.ev_max_voltage;
+        dc_charging_parameters.energyAmount = dc.energy_amount;
+        dc_charging_parameters.evMaxPower = dc.ev_max_power;
+        dc_charging_parameters.stateOfCharge = dc.state_of_charge;
+        dc_charging_parameters.evEnergyCapacity = dc.ev_energy_capacity;
+        dc_charging_parameters.fullSoC = dc.full_soc;
+        dc_charging_parameters.bulkSoC = dc.bulk_soc;
+    }
+
+    return _request;
+}
+
 ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {
     switch (result) {
     case types::reservation::ReservationResult::Accepted:
