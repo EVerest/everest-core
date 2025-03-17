@@ -128,12 +128,31 @@ Result ScheduleExchange::feed(Event ev) {
 
         dt::RationalNumber max_charge_power = {0, 0};
 
-        const auto selected_energy_service = m_ctx.session.get_selected_services().selected_energy_service;
+        const auto& selected_services = m_ctx.session.get_selected_services();
+        const auto selected_energy_service = selected_services.selected_energy_service;
 
         if (selected_energy_service == dt::ServiceCategory::DC or
             selected_energy_service == dt::ServiceCategory::DC_BPT) {
             max_charge_power = m_ctx.session_config.dc_limits.charge_limits.power.max;
         }
+
+        // We will pass the raw data to the listener, the
+        // listener will construct the full required type
+        std::optional<dt::AcConnector> ac_connector{};
+        if (std::holds_alternative<dt::AcConnector>(selected_services.selected_connector)) {
+            ac_connector = std::get<dt::AcConnector>(selected_services.selected_connector);
+        }
+
+        // TODO(ioan): prepare for AC transfer limits
+        const session::feedback::EvseTransferLimits& evse_limits = m_ctx.session_config.dc_limits;
+        const session::feedback::EvTransferLimits& ev_limits = m_ctx.session_ev_info.ev_transfer_limits;
+
+        const auto& control_mode = req->control_mode;
+
+        // Send the charging feedback
+        m_ctx.feedback.notify_ev_charging_needs(
+            selected_energy_service, ac_connector, selected_services.selected_control_mode,
+            selected_services.selected_mobility_needs_mode, evse_limits, ev_limits, control_mode);
 
         const auto res = handle_request(*req, m_ctx.session, max_charge_power, dynamic_parameters);
 

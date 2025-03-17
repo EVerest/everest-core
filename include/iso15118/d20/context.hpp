@@ -14,6 +14,7 @@
 
 #include "config.hpp"
 #include "control_event.hpp"
+#include "ev_session_info.hpp"
 #include "session.hpp"
 
 namespace iso15118::d20 {
@@ -95,6 +96,9 @@ public:
     Session session;
 
     SessionConfig session_config;
+
+    // Contains the EV received data
+    EVSessionInfo session_ev_info;
 
     bool session_stopped{false};
 

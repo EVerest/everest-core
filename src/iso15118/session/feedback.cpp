@@ -37,4 +37,15 @@ void Feedback::selected_protocol(const std::string& selected_protocol) const {
     call_if_available(callbacks.selected_protocol, selected_protocol);
 }
 
+void Feedback::notify_ev_charging_needs(const dt::ServiceCategory& service_category,
+                                        const std::optional<dt::AcConnector>& ac_connector,
+                                        const dt::ControlMode& control_mode,
+                                        const dt::MobilityNeedsMode& mobility_needs_mode,
+                                        const feedback::EvseTransferLimits& evse_limits,
+                                        const feedback::EvTransferLimits& ev_limits,
+                                        const feedback::EvSEControlMode& ev_control_mode) const {
+    call_if_available(callbacks.notify_ev_charging_needs, service_category, ac_connector, control_mode,
+                      mobility_needs_mode, evse_limits, ev_limits, ev_control_mode);
+}
+
 } // namespace iso15118::session

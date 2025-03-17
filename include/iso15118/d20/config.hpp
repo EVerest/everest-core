@@ -25,6 +25,7 @@ struct EvseSetupConfig {
     std::vector<ControlMobilityNeedsModes> control_mobility_modes;
 };
 
+// This should only have EVSE information
 struct SessionConfig {
     explicit SessionConfig(EvseSetupConfig);
 
