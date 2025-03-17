@@ -280,7 +280,7 @@ void ISO15118_chargerImpl::ready() {
             {},                                 ///< config_string
             path_chain,                         ///< path_certificate_chain
             certificate_info.key,               ///< path_certificate_key
-            certificate_info.password,          ///< private_key_password                              
+            certificate_info.password,          ///< private_key_password
             v2g_root_cert_path,                 ///< path_certificate_v2g_root
             mo_root_cert_path,                  ///< path_certificate_mo_root
             mod->config.enable_ssl_logging,     ///< enable_ssl_logging
