@@ -15,6 +15,7 @@ active_modules:
       supported_ISO15118_2: false
       supported_ISO15118_20_DC: true
       tls_active: true
+      enable_tls_1_3: true
   evse_manager:
     module: EvseManager
     config_module:
