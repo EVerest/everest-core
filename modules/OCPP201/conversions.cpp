@@ -1124,11 +1124,11 @@ types::text_message::MessageFormat to_everest_message_format(const ocpp::v2::Mes
     case ocpp::v2::MessageFormatEnum::URI:
         return types::text_message::MessageFormat::URI;
     case ocpp::v2::MessageFormatEnum::UTF8:
-        return types::display_message::MessageFormat::UTF8;
+        return types::text_message::MessageFormat::UTF8;
     case ocpp::v2::MessageFormatEnum::QRCODE:
-        return types::display_message::MessageFormat::QRCODE;
+        return types::text_message::MessageFormat::QRCODE;
     }
-    throw std::out_of_range("Could not convert ocpp::v2::MessageFormatEnum to types::ocpp::MessageFormat");
+    throw std::out_of_range("Could not convert ocpp::v2::MessageFormatEnum to types::text_message::MessageFormat");
 }
 
 types::text_message::MessageContent to_everest_message_content(const ocpp::v2::MessageContent& message_content) {
