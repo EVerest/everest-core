@@ -72,14 +72,46 @@ void evse_board_supportImpl::init() {
             EVLOG_info << "CP state changed: " << types::board_support_common::event_to_string(event_cp_state.event);
             publish_event(event_cp_state);
             last_cp_state = cp_state;
+
+            if (cp_state == CpState::CpState_STATE_A) {
+                if (error_state_monitor->is_error_active("evse_board_support/MREC8EmergencyStop", "")) {
+                    clear_error("evse_board_support/MREC8EmergencyStop");
+                }
+            }
         }
     });
+
     mod->serial.signalRelaisState.connect([this](bool relais_state) {
         if (last_relais_state not_eq relais_state) {
             publish_event(cast_event_type(relais_state));
             last_relais_state = relais_state;
         }
     });
+
+    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/emergency_stop", mod->config.connector_id),
+                        [this](const std::string& data) {
+                            types::evse_manager::StopTransactionRequest request;
+                            request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
+                            mod->p_board_support->publish_request_stop_transaction(request);
+                            Everest::error::Error error_object = error_factory->create_error(
+                                "evse_board_support/MREC8EmergencyStop", "", "Emergency stop button pushed by user",
+                                Everest::error::Severity::High);
+                            raise_error(error_object);
+                        });
+
+    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_utility_int", mod->config.connector_id),
+                        [this](const std::string& data) {
+                            types::evse_manager::StopTransactionRequest request;
+                            request.reason = types::evse_manager::StopTransactionReason::PowerLoss;
+                            mod->p_board_support->publish_request_stop_transaction(request);
+                        });
+
+    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/stop_transaction", mod->config.connector_id),
+                        [this](const std::string& data) {
+                            types::evse_manager::StopTransactionRequest request;
+                            request.reason = types::evse_manager::StopTransactionReason::Local;
+                            mod->p_board_support->publish_request_stop_transaction(request);
+                        });
 }
 
 void evse_board_supportImpl::ready() {
