@@ -203,16 +203,15 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
     return m;
 }
 
-types::session_cost::SessionCostMessage
-to_everest_session_cost_message(const ocpp::SessionCostMessage& session_cost_message) {
-    types::session_cost::SessionCostMessage m;
-    m.ocpp_transaction_id = session_cost_message.ocpp_transaction_id;
-    m.identifier_id = session_cost_message.identifier_id;
-    if (session_cost_message.identifier_type.has_value()) {
-        m.identifier_type = to_everest_identifier_type_enum(session_cost_message.identifier_type.value());
+types::session_cost::TariffMessage to_everest_tariff_message(const ocpp::TariffMessage& tariff_message) {
+    types::session_cost::TariffMessage m;
+    m.ocpp_transaction_id = tariff_message.ocpp_transaction_id;
+    m.identifier_id = tariff_message.identifier_id;
+    if (tariff_message.identifier_type.has_value()) {
+        m.identifier_type = to_everest_identifier_type_enum(tariff_message.identifier_type.value());
     }
 
-    for (const auto& message : session_cost_message.message) {
+    for (const auto& message : tariff_message.message) {
         types::text_message::MessageContent content = to_everest_display_message_content(message);
         m.messages.push_back(content);
     }

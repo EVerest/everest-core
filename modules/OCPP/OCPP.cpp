@@ -890,11 +890,10 @@ void OCPP::ready() {
             return response;
         });
 
-    this->charge_point->register_session_cost_message_callback(
-        [this](const ocpp::SessionCostMessage& message) -> ocpp::v16::DataTransferResponse {
-            const types::session_cost::SessionCostMessage m =
-                ocpp_conversions::to_everest_session_cost_message(message);
-            this->p_session_cost->publish_session_cost_message(m);
+    this->charge_point->register_tariff_message_callback(
+        [this](const ocpp::TariffMessage& message) -> ocpp::v16::DataTransferResponse {
+            const types::session_cost::TariffMessage m = ocpp_conversions::to_everest_tariff_message(message);
+            this->p_session_cost->publish_tariff_message(m);
             ocpp::v16::DataTransferResponse response;
             response.status = ocpp::v16::DataTransferStatus::Accepted;
             return response;
