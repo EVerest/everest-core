@@ -151,7 +151,7 @@ class TestOcpp16CostAndPrice:
         }
 
         session_cost_mock = Mock()
-        probe_module.subscribe_variable("session_cost", "session_cost_message", session_cost_mock)
+        probe_module.subscribe_variable("session_cost", "tariff_message", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -233,7 +233,7 @@ class TestOcpp16CostAndPrice:
         }
 
         session_cost_mock = Mock()
-        probe_module.subscribe_variable("session_cost", "session_cost_message", session_cost_mock)
+        probe_module.subscribe_variable("session_cost", "tariff_message", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
