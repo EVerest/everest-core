@@ -1,6 +1,6 @@
 description: Types to provide the session price
 types:
-  SessionCostMessage:
+  TariffMessage:
     description: >-
       Message containing cost information
     type: object

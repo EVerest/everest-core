@@ -5,7 +5,7 @@
 namespace module {
 
 void TerminalCostAndPriceMessage::init() {
-    this->r_session_cost->subscribe_session_cost_message([](const types::session_cost::SessionCostMessage& message) {
+    this->r_session_cost->subscribe_tariff_message([](const types::session_cost::TariffMessage& message) {
         for (const types::text_message::MessageContent& message : message.messages) {
             EVLOG_info << "Charging price message"
                        << (message.language.has_value() ? " (" + message.language.value() + ")" : "") << ": "
