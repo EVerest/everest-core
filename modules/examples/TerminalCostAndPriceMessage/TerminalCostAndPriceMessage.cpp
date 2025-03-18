@@ -5,7 +5,14 @@
 namespace module {
 
 void TerminalCostAndPriceMessage::init() {
-    invoke_init(*p_display_message);
+    this->r_session_cost->subscribe_tariff_message([](const types::session_cost::TariffMessage& message) {
+        for (const types::text_message::MessageContent& message : message.messages) {
+            EVLOG_info << "Charging price message"
+                       << (message.language.has_value() ? " (" + message.language.value() + ")" : "") << ": "
+                       << message.content;
+        }
+    });
+
     this->r_session_cost->subscribe_session_cost([](const types::session_cost::SessionCost& session_cost) {
         if (!session_cost.cost_chunks.has_value()) {
             EVLOG_warning << "No session cost chunks provided in session cost.";
@@ -52,7 +59,7 @@ void TerminalCostAndPriceMessage::init() {
         }
 
         if (session_cost.message.has_value()) {
-            for (const types::display_message::MessageContent& message : session_cost.message.value()) {
+            for (const types::text_message::MessageContent& message : session_cost.message.value()) {
                 EVLOG_info << "Charging price message"
                            << (message.language.has_value() ? " (" + message.language.value() + ")" : "") << ": "
                            << message.content;
@@ -62,7 +69,7 @@ void TerminalCostAndPriceMessage::init() {
 }
 
 void TerminalCostAndPriceMessage::ready() {
-    invoke_ready(*p_display_message);
+    invoke_ready(*p_main);
 }
 
 } // namespace module

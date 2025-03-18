@@ -3,6 +3,10 @@ description: >-
   provides cost of one session. If we have more than one EVESEID, we need to 
   instantiate this interface for each EVSE.
 vars:
+  tariff_message:
+    description: Message to show to the user with information about the tariff.
+    type: object
+    $ref: /session_cost#/TariffMessage
   session_cost:
     description: >-
       Session cost object containing the total cost of the session and a list
