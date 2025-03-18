@@ -6,6 +6,8 @@
 
 #include "EEBUS.hpp"
 
+#include "usecases/cs/lpc/service.grpc-ext.pb.h"
+
 namespace module {
 
 UseCaseEventReader::UseCaseEventReader(
@@ -57,37 +59,38 @@ grpc::Status UseCaseEventReader::Await() {
 }
 
 void UseCaseEventReader::callback_write_approval_required() {
-    cs_lpc::PendingConsumptionLimitRequest request;
+    cs_lpc::PendingConsumptionLimitRequest request = cs_lpc::CreatePendingConsumptionLimitRequest();
     cs_lpc::PendingConsumptionLimitResponse response;
-    grpc::ClientContext context;
-    cs_lpc_stub->PendingConsumptionLimit(&context, request, &response);
+    cs_lpc::CallPendingConsumptionLimit(
+        this->cs_lpc_stub,
+        request,
+        &response
+    );
 
     auto pending_writes = response.load_limits();
     for (auto entry : pending_writes) {
         uint64_t msg_counter = entry.first;
         common_types::LoadLimit& laod_limit = entry.second;
 
-        cs_lpc::ApproveOrDenyConsumptionLimitRequest request_02;
-        request_02.set_msg_counter(msg_counter);
-        request_02.set_approve(true);
-        request_02.set_reason("");
+        cs_lpc::ApproveOrDenyConsumptionLimitRequest request_02 = cs_lpc::CreateApproveOrDenyConsumptionLimitRequest(
+            msg_counter,
+            true,
+            ""
+        );
         cs_lpc::ApproveOrDenyConsumptionLimitResponse response_02;
-        grpc::ClientContext context_02;
-        cs_lpc_stub->ApproveOrDenyConsumptionLimit(
-            &context_02,
+        cs_lpc::CallApproveOrDenyConsumptionLimit(
+            this->cs_lpc_stub,
             request_02,
             &response_02
         );
-
     }
 }
 
 void UseCaseEventReader::callback_data_update_limit() {
-    cs_lpc::ConsumptionLimitRequest request;
+    cs_lpc::ConsumptionLimitRequest request = cs_lpc::CreateConsumptionLimitRequest();
     cs_lpc::ConsumptionLimitResponse response;
-    grpc::ClientContext context;
-    this->cs_lpc_stub->ConsumptionLimit(
-        &context,
+    cs_lpc::CallConsumptionLimit(
+        this->cs_lpc_stub,
         request,
         &response
     );
@@ -109,9 +112,10 @@ void UseCaseEventReader::callback_data_update_limit() {
 }
 
 void UseCaseEventReader::handle_use_case_event(control_service::SubscribeUseCaseEventsResponse& res) {
-    control_service::UseCase lpc;
-    lpc.set_actor(control_service::UseCase_ActorType_Enum_ControllableSystem);
-    lpc.set_name(control_service::UseCase_NameType_Enum_limitationOfPowerConsumption);
+    control_service::UseCase lpc = control_service::CreateUseCase(
+        control_service::UseCase_ActorType_Enum_ControllableSystem,
+        control_service::UseCase_NameType_Enum_limitationOfPowerConsumption
+    );
 
     if (!compare_use_case(lpc, res.use_case_event().use_case())) {
         return;

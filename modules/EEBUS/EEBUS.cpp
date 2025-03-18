@@ -12,6 +12,8 @@
 #include "control_service/control_service.grpc-ext.pb.h"
 #include "usecases/cs/lpc/service.grpc-ext.pb.h"
 
+#include "compile_time_settings.hpp"
+
 namespace module {
 
 
@@ -144,6 +146,8 @@ void EEBUS::ready() {
         control_service::EmptyRequest(),
         new control_service::EmptyResponse()
     );
+
+    EVLOG_error << "eebus-grpc-api binary is here: " << EEBUS_GRPC_API_BINARY_PATH;
 }
 
 } // namespace module

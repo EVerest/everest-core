@@ -1,11 +1,11 @@
 include(cmake/generate-helper.cmake)
 
-if (NOT eebus-grpc-api_SOURCE_DIR)
-    message(FATAL_ERROR "eebus-grpc-api_SOURCE_DIR not set")
+if (NOT CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR)
+    message(FATAL_ERROR "CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR not set")
 endif()
 
 get_filename_component(PROTOBUF_DIR
-    "${eebus-grpc-api_SOURCE_DIR}/protobuf/"
+    "${CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR}/protobuf/"
     ABSOLUTE
 )
 set(OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")

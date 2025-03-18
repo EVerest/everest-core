@@ -111,7 +111,7 @@ catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
-generic-eebus:
+eebus-grpc-api:
   git: git@github.com:PionixInternal/generic-eebus.git
   git_tag: main
 grpc-extended-cpp-plugin:
