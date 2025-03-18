@@ -7,7 +7,7 @@ Building tests:
 $ cd everest-core
 $ mkdir build
 $ cd build
-$ cmake -GNinja -DEVEREST_CORE_BUILD_TESTING=ON -DUSING_MBED_TLS=OFF ..
+$ cmake -GNinja -DEVEREST_CORE_BUILD_TESTING=ON ..
 $ ninja install
 ```
 
