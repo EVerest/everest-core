@@ -432,6 +432,9 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
     callbacks.signal = [this](feedback::Signal signal) {
         using Signal = feedback::Signal;
         switch (signal) {
+        case Signal::PRE_CHARGE_STARTED:
+            publish_start_pre_charge(nullptr);
+            break;
         case Signal::CHARGE_LOOP_STARTED:
             publish_current_demand_started(nullptr);
             break;
