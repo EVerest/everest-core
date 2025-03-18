@@ -34,7 +34,7 @@ use generated::types::{
     authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
     money::MoneyAmount,
     payment_terminal::{BankSessionToken, BankTransactionSummary, CardType},
-    session_cost::{SessionCost, SessionStatus, SessionCostMessage},
+    session_cost::{SessionCost, SessionStatus, TariffMessage},
 };
 use generated::{
     get_config, AuthTokenProviderServiceSubscriber, BankSessionTokenProviderClientSubscriber,
@@ -333,9 +333,9 @@ impl SessionCostClientSubscriber for PaymentTerminalModule {
         }
     }
 
-    fn on_session_cost_message(&self, _context: &Context, value: SessionCostMessage) {
+    fn on_tariff_message(&self, _context: &Context, value: TariffMessage) {
         for message in value.messages {
-            log::debug!("Received session cost message {0:}", message.content);
+            log::debug!("Received tariff message {0:}", message.content);
         }
     }
 }

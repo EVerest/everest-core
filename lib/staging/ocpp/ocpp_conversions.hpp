@@ -26,8 +26,7 @@ to_everest_display_message_content(const ocpp::DisplayMessageContent& message_co
 types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message);
 ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::DisplayMessage& display_message);
 
-types::session_cost::SessionCostMessage
-to_everest_session_cost_message(const ocpp::SessionCostMessage& session_cost_message);
+types::session_cost::TariffMessage to_everest_tariff_message(const ocpp::TariffMessage& tariff_message);
 
 types::session_cost::SessionStatus to_everest_running_cost_state(const ocpp::RunningCostState& state);
 
