@@ -21,6 +21,7 @@ target_sources(${MODULE_NAME}
         "main/powermeterImpl.cpp"
 )
 
+target_compile_features(${MODULE_NAME} PRIVATE cxx_std_17)
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
 target_link_libraries(${MODULE_NAME} PRIVATE everest::framework)
