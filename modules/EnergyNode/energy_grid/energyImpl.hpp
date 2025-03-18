@@ -55,11 +55,15 @@ private:
     // contains only the pricing informations last update
     types::energy_price_information::EnergyPriceSchedule energy_pricing;
 
-    types::energy::ScheduleReqEntry get_local_schedule();
+    types::energy::ScheduleReqEntry get_local_schedule_req_entry();
+    std::vector<types::energy::ScheduleReqEntry> get_local_schedule();
+
     void publish_complete_energy_object();
     void set_external_limits(types::energy::ExternalLimits& l);
     void merge_price_into_schedule(std::vector<types::energy::ScheduleReqEntry>& schedule,
                                    const std::vector<types::energy_price_information::PricePerkWh>& price);
+
+    std::string source_cfg;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
