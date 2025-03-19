@@ -1460,22 +1460,32 @@ bool Charger::deauthorize_internal() {
     return false;
 }
 
+void Charger::enable_disable_initial_state_publish() {
+    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_disable);
+    types::evse_manager::EnableDisableSource source{types::evse_manager::Enable_source::Unspecified,
+                                                    types::evse_manager::Enable_state::Unassigned, 10000};
+
+    // check the startup state and publish it
+    if (shared_context.current_state == EvseState::Disabled) {
+        signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
+        source.enable_state = types::evse_manager::Enable_state::Disable;
+    } else {
+        signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
+        source.enable_state = types::evse_manager::Enable_state::Enable;
+    }
+
+    // ensure the state is in the table
+    enable_disable_source_table_update(source);
+    active_enable_disable_source = source;
+}
+
 bool Charger::enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_disable);
 
     const auto last = active_enable_disable_source;
 
     // add/update enable_disable_source_table with new source information
-    const auto enable_source = source.enable_source;
-    const auto fn = [enable_source](const auto& entry) { return entry.enable_source == enable_source; };
-    if (auto it = std::find_if(enable_disable_source_table.begin(), enable_disable_source_table.end(), fn);
-        it == enable_disable_source_table.end()) {
-        // add to table
-        enable_disable_source_table.push_back(source);
-    } else {
-        // update in table
-        *it = source;
-    }
+    enable_disable_source_table_update(source);
 
     // process the table to calculate the current state
     // updates/recalculates active_enable_disable_source
@@ -1547,12 +1557,7 @@ bool Charger::parse_enable_disable_source_table() {
     about the state and other sources may decide.
 
     Each call to this command will update an internal table that looks like this:
-
-    | Source       | State         | Priority |
-    | ------------ | ------------- | -------- |
-    | Unspecified  | unassigned    |   10000  |
-    | LocalAPI     | disable       |      42  |
-    | LocalKeyLock | enable        |       0  |
+    void enable_disable_source_table_update(const types::evse_manager::EnableDisableSource& update);
 
     Evaluation will be done based on priorities. 0 is the highest priority, 10000 the lowest, so in this example the
     connector will be enabled regardless of what other sources say. Imagine LocalKeyLock sends a "unassigned, prio 0",
@@ -1608,6 +1613,22 @@ bool Charger::parse_enable_disable_source_table() {
 
     active_enable_disable_source = winning_source;
     return is_enabled;
+}
+
+void Charger::enable_disable_source_table_update(const types::evse_manager::EnableDisableSource& source) {
+    // already locked
+
+    // add/update enable_disable_source_table with new source information
+    const auto enable_source = source.enable_source;
+    const auto fn = [enable_source](const auto& entry) { return entry.enable_source == enable_source; };
+    if (auto it = std::find_if(enable_disable_source_table.begin(), enable_disable_source_table.end(), fn);
+        it == enable_disable_source_table.end()) {
+        // add to table
+        enable_disable_source_table.push_back(source);
+    } else {
+        // update in table
+        *it = source;
+    }
 }
 
 void Charger::set_faulted() {
