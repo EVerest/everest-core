@@ -88,6 +88,13 @@ void car_simulatorImpl::run() {
 
             const auto finished = run_simulation_loop();
 
+            auto& modify_session_cmds = car_simulation->get_modify_charging_session_cmds();
+            if (modify_session_cmds.has_value()) {
+                auto cmds = modify_session_cmds.value();
+                handle_modify_charging_session(cmds);
+                modify_session_cmds.reset();
+            }
+
             if (finished) {
                 EVLOG_info << "Finished simulation.";
                 set_execution_active(false);
@@ -257,6 +264,7 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
         _ev->subscribe_AC_StopFromCharger([this]() { car_simulation->set_iso_stopped(true); });
         _ev->subscribe_V2G_Session_Finished([this]() { car_simulation->set_v2g_finished(true); });
         _ev->subscribe_DC_PowerOn([this]() { car_simulation->set_dc_power_on(true); });
+        _ev->subscribe_pause_from_charger([this]() { car_simulation->set_iso_d20_paused(true); });
     }
 }
 
@@ -285,13 +293,8 @@ void car_simulatorImpl::subscribe_to_external_mqtt() {
     const auto& mqtt = mod->mqtt;
     mqtt.subscribe("everest_external/nodered/" + std::to_string(mod->config.connector_id) + "/carsim/cmd/enable",
                    [this](const std::string& message) {
-                       if (message == "true") {
-                           auto enable = true;
-                           handle_enable(enable);
-                       } else {
-                           auto enable = false;
-                           handle_enable(enable);
-                       }
+                       auto enable = (message == "true") ? true : false;
+                       handle_enable(enable);
                    });
     mqtt.subscribe("everest_external/nodered/" + std::to_string(mod->config.connector_id) +
                        "/carsim/cmd/execute_charging_session",
