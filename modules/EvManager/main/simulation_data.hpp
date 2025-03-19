@@ -25,6 +25,11 @@ enum class SimState {
     UNDEFINED,
 };
 
+enum class EnergyMode {
+    AC,
+    DC,
+};
+
 struct SimulationData {
 
     SimulationData() = default;
@@ -36,9 +41,13 @@ struct SimulationData {
 
     bool v2g_finished{false};
     bool iso_stopped{false};
+    bool iso_d20_paused{false};
     size_t evse_maxcurrent{0};
     size_t max_current{0};
     std::string payment{"ExternalPayment"};
+
+    EnergyMode energy_mode{EnergyMode::AC};
+    std::optional<std::string> modify_charging_session_cmds{std::nullopt};
 
     bool iso_pwr_ready{false};
 
