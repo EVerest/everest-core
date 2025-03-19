@@ -244,6 +244,7 @@ void EvseManager::ready() {
 
         // Ask HLC to stop charging session
         charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });
+        charger->signal_hlc_pause_charging.connect([this] { r_hlc[0]->call_pause_charging(true); });
 
         auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
