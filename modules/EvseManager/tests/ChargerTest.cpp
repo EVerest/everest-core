@@ -21,12 +21,16 @@ struct ChargerDerrived : public Charger {
     using Charger::get_shared_context;
 
     // updated when a non-zero connector is used to enable_disable()
-    constexpr auto& connector_enabled() const {
+    constexpr const auto& connector_enabled() {
         return get_shared_context().connector_enabled;
     }
 
-    constexpr auto& current_state() const {
+    constexpr const auto& current_state() {
         return get_shared_context().current_state;
+    }
+
+    constexpr void current_state(EvseState state) {
+        get_shared_context().current_state = state;
     }
 };
 
@@ -100,6 +104,64 @@ TEST_F(ChargerTest, EnableDisableSourceInit) {
     EXPECT_EQ(last_event, default_event);
     EXPECT_TRUE(charger->connector_enabled());
     EXPECT_EQ(charger->current_state(), Charger::EvseState::Idle);
+}
+
+TEST_F(ChargerTest, EnableDisableSourceInitPlusStateEnabled) {
+    charger->current_state(Charger::EvseState::Idle);
+
+    // check the default values on startup
+    // this is the starting point for all tests
+    auto last_source = charger->get_last_enable_disable_source();
+    EXPECT_EQ(last_source, default_source);
+    EXPECT_EQ(last_event, default_event);
+    EXPECT_TRUE(charger->connector_enabled());
+    EXPECT_EQ(charger->current_state(), Charger::EvseState::Idle);
+
+    reset_last_event();
+    constexpr EnableDisableSource enable_default{Enable_source::Unspecified, Enable_state::Enable, 10000};
+    charger->enable_disable_initial_state_publish();
+    last_source = charger->get_last_enable_disable_source();
+    EXPECT_EQ(last_source, enable_default);
+    EXPECT_EQ(last_event, SessionEventEnum::Enabled);
+    EXPECT_TRUE(charger->connector_enabled());
+    EXPECT_EQ(charger->current_state(), Charger::EvseState::Idle);
+
+    // already enabled so no event
+    reset_last_event();
+    constexpr EnableDisableSource enable_source{Enable_source::CSMS, Enable_state::Enable, 100};
+    EXPECT_TRUE(charger->enable_disable(0, enable_source));
+    last_source = charger->get_last_enable_disable_source();
+    EXPECT_EQ(last_source, enable_source);
+    EXPECT_EQ(last_event, default_event);
+}
+
+TEST_F(ChargerTest, EnableDisableSourceInitPlusStateDisabled) {
+    charger->current_state(Charger::EvseState::Disabled);
+
+    // check the default values on startup
+    // this is the starting point for all tests
+    auto last_source = charger->get_last_enable_disable_source();
+    EXPECT_EQ(last_source, default_source);
+    EXPECT_EQ(last_event, default_event);
+    EXPECT_TRUE(charger->connector_enabled());
+    EXPECT_EQ(charger->current_state(), Charger::EvseState::Disabled);
+
+    reset_last_event();
+    constexpr EnableDisableSource disable_default{Enable_source::Unspecified, Enable_state::Disable, 10000};
+    charger->enable_disable_initial_state_publish();
+    last_source = charger->get_last_enable_disable_source();
+    EXPECT_EQ(last_source, disable_default);
+    EXPECT_EQ(last_event, SessionEventEnum::Disabled);
+    EXPECT_TRUE(charger->connector_enabled());
+    EXPECT_EQ(charger->current_state(), Charger::EvseState::Disabled);
+
+    // already disabled so no event
+    reset_last_event();
+    constexpr EnableDisableSource disable_source{Enable_source::CSMS, Enable_state::Disable, 100};
+    EXPECT_FALSE(charger->enable_disable(0, disable_source));
+    last_source = charger->get_last_enable_disable_source();
+    EXPECT_EQ(last_source, disable_source);
+    EXPECT_EQ(last_event, default_event);
 }
 
 TEST_F(ChargerTest, EnableDisableSourceConnectorEnabled0) {
