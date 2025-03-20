@@ -1152,12 +1152,12 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                     default_params.max_current * default_params.voltage *
                     ((req->RequestedEnergyTransferMode == iso2_EnergyTransferModeType_AC_single_phase_core) ? 1 : 3);
 
-		dlog(DLOG_LEVEL_WARNING, "before adjusting for departure time, max_current %f, nom_voltage %d, pmax %d, departure_duration %d",
+		dlog(DLOG_LEVEL_INFO, "before adjusting for departure time, max_current %f, nom_voltage %d, pmax %d, departure_duration %d",
 			default_params.max_current, default_params.voltage,
 			default_params.pmax, departure_time_duration);
                 double req_eamount = calc_physical_value(req->AC_EVChargeParameter.EAmount.Value,
                         req->AC_EVChargeParameter.EAmount.Multiplier);
-                dlog(DLOG_LEVEL_WARNING, "Requested departure time %u, requested energy %f",
+                dlog(DLOG_LEVEL_INFO, "Requested departure time %u, requested energy %f",
 			departure_time_duration, req_eamount);
                 sel_params = default_params;
 
