@@ -9,6 +9,21 @@ ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
+
+if (DISABLE_EDM)
+    find_package(libwebsockets REQUIRED)
+endif()
+
+target_link_libraries(${MODULE_NAME}
+    PRIVATE
+        websockets_shared
+)
+
+target_sources(${MODULE_NAME}
+    PRIVATE
+        "server/transportInterface.cpp"
+        "server/websocketServer.cpp"
+)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_sources(${MODULE_NAME}
