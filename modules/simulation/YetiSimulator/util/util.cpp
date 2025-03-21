@@ -15,7 +15,7 @@ std::string get_current_iso_time_string() {
 
     auto string_stream = std::stringstream{};
     // NOLINTNEXTLINE(concurrency-mt-unsafe)
-    string_stream << std::put_time(gmtime(&date), "%F:%T%Z");
+    string_stream << std::put_time(gmtime(&date), "%FT%TZ");
     const auto iso_time_string = string_stream.str();
     return iso_time_string;
 }
