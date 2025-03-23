@@ -1422,8 +1422,8 @@ bool Charger::deauthorize() {
 }
 
 bool Charger::deauthorize_internal() {
-    signal_simple_event(types::evse_manager::SessionEventEnum::Deauthorized);
     if (shared_context.session_active) {
+        signal_simple_event(types::evse_manager::SessionEventEnum::Deauthorized);
         auto s = shared_context.current_state;
 
         if (s == EvseState::Disabled or s == EvseState::Idle or s == EvseState::WaitingForAuthentication) {
