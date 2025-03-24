@@ -10,6 +10,10 @@ void RpcApi::init() {
 
 void RpcApi::ready() {
     invoke_ready(*p_main);
+
+    // Start the WebSocket server
+    m_websocket_server = std::make_unique<server::WebSocketServer>(false, 8080);
+    m_websocket_server->start_server();
 }
 
 } // namespace module
