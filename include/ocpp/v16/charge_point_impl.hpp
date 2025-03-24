@@ -361,24 +361,28 @@ private:
     ///
     void set_time_offset_timer(const std::string& date_time);
 
-    // //brief Preprocess a ChangeAvailabilityRequest: Determine response;
-    // - if connector is 0, availability change is also propagated for all connectors
-    // - for each connector (except "0"), if transaction is ongoing the change is scheduled,
-    //    otherwise the OCPP connector id is appended to the `accepted_connector_availability_changes` vector
+    /// \brief Preprocess a ChangeAvailabilityRequest: Determine response;
+    /// - if connector is 0, availability change is also propagated for all connectors
+    /// - for each connector (except "0"), if transaction is ongoing the change is scheduled,
+    ///    otherwise the OCPP connector id is appended to the `accepted_connector_availability_changes` vector
     void preprocess_change_availability_request(const ChangeAvailabilityRequest& request,
                                                 ChangeAvailabilityResponse& response,
                                                 std::vector<int32_t>& accepted_connector_availability_changes);
 
-    // \brief TExecutes availability change for the provided connectors:
-    // - if persist == true: store availability in database
-    // - submit state event (for the whole ChargePoint if "0" in set of connectors; otherwise for each connector
-    // individually)
-    // - call according EVSE enable or disable callback, respectively
+    /// \brief Executes availability change for the provided connectors:
+    /// - if persist == true: store availability in database
+    /// - submit state event (for the whole ChargePoint if "0" in set of connectors; otherwise for each connector
+    /// individually)
+    /// - call according EVSE enable or disable callback, respectively
     /// \param changed_connectors list of OCPP connector ids (and 0 for whole chargepoint)
     /// \param availability new availabillity
     /// \param persist if true, persists availability in database
     void execute_connectors_availability_change(const std::vector<int32_t>& changed_connectors,
                                                 const ocpp::v16::AvailabilityType availability, bool persist);
+
+    /// \brief Checks scheduled availability queue and exeuctues availability change if required
+    /// \param connector for which availability change shall be checked and executed
+    void execute_queued_availability_change(const int32_t connector);
 
 public:
     /// \brief The main entrypoint for libOCPP for OCPP 1.6

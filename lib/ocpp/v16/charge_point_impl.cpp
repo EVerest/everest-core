@@ -1665,19 +1665,24 @@ void ChargePointImpl::preprocess_change_availability_request(
     std::vector<int32_t>& accepted_connector_availability_changes) {
 
     // we can only change the connector availability if there is no active transaction on this
-    // connector. is that case this change must be scheduled and we should report an availability status
-    // of "Scheduled"
+    // connector or the connector is not in Preparing state. If this is the case this change must be scheduled and we
+    // should report an availability status of "Scheduled"
+    auto should_be_scheduled_func = [this](int32_t connector) {
+        return this->transaction_handler->transaction_active(connector) or
+               this->status->get_state(connector) == ChargePointStatus::Preparing or
+               this->status->get_state(connector) == ChargePointStatus::Reserved;
+    };
 
     // check if connector exists
     if (request.connectorId <= this->configuration->getNumberOfConnectors() && request.connectorId >= 0) {
-        bool transaction_running = false;
+        bool should_be_scheduled = false;
 
         if (request.connectorId == 0) {
             accepted_connector_availability_changes.push_back(0);
             int32_t number_of_connectors = this->configuration->getNumberOfConnectors();
             for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
-                if (this->transaction_handler->transaction_active(connector)) {
-                    transaction_running = true;
+                if (should_be_scheduled_func(connector)) {
+                    should_be_scheduled = true;
                     std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
                     this->change_availability_queue[connector] = {request.type, true};
                 } else {
@@ -1685,8 +1690,8 @@ void ChargePointImpl::preprocess_change_availability_request(
                 }
             }
         } else {
-            if (this->transaction_handler->transaction_active(request.connectorId)) {
-                transaction_running = true;
+            if (should_be_scheduled_func(request.connectorId)) {
+                should_be_scheduled = true;
                 std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
                 this->change_availability_queue[request.connectorId] = {request.type, true};
             } else {
@@ -1699,7 +1704,7 @@ void ChargePointImpl::preprocess_change_availability_request(
             this->database_handler->insert_or_update_connector_availability(connector, availabilityChange.availability);
         }
 
-        if (transaction_running) {
+        if (should_be_scheduled) {
             response.status = AvailabilityStatus::Scheduled;
         } else {
             response.status = AvailabilityStatus::Accepted;
@@ -1738,6 +1743,25 @@ void ChargePointImpl::execute_connectors_availability_change(const std::vector<i
                 this->disable_evse_callback(connector);
             }
         }
+    }
+}
+
+void ChargePointImpl::execute_queued_availability_change(const int32_t connector) {
+    bool change_queued = false;
+    AvailabilityType connector_availability;
+    bool persist = false;
+    {
+        std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
+        change_queued = this->change_availability_queue.count(connector) != 0;
+        connector_availability = this->change_availability_queue[connector].availability;
+        persist = this->change_availability_queue[connector].persist;
+        this->change_availability_queue.erase(connector);
+    }
+
+    if (change_queued) {
+        EVLOG_debug << "Queued availability change of connector " << connector << " to "
+                    << conversions::availability_type_to_string(connector_availability);
+        execute_connectors_availability_change({connector}, connector_availability, persist);
     }
 }
 
@@ -2281,22 +2305,7 @@ void ChargePointImpl::handleStopTransactionResponse(const EnhancedMessage<v16::M
         }
 
         // perform a queued connector availability change
-        bool change_queued = false;
-        AvailabilityType connector_availability;
-        bool persist = false;
-        {
-            std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
-            change_queued = this->change_availability_queue.count(connector) != 0;
-            connector_availability = this->change_availability_queue[connector].availability;
-            persist = this->change_availability_queue[connector].persist;
-            this->change_availability_queue.erase(connector);
-        }
-
-        if (change_queued) {
-            EVLOG_debug << "Queued availability change of connector " << connector << " to "
-                        << conversions::availability_type_to_string(connector_availability);
-            execute_connectors_availability_change({connector}, connector_availability, persist);
-        }
+        this->execute_queued_availability_change(connector);
     } else {
         EVLOG_warning << "Received StopTransaction.conf for transaction that is not known to transaction_handler";
     }
@@ -4154,6 +4163,8 @@ void ChargePointImpl::on_session_started(int32_t connector, const std::string& s
 }
 
 void ChargePointImpl::on_session_stopped(const int32_t connector, const std::string& session_id) {
+    this->execute_queued_availability_change(connector);
+
     if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
         this->status->get_state(connector) != ChargePointStatus::Unavailable) {
         this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
@@ -4633,6 +4644,7 @@ void ChargePointImpl::on_reservation_start(int32_t connector) {
 }
 
 void ChargePointImpl::on_reservation_end(int32_t connector) {
+    this->execute_queued_availability_change(connector);
     this->status->submit_event(connector, FSMEvent::ReservationEnd, ocpp::DateTime());
 }
 
