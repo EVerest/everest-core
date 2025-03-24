@@ -244,7 +244,6 @@ async def test_change_availability_scheduled_in_reserved(
         "ReserveNow",
         ReserveNowPayload(ReservationStatus.accepted),
     )
-    
     ## end
 
     r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
