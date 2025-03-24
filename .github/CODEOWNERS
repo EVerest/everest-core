@@ -1,7 +1,7 @@
-* @pietfried @hikinggrass @marcemmers @maaikez
+* @pietfried @hikinggrass @marcemmers @maaikez @mlitre
 
-/config/v16/ @pietfried @hikinggrass @maaikez
-/include/ocpp/v16/ @pietfried @hikinggrass @maaikez
-/lib/ocpp/v16/ @pietfried @hikinggrass @maaikez
+/config/v16/ @pietfried @hikinggrass @maaikez @mlitre
+/include/ocpp/v16/ @pietfried @hikinggrass @maaikez @mlitre
+/lib/ocpp/v16/ @pietfried @hikinggrass @maaikez @mlitre
 
-/.github/ @pietfried @hikinggrass
+/.github/ @pietfried @hikinggrass @mlitre
