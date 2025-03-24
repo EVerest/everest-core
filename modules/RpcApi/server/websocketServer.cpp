@@ -13,6 +13,27 @@ namespace server {
 
 static const int PER_SESSION_DATA_SIZE {4096};
 
+static void log_callback(int level, const char *line) {
+    switch (level) {
+        case LLL_ERR:
+            EVLOG_error << line;
+            break;
+        case LLL_WARN:
+            EVLOG_warning << line;
+            break;
+        case LLL_INFO:
+            EVLOG_info << line;
+            break;
+        case LLL_NOTICE: // Fallthrough
+        case LLL_DEBUG:
+            EVLOG_debug << line;
+            break;
+        default:
+            EVLOG_info << line;
+            break;
+    }
+}
+
 int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len) {
     struct lws_context *context = lws_get_context(wsi);
     WebSocketServer *server = static_cast<WebSocketServer *>(lws_context_user(context));
@@ -68,7 +89,7 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
 WebSocketServer::WebSocketServer(bool ssl_enabled, int port)
     : m_ssl_enabled(ssl_enabled) {
     // Constructor implementation
-    lws_set_log_level(LLL_ERR | LLL_WARN, NULL);
+    lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG, log_callback);
     m_info.port = port;
     m_lws_protocols[0] = { "http", callback_ws, 0, PER_SESSION_DATA_SIZE };
     m_lws_protocols[1] = { NULL, NULL, 0, 0 };
