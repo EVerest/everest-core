@@ -108,6 +108,8 @@ void WebSocketServer::kill_client_connection(const ClientId &client_id, const st
 }
 
 uint WebSocketServer::connections_count() const {
+    std::lock_guard<std::mutex> lock(m_clients_mutex);
+    return m_clients.size();
 }
 
 bool WebSocketServer::start_server() {
