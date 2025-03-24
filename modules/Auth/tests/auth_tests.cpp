@@ -1793,7 +1793,7 @@ TEST_F(AuthTest, test_withdraw_authorization_during_transaction) {
 
 /// \brief Test two successive authorization requests and connector selection. The first authorization request targets
 /// only connector1, the second authorization request targets connector1 and connector2. Connector2 should be selected,
-/// since the transaction at connecto1 is already running.
+/// since the transaction at connector1 is already running.
 TEST_F(AuthTest, test_two_authorization_plug_events) {
 
     std::vector<int32_t> connector_1{1};
