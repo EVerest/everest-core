@@ -18,8 +18,7 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
     WebSocketServer *server = static_cast<WebSocketServer *>(lws_context_user(context));
 
     if (!server) {
-        EVLOG_error << "Error: WebSocketServer instance not found!";
-        return 0;
+        throw std::runtime_error("Error: WebSocketServer instance not found!");
     }
 
     switch (reason) {
@@ -118,7 +117,7 @@ bool WebSocketServer::start_server() {
         return false;
     }
 
-    EVLOG_info << "WebSocket Server running on port " << m_info.port << m_ssl_enabled? " with TLS": " without TLS";
+    EVLOG_info << "WebSocket Server running on port " << m_info.port << (m_ssl_enabled? " with TLS": " without TLS");
 
     m_server_thread = std::thread([this]() {
         m_running = true;
