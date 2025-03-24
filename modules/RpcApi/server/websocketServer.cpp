@@ -6,6 +6,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <everest/logging.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 namespace server {
 
 static const int PER_SESSION_DATA_SIZE {4096};
@@ -20,14 +23,15 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
 
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED: {
-            static int next_client_id = 1;
-            int client_id = next_client_id++;
+            // Generate a random UUID for the client
+            boost::uuids::uuid client_id = boost::uuids::random_generator()();
 
             {
                 std::lock_guard<std::mutex> lock(server->m_clients_mutex);
                 server->m_clients[client_id] = wsi;
             }
-            EVLOG_info << "Client " << client_id << " connected";
+
+            EVLOG_info << "Client " << boost::uuids::to_string(client_id) << " connected";
             break;
         }
         case LWS_CALLBACK_CLOSED: {
@@ -66,7 +70,7 @@ bool WebSocketServer::running() const {
     return m_running;
 }
 
-void WebSocketServer::send_data(const int &client_id, const std::vector<uint8_t> &data) {
+void WebSocketServer::send_data(const ClientId &client_id, const std::vector<uint8_t> &data) {
     std::lock_guard<std::mutex> lock(m_clients_mutex);
 
     auto it = m_clients.find(client_id);
@@ -83,7 +87,7 @@ void WebSocketServer::send_data(const int &client_id, const std::vector<uint8_t>
     delete[] buf;
 }
 
-void WebSocketServer::kill_client_connection(const int &client_id, const std::string &kill_reason) {
+void WebSocketServer::kill_client_connection(const ClientId &client_id, const std::string &kill_reason) {
     std::lock_guard<std::mutex> lock(m_clients_mutex);
 
     auto it = m_clients.find(client_id);
@@ -143,9 +147,9 @@ bool WebSocketServer::stop_server() {
 void WebSocketServer::on_client_connected() {
 }
 
-void WebSocketServer::on_client_disconnected(const int &client_id) {
+void WebSocketServer::on_client_disconnected(const ClientId &client_id) {
 }
 
-void WebSocketServer::on_data_received(const int &client_id, const std::vector<uint8_t> &data) {
+void WebSocketServer::on_data_received(const ClientId &client_id, const std::vector<uint8_t> &data) {
 }
 } // namespace server

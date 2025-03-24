@@ -11,13 +11,13 @@
 #include <optional>
 #include <stdexcept>
 #include <memory>
-//#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid.hpp>
 
 namespace server {
 
 class TransportInterface {
 public:
-    using ClientId = int;
+    using ClientId = boost::uuids::uuid;
     using Address = std::string;
     using Data = std::vector<uint8_t>;
 
