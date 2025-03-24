@@ -383,7 +383,7 @@ TEST_F(AuthTest, test_authorize_first) {
 
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
 
@@ -444,7 +444,7 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
 
     std::thread t5([this, provided_token, &result5]() { result5 = this->auth_handler->on_token(provided_token); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
     std::thread t6([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     t5.join();
@@ -477,7 +477,7 @@ TEST_F(AuthTest, test_two_id_tokens) {
     std::thread t1([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
     std::thread t2([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
     std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
     std::thread t4([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
@@ -1039,7 +1039,7 @@ TEST_F(AuthTest, test_reservation_with_authorization_global_reservations) {
 
     // this token is not valid for the reservation
     std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
     std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     t2.join();
@@ -1250,7 +1250,7 @@ TEST_F(AuthTest, test_authorization_timeout_and_reswipe) {
 
     std::thread t2([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
 
@@ -1594,6 +1594,54 @@ TEST_F(AuthTest, test_subsequent_valid_tokens) {
     ASSERT_TRUE(result2 == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test two successive authorization requests and connector selection. The first authorization request targets
+/// only connector1, the second authorization request targets connector1 and connector2. Connector2 should be selected,
+/// since the transaction at connector1 is already running.
+TEST_F(AuthTest, test_two_authorization_plug_events) {
+
+    std::vector<int32_t> connector_1{1};
+    std::vector<int32_t> all_connectors{1, 2};
+
+    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connector_1);
+    ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, all_connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
+
+    TokenHandlingResult result1;
+
+    std::thread t1([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+
+    std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
+
+    t1.join();
+    t2.join();
+
+    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+
+    SessionEvent session_event2 = get_transaction_started_event(provided_token_1);
+    this->auth_handler->handle_session_event(1, session_event2);
+
+    TokenHandlingResult result2;
+    std::thread t3([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+
+    t3.join();
+
+    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
 }
 
 } // namespace module

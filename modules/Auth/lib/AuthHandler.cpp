@@ -249,6 +249,13 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
     }
 
+    // We can remove evse_ids from referenced_evses that already have an identifier assigend, since we don't want to
+    // consider those when selecting an evse
+    referenced_evses.erase(
+        std::remove_if(referenced_evses.begin(), referenced_evses.end(),
+                       [this](int32_t evse_id) { return this->evses.at(evse_id)->identifier != std::nullopt; }),
+        referenced_evses.end());
+
     types::authorization::ValidationResult validation_result = {types::authorization::AuthorizationStatus::Unknown};
     if (!validation_results.empty()) {
         bool authorized = false;
@@ -643,11 +650,11 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
 
     switch (event_type) {
     case SessionEventEnum::SessionStarted: {
-        this->plug_in_queue.push_back(evse_id);
-        this->cv.notify_all();
 
         // only set plug in timeout when SessionStart is caused by plug in
         if (event.session_started.value().reason == StartSessionReason::EVConnected) {
+            this->plug_in_queue.push_back(evse_id);
+            this->cv.notify_all();
             this->evses.at(evse_id)->plugged_in = true;
 
             this->evses.at(evse_id)->timeout_timer.timeout(
