@@ -46,10 +46,6 @@ public:
     bool start_server() override;
     bool stop_server() override;
 
-    void on_client_connected();
-    void on_client_disconnected(const ClientId &client_id);
-    void on_data_received(const ClientId &client_id, const std::vector<uint8_t> &data);
-
 private:
     // Members
     bool m_ssl_enabled;

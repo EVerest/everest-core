@@ -21,25 +21,39 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
         throw std::runtime_error("Error: WebSocketServer instance not found!");
     }
 
+    std::lock_guard<std::mutex> lock(server->m_clients_mutex);
+
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED: {
             // Generate a random UUID for the client
             boost::uuids::uuid client_id = boost::uuids::random_generator()();
+            server->m_clients[client_id] = wsi;
 
-            {
-                std::lock_guard<std::mutex> lock(server->m_clients_mutex);
-                server->m_clients[client_id] = wsi;
+            char ip_address[INET6_ADDRSTRLEN] {0};
+            if (lws_get_peer_simple(wsi, ip_address, sizeof(ip_address)) == NULL) {
+                EVLOG_warning << "Failed to get client IP address";
             }
 
+            server->on_client_connected(client_id, ip_address);  // Call the on_client_connected callback
             EVLOG_info << "Client " << boost::uuids::to_string(client_id) << " connected";
             break;
         }
         case LWS_CALLBACK_CLOSED: {
-            std::lock_guard<std::mutex> lock(server->m_clients_mutex);
             for (auto it = server->m_clients.begin(); it != server->m_clients.end(); ++it) {
                 if (it->second == wsi) {
+                    server->on_client_disconnected(it->first);  // Call the on_client_disconnected callback
                     EVLOG_info << "Client " << it->first << " disconnected";
                     server->m_clients.erase(it);
+                    break;
+                }
+            }
+            break;
+        case LWS_CALLBACK_RECEIVE:
+            for (auto it = server->m_clients.begin(); it != server->m_clients.end(); ++it) {
+                if (it->second == wsi) {
+                    unsigned char *data = (unsigned char *)in;
+                    std::vector<uint8_t> received_data(data, data + len);
+                    server->on_data_available(it->first, received_data);  // Call the on_data_available callback
                     break;
                 }
             }
@@ -54,6 +68,7 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
 WebSocketServer::WebSocketServer(bool ssl_enabled, int port)
     : m_ssl_enabled(ssl_enabled) {
     // Constructor implementation
+    lws_set_log_level(LLL_ERR | LLL_WARN, NULL);
     m_info.port = port;
     m_lws_protocols[0] = { "http", callback_ws, 0, PER_SESSION_DATA_SIZE };
     m_lws_protocols[1] = { NULL, NULL, 0, 0 };
@@ -148,12 +163,4 @@ bool WebSocketServer::stop_server() {
     return true;
 }
 
-void WebSocketServer::on_client_connected() {
-}
-
-void WebSocketServer::on_client_disconnected(const ClientId &client_id) {
-}
-
-void WebSocketServer::on_data_received(const ClientId &client_id, const std::vector<uint8_t> &data) {
-}
 } // namespace server
