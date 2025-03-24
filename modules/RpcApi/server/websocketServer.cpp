@@ -14,7 +14,8 @@ namespace server {
 static const int PER_SESSION_DATA_SIZE {4096};
 
 int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len) {
-    WebSocketServer *server = static_cast<WebSocketServer *>(lws_context_user(lws_get_context(wsi)));
+    struct lws_context *context = lws_get_context(wsi);
+    WebSocketServer *server = static_cast<WebSocketServer *>(lws_context_user(context));
 
     if (!server) {
         EVLOG_error << "Error: WebSocketServer instance not found!";
@@ -60,6 +61,7 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port)
 
     m_info.protocols = m_lws_protocols;
     m_info.options = m_ssl_enabled ? LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT : 0;
+    m_info.user = this; // To access WebSocketServer instance in callback
 }
 
 WebSocketServer::~WebSocketServer() {
@@ -119,6 +121,7 @@ bool WebSocketServer::start_server() {
     EVLOG_info << "WebSocket Server running on port " << m_info.port << m_ssl_enabled? " with TLS": " without TLS";
 
     m_server_thread = std::thread([this]() {
+        m_running = true;
         while (m_running) {
             lws_service(m_context, 1000);
         }
