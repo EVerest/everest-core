@@ -2336,6 +2336,11 @@ void ChargePointImpl::handleUnlockConnectorRequest(ocpp::Call<UnlockConnectorReq
 
     ocpp::CallResult<UnlockConnectorResponse> call_result(response, call.uniqueId);
     this->message_dispatcher->dispatch_call_result(call_result);
+
+    if (response.status == UnlockStatus::NotSupported and this->transaction_handler->transaction_active(connector) and
+        this->configuration->getStopTransactionIfUnlockNotSupported()) {
+        this->stop_transaction_callback(connector, Reason::UnlockCommand);
+    }
 }
 
 void ChargePointImpl::handleHeartbeatResponse(CallResult<HeartbeatResponse> call_result) {

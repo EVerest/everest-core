@@ -355,6 +355,12 @@
             "type": "boolean",
             "readOnly": true,
             "default": false
+        },
+        "StopTransactionIfUnlockNotSupported": {
+            "$comment": "If true, a transaction is stopped on an Unlock.req even if unlocking is not supported",
+            "type": "boolean",
+            "readOnly": false,
+            "default": false
         }
     },
     "additionalProperties": false

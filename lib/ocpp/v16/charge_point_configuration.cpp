@@ -825,6 +825,23 @@ std::string ChargePointConfiguration::getTLSKeylogFile() {
     return this->config["Internal"]["TLSKeylogFile"];
 }
 
+bool ChargePointConfiguration::getStopTransactionIfUnlockNotSupported() {
+    return this->config["Internal"]["StopTransactionIfUnlockNotSupported"];
+}
+
+void ChargePointConfiguration::setStopTransactionIfUnlockNotSupported(bool stop_transaction_if_unlock_not_supported) {
+    this->config["Internal"]["StopTransactionIfUnlockNotSupported"] = stop_transaction_if_unlock_not_supported;
+    this->setInUserConfig("Internal", "StopTransactionIfUnlockNotSupported", stop_transaction_if_unlock_not_supported);
+}
+
+KeyValue ChargePointConfiguration::getStopTransactionIfUnlockNotSupportedKeyValue() {
+    KeyValue kv;
+    kv.key = "StopTransactionIfUnlockNotSupported";
+    kv.readonly = false;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getStopTransactionIfUnlockNotSupported()));
+    return kv;
+}
+
 KeyValue ChargePointConfiguration::getWebsocketPingPayloadKeyValue() {
     KeyValue kv;
     kv.key = "WebsocketPingPayload";
@@ -3121,6 +3138,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "MessageQueueSizeThreshold") {
         return this->getMessageQueueSizeThresholdKeyValue();
     }
+    if (key == "StopTransactionIfUnlockNotSupported") {
+        return this->getStopTransactionIfUnlockNotSupportedKeyValue();
+    }
 
     // Core Profile
     if (key == "AllowOfflineTxForUnknownId") {
@@ -3720,6 +3740,13 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         } catch (const std::out_of_range& e) {
+            return ConfigurationStatus::Rejected;
+        }
+    }
+    if (key == "StopTransactionIfUnlockNotSupported") {
+        if (isBool(value.get())) {
+            this->setStopTransactionIfUnlockNotSupported(ocpp::conversions::string_to_bool(value.get()));
+        } else {
             return ConfigurationStatus::Rejected;
         }
     }

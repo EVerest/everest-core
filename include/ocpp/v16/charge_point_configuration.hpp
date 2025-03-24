@@ -124,6 +124,10 @@ public:
     bool getEnableTLSKeylog();
     std::string getTLSKeylogFile();
 
+    bool getStopTransactionIfUnlockNotSupported();
+    void setStopTransactionIfUnlockNotSupported(bool stop_transaction_if_unlock_not_supported);
+    KeyValue getStopTransactionIfUnlockNotSupportedKeyValue();
+
     int32_t getRetryBackoffRandomRange();
     void setRetryBackoffRandomRange(int32_t retry_backoff_random_range);
     KeyValue getRetryBackoffRandomRangeKeyValue();
