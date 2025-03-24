@@ -59,7 +59,7 @@ private:
     struct lws_context *m_context = nullptr;
     std::thread m_server_thread;
     std::unordered_map<ClientId, struct lws *> m_clients;  // Client-Mapping
-    std::mutex m_clients_mutex;
+    mutable std::mutex m_clients_mutex;
 
     // Methods
     static int callback_ws(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
