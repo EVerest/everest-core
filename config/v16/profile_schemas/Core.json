@@ -16,7 +16,6 @@
         "MeterValueSampleInterval",
         "NumberOfConnectors",
         "ResetRetries",
-        "StopTransactionOnEVSideDisconnect",
         "StopTransactionOnInvalidId",
         "StopTxnAlignedData",
         "StopTxnSampledData",
@@ -134,7 +133,7 @@
         },
         "StopTransactionOnEVSideDisconnect": {
             "type": "boolean",
-            "readOnly": false
+            "readOnly": true
         },
         "StopTransactionOnInvalidId": {
             "type": "boolean",

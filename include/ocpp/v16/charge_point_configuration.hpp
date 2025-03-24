@@ -275,10 +275,9 @@ public:
     void setResetRetries(int32_t retries);
     KeyValue getResetRetriesKeyValue();
 
-    // Core Profile
-    bool getStopTransactionOnEVSideDisconnect();
-    void setStopTransactionOnEVSideDisconnect(bool stop_transaction_on_ev_side_disconnect);
-    KeyValue getStopTransactionOnEVSideDisconnectKeyValue();
+    // Core Profile - optional
+    std::optional<bool> getStopTransactionOnEVSideDisconnect();
+    std::optional<KeyValue> getStopTransactionOnEVSideDisconnectKeyValue();
 
     // Core Profile
     bool getStopTransactionOnInvalidId();

@@ -21,7 +21,6 @@
         "MeterValueSampleInterval": 0,
         "NumberOfConnectors": 1,
         "ResetRetries": 1,
-        "StopTransactionOnEVSideDisconnect": true,
         "StopTransactionOnInvalidId": true,
         "StopTxnAlignedData": "Energy.Active.Import.Register",
         "StopTxnSampledData": "Energy.Active.Import.Register",
