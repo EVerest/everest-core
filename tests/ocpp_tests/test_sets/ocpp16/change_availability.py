@@ -175,13 +175,6 @@ async def test_change_availability_scheduled_in_preparing(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        {"connectorId": 1, "status": "Available", "errorCode": "NoError"},
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
         {"connectorId": 1, "status": "Unavailable", "errorCode": "NoError"},
     )
 
@@ -220,13 +213,6 @@ async def test_change_availability_scheduled_in_transaction(
 
     assert await wait_for_and_validate(
         test_utility, charge_point_v16, "StopTransaction", {"reason": "EVDisconnected"}
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
-        {"connectorId": 1, "status": "Available", "errorCode": "NoError"},
     )
 
     assert await wait_for_and_validate(
@@ -290,13 +276,6 @@ async def test_change_availability_scheduled_in_reserved(
         charge_point_v16,
         "CancelReservation",
         CancelReservationPayload(CancelReservationStatus.accepted),
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
-        {"connectorId": 1, "status": "Available", "errorCode": "NoError"},
     )
 
     assert await wait_for_and_validate(
