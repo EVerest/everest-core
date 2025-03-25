@@ -77,6 +77,9 @@ This variable is published every second and contains a json object with informat
     - ChargingPausedEV
     - ChargingPausedEVSE
     - Finished
+    - FinishedEV
+    - FinishedEVSE
+    - AuthTimeout
 
 ### everest_api/evse_manager/var/limits
 This variable is published every second and contains a json object with information
