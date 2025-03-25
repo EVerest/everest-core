@@ -118,8 +118,55 @@ template <> void convert(const struct iso20_ServiceDetailReqType& in, ServiceDet
     out.service = static_cast<datatypes::ServiceCategory>(in.ServiceID);
 }
 
-struct ParamterValueVisitor {
-    ParamterValueVisitor(iso20_ParameterType& parameter_) : parameter(parameter_){};
+template <> void convert(const struct iso20_ServiceDetailResType& in, ServiceDetailResponse& out) {
+
+    cb_convert_enum(in.ResponseCode, out.response_code);
+
+    cb_convert_enum(in.ServiceID, out.service);
+    out.service_parameter_list.clear();
+    for (uint8_t i = 0; i < in.ServiceParameterList.ParameterSet.arrayLen; i++) {
+        const auto& in_parameter_set = in.ServiceParameterList.ParameterSet.array[i];
+        datatypes::ParameterSet out_parameter_set;
+        out_parameter_set.id = in_parameter_set.ParameterSetID;
+
+        out_parameter_set.parameter.clear();
+        for (uint8_t t = 0; t < in_parameter_set.Parameter.arrayLen; t++) {
+            const auto& in_parameter = in_parameter_set.Parameter.array[t];
+            datatypes::Parameter out_parameter;
+
+            out_parameter.name = CB2CPP_STRING(in_parameter.Name);
+            if (in_parameter.boolValue_isUsed) {
+                out_parameter.value = in_parameter.boolValue;
+            } else if (in_parameter.byteValue_isUsed) {
+                out_parameter.value = in_parameter.byteValue;
+            } else if (in_parameter.shortValue_isUsed) {
+                out_parameter.value = in_parameter.shortValue;
+            } else if (in_parameter.intValue_isUsed) {
+                out_parameter.value = in_parameter.intValue;
+            } else if (in_parameter.finiteString_isUsed) {
+                out_parameter.value = CB2CPP_STRING(in_parameter.finiteString);
+            } else if (in_parameter.rationalNumber_isUsed) {
+                out_parameter.value =
+                    datatypes::RationalNumber{in_parameter.rationalNumber.Value, in_parameter.rationalNumber.Exponent};
+            }
+            out_parameter_set.parameter.push_back(out_parameter);
+        }
+        out.service_parameter_list.push_back(out_parameter_set);
+    }
+
+    convert(in.Header, out.header);
+}
+
+template <> void convert(const ServiceDetailRequest& in, iso20_ServiceDetailReqType& out) {
+    init_iso20_ServiceDetailReqType(&out);
+
+    cb_convert_enum(in.service, out.ServiceID);
+
+    convert(in.header, out.Header);
+}
+
+struct ParameterValueVisitor {
+    ParameterValueVisitor(iso20_ParameterType& parameter_) : parameter(parameter_){};
     void operator()(const bool& in) {
         CB_SET_USED(parameter.boolValue);
         parameter.boolValue = in;
@@ -161,18 +208,18 @@ template <> void convert(const ServiceDetailResponse& in, iso20_ServiceDetailRes
 
     uint8_t index = 0;
     for (auto const& in_parameter_set : in.service_parameter_list) {
-        auto& out_paramater_set = out.ServiceParameterList.ParameterSet.array[index++];
-        out_paramater_set.ParameterSetID = in_parameter_set.id;
+        auto& out_parameter_set = out.ServiceParameterList.ParameterSet.array[index++];
+        out_parameter_set.ParameterSetID = in_parameter_set.id;
 
         uint8_t t = 0;
         for (auto const& in_parameter : in_parameter_set.parameter) {
-            auto& out_parameter = out_paramater_set.Parameter.array[t++];
+            auto& out_parameter = out_parameter_set.Parameter.array[t++];
             init_iso20_ParameterType(&out_parameter);
 
             CPP2CB_STRING(in_parameter.name, out_parameter.Name);
-            std::visit(ParamterValueVisitor(out_parameter), in_parameter.value);
+            std::visit(ParameterValueVisitor(out_parameter), in_parameter.value);
         }
-        out_paramater_set.Parameter.arrayLen = in_parameter_set.parameter.size();
+        out_parameter_set.Parameter.arrayLen = in_parameter_set.parameter.size();
     }
 
     out.ServiceParameterList.ParameterSet.arrayLen = in.service_parameter_list.size();
@@ -181,6 +228,10 @@ template <> void convert(const ServiceDetailResponse& in, iso20_ServiceDetailRes
 template <> void insert_type(VariantAccess& va, const struct iso20_ServiceDetailReqType& in) {
     va.insert_type<ServiceDetailRequest>(in);
 }
+
+template <> void insert_type(VariantAccess& va, const struct iso20_ServiceDetailResType& in) {
+    va.insert_type<ServiceDetailResponse>(in);
+};
 
 template <> int serialize_to_exi(const ServiceDetailResponse& in, exi_bitstream_t& out) {
     iso20_exiDocument doc;
@@ -193,7 +244,22 @@ template <> int serialize_to_exi(const ServiceDetailResponse& in, exi_bitstream_
     return encode_iso20_exiDocument(&out, &doc);
 }
 
+template <> int serialize_to_exi(const ServiceDetailRequest& in, exi_bitstream_t& out) {
+    iso20_exiDocument doc;
+    init_iso20_exiDocument(&doc);
+
+    CB_SET_USED(doc.ServiceDetailReq);
+
+    convert(in, doc.ServiceDetailReq);
+
+    return encode_iso20_exiDocument(&out, &doc);
+}
+
 template <> size_t serialize(const ServiceDetailResponse& in, const io::StreamOutputView& out) {
+    return serialize_helper(in, out);
+}
+
+template <> size_t serialize(const ServiceDetailRequest& in, const io::StreamOutputView& out) {
     return serialize_helper(in, out);
 }
 
