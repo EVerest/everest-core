@@ -27,10 +27,6 @@ generate_cpp_from_proto(
         "${PROTOBUF_DIR}/control_service/messages.proto"
         "${PROTOBUF_DIR}/control_service/types.proto"
 )
-target_link_libraries(proto_control_service
-    PUBLIC
-        proto_common_types
-)
 
 generate_cpp_from_proto(
     LIBRARY_NAME "proto_cs_lpc_service"
@@ -40,6 +36,12 @@ generate_cpp_from_proto(
         "${PROTOBUF_DIR}/usecases/cs/lpc/service.proto"
         "${PROTOBUF_DIR}/usecases/cs/lpc/messages.proto"
 )
+
+target_link_libraries(proto_control_service
+    PUBLIC
+        proto_common_types
+)
+
 target_link_libraries(proto_cs_lpc_service
     PUBLIC
         proto_common_types

@@ -2,7 +2,7 @@ description: EEBUS module
 config:
   control_service_rpc_port:
     description: Port for the control service RPC server
-    type: int
+    type: integer
     default: 50051
   eebus_ems_ski:
     description: EEBUS EMS SKI
@@ -14,6 +14,10 @@ config:
     required: true
   private_key_path:
     description: Path to the private key file used by eebus go client. Must be absolute path.
+    type: string
+    required: true
+  eebus_grpc_api_binary_path:
+    description: Path to the eebus grpc api binary. Must be absolute path.
     type: string
     required: true
 provides:

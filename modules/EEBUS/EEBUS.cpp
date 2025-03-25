@@ -3,151 +3,142 @@
 #include "EEBUS.hpp"
 
 #include <string>
+#include <filesystem>
 
-#include "helper.hpp"
-#include "useCaseEventReader.hpp"
-
+// everest framework
 #include <everest/logging.hpp>
 
-#include "control_service/control_service.grpc-ext.pb.h"
-#include "usecases/cs/lpc/service.grpc-ext.pb.h"
+// everest core deps
+#include <grpcpp/grpcpp.h>
 
-#include "compile_time_settings.hpp"
+// everest core staging
+#include <RunApplication.hpp>
+
+// module internal
+#include <helper.hpp>
+#include <compile_time_settings.hpp>
 
 namespace module {
 
+void start_eebus_grpc_api(int port, std::filesystem::path cert_file, std::filesystem::path key_file) {
+    std::string eebus_grpc_api_binary = EEBUS_GRPC_API_BINARY_PATH;
+    std::vector<std::string> args;
+    args.push_back("-port");
+    args.push_back(std::to_string(port));
+    args.push_back("-certificate-path");
+    args.push_back(cert_file.string());
+    args.push_back("-private-key-path");
+    args.push_back(key_file.string());
+    module::CmdOutput output = module::run_application(eebus_grpc_api_binary, args);
+    EVLOG_error << "eebus-grpc-api output: " << output.output;
+    EVLOG_error << "eebus-grpc-api exit code: " << output.exit_code;
+}
+
+bool wait_for_channel_ready(std::shared_ptr<grpc::Channel> channel, std::chrono::milliseconds timeout) {
+    const std::chrono::milliseconds retry_interval = std::chrono::seconds(1);
+
+    const std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+    grpc_connectivity_state channel_state = channel->GetState(true);
+
+    while(channel_state != GRPC_CHANNEL_READY && std::chrono::system_clock::now() - start < timeout) {
+        EVLOG_debug << "Channel is not ready, retrying...";
+        std::this_thread::sleep_for(retry_interval);
+        channel_state = channel->GetState(true);
+    }
+    switch(channel_state) {
+        case GRPC_CHANNEL_IDLE:
+            EVLOG_error << "Channel is still in idle, but timeout is reached";
+            return false;
+        case GRPC_CHANNEL_CONNECTING:
+            EVLOG_error << "Channel is still connecting, but timeout is reached";
+            return false;        
+        case GRPC_CHANNEL_READY:
+            // no need to log, as this is the expected state
+            return true;
+        case GRPC_CHANNEL_TRANSIENT_FAILURE:
+            EVLOG_error << "Channel is in transient failure, but timeout is reached";
+            return false;
+        case GRPC_CHANNEL_SHUTDOWN:
+            EVLOG_error << "Channel is shutdown and timeout is reached";
+            return false;
+    }
+    return false;
+}
+
+void EEBUS::set_use_case_event_reader(std::unique_ptr<UseCaseEventReader> reader) {
+    this->reader = std::move(reader);
+}
 
 void EEBUS::init() {
-    std::string remote_ski = "fa2548488be47c89a342ea29c2fc9867df7cf700";
-    std::string rpc_url = "localhost:50051";
     invoke_init(*p_main);
+    this->failed = false;
 
-    std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(rpc_url, grpc::InsecureChannelCredentials());
-    this->control_service_stub = control_service::ControlService::NewStub(channel);
+    this->config_validator = std::make_unique<ConfigValidator>(this->config);
+    if (!this->config_validator->validate()) {
+        EVLOG_error << "EEBUS module configuration is invalid";
+        this->failed = true;
+        return;
+    }
 
-    grpc::ClientContext* context = nullptr;
-    std::vector<uint32_t> entity_addresses;
-    entity_addresses.push_back(1);
-    auto entity_address = common_types::CreateEntityAddress(
-        entity_addresses
-    );
-    auto use_case = control_service::CreateUseCase(
-        control_service::UseCase_ActorType_Enum::UseCase_ActorType_Enum_ControllableSystem,
-        control_service::UseCase_NameType_Enum::UseCase_NameType_Enum_limitationOfPowerConsumption
-    );
-
-    control_service::CallSetConfig(
-        this->control_service_stub,
-        control_service::CreateSetConfigRequest(
-            4715,
-            "Demo",
-            "Demo",
-            "EVSE",
-            "2345678901",
-            std::vector<control_service::DeviceCategory_Enum>{
-                control_service::DeviceCategory_Enum::DeviceCategory_Enum_E_MOBILITY
-            },
-            control_service::DeviceType_Enum::DeviceType_Enum_CHARGING_STATION,
-            std::vector<control_service::EntityType_Enum>{
-                control_service::EntityType_Enum::EntityType_Enum_EVSE
-            },
-            4
-        ),
-        new control_service::EmptyResponse()
+    this->eebus_grpc_api_thread = std::thread(
+        start_eebus_grpc_api,
+        this->config.control_service_rpc_port,
+        this->config_validator->get_certificate_path(),
+        this->config_validator->get_private_key_path()
     );
 
-    control_service::CallStartService(
-        this->control_service_stub,
-        control_service::EmptyRequest(),
-        new control_service::EmptyResponse()
-    );
-
-    control_service::CallRegisterRemoteSki(
-        this->control_service_stub,
-        control_service::CreateRegisterRemoteSkiRequest(
-            remote_ski
-        ),
-        new control_service::EmptyResponse()
-    );
-
-    control_service::AddUseCaseResponse add_use_case_response;
-    control_service::CallAddUseCase(
-        this->control_service_stub,
-        control_service::CreateAddUseCaseRequest(
-            &entity_address,
-            &use_case
-        ),
-        &add_use_case_response
-    );
-
-    std::shared_ptr<grpc::Channel> channel2 = grpc::CreateChannel(
-        add_use_case_response.endpoint(),
+    std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
+        this->config_validator->get_control_service_rpc_endpoint(),
         grpc::InsecureChannelCredentials()
     );
+    this->failed = !wait_for_channel_ready(channel, std::chrono::seconds(10));
+    if (this->failed) {
+        EVLOG_error << "control service channel is not ready";
+        return;
+    }
+    this->control_service_stub = control_service::ControlService::NewStub(channel);
+
+    this->cs_calls = std::make_unique<grpc_calls::ControlServiceCalls>(this->control_service_stub);
+    this->cs_calls->call_set_config();
+    this->cs_calls->call_start_setup();
+    this->cs_calls->call_register_remote_ski(this->config.eebus_ems_ski);
+    std::string endpoint = this->cs_calls->call_add_use_case();
+
+    std::shared_ptr<grpc::Channel> channel2 = grpc::CreateChannel(
+        endpoint,
+        grpc::InsecureChannelCredentials()
+    );
+    this->failed = !wait_for_channel_ready(channel2, std::chrono::seconds(10));
+    if (this->failed) {
+        EVLOG_error << "use case channel is not ready";
+        return;
+    }
     this->cs_lpc_stub = cs_lpc::ControllableSystemLPCControl::NewStub(channel2);
 
-    cs_lpc::CallSetConsumptionNominalMax(
-        this->cs_lpc_stub,
-        cs_lpc::CreateSetConsumptionNominalMaxRequest(
-            32000
-        ),
-        new cs_lpc::SetConsumptionNominalMaxResponse()
-    );
+    this->cs_lpc_calls = std::make_unique<grpc_calls::ControllableSystemLPCControlCalls>(this->cs_lpc_stub);
+    this->cs_lpc_calls->call_set_consumption_nominal_max();
+    this->cs_lpc_calls->call_set_consumption_limit();
+    this->cs_lpc_calls->call_set_failsafe_consumption_active_power_limit();
+    this->cs_lpc_calls->call_set_failsafe_duration_minimum();
 
-    common_types::LoadLimit load_limit = common_types::CreateLoadLimit(
-        0,
-        true,
-        false,
-        4200,
-        false
-    );
-    cs_lpc::CallSetConsumptionLimit(
-        this->cs_lpc_stub,
-        cs_lpc::CreateSetConsumptionLimitRequest(
-            &load_limit
-        ),
-        new cs_lpc::SetConsumptionLimitResponse()
-    );
-
-    cs_lpc::CallSetFailsafeConsumptionActivePowerLimit(
-        this->cs_lpc_stub,
-        cs_lpc::CreateSetFailsafeConsumptionActivePowerLimitRequest(
-            4200,
-            true
-        ),
-        new cs_lpc::SetFailsafeConsumptionActivePowerLimitResponse()
-    );
-
-    cs_lpc::CallSetFailsafeDurationMinimum(
-        this->cs_lpc_stub,
-        cs_lpc::CreateSetFailsafeDurationMinimumRequest(
-            (int64_t) 2 * 60 * 60 * 1000 * 1000 * 1000,
-            true
-        ),
-        new cs_lpc::SetFailsafeDurationMinimumResponse()
-    );
-
-    this->reader = new UseCaseEventReader(
-        this->control_service_stub,
-        this->cs_lpc_stub,
-        control_service::CreateSubscribeUseCaseEventsRequest(
-            &entity_address,
-            &use_case
-        ),
-        this
+    this->cs_calls->subscribe_use_case_events(
+        this,
+        this->cs_lpc_stub
     );
 }
 
 void EEBUS::ready() {
     invoke_ready(*p_main);
 
-    control_service::CallStartService(
-        this->control_service_stub,
-        control_service::EmptyRequest(),
-        new control_service::EmptyResponse()
-    );
+    if (this->failed) {
+        EVLOG_error << "EEBUS module failed to initialize";
+        this->eebus_grpc_api_thread.join();
+        return;
+    }
 
-    EVLOG_error << "eebus-grpc-api binary is here: " << EEBUS_GRPC_API_BINARY_PATH;
+    this->cs_calls->call_start_service();
+
+    this->eebus_grpc_api_thread.join();
 }
 
 } // namespace module

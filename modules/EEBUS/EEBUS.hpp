@@ -18,18 +18,29 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
-#include "control_service/control_service.grpc.pb.h"
-#include "usecases/cs/lpc/service.grpc.pb.h"
+#include <thread>
 
-#include <grpcpp/grpcpp.h>
+// generated
+#include <control_service/control_service.grpc-ext.pb.h>
+#include <usecases/cs/lpc/service.grpc-ext.pb.h>
 
-#include "useCaseEventReader.hpp"
+// module internal
+#include <UseCaseEventReader.hpp>
+#include <grpc_calls/ControlServiceCalls.hpp>
+#include <grpc_calls/ControllableSystemLPCControlCalls.hpp>
+#include <ConfigValidator.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
 
-struct Conf {};
+struct Conf {
+    int control_service_rpc_port;
+    std::string eebus_ems_ski;
+    std::string certificate_path;
+    std::string private_key_path;
+    std::string eebus_grpc_api_binary_path;
+};
 
 class EEBUS : public Everest::ModuleBase {
 public:
@@ -46,7 +57,7 @@ public:
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
-    // insert your public definitions here
+    void set_use_case_event_reader(std::unique_ptr<UseCaseEventReader> reader);
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -62,7 +73,14 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     std::shared_ptr<control_service::ControlService::Stub> control_service_stub;
     std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub;
-    UseCaseEventReader* reader;
+    std::unique_ptr<UseCaseEventReader> reader;
+    std::thread eebus_grpc_api_thread;
+
+    std::unique_ptr<grpc_calls::ControlServiceCalls> cs_calls;
+    std::unique_ptr<grpc_calls::ControllableSystemLPCControlCalls> cs_lpc_calls;
+    std::unique_ptr<ConfigValidator> config_validator;
+
+    bool failed;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

@@ -4,10 +4,12 @@
 #include <memory>
 #include <future>
 
+// everest core deps
 #include <grpcpp/grpcpp.h>
 
-#include "control_service/control_service.grpc.pb.h"
-#include "usecases/cs/lpc/service.grpc.pb.h"
+// generated
+#include <control_service/control_service.grpc.pb.h>
+#include <usecases/cs/lpc/service.grpc.pb.h>
 
 
 namespace module {

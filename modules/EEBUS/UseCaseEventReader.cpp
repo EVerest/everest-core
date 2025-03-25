@@ -1,12 +1,15 @@
-#include "useCaseEventReader.hpp"
+#include "UseCaseEventReader.hpp"
 
-#include "helper.hpp"
 #include <date/date.h>
 #include <chrono>
 
+// generated
+#include <usecases/cs/lpc/service.grpc-ext.pb.h>
+
+// module internal
+#include <helper.hpp>
 #include "EEBUS.hpp"
 
-#include "usecases/cs/lpc/service.grpc-ext.pb.h"
 
 namespace module {
 
@@ -28,15 +31,11 @@ UseCaseEventReader::UseCaseEventReader(
 
 void UseCaseEventReader::OnReadDone(bool ok) {
     if (ok) {
-        // std::cout << "Received use case event:" << std::endl
-        // << "  remote_ski: " << this->use_case_event.remote_ski() << std::endl
-        // << "  remote_entity_address: " << this->use_case_event.remote_entity_address().DebugString() << std::endl
-        // << "  use_case_event: " << this->use_case_event.use_case_event().DebugString() << std::endl;
         this->handle_use_case_event(this->use_case_event);
         this->StartRead(&this->use_case_event);
     } else {
-        std::cout << "read wasn't ok" << std::endl;
-        exit(-1);
+        EVLOG_error << "Could not read use case event" << std::endl;
+        EVLOG_error << "Stop reading use case events" << std::endl;
     }
 }
 
@@ -94,21 +93,12 @@ void UseCaseEventReader::callback_data_update_limit() {
         request,
         &response
     );
-    common_types::LoadLimit load_limit = response.load_limit();
-    
+    common_types::LoadLimit load_limit = response.load_limit();    
+    EVLOG_debug << "load limit:" << std::endl << load_limit.DebugString();
+
     types::energy::ExternalLimits limits;
-    std::vector<types::energy::ScheduleReqEntry> schedule_import;
-    types::energy::ScheduleReqEntry schedule_req_entry;
-    types::energy::LimitsReq limits_req;
-    const std::chrono::time_point<date::utc_clock> timestamp =  date::utc_clock::from_sys(std::chrono::system_clock::now());
-    schedule_req_entry.timestamp = Everest::Date::to_rfc3339(timestamp);
-    limits_req.total_power_W = load_limit.value();
-    schedule_req_entry.limits_to_leaves = limits_req;
-    schedule_req_entry.limits_to_root = limits_req;
-    schedule_import.push_back(schedule_req_entry);
-    limits.schedule_import = schedule_import;
+    limits = translate_to_external_limits(load_limit);
     this->ev_module->r_eebus_energy_sink->call_set_external_limits(limits);
-    std::cout << "load limit:" << std::endl << load_limit.DebugString();
 }
 
 void UseCaseEventReader::handle_use_case_event(control_service::SubscribeUseCaseEventsResponse& res) {
@@ -123,10 +113,10 @@ void UseCaseEventReader::handle_use_case_event(control_service::SubscribeUseCase
 
     std::string event = res.use_case_event().event();
     if (event == "DataUpdateHeartbeat") {
-        std::cout << "ignore hearbeat" << std::endl;
+        EVLOG_debug << "ignore hearbeat" << std::endl;
         return;
     } else if (event == "UseCaseSupportUpdate") {
-        std::cout << "ignore use case support update" << std::endl;
+        EVLOG_debug << "ignore use case support update" << std::endl;
         return;
     } else if (event == "WriteApprovalRequired") {
         this->callback_write_approval_required();
@@ -134,7 +124,7 @@ void UseCaseEventReader::handle_use_case_event(control_service::SubscribeUseCase
     } else if (event == "DataUpdateLimit") {
         this->callback_data_update_limit();
     } else {
-        std::cout << "Oh never heard about: " << event << std::endl;
+        EVLOG_error << "Oh never heard about: " << event << std::endl;
         return;
     }
 }

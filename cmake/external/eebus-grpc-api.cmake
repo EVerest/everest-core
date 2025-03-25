@@ -7,6 +7,11 @@ endif()
 set(EEBUS_GRPC_API_SOURCE_DIR ${CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR})
 set(EEBUS_GRPC_API_BINARY_DIR ${CMAKE_BINARY_DIR}/eebus-grpc-api)
 
+file(GLOB_RECURSE EEBUS_GRPC_API_SOURCE_FILES
+    CONFIGURE_DEPENDS
+    ${EEBUS_GRPC_API_SOURCE_DIR}/*
+)
+
 add_go_target(
     NAME
         eebus_grpc_api_cmd
@@ -18,6 +23,8 @@ add_go_target(
         ${EEBUS_GRPC_API_BINARY_DIR}
     WORKING_DIRECTORY
         ${EEBUS_GRPC_API_SOURCE_DIR}
+    DEPENDS
+        ${EEBUS_GRPC_API_SOURCE_FILES}
 )
 
 add_go_target(
@@ -31,6 +38,8 @@ add_go_target(
         ${EEBUS_GRPC_API_BINARY_DIR}
     WORKING_DIRECTORY
         ${EEBUS_GRPC_API_SOURCE_DIR}
+    DEPENDS
+        ${EEBUS_GRPC_API_SOURCE_FILES}
 )
 
 add_go_target(
@@ -44,6 +53,8 @@ add_go_target(
         ${EEBUS_GRPC_API_BINARY_DIR}
     WORKING_DIRECTORY
         ${EEBUS_GRPC_API_SOURCE_DIR}
+    DEPENDS
+        ${EEBUS_GRPC_API_SOURCE_FILES}
 )
 
 add_custom_target(eebus_grpc_api_all
