@@ -1843,6 +1843,17 @@ types::iso15118::DcEvseMaximumLimits Charger::get_evse_max_hlc_limits() {
     return shared_context.current_evse_max_limits;
 }
 
+void Charger::inform_new_evse_min_hlc_limits(const types::iso15118::DcEvseMinimumLimits& _currentEvseMinLimits) {
+    Everest::scoped_lock_timeout lock(state_machine_mutex,
+                                      Everest::MutexDescription::Charger_inform_new_evse_min_hlc_limits);
+    shared_context.current_evse_min_limits = _currentEvseMinLimits;
+}
+
+types::iso15118::DcEvseMinimumLimits Charger::get_evse_min_hlc_limits() {
+    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_evse_max_hlc_limits);
+    return shared_context.current_evse_min_limits;
+}
+
 // HLC stack signalled a pause request for the lower layers.
 void Charger::dlink_pause() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_dlink_pause);

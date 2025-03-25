@@ -701,6 +701,29 @@ types:
       - VoltWatt
       - WattPF
       - WattVar
+  ServiceCategory:
+    description: Different service (energy and VAS) in ISO15118-20
+    type: string
+    enum:
+      - AC
+      - DC
+      - WPT
+      - DC_ACDP
+      - AC_BPT
+      - DC_BPT
+      - DC_ACDP_BPT
+      - Internet
+      - ParkingStatus
+  Connector:
+    description: Different AC and DC connector
+    type: string
+    enum:
+      - SinglePhase
+      - ThreePhase
+      - Core
+      - Extended
+      - Dual2
+      - Dual4
   ControlMode:
     description: >-
       (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When
@@ -740,6 +763,27 @@ types:
     enum:
       - EVCC
       - EVCC_SECC
+  Pricing:
+    description: >-
+      Providing information about which pricing structure will be used in the offered
+      schedules.
+    type: string
+    enum:
+      - NoPricing
+      - AbsolutePricing
+      - PriceLevels
+  BptChannel:
+    description: Type of installed power transfer channel
+    type: string
+    enum:
+      - Unified
+      - Separated
+  GeneratorMode:
+    description: Power converter behavior.
+    type: string
+    enum:
+      - GridFollowing
+      - GridForming 
   V2XChargingParameters:
     description: >-
       Charging parameters for ISO 15118-20, also supporting V2X charging/discharging.
@@ -1459,6 +1503,47 @@ types:
           DepartureTime ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType:
           DepartureTime
         type: string
+  SelectedServiceParameters:
+    description: >-
+      The selected service parameters selected from the EV in the ServiceSelectionReq message.
+      Only for ISO15118-20.
+    type: object
+    additionalProperties: false
+    required:
+      - energy_transfer
+      - connector
+      - control_mode
+      - mobility_needs_mode
+      - pricing
+    properties:
+      energy_transfer:
+        description: The selected energy mode by the EV
+        type: string
+        $ref: /iso15118#/ServiceCategory
+      connector:
+        description: The selected connector by the EV
+        type: string
+        $ref: /iso15118#/Connector
+      control_mode:
+        description: The selected control mode by the EV
+        type: string
+        $ref: /iso15118#/ControlMode
+      mobility_needs_mode:
+        description: The selected mobility needs mode by the EV
+        type: string
+        $ref: /iso15118#/MobilityNeedsMode
+      pricing:
+        description: The selected pricing by the EV
+        type: string
+        $ref: /iso15118#/Pricing
+      bpt_channel:
+        description: The selected bpt channel by the EV
+        type: string
+        $ref: /iso15118#/BptChannel
+      generator_mode:
+        description: The selected generator mode by the EV
+        type: string
+        $ref: /iso15118#/GeneratorMode
 # EV Side
   DcEvParameters:
     description: Target settings for dc charging
