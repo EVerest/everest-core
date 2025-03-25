@@ -21,15 +21,9 @@ static void log_callback(int level, const char *line) {
         case LLL_WARN:
             EVLOG_warning << line;
             break;
-        case LLL_INFO:
-            EVLOG_info << line;
-            break;
-        case LLL_NOTICE: // Fallthrough
+        default:
         case LLL_DEBUG:
             EVLOG_debug << line;
-            break;
-        default:
-            EVLOG_info << line;
             break;
     }
 }
@@ -92,8 +86,8 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port)
     // Constructor implementation
     lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG, log_callback);
     m_info.port = port;
-    m_lws_protocols[0] = { "http", callback_ws, 0, PER_SESSION_DATA_SIZE };
-    m_lws_protocols[1] = { NULL, NULL, 0, 0 };
+    m_lws_protocols[0] = { NULL, callback_ws, PER_SESSION_DATA_SIZE, 0 };
+    m_lws_protocols[1] = LWS_PROTOCOL_LIST_TERM;
 
     m_info.protocols = m_lws_protocols;
     m_info.options = m_ssl_enabled ? LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT : 0;
@@ -109,20 +103,24 @@ bool WebSocketServer::running() const {
 }
 
 void WebSocketServer::send_data(const ClientId &client_id, const std::vector<uint8_t> &data) {
-    std::lock_guard<std::mutex> lock(m_clients_mutex);
+    try {
+        std::lock_guard<std::mutex> lock(m_clients_mutex);
 
-    auto it = m_clients.find(client_id);
-    if (it == m_clients.end()) {
-        EVLOG_error << "Client " << client_id << " not found" << std::endl;
-        return;
-    }
+        auto it = m_clients.find(client_id);
+        if (it == m_clients.end()) {
+            EVLOG_error << "Client " << client_id << " not found";
+            return;
+        }
 
-    struct lws *wsi = it->second;
-    std::vector<unsigned char> buf(LWS_PRE + data.size());
-    memcpy(buf.data() + LWS_PRE, data.data(), data.size());
-    
-    if (lws_write(wsi, buf.data() + LWS_PRE, data.size(), LWS_WRITE_BINARY) < 0) {
-        EVLOG_error << "Failed to send data to client " << client_id;
+        struct lws *wsi = it->second;
+        std::vector<unsigned char> buf(LWS_PRE + data.size());
+        memcpy(buf.data() + LWS_PRE, data.data(), data.size());
+
+        if (lws_write(wsi, buf.data() + LWS_PRE, data.size(), LWS_WRITE_BINARY) < 0) {
+            EVLOG_error << "Failed to send data to client " << client_id;
+        }
+    } catch (const std::exception &e) {
+        EVLOG_error << "Exception occurred while sending data to client " << client_id << ": " << e.what();
     }
 }
 
