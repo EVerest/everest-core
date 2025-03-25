@@ -10,15 +10,6 @@ cmds:
           vehicle is connected to 
         type: object
         $ref: /iso15118#/EVSEID
-      supported_energy_transfer_modes:
-        description: Available energy transfer modes supported by the EVSE
-        type: array
-        items:
-          description: The different energy modes supported by the SECC 
-          type: object
-          $ref: /iso15118#/SupportedEnergyMode
-        minItems: 1
-        maxItems: 6
       sae_j2847_mode:
         description: Charger is supporting SAE J2847 V2G/V2H version
         type: string
@@ -120,6 +111,18 @@ cmds:
         description: Set to true when to pause, set to false when to continue
         type: boolean
 # Update physical values
+  update_energy_transfer_modes:
+    description: Update the supported energy transfer modes. Call at least once during start up.
+    arguments:
+      supported_energy_transfer_modes:
+        description: Available energy transfer modes supported by the EVSE
+        type: array
+        items:
+          description: The different energy modes supported by the SECC 
+          type: object
+          $ref: /iso15118#/SupportedEnergyMode
+        minItems: 1
+        maxItems: 6
   update_ac_max_current:
     description: Update the maximum allowed line current restriction per phase. Call at least once during start up.
     arguments:
@@ -356,3 +359,7 @@ vars:
   meter_info_requested:
     description: The EV requested meter infos from the EVSE
     type: "null"
+  selected_service_parameters:
+    description: From the EV selected service parameters
+    type: object
+    $ref: /iso15118#/SelectedServiceParameters

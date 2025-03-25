@@ -23,10 +23,13 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
     virtual void ready() {
     }
 
-    virtual void handle_setup(types::iso15118::EVSEID& evse_id,
-                              std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-                              types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    virtual void handle_setup(types::iso15118::EVSEID& evse_id, types::iso15118::SaeJ2847BidiMode& sae_j2847_mode,
+                              bool& debug_mode) {
         std::cout << "ISO15118_chargerImplBase::handle_setup called" << std::endl;
+    }
+    virtual void handle_update_energy_transfer_modes(
+        std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_energy_transfer_modes called" << std::endl;
     }
     virtual void handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
         std::cout << "ISO15118_chargerImplBase::handle_set_charging_parameters called" << std::endl;

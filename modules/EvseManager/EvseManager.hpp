@@ -231,6 +231,8 @@ public:
     std::atomic<std::chrono::seconds> random_delay_max_duration;
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
 
+    bool d20_dc_bpt_active{false};
+
     types::power_supply_DC::Capabilities get_powersupply_capabilities() {
         std::scoped_lock lock(powersupply_capabilities_mutex);
         return powersupply_capabilities;

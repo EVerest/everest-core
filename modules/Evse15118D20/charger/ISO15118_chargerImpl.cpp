@@ -474,17 +474,91 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 
     callbacks.selected_protocol = [this](const std::string& protocol) { publish_selected_protocol(protocol); };
 
+    callbacks.selected_service_parameters = [this](const iso15118::d20::SelectedServiceParameters& parameters) {
+        using namespace types::iso15118;
+
+        SelectedServiceParameters selected_parameters{};
+
+        if (parameters.selected_energy_service == dt::ServiceCategory::AC) {
+            selected_parameters.energy_transfer = ServiceCategory::AC;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::DC) {
+            selected_parameters.energy_transfer = ServiceCategory::DC;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::WPT) {
+            selected_parameters.energy_transfer = ServiceCategory::WPT;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::DC_ACDP) {
+            selected_parameters.energy_transfer = ServiceCategory::DC_ACDP;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::AC_BPT) {
+            selected_parameters.energy_transfer = ServiceCategory::AC_BPT;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::DC_BPT) {
+            selected_parameters.energy_transfer = ServiceCategory::DC_BPT;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::DC_ACDP_BPT) {
+            selected_parameters.energy_transfer = ServiceCategory::DC_ACDP_BPT;
+        } else {
+            EVLOG_critical << "Energy service is apperantly no energy service!";
+        }
+
+        if (const auto* ac_connector = std::get_if<dt::AcConnector>(&parameters.selected_connector)) {
+            if (*ac_connector == dt::AcConnector::SinglePhase) {
+                selected_parameters.connector = Connector::SinglePhase;
+            } else {
+                selected_parameters.connector = Connector::ThreePhase;
+            }
+        } else if (const auto* dc_connector = std::get_if<dt::DcConnector>(&parameters.selected_connector)) {
+            if (*dc_connector == dt::DcConnector::Core) {
+                selected_parameters.connector = Connector::Core;
+            } else if (*dc_connector == dt::DcConnector::Extended) {
+                selected_parameters.connector = Connector::Extended;
+            } else if (*dc_connector == dt::DcConnector::Dual2) {
+                selected_parameters.connector = Connector::Dual2;
+            } else {
+                selected_parameters.connector = Connector::Dual4;
+            }
+        }
+
+        if (parameters.selected_control_mode == dt::ControlMode::Scheduled) {
+            selected_parameters.control_mode = ControlMode::ScheduledControl;
+        } else {
+            selected_parameters.control_mode = ControlMode::DynamicControl;
+        }
+        if (parameters.selected_mobility_needs_mode == dt::MobilityNeedsMode::ProvidedByEvcc) {
+            selected_parameters.mobility_needs_mode = MobilityNeedsMode::EVCC;
+        } else {
+            selected_parameters.mobility_needs_mode = MobilityNeedsMode::EVCC_SECC;
+        }
+        selected_parameters.pricing = static_cast<types::iso15118::Pricing>(parameters.selected_pricing);
+
+        if (parameters.selected_bpt_channel.has_value()) {
+            if (parameters.selected_bpt_channel.value() == dt::BptChannel::Unified) {
+                selected_parameters.bpt_channel = BptChannel::Unified;
+            } else {
+                selected_parameters.bpt_channel = BptChannel::Separated;
+            }
+        }
+        if (parameters.selected_generator_mode.has_value()) {
+            if (parameters.selected_generator_mode.value() == dt::GeneratorMode::GridFollowing) {
+                selected_parameters.generator_mode = GeneratorMode::GridFollowing;
+            } else {
+                selected_parameters.generator_mode = GeneratorMode::GridForming;
+            }
+        }
+
+        publish_selected_service_parameters(selected_parameters);
+    };
+
     return callbacks;
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
-
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
     std::scoped_lock lock(GEL);
     setup_config.evse_id = evse_id.evse_id; // TODO(SL): Check format for d20
 
+    setup_steps_done.set(to_underlying_value(SetupStep::SETUP));
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes) {
+    std::scoped_lock lock(GEL);
     std::vector<dt::ServiceCategory> services;
 
     for (const auto& mode : supported_energy_transfer_modes) {
@@ -508,6 +582,10 @@ void ISO15118_chargerImpl::handle_setup(
     }
 
     setup_config.supported_energy_services = services;
+
+    if (controller) {
+        controller->update_energy_modes(services);
+    }
 
     setup_steps_done.set(to_underlying_value(SetupStep::ENERGY_SERVICE));
 }

@@ -64,11 +64,8 @@ void ISO15118_chargerImpl::init() {
 void ISO15118_chargerImpl::ready() {
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
-
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
     uint8_t len = evse_id.evse_id.length();
     if (len < iso2_EVSEID_CHARACTER_SIZE) {
         memcpy(v2g_ctx->evse_v2g_data.evse_id.bytes, reinterpret_cast<uint8_t*>(evse_id.evse_id.data()), len);
@@ -77,6 +74,39 @@ void ISO15118_chargerImpl::handle_setup(
         dlog(DLOG_LEVEL_WARNING, "EVSEID_CHARACTER_SIZE exceeded (received: %u, max: %u)", len,
              iso2_EVSEID_CHARACTER_SIZE);
     }
+
+    v2g_ctx->debugMode = debug_mode;
+
+    if (sae_j2847_mode == BidiMode::V2H || sae_j2847_mode == BidiMode::V2G) {
+        struct iso2_ServiceType sae_service;
+
+        init_iso2_ServiceType(&sae_service);
+
+        sae_service.FreeService = 1;
+        sae_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
+
+        if (sae_j2847_mode == BidiMode::V2H) {
+            sae_service.ServiceID = 28472;
+            const std::string service_name = "SAE J2847/2 V2H";
+            memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
+                   service_name.length());
+            sae_service.ServiceName.charactersLen = service_name.length();
+            sae_service.ServiceName_isUsed = true;
+        } else {
+            sae_service.ServiceID = 28473;
+            const std::string service_name = "SAE J2847/2 V2G";
+            memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
+                   service_name.length());
+            sae_service.ServiceName.charactersLen = service_name.length();
+            sae_service.ServiceName_isUsed = true;
+        }
+
+        add_service_to_service_list(v2g_ctx, sae_service);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes) {
 
     if (v2g_ctx->hlc_pause_active != true) {
         uint16_t& energyArrayLen =
@@ -129,35 +159,6 @@ void ISO15118_chargerImpl::handle_setup(
             v2g_ctx->supported_protocols &= ~(1 << V2G_PROTO_DIN70121);
             dlog(DLOG_LEVEL_WARNING, "Removed DIN70121 from the list of supported protocols as AC is enabled");
         }
-    }
-
-    v2g_ctx->debugMode = debug_mode;
-
-    if (sae_j2847_mode == BidiMode::V2H || sae_j2847_mode == BidiMode::V2G) {
-        struct iso2_ServiceType sae_service;
-
-        init_iso2_ServiceType(&sae_service);
-
-        sae_service.FreeService = 1;
-        sae_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
-
-        if (sae_j2847_mode == BidiMode::V2H) {
-            sae_service.ServiceID = 28472;
-            const std::string service_name = "SAE J2847/2 V2H";
-            memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
-                   service_name.length());
-            sae_service.ServiceName.charactersLen = service_name.length();
-            sae_service.ServiceName_isUsed = true;
-        } else {
-            sae_service.ServiceID = 28473;
-            const std::string service_name = "SAE J2847/2 V2G";
-            memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
-                   service_name.length());
-            sae_service.ServiceName.charactersLen = service_name.length();
-            sae_service.ServiceName_isUsed = true;
-        }
-
-        add_service_to_service_list(v2g_ctx, sae_service);
     }
 }
 
@@ -324,18 +325,40 @@ void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
-    if (maximum_limits.evse_maximum_current_limit > 300.) {
-        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
-                                      maximum_limits.evse_maximum_current_limit, 1, iso2_unitSymbolType_A);
-    } else {
-        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
-                                      maximum_limits.evse_maximum_current_limit, 2, iso2_unitSymbolType_A);
-    }
-    v2g_ctx->evse_v2g_data.evse_maximum_current_limit_is_used = 1;
 
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit, maximum_limits.evse_maximum_power_limit,
-                            iso2_unitSymbolType_W);
-    v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used = 1;
+    // TODO(sl): Check SAE V2G
+    if (v2g_ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h) {
+        if (maximum_limits.evse_maximum_discharge_current_limit.has_value()) {
+            const auto discharge_current_limit = maximum_limits.evse_maximum_discharge_current_limit.value();
+            if (discharge_current_limit > 300.) {
+                populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
+                                              -discharge_current_limit, 1, iso2_unitSymbolType_A);
+            } else {
+                populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
+                                              -discharge_current_limit, 2, iso2_unitSymbolType_A);
+            }
+            v2g_ctx->evse_v2g_data.evse_maximum_current_limit_is_used = 1;
+        }
+
+        if (maximum_limits.evse_maximum_discharge_power_limit.has_value()) {
+            populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit,
+                                    -maximum_limits.evse_maximum_discharge_power_limit.value(), iso2_unitSymbolType_W);
+            v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used = 1;
+        }
+    } else {
+        if (maximum_limits.evse_maximum_current_limit > 300.) {
+            populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
+                                          maximum_limits.evse_maximum_current_limit, 1, iso2_unitSymbolType_A);
+        } else {
+            populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
+                                          maximum_limits.evse_maximum_current_limit, 2, iso2_unitSymbolType_A);
+        }
+        v2g_ctx->evse_v2g_data.evse_maximum_current_limit_is_used = 1;
+
+        populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit,
+                                maximum_limits.evse_maximum_power_limit, iso2_unitSymbolType_W);
+        v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used = 1;
+    }
 
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit,
                                   maximum_limits.evse_maximum_voltage_limit, 1, iso2_unitSymbolType_V);
@@ -344,9 +367,19 @@ void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEv
 
 void ISO15118_chargerImpl::handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) {
 
-    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_current_limit,
-                                  static_cast<long long int>(minimum_limits.evse_minimum_current_limit), 1,
-                                  iso2_unitSymbolType_A);
+    // TODO(sl): Check SAE V2G
+    if (v2g_ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h) {
+        if (minimum_limits.evse_minimum_discharge_current_limit.has_value()) {
+            populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_current_limit,
+                                          -minimum_limits.evse_minimum_discharge_current_limit.value(), 1,
+                                          iso2_unitSymbolType_A);
+        }
+    } else {
+        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_current_limit,
+                                      static_cast<long long int>(minimum_limits.evse_minimum_current_limit), 1,
+                                      iso2_unitSymbolType_A);
+    }
+
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_voltage_limit,
                                   static_cast<long long int>(minimum_limits.evse_minimum_voltage_limit), 1,
                                   iso2_unitSymbolType_V);

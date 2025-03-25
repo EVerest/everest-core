@@ -127,7 +127,7 @@ class PyEVJosevModule():
         self._es.dc_discharge_max_current_limit = parameters["discharge_max_current_limit"]
         self._es.dc_discharge_max_power_limit = parameters['discharge_max_power_limit']
         self._es.dc_discharge_target_current = parameters['discharge_target_current']
-        self._es.minimal_soc = parameters["discharge_minimal_soC"]
+        self._es.minimal_soc = parameters["discharge_minimal_soc"]
 
     def _handler_enable_sae_j2847_v2g_v2h(self, args):
         self._es.SAEJ2847_V2H_V2G_Active = True
