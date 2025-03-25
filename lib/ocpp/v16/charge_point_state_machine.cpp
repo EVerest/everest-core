@@ -227,6 +227,12 @@ bool ChargePointFSM::handle_error(const ErrorInfo& error_info) {
 }
 
 bool ChargePointFSM::handle_error_cleared(const std::string uuid) {
+    // dont do anything if the error is unknown
+    if (this->active_errors.find(uuid) == this->active_errors.end()) {
+        EVLOG_warning << "Attempt to clear error with unknown id: " << uuid;
+        return false;
+    }
+
     this->active_errors.erase(uuid);
 
     // dont report StatusNotification if still "Faulted"
@@ -234,14 +240,26 @@ bool ChargePointFSM::handle_error_cleared(const std::string uuid) {
         return false;
     }
 
-    // dont report StatusNotification if errors are still active
+    // defaults if no errors are active anymore
+    ChargePointErrorCode error_code = ChargePointErrorCode::NoError;
+    std::optional<CiString<50>> info;
+    std::optional<CiString<255>> vendor_id;
+    std::optional<CiString<50>> vendor_error_code;
+
+    // report the latest error if there are still errors active
     if (this->active_errors.size() > 0) {
-        return false;
+        const auto latest_error_opt = this->get_latest_error();
+        if (latest_error_opt.has_value()) {
+            const auto latest_error = latest_error_opt.value();
+            error_code = latest_error.error_code;
+            info = latest_error.info;
+            vendor_id = latest_error.vendor_id;
+            vendor_error_code = latest_error.vendor_error_code;
+        }
     }
 
-    // no fault present and no error active, so we can send a StatusNotification.req and return to previous state
-    status_notification_callback(this->state, ChargePointErrorCode::NoError, DateTime(), std::nullopt, std::nullopt,
-                                 std::nullopt);
+    // Send a StatusNotification.req
+    status_notification_callback(this->state, error_code, DateTime(), info, vendor_id, vendor_error_code);
 
     return true;
 }

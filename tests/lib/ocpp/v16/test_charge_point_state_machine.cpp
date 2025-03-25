@@ -72,7 +72,7 @@ TEST_F(ChargePointStateMachineTest, HandleErrorCleared__TwoErrors__OneCleared) {
     ErrorInfo error_info_2("uuid2", ChargePointErrorCode::GroundFailure, false);
 
     EXPECT_CALL(mock_callback, Call(FSMState::Available, ChargePointErrorCode::ConnectorLockFailure, _, _, _, _))
-        .Times(1);
+        .Times(2);
     EXPECT_CALL(mock_callback, Call(FSMState::Available, ChargePointErrorCode::GroundFailure, _, _, _, _)).Times(1);
     EXPECT_CALL(mock_callback, Call(FSMState::Available, ChargePointErrorCode::NoError, _, _, _, _)).Times(0);
 
@@ -114,4 +114,25 @@ TEST_F(ChargePointStateMachineTest, HandleErrorCleared__ClearUnknown) {
     state_machine->handle_error_cleared("uuid2");
     state_machine->handle_error_cleared("uuid3");
     state_machine->handle_error_cleared("uuid4");
+}
+
+TEST_F(ChargePointStateMachineTest, HandleErrorCleared__NonFault__StillActive) {
+    ErrorInfo error_info_1("uuid1", ChargePointErrorCode::ConnectorLockFailure, false);
+    ErrorInfo error_info_2("uuid2", ChargePointErrorCode::GroundFailure, true);
+
+    EXPECT_CALL(mock_callback, Call(FSMState::Available, ChargePointErrorCode::ConnectorLockFailure, _, _, _, _))
+        .Times(2);
+    EXPECT_CALL(mock_callback, Call(FSMState::Faulted, ChargePointErrorCode::GroundFailure, _, _, _, _)).Times(1);
+    EXPECT_CALL(mock_callback, Call(FSMState::Available, ChargePointErrorCode::NoError, _, _, _, _)).Times(1);
+
+    state_machine->handle_error(error_info_1);
+    state_machine->handle_error(error_info_2);
+    state_machine->handle_error_cleared("uuid2");
+
+    const auto latest_error = state_machine->get_latest_error();
+
+    EXPECT_TRUE(latest_error.has_value());
+    EXPECT_EQ(latest_error.value().error_code, ChargePointErrorCode::ConnectorLockFailure);
+
+    state_machine->handle_error_cleared("uuid1");
 }
