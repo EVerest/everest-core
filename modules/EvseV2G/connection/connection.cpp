@@ -144,6 +144,14 @@ int connection_init(struct v2g_context* v2g_ctx) {
         }
     }
 
+    if (v2g_ctx->tls_security != TLS_SECURITY_PROHIBIT) {
+        v2g_ctx->local_tls_addr = static_cast<sockaddr_in6*>(calloc(1, sizeof(*v2g_ctx->local_tls_addr)));
+        if (!v2g_ctx->local_tls_addr) {
+            dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory for TLS address");
+            return -1;
+        }
+    }
+
     while (1) {
         if (v2g_ctx->local_tcp_addr) {
             get_interface_ipv6_address(v2g_ctx->if_name, ADDR6_TYPE_LINKLOCAL, v2g_ctx->local_tcp_addr);
@@ -265,37 +273,61 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t 
 
         int num_of_bytes;
 
-        /* use select for timeout handling */
-        struct timeval tv;
-        fd_set read_fds;
+        if (conn->is_tls_connection) {
+#ifdef EVEREST_MBED_TLS
+            num_of_bytes = mbedtls_ssl_read(&conn->conn.ssl.ssl_context, &buf[bytes_read], count - bytes_read);
 
-        FD_ZERO(&read_fds);
-        FD_SET(conn->conn.socket_fd, &read_fds);
-
-        tv.tv_sec = conn->ctx->network_read_timeout / 1000;
-        tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
-
-        num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
-
-        if (num_of_bytes == -1) {
-            if (errno == EINTR)
+            if (num_of_bytes == MBEDTLS_ERR_SSL_WANT_READ || num_of_bytes == MBEDTLS_ERR_SSL_WANT_WRITE ||
+                num_of_bytes == MBEDTLS_ERR_SSL_TIMEOUT)
                 continue;
 
+            if (num_of_bytes == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || num_of_bytes == MBEDTLS_ERR_SSL_CONN_EOF)
+                return bytes_read;
+
+            if (num_of_bytes < 0) {
+                char error_buf[100];
+                mbedtls_strerror(num_of_bytes, error_buf, sizeof(error_buf));
+                dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_read() error: %s", error_buf);
+
+                return -1;
+            }
+#else
+            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_read() not configured");
             return -1;
-        }
+#endif // EVEREST_MBED_TLS
+        } else {
+            /* use select for timeout handling */
+            struct timeval tv;
+            fd_set read_fds;
 
-        /* Zero fds ready means we timed out, so let upper loop check our sequence timeout */
-        if (num_of_bytes == 0) {
-            continue;
-        }
+            FD_ZERO(&read_fds);
+            FD_SET(conn->conn.socket_fd, &read_fds);
 
-        num_of_bytes = (int)read(conn->conn.socket_fd, &buf[bytes_read], count - bytes_read);
+            tv.tv_sec = conn->ctx->network_read_timeout / 1000;
+            tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
 
-        if (num_of_bytes == -1) {
-            if (errno == EINTR)
+            num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
+
+            if (num_of_bytes == -1) {
+                if (errno == EINTR)
+                    continue;
+
+                return -1;
+            }
+
+            /* Zero fds ready means we timed out, so let upper loop check our sequence timeout */
+            if (num_of_bytes == 0) {
                 continue;
+            }
 
-            return -1;
+            num_of_bytes = (int)read(conn->conn.socket_fd, &buf[bytes_read], count - bytes_read);
+
+            if (num_of_bytes == -1) {
+                if (errno == EINTR)
+                    continue;
+
+                return -1;
+            }
         }
 
         /* return when peer closed connection */
@@ -328,13 +360,28 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
     while (bytes_written < count) {
         int num_of_bytes;
 
-        num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
+        if (conn->is_tls_connection) {
+#ifdef EVEREST_MBED_TLS
+            num_of_bytes = mbedtls_ssl_write(&conn->conn.ssl.ssl_context, &buf[bytes_written], count - bytes_written);
 
-        if (num_of_bytes == -1) {
-            if (errno == EINTR)
+            if (num_of_bytes == MBEDTLS_ERR_SSL_WANT_READ || num_of_bytes == MBEDTLS_ERR_SSL_WANT_WRITE)
                 continue;
 
-            return -1;
+            if (num_of_bytes < 0)
+                return -1;
+#else
+            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_write() not configured");
+            return -1; // shouldn't be using this function
+#endif // EVEREST_MBED_TLS
+        } else {
+            num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
+
+            if (num_of_bytes == -1) {
+                if (errno == EINTR)
+                    continue;
+
+                return -1;
+            }
         }
 
         /* return when peer closed connection */
