@@ -12,11 +12,14 @@ void ISO15118_chargerImpl::init() {
 void ISO15118_chargerImpl::ready() {
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
     // your code for cmd setup goes here
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes) {
+    // your code for cmd update_energy_transfer_modes goes here
 }
 
 void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {

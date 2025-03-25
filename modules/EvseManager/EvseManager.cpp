@@ -226,6 +226,8 @@ void EvseManager::ready() {
         });
 
         r_hlc[0]->subscribe_dlink_terminate([this] {
+            sae_bidi_active = false;
+            d20_dc_bpt_active = false;
             session_log.evse(true, "D-LINK_TERMINATE.req");
             charger->dlink_terminate();
             r_slac[0]->call_dlink_terminate();
@@ -311,7 +313,6 @@ void EvseManager::ready() {
 
             r_hlc[0]->subscribe_current_demand_finished([this] {
                 current_demand_active = false;
-                sae_bidi_active = false;
                 if (not r_over_voltage_monitor.empty()) {
                     r_over_voltage_monitor[0]->call_stop();
                 }
@@ -346,7 +347,8 @@ void EvseManager::ready() {
                     powersupply_measurement = m;
                     types::iso15118::DcEvsePresentVoltageCurrent present_values;
                     present_values.evse_present_voltage = (m.voltage_V > 0 ? m.voltage_V : 0.0);
-                    if (config.sae_j2847_2_bpt_enabled) {
+
+                    if (config.sae_j2847_2_bpt_enabled or d20_dc_bpt_active) {
                         present_values.evse_present_current = m.current_A;
                     } else {
                         present_values.evse_present_current = (m.current_A > 0 ? m.current_A : 0.0);
@@ -442,6 +444,56 @@ void EvseManager::ready() {
 
             r_hlc[0]->subscribe_d20_dc_dynamic_charge_mode([this](types::iso15118::DcChargeDynamicModeValues values) {
                 constexpr auto PRE_CHARGE_MAX_POWER = 800.0f;
+                static bool last_is_actually_exporting_to_grid{false};
+
+                const auto energy_flow_changed = is_actually_exporting_to_grid != last_is_actually_exporting_to_grid;
+                last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
+
+                const auto max_hlc_limits = charger->get_evse_max_hlc_limits();
+                const auto min_hlc_limits = charger->get_evse_min_hlc_limits();
+
+                static bool ev_trigger_discharge{false};
+                bool new_energy_request{false};
+
+                // TODO(sl): Missing min_energy_request < 0 or missing min_energy_request < 0 and max_energy_request > 0
+                // check
+                if (is_actually_exporting_to_grid == false and ev_trigger_discharge == false and
+                    values.max_energy_request < 0) {
+                    EVLOG_info << "D20 dynamic mode: EV requesting discharge: " << -values.max_energy_request << "W";
+                    new_energy_request = true;
+                    ev_trigger_discharge = true;
+                } else if (is_actually_exporting_to_grid == true and ev_trigger_discharge == true and
+                           values.max_energy_request >= 0) {
+                    EVLOG_info << "D20 dynamic mode: EV requesting charging: " << values.max_energy_request << "W";
+                    new_energy_request = true;
+                    ev_trigger_discharge = false;
+                }
+
+                if (new_energy_request) {
+                    const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+                    types::energy::ExternalLimits external_limits;
+                    types::energy::ScheduleReqEntry target_entry;
+
+                    const auto max_energy_request =
+                        (ev_trigger_discharge) ? -values.max_energy_request : values.max_energy_request;
+                    target_entry.timestamp = timestamp;
+                    target_entry.limits_to_leaves.total_power_W = {max_energy_request,
+                                                                   info.id + "/d20_dc_dynamic_charge_mode"};
+
+                    types::energy::ScheduleReqEntry zero_entry;
+                    zero_entry.timestamp = timestamp;
+                    zero_entry.limits_to_leaves.total_power_W = {0, info.id + "/d20_dc_dynamic_charge_mode"};
+
+                    if (ev_trigger_discharge) {
+                        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+                        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
+                    } else {
+                        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+                        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
+                    }
+
+                    update_local_energy_limit(external_limits);
+                }
 
                 bool target_changed{false};
 
@@ -454,13 +506,58 @@ void EvseManager::ready() {
                     target_changed = true;
                 }
 
+                float min_charge_power{0.0f};
+                float max_charge_power{0.0f};
+                float max_charge_current{0.0f};
+
+                if (is_actually_exporting_to_grid and current_demand_active) {
+                    if (values.max_discharge_power.has_value() and
+                        max_hlc_limits.evse_maximum_discharge_power_limit.has_value()) {
+                        max_charge_power = (values.max_discharge_power.value() >
+                                            max_hlc_limits.evse_maximum_discharge_power_limit.value())
+                                               ? max_hlc_limits.evse_maximum_discharge_power_limit.value()
+                                               : values.max_discharge_power.value();
+                    }
+
+                    if (values.min_discharge_power.has_value() and
+                        min_hlc_limits.evse_minimum_discharge_power_limit.has_value()) {
+                        min_charge_power = (values.min_discharge_power.value() >
+                                            min_hlc_limits.evse_minimum_discharge_power_limit.value())
+                                               ? values.min_discharge_power.value()
+                                               : min_hlc_limits.evse_minimum_discharge_power_limit.value();
+                    }
+
+                    if (values.max_discharge_current.has_value() and
+                        max_hlc_limits.evse_maximum_discharge_current_limit.has_value()) {
+                        max_charge_current = (values.max_discharge_current.value() >
+                                              max_hlc_limits.evse_maximum_discharge_current_limit.value())
+                                                 ? max_hlc_limits.evse_maximum_discharge_current_limit.value()
+                                                 : values.max_discharge_current.value();
+                    }
+
+                } else {
+                    max_charge_power = (values.max_charge_power > max_hlc_limits.evse_maximum_power_limit)
+                                           ? max_hlc_limits.evse_maximum_power_limit
+                                           : values.max_charge_power;
+                    min_charge_power = (values.min_charge_power > min_hlc_limits.evse_minimum_power_limit)
+                                           ? values.min_charge_power
+                                           : min_hlc_limits.evse_minimum_power_limit;
+                    max_charge_current = (values.max_charge_current > max_hlc_limits.evse_maximum_current_limit)
+                                             ? max_hlc_limits.evse_maximum_current_limit
+                                             : values.max_charge_current;
+                }
+
+                const auto ev = get_ev_info();
+                const auto actual_voltage =
+                    ev_info.present_voltage.has_value() ? ev_info.present_voltage.value() : latest_target_voltage;
+
                 const double latest_target_power = latest_target_voltage * latest_target_current;
 
-                if (latest_target_power <= PRE_CHARGE_MAX_POWER or values.min_charge_power > latest_target_power or
-                    values.max_charge_power < latest_target_power) {
-                    latest_target_current = static_cast<double>(values.max_charge_power) / latest_target_voltage;
-                    if (values.max_charge_current < latest_target_current) {
-                        latest_target_current = values.max_charge_current;
+                if (latest_target_power <= PRE_CHARGE_MAX_POWER or min_charge_power > latest_target_power or
+                    max_charge_power < latest_target_power or energy_flow_changed) {
+                    latest_target_current = static_cast<double>(max_charge_power) / actual_voltage;
+                    if (latest_target_current > max_charge_current) {
+                        latest_target_current = max_charge_current;
                     }
                     target_changed = true;
                 }
@@ -480,6 +577,15 @@ void EvseManager::ready() {
                     }
                 }
             });
+
+            r_hlc[0]->subscribe_selected_service_parameters(
+                [this](types::iso15118::SelectedServiceParameters parameters) {
+                    d20_dc_bpt_active = parameters.energy_transfer == types::iso15118::ServiceCategory::DC_BPT;
+
+                    session_log.car(
+                        true, fmt::format("EV selected service: {}",
+                                          types::iso15118::service_category_to_string(parameters.energy_transfer)));
+                });
 
             // Car requests DC contactor open. We don't actually open but switch off DC supply.
             // opening will be done by Charger on C->B CP event.
@@ -631,7 +737,8 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+        r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
 
         // reset error flags
         r_hlc[0]->call_reset_error();
@@ -1146,7 +1253,8 @@ void EvseManager::setup_fake_DC_mode() {
 
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
-    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+    r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+    r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
 }
 
 void EvseManager::setup_AC_mode() {
@@ -1173,39 +1281,12 @@ void EvseManager::setup_AC_mode() {
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
     if (hlc_enabled) {
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+        r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
     }
 }
 
 void EvseManager::setup_v2h_mode() {
-    types::iso15118::DcEvseMaximumLimits evse_max_limits;
-    types::iso15118::DcEvseMinimumLimits evse_min_limits;
-
-    if (powersupply_capabilities.max_import_current_A.has_value() and
-        powersupply_capabilities.max_import_power_W.has_value() and
-        powersupply_capabilities.max_import_voltage_V.has_value()) {
-        evse_max_limits.evse_maximum_current_limit = -powersupply_capabilities.max_import_current_A.value();
-        evse_max_limits.evse_maximum_power_limit = -powersupply_capabilities.max_import_power_W.value();
-        evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_import_voltage_V.value();
-        r_hlc[0]->call_update_dc_maximum_limits(evse_max_limits);
-        charger->inform_new_evse_max_hlc_limits(evse_max_limits);
-    } else {
-        EVLOG_error << "No Import Current, Power or Voltage is available!!!";
-        return;
-    }
-
-    if (powersupply_capabilities.min_import_current_A.has_value() and
-        powersupply_capabilities.min_import_voltage_V.has_value()) {
-        evse_min_limits.evse_minimum_current_limit = -powersupply_capabilities.min_import_current_A.value();
-        evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_import_voltage_V.value();
-        evse_min_limits.evse_minimum_power_limit =
-            evse_min_limits.evse_minimum_current_limit * evse_min_limits.evse_minimum_voltage_limit;
-        r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
-    } else {
-        EVLOG_error << "No Import Current, Power or Voltage is available!!!";
-        return;
-    }
-
     const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     types::energy::ExternalLimits external_limits;
     types::energy::ScheduleReqEntry target_entry;
@@ -1734,7 +1815,7 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     auto caps = get_powersupply_capabilities();
 
-    if (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and current_demand_active) and
+    if (((config.hack_allow_bpt_with_iso2 or sae_bidi_active or d20_dc_bpt_active) and current_demand_active) and
         is_actually_exporting_to_grid) {
         if (not last_is_actually_exporting_to_grid and powersupply_dc_is_on) {
             // switching from import from grid to export to grid
@@ -1742,10 +1823,9 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Import, power_supply_DC_charging_phase);
         }
         last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
-        // Hack: we are exporting to grid but are in ISO-2 mode
         // check limits of supply
-        if (caps.min_import_voltage_V.has_value() and voltage >= caps.min_import_voltage_V.value() and
-            voltage <= caps.max_import_voltage_V.value()) {
+        if (caps.min_import_voltage_V.has_value() and caps.max_import_voltage_V.has_value() and
+            voltage >= caps.min_import_voltage_V.value() and voltage <= caps.max_import_voltage_V.value()) {
 
             if (caps.max_import_current_A.has_value() and current > caps.max_import_current_A.value())
                 current = caps.max_import_current_A.value();
@@ -1757,8 +1837,8 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             // now also limit with the limits given by the energymanager.
             // FIXME: dont do this for now, see if the car reduces if we supply new limits.
 
-            session_log.evse(false, fmt::format("BPT HACK: DC power supply set: {}V/{}A, requested was {}V/{}A.",
-                                                voltage, current, _voltage, _current));
+            session_log.evse(false, fmt::format("DC power supply set: {}V/{}A, requested was {}V/{}A.", voltage,
+                                                current, _voltage, _current));
 
             // set the new limits for the DC output
             r_powersupply_DC[0]->call_setImportVoltageCurrent(voltage, current);
@@ -1770,7 +1850,7 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     } else {
         if (powersupply_dc_is_on and
-            (charging_phase_changed or (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
+            (charging_phase_changed or (((config.hack_allow_bpt_with_iso2 or sae_bidi_active or d20_dc_bpt_active) and
                                          last_is_actually_exporting_to_grid) and
                                         current_demand_active))) {
             // switching from export to grid to import from grid
