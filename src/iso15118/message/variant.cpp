@@ -66,6 +66,8 @@ static void handle_main(VariantAccess& va) {
         insert_type(va, doc.ServiceDetailRes);
     } else if (doc.ServiceSelectionReq_isUsed) {
         insert_type(va, doc.ServiceSelectionReq);
+    } else if (doc.ServiceSelectionRes_isUsed) {
+        insert_type(va, doc.ServiceSelectionRes);
     } else if (doc.ScheduleExchangeReq_isUsed) {
         insert_type(va, doc.ScheduleExchangeReq);
     } else if (doc.PowerDeliveryReq_isUsed) {
