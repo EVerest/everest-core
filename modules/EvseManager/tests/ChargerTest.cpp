@@ -15,7 +15,7 @@ using namespace types::evse_manager;
 // test classes
 
 // class that provides access to internal state from the Charger class
-struct ChargerDerrived : public Charger {
+struct ChargerDerived : public Charger {
     using Charger::Charger;
     using Charger::get_enable_disable_source_table;
     using Charger::get_shared_context;
@@ -53,7 +53,7 @@ struct ChargerTest : public testing::Test {
     std::vector<std::unique_ptr<powermeterIntf>> error_handler_powermeter;
     std::vector<std::unique_ptr<over_voltage_monitorIntf>> error_handler_over_voltage_monitor;
 
-    std::unique_ptr<ChargerDerrived> charger;
+    std::unique_ptr<ChargerDerived> charger;
 
     ChargerTest() :
         charger_error_handling(std::make_unique<ErrorHandling>(
@@ -64,7 +64,7 @@ struct ChargerTest : public testing::Test {
 
     void SetUp() override {
         reset_last_event();
-        charger = std::make_unique<ChargerDerrived>(
+        charger = std::make_unique<ChargerDerived>(
             charger_bsp, charger_error_handling, charger_powermeter_billing, charger_store,
             types::evse_board_support::Connector_type::IEC62196Type2Socket, "EVSETEST");
         charger->signal_simple_event.connect(&ChargerTest::session_event, this);
