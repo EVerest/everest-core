@@ -1,4 +1,4 @@
-description: Interface that provides all the functionallity for Payment Terminal
+description: Interface that provides functionality for a Payment Terminal
 cmds:
   enable_card_reading:
     description: >-
