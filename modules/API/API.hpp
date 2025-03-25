@@ -54,7 +54,7 @@ public:
         false}; ///< Indicate if end export energy value (optional) has been received or not
 
     void reset();
-    void update_state(const types::evse_manager::SessionEventEnum event);
+    void update_state(const types::evse_manager::SessionEvent event);
     void set_start_energy_import_wh(int32_t start_energy_import_wh);
     void set_end_energy_import_wh(int32_t end_energy_import_wh);
     void set_latest_energy_import_wh(int32_t latest_energy_wh);
@@ -96,7 +96,9 @@ private:
         ChargingPausedEVSE,
         Charging,
         AuthTimeout,
-        Finished
+        Finished,
+        FinishedEVSE,
+        FinishedEV
     } state;
 
     bool is_state_charging(const SessionInfo::State current_state);
