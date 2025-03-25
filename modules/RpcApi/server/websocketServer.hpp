@@ -6,9 +6,6 @@
 #include <memory>
 #include <vector>
 #include <boost/asio.hpp>
-//#include <boost/uuid/uuid.hpp>
-//#include <boost/uuid/uuid_generators.hpp>
-//#include <boost/uuid/uuid_io.hpp>
 #include <libwebsockets.h>
 #include <atomic>
 #include <thread>

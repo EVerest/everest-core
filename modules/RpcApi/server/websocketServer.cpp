@@ -69,7 +69,8 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
                 }
             }
             break;
-        case LWS_CALLBACK_RECEIVE:
+        }
+        case LWS_CALLBACK_RECEIVE: {
             for (auto it = server->m_clients.begin(); it != server->m_clients.end(); ++it) {
                 if (it->second == wsi) {
                     unsigned char *data = (unsigned char *)in;
@@ -117,11 +118,12 @@ void WebSocketServer::send_data(const ClientId &client_id, const std::vector<uin
     }
 
     struct lws *wsi = it->second;
-    unsigned char *buf = new unsigned char[LWS_PRE + data.size()];
-    memcpy(buf + LWS_PRE, data.data(), data.size());
-
-    lws_write(wsi, buf + LWS_PRE, data.size(), LWS_WRITE_BINARY);
-    delete[] buf;
+    std::vector<unsigned char> buf(LWS_PRE + data.size());
+    memcpy(buf.data() + LWS_PRE, data.data(), data.size());
+    
+    if (lws_write(wsi, buf.data() + LWS_PRE, data.size(), LWS_WRITE_BINARY) < 0) {
+        EVLOG_error << "Failed to send data to client " << client_id;
+    }
 }
 
 void WebSocketServer::kill_client_connection(const ClientId &client_id, const std::string &kill_reason) {
@@ -130,11 +132,10 @@ void WebSocketServer::kill_client_connection(const ClientId &client_id, const st
     auto it = m_clients.find(client_id);
     if (it != m_clients.end()) {
         struct lws *wsi = it->second;
+        std::string close_reason = kill_reason.empty() ? "Connection closed by server" : kill_reason;
 
-        unsigned char * close_msg = new unsigned char[kill_reason.size() + 1];
-        strncpy((char *)close_msg, kill_reason.c_str(), kill_reason.size());
-
-        lws_close_reason(wsi, LWS_CLOSE_STATUS_ABNORMAL_CLOSE, close_msg, kill_reason.size());
+        lws_close_reason(wsi, LWS_CLOSE_STATUS_ABNORMAL_CLOSE,
+            reinterpret_cast<unsigned char*>(const_cast<char*>(close_reason.data())), close_reason.size());
         m_clients.erase(it);  // Remove client from map
 
         EVLOG_info << "Client " << client_id << " connection closed (reason:" << kill_reason << ")";
@@ -171,8 +172,10 @@ bool WebSocketServer::stop_server() {
     if (!m_running) {
         return true;
     }
-
-    m_running = false;
+    {
+        std::lock_guard<std::mutex> lock(m_clients_mutex);
+        m_running = false;
+    }
     if (m_server_thread.joinable()) {
         m_server_thread.join();  // Wait for server thread to finish
     }
@@ -180,6 +183,9 @@ bool WebSocketServer::stop_server() {
         lws_context_destroy(m_context);
         m_context = nullptr;
     }
+
+    m_clients.clear();  // Clear the clients map
+    EVLOG_info << "WebSocket Server stopped";
 
     return true;
 }
