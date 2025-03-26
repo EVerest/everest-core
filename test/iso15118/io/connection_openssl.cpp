@@ -23,7 +23,6 @@ void parse_options(int argc, char** argv) {
 
     while ((c = getopt(argc, argv, short_opts)) != -1) {
         switch (c) {
-            break;
         case 'i':
             interface = std::string(optarg);
             break;
@@ -32,7 +31,6 @@ void parse_options(int argc, char** argv) {
             std::cout << "Usage: " << argv[0] << " [-i]" << std::endl;
             std::cout << "       -i <interface name>" << std::endl;
             exit(1);
-            break;
         default:
             exit(2);
         }

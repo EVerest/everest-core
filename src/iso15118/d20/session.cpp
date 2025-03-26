@@ -10,6 +10,29 @@ namespace iso15118::d20 {
 
 namespace dt = message_20::datatypes;
 
+SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::DcConnector dc_connector_,
+                                                     dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_,
+                                                     dt::Pricing pricing_) :
+    selected_energy_service(energy_service_),
+    selected_control_mode(control_mode_),
+    selected_mobility_needs_mode(mobility_),
+    selected_pricing(pricing_) {
+    selected_connector.emplace<dt::DcConnector>(dc_connector_);
+};
+
+SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::DcConnector dc_connector_,
+                                                     dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_,
+                                                     dt::Pricing pricing_, dt::BptChannel channel_,
+                                                     dt::GeneratorMode generator_) :
+    selected_energy_service(energy_service_),
+    selected_control_mode(control_mode_),
+    selected_mobility_needs_mode(mobility_),
+    selected_pricing(pricing_),
+    selected_bpt_channel(channel_),
+    selected_generator_mode(generator_) {
+    selected_connector.emplace<dt::DcConnector>(dc_connector_);
+};
+
 Session::Session() {
     std::random_device rd;
     std::mt19937 generator(rd());
