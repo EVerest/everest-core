@@ -79,7 +79,7 @@ types::energy::ExternalLimits get_external_limits(int32_t phases, float amps) {
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = {0, api_module_source};
+    zero_entry.limits_to_leaves.total_power_W = {0, API_MODULE_SOURCE};
 
     // check if phases are 1 or 3, otherwise throw an exception
     const auto is_valid = (phases == 1 || phases == 3);
