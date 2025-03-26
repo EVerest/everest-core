@@ -86,7 +86,7 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port)
     // Constructor implementation
     lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG, log_callback);
     m_info.port = port;
-    m_lws_protocols[0] = { NULL, callback_ws, PER_SESSION_DATA_SIZE, 0 };
+    m_lws_protocols[0] = { "EVerestRpcApi", callback_ws, PER_SESSION_DATA_SIZE, 0 };
     m_lws_protocols[1] = LWS_PROTOCOL_LIST_TERM;
 
     m_info.protocols = m_lws_protocols;
@@ -163,6 +163,10 @@ bool WebSocketServer::start_server() {
         }
     });
 
+    while(!m_running) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Wait for server to start
+    }
+
     return true; // Server started successfully
 }
 
@@ -170,10 +174,8 @@ bool WebSocketServer::stop_server() {
     if (!m_running) {
         return true;
     }
-    {
-        std::lock_guard<std::mutex> lock(m_clients_mutex);
-        m_running = false;
-    }
+    m_running = false;
+
     if (m_server_thread.joinable()) {
         m_server_thread.join();  // Wait for server thread to finish
     }
