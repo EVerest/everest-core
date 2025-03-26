@@ -8,7 +8,7 @@
 namespace module {
 
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
-static const std::string api_module_source = "API_module";
+static const std::string API_MODULE_SOURCE = "API_module";
 
 SessionInfo::SessionInfo() :
     start_energy_import_wh(0),
