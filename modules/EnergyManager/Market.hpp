@@ -94,7 +94,7 @@ private:
     ScheduleSetpoints resample(const ScheduleSetpoints& request);
 };
 
-float get_watt_from_freq_table(std::vector<types::energy::FrequencyWattPoint> table, float freq);
+float get_watt_from_freq_table(const std::vector<types::energy::FrequencyWattPoint>& table, float freq);
 void apply_limit_if_smaller(std::optional<types::energy::NumberWithSource>& base, float limit,
                             const std::string& source);
 void apply_setpoints(ScheduleReq& imp, ScheduleReq& exp, const ScheduleSetpoints& setpoints, std::optional<float> freq);
