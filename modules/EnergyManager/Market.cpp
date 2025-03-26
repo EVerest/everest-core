@@ -292,7 +292,7 @@ ScheduleReq Market::get_available_energy_export() {
     return get_available_energy(export_max_available, true);
 }
 
-float get_watt_from_freq_table(const std::vector<types::energy::FrequencyWattPoint> table, float freq) {
+float get_watt_from_freq_table(const std::vector<types::energy::FrequencyWattPoint>& table, float freq) {
     // the table has to be sorted by freqency
 
     if (table.size() == 0) {
