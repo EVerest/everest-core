@@ -264,7 +264,7 @@ This is not implemented for now, the priority property will be ignored for now.
 
 In most cases a setpoint is not neccessary as the same functionality can also be implemented by setting the 
 limits at the node appropriately. 
-It is especially useful for bidirectional use case, as it selects whether charging or discharging should be performed:
+It is especially useful for the bidirectional use case, as it selects whether charging or discharging should be performed:
 
 E.g. with watt limits of -10kW to +10kW and a setpoint of -2kW, it will discharge at 2kW.
 A setpoint of +3kW will switch to charging without changing the limits.
