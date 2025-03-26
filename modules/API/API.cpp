@@ -84,9 +84,9 @@ types::energy::ExternalLimits get_external_limits(int32_t phases, float amps) {
     // check if phases are 1 or 3, otherwise throw an exception
     const auto is_valid = (phases == 1 || phases == 3);
     if (is_valid) {
-        target_entry.limits_to_leaves.ac_max_phase_count = {phases, api_module_source};
-        target_entry.limits_to_leaves.ac_min_phase_count = {phases, api_module_source};
-        target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(amps), api_module_source};
+        target_entry.limits_to_leaves.ac_max_phase_count = {phases, API_MODULE_SOURCE};
+        target_entry.limits_to_leaves.ac_min_phase_count = {phases, API_MODULE_SOURCE};
+        target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(amps), API_MODULE_SOURCE};
     } else {
         std::string error_msg = "Invalid phase count " + std::to_string(phases);
         throw std::out_of_range(error_msg);
