@@ -8,6 +8,7 @@
 namespace module {
 
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
+static const std::string API_MODULE_SOURCE = "API_module";
 
 SessionInfo::SessionInfo() :
     start_energy_import_wh(0),
@@ -53,19 +54,19 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = 0;
+    zero_entry.limits_to_leaves.total_power_W = {0};
 
     if (is_watts) {
-        target_entry.limits_to_leaves.total_power_W = std::fabs(limit);
+        target_entry.limits_to_leaves.total_power_W = {std::fabs(limit), API_MODULE_SOURCE};
     } else {
-        target_entry.limits_to_leaves.ac_max_current_A = std::fabs(limit);
+        target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(limit), API_MODULE_SOURCE};
     }
 
     if (limit > 0) {
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     } else {
-        external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
     }
     return external_limits;
 }
@@ -78,24 +79,24 @@ types::energy::ExternalLimits get_external_limits(int32_t phases, float amps) {
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = 0;
+    zero_entry.limits_to_leaves.total_power_W = {0, API_MODULE_SOURCE};
 
     // check if phases are 1 or 3, otherwise throw an exception
     const auto is_valid = (phases == 1 || phases == 3);
     if (is_valid) {
-        target_entry.limits_to_leaves.ac_max_phase_count = phases;
-        target_entry.limits_to_leaves.ac_min_phase_count = phases;
-        target_entry.limits_to_leaves.ac_max_current_A = std::fabs(amps);
+        target_entry.limits_to_leaves.ac_max_phase_count = {phases, API_MODULE_SOURCE};
+        target_entry.limits_to_leaves.ac_min_phase_count = {phases, API_MODULE_SOURCE};
+        target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(amps), API_MODULE_SOURCE};
     } else {
         std::string error_msg = "Invalid phase count " + std::to_string(phases);
         throw std::out_of_range(error_msg);
     }
 
     if (amps > 0) {
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     } else {
-        external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
     }
     return external_limits;
 }

@@ -1,5 +1,31 @@
 description: Energy import/export capability/limit types
 types:
+  NumberWithSource:
+    description: Simple number type with source information
+    type: object
+    required:
+      - value
+      - source
+    properties:
+      value:
+        description: Value
+        type: number
+      source:
+        description: Source of the value
+        type: string
+  IntegerWithSource:
+    description: Simple number type with source information
+    type: object
+    required:
+      - value
+      - source
+    properties:
+      value:
+        description: Value
+        type: integer
+      source:
+        description: Source of the value
+        type: string
   NodeType:
     description: Enum Type for different Nodes on the energy tree
     type: string
@@ -28,29 +54,27 @@ types:
       total_power_W:
         description: >-
           Total power limit in Watt. Can be used for DC or as additional
-          limit for AC.
-        type: number
-        minimum: 0.0
+          limit for AC. Positive number.
+        type: object
+        $ref: /energy#/NumberWithSource
       ac_max_current_A:
-        description: Max current limit (per phase) in Ampere. AC only.
-        type: number
-        minimum: 0.0
+        description: Max current limit (per phase) in Ampere. AC only. Positive number.
+        type: object
+        $ref: /energy#/NumberWithSource
       ac_min_current_A:
         description: >-
           Min AC current limit per phase in Ampere. Values below that value indicate the 
           device will not work properly, i.e. it will not charge below 6 amps. AC only.
-        type: number
-        minimum: 0.0
+        type: object
+        $ref: /energy#/NumberWithSource
       ac_max_phase_count:
-        description: Limit to number of phases. Omit if number of phases are not limited.
-        type: integer
-        minimum: 1
-        maximum: 3
+        description: Limit to number of phases. Omit if number of phases are not limited. Value between 1 and 3.
+        type: object
+        $ref: /energy#/IntegerWithSource
       ac_min_phase_count:
-        description: Minimal number of phases. Omit if number of phases are not limited.
-        type: integer
-        minimum: 1
-        maximum: 3
+        description: Minimal number of phases. Omit if number of phases are not limited. Value between 1 and 3.
+        type: object
+        $ref: /energy#/IntegerWithSource
       ac_supports_changing_phases_during_charging:
         description: >-
           Indicate whether phase switching is allowed during charging or
@@ -71,15 +95,16 @@ types:
         description: >-
           Total power limit in Watt. Can be used for DC or as additional
           limit for AC. Negative numbers mean export to grid direction.
-        type: number
+        type: object
+        $ref: /energy#/NumberWithSource
       ac_max_current_A:
         description: Max current limit (per phase) in Ampere. AC only. Negative numbers mean export to grid direction.
-        type: number
+        type: object
+        $ref: /energy#/NumberWithSource
       ac_max_phase_count:
         description: Limit to number of phases. Omit if number of phases are not limited.
-        type: integer
-        minimum: 1
-        maximum: 3
+        type: object
+        $ref: /energy#/IntegerWithSource
   OptimizerTarget:
     description: User defined optimizer targets for this evse
     type: object
@@ -111,6 +136,75 @@ types:
           Only charge from locally generated energy. Do not draw power
           from grid for charging.
         type: boolean
+  FrequencyWattPoint:
+    description: A point of a frequency-watt curve
+    type: object
+    required:
+      - frequency_Hz
+      - total_power_W
+    properties:
+      frequency_Hz:
+        description: The frequency in Hz
+        type: number
+      total_power_W:
+        description: The total power in W
+        type: number
+  SetpointType:
+    description: Defines a setpoint, which is a target value for either charging or discharging depending on the sign. Setpoints per phase are currently not supported.
+    type: object
+    required:
+      - source
+      - priority
+    properties:
+      ac_current_A:
+        description: >-
+          The target value in amps per phase for either charging or discharging depending on the sign. 
+          Positive values indicate charging, while negative values indicate discharging.
+          Do not set ac_current_A, total_power_W and frequency_table properties simultaneously.
+        type: number
+      total_power_W:
+        description: >-
+          The target value for the total power for either charging or discharging depending on the sign.
+          Positive values indicate charging, while negative values indicate discharging.
+          Do not set ac_current_A, total_power_W and frequency_table properties simultaneously.
+        type: number
+      frequency_table:
+        description: >-
+          Frequency table for the setpoint. When used it must contain at least
+          two coordinates to specify a power-frequency table to use during this period.
+          If the array is empty, no frequency setpoint is set.
+          Do not set ac_current_A, total_power_W and frequency_table properties simultaneously.
+        type: array
+        items:
+          description: One entry for the frequency table
+          type: object
+          $ref: /energy#/FrequencyWattPoint
+      priority:
+        description: >-
+          Note: priority handling is not implemented for now.
+          If multiple conflicting setpoints are specified in the tree, the priority selects which one is used.
+          Highest priority is 0, lowest priority is 1000.
+        type: integer
+        minimum: 0
+        maximum: 1000
+      source:
+        description: Source of the setpoint
+        type: string
+  ScheduleSetpointEntry:
+    description: One entry for the time series (setpoint request)
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+    properties:
+      timestamp:
+        description: Absolute timestamp for this sample in RFC3339 UTC format
+        type: string
+        format: date-time
+      setpoint:
+        description: Setpoint for this timestamp
+        type: object
+        $ref: /energy#/SetpointType
   ScheduleReqEntry:
     description: One entry for the time series (request)
     type: object
@@ -170,9 +264,12 @@ types:
       - uuid
       - children
       - node_type
+      - schedule_import
+      - schedule_export
+      - schedule_setpoints
     properties:
       children:
-        description: Array of child node energy flow requests (in the direction to consumer/car
+        description: Array of child node energy flow requests (in the direction to consumer/car)
         type: array
         items:
           description: One entry per child node
@@ -233,12 +330,26 @@ types:
           description: One entry for the time series. Values are always positive.
           type: object
           $ref: /energy#/ScheduleReqEntry
+      schedule_setpoints:
+        description: >-
+          Setpoints time series. The first entry is special
+          as it will be active already now even if the timestamp is in the future,
+          so it is good practice to set the first entry to current time. The time
+          series can have arbitrary time difference between entries and all timestamps
+          are absolute UTC time.
+        type: array
+        items:
+          description: One entry for the time series.
+          type: object
+          $ref: /energy#/ScheduleSetpointEntry
   EnforcedLimits:
     description: Enforce Limits data type
     type: object
     required:
       - uuid
       - valid_until
+      - schedule
+      - limits_root_side
     properties:
       uuid:
         description: UUID of node that this limit applies to
@@ -268,6 +379,10 @@ types:
   ExternalLimits:
     description: External Limits data type
     type: object
+    required:
+      - schedule_import
+      - schedule_export
+      - schedule_setpoints
     properties:
       schedule_import:
         description: >-
@@ -293,3 +408,15 @@ types:
           description: One entry for the time series
           type: object
           $ref: /energy#/ScheduleReqEntry
+      schedule_setpoints:
+        description: >-
+          Setpoints time series. The first entry is special
+          as it will be active already now even if the timestamp is in the future,
+          so it is good practice to set the first entry to current time. The time
+          series can have arbitrary time difference between entries and all timestamps
+          are absolute UTC time.
+        type: array
+        items:
+          description: One entry for the time series.
+          type: object
+          $ref: /energy#/ScheduleSetpointEntry

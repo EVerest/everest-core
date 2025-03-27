@@ -2,7 +2,9 @@ description: >-
   This module is part of the Energy Tree and represents a simple current fuse.
 config:
   fuse_limit_A:
-    description: Fuse limit in ampere for all phases
+    description: >-
+      Fuse limit in ampere for all phases. Note: this always applies
+      in addition to limits set by external_limits interface.
     type: number
     minimum: 0.0
   phase_count:
