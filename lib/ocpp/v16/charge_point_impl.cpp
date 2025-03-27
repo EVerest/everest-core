@@ -1669,8 +1669,7 @@ void ChargePointImpl::preprocess_change_availability_request(
     // should report an availability status of "Scheduled"
     auto should_be_scheduled_func = [this](int32_t connector) {
         return this->transaction_handler->transaction_active(connector) or
-               this->status->get_state(connector) == ChargePointStatus::Preparing or
-               this->status->get_state(connector) == ChargePointStatus::Reserved;
+               this->status->get_state(connector) == ChargePointStatus::Preparing;
     };
 
     // check if connector exists
@@ -4644,7 +4643,6 @@ void ChargePointImpl::on_reservation_start(int32_t connector) {
 }
 
 void ChargePointImpl::on_reservation_end(int32_t connector) {
-    this->execute_queued_availability_change(connector);
     this->status->submit_event(connector, FSMEvent::ReservationEnd, ocpp::DateTime());
 }
 
