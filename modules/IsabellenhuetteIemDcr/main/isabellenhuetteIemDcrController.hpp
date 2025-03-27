@@ -94,13 +94,16 @@ public:
         std::string value;
     };
 
+    bool init();
     json get_gw();
+    bool check_gw_is_empty();
     void post_gw();
     void post_tariff(std::string tariff_info);
     std::tuple<types::powermeter::Powermeter, std::string, bool> get_metervalue();
     std::string get_publickey(bool allow_cached_value);
     std::string get_datetime();
     void post_datetime();
+    void refresh_datetime_if_required();
     void post_user(const types::powermeter::OCMFUserIdentificationStatus IS,
                    const std::optional<types::powermeter::OCMFIdentificationLevel> IL,
                    const std::vector<types::powermeter::OCMFIdentificationFlags>& IF,
@@ -148,6 +151,7 @@ private:
     SnapshotConfig snapshot_config;
     std::string cached_public_key = "";
     std::chrono::minutes zone_time_offset;
+    std::atomic<std::chrono::time_point<std::chrono::steady_clock>> last_datetime_sync;
 
     std::chrono::minutes helper_convert_timezone(std::string& timezone);
     std::string helper_get_current_datetime();

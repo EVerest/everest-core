@@ -11,8 +11,6 @@ namespace module {
 namespace main {
 
 void powermeterImpl::init() {
-    EVLOG_info << "Isabellenhuette IEM-DCR: Init started...";
-
     // Check Config values (essential plausibility checks)
     check_config();
 
@@ -28,83 +26,52 @@ void powermeterImpl::init() {
             mod->config.resilience_initial_connection_retries, mod->config.resilience_initial_connection_retry_delay,
             mod->config.resilience_transaction_request_retries, mod->config.resilience_transaction_request_retry_delay,
             mod->config.CT, mod->config.CI, mod->config.TT_initial, mod->config.US});
-
-    // Store datetime resync interval in a threadsafe manner
-    datetime_resync_interval.store(mod->config.datetime_resync_interval);
-
-    // Check connection with polling REST node gw
-    this->controller->call_with_retry([this]() { this->controller->get_gw(); },
-                                      mod->config.resilience_initial_connection_retries,
-                                      mod->config.resilience_initial_connection_retry_delay);
-
-    // Send gw information
-    try {
-        this->controller->post_gw();
-        last_datetime_sync.store(std::chrono::steady_clock::now());
-    } catch (IsaIemDcrController::UnexpectedIemDcrResponseCode& error) {
-        EVLOG_warning << "Node /gw seems to be already set. If those values should be updated, please restart IEM-DCR "
-                         "and then also this system.";
-        // If gw is already set, not TM information is transfered here. So mark time as invalid for later update in
-        // ready function
-        last_datetime_sync.store(std::chrono::steady_clock::now() - std::chrono::hours(48));
-    }
-
-    // Send initial tariff information
-    try {
-        if (mod->config.TT_initial.length() > 0) {
-            this->controller->post_tariff(mod->config.TT_initial);
-        }
-    } catch (IsaIemDcrController::UnexpectedIemDcrResponseCode& error) {
-        EVLOG_error << "Incorrect config: Value TT_initial could not be set. Please check its value.";
-    }
 }
 
 void powermeterImpl::ready() {
     // Start the live_measure_publisher thread, which periodically publishes the live measurements of the device
     this->live_measure_publisher_thread = std::thread([this] {
         while (true) {
-            // Wait for one second
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
             try {
-                // Publish public key
-                this->publish_public_key_ocmf(this->controller->get_publickey(true));
+                // Wait for at least one second (more if handle_start_transaction() or handle_stop_transaction() active)
+                do {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                } while(start_transaction_running.load() == true || stop_transaction_running.load() == true);
+                // Init if needed
+                if(is_initialized.load() == false) {
+                    is_initialized.store(this->controller->init());
+                    if(is_initialized.load() == true) {
+                        // Publish public key once after init
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                        this->publish_public_key_ocmf(this->controller->get_publickey(false));
+                    }
+                } else {
+                    // Publish metervalue node (named powermeter in EVerest) and update status information
+                    auto meter_value_response = this->controller->get_metervalue();
+                    types::powermeter::Powermeter tmp_powermeter;
+                    std::string tmp_status;
+                    bool tmp_transaction_active;
+                    std::tie(tmp_powermeter, tmp_status, tmp_transaction_active) = meter_value_response;
+                    this->publish_powermeter(tmp_powermeter);
+                    dcr_status.store(tmp_status);
+                    transaction_active.store(tmp_transaction_active);
 
-                // Publish metervalue node (named powermeter in EVerest) and update status information
-                auto meter_value_response = this->controller->get_metervalue();
-                types::powermeter::Powermeter tmp_powermeter;
-                std::string tmp_status;
-                bool tmp_transaction_active;
-                std::tie(tmp_powermeter, tmp_status, tmp_transaction_active) = meter_value_response;
-                this->publish_powermeter(tmp_powermeter);
-                dcr_status.store(tmp_status);
-                transaction_active.store(tmp_transaction_active);
+                    // Debug output :)
+                    // EVLOG_info << this->controller->get_datetime();
 
-                // Debug output :)
-                // EVLOG_info << this->controller->get_datetime();
+                    // Update datetime in specified interval
+                    if (transaction_active.load() == false) {
+                        this->controller->refresh_datetime_if_required();
+                    }
 
-                // Update datetime in specified interval
-                if (transaction_active.load() == false) {
-                    const auto now = std::chrono::steady_clock::now();
-                    const auto elapsed =
-                        std::chrono::duration_cast<std::chrono::hours>(now - last_datetime_sync.load());
-                    if (elapsed.count() >= datetime_resync_interval.load()) {
-                        try {
-                            this->controller->post_datetime();
-                            last_datetime_sync.store(now);
-                            EVLOG_info << "DateTime resynchronized.";
-                        } catch (...) {
-                            // On error: just retry in the next second
-                        }
+                    // Reset previous error (if active)
+                    if (this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
+                                                                "Communication timed out")) {
+                        clear_error("powermeter/CommunicationFault", "Communication timed out");
                     }
                 }
-
-                // Reset previous error (if active)
-                if (this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
-                                                               "Communication timed out")) {
-                    clear_error("powermeter/CommunicationFault", "Communication timed out");
-                }
             } catch (HttpClientError& client_error) {
+                is_initialized.store(false);
                 if (!this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
                                                                 "Communication timed out")) {
                     EVLOG_error << "Failed to communicate with the powermeter due to http error: "
@@ -115,6 +82,7 @@ void powermeterImpl::ready() {
                     raise_error(error);
                 }
             } catch (const std::exception& e) {
+                is_initialized.store(false);
                 EVLOG_error << "Exception in cyclic IEM-DCR communication: " << e.what();
             }
         }
@@ -126,12 +94,19 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
     // your code for cmd start_transaction goes here
     types::powermeter::TransactionStartResponse return_value;
 
+    start_transaction_running.store(true);
     EVLOG_info << "handle_start_transaction() called.";
 
     // Check preconditions
     if (value.evse_id != mod->config.CI && value.evse_id.length() > 0) {
         return_value.status = types::powermeter::TransactionRequestStatus::NOT_SUPPORTED;
         return_value.error = "config: CI does not match evse_id. This is not allowed.";
+        EVLOG_error << "Aborted: " << *return_value.error;
+        return return_value;
+    }
+    if(is_initialized.load() == false) {
+        return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
+        return_value.error = "Init of communication not finished yet. Please try again later.";
         EVLOG_error << "Aborted: " << *return_value.error;
         return return_value;
     }
@@ -144,44 +119,53 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
 
     // Perform action
     try {
-        // Stop transaction (if a transaction is still running)
-        if (transaction_active.load() == true) {
-            this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
-                                              mod->config.resilience_transaction_request_retries,
-                                              mod->config.resilience_transaction_request_retry_delay);
-        }
-        // Create user
-        if ((static_cast<std::string>(value.identification_data.value_or(""))).length() <= 0) {
-            this->controller->call_with_retry(
-                [this, value]() {
-                    this->controller->post_user(value.identification_status, value.identification_level,
-                                                value.identification_flags, value.identification_type,
-                                                value.transaction_id, value.tariff_text);
-                },
-                mod->config.resilience_transaction_request_retries,
-                mod->config.resilience_transaction_request_retry_delay);
+        // Check if gw information is already set
+        if(this->controller->check_gw_is_empty()) {
+            return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
+            return_value.error = "Init seems to be missing. Re-Init triggered. Please try again later.";
+            is_initialized.store(false);
         } else {
-            this->controller->call_with_retry(
-                [this, value]() {
-                    this->controller->post_user(value.identification_status, value.identification_level,
-                                                value.identification_flags, value.identification_type,
-                                                value.identification_data, value.tariff_text);
-                },
-                mod->config.resilience_transaction_request_retries,
-                mod->config.resilience_transaction_request_retry_delay);
+            // Stop transaction (if a transaction is still running)
+            if (transaction_active.load() == true) {
+                this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
+                                                mod->config.resilience_transaction_request_retries,
+                                                mod->config.resilience_transaction_request_retry_delay);
+            }
+            // Create user
+            if ((static_cast<std::string>(value.identification_data.value_or(""))).length() <= 0) {
+                this->controller->call_with_retry(
+                    [this, value]() {
+                        this->controller->post_user(value.identification_status, value.identification_level,
+                                                    value.identification_flags, value.identification_type,
+                                                    value.transaction_id, value.tariff_text);
+                    },
+                    mod->config.resilience_transaction_request_retries,
+                    mod->config.resilience_transaction_request_retry_delay);
+            } else {
+                this->controller->call_with_retry(
+                    [this, value]() {
+                        this->controller->post_user(value.identification_status, value.identification_level,
+                                                    value.identification_flags, value.identification_type,
+                                                    value.identification_data, value.tariff_text);
+                    },
+                    mod->config.resilience_transaction_request_retries,
+                    mod->config.resilience_transaction_request_retry_delay);
+            }
+            // Start transaction
+            this->controller->call_with_retry([this]() { this->controller->post_receipt("B"); },
+                                            mod->config.resilience_transaction_request_retries,
+                                            mod->config.resilience_transaction_request_retry_delay);
+            // Prepare positive response
+            return_value.status = types::powermeter::TransactionRequestStatus::OK;
+            return_value.error = "";
         }
-        // Start transaction
-        this->controller->call_with_retry([this]() { this->controller->post_receipt("B"); },
-                                          mod->config.resilience_transaction_request_retries,
-                                          mod->config.resilience_transaction_request_retry_delay);
-        // Prepare positive response
-        return_value.status = types::powermeter::TransactionRequestStatus::OK;
-        return_value.error = "";
     } catch (const std::exception& e) {
         return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
         return_value.error = e.what();
         EVLOG_error << "Aborted: " << return_value.error.value_or("");
     }
+
+    start_transaction_running.store(false);
 
     return return_value;
 }
@@ -190,16 +174,21 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
     // your code for cmd stop_transaction goes here
     types::powermeter::TransactionStopResponse return_value;
 
+    stop_transaction_running.store(true);
     EVLOG_info << "handle_stop_transaction() called.";
 
-    if (transaction_active.load() == true) {
+    if(is_initialized.load() == false) {
+        return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
+        return_value.error = "Init of communication not finished yet.";
+        EVLOG_error << "Aborted: " << *return_value.error;
+    } else if (transaction_active.load() == true) {
         try {
             // Stop transaction
             this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
                                               mod->config.resilience_transaction_request_retries,
                                               mod->config.resilience_transaction_request_retry_delay);
             // Wait for signature calculation
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
             // Read receipt
             return_value.signed_meter_value =
                 this->controller->call_with_retry([this]() { return this->controller->get_receipt(); },
@@ -225,6 +214,8 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
             EVLOG_warning << "Aborted: " << return_value.error.value_or("");
         }
     }
+
+    stop_transaction_running.store(false);
 
     return return_value;
 }
