@@ -53,9 +53,10 @@ private:
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
     IsaIemDcrController::ThreadSafeString dcr_status;
+    std::atomic<bool> is_initialized = false;
     std::atomic<bool> transaction_active = true;
-    std::atomic<int> datetime_resync_interval = 12;
-    std::atomic<std::chrono::time_point<std::chrono::steady_clock>> last_datetime_sync;
+    std::atomic<bool> start_transaction_running = false;
+    std::atomic<bool> stop_transaction_running = false;
     // At construction time, there is no controller and no HTTP client, so these are null pointers.
     // When init() is called, the controller is initialized.
     std::unique_ptr<IsaIemDcrController> controller = nullptr;

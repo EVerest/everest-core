@@ -12,6 +12,36 @@ IsaIemDcrController::IsaIemDcrController(std::unique_ptr<HttpClientInterface> ht
 
     // Further initialization
     zone_time_offset = helper_convert_timezone(snapshot_config.timezone);
+    last_datetime_sync.store(std::chrono::steady_clock::now() - std::chrono::hours(48));
+}
+
+bool IsaIemDcrController::init() {
+    try {
+        EVLOG_info << "Isabellenhuette IEM-DCR: Connecting to module...";   
+        // Check connection with polling REST node gw
+        this->call_with_retry([this]() { this->get_gw(); },
+                            snapshot_config.resilience_initial_connection_retries,
+                            snapshot_config.resilience_initial_connection_retry_delay);
+        // Send gw information
+        try {
+            this->post_gw();
+        } catch (IsaIemDcrController::UnexpectedIemDcrResponseCode& error) {
+            EVLOG_warning << "Node /gw seems to be already set. If those values should be updated, "
+                            "please restart IEM-DCR and then also this system.";
+        }
+        // Send initial tariff information
+        try {
+            if (snapshot_config.TT_initial.length() > 0) {
+                this->post_tariff(snapshot_config.TT_initial);
+            }
+        } catch (IsaIemDcrController::UnexpectedIemDcrResponseCode& error) {
+            EVLOG_warning << "Incorrect config: Value TT_initial could not be set. Please check its value.";
+        }
+        EVLOG_info << "Isabellenhuette IEM-DCR: Connected.";
+        return true;
+    } catch (const std::exception& e) {
+        return false;
+    }
 }
 
 json IsaIemDcrController::get_gw() {
@@ -30,6 +60,11 @@ json IsaIemDcrController::get_gw() {
     }
 }
 
+bool IsaIemDcrController::check_gw_is_empty() {
+    json gw_result = this->get_gw();
+    return gw_result.at("CT").empty();
+}
+
 void IsaIemDcrController::post_gw() {
     const std::string endpoint = "/counter/v1/ocmf/gw";
     const std::string payload = nlohmann::ordered_json{{"CT", snapshot_config.CT},
@@ -37,7 +72,9 @@ void IsaIemDcrController::post_gw() {
                                                        {"TM", helper_get_current_datetime()}}
                                     .dump();
     auto response = this->http_client->post(endpoint, payload);
-    if (response.status_code != 200) {
+    if (response.status_code == 200) {
+        last_datetime_sync.store(std::chrono::steady_clock::now());
+    } else {
         throw UnexpectedIemDcrResponseCode(endpoint, 200, response);
     }
 }
@@ -131,8 +168,24 @@ void IsaIemDcrController::post_datetime() {
     const std::string endpoint = "/counter/v1/ocmf/datetime";
     const std::string payload = nlohmann::ordered_json{{"TM", helper_get_current_datetime()}}.dump();
     auto response = this->http_client->post(endpoint, payload);
-    if (response.status_code != 200) {
+    if (response.status_code == 200) {
+        last_datetime_sync.store(std::chrono::steady_clock::now());
+    } else {
         throw UnexpectedIemDcrResponseCode(endpoint, 200, response);
+    }
+}
+
+void IsaIemDcrController::refresh_datetime_if_required() {
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsed =
+        std::chrono::duration_cast<std::chrono::hours>(now - last_datetime_sync.load());
+    if (elapsed.count() >= snapshot_config.datetime_resync_interval) {
+        try {
+            this->post_datetime();
+            EVLOG_info << "DateTime resynchronized.";
+        } catch (...) {
+            // On error: just retry on next call
+        }
     }
 }
 

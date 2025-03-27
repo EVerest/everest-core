@@ -56,6 +56,7 @@ static void setup_connection(CURL* connection, struct payloadInTransit& request_
 
     // Misc. settings come here
     curl_easy_setopt(connection, CURLOPT_FORBID_REUSE, 1);
+    curl_easy_setopt(connection, CURLOPT_CONNECTTIMEOUT, 2);
     if (curl_easy_setopt(connection, CURLOPT_FOLLOWLOCATION, 0) != CURLE_OK) {
         throw std::runtime_error(
             "libcurl signals that HTTP is unsupported. Your build or linkage might be misconfigured.");
