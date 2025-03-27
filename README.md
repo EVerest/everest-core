@@ -47,7 +47,7 @@ OCPP1.6 is fully implemented.
 ### CSMS Compatibility
 
 The EVerest implementation of OCPP 1.6 has been tested against the
-OCPP Compliance Test Tool (OCTT and OCTT2) during the implementation.
+OCPP Compliance Test Tool (OCTT) during the implementation.
 
 The following table shows the known CSMS with which this library was tested.
 
@@ -96,14 +96,14 @@ The following table shows the known CSMS with which this library was tested.
 | H. Reservation                       | ✅ yes                      |
 | I. TariffAndCost                     | ✅ yes  |
 | J. MeterValues                       | ✅ yes  |
-| K. SmartCharging                     | WIP                       |
+| K. SmartCharging                     | ✅ yes (except K11-K17)                       |
 | L. FirmwareManagement                | ✅ yes  |
 | M. ISO 15118 CertificateManagement   | ✅ yes  |
 | N. Diagnostics                       | ✅ yes  |
 | O. DisplayMessage                    | ✅ yes  |
 | P. DataTransfer                      | ✅ yes  |
 
-The development of OCPP2.0.1 is in progress. Check the [detailed current implementation status.](doc/v2/ocpp_2x_status.md).
+Check the [detailed current implementation status.](doc/v2/ocpp_2x_status.md).
 
 | Whitepapers & Application Notes                                                                                                                              | Supported              |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
@@ -111,22 +111,36 @@ The development of OCPP2.0.1 is in progress. Check the [detailed current impleme
 
 ### CSMS Compatibility OCPP 2.0.1
 
-The current, ongoing implementation of OCPP 2.0.1 has been tested against a
-few CSMS and is continuously tested against OCTT2.
+The implementation of OCPP 2.0.1 has been tested against the following CSMS and is continuously tested against OCTT2.
 
 Additionally, the implementation has been tested against these CSMS:
 
-- [CitrineOS](https://lfenergy.org/projects/citrineos/)
+- ChargeLab
 - Chargepoint
+- [CitrineOS](https://lfenergy.org/projects/citrineos/)
 - Current
+- Ecoenergetyca
+- einfochips
+- evgateway
 - ihomer (Infuse CPMS)
 - Instituto Tecnológico de la Energía (ITE)
 - [MaEVe (Thoughtworks)](https://github.com/thoughtworks/maeve-csms)
 - [Monta](https://monta.com)
+- Numocity
 - [Open Charging Cloud (GraphDefined)](https://github.com/OpenChargingCloud/WWCP_OCPP)
 - Switch EV
 - SWTCH
+- Relion
+- Syntech
+- Vector
 
 ## OCPP2.1
 
-The implementation of OCPP2.1 is currently under development.
+The implementation of OCPP2.1 is currently under development 🔧.
+
+OCPP2.1 websocket connections and messages are supported by the library. Every functional block and use case supported in OCPP2.0.1 is also supported in OCPP2.1. Additional functional blocks and new requirements are currently
+implemented.
+
+The functional blocks we are targeting first are the extensions to SmartCharging and support for Bidirectional Power Transfer.
+
+Check the [detailed current implementation status.](doc/v2/ocpp_2x_status.md).
