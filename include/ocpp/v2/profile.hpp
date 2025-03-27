@@ -39,7 +39,7 @@ struct period_entry_t {
     std::optional<float> min_charging_rate;
 
     bool equals(const period_entry_t& other) const {
-        return (start == other.end) && (end == other.end) && (limit == other.limit) &&
+        return (start == other.start) && (end == other.end) && (limit == other.limit) &&
                (number_phases == other.number_phases) && (stack_level == other.stack_level) &&
                (charging_rate_unit == other.charging_rate_unit) && (min_charging_rate == other.min_charging_rate);
     }
