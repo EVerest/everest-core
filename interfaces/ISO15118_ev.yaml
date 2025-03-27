@@ -9,6 +9,17 @@ cmds:
           by the EVCC
         type: string
         $ref: /iso15118_ev#/EnergyTransferMode
+      DepartureTime:
+        description: >- 
+          Optional: Amount of time until requested departure in seconds
+        type: number
+        $ref: /iso15118_ev#/DepartureTime
+      EAmount:
+        description: >- 
+          Optional: Amount of energy requested for charging session
+          to be delivered before departure time in kWh
+        type: number
+        $ref: /iso15118_ev#/EAmount
     result:
       description: Returns true if the evcc simulation started
       type: boolean
