@@ -10,47 +10,11 @@ namespace module {
 // This broker tries to charge as fast as possible.
 class BrokerFastCharging : public Broker {
 public:
-    enum class Switch1ph3phMode {
-        Never,
-        Oneway,
-        Both,
-    };
-
-    enum class StickyNess {
-        SinglePhase,
-        ThreePhase,
-        DontChange,
-    };
-
-    struct EnergyManagerConfig {
-        Switch1ph3phMode switch_1ph_3ph_mode{Switch1ph3phMode::Never};
-        StickyNess stickyness{StickyNess::DontChange};
-        int max_nr_of_switches_per_session{0};
-        int power_hysteresis_W{200};
-        int time_hysteresis_s{600};
-    };
-
-    explicit BrokerFastCharging(Market& market, BrokerContext& context, EnergyManagerConfig config);
-    virtual bool trade(Offer& offer) override;
+    explicit BrokerFastCharging(Market& market, BrokerContext& context, EnergyManagerConfig config) :
+        Broker(market, context, config){};
+    virtual void tradeImpl() override;
 
 private:
-    void buy_ampere_unchecked(int index, float ampere, int number_of_phases);
-    void buy_watt_unchecked(int index, float watt);
-
-    bool buy_ampere_import(int index, float ampere, bool allow_less, int number_of_phases);
-    bool buy_ampere_export(int index, float ampere, bool allow_less, int number_of_phases);
-    bool buy_ampere(const types::energy::ScheduleReqEntry& _offer, int index, float ampere, bool allow_less,
-                    bool import, int number_of_phases);
-
-    bool buy_watt_import(int index, float watt, bool allow_less);
-    bool buy_watt_export(int index, float watt, bool allow_less);
-    bool buy_watt(const types::energy::ScheduleReqEntry& _offer, int index, float watt, bool allow_less, bool import);
-
-    ScheduleRes trading;
-    Offer* offer{nullptr};
-    bool traded{false};
-
-    EnergyManagerConfig config;
 };
 
 } // namespace module

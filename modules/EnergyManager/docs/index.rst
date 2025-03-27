@@ -165,49 +165,113 @@ Limits may also change over time, which is why the *schedule_import* and
 *schedule_export* properties are lists containing multiple limit
 specifications.
 
+Besides the limiting schedules for import and export, it also contains
+a *setpoint_schedule*. This is a list (time series) just like the limiting schedules
+and it may contain setpoints for each timeslot, see below for a more detailed description.
+
+Each value that is given for a limit or schedule has a source property (string).
+It is used to track which value is the actual limiting factor for the result in the
+optimization algorithm.
+
+This is useful to understand how the result that is sent to the EvseManager is composed.
+
 Below is an example JSON representation of an **EnergyFlowRequest** for a leaf node:
 
 .. code-block:: json
 
+{
+  "children": [],
+  "evse_state": "Charging",
+  "node_type": "Evse",
+  "priority_request": false,
+  "schedule_export": [
     {
-      "children": [],
-      "evse_state": "Charging",
-      "node_type": "Evse",
-      "priority_request": false,
-      "schedule_export": [
-        {
-          "limits_to_leaves": {
-            "ac_max_current_A": 0.0
-          },
-          "limits_to_root": {
-            "ac_max_current_A": 16.0,
-            "ac_max_phase_count": 3,
-            "ac_min_current_A": 0.0,
-            "ac_min_phase_count": 1,
-            "ac_number_of_active_phases": 3,
-            "ac_supports_changing_phases_during_charging": true
-          },
-          "timestamp": "2024-12-17T13:08:36.479Z"
+      "limits_to_leaves": {
+        "ac_max_current_A": {
+          "value": 10.0,
+          "source": "EVSE1_leave"
         }
-      ],
-      "schedule_import": [
-        {
-          "limits_to_leaves": {
-            "ac_max_current_A": 32.0
-          },
-          "limits_to_root": {
-            "ac_max_current_A": 32.0,
-            "ac_max_phase_count": 3,
-            "ac_min_current_A": 6.0,
-            "ac_min_phase_count": 1,
-            "ac_number_of_active_phases": 3,
-            "ac_supports_changing_phases_during_charging": true
-          },
-          "timestamp": "2024-12-17T13:08:36.479Z"
-        }
-      ],
-      "uuid": "evse1"
+      },
+      "limits_to_root": {
+        "ac_max_current_A": {
+          "value": 16.0,
+          "source": "EVSE1_root"
+        },
+        "ac_max_phase_count": {
+          "value": 3,
+          "source": "EVSE1_phase"
+        },
+        "ac_min_current_A": {
+          "value": 0.0,
+          "source": "EVSE1_mincurrent"
+        },
+        "ac_min_phase_count": {
+          "value": 1,
+          "source": "EVSE1_minphase"
+        },
+        "ac_number_of_active_phases": 3,
+        "ac_supports_changing_phases_during_charging": true
+      },
+      "timestamp": "2024-12-17T13:08:36.479Z"
     }
+  ],
+  "schedule_import": [
+    {
+      "limits_to_leaves": {
+        "ac_max_current_A": {
+          "value": 32.0,
+          "source": "EVSE1_leave"
+        }
+      },
+      "limits_to_root": {
+        "ac_max_current_A": {
+          "value": 32.0,
+          "source": "EVSE1_root"
+        },
+        "ac_max_phase_count": {
+          "value": 3,
+          "source": "EVSE1_phase"
+        },
+        "ac_min_current_A": {
+          "value": 6.0,
+          "source": "EVSE1_mincurrent"
+        },
+        "ac_min_phase_count": {
+          "value": 1,
+          "source": "EVSE1_minphase"
+        },
+        "ac_number_of_active_phases": 3,
+        "ac_supports_changing_phases_during_charging": true
+      },
+      "timestamp": "2024-12-17T13:08:36.479Z"
+    }
+  ],
+  "schedule_setpoints": [],
+  "uuid": "evse1"
+}
+
+Setpoints
+---------
+
+Setpoints can optionally be specified for each time slot. Note that the schedule_setpoints list
+may have different timestamp entries then the limiting schedules.
+
+A setpoint entry may have an ampere or watt limit or specify a Watt-Grid Frequency table as setpoint.
+Only one of those three options may be set in each timeslot, but they may be different for each timeslot.
+
+The priority property is intended to be used if multiple conflicting setpoints exist in the energy tree.
+This is not implemented for now, the priority property will be ignored for now.
+
+In most cases a setpoint is not neccessary as the same functionality can also be implemented by setting the 
+limits at the node appropriately. 
+It is especially useful for the bidirectional use case, as it selects whether charging or discharging should be performed:
+
+E.g. with watt limits of -10kW to +10kW and a setpoint of -2kW, it will discharge at 2kW.
+A setpoint of +3kW will switch to charging without changing the limits.
+
+The Frequency based watt limit table can be set through e.g. OCPP 2.1 smart charging. It is intended to
+specifiy a grid stabilizing mode, in which the charger charges when the grid frequency is too high and discharges
+to support the grid if the frequency is too low.
 
 External limits
 ---------------
