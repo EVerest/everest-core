@@ -94,7 +94,6 @@ class PyEVJosevModule():
     # implementation handlers
 
     def _handler_start_charging(self, args) -> bool:
-        log.info('_handler_start_charging() args: %s' % str(args))
 
         self._es.DepartureTime = args['DepartureTime']
         self._es.EAmount = args['EAmount']
