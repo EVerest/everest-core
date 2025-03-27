@@ -308,7 +308,8 @@ private:
     bool is_authorization_withdrawn(const std::vector<int>& selected_evses, const IdToken& id_token);
 
     int get_latest_plugin(const std::vector<int>& evse_ids);
-    void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
+    void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result,
+                     std::unique_lock<std::mutex>& lk);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
                               const AuthorizationType& type);
     void submit_event_for_connector(const int32_t evse_id, const int32_t connector_id,

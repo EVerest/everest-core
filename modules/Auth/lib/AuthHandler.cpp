@@ -59,8 +59,8 @@ void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::
     std::lock_guard<std::mutex> lock(this->event_mutex);
     EVLOG_debug << "Add evse with evse id " << evse_id;
 
-    if (evse_id < 0) {
-        EVLOG_error << "Can not add connector to reservation handler: evse id is negative.";
+    if (evse_id <= 0) {
+        EVLOG_error << "Can not initialize EVSE: evse id is <= 0.";
         return;
     }
 
@@ -332,7 +332,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                         validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;
                     }
                 }
-                this->notify_evse(evse_id, provided_token, validation_result);
+                this->notify_evse(evse_id, provided_token, validation_result, lk);
             }
             i++;
         }
@@ -346,8 +346,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
             if (provided_token.connectors.has_value()) {
                 const auto connectors = provided_token.connectors.value();
                 std::for_each(connectors.begin(), connectors.end(),
-                              [this, provided_token, validation_result](int32_t connector) {
-                                  this->notify_evse(connector, provided_token, validation_result);
+                              [this, provided_token, validation_result, &lk](int32_t connector) {
+                                  this->notify_evse(connector, provided_token, validation_result, lk);
                               });
             }
             return TokenHandlingResult::REJECTED;
@@ -553,7 +553,7 @@ bool AuthHandler::is_authorization_withdrawn(const std::vector<int>& selected_ev
 }
 
 void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token,
-                              const ValidationResult& validation_result) {
+                              const ValidationResult& validation_result, std::unique_lock<std::mutex>& lk) {
     const auto evse_index = this->evses.at(evse_id)->evse_index;
 
     if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
@@ -562,14 +562,20 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
                               validation_result.parent_id_token};
         this->evses.at(evse_id)->identifier.emplace(identifier);
 
+        // wait for potentially running timeout task to finish execution
+        this->cv.wait(lk, [&evse = this->evses.at(evse_id)]() { return !evse->timeout_in_progress.load(); });
+
         this->evses.at(evse_id)->timeout_timer.stop();
         this->evses.at(evse_id)->timeout_timer.timeout(
-            [this, evse_index, evse_id, provided_token]() {
+            [this, evse_index, &evse = this->evses.at(evse_id), provided_token]() {
+                evse->timeout_in_progress = true;
                 std::lock_guard<std::mutex> lk(this->event_mutex);
                 EVLOG_debug << "Authorization timeout for evse#" << evse_index;
-                this->evses.at(evse_id)->identifier.reset();
+                evse->identifier.reset();
                 this->withdraw_authorization_callback(evse_index);
                 this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
+                evse->timeout_in_progress = false;
+                this->cv.notify_all();
             },
             std::chrono::seconds(this->connection_timeout));
         this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
@@ -690,13 +696,13 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     std::lock_guard<std::mutex> lk(this->event_mutex);
     // When connector id is not specified, it is assumed to be '1'.
     const int32_t connector_id = event.connector_id.value_or(1);
-    if (evse_id < 0) {
-        EVLOG_error << "Handle session event: Evse id is negative: that should not be possible.";
+    if (evse_id <= 0) {
+        EVLOG_error << "Handle session event: Evse id is <= 0>: That should not be possible.";
         return;
     }
 
-    if (connector_id < 0) {
-        EVLOG_error << "Handle session event: connector id is negative: that should not be possible.";
+    if (connector_id <= 0) {
+        EVLOG_error << "Handle session event: connector id is <= 0: That should not be possible.";
         return;
     }
 
@@ -719,6 +725,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
 
             this->evses.at(evse_id)->timeout_timer.timeout(
                 [this, evse_id]() {
+                    this->evses.at(evse_id)->timeout_in_progress = true;
                     std::lock_guard<std::mutex> lk(this->event_mutex);
 
                     EVLOG_info << "Plug In timeout for evse#" << evse_id << ". Replug required for this EVSE";
@@ -726,6 +733,8 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
 
                     this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
                     this->evses.at(evse_id)->plug_in_timeout = true;
+                    this->evses.at(evse_id)->timeout_in_progress = false;
+                    this->cv.notify_all();
                 },
                 std::chrono::seconds(this->connection_timeout));
         }
