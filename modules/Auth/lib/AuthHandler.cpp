@@ -693,7 +693,7 @@ void AuthHandler::handle_permanent_fault_cleared(const int evse_id, const int32_
 }
 
 void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& event) {
-    std::lock_guard<std::mutex> lk(this->event_mutex);
+    std::unique_lock<std::mutex> lk(this->event_mutex);
     // When connector id is not specified, it is assumed to be '1'.
     const int32_t connector_id = event.connector_id.value_or(1);
     if (evse_id <= 0) {
@@ -743,6 +743,8 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         this->evses.at(evse_id)->plugged_in = true;
         this->evses.at(evse_id)->transaction_active = true;
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::TRANSACTION_STARTED);
+        // wait for potentially running timeout task to finish execution
+        this->cv.wait(lk, [&evse = this->evses.at(evse_id)]() { return !evse->timeout_in_progress.load(); });
         this->evses.at(evse_id)->timeout_timer.stop();
         check_reservations = true;
         break;
@@ -756,6 +758,8 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         this->evses.at(evse_id)->plug_in_timeout = false;
         this->evses.at(evse_id)->identifier.reset();
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::SESSION_FINISHED);
+        // wait for potentially running timeout task to finish execution
+        this->cv.wait(lk, [&evse = this->evses.at(evse_id)]() { return !evse->timeout_in_progress.load(); });
         this->evses.at(evse_id)->timeout_timer.stop();
         this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
         check_reservations = true;
@@ -771,6 +775,8 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         break;
     case SessionEventEnum::Deauthorized:
         this->evses.at(evse_id)->identifier.reset();
+        // wait for potentially running timeout task to finish execution
+        this->cv.wait(lk, [&evse = this->evses.at(evse_id)]() { return !evse->timeout_in_progress.load(); });
         this->evses.at(evse_id)->timeout_timer.stop();
         break;
     case SessionEventEnum::ReservationStart:
