@@ -53,12 +53,12 @@ display_messageImpl::handle_get_display_messages(types::display_message::GetDisp
     response.messages = std::vector<types::display_message::DisplayMessage>();
     types::display_message::DisplayMessage test_message;
     test_message.message.content = "This is a test message";
-    test_message.message.format = types::display_message::MessageFormat::UTF8;
+    test_message.message.format = types::text_message::MessageFormat::UTF8;
     test_message.message.language = "en";
     response.messages->push_back(test_message);
     types::display_message::DisplayMessage test_message_url;
     test_message_url.message.content = "https://pionix.de";
-    test_message_url.message.format = types::display_message::MessageFormat::URI;
+    test_message_url.message.format = types::text_message::MessageFormat::URI;
     response.messages->push_back(test_message_url);
 
     return response;

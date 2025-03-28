@@ -146,7 +146,7 @@ types:
         type: array
         items:
           type: object
-          $ref: /display_message#/MessageContent
+          $ref: /text_message#/MessageContent
   ValidationResult:
     description: >-
       Result object containing authorization status enum value and an optional
