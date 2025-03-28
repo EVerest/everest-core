@@ -36,11 +36,11 @@ void powermeterImpl::ready() {
                 // Wait for at least one second (more if handle_start_transaction() or handle_stop_transaction() active)
                 do {
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                } while(start_transaction_running.load() == true || stop_transaction_running.load() == true);
+                } while (start_transaction_running.load() == true || stop_transaction_running.load() == true);
                 // Init if needed
-                if(is_initialized.load() == false) {
+                if (is_initialized.load() == false) {
                     is_initialized.store(this->controller->init());
-                    if(is_initialized.load() == true) {
+                    if (is_initialized.load() == true) {
                         // Publish public key once after init
                         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                         this->publish_public_key_ocmf(this->controller->get_publickey(false));
@@ -66,7 +66,7 @@ void powermeterImpl::ready() {
 
                     // Reset previous error (if active)
                     if (this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
-                                                                "Communication timed out")) {
+                                                                   "Communication timed out")) {
                         clear_error("powermeter/CommunicationFault", "Communication timed out");
                     }
                 }
@@ -104,7 +104,7 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
         EVLOG_error << "Aborted: " << *return_value.error;
         return return_value;
     }
-    if(is_initialized.load() == false) {
+    if (is_initialized.load() == false) {
         return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
         return_value.error = "Init of communication not finished yet. Please try again later.";
         EVLOG_error << "Aborted: " << *return_value.error;
@@ -120,7 +120,7 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
     // Perform action
     try {
         // Check if gw information is already set
-        if(this->controller->check_gw_is_empty()) {
+        if (this->controller->check_gw_is_empty()) {
             return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
             return_value.error = "Init seems to be missing. Re-Init triggered. Please try again later.";
             is_initialized.store(false);
@@ -128,8 +128,8 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
             // Stop transaction (if a transaction is still running)
             if (transaction_active.load() == true) {
                 this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
-                                                mod->config.resilience_transaction_request_retries,
-                                                mod->config.resilience_transaction_request_retry_delay);
+                                                  mod->config.resilience_transaction_request_retries,
+                                                  mod->config.resilience_transaction_request_retry_delay);
             }
             // Create user
             if ((static_cast<std::string>(value.identification_data.value_or(""))).length() <= 0) {
@@ -153,8 +153,8 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
             }
             // Start transaction
             this->controller->call_with_retry([this]() { this->controller->post_receipt("B"); },
-                                            mod->config.resilience_transaction_request_retries,
-                                            mod->config.resilience_transaction_request_retry_delay);
+                                              mod->config.resilience_transaction_request_retries,
+                                              mod->config.resilience_transaction_request_retry_delay);
             // Prepare positive response
             return_value.status = types::powermeter::TransactionRequestStatus::OK;
             return_value.error = "";
@@ -177,7 +177,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
     stop_transaction_running.store(true);
     EVLOG_info << "handle_stop_transaction() called.";
 
-    if(is_initialized.load() == false) {
+    if (is_initialized.load() == false) {
         return_value.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
         return_value.error = "Init of communication not finished yet.";
         EVLOG_error << "Aborted: " << *return_value.error;
