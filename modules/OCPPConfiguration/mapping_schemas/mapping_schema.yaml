@@ -1,0 +1,52 @@
+$schema: http://json-schema.org/draft-07/schema#
+description: Json schema for OCPP to Everest configuration mapping
+type: array
+items:
+  type: object
+  required:
+    - ocpp_definition
+    - everest_definition
+  properties:
+    ocpp_definition:
+      type: object
+      required:
+        - variable
+      properties:
+        component:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+            instance:
+              type: string
+            evse:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                connector_id:
+                  type: integer
+        variable:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+            instance:
+              type: string
+    everest_definition:
+      type: object
+      required:
+        - module_id
+        - config_param
+      properties:
+        module_id:
+          type: string
+        config_param:
+          type: string
+  additionalProperties: false
