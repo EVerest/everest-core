@@ -18,12 +18,8 @@ target_include_directories(${TEST_TARGET_NAME}
 
 target_link_libraries(${TEST_TARGET_NAME}
     PRIVATE
-        GTest::gmock
         GTest::gtest_main
-        everest::timer
         everest::log
-        everest::framework
-        everest::staging::helpers
         websockets_shared
 )
 
