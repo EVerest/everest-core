@@ -12,11 +12,13 @@ ev_setup_cpp_module()
 
 if (DISABLE_EDM)
     find_package(libwebsockets REQUIRED)
+    find_package(json-rpc-cxx REQUIRED)
 endif()
 
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         websockets_shared
+        json-rpc-cxx
 )
 
 target_sources(${MODULE_NAME}

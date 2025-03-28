@@ -64,6 +64,14 @@ libwebsockets:
     - LWS_WITHOUT_TEST_PING ON
     - LWS_WITHOUT_TEST_CLIENT ON
     - LWS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR}
+json-rpc-cxx:
+  git: https://github.com/jsonrpcx/json-rpc-cxx.git
+  git_tag: v0.3.2
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_JSON_RPC_CXX"
+  options:
+    - COMPILE_TESTS OFF
+    - COMPILE_EXAMPLES OFF
+    - CODE_COVERAGE OFF
 
 # libcbv2g
 libcbv2g:
