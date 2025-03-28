@@ -4396,6 +4396,16 @@ async def test_reservation_remote_start_tx(
         validate_remote_start_stop_transaction,
     )
 
+    # expect StatusNotification with status preparing
+    assert await wait_for_and_validate_next_message_only_with_specific_action(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.preparing
+        ),
+    )
+
     # start charging session
     test_controller.plug_in()
 
@@ -4708,7 +4718,7 @@ async def test_reservation_connector_zero_supported(
     test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
 
     # expect StatusNotification with status preparing
-    assert await wait_for_and_validate(
+    assert await wait_for_and_validate_next_message_only_with_specific_action(
         test_utility,
         charge_point_v16,
         "StatusNotification",
