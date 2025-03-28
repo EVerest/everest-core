@@ -67,7 +67,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 63e25cdd0dd993f8d78d527195a2dd355d90e5fa
+  git_tag: bugfix/reservation-state-transitions # fixme
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
