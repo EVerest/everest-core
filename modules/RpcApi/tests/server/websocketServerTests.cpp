@@ -5,7 +5,6 @@
 #include <atomic>
 #include <everest/logging.hpp>
 
-
 #include "../server/websocketServer.hpp"
 
 using namespace server;
@@ -48,7 +47,6 @@ protected:
             } catch (const std::exception& e) {
                 EVLOG_error << "Exception occurred while handling data available: " << e.what();
             }
-            
         };
 
         ws_server->start_server();
@@ -270,9 +268,10 @@ TEST_F(WebSocketServerTest, ClientCanSendAndReceiveData) {
 
     std::unique_lock<std::mutex> lock(cv_mutex);
     cv.wait_for(lock, std::chrono::seconds(1), [&] { return !received_data.empty(); });
+    lock.unlock();
 
     ASSERT_EQ(ws_server->connections_count(), 1);
-    ASSERT_EQ(received_data[connected_clients[0]], "Hello World!");
+    ASSERT_EQ(received_data[(get_connected_clients()[0])], "Hello World!");
 }
 
 // Test: Server kills client connection
