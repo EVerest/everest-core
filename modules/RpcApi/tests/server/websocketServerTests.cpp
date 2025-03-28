@@ -275,3 +275,25 @@ TEST_F(WebSocketServerTest, ClientCanSendAndReceiveData) {
     ASSERT_EQ(received_data[connected_clients[0]], "Hello World!");
 }
 
+// Test: Server kills client connection
+TEST_F(WebSocketServerTest, ServerCanKillClientConnection) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    ASSERT_TRUE(client.is_connected());
+
+    client.send("Hello World!");
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    std::unique_lock<std::mutex> lock(cv_mutex);
+    cv.wait_for(lock, std::chrono::seconds(1), [&] { return !received_data.empty(); });
+    lock.unlock();
+
+    ASSERT_EQ(ws_server->connections_count(), 1);
+    ASSERT_EQ(received_data[get_connected_clients()[0]], "Hello World!");
+
+    ws_server->kill_client_connection(get_connected_clients()[0], "Test kill");
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    ASSERT_EQ(ws_server->connections_count(), 0);
+}
