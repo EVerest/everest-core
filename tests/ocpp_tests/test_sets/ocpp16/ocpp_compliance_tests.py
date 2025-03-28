@@ -25,7 +25,7 @@ from validations import (
 
 from everest.testing.ocpp_utils.fixtures import *
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
-from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility, ValidationMode
+from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, wait_for_and_validate_next_message_only_with_specific_action, TestUtility, ValidationMode
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP16ConfigAdjustment
 from everest_test_utils import *
 # fmt: on
@@ -4315,7 +4315,7 @@ async def test_reservation_local_start_tx(
     test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
 
     # expect StatusNotification with status preparing
-    assert await wait_for_and_validate(
+    assert await wait_for_and_validate_next_message_only_with_specific_action(
         test_utility,
         charge_point_v16,
         "StatusNotification",
@@ -4394,6 +4394,16 @@ async def test_reservation_remote_start_tx(
         "RemoteStartTransaction",
         call_result.RemoteStartTransactionPayload(RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
+    )
+
+    # expect StatusNotification with status preparing
+    assert await wait_for_and_validate_next_message_only_with_specific_action(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.preparing
+        ),
     )
 
     # start charging session
@@ -4708,7 +4718,7 @@ async def test_reservation_connector_zero_supported(
     test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
 
     # expect StatusNotification with status preparing
-    assert await wait_for_and_validate(
+    assert await wait_for_and_validate_next_message_only_with_specific_action(
         test_utility,
         charge_point_v16,
         "StatusNotification",
