@@ -17,17 +17,16 @@ IsaIemDcrController::IsaIemDcrController(std::unique_ptr<HttpClientInterface> ht
 
 bool IsaIemDcrController::init() {
     try {
-        EVLOG_info << "Isabellenhuette IEM-DCR: Connecting to module...";   
+        EVLOG_info << "Isabellenhuette IEM-DCR: Connecting to module...";
         // Check connection with polling REST node gw
-        this->call_with_retry([this]() { this->get_gw(); },
-                            snapshot_config.resilience_initial_connection_retries,
-                            snapshot_config.resilience_initial_connection_retry_delay);
+        this->call_with_retry([this]() { this->get_gw(); }, snapshot_config.resilience_initial_connection_retries,
+                              snapshot_config.resilience_initial_connection_retry_delay);
         // Send gw information
         try {
             this->post_gw();
         } catch (IsaIemDcrController::UnexpectedIemDcrResponseCode& error) {
             EVLOG_warning << "Node /gw seems to be already set. If those values should be updated, "
-                            "please restart IEM-DCR and then also this system.";
+                             "please restart IEM-DCR and then also this system.";
         }
         // Send initial tariff information
         try {
@@ -177,8 +176,7 @@ void IsaIemDcrController::post_datetime() {
 
 void IsaIemDcrController::refresh_datetime_if_required() {
     const auto now = std::chrono::steady_clock::now();
-    const auto elapsed =
-        std::chrono::duration_cast<std::chrono::hours>(now - last_datetime_sync.load());
+    const auto elapsed = std::chrono::duration_cast<std::chrono::hours>(now - last_datetime_sync.load());
     if (elapsed.count() >= snapshot_config.datetime_resync_interval) {
         try {
             this->post_datetime();
