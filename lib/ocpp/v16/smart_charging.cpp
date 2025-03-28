@@ -275,19 +275,15 @@ void SmartChargingHandler::add_tx_default_profile(const ChargingProfile& profile
     if (connector_id == 0) {
         for (size_t id = 1; id <= this->connectors.size() - 1; id++) {
             this->connectors.at(id)->stack_level_tx_default_profiles_map[profile.stackLevel] = profile;
-            try {
-                this->database_handler->insert_or_update_charging_profile(connector_id, profile);
-            } catch (const QueryExecutionException& e) {
-                EVLOG_warning << "Could not store TxDefaultProfile in the database: " << e.what();
-            }
         }
     } else {
         this->connectors.at(connector_id)->stack_level_tx_default_profiles_map[profile.stackLevel] = profile;
-        try {
-            this->database_handler->insert_or_update_charging_profile(connector_id, profile);
-        } catch (const QueryExecutionException& e) {
-            EVLOG_warning << "Could not store TxDefaultProfile in the database: " << e.what();
-        }
+    }
+    try {
+        this->database_handler->insert_or_update_charging_profile(connector_id, profile);
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not store TxDefaultProfile for connector id " << connector_id
+                      << " in the database: " << e.what();
     }
 }
 

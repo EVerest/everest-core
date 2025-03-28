@@ -2385,6 +2385,8 @@ void ChargePointImpl::handleSetChargingProfileRequest(ocpp::Call<SetChargingProf
         // existing charging profile, otherwise it SHALL be added.
         this->smart_charging_handler->clear_all_profiles_with_filter(profile.chargingProfileId, std::nullopt,
                                                                      std::nullopt, std::nullopt, true);
+        this->smart_charging_handler->clear_all_profiles_with_filter(std::nullopt, connector_id, profile.stackLevel,
+                                                                     profile.chargingProfilePurpose, false);
         if (profile.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
             this->smart_charging_handler->add_charge_point_max_profile(profile);
         } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxDefaultProfile) {
