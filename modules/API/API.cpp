@@ -8,6 +8,7 @@
 namespace module {
 
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
+static const std::string API_MODULE_SOURCE = "API_module";
 
 SessionInfo::SessionInfo() :
     start_energy_import_wh(0),
@@ -53,19 +54,19 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = 0;
+    zero_entry.limits_to_leaves.total_power_W = {0};
 
     if (is_watts) {
-        target_entry.limits_to_leaves.total_power_W = std::fabs(limit);
+        target_entry.limits_to_leaves.total_power_W = {std::fabs(limit), API_MODULE_SOURCE};
     } else {
-        target_entry.limits_to_leaves.ac_max_current_A = std::fabs(limit);
+        target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(limit), API_MODULE_SOURCE};
     }
 
     if (limit > 0) {
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     } else {
-        external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
     }
     return external_limits;
 }
@@ -78,24 +79,24 @@ types::energy::ExternalLimits get_external_limits(int32_t phases, float amps) {
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = 0;
+    zero_entry.limits_to_leaves.total_power_W = {0, API_MODULE_SOURCE};
 
     // check if phases are 1 or 3, otherwise throw an exception
     const auto is_valid = (phases == 1 || phases == 3);
     if (is_valid) {
-        target_entry.limits_to_leaves.ac_max_phase_count = phases;
-        target_entry.limits_to_leaves.ac_min_phase_count = phases;
-        target_entry.limits_to_leaves.ac_max_current_A = std::fabs(amps);
+        target_entry.limits_to_leaves.ac_max_phase_count = {phases, API_MODULE_SOURCE};
+        target_entry.limits_to_leaves.ac_min_phase_count = {phases, API_MODULE_SOURCE};
+        target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(amps), API_MODULE_SOURCE};
     } else {
         std::string error_msg = "Invalid phase count " + std::to_string(phases);
         throw std::out_of_range(error_msg);
     }
 
     if (amps > 0) {
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     } else {
-        external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
     }
     return external_limits;
 }
@@ -106,13 +107,13 @@ static void remove_error_from_list(std::vector<module::SessionInfo::Error>& list
                list.end());
 }
 
-void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event) {
+void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     using Event = types::evse_manager::SessionEventEnum;
 
     // using switch since some code analysis tools can detect missing cases
     // (when new events are added)
-    switch (event) {
+    switch (event.event) {
     case Event::Enabled:
         this->state = State::Unplugged;
         break;
@@ -141,10 +142,19 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         this->state = State::WaitingForEnergy;
         break;
     case Event::ChargingFinished:
-    case Event::StoppingCharging:
-    case Event::TransactionFinished:
         this->state = State::Finished;
         break;
+    case Event::StoppingCharging:
+        this->state = State::FinishedEV;
+        break;
+    case Event::TransactionFinished: {
+        if (event.transaction_finished->reason == types::evse_manager::StopTransactionReason::Local) {
+            this->state = State::FinishedEVSE;
+        } else {
+            this->state = State::Finished;
+        }
+        break;
+    }
     case Event::PluginTimeout:
         this->state = State::AuthTimeout;
         break;
@@ -186,6 +196,10 @@ std::string SessionInfo::state_to_string(SessionInfo::State s) {
         return "Charging";
     case SessionInfo::State::Finished:
         return "Finished";
+    case SessionInfo::State::FinishedEVSE:
+        return "FinishedEVSE";
+    case SessionInfo::State::FinishedEV:
+        return "FinishedEV";
     case SessionInfo::State::AuthTimeout:
         return "AuthTimeout";
     }
@@ -398,7 +412,7 @@ void API::init() {
 
         evse->subscribe_session_event(
             [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
-                session_info->update_state(session_event.event);
+                session_info->update_state(session_event);
 
                 if (session_event.source.has_value()) {
                     const auto source = session_event.source.value();

@@ -70,43 +70,6 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/resume_charging", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) { charger->resume_charging(); });
 
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/stop_transaction", mod->config.connector_id),
-                        [this](const std::string& data) {
-                            types::evse_manager::StopTransactionRequest request;
-                            request.reason = types::evse_manager::StopTransactionReason::Local;
-                            mod->charger->cancel_transaction(request);
-                        });
-
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/emergency_stop", mod->config.connector_id),
-                        [this](const std::string& data) {
-                            if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
-                            }
-                            types::evse_manager::StopTransactionRequest request;
-                            request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
-                            mod->charger->cancel_transaction(request);
-                        });
-
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_malfunction", mod->config.connector_id),
-                        [this](const std::string& data) {
-                            if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_Malfunction);
-                            }
-                            types::evse_manager::StopTransactionRequest request;
-                            request.reason = types::evse_manager::StopTransactionReason::Other;
-                            mod->charger->cancel_transaction(request);
-                        });
-
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_utility_int", mod->config.connector_id),
-                        [this](const std::string& data) {
-                            if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_UtilityInterruptEvent);
-                            }
-                            types::evse_manager::StopTransactionRequest request;
-                            request.reason = types::evse_manager::StopTransactionReason::Other;
-                            mod->charger->cancel_transaction(request);
-                        });
-
     // /Interface to Node-RED debug UI
 
     if (mod->r_powermeter_billing().size() > 0) {
@@ -174,7 +137,7 @@ void evse_managerImpl::ready() {
             if (mod->is_reserved()) {
                 session_started.reservation_id = mod->get_reservation_id();
                 if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
-                    this->mod->cancel_reservation(true);
+                    this->mod->cancel_reservation(false);
                 }
             }
 
@@ -207,7 +170,7 @@ void evse_managerImpl::ready() {
         transaction_started.meter_value = mod->get_latest_powermeter_data_billing();
         if (mod->is_reserved()) {
             transaction_started.reservation_id.emplace(mod->get_reservation_id());
-            mod->cancel_reservation(true);
+            mod->cancel_reservation(false); // this allows OCPP1.6 to not move back to available.
         }
 
         transaction_started.id_tag = id_token;

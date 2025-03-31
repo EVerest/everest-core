@@ -57,7 +57,7 @@ libcurl:
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
 
 # EvseSecurity
-# This has to appear before libocpp in this file since it is also a direct dependency 
+# This has to appear before libocpp in this file since it is also a direct dependency
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
@@ -67,7 +67,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 593ad434ef59407ae3af87b1d2172abafbd904b7
+  git_tag: ae8f7fbf17a1b928dd8f3c2b8e9172d033ead3ad
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -86,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: b7e99aa7c2834710a10f5cf0b8f111b71dfc0290
+  git_tag: 749c77c422c83b7669ba9e4000c3cc3ad88599cf
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git

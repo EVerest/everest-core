@@ -280,6 +280,8 @@ void OCPP201::init() {
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
 
+    source_ext_limit = info.id + "/OCPP_set_external_limits";
+
     // ensure all evse_energy_sink(s) that are connected have an evse id mapping
     for (const auto& evse_sink : this->r_evse_energy_sink) {
         if (not evse_sink->get_mapping().has_value()) {
@@ -1337,12 +1339,16 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (composite_schedule.chargingRateUnit == ocpp::v2::ChargingRateUnitEnum::A) {
-                limits_req.ac_max_current_A = period.limit;
+                if (period.limit.has_value()) {
+                    limits_req.ac_max_current_A = {period.limit.value(), source_ext_limit};
+                }
                 if (period.numberPhases.has_value()) {
-                    limits_req.ac_max_phase_count = period.numberPhases.value();
+                    limits_req.ac_max_phase_count = {period.numberPhases.value(), source_ext_limit};
                 }
             } else {
-                limits_req.total_power_W = period.limit;
+                if (period.limit.has_value()) {
+                    limits_req.total_power_W = {period.limit.value(), source_ext_limit};
+                }
             }
             schedule_req_entry.limits_to_leaves = limits_req;
             schedule_import.push_back(schedule_req_entry);
