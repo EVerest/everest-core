@@ -430,11 +430,21 @@ std::chrono::minutes IsaIemDcrController::helper_convert_timezone(std::string& t
     }
 }
 
+bool IsaIemDcrController::helper_is_daylight_saving_time() {
+    const std::time_t now = std::time(nullptr);
+    const std::tm* localTime = std::localtime(&now);
+    return localTime->tm_isdst > 0;
+}
+
 std::string IsaIemDcrController::helper_get_current_datetime() {
     // Get UTC time
     auto now = std::chrono::system_clock::now();
     // Add configured timezone information
-    const std::time_t now_with_offset = std::chrono::system_clock::to_time_t(now + zone_time_offset);
+    std::time_t now_with_offset = std::chrono::system_clock::to_time_t(now + zone_time_offset);
+    // Add DST offset if configured
+    if(snapshot_config.timezone_handle_DST && helper_is_daylight_saving_time()) {
+        now_with_offset = now_with_offset + 3600;
+    }
     // Generate and return time in correct format
     std::ostringstream oss;
     oss << std::put_time(gmtime(&now_with_offset), "%FT%T,000") << snapshot_config.timezone;
