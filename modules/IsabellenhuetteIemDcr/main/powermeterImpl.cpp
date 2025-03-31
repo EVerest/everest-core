@@ -22,7 +22,7 @@ void powermeterImpl::init() {
     this->controller = std::make_unique<IsaIemDcrController>(
         std::move(http_client),
         IsaIemDcrController::SnapshotConfig{
-            mod->config.timezone, mod->config.datetime_resync_interval,
+            mod->config.timezone, mod->config.timezone_handle_DST, mod->config.datetime_resync_interval,
             mod->config.resilience_initial_connection_retries, mod->config.resilience_initial_connection_retry_delay,
             mod->config.resilience_transaction_request_retries, mod->config.resilience_transaction_request_retry_delay,
             mod->config.CT, mod->config.CI, mod->config.TT_initial, mod->config.US});
@@ -139,7 +139,7 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
                     // Nothing to do here
                 }
             }
-            // Wait for being sure in idle mode
+            // Wait for being surely in idle mode
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
             // Create user
             if ((static_cast<std::string>(value.identification_data.value_or(""))).length() <= 0) {

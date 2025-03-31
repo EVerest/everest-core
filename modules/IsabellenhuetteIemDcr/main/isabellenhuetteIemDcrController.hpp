@@ -20,6 +20,7 @@ class IsaIemDcrController {
 public:
     struct SnapshotConfig {
         std::string timezone;
+        bool timezone_handle_DST;
         int datetime_resync_interval;
         int resilience_initial_connection_retries;
         int resilience_initial_connection_retry_delay;
@@ -154,6 +155,7 @@ private:
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> last_datetime_sync;
 
     std::chrono::minutes helper_convert_timezone(std::string& timezone);
+    bool helper_is_daylight_saving_time();
     std::string helper_get_current_datetime();
     std::string helper_remove_first_and_last_char(const std::string& input);
     bool helper_get_bool_from_OCMFUserIdentificationStatus(types::powermeter::OCMFUserIdentificationStatus IS);

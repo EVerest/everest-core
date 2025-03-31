@@ -11,15 +11,19 @@ config:
     maximum: 65535
     default: 80
   timezone:
-    description: The timezone offset information according to ISO8601 (version without colon).
+    description: The timezone offset information according to ISO8601 (version without colon) for normal time.
     type: string
     default: "+0100"
+  timezone_handle_DST:
+    description: Controls whether daylight saving time (DST) is handled or normal time is used continuously.
+    type: boolean
+    default: true
   datetime_resync_interval:
     description: Interval for cyclic time resync in hours.
     type: integer
     minimum: 1
     maximum: 24
-    default: 12
+    default: 2
   resilience_initial_connection_retries:
     description: For the controller resilience, the number of retries to connect to the powermeter at module initialization.
     type: integer

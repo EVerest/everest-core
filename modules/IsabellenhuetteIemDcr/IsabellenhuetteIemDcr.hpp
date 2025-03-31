@@ -23,6 +23,7 @@ struct Conf {
     std::string ip_address;
     int port_http;
     std::string timezone;
+    bool timezone_handle_DST;
     int datetime_resync_interval;
     int resilience_initial_connection_retries;
     int resilience_initial_connection_retry_delay;
