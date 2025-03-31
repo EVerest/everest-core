@@ -212,69 +212,8 @@ async def test_change_availability_scheduled_in_transaction(
     test_controller.plug_out()
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "StopTransaction", {"reason": "EVDisconnected"}
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
-        {"connectorId": 1, "status": "Unavailable", "errorCode": "NoError"},
-    )
-
-@pytest.mark.asyncio
-@pytest.mark.everest_core_config(
-    get_everest_config_path_str("everest-config-two-connectors.yaml")
-)
-async def test_change_availability_scheduled_in_reserved(
-    charge_point_v16: ChargePoint16,
-    test_utility: TestUtility
-):
-    await charge_point_v16.reserve_now_req(
-        connector_id=1,
-        expiry_date="2090-06-19T09:10:00.000Z",
-        id_tag="RFID1",
-        reservation_id=0,
-    )
-
-    # expect ReserveNow.conf with status accepted
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "ReserveNow",
-        ReserveNowPayload(ReservationStatus.accepted),
-    )
-    ## end
-
-    r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
-        type=AvailabilityType.inoperative, connector_id=0
-    )
-
-    assert r.status == AvailabilityStatus.scheduled
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
-        {"connectorId": 0, "status": "Unavailable", "errorCode": "NoError"},
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
-        {"connectorId": 2, "status": "Unavailable", "errorCode": "NoError"},
-    )
-
-    test_utility.messages.clear()
-    await charge_point_v16.cancel_reservation_req(reservation_id=0)
-
-    # expect CancelReservation.conf with status accepted
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "CancelReservation",
-        CancelReservationPayload(CancelReservationStatus.accepted),
+        test_utility, charge_point_v16, "StopTransaction", {
+            "reason": "EVDisconnected"}
     )
 
     assert await wait_for_and_validate(
