@@ -3,7 +3,6 @@
 
 import pytest
 import asyncio
-import logging
 from datetime import datetime
 
 from everest.testing.core_utils.controller.test_controller_interface import (
