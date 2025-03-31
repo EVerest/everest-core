@@ -137,7 +137,7 @@ void evse_managerImpl::ready() {
             if (mod->is_reserved()) {
                 session_started.reservation_id = mod->get_reservation_id();
                 if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
-                    this->mod->cancel_reservation(true);
+                    this->mod->cancel_reservation(false);
                 }
             }
 
@@ -170,7 +170,7 @@ void evse_managerImpl::ready() {
         transaction_started.meter_value = mod->get_latest_powermeter_data_billing();
         if (mod->is_reserved()) {
             transaction_started.reservation_id.emplace(mod->get_reservation_id());
-            mod->cancel_reservation(true);
+            mod->cancel_reservation(false); // this allows OCPP1.6 to not move back to available.
         }
 
         transaction_started.id_tag = id_token;
