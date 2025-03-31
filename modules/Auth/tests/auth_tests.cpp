@@ -1644,4 +1644,61 @@ TEST_F(AuthTest, test_two_authorization_plug_events) {
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
 }
 
+TEST_F(AuthTest, test_token_swipe_race_with_timeout) {
+
+    auto token_entered_promise = std::make_shared<std::promise<void>>();
+    auto timeout_entered_promise = std::make_shared<std::promise<void>>();
+
+    std::shared_future<void> token_entered_future = token_entered_promise->get_future();
+    std::shared_future<void> timeout_entered_future = timeout_entered_promise->get_future();
+
+    std::atomic<bool> token_validation_started{false};
+    std::atomic<bool> timeout_triggered{false};
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    // Plug-in first
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    this->auth_handler->register_validate_token_callback(
+        [token_entered_promise, timeout_entered_future](const ProvidedIdToken& provided_token) {
+            token_entered_promise->set_value();
+            timeout_entered_future.wait();
+
+            ValidationResult result;
+            result.authorization_status = AuthorizationStatus::Accepted;
+            result.parent_id_token = {PARENT_ID_TOKEN, types::authorization::IdTokenType::ISO14443};
+            return std::vector<ValidationResult>{ValidationResult{}, result};
+        });
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+
+    TokenHandlingResult result;
+
+    std::thread token_thread([&]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds((CONNECTION_TIMEOUT * 1000) - 200));
+        result = this->auth_handler->on_token(provided_token);
+    });
+
+    std::thread timeout_simulation_thread([timeout_entered_promise, token_entered_future, &timeout_triggered]() {
+        token_entered_future.wait();
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        timeout_triggered = true;
+        timeout_entered_promise->set_value();
+    });
+
+    token_thread.join();
+    timeout_simulation_thread.join();
+
+    ASSERT_TRUE(timeout_triggered);
+    ASSERT_EQ(result, TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+}
+
 } // namespace module
