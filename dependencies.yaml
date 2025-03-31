@@ -57,7 +57,7 @@ libcurl:
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
 
 # EvseSecurity
-# This has to appear before libocpp in this file since it is also a direct dependency 
+# This has to appear before libocpp in this file since it is also a direct dependency
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
@@ -86,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: 1fb2f3e706ea4cd06db96220eb7996bbf2de3d43
+  git_tag: feat/new-validation-func-ocpp # fixme
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
