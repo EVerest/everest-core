@@ -56,6 +56,28 @@ def abs_req2_test1():
     )
 
 
+def abs_req2_test_con0():
+    return call.SetChargingProfilePayload(
+        connector_id=0,
+        cs_charging_profiles=ChargingProfile(
+            charging_profile_id=2,
+            stack_level=0,
+            charging_profile_purpose=ChargingProfilePurposeType.charge_point_max_profile,
+            charging_profile_kind=ChargingProfileKindType.absolute,
+            valid_from=datetime.utcnow().isoformat(),
+            valid_to=(datetime.utcnow() + timedelta(days=3)).isoformat(),
+            charging_schedule=ChargingSchedule(
+                duration=86400,
+                start_schedule=datetime.utcnow().isoformat(),
+                charging_rate_unit=ChargingRateUnitType.amps,
+                charging_schedule_period=[
+                    ChargingSchedulePeriod(start_period=0, limit=20)
+                ],
+            ),
+        ),
+    )
+
+
 def abs_req3_test1():
     return call.SetChargingProfilePayload(
         connector_id=1,
@@ -93,7 +115,8 @@ def abs_exp_test1(passed_seconds):
             start_schedule=datetime.utcnow().isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=8, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=8, number_phases=3),
                 ChargingSchedulePeriod(
                     start_period=50 - passed_seconds, limit=10, number_phases=3
                 ),
@@ -129,9 +152,12 @@ def abs_req1_test2():
                 start_schedule=datetime.utcnow().isoformat(),
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=6, number_phases=3),
-                    ChargingSchedulePeriod(start_period=60, limit=10, number_phases=3),
-                    ChargingSchedulePeriod(start_period=120, limit=8, number_phases=3),
+                    ChargingSchedulePeriod(
+                        start_period=0, limit=6, number_phases=3),
+                    ChargingSchedulePeriod(
+                        start_period=60, limit=10, number_phases=3),
+                    ChargingSchedulePeriod(
+                        start_period=120, limit=8, number_phases=3),
                 ],
             ),
         ),
@@ -148,7 +174,8 @@ def abs_exp_test2(passed_seconds):
             start_schedule=datetime.utcnow().isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=6, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=6, number_phases=3),
                 ChargingSchedulePeriod(
                     start_period=60 - passed_seconds, limit=10, number_phases=3
                 ),
@@ -195,7 +222,8 @@ def abs_exp_test3(passed_seconds):
             start_schedule=datetime.utcnow().isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=6, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=6, number_phases=3),
                 ChargingSchedulePeriod(
                     start_period=60 - passed_seconds, limit=10, number_phases=3
                 ),
@@ -268,7 +296,8 @@ def abs_exp_test5_1(passed_seconds):
             start_schedule=datetime.utcnow().isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=7, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=7, number_phases=3),
                 ChargingSchedulePeriod(
                     start_period=100 - passed_seconds, limit=9, number_phases=3
                 ),
@@ -293,7 +322,8 @@ def abs_exp_test5_2(passed_seconds):
             start_schedule=datetime.utcnow().isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=7, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=7, number_phases=3),
                 ChargingSchedulePeriod(
                     start_period=100 - passed_seconds, limit=9, number_phases=3
                 ),
@@ -392,10 +422,14 @@ def abs_exp_test6_con0():
             start_schedule=datetime.utcnow().isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=18, number_phases=3),
-                ChargingSchedulePeriod(start_period=50, limit=24, number_phases=3),
-                ChargingSchedulePeriod(start_period=100, limit=14, number_phases=3),
-                ChargingSchedulePeriod(start_period=200, limit=24, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=18, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=50, limit=24, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=100, limit=14, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=200, limit=24, number_phases=3),
             ],
         ),
     )
@@ -411,7 +445,8 @@ def abs_exp_test6_con1(passed_seconds):
             start_schedule=datetime.utcnow().isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=16, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=16, number_phases=3),
                 ChargingSchedulePeriod(
                     start_period=100 - passed_seconds, limit=14, number_phases=3
                 ),
@@ -439,13 +474,65 @@ def abs_exp_test6_con2(passed_seconds):
             start_schedule=datetime.utcnow().isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=10, number_phases=3),
                 ChargingSchedulePeriod(
                     start_period=100 - passed_seconds, limit=14, number_phases=3
                 ),
                 ChargingSchedulePeriod(
                     start_period=200 - passed_seconds, limit=16, number_phases=3
                 ),
+            ],
+        ),
+    )
+
+
+def abs_exp_test1_con0(passed_seconds):
+    return call_result.GetCompositeSchedulePayload(
+        status=GetCompositeScheduleStatus.accepted,
+        schedule_start=datetime.utcnow().isoformat(),
+        connector_id=1,
+        charging_schedule=ChargingSchedule(
+            duration=400,
+            start_schedule=datetime.utcnow().isoformat(),
+            charging_rate_unit=ChargingRateUnitType.amps,
+            charging_schedule_period=[
+                ChargingSchedulePeriod(
+                    start_period=0, limit=10, number_phases=3)
+            ],
+        ),
+    )
+
+
+def abs_exp_test2_con0(passed_seconds):
+    return call_result.GetCompositeSchedulePayload(
+        status=GetCompositeScheduleStatus.accepted,
+        schedule_start=datetime.utcnow().isoformat(),
+        connector_id=1,
+        charging_schedule=ChargingSchedule(
+            duration=400,
+            start_schedule=datetime.utcnow().isoformat(),
+            charging_rate_unit=ChargingRateUnitType.amps,
+            charging_schedule_period=[
+                ChargingSchedulePeriod(
+                    start_period=0, limit=20, number_phases=3)
+            ],
+        ),
+    )
+
+
+def abs_exp_test3_con0(passed_seconds):
+    return call_result.GetCompositeSchedulePayload(
+        status=GetCompositeScheduleStatus.accepted,
+        schedule_start=datetime.utcnow().isoformat(),
+        connector_id=1,
+        charging_schedule=ChargingSchedule(
+            duration=90,
+            start_schedule=datetime.utcnow().isoformat(),
+            charging_rate_unit=ChargingRateUnitType.amps,
+            charging_schedule_period=[
+                ChargingSchedulePeriod(
+                    start_period=0, limit=48, number_phases=3)
             ],
         ),
     )
