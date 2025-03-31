@@ -130,7 +130,17 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
                 this->controller->call_with_retry([this]() { this->controller->post_receipt("E"); },
                                                   mod->config.resilience_transaction_request_retries,
                                                   mod->config.resilience_transaction_request_retry_delay);
+            } else {
+                // transaction_active may be deprecated as it is only updated every second.
+                // So try to end transaction at least once.
+                try {
+                    this->controller->post_receipt("E");
+                } catch (...) {
+                    // Nothing to do here
+                }
             }
+            // Wait for being sure in idle mode
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
             // Create user
             if ((static_cast<std::string>(value.identification_data.value_or(""))).length() <= 0) {
                 this->controller->call_with_retry(
@@ -221,13 +231,10 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
 }
 
 void powermeterImpl::check_config() {
+    // Numeric range checks are aready covered by manifest minimum and maximum declaration
     if (mod->config.ip_address.length() <= 0) {
         EVLOG_error << "Incorrect module config: parameter ip_address is empty." << std::endl;
         throw std::runtime_error("ip_address invalid. Please check configuration.");
-    }
-    if (mod->config.port_http < 0) {
-        EVLOG_error << "Incorrect module config: parameter port_http has a negative value." << std::endl;
-        throw std::runtime_error("port_http invalid. Please check configuration.");
     }
     if (mod->config.timezone.length() != 5) {
         EVLOG_error
@@ -239,33 +246,6 @@ void powermeterImpl::check_config() {
         EVLOG_error << "Incorrect module config: parameter timezone has invalid format. It must begin with + or - char."
                     << std::endl;
         throw std::runtime_error("Timezone invalid. Please check configuration.");
-    }
-    if (mod->config.datetime_resync_interval <= 0) {
-        EVLOG_error << "Incorrect module config: The value of parameter datetime_resync_interval must be 1 or greater."
-                    << std::endl;
-        throw std::runtime_error("datetime_resync_interval invalid. Please check configuration.");
-    }
-    if (mod->config.resilience_initial_connection_retries < 0) {
-        EVLOG_error << "Incorrect module config: parameter resilience_initial_connection_retries has a negative value."
-                    << std::endl;
-        throw std::runtime_error("port_http resilience_initial_connection_retries. Please check configuration.");
-    }
-    if (mod->config.resilience_initial_connection_retry_delay < 0) {
-        EVLOG_error
-            << "Incorrect module config: parameter resilience_initial_connection_retry_delay has a negative value."
-            << std::endl;
-        throw std::runtime_error("port_http resilience_initial_connection_retry_delay. Please check configuration.");
-    }
-    if (mod->config.resilience_transaction_request_retries < 0) {
-        EVLOG_error << "Incorrect module config: parameter resilience_transaction_request_retries has a negative value."
-                    << std::endl;
-        throw std::runtime_error("port_http resilience_transaction_request_retries. Please check configuration.");
-    }
-    if (mod->config.resilience_transaction_request_retry_delay < 0) {
-        EVLOG_error
-            << "Incorrect module config: parameter resilience_transaction_request_retry_delay has a negative value."
-            << std::endl;
-        throw std::runtime_error("port_http resilience_transaction_request_retry_delay. Please check configuration.");
     }
     if (mod->config.CT.length() <= 0) {
         EVLOG_error << "Incorrect module config: parameter CT is empty." << std::endl;
