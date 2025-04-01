@@ -34,8 +34,6 @@ protected:
     void v2g_ctx_init_charging_state_cleared() {
         // checks try to match the order is v2g.hpp
 
-        EXPECT_EQ(ctx->com_setup_timeout, nullptr);
-
         EXPECT_EQ(ctx->last_v2g_msg, V2G_UNKNOWN_MSG);
         EXPECT_EQ(ctx->current_v2g_msg, V2G_UNKNOWN_MSG);
         EXPECT_EQ(ctx->state, 0);
@@ -96,7 +94,6 @@ TEST(RunFirst, v2g_ctx_init_charging_values) {
 TEST_F(V2gCtxTest, v2g_ctx_init_charging_stateTrue) {
     // called on session start in v2g_handle_connection()
 
-    ctx->com_setup_timeout = nullptr; // does not appear to ever be set
     ctx->last_v2g_msg = V2G_CABLE_CHECK_MSG;
     ctx->current_v2g_msg = V2G_CHARGE_PARAMETER_DISCOVERY_MSG;
     ctx->state = 10;
@@ -115,7 +112,6 @@ TEST_F(V2gCtxTest, v2g_ctx_init_charging_stateTrue) {
 TEST_F(V2gCtxTest, v2g_ctx_init_charging_stateFalse) {
     // called on session end in v2g_handle_connection()
 
-    ctx->com_setup_timeout = nullptr; // does not appear to ever be set
     ctx->last_v2g_msg = V2G_CABLE_CHECK_MSG;
     ctx->current_v2g_msg = V2G_CHARGE_PARAMETER_DISCOVERY_MSG;
     ctx->state = 10;
