@@ -20,6 +20,8 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <vector>
+#include "data/Data.hpp"
 #include "server/websocketServer.hpp"
 #include "rpc/rpcHandler.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -76,6 +78,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    std::vector<data::DataStore> data;
     std::unique_ptr<server::WebSocketServer> m_websocket_server;
     std::unique_ptr<rpc::RpcHandler> m_rpc_server;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
