@@ -25,6 +25,7 @@ target_sources(${MODULE_NAME}
     PRIVATE
         "server/transportInterface.cpp"
         "server/websocketServer.cpp"
+        "rpc/rpcHandler.cpp"
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
