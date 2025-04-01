@@ -293,7 +293,7 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
                    (ev_app_priority >= app_proto->Priority)) {
 
             conn->handshake_resp.supportedAppProtocolRes.ResponseCode =
-                appHand_responseCodeType_OK_SuccessfulNegotiation;
+                appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation;
             ev_app_priority = app_proto->Priority;
             conn->handshake_resp.supportedAppProtocolRes.SchemaID = app_proto->SchemaID;
             conn->ctx->selected_protocol = V2G_PROTO_ISO15118_2013;
@@ -320,7 +320,9 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
 
     std::string selected_protocol_str;
     if (conn->handshake_resp.supportedAppProtocolRes.ResponseCode ==
-        appHand_responseCodeType_OK_SuccessfulNegotiation) {
+            appHand_responseCodeType_OK_SuccessfulNegotiation ||
+        conn->handshake_resp.supportedAppProtocolRes.ResponseCode ==
+            appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation) {
         conn->handshake_resp.supportedAppProtocolRes.SchemaID_isUsed = (unsigned int)1;
         if (V2G_PROTO_DIN70121 == conn->ctx->selected_protocol) {
             dlog(DLOG_LEVEL_INFO, "Protocol negotiation was successful. Selected protocol is DIN70121");
