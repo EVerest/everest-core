@@ -5,7 +5,19 @@
 
 namespace data {
 
-class ConnectorInfoStore {};
+class GenericInfoStore {
+    explicit GenericInfoStore() = default;
+    virtual ~GenericInfoStore() = default;
+public:
+    // Do we need a template for the getter?
+    // Does the getter get a generic name?
+    // Who converts to JSON?
+    // Do the Store classes own their to_json()/from_json()? They should!
+    json get_data() const;
+    void set_data(const json& in);
+};
+
+class ConnectorInfoStore : GenericInfoStore {};
 class HardwareCapabilitiesStore {};
 class MeterDataStore {};
 class ACChargeParametersStore {};
