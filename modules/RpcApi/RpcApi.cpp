@@ -8,6 +8,11 @@ namespace module {
 
 void RpcApi::init() {
     invoke_init(*p_main);
+
+    for (const auto& evse_manager : r_evse_manager) {
+        // create on DataStore object per EVSE
+        this->data.emplace_back();
+    }
 }
 
 void RpcApi::ready() {
