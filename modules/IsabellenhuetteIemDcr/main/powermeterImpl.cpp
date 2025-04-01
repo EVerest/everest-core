@@ -131,8 +131,7 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
                                                   mod->config.resilience_transaction_request_retries,
                                                   mod->config.resilience_transaction_request_retry_delay);
             } else {
-                // transaction_active may be deprecated as it is only updated every second.
-                // So try to end transaction at least once.
+                // Try to end transaction at least once.
                 try {
                     this->controller->post_receipt("E");
                 } catch (...) {
@@ -166,6 +165,7 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
                                               mod->config.resilience_transaction_request_retries,
                                               mod->config.resilience_transaction_request_retry_delay);
             // Prepare positive response
+            transaction_active.store(true);
             return_value.status = types::powermeter::TransactionRequestStatus::OK;
             return_value.error = "";
         }
@@ -205,6 +205,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
                                                   mod->config.resilience_transaction_request_retries,
                                                   mod->config.resilience_transaction_request_retry_delay);
             // Prepare positive response
+            transaction_active.store(false);
             return_value.status = types::powermeter::TransactionRequestStatus::OK;
             return_value.error = "";
         } catch (const std::exception& e) {
