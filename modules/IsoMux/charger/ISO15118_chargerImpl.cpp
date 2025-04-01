@@ -536,6 +536,14 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     }
 }
 
+void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_pause_charging(pause);
+    } else {
+        mod->r_iso2->call_pause_charging(pause);
+    }
+}
+
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     mod->r_iso20->call_update_ac_max_current(max_current);
     mod->r_iso2->call_update_ac_max_current(max_current);

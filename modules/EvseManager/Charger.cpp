@@ -717,15 +717,31 @@ void Charger::run_state_machine() {
             break;
 
         case EvseState::ChargingPausedEVSE:
-            if (initialize_state) {
-                signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
-                if (shared_context.hlc_charging_active) {
-                    // currentState = EvseState::StoppingCharging;
-                    shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::Local;
-                    // tell HLC stack to stop the session
-                    signal_hlc_stop_charging();
-                    pwm_off();
-                } else {
+
+            if (shared_context.hlc_charging_active) {
+                if (initialize_state) {
+                    bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
+                    if (config_context.charge_mode == ChargeMode::DC) {
+                        signal_dc_supply_off();
+                    }
+                    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
+                }
+
+                if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
+                    // EV wants to terminate session
+                    shared_context.current_state = EvseState::StoppingCharging;
+                    if (shared_context.pwm_running) {
+                        pwm_off();
+                    }
+                } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
+                    // EV wants an actual pause
+                    if (shared_context.pwm_running) {
+                        pwm_off();
+                    }
+                }
+            } else {
+                if (initialize_state) {
+                    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
                     pwm_off();
                 }
             }
@@ -1069,6 +1085,9 @@ bool Charger::set_max_current(float c, std::chrono::time_point<date::utc_clock> 
 bool Charger::pause_charging() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_pause_charging);
     if (shared_context.current_state == EvseState::Charging) {
+        if (shared_context.hlc_charging_active and shared_context.transaction_active) {
+            signal_hlc_pause_charging();
+        }
         shared_context.legacy_wakeup_done = false;
         shared_context.current_state = EvseState::ChargingPausedEVSE;
         return true;
@@ -1082,8 +1101,9 @@ bool Charger::resume_charging() {
     if (shared_context.hlc_charging_active and shared_context.transaction_active and
         shared_context.current_state == EvseState::ChargingPausedEVSE) {
         shared_context.current_state = EvseState::PrepareCharging;
-        // wake up SLAC as well
-        signal_slac_start();
+        if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
+            signal_slac_start(); // wake up SLAC as well
+        }
         return true;
     } else if (shared_context.transaction_active and shared_context.current_state == EvseState::ChargingPausedEVSE) {
         shared_context.current_state = EvseState::WaitingForEnergy;

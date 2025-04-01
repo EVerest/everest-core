@@ -582,6 +582,13 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     }
 }
 
+void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
+    std::scoped_lock lock(GEL);
+    if (controller) {
+        controller->send_control_event(iso15118::d20::PauseCharging{pause});
+    }
+}
+
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     // your code for cmd update_ac_max_current goes here
 }
