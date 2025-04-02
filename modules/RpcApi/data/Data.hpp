@@ -16,15 +16,14 @@ public:
     // override this to represent the collected data as json according to the JSON RPC API
     // if the returned value has no value, the data is incomplete or not available
     virtual std::optional<nlohmann::json> get_data() const = 0;
+    // TBD: Do we need to be able to return an error if we cannot set the data?
     virtual void set_data(const nlohmann::json& in) = 0;
 
 protected:
     // override this if structures need special (non-default) initialization
     virtual void init_data(){};
-
-private:
     // whether the non-optional values are valid, so that the RPC interface can generate an error
-    bool data_is_valid;
+    bool data_is_valid{false};
 };
 
 class ConnectorInfoStore : public GenericInfoStore {
