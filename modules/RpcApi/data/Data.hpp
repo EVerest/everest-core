@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <optional>
 #include <nlohmann/json.hpp>
+#include <optional>
 
 // This contains types for all the data objects
 
@@ -17,9 +17,11 @@ public:
     // if the returned value has no value, the data is incomplete or not available
     virtual std::optional<nlohmann::json> get_data() const = 0;
     virtual void set_data(const nlohmann::json& in) = 0;
+
 protected:
     // override this if structures need special (non-default) initialization
-    virtual void init_data() {};
+    virtual void init_data(){};
+
 private:
     // whether the non-optional values are valid, so that the RPC interface can generate an error
     bool data_is_valid;

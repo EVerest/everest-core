@@ -194,4 +194,4 @@ struct EVSEGetStatusResponse {
     EVSEStatusObj status;
     ResponseErrorEnum error;
 };
-}
+} // namespace data
