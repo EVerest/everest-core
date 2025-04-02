@@ -12,6 +12,9 @@
 #include <stdexcept>
 #include <memory>
 #include <boost/uuid/uuid.hpp>
+#include <unordered_map>
+#include <mutex>
+#include <condition_variable>
 
 #include "server/transportInterface.hpp"
 
@@ -31,14 +34,18 @@ public:
     void start_server();
     void stop_server();
 
-    void client_connected(const server::TransportInterface::ClientId &client_id,
-                        const server::TransportInterface::Address &address);
+    void client_connected(const std::shared_ptr<server::TransportInterface> &transport_interfaces, const TransportInterface::ClientId &client_id, const TransportInterface::Address &address);
     void client_disconnected(const server::TransportInterface::ClientId &client_id);
-    void data_available(const server::TransportInterface::ClientId &client_id,
-                        const server::TransportInterface::Data &data);
+    void data_available(const TransportInterface::ClientId &client_id,
+                        const TransportInterface::Data &data);
 
     // Members
-    std::vector<std::shared_ptr<server::TransportInterface>> m_transport_interfaces;
+    std::vector<std::shared_ptr<TransportInterface>> m_transport_interfaces;
+
+private:
+    std::mutex m_mtx;
+    std::condition_variable m_cv;
+    std::unordered_map<TransportInterface::ClientId, bool> m_client_hello_received;
 
 };
 }
