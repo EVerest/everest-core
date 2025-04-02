@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <optional>
+#include <nlohmann/json.hpp>
 
 // This contains types for all the data objects
 
@@ -12,12 +13,10 @@ public:
     explicit GenericInfoStore() {
         this->init_data();
     };
-    // Do the Store classes own their to_json()/from_json()? They should!
-
     // override this to represent the collected data as json according to the JSON RPC API
     // if the returned value has no value, the data is incomplete or not available
-    virtual std::optional<json> get_data() const = 0;
-    virtual void set_data(const json& in) = 0;
+    virtual std::optional<nlohmann::json> get_data() const = 0;
+    virtual void set_data(const nlohmann::json& in) = 0;
 protected:
     // override this if structures need special (non-default) initialization
     virtual void init_data() {};
@@ -27,15 +26,9 @@ private:
 };
 
 class ConnectorInfoStore : public GenericInfoStore {
-    std::optional<json> get_data() const {
-        return std::nullopt;
-    }
-    void set_data(const json& in) {
-        return;
-    }
-    void init_data() override {
-        // do something to explicitly initialize our data structures
-    }
+    std::optional<nlohmann::json> get_data() const;
+    void set_data(const nlohmann::json& in);
+    void init_data() override;
 };
 class HardwareCapabilitiesStore {};
 class MeterDataStore {};
@@ -62,4 +55,4 @@ class DataStore {
     ChargerInfoStore chargerinfo;
 };
 
-}
+} // namespace data
