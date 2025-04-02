@@ -7,7 +7,10 @@ namespace data {
 
 // ConnectorInfoStore
 std::optional<nlohmann::json> ConnectorInfoStore::get_data() const {
-    return std::nullopt;
+    if (not this->data_is_valid) {
+        return std::nullopt;
+    }
+    return nlohmann::json({});
 }
 void ConnectorInfoStore::set_data(const nlohmann::json& in) {
     return;
