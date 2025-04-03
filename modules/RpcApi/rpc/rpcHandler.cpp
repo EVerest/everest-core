@@ -2,6 +2,7 @@
 
 #include <jsonrpccxx/server.hpp>
 #include <thread>
+#include <everest/logging.hpp>
 
 
 namespace rpc {
@@ -28,11 +29,12 @@ RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> 
 
 void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterface> &transport_interfaces, const server::TransportInterface::ClientId &client_id,
                                   const server::TransportInterface::Address &address) {
-    // In case of a new client, we expect that the client will send a API.Hello request within 5 seconds.
-    // If not, we will close the connection.
-    // Start a timer for 5 seconds and wait for condition variable
+    // In case of a new client, we expect that the client will send an API.Hello request within 5 seconds.
+    // The API.Hello request is a handshake message sent by the client to establish a connection and verify compatibility.
+    // If the API.Hello request is not received within the timeout period, the connection will be terminated.
 
-    std::thread wait_for_hello([this, client_id, transport_interfaces]() {
+    // Launch a detached thread to wait for the client hello message
+    std::thread([this, client_id, transport_interfaces]() {
         std::unique_lock<std::mutex> lock(m_mtx);
         if (m_cv.wait_for(lock, std::chrono::seconds(5), [this, client_id] {
             return m_client_hello_received.find(client_id) != m_client_hello_received.end();
@@ -41,10 +43,15 @@ void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterfa
             m_client_hello_received.erase(client_id);
         } else {
             // Client did not send hello, close connection
-            transport_interfaces->kill_client_connection(client_id, "Disconnected due to timeout");
+            if (transport_interfaces) {
+                transport_interfaces->kill_client_connection(client_id, "Disconnected due to timeout");
+            } else {
+                // Log the error instead of throwing an exception in a detached thread
+                // to avoid undefined behavior.
+                EVLOG_error << "Transport interface is null during client connection timeout handling";
+            }
         }
-    });
-    wait_for_hello.detach();
+    }).detach();
 }
 
 void RpcHandler::client_disconnected(const server::TransportInterface::ClientId &client_id) {
