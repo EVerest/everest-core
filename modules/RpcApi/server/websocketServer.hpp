@@ -12,18 +12,6 @@
 
 #include "transportInterface.hpp"
 
-namespace std {
-    template <>
-    struct hash<boost::uuids::uuid> {
-        std::size_t operator()(const boost::uuids::uuid& u) const {
-            // Combine the two 64-bit parts of the UUID into one 128-bit integer
-            uint64_t part1 = *reinterpret_cast<const uint64_t*>(&u.data[0]);
-            uint64_t part2 = *reinterpret_cast<const uint64_t*>(&u.data[8]);
-            return std::hash<uint64_t>()(part1) ^ (std::hash<uint64_t>()(part2) << 1); // Combine the two parts
-        }
-    };
-}
-
 namespace server {
 
 class WebSocketServer : public TransportInterface
