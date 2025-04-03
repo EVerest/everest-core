@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#ifndef DATATYPES_HPP
+#define DATATYPES_HPP
 
 #include <Enums.hpp>
 
@@ -195,3 +197,5 @@ struct EVSEGetStatusResponse {
     ResponseErrorEnum error;
 };
 } // namespace data
+
+#endif // DATATYPES_HPP

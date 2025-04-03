@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#ifndef DATA_HPP
+#define DATA_HPP
 
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -57,3 +59,5 @@ class DataStore {
 };
 
 } // namespace data
+
+#endif // DATA_HPP

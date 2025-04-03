@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#ifndef METHODS_HPP
+#define METHODS_HPP
 
 // drafts for methods, possibly obsolete
 namespace data {
@@ -45,3 +47,5 @@ void EVSE_HardwareCapabilitiesChanged(const std::string& evse_id, const Hardware
 void EVSE_StatusChanged(const std::string& evse_id, const EVSEStatusObj& evse_status);
 void EVSE_MeterDataChanged(const std::string& evse_id, const MeterDataObj& meter_data);
 } // namespace data
+
+#endif // METHODS_HPP
