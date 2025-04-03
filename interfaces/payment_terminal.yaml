@@ -1,0 +1,27 @@
+description: Interface that provides functionality for a Payment Terminal
+cmds:
+  enable_card_reading:
+    description: >-
+      Enables or disables card reading for given connector
+    arguments:
+      supported_cards:
+        description: Supported card types array
+        type: array
+        items:
+            type: string
+            $ref: /payment_terminal#/CardType
+      connector_id:
+        description: Which connector
+        type: integer
+  allow_all_cards_for_every_connector:
+    description: >-
+      Enable all card types on each connector. This is default behavior on the startup
+vars:
+  bank_transaction_summary:
+    description: >-
+      Provides information of the session that was committed to the bank.
+      This data may be needed for accounting purposes.
+      Summary of a bank transaction. Depends on bank and the backend. Therefore
+      it's mostly opaque data at the moment.
+    type: object
+    $ref: /payment_terminal#/BankTransactionSummary
