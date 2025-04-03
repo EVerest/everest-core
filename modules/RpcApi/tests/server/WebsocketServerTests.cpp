@@ -5,7 +5,7 @@
 #include <atomic>
 #include <everest/logging.hpp>
 
-#include "../server/websocketServer.hpp"
+#include "../server/WebsocketServer.hpp"
 
 using namespace server;
 

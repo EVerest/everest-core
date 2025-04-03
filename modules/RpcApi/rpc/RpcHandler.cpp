@@ -1,11 +1,13 @@
-#include "rpcHandler.hpp"
+#include "RpcHandler.hpp"
 
 #include <jsonrpccxx/server.hpp>
 #include <thread>
 #include <everest/logging.hpp>
 
-
 namespace rpc {
+
+static const std::chrono::seconds CLIENT_HELLO_TIMEOUT(5);
+
 // RpcHandler just needs just a tranport interface array
 RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces)
     : m_transport_interfaces(std::move(transport_interfaces)) {
@@ -36,7 +38,7 @@ void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterfa
     // Launch a detached thread to wait for the client hello message
     std::thread([this, client_id, transport_interfaces]() {
         std::unique_lock<std::mutex> lock(m_mtx);
-        if (m_cv.wait_for(lock, std::chrono::seconds(5), [this, client_id] {
+        if (m_cv.wait_for(lock, CLIENT_HELLO_TIMEOUT, [this, client_id] {
             return m_client_hello_received.find(client_id) != m_client_hello_received.end();
         })) {
             // Client sent hello

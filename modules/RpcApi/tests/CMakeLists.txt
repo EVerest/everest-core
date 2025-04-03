@@ -1,8 +1,8 @@
 set(TEST_TARGET_NAME ${PROJECT_NAME}_rpcapi_tests)
 
-set(TEST_SOURCES ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/websocketServer.cpp)
+set(TEST_SOURCES ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp)
 
-add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES} server/websocketServerTests.cpp)
+add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES} server/WebsocketServerTests.cpp)
 
 set(INCLUDE_DIR 
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/server"
