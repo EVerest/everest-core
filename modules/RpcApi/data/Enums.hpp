@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#ifndef ENUMS_HPP
+#define ENUMS_HPP
 
 // This contains types for all the JSON objects
 #include <optional>
@@ -86,4 +88,7 @@ enum class EVSEErrorEnum {
     evse_board_support_MREC26CutCable
     // ... Add remaining EVSEErrorEnum values
 };
+
 } // namespace data
+
+#endif // ENUMS_HPP
