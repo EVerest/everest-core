@@ -6,6 +6,10 @@ add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES} server/WebsocketServerTests.c
 
 set(INCLUDE_DIR 
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/server"
+
+target_sources(${TEST_TARGET_NAME}
+    PRIVATE
+        "helpers/WebSocketTestClient.cpp"
 )
 
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
