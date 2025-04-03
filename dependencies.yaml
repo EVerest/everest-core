@@ -99,14 +99,9 @@ gtest:
   git: https://github.com/google/googletest.git
   git_tag: release-1.12.1
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
-sqlite_cpp:
-  git: https://github.com/SRombauts/SQLiteCpp.git
-  git_tag: 3.3.1
-  options:
-  - SQLITECPP_RUN_CPPLINT OFF
-  - SQLITECPP_RUN_CPPCHECK OFF
-  - SQLITECPP_INTERNAL_SQLITE OFF
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SQLITE_CPP"
+everest-sqlite:
+  git: git@github.com:EVerest/everest-sqlite.git # Fix once public
+  git_tag: feature/initial
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0

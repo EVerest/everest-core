@@ -14,11 +14,13 @@ set(CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu" ${CMAKE_PREFIX_PATH})
 find_package(SQLite3 REQUIRED)
 if (DISABLE_EDM)
     find_package(SQLiteCpp REQUIRED)
+    find_package(everest-sqlite REQUIRED)
 endif()
 
 target_link_libraries(${MODULE_NAME}
+    PUBLIC
+        everest::sqlite
     PRIVATE
-        SQLiteCpp
         SQLite::SQLite3
 )
 target_sources(${MODULE_NAME}
