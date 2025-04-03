@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
 
-#include "websocketServer.hpp"
+#include "WebsocketServer.hpp"
 
 #include <iostream>
 #include <unordered_map>
