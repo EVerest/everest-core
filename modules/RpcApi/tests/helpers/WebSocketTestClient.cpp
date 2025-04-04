@@ -33,7 +33,7 @@ WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
     }
 
     m_ccinfo.context = m_context;
-    m_ccinfo.address = "localhost";
+    m_ccinfo.address = m_address.c_str();
     m_ccinfo.port = m_port;
     m_ccinfo.path = "/";
     m_ccinfo.host = m_ccinfo.address;
