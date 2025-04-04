@@ -597,75 +597,85 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
     // retrieve v2g certificate chain
     if (std::find(certificate_types.begin(), certificate_types.end(), CertificateType::V2GCertificateChain) !=
         certificate_types.end()) {
+        // Retrieve all valid leaf certificates, we will return
+        // multiple chains for each valid leaf that we find
+        CertificateQueryParams params;
+        params.certificate_type = LeafCertificateType::V2G;
+        params.include_all_valid = true;
+        params.remove_duplicates = true;
 
-        // Internal since we already acquired the lock
-        const auto secc_key_pair =
-            this->get_leaf_certificate_info_internal(LeafCertificateType::V2G, EncodingFormat::PEM);
-        if (secc_key_pair.status == GetCertificateInfoStatus::Accepted) {
-            fs::path certificate_path;
+        GetCertificateFullInfoResult secc_key_pairs = get_full_leaf_certificate_info_internal(params);
 
-            if (secc_key_pair.info.value().certificate.has_value())
-                certificate_path = secc_key_pair.info.value().certificate.value();
-            else
-                certificate_path = secc_key_pair.info.value().certificate_single.value();
+        if (secc_key_pairs.status == GetCertificateInfoStatus::Accepted) {
+            for (const auto& secc_key_pair : secc_key_pairs.info) {
+                fs::path certificate_path;
 
-            try {
-                // Leaf V2G chain, containing (SECCLeaf->SubCA2->SubCA1) or (SECCLeaf)
-                X509CertificateBundle leaf_bundle(certificate_path, EncodingFormat::PEM);
-
-                // V2G chain, containing the certs from the V2G bundle/folder,
-                // containing (SubCA2->SubCA1->V2GRoot) or (V2GRoot)
-                const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
-                X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
-
-                // Merge the bundles, adding only uniques for full chain
-                // (SubCA2->SubCA1->V2GRoot->SECCLeaf) in any order
-                for (auto& certif : leaf_bundle.split()) {
-                    ca_bundle.add_certificate_unique(std::move(certif));
+                if (secc_key_pair.certificate.has_value()) {
+                    certificate_path = secc_key_pair.certificate.value();
+                } else if (secc_key_pair.certificate_single.has_value()) {
+                    certificate_path = secc_key_pair.certificate_single.value();
+                } else {
+                    throw std::runtime_error("Leaf certificate single/bundle not present, should never happen!");
                 }
 
-                // Create the proper certificate hierarchy since the bundle is not ordered
-                X509CertificateHierarchy& hierarchy = ca_bundle.get_certificate_hierarchy();
-                EVLOG_debug << "Hierarchy:(V2GCertificateChain)\n" << hierarchy.to_debug_string();
+                try {
+                    // Leaf V2G chain, containing (SECCLeaf->SubCA2->SubCA1) or (SECCLeaf)
+                    X509CertificateBundle leaf_bundle(certificate_path, EncodingFormat::PEM);
 
-                for (auto& root : hierarchy.get_hierarchy()) {
-                    CertificateHashDataChain certificate_hash_data_chain;
-                    certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
+                    // V2G chain, containing the certs from the V2G bundle/folder,
+                    // containing (SubCA2->SubCA1->V2GRoot) or (V2GRoot)
+                    const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
+                    X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
 
-                    // Since the hierarchy starts with V2G (Root) -> SubCa1->SubCa2 we have to reorder:
-                    // them with the leaf first when returning to:
-                    // * Leaf           [index 0]
-                    // --- SubCa2       [index 1]
-                    // --- SubCa1       [index 2]
-                    // --- --- V2GRoot  [index 3]
-                    std::vector<CertificateHashData> hierarchy_hash_data;
-
-                    // For each root's descendant, excluding the root
-                    X509CertificateHierarchy::for_each_descendant(
-                        [&](const X509Node& child, int depth) { hierarchy_hash_data.push_back(child.hash); }, root);
-
-                    // Now the hierarchy_hash_data contains SubCA1->SubCA2->SECCLeaf,
-                    // reverse order iteration to conform to the required leaf-first order
-                    if (hierarchy_hash_data.size()) {
-                        bool first_leaf = true;
-
-                        // Reverse iteration
-                        for (auto it = hierarchy_hash_data.rbegin(); it != hierarchy_hash_data.rend(); ++it) {
-                            if (first_leaf) {
-                                // Leaf is the last
-                                certificate_hash_data_chain.certificate_hash_data = *it;
-                                first_leaf = false;
-                            } else {
-                                certificate_hash_data_chain.child_certificate_hash_data.push_back(*it);
-                            }
-                        }
-
-                        // Add to our chains
-                        certificate_chains.push_back(certificate_hash_data_chain);
+                    // Merge the bundles, adding only uniques for full chain
+                    // (SubCA2->SubCA1->V2GRoot->SECCLeaf) in any order
+                    for (auto& certif : leaf_bundle.split()) {
+                        ca_bundle.add_certificate_unique(std::move(certif));
                     }
+
+                    // Create the proper certificate hierarchy since the bundle is not ordered
+                    X509CertificateHierarchy& hierarchy = ca_bundle.get_certificate_hierarchy();
+                    EVLOG_debug << "Hierarchy:(V2GCertificateChain)\n" << hierarchy.to_debug_string();
+
+                    for (auto& root : hierarchy.get_hierarchy()) {
+                        CertificateHashDataChain certificate_hash_data_chain;
+                        certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
+
+                        // Since the hierarchy starts with V2G (Root) -> SubCa1->SubCa2 we have to reorder:
+                        // them with the leaf first when returning to:
+                        // * Leaf           [index 0]
+                        // --- SubCa2       [index 1]
+                        // --- SubCa1       [index 2]
+                        // --- --- V2GRoot  [index 3]
+                        std::vector<CertificateHashData> hierarchy_hash_data;
+
+                        // For each root's descendant, excluding the root
+                        X509CertificateHierarchy::for_each_descendant(
+                            [&](const X509Node& child, int depth) { hierarchy_hash_data.push_back(child.hash); }, root);
+
+                        // Now the hierarchy_hash_data contains SubCA1->SubCA2->SECCLeaf,
+                        // reverse order iteration to conform to the required leaf-first order
+                        if (hierarchy_hash_data.size()) {
+                            bool first_leaf = true;
+
+                            // Reverse iteration
+                            for (auto it = hierarchy_hash_data.rbegin(); it != hierarchy_hash_data.rend(); ++it) {
+                                if (first_leaf) {
+                                    // Leaf is the last
+                                    certificate_hash_data_chain.certificate_hash_data = *it;
+                                    first_leaf = false;
+                                } else {
+                                    certificate_hash_data_chain.child_certificate_hash_data.push_back(*it);
+                                }
+                            }
+
+                            // Add to our chains
+                            certificate_chains.push_back(certificate_hash_data_chain);
+                        }
+                    }
+                } catch (const CertificateLoadException& e) {
+                    EVLOG_error << "Could not load installed leaf certificates: " << e.what();
                 }
-            } catch (const CertificateLoadException& e) {
-                EVLOG_error << "Could not load installed leaf certificates: " << e.what();
             }
         }
     }
@@ -1103,7 +1113,7 @@ GetCertificateFullInfoResult EvseSecurity::get_all_valid_certificates_info(LeafC
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
     GetCertificateFullInfoResult result =
-        get_full_leaf_certificate_info_internal(certificate_type, encoding, include_ocsp, true, true);
+        get_full_leaf_certificate_info_internal({certificate_type, encoding, include_ocsp, true, true});
 
     // If we failed, simply return the result
     if (result.status != GetCertificateInfoStatus::Accepted) {
@@ -1149,7 +1159,7 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info(LeafCertificate
 GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCertificateType certificate_type,
                                                                           EncodingFormat encoding, bool include_ocsp) {
     GetCertificateFullInfoResult result =
-        get_full_leaf_certificate_info_internal(certificate_type, encoding, include_ocsp, false, false);
+        get_full_leaf_certificate_info_internal({certificate_type, encoding, include_ocsp, false, false});
     GetCertificateInfoResult internal_result;
 
     internal_result.status = result.status;
@@ -1160,10 +1170,10 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
     return internal_result;
 }
 
-GetCertificateFullInfoResult EvseSecurity::get_full_leaf_certificate_info_internal(LeafCertificateType certificate_type,
-                                                                                   EncodingFormat encoding,
-                                                                                   bool include_ocsp, bool include_root,
-                                                                                   bool include_all_valid) {
+GetCertificateFullInfoResult
+EvseSecurity::get_full_leaf_certificate_info_internal(const CertificateQueryParams& params) {
+    auto certificate_type = params.certificate_type;
+
     EVLOG_info << "Requesting leaf certificate info: "
                << conversions::leaf_certificate_type_to_string(certificate_type);
 
@@ -1224,15 +1234,31 @@ GetCertificateFullInfoResult EvseSecurity::get_full_leaf_certificate_info_intern
                         // Found at least one valid key
                         any_valid_key = true;
 
-                        // Copy to latest valid
                         KeyPairInternal key_pair{chain.at(0), priv_key_path};
-                        valid_leafs.emplace_back(std::move(key_pair));
+
+                        if (params.remove_duplicates) {
+                            // Filter the already added certificates, since we can have a case
+                            // when a leaf is present in 2 files (single/chain) that causes it
+                            // to be added to the list twice by the bundle parser
+                            auto it = std::find_if(valid_leafs.begin(), valid_leafs.end(),
+                                                   [&key_pair](const auto& in_key_pair) {
+                                                       return in_key_pair.certificate == key_pair.certificate;
+                                                   });
+
+                            // None found
+                            if (it == valid_leafs.end()) {
+                                valid_leafs.emplace_back(std::move(key_pair));
+                            }
+                        } else {
+                            // Copy to latest valid
+                            valid_leafs.emplace_back(std::move(key_pair));
+                        }
 
                         // We found, break
                         EVLOG_info << "Found valid leaf: [" << chain.at(0).get_file().value() << "]";
 
                         // Collect all if we don't include valid only
-                        if (include_all_valid == false) {
+                        if (params.include_all_valid == false) {
                             EVLOG_info << "Not requiring all valid leafs, returning";
                             return false;
                         }
@@ -1329,7 +1355,7 @@ GetCertificateFullInfoResult EvseSecurity::get_full_leaf_certificate_info_intern
             }
 
             // Both require the hierarchy build
-            if (include_ocsp || include_root) {
+            if (params.include_ocsp || params.include_root) {
                 X509CertificateBundle root_bundle(root_dir, EncodingFormat::PEM); // Required for hierarchy
 
                 // The hierarchy is required for both roots and the OCSP cache
@@ -1337,7 +1363,7 @@ GetCertificateFullInfoResult EvseSecurity::get_full_leaf_certificate_info_intern
                 EVLOG_debug << "Hierarchy for root/OCSP data: \n" << hierarchy.to_debug_string();
 
                 // Include OCSP data if possible
-                if (include_ocsp) {
+                if (params.include_ocsp) {
                     // Search for OCSP data for each certificate
                     if (leaf_fullchain != nullptr) {
                         for (const auto& chain_certif : *leaf_fullchain) {
@@ -1361,7 +1387,7 @@ GetCertificateFullInfoResult EvseSecurity::get_full_leaf_certificate_info_intern
                 }
 
                 // Include root data if possible
-                if (include_root) {
+                if (params.include_root) {
                     // Search for the root of any of the leafs
                     // present either in the chain or single
                     try {
@@ -1386,11 +1412,11 @@ GetCertificateFullInfoResult EvseSecurity::get_full_leaf_certificate_info_intern
             info.certificate_count = chain_len;
             info.password = this->private_key_password;
 
-            if (include_ocsp) {
+            if (params.include_ocsp) {
                 info.ocsp = certificate_ocsp;
             }
 
-            if (include_root && leafs_root.has_value()) {
+            if (params.include_root && leafs_root.has_value()) {
                 info.certificate_root = leafs_root.value();
             }
 

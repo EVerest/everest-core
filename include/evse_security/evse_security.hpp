@@ -40,6 +40,22 @@ struct FilePaths {
     LinkPaths links;
 };
 
+struct CertificateQueryParams {
+    LeafCertificateType certificate_type;
+    EncodingFormat encoding{EncodingFormat::PEM};
+    /// if OCSP information should be included
+    bool include_ocsp{false};
+    /// if the root certificate of the leaf should be included in the returned list
+    bool include_root{false};
+    /// if true, all valid leafs will be included, sorted in order, with the newest being
+    /// first. If false, only the newest one will be returned
+    bool include_all_valid{false};
+    /// if true, will remove all duplicates found, since we can find a leaf for example
+    /// in 2 files, one in 'leaf_single' and one in 'leaf_chain'. For delete routines
+    /// we need both files returned, while for queries (v2g_chain) we don't need duplicates
+    bool remove_duplicates{false};
+};
+
 // Unchangeable security limit for certificate deletion, a min entry count will be always kept (newest)
 static constexpr std::size_t DEFAULT_MINIMUM_CERTIFICATE_ENTRIES = 10;
 // 50 MB default limit for filesystem usage
@@ -115,6 +131,8 @@ public:
                                                      LeafCertificateType certificate_type);
 
     /// @brief Retrieves all certificates installed on the filesystem applying the \p certificate_type filter.
+    /// In the case of the 'V2GCertificateChain', it will return all valid leafs chains, with the newest being
+    /// the first in the list
     /// @param certificate_types
     /// @return contains the certificate hash data chains of the requested \p certificate_type
     GetInstalledCertificatesResult get_installed_certificate(CertificateType certificate_type);
@@ -285,15 +303,7 @@ private:
                                                                 EncodingFormat encoding, bool include_ocsp = false);
 
     /// @brief Retrieves information related to leaf certificates
-    /// @param include_ocsp if OCSP information should be included
-    /// @param include_root if the root certificate of the leaf should be included in the returned list
-    /// @param include_all_valid if true, all valid leafs will be included, sorted in order, with the newest being
-    /// first. If false, only the newest one will be returned
-    GetCertificateFullInfoResult get_full_leaf_certificate_info_internal(LeafCertificateType certificate_type,
-                                                                         EncodingFormat encoding,
-                                                                         bool include_ocsp = false,
-                                                                         bool include_root = false,
-                                                                         bool include_all_valid = false);
+    GetCertificateFullInfoResult get_full_leaf_certificate_info_internal(const CertificateQueryParams& params);
 
     GetCertificateInfoResult get_ca_certificate_info_internal(CaCertificateType certificate_type);
     std::optional<fs::path> retrieve_ocsp_cache_internal(const CertificateHashData& certificate_hash_data);

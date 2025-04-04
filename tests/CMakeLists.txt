@@ -49,7 +49,8 @@ setup_target_for_coverage_gcovr_xml(
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs.sh"
-    "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs_multi.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs_root_multi.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs_leaf_multi.sh"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
 )
 

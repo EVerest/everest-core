@@ -91,7 +91,14 @@ protected:
 class EvseSecurityTestsMulti : public EvseSecurityTests {
 protected:
     void install_certs() override {
-        std::system("./generate_test_certs_multi.sh");
+        std::system("./generate_test_certs_root_multi.sh");
+    }
+};
+
+class EvseSecurityTestsMultiLeaf : public EvseSecurityTests {
+protected:
+    void install_certs() override {
+        std::system("./generate_test_certs_leaf_multi.sh");
     }
 };
 
@@ -307,6 +314,32 @@ TEST_F(EvseSecurityTestsMulti, verify_multi_root_leaf_retrieval) {
                 equal_certificate_strings(result.info[0].certificate_root.value(), root_grid));
     ASSERT_TRUE(equal_certificate_strings(result.info[1].certificate_root.value(), root_v2g) ||
                 equal_certificate_strings(result.info[1].certificate_root.value(), root_grid));
+}
+
+TEST_F(EvseSecurityTestsMultiLeaf, verify_multi_leaf_retrieval) {
+    std::vector<CertificateType> certificate_types;
+    certificate_types.push_back(CertificateType::V2GCertificateChain);
+
+    const auto r = this->evse_security->get_installed_certificates(certificate_types);
+
+    ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
+    ASSERT_EQ(r.certificate_hash_data_chain.size(), 2);
+
+    auto& v2g_chain = r.certificate_hash_data_chain.front();
+
+    // Assert the order with the SECCLeaf first
+    ASSERT_EQ(v2g_chain.certificate_hash_data.debug_common_name, std::string("SECCCert"));
+    ASSERT_EQ(v2g_chain.child_certificate_hash_data.size(), 2);
+    ASSERT_EQ(v2g_chain.child_certificate_hash_data[0].debug_common_name, std::string("CPOSubCA2"));
+    ASSERT_EQ(v2g_chain.child_certificate_hash_data[1].debug_common_name, std::string("CPOSubCA1"));
+
+    auto& v2g_chain_alternate = r.certificate_hash_data_chain.back();
+
+    // Assert the order with the SECCLeaf first
+    ASSERT_EQ(v2g_chain_alternate.certificate_hash_data.debug_common_name, std::string("SECCGridSyncCert"));
+    ASSERT_EQ(v2g_chain_alternate.child_certificate_hash_data.size(), 2);
+    ASSERT_EQ(v2g_chain_alternate.child_certificate_hash_data[0].debug_common_name, std::string("CPOSubCA2"));
+    ASSERT_EQ(v2g_chain_alternate.child_certificate_hash_data[1].debug_common_name, std::string("CPOSubCA1"));
 }
 
 TEST_F(EvseSecurityTests, verify_normal_keygen) {
@@ -549,7 +582,6 @@ TEST_F(EvseSecurityTests, install_root_ca_05) {
 }
 
 TEST_F(EvseSecurityTests, delete_root_ca_01) {
-
     std::vector<CertificateType> certificate_types;
     certificate_types.push_back(CertificateType::V2GRootCertificate);
     certificate_types.push_back(CertificateType::MORootCertificate);
