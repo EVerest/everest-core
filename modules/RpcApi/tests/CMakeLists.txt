@@ -1,18 +1,23 @@
 set(TEST_TARGET_NAME ${PROJECT_NAME}_rpcapi_tests)
 
-set(TEST_SOURCES ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp)
+set(TEST_SOURCES 
+    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/RpcHandler.cpp
+    ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp
+    server/WebsocketServerTests.cpp
+    rpc/RpcHandlerTests.cpp
+)
 
-add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES} server/WebsocketServerTests.cpp)
+add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES})
 
 set(INCLUDE_DIR 
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/server"
+    "${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc"
+)
 
 target_sources(${TEST_TARGET_NAME}
     PRIVATE
         "helpers/WebSocketTestClient.cpp"
 )
-
-get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
 target_include_directories(${TEST_TARGET_NAME}
     PUBLIC
@@ -25,6 +30,8 @@ target_link_libraries(${TEST_TARGET_NAME}
         GTest::gtest_main
         everest::log
         websockets_shared
+        json-rpc-cxx
+        nlohmann_json::nlohmann_json
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
