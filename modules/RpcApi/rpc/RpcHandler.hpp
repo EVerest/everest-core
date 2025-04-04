@@ -16,11 +16,13 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "server/TransportInterface.hpp"
+#include "../server/TransportInterface.hpp"
 
 using namespace server;
 
 namespace rpc {
+
+static const std::chrono::seconds CLIENT_HELLO_TIMEOUT(5);
 
 class RpcHandler
 {
