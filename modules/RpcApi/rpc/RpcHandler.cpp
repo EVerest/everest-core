@@ -6,8 +6,6 @@
 
 namespace rpc {
 
-static const std::chrono::seconds CLIENT_HELLO_TIMEOUT(5);
-
 // RpcHandler just needs just a tranport interface array
 RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces)
     : m_transport_interfaces(std::move(transport_interfaces)) {
