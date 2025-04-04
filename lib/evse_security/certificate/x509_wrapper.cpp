@@ -64,6 +64,9 @@ X509Wrapper::X509Wrapper(const X509Wrapper& other) :
     file(other.file),
     valid_in(other.valid_in),
     valid_to(other.valid_to) {
+#ifdef DEBUG_MODE_EVSE_SECURITY
+    debug_common_name = other.debug_common_name;
+#endif
 }
 
 X509Wrapper::~X509Wrapper() {
@@ -80,6 +83,10 @@ void X509Wrapper::update_validity() {
     if (false == CryptoSupplier::x509_get_validity(get(), valid_in, valid_to)) {
         EVLOG_error << "Could not update validity for certificate: " << get_common_name();
     }
+
+#ifdef DEBUG_MODE_EVSE_SECURITY
+    debug_common_name = get_common_name();
+#endif
 }
 
 bool X509Wrapper::is_child(const X509Wrapper& parent) const {
@@ -162,6 +169,11 @@ CertificateHashData X509Wrapper::get_certificate_hash_data() const {
     certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
     certificate_hash_data.issuer_key_hash = this->get_issuer_key_hash();
     certificate_hash_data.serial_number = this->get_serial_number();
+
+#ifdef DEBUG_MODE_EVSE_SECURITY
+    certificate_hash_data.debug_common_name = this->get_common_name();
+#endif
+
     return certificate_hash_data;
 }
 
@@ -182,6 +194,10 @@ CertificateHashData X509Wrapper::get_certificate_hash_data(const X509Wrapper& is
     // Issuer key hash
     certificate_hash_data.issuer_key_hash = issuer.get_key_hash();
     certificate_hash_data.serial_number = this->get_serial_number();
+
+#ifdef DEBUG_MODE_EVSE_SECURITY
+    certificate_hash_data.debug_common_name = this->get_common_name();
+#endif
 
     return certificate_hash_data;
 }

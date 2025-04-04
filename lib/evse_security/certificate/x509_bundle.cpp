@@ -54,17 +54,19 @@ X509CertificateBundle::X509CertificateBundle(const fs::path& path, const Encodin
         // Iterate directory
         for (const auto& entry : fs::recursive_directory_iterator(path)) {
             if (is_certificate_file(entry)) {
-                std::string certificate;
-                if (filesystem_utils::read_from_file(entry.path(), certificate))
+                std::string certificate{};
+                if (filesystem_utils::read_from_file(entry.path(), certificate)) {
                     add_certificates(certificate, encoding, entry.path());
+                }
             }
         }
     } else if (is_certificate_file(path)) {
         source = X509CertificateSource::FILE;
 
-        std::string certificate;
-        if (filesystem_utils::read_from_file(path, certificate))
+        std::string certificate{};
+        if (filesystem_utils::read_from_file(path, certificate)) {
             add_certificates(certificate, encoding, path);
+        }
     } else {
         throw CertificateLoadException("Failed to create certificate info from path: " + path.string());
     }

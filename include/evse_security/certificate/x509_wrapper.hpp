@@ -134,6 +134,10 @@ private:
 
     // Relevant file in which this certificate resides
     std::optional<fs::path> file;
+
+#ifdef DEBUG_MODE_EVSE_SECURITY
+    std::string debug_common_name;
+#endif
 };
 
 } // namespace evse_security

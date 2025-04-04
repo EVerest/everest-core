@@ -667,6 +667,24 @@ TEST_F(EvseSecurityTests, delete_sub_ca_2) {
               certs_after_delete.end());
 }
 
+TEST_F(EvseSecurityTests, get_installed_certificates_chain_order) {
+    std::vector<CertificateType> certificate_types;
+    certificate_types.push_back(CertificateType::V2GCertificateChain);
+
+    const auto r = this->evse_security->get_installed_certificates(certificate_types);
+
+    ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
+    ASSERT_EQ(r.certificate_hash_data_chain.size(), 1);
+
+    auto& v2g_chain = r.certificate_hash_data_chain.front();
+
+    // Assert the order with the SECCLeaf first
+    ASSERT_EQ(v2g_chain.certificate_hash_data.debug_common_name, std::string("SECCCert"));
+    ASSERT_EQ(v2g_chain.child_certificate_hash_data.size(), 2);
+    ASSERT_EQ(v2g_chain.child_certificate_hash_data[0].debug_common_name, std::string("CPOSubCA2"));
+    ASSERT_EQ(v2g_chain.child_certificate_hash_data[1].debug_common_name, std::string("CPOSubCA1"));
+}
+
 TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
     std::vector<CertificateType> certificate_types;
     certificate_types.push_back(CertificateType::V2GRootCertificate);

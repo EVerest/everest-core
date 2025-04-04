@@ -610,45 +610,54 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
                 certificate_path = secc_key_pair.info.value().certificate_single.value();
 
             try {
-                // Leaf V2G chain
+                // Leaf V2G chain, containing (SECCLeaf->SubCA2->SubCA1) or (SECCLeaf)
                 X509CertificateBundle leaf_bundle(certificate_path, EncodingFormat::PEM);
 
-                // V2G chain
+                // V2G chain, containing the certs from the V2G bundle/folder,
+                // containing (SubCA2->SubCA1->V2GRoot) or (V2GRoot)
                 const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
                 X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
 
-                // Merge the bundles
+                // Merge the bundles, adding only uniques for full chain
+                // (SubCA2->SubCA1->V2GRoot->SECCLeaf) in any order
                 for (auto& certif : leaf_bundle.split()) {
                     ca_bundle.add_certificate_unique(std::move(certif));
                 }
 
-                // Create the certificate hierarchy
+                // Create the proper certificate hierarchy since the bundle is not ordered
                 X509CertificateHierarchy& hierarchy = ca_bundle.get_certificate_hierarchy();
                 EVLOG_debug << "Hierarchy:(V2GCertificateChain)\n" << hierarchy.to_debug_string();
 
                 for (auto& root : hierarchy.get_hierarchy()) {
                     CertificateHashDataChain certificate_hash_data_chain;
-
                     certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
 
-                    // Since the hierarchy starts with V2G and SubCa1/SubCa2 we have to add:
-                    // the leaf as the first when returning
-                    // * Leaf
-                    // --- SubCa1
-                    // --- SubCa2
+                    // Since the hierarchy starts with V2G (Root) -> SubCa1->SubCa2 we have to reorder:
+                    // them with the leaf first when returning to:
+                    // * Leaf           [index 0]
+                    // --- SubCa2       [index 1]
+                    // --- SubCa1       [index 2]
+                    // --- --- V2GRoot  [index 3]
                     std::vector<CertificateHashData> hierarchy_hash_data;
 
+                    // For each root's descendant, excluding the root
                     X509CertificateHierarchy::for_each_descendant(
                         [&](const X509Node& child, int depth) { hierarchy_hash_data.push_back(child.hash); }, root);
 
+                    // Now the hierarchy_hash_data contains SubCA1->SubCA2->SECCLeaf,
+                    // reverse order iteration to conform to the required leaf-first order
                     if (hierarchy_hash_data.size()) {
-                        // Leaf is the last
-                        certificate_hash_data_chain.certificate_hash_data = hierarchy_hash_data.back();
-                        hierarchy_hash_data.pop_back();
+                        bool first_leaf = true;
 
-                        // Add others in order, except last
-                        for (const auto& hash_data : hierarchy_hash_data) {
-                            certificate_hash_data_chain.child_certificate_hash_data.push_back(hash_data);
+                        // Reverse iteration
+                        for (auto it = hierarchy_hash_data.rbegin(); it != hierarchy_hash_data.rend(); ++it) {
+                            if (first_leaf) {
+                                // Leaf is the last
+                                certificate_hash_data_chain.certificate_hash_data = *it;
+                                first_leaf = false;
+                            } else {
+                                certificate_hash_data_chain.child_certificate_hash_data.push_back(*it);
+                            }
                         }
 
                         // Add to our chains

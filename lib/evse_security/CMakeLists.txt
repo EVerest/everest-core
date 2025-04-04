@@ -78,6 +78,12 @@ target_link_libraries(evse_security
         OpenSSL::Crypto
 )
 
+if(LIBEVSE_SECURITY_BUILD_TESTING)
+    target_compile_definitions(evse_security PRIVATE
+        DEBUG_MODE_EVSE_SECURITY       
+    )
+endif()
+
 if(LIBEVSE_SECURITY_USE_BOOST_FILESYSTEM)
     find_package(Boost REQUIRED COMPONENTS filesystem)
     target_link_libraries(evse_security

@@ -120,6 +120,10 @@ struct CertificateHashData {
     std::string serial_number; ///< The string representation of the hexadecimal value of the serial number without the
                                ///< prefix "0x" and without leading zeroes.
 
+#ifdef DEBUG_MODE_EVSE_SECURITY
+    std::string debug_common_name; ///< Common name for easy debug
+#endif
+
     bool operator==(const CertificateHashData& Other) const {
         return hash_algorithm == Other.hash_algorithm && issuer_name_hash == Other.issuer_name_hash &&
                issuer_key_hash == Other.issuer_key_hash && serial_number == Other.serial_number;
