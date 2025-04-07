@@ -1,6 +1,7 @@
 name: Build, Lint and Test
 on:
   pull_request: {}
+  merge_group: {}
   workflow_dispatch:
     inputs:
       runner:
