@@ -131,12 +131,12 @@ void WebSocketServer::kill_client_connection(const ClientId &client_id, const st
     if (it != m_clients.end()) {
         struct lws *wsi = it->second;
         std::string close_reason = kill_reason.empty() ? "Connection closed by server" : kill_reason;
-
-        lws_close_reason(wsi, LWS_CLOSE_STATUS_ABNORMAL_CLOSE,
+        lws_close_reason(wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR,
             reinterpret_cast<unsigned char*>(const_cast<char*>(close_reason.data())), close_reason.size());
+        lws_set_timeout(wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC); // Set timeout to close the connection
         m_clients.erase(it);  // Remove client from map
 
-        EVLOG_info << "Client " << client_id << " connection closed (reason:" << kill_reason << ")";
+        EVLOG_info << "Client " << client_id << " connection closed (reason: " << kill_reason << ")";
     } else {
         EVLOG_error << "Client ID " << client_id << " not found!";
     }
