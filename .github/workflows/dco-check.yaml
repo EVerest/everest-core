@@ -1,6 +1,7 @@
 name: DCO Check
 on:    
   pull_request: {}
+  merge_group: {}
 jobs:
   dco_check:
     name: DCO Check
@@ -14,6 +15,7 @@ jobs:
       - name: Install dco-check
         run: pip3 install -U dco-check==0.4.0
       - name: Check DCO
+        if: ${{ github.event_name == 'pull_request' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
