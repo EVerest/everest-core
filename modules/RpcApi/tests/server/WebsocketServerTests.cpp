@@ -140,7 +140,8 @@ TEST_F(WebSocketServerTest, ServerCanKillClientConnection) {
     ASSERT_EQ(received_data[get_connected_clients()[0]], "Hello World!");
 
     ws_server->kill_client_connection(get_connected_clients()[0], "Test kill");
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     ASSERT_EQ(ws_server->connections_count(), 0);
+    ASSERT_FALSE(client.is_connected());
 }
