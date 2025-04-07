@@ -148,13 +148,18 @@ uint WebSocketServer::connections_count() const {
 }
 
 bool WebSocketServer::start_server() {
+    if (m_running) {
+        EVLOG_warning << "WebSocket Server is already running";
+        return true;
+    }
+
     m_context = lws_create_context(&m_info);
     if (!m_context) {
         EVLOG_error << "Failed to create WebSocket context";
         return false;
     }
 
-    EVLOG_info << "WebSocket Server running on port " << m_info.port << (m_ssl_enabled? " with TLS": " without TLS");
+    EVLOG_info << "WebSocket Server running on port " << m_info.port << (m_ssl_enabled? " with TLS":" without TLS");
 
     m_server_thread = std::thread([this]() {
         m_running = true;
