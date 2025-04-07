@@ -9,20 +9,23 @@
 using namespace server;
 using namespace rpc;
 
-class WebSocketServerTest : public ::testing::Test {
+class RpcHandlerTest : public ::testing::Test {
 protected:
-    std::unique_ptr<WebSocketServer> ws_server;
-    std::unique_ptr<rpc::RpcHandler> rpc_handler;
     int test_port = 8080;
-
     void SetUp() override {
         // Start the WebSocket server
         m_websocket_server = std::make_unique<server::WebSocketServer>(false, test_port);
+        lws_set_log_level(LLL_ERR | LLL_WARN, NULL);
+
         // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
         std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
         transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
         m_rpc_server = std::make_unique<RpcHandler>(std::move(transport_interfaces));
         m_rpc_server->start_server();
+    }
+
+    void TearDown() override {
+        m_rpc_server->stop_server();
     }
 
     std::vector<TransportInterface::ClientId>& get_connected_clients() {
@@ -42,18 +45,12 @@ protected:
 
     //Reveived data with client id
     std::unordered_map<TransportInterface::ClientId, std::string> received_data;
-
-    void TearDown() override {
-        ws_server->stop_server();
-    }
 };
 
 // Test: Connect to WebSocket server and check if API.hello timeout occurs
-TEST_F(WebSocketServerTest, ClientHelloTimeout) {
+TEST_F(RpcHandlerTest, ClientHelloTimeout) {
     WebSocketTestClient client("localhost", test_port);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     ASSERT_TRUE(client.connect());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     ASSERT_TRUE(client.is_connected());
 
     // Wait for the client hello timeout
