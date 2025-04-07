@@ -60,9 +60,12 @@ int WebSocketTestClient::callback(struct lws* wsi, enum lws_callback_reasons rea
         case LWS_CALLBACK_CLIENT_RECEIVE:
             client->received_data.assign(static_cast<char*>(in), len);
             break;
-        case LWS_CALLBACK_CLOSED:
+        case LWS_CALLBACK_CLIENT_CLOSED:
+        case LWS_CALLBACK_CLOSED_CLIENT_HTTP: {
             client->m_connected = false;
+            EVLOG_info << "Client closed connection: " << (in ? (char*)in : "(null)") << " reason: " << reason;
             break;
+        }
         case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
             EVLOG_error << "CLIENT_CONNECTION_ERROR: " << (in ? (char*)in : "(null)");
             break;
@@ -114,7 +117,9 @@ void WebSocketTestClient::close() {
     if (m_wsi) {
         m_running = false;
 
-        lws_close_reason(m_wsi, LWS_CLOSE_STATUS_NORMAL, nullptr, 0);
+        if (m_connected == true) {
+            lws_close_reason(m_wsi, LWS_CLOSE_STATUS_NORMAL, nullptr, 0);
+        }
 
         if (m_context == nullptr) {
             EVLOG_error << "Error: WebSocket m_context not found!";
