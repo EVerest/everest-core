@@ -107,7 +107,7 @@ void EvseManager::init() {
     // apply sane defaults capabilities settings once on boot
     powersupply_capabilities = get_sane_default_power_supply_capabilities();
 
-    if (get_hlc_enabled()) {
+    if (hlc_enabled) {
         if (config.charge_mode == "DC") {
             // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
             r_powersupply_DC[0]->subscribe_capabilities(
@@ -184,7 +184,7 @@ void EvseManager::ready() {
         bsp->signal_unlock.connect([this]() { r_connector_lock[0]->call_unlock(); });
     }
 
-    if (get_hlc_enabled()) {
+    if (hlc_enabled) {
 
         // Set up EVSE ID
         types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
@@ -613,12 +613,8 @@ void EvseManager::ready() {
             //  Do we have auth already (i.e. delayed HLC after charging already running)?
             if ((config.dbg_hlc_auth_after_tstep and charger->get_authorized_eim_ready_for_hlc()) or
                 (not config.dbg_hlc_auth_after_tstep and charger->get_authorized_eim())) {
-                {
-                    Everest::scoped_lock_timeout lock(hlc_mutex,
-                                                      Everest::MutexDescription::EVSE_subscribe_require_auth_eim);
-                    hlc_waiting_for_auth_eim = false;
-                    hlc_waiting_for_auth_pnc = false;
-                }
+                hlc_waiting_for_auth_eim = false;
+                hlc_waiting_for_auth_pnc = false;
                 r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                                       types::authorization::CertificateStatus::NoCertificateAvailable);
                 charger->get_stopwatch().mark("Auth EIM Done");
@@ -626,7 +622,6 @@ void EvseManager::ready() {
                 if (config.enable_autocharge) {
                     p_token_provider->publish_provided_token(autocharge_token);
                 }
-                Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_publish_provided_token);
                 hlc_waiting_for_auth_eim = true;
                 hlc_waiting_for_auth_pnc = false;
             }
@@ -653,15 +648,9 @@ void EvseManager::ready() {
             _token.connectors.emplace(referenced_connectors);
             p_token_provider->publish_provided_token(_token);
             if (charger->get_authorized_pnc()) {
-                {
-                    Everest::scoped_lock_timeout lock(hlc_mutex,
-                                                      Everest::MutexDescription::EVSE_subscribe_require_auth_pnc);
-                    hlc_waiting_for_auth_eim = false;
-                    hlc_waiting_for_auth_pnc = false;
-                }
+                hlc_waiting_for_auth_eim = false;
+                hlc_waiting_for_auth_pnc = false;
             } else {
-                Everest::scoped_lock_timeout lock(hlc_mutex,
-                                                  Everest::MutexDescription::EVSE_subscribe_require_auth_pnc2);
                 hlc_waiting_for_auth_eim = false;
                 hlc_waiting_for_auth_pnc = true;
             }
@@ -729,7 +718,7 @@ void EvseManager::ready() {
         charger->process_event(event);
 
         // Forward some events to HLC
-        if (get_hlc_enabled()) {
+        if (hlc_enabled) {
             // Reset HLC auth waiting flags on new session
             if (event == CPEvent::CarPluggedIn) {
                 r_hlc[0]->call_reset_error();
@@ -737,11 +726,8 @@ void EvseManager::ready() {
                 r_hlc[0]->call_stop_charging(false);
                 latest_target_voltage = 0;
                 latest_target_current = 0;
-                {
-                    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_signal_event);
-                    hlc_waiting_for_auth_eim = false;
-                    hlc_waiting_for_auth_pnc = false;
-                }
+                hlc_waiting_for_auth_eim = false;
+                hlc_waiting_for_auth_pnc = false;
             }
 
             if (event == CPEvent::PowerOn) {
@@ -769,7 +755,7 @@ void EvseManager::ready() {
             }
 
             // Inform HLC about the power meter data
-            if (get_hlc_enabled()) {
+            if (hlc_enabled) {
                 r_hlc[0]->call_update_meter_info(p);
             }
 
@@ -837,7 +823,7 @@ void EvseManager::ready() {
 
     charger->signal_max_current.connect([this](float ampere) {
         // The charger changed the max current setting. Forward to HLC
-        if (get_hlc_enabled()) {
+        if (hlc_enabled) {
             r_hlc[0]->call_update_ac_max_current(ampere);
         }
     });
@@ -854,7 +840,7 @@ void EvseManager::ready() {
 
         std::vector<types::iso15118::PaymentOption> payment_options;
 
-        if (get_hlc_enabled() and s == types::evse_manager::SessionEventEnum::SessionFinished) {
+        if (hlc_enabled and s == types::evse_manager::SessionEventEnum::SessionFinished) {
             if (config.payment_enable_eim) {
                 payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
             }
@@ -879,7 +865,7 @@ void EvseManager::ready() {
 
             std::vector<types::iso15118::PaymentOption> payment_options;
 
-            if (get_hlc_enabled() and start_reason == types::evse_manager::StartSessionReason::Authorized) {
+            if (hlc_enabled and start_reason == types::evse_manager::StartSessionReason::Authorized) {
                 payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
                 r_hlc[0]->call_session_setup(payment_options, false);
             }
@@ -1137,7 +1123,7 @@ void EvseManager::setup_AC_mode() {
 
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
-    if (get_hlc_enabled()) {
+    if (hlc_enabled) {
         r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
     }
 }
@@ -1329,13 +1315,7 @@ bool EvseManager::is_reserved() {
     return reserved;
 }
 
-bool EvseManager::get_hlc_enabled() {
-    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_get_hlc_enabled);
-    return hlc_enabled;
-}
-
 bool EvseManager::get_hlc_waiting_for_auth_pnc() {
-    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_get_hlc_waiting_for_auth_pnc);
     return hlc_waiting_for_auth_pnc;
 }
 
@@ -1357,7 +1337,6 @@ void EvseManager::log_v2g_message(types::iso15118::V2gMessages v2g_messages) {
 
 void EvseManager::charger_was_authorized() {
 
-    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_charger_was_authorized);
     if (hlc_waiting_for_auth_pnc and charger->get_authorized_pnc()) {
         r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                               types::authorization::CertificateStatus::Accepted);
