@@ -2588,7 +2588,7 @@ std::optional<std::string> ChargePointConfiguration::getDefaultPriceText(const s
         }
 
         for (auto& price_text : default_price.at("priceTexts").items()) {
-            if (language == price_text.value().at("language")) {
+            if (language == price_text.value().at("language").get<std::string>()) {
                 // Language found.
                 result["priceText"] = price_text.value().at("priceText");
                 if (price_text.value().contains("priceTextOffline")) {

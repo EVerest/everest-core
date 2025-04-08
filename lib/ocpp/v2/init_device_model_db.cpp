@@ -83,7 +83,7 @@ void InitDeviceModelDb::execute_init_sql(const bool delete_db_if_exists) {
     if (delete_db_if_exists) {
         if (std::filesystem::exists(database_path)) {
             if (!std::filesystem::remove(database_path)) {
-                EVLOG_AND_THROW(InitDeviceModelDbError("Could not remove database " + database_path.u8string()));
+                EVLOG_AND_THROW(InitDeviceModelDbError("Could not remove database " + database_path.string()));
             }
 
             database_exists = false;

@@ -654,7 +654,7 @@ public:
         {
             std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
             if (next_message_to_send.has_value()) {
-                if (next_message_to_send.value() == call_result.at(MESSAGE_ID)) {
+                if (next_message_to_send.value() == static_cast<MessageId>(call_result.at(MESSAGE_ID))) {
                     next_message_to_send.reset();
                 }
             }
@@ -1035,7 +1035,7 @@ public:
                 for (const auto& meter_value_message_id :
                      this->start_transaction_mid_meter_values_mid_map.at(start_transaction_message_id)) {
 
-                    if (meter_value_message_id == (*it)->message.at(1)) {
+                    if (meter_value_message_id == static_cast<std::string>((*it)->message.at(1))) {
                         EVLOG_debug << "Adding transactionId " << transaction_id << " to MeterValue.req";
                         (*it)->message.at(3)["transactionId"] = transaction_id;
                     }
