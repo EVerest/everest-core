@@ -8,4 +8,4 @@ cmds:
     result: 
       description: token
       type: object
-      $ref: /bank_transaction#/BankSessionToken
+      $ref: /payment_terminal#/BankSessionToken

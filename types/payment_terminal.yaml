@@ -1,5 +1,5 @@
 description: >-
-  Types needed for bookkeeping bank transactions
+  Types needed for payment terminal - bookkeeping bank transactions, card types
 types:
   BankSessionToken:
     description: >-
@@ -24,9 +24,15 @@ types:
           Token to identify the session. This token can be used to download the
           invoices.
         type: object
-        $ref: /bank_transaction#/BankSessionToken
+        $ref: /payment_terminal#/BankSessionToken
       transaction_data:
         description: >-
           Arbitrary data that is needed to identify the transaction. This is
           mostly opaque data at the moment.
         type: string
+  CardType:
+    description: types of cards for the payment terminal
+    type: string
+    enum:
+        - BankCard
+        - RfidCard
