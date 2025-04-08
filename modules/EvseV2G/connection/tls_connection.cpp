@@ -17,24 +17,6 @@
 #include <sys/types.h>
 #include <thread>
 
-#ifdef EVEREST_MBED_TLS
-namespace tls {
-int connection_init(struct v2g_context* ctx) {
-    return -1;
-}
-int connection_start_servers(struct v2g_context* ctx) {
-    return -1;
-}
-ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, std::size_t count) {
-    return -1;
-}
-ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::size_t count) {
-    return -1;
-}
-} // namespace tls
-
-#else // EVEREST_MBED_TLS
-
 namespace {
 
 // used when ctx->network_read_timeout_tls is 0
@@ -280,7 +262,7 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, const s
             conn->tls_connection->wait_for(read_res, default_timeout_ms);
             break;
         case tls::Connection::result_t::timeout:
-            // the MBedTLS code loops on timeout, is_sequence_timeout() is used instead
+            // is_sequence_timeout() is used to manage timeouts. Just loop and wait for more bytes
             break;
         case tls::Connection::result_t::closed:
         default:
@@ -324,7 +306,7 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
             conn->tls_connection->wait_for(write_res, default_timeout_ms);
             break;
         case tls::Connection::result_t::timeout:
-            // the MBedTLS code loops on timeout
+            // is_sequence_timeout() is used to manage timeouts. Just loop and wait for more bytes
             break;
         case tls::Connection::result_t::closed:
         default:
@@ -342,5 +324,3 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
 }
 
 } // namespace tls
-
-#endif // EVEREST_MBED_TLS

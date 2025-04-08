@@ -307,9 +307,6 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
     ctx->sdp_socket = -1;
     ctx->tcp_socket = -1;
     ctx->tls_socket.fd = -1;
-#ifdef EVEREST_MBED_TLS
-    memset(&ctx->tls_log_ctx, 0, sizeof(keylogDebugCtx));
-#endif // EVEREST_MBED_TLS
     ctx->tls_key_logging = false;
     ctx->debugMode = false;
 
@@ -344,30 +341,6 @@ free_out:
     return NULL;
 }
 
-static void v2g_ctx_free_tls(struct v2g_context* ctx) {
-#ifdef EVEREST_MBED_TLS
-    mbedtls_net_free(&ctx->tls_socket);
-
-    for (uint8_t idx = 0; idx < ctx->num_of_tls_crt; idx++) {
-        mbedtls_pk_free(&ctx->evse_tls_crt_key[idx]);
-        mbedtls_x509_crt_free(&ctx->evseTlsCrt[idx]);
-    }
-
-    free(ctx->evseTlsCrt);
-    ctx->evseTlsCrt = NULL;
-    free(ctx->evse_tls_crt_key);
-    ctx->evse_tls_crt_key = NULL;
-
-    mbedtls_x509_crt_free(&ctx->v2g_root_crt);
-    mbedtls_ssl_config_free(&ctx->ssl_config);
-
-    if (NULL != ctx->tls_log_ctx.file) {
-        fclose(ctx->tls_log_ctx.file);
-        memset(&ctx->tls_log_ctx, 0, sizeof(ctx->tls_log_ctx));
-    }
-#endif // EVEREST_MBED_TLS
-}
-
 void v2g_ctx_free(struct v2g_context* ctx) {
     if (ctx->event_base) {
         event_base_loopbreak(ctx->event_base);
@@ -376,8 +349,6 @@ void v2g_ctx_free(struct v2g_context* ctx) {
 
     pthread_cond_destroy(&ctx->mqtt_cond);
     pthread_mutex_destroy(&ctx->mqtt_lock);
-
-    v2g_ctx_free_tls(ctx);
 
     free(ctx->local_tls_addr);
     ctx->local_tls_addr = NULL;

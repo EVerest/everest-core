@@ -15,18 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef EVEREST_MBED_TLS
-#include "crypto/crypto_mbedtls.hpp"
-using namespace crypto::mbedtls;
-#include <mbedtls/base64.h>
-#include <mbedtls/error.h>
-#include <mbedtls/oid.h> /* To extract the emaid */
-#include <mbedtls/sha256.h>
-#else
 #include "crypto/crypto_openssl.hpp"
 using namespace openssl;
 using namespace crypto::openssl;
-#endif // EVEREST_MBED_TLS
 
 #include "iso_server.hpp"
 #include "log.hpp"
@@ -504,28 +495,6 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
     bool rv = true;
     types::iso15118::RequestExiStreamSchema certificate_request;
 
-#ifdef EVEREST_MBED_TLS
-    /* Parse contract leaf certificate */
-    unsigned char* base64Buffer = NULL;
-    size_t olen;
-    mbedtls_base64_encode(NULL, 0, &olen, static_cast<unsigned char*>(AExiBuffer), AExiBufferSize);
-
-    if (MQTT_MAX_PAYLOAD_SIZE < olen) {
-        rv = false;
-        dlog(DLOG_LEVEL_ERROR, "Mqtt payload size exceeded!");
-        goto exit;
-    }
-    base64Buffer = static_cast<unsigned char*>(malloc(olen));
-
-    if ((NULL == base64Buffer) ||
-        (mbedtls_base64_encode(base64Buffer, olen, &olen, static_cast<unsigned char*>(AExiBuffer), AExiBufferSize) !=
-         0)) {
-        rv = false;
-        dlog(DLOG_LEVEL_ERROR, "Unable to encode contract leaf certificate");
-        goto exit;
-    }
-    certificate_request.exi_request = std::string(reinterpret_cast<const char*>(base64Buffer), olen);
-#else
     certificate_request.exi_request = openssl::base64_encode(AExiBuffer, AExiBufferSize);
     if (certificate_request.exi_request.size() > MQTT_MAX_PAYLOAD_SIZE) {
         dlog(DLOG_LEVEL_ERROR, "Mqtt payload size exceeded!");
@@ -535,17 +504,10 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
         dlog(DLOG_LEVEL_ERROR, "Unable to encode contract leaf certificate");
         return false;
     }
-#endif // EVEREST_MBED_TLS
 
     certificate_request.iso15118_schema_version = ISO_15118_2013_MSG_DEF;
     certificate_request.certificate_action = types::iso15118::CertificateActionEnum::Install;
     ctx->p_extensions->publish_iso15118_certificate_request(certificate_request);
-
-#ifdef EVEREST_MBED_TLS
-exit:
-    if (base64Buffer != NULL)
-        free(base64Buffer);
-#endif // EVEREST_MBED_TLS
 
     return rv;
 }
@@ -894,13 +856,8 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
 
         // Parse contract leaf certificate
 
-#ifdef EVEREST_MBED_TLS
-        Certificate_ptr contract_crt;
-        const void* chain{nullptr};
-#else
         certificate_ptr contract_crt{nullptr, nullptr};
         certificate_list chain{};
-#endif // EVEREST_MBED_TLS
 
         if (req->ContractSignatureCertChain.Certificate.bytesLen != 0) {
             err = parse_contract_certificate(contract_crt, req->ContractSignatureCertChain.Certificate.bytes,
@@ -933,16 +890,9 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             goto error_out;
         }
 
-        // Convert the public key in the certificate to a mbed TLS ECDSA public key
-        // This also verifies that it's an ECDSA key and not an RSA key
-
-#ifdef EVEREST_MBED_TLS
-        err = get_public_key(&conn->ctx->session.contract.pubkey, contract_crt.get()->pk);
-#else
         assert(conn->pubkey != nullptr);
         *conn->pubkey = certificate_public_key(contract_crt.get());
         err = (*conn->pubkey == nullptr) ? -1 : 0;
-#endif // EVEREST_MBED_TLS
 
         if (err != 0) {
             memset(res, 0, sizeof(*res));
@@ -953,15 +903,9 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         // Parse contract sub certificates
         if (req->ContractSignatureCertChain.SubCertificates_isUsed == 1) {
             for (int i = 0; i < req->ContractSignatureCertChain.SubCertificates.Certificate.arrayLen; i++) {
-#ifdef EVEREST_MBED_TLS
-                err = load_certificate(contract_crt,
-                                       req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytes,
-                                       req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytesLen);
-#else
                 err =
                     load_certificate(&chain, req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytes,
                                      req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytesLen);
-#endif // EVEREST_MBED_TLS
                 if (err != 0) {
                     res->ResponseCode = iso2_responseCodeType_FAILED_CertChainError;
                     goto error_out;
@@ -1094,14 +1038,9 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
         iso2_fragment.AuthorizationReq_isUsed = 1u;
         memcpy(&iso2_fragment.AuthorizationReq, req, sizeof(*req));
 
-#ifdef EVEREST_MBED_TLS
-        const bool bSigRes = check_iso2_signature(&conn->exi_in.iso2EXIDocument->V2G_Message.Header.Signature,
-                                                  conn->ctx->session.contract.pubkey, &iso2_fragment);
-#else
         assert(conn->pubkey != nullptr);
         const bool bSigRes = check_iso2_signature(&conn->exi_in.iso2EXIDocument->V2G_Message.Header.Signature,
                                                   conn->pubkey->get(), &iso2_fragment);
-#endif
 
         if (!bSigRes) {
             res->ResponseCode = iso2_responseCodeType_FAILED_SignatureError;
@@ -1703,19 +1642,6 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
 
     if ((conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.empty() == false) &&
         (conn->ctx->evse_v2g_data.cert_install_status == true)) {
-#ifdef EVEREST_MBED_TLS
-        size_t buffer_pos = 0;
-        if ((rv = mbedtls_base64_decode(
-                 conn->buffer + V2GTP_HEADER_LENGTH, DEFAULT_BUFFER_SIZE, &buffer_pos,
-                 reinterpret_cast<unsigned char*>(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.data()),
-                 conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.size())) != 0) {
-            char strerr[256];
-            mbedtls_strerror(rv, strerr, 256);
-            dlog(DLOG_LEVEL_ERROR, "Failed to decode base64 stream (-0x%04x) %s", rv, strerr);
-            goto exit;
-        }
-        conn->stream.byte_pos = buffer_pos;
-#else
         const auto data = openssl::base64_decode(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.data(),
                                                  conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.size());
         if (data.empty() || (data.size() > DEFAULT_BUFFER_SIZE)) {
@@ -1725,7 +1651,6 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
             std::memcpy(conn->buffer + V2GTP_HEADER_LENGTH, data.data(), data.size());
             conn->stream.byte_pos = data.size();
         }
-#endif // EVEREST_MBED_TLS
         nextEvent = V2G_EVENT_SEND_RECV_EXI_MSG;
         res->ResponseCode =
             iso2_responseCodeType_OK; // Is irrelevant but must be valid to serve the internal validation
