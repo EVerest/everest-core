@@ -54,8 +54,6 @@ void ISO15118_chargerImpl::init() {
 
     v2g_ctx->network_read_timeout_tls = mod->config.tls_timeout;
 
-    v2g_ctx->certs_path = mod->info.paths.etc / CERTS_SUB_DIR;
-
     /* Configure if the contract certificate chain should be verified locally */
     v2g_ctx->session.verify_contract_cert_chain = mod->config.verify_contract_cert_chain;
 
