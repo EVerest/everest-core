@@ -98,7 +98,6 @@ TEST_F(DinServerTest, session_setup_generating_new_session_id) {
 
     // Setting up conn
     ctx->current_v2g_msg = V2G_SESSION_SETUP_MSG;
-    ctx->com_setup_timeout = nullptr;
 
     ctx->evse_v2g_data.session_id = 0;
     ctx->evse_v2g_data.date_time_now_is_used = 0;
@@ -137,7 +136,6 @@ TEST_F(DinServerTest, session_setup_old_session_id) {
 
     // Setting up conn
     ctx->current_v2g_msg = V2G_SESSION_SETUP_MSG;
-    ctx->com_setup_timeout = nullptr;
 
     ctx->evse_v2g_data.session_id = 4158610156;
     ctx->evse_v2g_data.date_time_now_is_used = 0;
@@ -176,7 +174,6 @@ TEST_F(DinServerTest, session_setup_datetime_is_used) {
 
     // Setting up conn
     ctx->current_v2g_msg = V2G_SESSION_SETUP_MSG;
-    ctx->com_setup_timeout = nullptr;
 
     ctx->evse_v2g_data.session_id = 0;
     ctx->evse_v2g_data.date_time_now_is_used = true;
@@ -219,8 +216,6 @@ TEST_F(DinServerTest, din_service_discovery_good_case) {
 
 TEST_F(DinServerTest, handle_din_contract_authentication_check_evse_processing_finished) {
 
-    ctx->com_setup_timeout = nullptr;
-
     // TODO: set a prober session id
     ctx->evse_v2g_data.session_id = 0;
     ctx->evse_v2g_data.date_time_now_is_used = 0;
@@ -241,8 +236,6 @@ TEST_F(DinServerTest, handle_din_contract_authentication_check_evse_processing_f
 }
 
 TEST_F(DinServerTest, handle_din_contract_authentication_check_evse_processing_ongoing) {
-
-    ctx->com_setup_timeout = nullptr;
 
     // TODO: set a prober session id
     ctx->evse_v2g_data.session_id = 0;
