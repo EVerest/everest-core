@@ -722,7 +722,7 @@ class TestIso15118CertificateManagementE2E:
             {
                 "certificate_type": "V2GCertificateChain",
                 "certificate_hash_data": exp_hashdata_leaf,
-                "child_certificate_hash_data": [exp_hashdata_ca_1, exp_hashdata_ca_2],
+                "child_certificate_hash_data": [exp_hashdata_ca_2, exp_hashdata_ca_1],
             }
         ]
 
