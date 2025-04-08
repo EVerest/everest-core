@@ -274,60 +274,39 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t 
         int num_of_bytes;
 
         if (conn->is_tls_connection) {
-#ifdef EVEREST_MBED_TLS
-            num_of_bytes = mbedtls_ssl_read(&conn->conn.ssl.ssl_context, &buf[bytes_read], count - bytes_read);
+            return -1; // shouldn't be using this function
+        }
+        /* use select for timeout handling */
+        struct timeval tv;
+        fd_set read_fds;
 
-            if (num_of_bytes == MBEDTLS_ERR_SSL_WANT_READ || num_of_bytes == MBEDTLS_ERR_SSL_WANT_WRITE ||
-                num_of_bytes == MBEDTLS_ERR_SSL_TIMEOUT)
+        FD_ZERO(&read_fds);
+        FD_SET(conn->conn.socket_fd, &read_fds);
+
+        tv.tv_sec = conn->ctx->network_read_timeout / 1000;
+        tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
+
+        num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
+
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
                 continue;
 
-            if (num_of_bytes == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || num_of_bytes == MBEDTLS_ERR_SSL_CONN_EOF)
-                return bytes_read;
-
-            if (num_of_bytes < 0) {
-                char error_buf[100];
-                mbedtls_strerror(num_of_bytes, error_buf, sizeof(error_buf));
-                dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_read() error: %s", error_buf);
-
-                return -1;
-            }
-#else
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_read() not configured");
             return -1;
-#endif // EVEREST_MBED_TLS
-        } else {
-            /* use select for timeout handling */
-            struct timeval tv;
-            fd_set read_fds;
+        }
 
-            FD_ZERO(&read_fds);
-            FD_SET(conn->conn.socket_fd, &read_fds);
+        /* Zero fds ready means we timed out, so let upper loop check our sequence timeout */
+        if (num_of_bytes == 0) {
+            continue;
+        }
 
-            tv.tv_sec = conn->ctx->network_read_timeout / 1000;
-            tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
+        num_of_bytes = (int)read(conn->conn.socket_fd, &buf[bytes_read], count - bytes_read);
 
-            num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
-
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
-
-                return -1;
-            }
-
-            /* Zero fds ready means we timed out, so let upper loop check our sequence timeout */
-            if (num_of_bytes == 0) {
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
                 continue;
-            }
 
-            num_of_bytes = (int)read(conn->conn.socket_fd, &buf[bytes_read], count - bytes_read);
-
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
-
-                return -1;
-            }
+            return -1;
         }
 
         /* return when peer closed connection */
@@ -358,30 +337,15 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
 
     /* loop until we got all requested bytes out */
     while (bytes_written < count) {
-        int num_of_bytes;
-
+        int num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
         if (conn->is_tls_connection) {
-#ifdef EVEREST_MBED_TLS
-            num_of_bytes = mbedtls_ssl_write(&conn->conn.ssl.ssl_context, &buf[bytes_written], count - bytes_written);
-
-            if (num_of_bytes == MBEDTLS_ERR_SSL_WANT_READ || num_of_bytes == MBEDTLS_ERR_SSL_WANT_WRITE)
+            return -1; // shouldn't be using this function
+        }
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
                 continue;
 
-            if (num_of_bytes < 0)
-                return -1;
-#else
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_write() not configured");
-            return -1; // shouldn't be using this function
-#endif // EVEREST_MBED_TLS
-        } else {
-            num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
-
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
-
-                return -1;
-            }
+            return -1;
         }
 
         /* return when peer closed connection */
@@ -472,195 +436,6 @@ static void* connection_handle_tcp(void* data) {
     }
 
     free(conn);
-
-    return nullptr;
-}
-
-/**
- * This is the 'main' function of a thread, which handles a TLS connection.
- */
-static void* connection_handle_tls(void* data) {
-#ifdef EVEREST_MBED_TLS
-    struct v2g_connection* conn = static_cast<v2g_connection*>(data);
-    struct v2g_context* v2g_ctx = conn->ctx;
-    mbedtls_ssl_config* ssl_config = conn->conn.ssl.ssl_config;
-    mbedtls_net_context* client_fd = &conn->conn.ssl.tls_client_fd;
-    mbedtls_ssl_context* ssl = &conn->conn.ssl.ssl_context;
-
-    mbedtls_x509_crt_init(&conn->ctx->v2g_root_crt);
-    mbedtls_ssl_config_init(&conn->ctx->ssl_config);
-    conn->ctx->num_of_tls_crt = 0;
-    conn->ctx->evseTlsCrt = NULL;
-    conn->ctx->evse_tls_crt_key = NULL;
-
-    int rv = -1;
-
-    dlog(DLOG_LEVEL_INFO, "Started new TLS connection thread");
-
-    if (connection_init_tls(conn->ctx) == false) {
-        goto thread_exit;
-    }
-
-    /* Init new SSL context */
-    mbedtls_ssl_init(ssl);
-
-    /* Code to start the TLS-key logging */
-    if (v2g_ctx->tls_key_logging == true) {
-        if (v2g_ctx->tls_log_ctx.file != NULL) {
-            fclose(v2g_ctx->tls_log_ctx.file);
-        }
-        memset(&v2g_ctx->tls_log_ctx, 0, sizeof(v2g_ctx->tls_log_ctx));
-
-        std::string tls_log_path(v2g_ctx->tls_key_logging_path);
-        tls_log_path.append("/tls_session_keys.log");
-
-        v2g_ctx->tls_log_ctx.file = fopen(tls_log_path.c_str(), "a");
-
-        const auto udp_socket = create_udp_socket(conn->ctx->udp_port, v2g_ctx->if_name);
-        if (udp_socket < 0) {
-            goto thread_exit;
-        }
-        EVLOG_info << "Sending TLS secrets to port: " << conn->ctx->udp_port;
-        v2g_ctx->udp_socket = udp_socket;
-
-        if (v2g_ctx->tls_log_ctx.file == NULL) {
-            dlog(DLOG_LEVEL_INFO, "%s", "Failed to open file path for TLS key logging: %s", strerror(errno));
-            mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_NO_DEBUG);
-        } else {
-            // Activate full debugging to receive the demanded key-log-msgs
-            mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_VERBOSE);
-            v2g_ctx->tls_log_ctx.inClientRandom = false;
-            v2g_ctx->tls_log_ctx.inMasterSecret = false;
-            v2g_ctx->tls_log_ctx.hexdumpLinesToProcess = 0;
-            v2g_ctx->tls_log_ctx.udp_socket = v2g_ctx->udp_socket;
-            mbedtls_ssl_conf_dbg(ssl_config, ssl_key_log_debug_callback, &v2g_ctx->tls_log_ctx);
-        }
-    }
-
-    /* get the SSL context ready */
-    if ((rv = mbedtls_ssl_setup(ssl, ssl_config)) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_setup returned: %s (-0x%04x)", error_buf, -rv);
-        goto thread_exit;
-    }
-
-    mbedtls_ssl_set_bio(ssl, client_fd, mbedtls_net_send, NULL, mbedtls_net_recv_timeout);
-
-    /* TLS handshake */
-    dlog(DLOG_LEVEL_INFO, "Performing TLS handshake");
-
-    rv = 0;
-    do {
-        if (ssl == NULL || ssl->conf == NULL) {
-            goto thread_exit;
-        }
-
-        while (ssl->state != MBEDTLS_SSL_HANDSHAKE_OVER) {
-            rv = mbedtls_ssl_handshake_step(ssl);
-
-            /* Determine used v2g-root certificate */
-            if (ssl->state == MBEDTLS_SSL_SERVER_HELLO_DONE) {
-                mbedtls_x509_crt* caChain = ssl_config->key_cert->cert;
-                mbedtls_x509_crt* root_crt = &conn->ctx->v2g_root_crt;
-                uint8_t pkiIdx;
-
-                for (pkiIdx = 0; caChain != NULL && (caChain != mbedtls_ssl_own_cert(ssl)); pkiIdx++) {
-                    caChain = ssl_config->key_cert->next->cert;
-                    root_crt = root_crt->next;
-                }
-
-                /* Log selected V2G-root cert */
-                if (root_crt != NULL) {
-                    unsigned char trusted_id[20];
-                    mbedtls_sha1(root_crt->raw.p, root_crt->raw.len, trusted_id);
-                    std::string root_issuer(reinterpret_cast<const char*>(root_crt->issuer.val.p),
-                                            root_crt->issuer.val.len);
-
-                    dlog(DLOG_LEVEL_INFO, "Using V2G-root of issuer %s (SHA-1: 0x%s) for TLS-handshake",
-                         root_issuer.c_str(),
-                         convert_to_hex_str(reinterpret_cast<const uint8_t*>(trusted_id), sizeof(trusted_id)).c_str());
-                }
-            }
-
-            if (rv != 0) {
-                if (((rv != MBEDTLS_ERR_SSL_WANT_READ) && (rv != MBEDTLS_ERR_SSL_WANT_WRITE) &&
-                     (rv != MBEDTLS_ERR_SSL_TIMEOUT)) ||
-                    (NULL == conn->ctx->com_setup_timeout)) {
-                    dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_handshake returned -0x%04x", -rv);
-                    goto thread_exit;
-                }
-                break;
-            }
-        }
-    } while (rv != 0);
-
-    dlog(DLOG_LEVEL_INFO, "TLS handshake succeeded");
-
-    /* Deactivate tls-debug-mode after the tls-handshake, because of performance reasons */
-    if (conn->ctx->tls_log_ctx.file != NULL) {
-        mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_NO_DEBUG);
-        fclose(conn->ctx->tls_log_ctx.file);
-        close(conn->ctx->udp_socket);
-        memset(&conn->ctx->tls_log_ctx, 0, sizeof(conn->ctx->tls_log_ctx));
-    }
-
-    /* check if the v2g-session is already running in another thread, if not handle v2g-connection */
-    if (conn->ctx->state == 0) {
-        rv = v2g_handle_connection(conn);
-        dlog(DLOG_LEVEL_INFO, "v2g_dispatch_connection exited with %d", rv);
-    } else {
-        rv = ERROR_SESSION_ALREADY_STARTED;
-        dlog(DLOG_LEVEL_INFO, "%s", "Closing tls-connection. v2g-session is already running");
-    }
-
-    /* tear down TLS connection gracefully */
-    dlog(DLOG_LEVEL_INFO, "Closing TLS connection");
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    while ((rv = mbedtls_ssl_close_notify(ssl)) < 0) {
-        if ((rv != MBEDTLS_ERR_SSL_WANT_READ) && (rv != MBEDTLS_ERR_SSL_WANT_WRITE)) {
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_close_notify returned -0x%04x", -rv);
-            goto thread_exit;
-        }
-    }
-    dlog(DLOG_LEVEL_INFO, "TLS connection closed gracefully");
-
-    rv = 0;
-
-thread_exit:
-    dlog(DLOG_LEVEL_INFO, "Closing TLS connection thread");
-
-    if (rv != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "Last TLS error was: -0x%04x - %s", -rv, error_buf);
-    }
-
-    mbedtls_net_free(client_fd);
-    mbedtls_ssl_free(ssl);
-
-    for (uint8_t idx = 0; idx < conn->ctx->num_of_tls_crt; idx++) {
-        mbedtls_pk_free(&conn->ctx->evse_tls_crt_key[idx]);
-        mbedtls_x509_crt_free(&conn->ctx->evseTlsCrt[idx]);
-    }
-    conn->ctx->num_of_tls_crt = 0;
-
-    free(conn->ctx->evseTlsCrt);
-    conn->ctx->evseTlsCrt = NULL;
-
-    free(conn->ctx->evse_tls_crt_key);
-    conn->ctx->evse_tls_crt_key = NULL;
-
-    mbedtls_x509_crt_free(&conn->ctx->v2g_root_crt);
-    mbedtls_ssl_config_free(&conn->ctx->ssl_config);
-
-    /* cleanup and notify lower layers */
-    connection_teardown(conn);
-
-    free(conn);
-#endif // EVEREST_MBED_TLS
 
     return nullptr;
 }
