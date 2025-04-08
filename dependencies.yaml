@@ -74,15 +74,6 @@ Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
   git_tag: 2025.2.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
-# mbedtls
-ext-mbedtls:
-  git: https://github.com/EVerest/ext-mbedtls.git
-  git_tag: 8b3f26a5ac38d4fdccbc5c5366229f3e01dafcc0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_MBEDTLS"
-  options:
-    - ENABLE_PROGRAMS OFF
-    - ENABLE_TESTING OFF
-    - MBEDTLS_FATAL_WARNINGS OFF  # disables setting warnings as errors  FIXME: workaround until upstream-fixes are included
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
