@@ -338,6 +338,11 @@ void ChargePoint::register_session_cost_callback(
     this->charge_point->register_session_cost_callback(session_cost_callback);
 }
 
+void ChargePoint::register_tariff_message_callback(
+    const std::function<DataTransferResponse(const TariffMessage& message)>& tariff_message_callback) {
+    this->charge_point->register_tariff_message_callback(tariff_message_callback);
+}
+
 void ChargePoint::register_set_display_message_callback(
     const std::function<DataTransferResponse(const std::vector<DisplayMessage>&)> set_display_message_callback) {
     this->charge_point->register_set_display_message_callback(set_display_message_callback);

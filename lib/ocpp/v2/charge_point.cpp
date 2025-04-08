@@ -557,7 +557,7 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
                                                            this->callbacks.set_charging_profiles_callback);
 
     this->tariff_and_cost = std::make_unique<TariffAndCost>(
-        *functional_block_context, *this->meter_values, this->callbacks.set_display_message_callback,
+        *functional_block_context, *this->meter_values, this->callbacks.tariff_message_callback,
         this->callbacks.set_running_cost_callback, this->io_context);
 
     this->firmware_update = std::make_unique<FirmwareUpdate>(

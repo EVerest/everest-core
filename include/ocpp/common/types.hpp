@@ -371,6 +371,13 @@ enum class IdentifierType {
     TransactionId ///< \brief Identifier is the transaction id.
 };
 
+struct TariffMessage {
+    std::optional<std::string> ocpp_transaction_id;
+    std::optional<std::string> identifier_id;
+    std::optional<IdentifierType> identifier_type;
+    std::vector<DisplayMessageContent> message;
+};
+
 struct DisplayMessage {
     std::optional<int32_t> id;
     std::optional<v2::MessagePriorityEnum> priority;
