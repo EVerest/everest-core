@@ -28,23 +28,12 @@ protected:
         m_rpc_server->stop_server();
     }
 
-    std::vector<TransportInterface::ClientId>& get_connected_clients() {
-        std::lock_guard<std::mutex> lock(cv_mutex);
-        return connected_clients;
-    }
-
     std::unique_ptr<server::WebSocketServer> m_websocket_server;
     std::unique_ptr<rpc::RpcHandler> m_rpc_server;
-
-    //Connected client id's
-    std::vector<TransportInterface::ClientId> connected_clients;
 
     //Condition variable to wait for response
     std::condition_variable cv;
     std::mutex cv_mutex;
-
-    //Reveived data with client id
-    std::unordered_map<TransportInterface::ClientId, std::string> received_data;
 };
 
 // Test: Connect to WebSocket server and check if API.hello timeout occurs
