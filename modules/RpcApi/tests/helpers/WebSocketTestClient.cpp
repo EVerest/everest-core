@@ -57,9 +57,16 @@ int WebSocketTestClient::callback(struct lws* wsi, enum lws_callback_reasons rea
         case LWS_CALLBACK_CLIENT_ESTABLISHED:
             client->m_connected = true;
             break;
-        case LWS_CALLBACK_CLIENT_RECEIVE:
-            client->received_data.assign(static_cast<char*>(in), len);
+        case LWS_CALLBACK_CLIENT_RECEIVE: {
+            std::lock_guard<std::mutex> lock(client->m_cv_mutex);
+            try {
+                client->m_received_data.assign(static_cast<char*>(in), len);
+                client->m_cv.notify_all();
+            } catch (const std::exception& e) {
+                EVLOG_error << "Exception occurred while handling data available: " << e.what();
+            }
             break;
+        }
         case LWS_CALLBACK_CLIENT_CLOSED:
         case LWS_CALLBACK_CLOSED_CLIENT_HTTP: {
             client->m_connected = false;
@@ -110,7 +117,7 @@ void WebSocketTestClient::send(const std::string& message) {
 }
 
 std::string WebSocketTestClient::receive() {
-    return received_data;
+    return m_received_data;
 }
 
 void WebSocketTestClient::close() {
