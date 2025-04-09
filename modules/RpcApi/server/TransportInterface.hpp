@@ -39,6 +39,9 @@ public:
     std::string server_name() const;
 
     virtual void send_data(const ClientId &clientId, const Data &data) = 0;
+    inline void send_data(const ClientId &clientId, const std::string &data) {
+        send_data(clientId, std::vector<uint8_t>(data.begin(), data.end()));
+    };
     virtual void kill_client_connection(const ClientId &clientId, const std::string &killReason) = 0;
 
     virtual uint32_t connections_count() const = 0;
