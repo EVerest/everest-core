@@ -108,6 +108,12 @@ cmds:
       stop:
         description: Set to true when to stop, set to false when to continue
         type: boolean
+  pause_charging:
+    description: Pause the charging process (only in ISO15118-20)
+    arguments:
+      pause:
+        description: Set to true when to pause, set to false when to continue
+        type: boolean
 # Update physical values
   update_ac_max_current:
     description: Update the maximum allowed line current restriction per phase. Call at least once during start up.
