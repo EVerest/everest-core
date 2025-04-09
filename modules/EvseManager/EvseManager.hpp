@@ -191,7 +191,6 @@ public:
     bool reserve(int32_t id, const bool signal_reservation_event = true);
     int32_t get_reservation_id();
 
-    bool get_hlc_enabled();
     bool get_hlc_waiting_for_auth_pnc();
     sigslot::signal<types::evse_manager::SessionEvent> signalReservationEvent;
 
@@ -292,12 +291,10 @@ private:
 
     std::atomic_bool contactor_open{true};
 
-    Everest::timed_mutex_traceable hlc_mutex;
+    std::atomic_bool hlc_enabled;
 
-    bool hlc_enabled;
-
-    bool hlc_waiting_for_auth_eim;
-    bool hlc_waiting_for_auth_pnc;
+    std::atomic_bool hlc_waiting_for_auth_eim;
+    std::atomic_bool hlc_waiting_for_auth_pnc;
 
     VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;
