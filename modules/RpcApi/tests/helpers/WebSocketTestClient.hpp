@@ -9,6 +9,8 @@
 #include <vector>
 #include <cstring>
 #include <everest/logging.hpp>
+#include <condition_variable>
+#include <mutex>
 
 class WebSocketTestClient {
 public:
@@ -20,6 +22,7 @@ public:
     void send(const std::string& message);
     std::string receive();
     void close();
+    std::string get_received_data() const { return m_received_data; }
 
 private:
     static int callback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
@@ -32,7 +35,11 @@ private:
     std::atomic<bool> m_connected {false};
     std::atomic<bool> m_running {false};
     std::thread m_client_thread;
-    std::string received_data;
+    std::string m_received_data;
+
+    //Condition variable to wait for response
+    std::condition_variable m_cv;
+    std::mutex m_cv_mutex;
 };
 
 #endif // WEBSOCKETTESTCLIENT_HPP
