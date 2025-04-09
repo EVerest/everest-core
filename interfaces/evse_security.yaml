@@ -49,10 +49,13 @@ cmds:
       certificate_chain:
         description: Leaf certificate or certificate chain that is to be verified
         type: string
-      certificate_type:
+      certificate_types:
         description: Indicates the type of the certificate
-        type: string
-        $ref: /evse_security#/LeafCertificateType
+        type: array
+        items:
+          minimum: 1
+          type: string
+          $ref: /evse_security#/LeafCertificateType
     result:
       description: Result of the verification
       type: string

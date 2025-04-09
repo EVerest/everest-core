@@ -47,7 +47,28 @@ ocpp::CertificateValidationResult EvseSecurity::verify_certificate(const std::st
                                                                    const ocpp::LeafCertificateType& certificate_type) {
     try {
         return conversions::to_ocpp(
-            this->r_security.call_verify_certificate(certificate_chain, conversions::from_ocpp(certificate_type)));
+            this->r_security.call_verify_certificate(certificate_chain, {conversions::from_ocpp(certificate_type)}));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return ocpp::CertificateValidationResult::Unknown;
+    }
+}
+
+ocpp::CertificateValidationResult
+EvseSecurity::verify_certificate(const std::string& certificate_chain,
+                                 const std::vector<ocpp::LeafCertificateType>& certificate_types) {
+    std::vector<types::evse_security::LeafCertificateType> _certificate_types;
+
+    for (const auto& certificate_type : certificate_types) {
+        try {
+            _certificate_types.push_back(conversions::from_ocpp(certificate_type));
+        } catch (const std::out_of_range& e) {
+            EVLOG_warning << e.what();
+        }
+    }
+
+    try {
+        return conversions::to_ocpp(this->r_security.call_verify_certificate(certificate_chain, _certificate_types));
     } catch (const std::out_of_range& e) {
         EVLOG_warning << e.what();
         return ocpp::CertificateValidationResult::Unknown;
