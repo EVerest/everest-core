@@ -1,5 +1,30 @@
 description: Types to provide the session price
 types:
+  TariffMessage:
+    description: >-
+      Message containing cost information
+    type: object
+    additionalProperties: false
+    required:
+      - messages
+    properties:
+      ocpp_transaction_id:
+        description: Transaction id of ocpp.
+        type: string
+      identifier_id:
+        description: To which token this message is bound.
+        type: string
+      identifier_type:
+        description: The type of 'identifier_id'. If omitted, type will be session id.
+        type: string
+        $ref: /display_message#/IdentifierType
+      messages:
+        description: Message with session price information to show the user.
+        type: array
+        items:
+          description: Message with pricing information in a specific language
+          type: object
+          $ref: /text_message#/MessageContent
   IdlePrice:
     description: >-
       Price components when idle
@@ -171,7 +196,7 @@ types:
         items:
           description: Message with pricing information in a specific language
           type: object
-          $ref: /display_message#/MessageContent
+          $ref: /text_message#/MessageContent
       qr_code:
         description: >-
           QR Code with more information. For example when the charging is finished,

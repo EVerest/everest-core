@@ -858,6 +858,15 @@ void OCPP::ready() {
             return response;
         });
 
+    this->charge_point->register_tariff_message_callback(
+        [this](const ocpp::TariffMessage& message) -> ocpp::v16::DataTransferResponse {
+            const types::session_cost::TariffMessage m = ocpp_conversions::to_everest_tariff_message(message);
+            this->p_session_cost->publish_tariff_message(m);
+            ocpp::v16::DataTransferResponse response;
+            response.status = ocpp::v16::DataTransferStatus::Accepted;
+            return response;
+        });
+
     this->charge_point->register_set_display_message_callback(
         [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
             ocpp::v16::DataTransferResponse response;

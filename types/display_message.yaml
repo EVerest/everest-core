@@ -1,6 +1,13 @@
 description: >-
   Message to show on a display
 types:
+  IdentifierType:
+    description: Types of identifiers
+    type: string
+    enum:
+      - IdToken
+      - SessionId
+      - TransactionId
   MessagePriorityEnum:
     description: >-
       Priority of the message.
@@ -42,28 +49,6 @@ types:
     enum:
       - Accepted
       - Unknown
-  MessageContent:
-    description: Contains message details
-    required:
-      - content
-    type: object
-    properties:
-      format:
-        type: string
-        $ref: /display_message#/MessageFormat
-      language:
-        type: string
-      content:
-        type: string
-  MessageFormat:
-    description: Format of the message to be displayed
-    type: string
-    enum:
-      - ASCII
-      - HTML
-      - URI
-      - UTF8
-      - QRCODE
   DisplayMessage:
     description: Message to show on a display
     type: object
@@ -111,14 +96,11 @@ types:
         description: >-
           The type of 'identifier_id'. If omitted, type will be session id.
         type: string
-        enum:
-          - IdToken
-          - SessionId
-          - TransactionId
+        $ref: /display_message#/IdentifierType
       message:  
         type: object
         description: The message to show
-        $ref: /display_message#/MessageContent
+        $ref: /text_message#/MessageContent
       qr_code:
         description: >-
           QR Code to scan for more information.
