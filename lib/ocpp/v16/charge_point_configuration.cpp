@@ -3489,7 +3489,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         if (this->getCentralContractValidationAllowed() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         } else {
-            this->setContractValidationOffline(ocpp::conversions::string_to_bool(value.get()));
+            this->setCentralContractValidationAllowed(ocpp::conversions::string_to_bool(value.get()));
         }
     }
     if (key == "CertSigningWaitMinimum") {
