@@ -50,3 +50,20 @@ TEST_F(RpcHandlerTest, ClientHelloTimeout) {
     ASSERT_FALSE(client.is_connected());
 }
 
+// Test: Connect to WebSocket server and send API.Hello request
+TEST_F(RpcHandlerTest, ClientHelloRequest) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    ASSERT_TRUE(client.is_connected());
+
+    // Send API.Hello request
+    client.send(R"({"jsonrpc": "2.0", "method": "API.Hello", "params": {}, "id": 1})");
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::unique_lock<std::mutex> lock(cv_mutex);
+    cv.wait_for(lock, std::chrono::seconds(1), [&] { return !client.get_received_data().empty(); });
+    lock.unlock();
+    ASSERT_FALSE(client.get_received_data().empty());
+    // Check if the response is valid
+    nlohmann::json response = nlohmann::json::parse(client.get_received_data());
+    ASSERT_EQ(response.dump(), R"({"jsonrpc":"2.0","result":{"authentication_required":false,"authenticated":true,"api_version":"1.0","everest_version":"2024.9.0"},"id":1})");
+}
