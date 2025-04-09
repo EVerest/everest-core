@@ -3940,15 +3940,18 @@ void ChargePointImpl::handle_data_transfer_pnc_get_installed_certificates(Call<D
 
             const auto certificate_hash_data_chains =
                 this->evse_security->get_installed_certificates(certificate_types);
-            std::optional<std::vector<ocpp::v2::CertificateHashDataChain>> certificate_hash_data_chain_v2_opt;
-            std::vector<ocpp::v2::CertificateHashDataChain> certificate_hash_data_chain_v2;
-            for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chains) {
-                certificate_hash_data_chain_v2.push_back(
-                    ocpp::evse_security_conversions::to_ocpp_v2(certificate_hash_data_chain_entry));
+
+            if (!certificate_hash_data_chains.empty()) {
+                std::optional<std::vector<ocpp::v2::CertificateHashDataChain>> certificate_hash_data_chain_v2_opt;
+                std::vector<ocpp::v2::CertificateHashDataChain> certificate_hash_data_chain_v2;
+                for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chains) {
+                    certificate_hash_data_chain_v2.push_back(
+                        ocpp::evse_security_conversions::to_ocpp_v2(certificate_hash_data_chain_entry));
+                }
+                certificate_hash_data_chain_v2_opt.emplace(certificate_hash_data_chain_v2);
+                get_certificate_ids_response.certificateHashDataChain = certificate_hash_data_chain_v2_opt;
+                get_certificate_ids_response.status = ocpp::v2::GetInstalledCertificateStatusEnum::Accepted;
             }
-            certificate_hash_data_chain_v2_opt.emplace(certificate_hash_data_chain_v2);
-            get_certificate_ids_response.certificateHashDataChain = certificate_hash_data_chain_v2_opt;
-            get_certificate_ids_response.status = ocpp::v2::GetInstalledCertificateStatusEnum::Accepted;
 
             response.data.emplace(json(get_certificate_ids_response).dump());
         } else {
