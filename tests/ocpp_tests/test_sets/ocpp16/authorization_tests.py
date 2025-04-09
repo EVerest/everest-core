@@ -24,6 +24,7 @@ from everest_test_utils import *
 from validations import (validate_standard_start_transaction,
                                validate_standard_stop_transaction,
                                validate_remote_start_stop_transaction,
+                               wait_for_callerror_and_validate
                                )
 # fmt: on
 
@@ -1315,4 +1316,57 @@ async def test_double_remote_start_transaction(
             2, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
+    )
+
+
+@pytest.mark.asyncio
+async def test_send_local_lost_large_token(
+    charge_point_v16: ChargePoint16,
+    test_utility: TestUtility,
+    test_controller: TestController
+):
+
+    from ocpp.messages import Call, _DecimalEncoder
+
+    async def send_message_without_validation(charge_point_v16, call_msg):
+        json_data = json.dumps(
+            [
+                call_msg.message_type_id,
+                call_msg.unique_id,
+                call_msg.action,
+                call_msg.payload,
+            ],
+            # By default json.dumps() adds a white space after every separator.
+            # By setting the separator manually that can be avoided.
+            separators=(",", ":"),
+            cls=_DecimalEncoder,
+        )
+
+        async with charge_point_v16._call_lock:
+            await charge_point_v16._send(json_data)
+
+    payload = call.SendLocalListPayload(
+        list_version=1,
+        update_type=UpdateType.differential,
+        local_authorization_list=[{
+            "idTag": "RFID111111111111111111111111111",
+            "idTagInfo": {
+                "status": "Accepted",
+                "expiryDate": "2342-06-19T09:10:00.000Z",
+                "parentIdTag": "PTAG",
+            },
+        }],
+    )
+    camel_case_payload = snake_to_camel_case(asdict(payload))
+
+    call_msg = Call(
+        unique_id=str(charge_point_v16._unique_id_generator()),
+        action=payload.__class__.__name__[:-7],
+        payload=remove_nones(camel_case_payload),
+    )
+
+    await send_message_without_validation(charge_point_v16, call_msg)
+
+    assert await wait_for_callerror_and_validate(
+        test_utility, charge_point_v16, "FormationViolation"
     )
