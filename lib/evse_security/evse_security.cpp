@@ -480,7 +480,7 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         }
 
         // Internal since we already acquired the lock
-        const auto result = this->verify_certificate_internal(certificate_chain, certificate_type);
+        const auto result = this->verify_certificate_internal(certificate_chain, {certificate_type});
         if (result != CertificateValidationResult::Valid) {
             return to_install_certificate_result(result);
         }
@@ -1738,29 +1738,49 @@ CertificateValidationResult EvseSecurity::verify_certificate(const std::string& 
                                                              LeafCertificateType certificate_type) {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
-    return verify_certificate_internal(certificate_chain, certificate_type);
+    return verify_certificate_internal(certificate_chain, {certificate_type});
 }
 
-CertificateValidationResult EvseSecurity::verify_certificate_internal(const std::string& certificate_chain,
-                                                                      LeafCertificateType certificate_type) {
-    EVLOG_info << "Verifying leaf certificate: " << conversions::leaf_certificate_type_to_string(certificate_type);
+CertificateValidationResult
+EvseSecurity::verify_certificate(const std::string& certificate_chain,
+                                 const std::vector<LeafCertificateType>& certificate_types) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+    return verify_certificate_internal(certificate_chain, certificate_types);
+}
 
-    CaCertificateType ca_certificate_type;
+CertificateValidationResult
+EvseSecurity::verify_certificate_internal(const std::string& certificate_chain,
+                                          const std::vector<LeafCertificateType>& certificate_types) {
 
-    if (certificate_type == LeafCertificateType::CSMS) {
-        ca_certificate_type = CaCertificateType::CSMS;
-    } else if (certificate_type == LeafCertificateType::V2G) {
-        ca_certificate_type = CaCertificateType::V2G;
-    } else if (certificate_type == LeafCertificateType::MF)
-        ca_certificate_type = CaCertificateType::MF;
-    else if (certificate_type == LeafCertificateType::MO) {
-        ca_certificate_type = CaCertificateType::MO;
-    } else {
-        throw std::runtime_error("Could not convert LeafCertificateType to CaCertificateType during verification!");
+    EVLOG_info << "Verifying leaf certificate";
+
+    std::set<CaCertificateType> ca_certificate_types;
+
+    for (const auto& cert_type : certificate_types) {
+        EVLOG_info << "Including trust anchor for leaf certificate: "
+                   << conversions::leaf_certificate_type_to_string(cert_type);
+
+        switch (cert_type) {
+        case LeafCertificateType::CSMS:
+            ca_certificate_types.insert(CaCertificateType::CSMS);
+            break;
+        case LeafCertificateType::V2G:
+            ca_certificate_types.insert(CaCertificateType::V2G);
+            break;
+        case LeafCertificateType::MF:
+            ca_certificate_types.insert(CaCertificateType::MF);
+            break;
+        case LeafCertificateType::MO:
+            ca_certificate_types.insert(CaCertificateType::MO);
+            break;
+        default:
+            EVLOG_warning << "Unknown LeafCertificateType provided. Skipping.";
+            break;
+        }
     }
 
-    // If we don't have a root certificate installed, return that we can't find an issuer
-    if (false == is_ca_certificate_installed_internal(ca_certificate_type)) {
+    if (ca_certificate_types.empty()) {
+        EVLOG_warning << "No valid CA certificate types could be determined from leaf types.";
         return CertificateValidationResult::IssuerNotFound;
     }
 
@@ -1794,36 +1814,47 @@ CertificateValidationResult EvseSecurity::verify_certificate_internal(const std:
         }
 
         // Build the trusted parent certificates from our internal store
+        std::vector<X509Wrapper> trusted_wrappers;
         std::vector<X509Handle*> trusted_parent_certificates;
 
-        fs::path root_store = this->ca_bundle_path_map.at(ca_certificate_type);
-        CertificateValidationResult validated{};
-
-        if (fs::is_directory(root_store)) {
-            // In case of a directory load the certificates manually and add them
-            // to the parent certificates
-            X509CertificateBundle roots(root_store, EncodingFormat::PEM);
-
-            // We use a root chain instead of relying on OpenSSL since that requires to have
-            // the name of the certificates in the format "hash.0", hash being the subject hash
-            // or to have symlinks in the mentioned format to the certificates in the directory
-            std::vector<X509Wrapper> root_chain{roots.split()};
-
-            for (size_t i = 0; i < root_chain.size(); i++) {
-                trusted_parent_certificates.emplace_back(root_chain[i].get());
+        for (const auto& ca_type : ca_certificate_types) {
+            if (!is_ca_certificate_installed_internal(ca_type)) {
+                continue;
             }
 
-            // The root_chain stores the X509Handler pointers, if this goes out of scope then
-            // parent_certificates will point to nothing.
-            validated =
-                CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), trusted_parent_certificates,
-                                                              untrusted_subcas, true, std::nullopt, std::nullopt);
-        } else {
-            validated = CryptoSupplier::x509_verify_certificate_chain(
-                leaf_certificate.get(), trusted_parent_certificates, untrusted_subcas, true, std::nullopt, root_store);
+            const auto root_store = this->ca_bundle_path_map.at(ca_type);
+            if (fs::is_directory(root_store)) {
+                // In case of a directory load the certificates manually and add them
+                // to the parent certificates
+                X509CertificateBundle roots(root_store, EncodingFormat::PEM);
+
+                // We use a root chain instead of relying on OpenSSL since that requires to have
+                // the name of the certificates in the format "hash.0", hash being the subject hash
+                // or to have symlinks in the mentioned format to the certificates in the directory
+                std::vector<X509Wrapper> root_chain = roots.split();
+
+                for (auto& root_cert : root_chain) {
+                    trusted_parent_certificates.emplace_back(root_cert.get());
+                    trusted_wrappers.emplace_back(std::move(root_cert)); // Keep wrappers alive
+                }
+            } else {
+                X509CertificateBundle roots(root_store, EncodingFormat::PEM);
+                std::vector<X509Wrapper> root_chain = roots.split();
+
+                for (auto& root_cert : root_chain) {
+                    trusted_parent_certificates.emplace_back(root_cert.get());
+                    trusted_wrappers.emplace_back(std::move(root_cert));
+                }
+            }
         }
 
-        return validated;
+        if (trusted_parent_certificates.empty()) {
+            return CertificateValidationResult::IssuerNotFound;
+        }
+
+        return CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), trusted_parent_certificates,
+                                                             untrusted_subcas, true, std::nullopt, std::nullopt);
+
     } catch (const CertificateLoadException& e) {
         EVLOG_warning << "Could not validate certificate chain because of invalid format";
         return CertificateValidationResult::Unknown;

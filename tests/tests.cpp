@@ -1128,6 +1128,39 @@ TEST_F(EvseSecurityTests, verify_base64) {
     ASSERT_EQ(test_string1, out_encoded);
 }
 
+TEST_F(EvseSecurityTestsMulti, verify_with_multiple_leaf_types_accepts_valid_cert) {
+    const std::string certificate_chain = read_file_to_string("certs/client/csms/SECC_LEAF_GRIDSYNC.pem");
+
+    // Validate with both V2G and CSMS trust anchors
+    std::vector<LeafCertificateType> types = {LeafCertificateType::V2G, LeafCertificateType::CSMS};
+
+    auto result = this->evse_security->verify_certificate(certificate_chain, types);
+
+    ASSERT_EQ(result, CertificateValidationResult::Valid);
+}
+
+TEST_F(EvseSecurityTestsMulti, verify_with_missing_trust_anchor_fails) {
+    const std::string certificate_chain = read_file_to_string("certs/client/csms/SECC_LEAF_GRIDSYNC.pem");
+
+    // Intentionally omit the correct anchor (V2G or CSMS)
+    std::vector<LeafCertificateType> types = {LeafCertificateType::MO};
+
+    auto result = this->evse_security->verify_certificate(certificate_chain, types);
+
+    ASSERT_NE(result, CertificateValidationResult::Valid);
+    ASSERT_EQ(result, CertificateValidationResult::IssuerNotFound); // since MO is empty
+}
+
+TEST_F(EvseSecurityTestsMulti, verify_with_invalid_cert_fails) {
+    const std::string invalid_cert = "-----BEGIN CERTIFICATE-----\nINVALID\n-----END CERTIFICATE-----";
+
+    std::vector<LeafCertificateType> types = {LeafCertificateType::CSMS, LeafCertificateType::V2G};
+
+    auto result = this->evse_security->verify_certificate(invalid_cert, types);
+
+    ASSERT_EQ(result, CertificateValidationResult::Unknown);
+}
+
 } // namespace evse_security
 
 // FIXME(piet): Add more tests for getRootCertificateHashData (incl. V2GCertificateChain etc.)
