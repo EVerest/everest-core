@@ -24,7 +24,7 @@ WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
     m_client_thread = std::thread([this]() {
         m_running = true;
         while (m_running) {
-            lws_service(m_context, 1000);
+            lws_service(m_context, 100);
         }
     });
 
@@ -67,7 +67,7 @@ int WebSocketTestClient::callback(struct lws* wsi, enum lws_callback_reasons rea
             break;
         }
         case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-            EVLOG_error << "CLIENT_CONNECTION_ERROR: " << (in ? (char*)in : "(null)");
+            EVLOG_error << "Client connection error: " << (in ? (char*)in : "(null)");
             break;
         default:
             break;
@@ -137,4 +137,6 @@ void WebSocketTestClient::close() {
         m_context = nullptr;
     }
     m_connected = false;
+
+    EVLOG_info << "WebSocket client closed";
 }
