@@ -242,6 +242,9 @@ to_everest_charging_schedules(const std::vector<ocpp::v2::CompositeSchedule>& co
 /// \brief Converts a given ocpp::v2::CompositeSchedule \p composite_schedule to a types::ocpp::ChargingSchedule
 types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v2::CompositeSchedule& composite_schedule);
 
+/// \brief Converts a given ocpp::v2::OperationModeEnum to a types::ocpp::Operation_mode enum.
+types::ocpp::Operation_mode to_everest_operation_mode(const ocpp::v2::OperationModeEnum operation_mode);
+
 /// \brief Converst a given ocpp::v2::ChargingSchedulePeriod \p period to a types::ocpp::ChargingSchedulePeriod
 types::ocpp::ChargingSchedulePeriod to_everest_charging_schedule_period(const ocpp::v2::ChargingSchedulePeriod& period);
 
