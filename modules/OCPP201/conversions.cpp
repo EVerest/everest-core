@@ -1333,6 +1333,29 @@ types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v2::Compo
     return charging_schedule;
 }
 
+types::ocpp::Operation_mode to_everest_operation_mode(const ocpp::v2::OperationModeEnum operation_mode) {
+    switch (operation_mode) {
+    case ocpp::v2::OperationModeEnum::Idle:
+        return types::ocpp::Operation_mode::Idle;
+    case ocpp::v2::OperationModeEnum::ChargingOnly:
+        return types::ocpp::Operation_mode::ChargingOnly;
+    case ocpp::v2::OperationModeEnum::CentralSetpoint:
+        return types::ocpp::Operation_mode::CentralSetpoint;
+    case ocpp::v2::OperationModeEnum::ExternalSetpoint:
+        return types::ocpp::Operation_mode::ExternalSetpoint;
+    case ocpp::v2::OperationModeEnum::ExternalLimits:
+        return types::ocpp::Operation_mode::ExternalLimits;
+    case ocpp::v2::OperationModeEnum::CentralFrequency:
+        return types::ocpp::Operation_mode::CentralFrequency;
+    case ocpp::v2::OperationModeEnum::LocalFrequency:
+        return types::ocpp::Operation_mode::LocalFrequency;
+    case ocpp::v2::OperationModeEnum::LocalLoadBalancing:
+        return types::ocpp::Operation_mode::LocalLoadBalancing;
+    }
+
+    throw std::out_of_range("Could not convert operation mode enum.");
+}
+
 types::ocpp::ChargingSchedulePeriod
 to_everest_charging_schedule_period(const ocpp::v2::ChargingSchedulePeriod& period) {
     if (not period.limit.has_value()) {
@@ -1342,8 +1365,40 @@ to_everest_charging_schedule_period(const ocpp::v2::ChargingSchedulePeriod& peri
     types::ocpp::ChargingSchedulePeriod _period;
     _period.start_period = period.startPeriod;
     _period.limit = period.limit.value_or(0);
+    _period.limit_L2 = period.limit_L2;
+    _period.limit_L3 = period.limit_L3;
     _period.number_phases = period.numberPhases;
     _period.phase_to_use = period.phaseToUse;
+    _period.discharge_limit = period.dischargeLimit;
+    _period.discharge_limit_L2 = period.dischargeLimit_L2;
+    _period.discharge_limit_L3 = period.dischargeLimit_L3;
+    _period.setpoint = period.setpoint;
+    _period.setpoint_L2 = period.setpoint_L2;
+    _period.setpoint_L3 = period.setpoint_L3;
+    _period.setpoint_reactive = period.setpointReactive;
+    _period.setpoint_reactive_L2 = period.setpointReactive_L2;
+    _period.setpoint_reactive_L3 = period.setpointReactive_L3;
+    _period.preconditioning_request = period.preconditioningRequest;
+    _period.evse_sleep = period.evseSleep;
+    _period.v2x_baseline = period.v2xBaseline;
+    if (period.operationMode.has_value()) {
+        _period.operation_mode = to_everest_operation_mode(period.operationMode.value());
+    }
+
+    if (period.v2xFreqWattCurve.has_value()) {
+        _period.v2x_freq_watt_curve = std::vector<types::ocpp::V2XFreqWattPointType>();
+        for (const auto& point : period.v2xFreqWattCurve.value()) {
+            _period.v2x_freq_watt_curve->push_back({point.frequency, point.power});
+        }
+    }
+
+    if (period.v2xSignalWattCurve.has_value()) {
+        _period.v2x_signal_watt_curve = std::vector<types::ocpp::V2XSignalWattPointCurve>();
+        for (const auto& point : period.v2xSignalWattCurve.value()) {
+            _period.v2x_signal_watt_curve->push_back({point.signal, point.power});
+        }
+    }
+
     return _period;
 }
 
