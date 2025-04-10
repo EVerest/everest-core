@@ -20,6 +20,8 @@ public:
     virtual std::optional<nlohmann::json> get_data() const = 0;
     // TBD: Do we need to be able to return an error if we cannot set the data?
     virtual void set_data(const nlohmann::json& in) = 0;
+    // register a callback which is triggered when any data in this data store changes
+    void register_notification_callback(const std::function<void()>& callback);
 
 protected:
     // override this if structures need special (non-default) initialization
@@ -32,6 +34,7 @@ class ConnectorInfoStore : public GenericInfoStore {
     std::optional<nlohmann::json> get_data() const;
     void set_data(const nlohmann::json& in);
     void init_data() override;
+    // void register_notification_callback() override;
 };
 class HardwareCapabilitiesStore {};
 class MeterDataStore {};
