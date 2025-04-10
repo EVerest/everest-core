@@ -49,7 +49,7 @@
         "VerifyCsmsCommonName": true,
         "VerifyCsmsAllowWildcards": true,
         "OcspRequestInterval": 604800,
-        "SeccLeafSubjectCommonName": "cp001",
+        "SeccLeafSubjectCommonName": "DEPNX100001",
         "SeccLeafSubjectCountry": "DE",
         "SeccLeafSubjectOrganization": "Pionix",
         "ConnectorEvseIds": "DE*PNX*100001,DE*PNX*100002",

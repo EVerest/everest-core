@@ -284,17 +284,23 @@
         "SeccLeafSubjectCommonName": {
             "$comment": "Common Name(s) of the SECC (EVSE) leaf certificate(s). The CN must be a SECCID. The field can contain optional multiple SECCIDs if necessary.",
             "type": "string",
-            "readOnly": false
+            "readOnly": false,
+            "minLength": 7,
+            "maxLength": 64
         },
         "SeccLeafSubjectCountry": {
             "$comment": "County of the SECC (EVSE) leaf certificate. Indicates in which country the CPO operates.",
             "type": "string",
-            "readOnly": false
+            "readOnly": false,
+            "minLength": 2,
+            "maxLength": 2
         },
         "SeccLeafSubjectOrganization": {
             "$comment": "Organization of the SECC (EVSE) leaf certificate. Indicates which CPO operates this EVSE. Example: Hubject GmbH",
             "type": "string",
-            "readOnly": false
+            "readOnly": false,
+            "minLength": 0,
+            "maxLength": 64
         },
         "ConnectorEvseIds": {
             "$comment": "Comma separated EVSEIDs for OCPP connectors starting with connector 1 in one string.",
