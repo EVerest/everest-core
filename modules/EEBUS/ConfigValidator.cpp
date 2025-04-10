@@ -5,9 +5,7 @@
 
 namespace module {
 
-ConfigValidator::ConfigValidator(
-    const Conf& config
-) : config(config) {
+ConfigValidator::ConfigValidator(const Conf& config) : config(config) {
     this->certificate_path = std::filesystem::path(this->config.certificate_path);
     this->private_key_path = std::filesystem::path(this->config.private_key_path);
     this->eebus_grpc_api_binary_path = std::filesystem::path(this->config.eebus_grpc_api_binary_path);

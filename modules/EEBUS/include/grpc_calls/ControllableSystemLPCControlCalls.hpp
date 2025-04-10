@@ -9,17 +9,16 @@ namespace module {
 namespace grpc_calls {
 
 class ControllableSystemLPCControlCalls {
-    public:
-        ControllableSystemLPCControlCalls(
-            const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub
-        );
+public:
+    ControllableSystemLPCControlCalls(const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub);
 
-        void call_set_consumption_nominal_max();
-        void call_set_consumption_limit();
-        void call_set_failsafe_consumption_active_power_limit();
-        void call_set_failsafe_duration_minimum();
-    private:
-        const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub;
+    void call_set_consumption_nominal_max();
+    void call_set_consumption_limit();
+    void call_set_failsafe_consumption_active_power_limit();
+    void call_set_failsafe_duration_minimum();
+
+private:
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub;
 };
 
 } // namespace grpc_calls

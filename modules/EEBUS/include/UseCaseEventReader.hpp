@@ -1,8 +1,8 @@
 #ifndef USE_CASE_EVENT_READER_HPP
 #define USE_CASE_EVENT_READER_HPP
 
-#include <memory>
 #include <future>
+#include <memory>
 
 // everest core deps
 #include <grpcpp/grpcpp.h>
@@ -11,19 +11,15 @@
 #include <control_service/control_service.grpc.pb.h>
 #include <usecases/cs/lpc/service.grpc.pb.h>
 
-
 namespace module {
 
 class EEBUS;
 
 class UseCaseEventReader : public grpc::ClientReadReactor<control_service::SubscribeUseCaseEventsResponse> {
 public:
-    UseCaseEventReader(
-        std::shared_ptr<control_service::ControlService::Stub> control_service_stub,
-        std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub,
-        const control_service::SubscribeUseCaseEventsRequest& request,
-        module::EEBUS* ev_module
-    );
+    UseCaseEventReader(std::shared_ptr<control_service::ControlService::Stub> control_service_stub,
+                       std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub,
+                       const control_service::SubscribeUseCaseEventsRequest& request, module::EEBUS* ev_module);
     void OnReadDone(bool ok) override;
     void OnDone(const grpc::Status& status) override;
     grpc::Status Await();
