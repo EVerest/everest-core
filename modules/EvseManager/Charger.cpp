@@ -271,7 +271,8 @@ void Charger::run_state_machine() {
                 if (hlc_use_5percent_current_session) {
                     // FIXME: wait for SLAC to be ready. Teslas are really fast with sending the first slac packet after
                     // enabling PWM.
-                    std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
+                    std::this_thread::sleep_for(
+                        std::chrono::milliseconds(config_context.sleep_before_enabling_pwm_hlc_mode_ms));
                     update_pwm_now(PWM_5_PERCENT);
                     stopwatch.mark("HLC_PWM_5%_ON");
                 }
@@ -1342,7 +1343,8 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
                     float _soft_over_current_tolerance_percent, float _soft_over_current_measurement_noise_A,
                     const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
                     const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms,
-                    const bool fail_on_powermeter_errors, const bool raise_mrec9) {
+                    const bool fail_on_powermeter_errors, const bool raise_mrec9,
+                    const int sleep_before_enabling_pwm_hlc_mode_ms) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1364,6 +1366,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
     config_context.state_F_after_fault_ms = _state_F_after_fault_ms;
     config_context.fail_on_powermeter_errors = fail_on_powermeter_errors;
     config_context.raise_mrec9 = raise_mrec9;
+    config_context.sleep_before_enabling_pwm_hlc_mode_ms = sleep_before_enabling_pwm_hlc_mode_ms;
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";
