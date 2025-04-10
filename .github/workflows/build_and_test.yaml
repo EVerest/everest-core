@@ -1,0 +1,34 @@
+name: Build, lint and test everest-framework
+on:
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Which runner to use
+        type: choice
+        default: 'ubuntu-22.04'
+        required: true
+        options:
+          - 'ubuntu-22.04'
+          - 'large-ubuntu-22.04-xxl'
+  schedule:
+    - cron: '37 13,1 * * *'
+jobs:
+  ci:
+    name: Build, Lint and Test
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.5.2
+    permissions:
+      contents: read
+    secrets:
+      coverage_deploy_token: ${{ secrets.SA_GITHUB_PAT }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-22.04' }}
+      artifact_deploy_target_repo: EVerest/everest.github.io
+      run_coverage: true
+      do_not_run_coverage_badge_creation: false
+      run_install: false
+      run_install_wheels: false
+      run_integration_tests: false
+      ctest_report_path: ctest-report
+      coverage_report_path: gcovr-coverage
+      coverage_xml_path: gcovr-coverage-xml.xml

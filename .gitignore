@@ -1,6 +1,6 @@
 *build
 *build-cross
-build*
+/build*
 !build.rs
 !everestrs-build
 target
