@@ -106,7 +106,8 @@ public:
                bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
                const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms,
-               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, const bool raise_mrec9);
+               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, const bool raise_mrec9,
+               const int sleep_before_enabling_pwm_hlc_mode_ms);
 
     void enable_disable_initial_state_publish();
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
@@ -334,6 +335,8 @@ private:
         bool fail_on_powermeter_errors;
         // Raise MREC9 authorization timeout error
         bool raise_mrec9;
+        // sleep before enabling pwm in hlc mode
+        int sleep_before_enabling_pwm_hlc_mode_ms{1000};
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
@@ -413,7 +416,6 @@ private:
     // Maximum duration of a BCB toggle sequence of 1-3 BCB toggles
     static constexpr auto TT_EVSE_VALD_TOGGLE =
         std::chrono::milliseconds(3500 + 200); // We give 200 msecs tolerance to the norm values (table 3 ISO15118-3)
-    static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::seconds(1);
     static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(100);
     static constexpr float PWM_5_PERCENT = 0.05;
     static constexpr int T_REPLUG_MS = 4000;
