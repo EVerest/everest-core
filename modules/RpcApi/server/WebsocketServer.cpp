@@ -36,7 +36,7 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
         throw std::runtime_error("Error: WebSocketServer instance not found!");
     }
 
-    std::lock_guard<std::mutex> lock(server->m_clients_mutex);
+    std::unique_lock<std::mutex> lock(server->m_clients_mutex); // To protect access to m_clients
 
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED: {
@@ -49,14 +49,18 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
                 EVLOG_warning << "Failed to get client IP address";
             }
 
+            lock.unlock();  // Unlock before calling the callback
             server->on_client_connected(client_id, ip_address);  // Call the on_client_connected callback
+            lock.lock();  // Lock again after the callback
             EVLOG_info << "Client " << boost::uuids::to_string(client_id) << " connected";
             break;
         }
         case LWS_CALLBACK_CLOSED: {
             for (auto it = server->m_clients.begin(); it != server->m_clients.end(); ++it) {
                 if (it->second == wsi) {
+                    lock.unlock();  // Unlock before calling the callback
                     server->on_client_disconnected(it->first);  // Call the on_client_disconnected callback
+                    lock.lock();  // Lock again after the callback
                     EVLOG_info << "Client " << it->first << " disconnected";
                     server->m_clients.erase(it);
                     break;
@@ -69,7 +73,9 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
                 if (it->second == wsi) {
                     unsigned char *data = (unsigned char *)in;
                     std::vector<uint8_t> received_data(data, data + len);
+                    lock.unlock();  // Unlock before calling the callback
                     server->on_data_available(it->first, received_data);  // Call the on_data_available callback
+                    lock.lock();  // Lock again after the callback
                     break;
                 }
             }
@@ -78,6 +84,9 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
         default:
             break;
     }
+
+    lock.unlock();  // Unlock the mutex after processing the callback
+
     return 0;
 }
 
