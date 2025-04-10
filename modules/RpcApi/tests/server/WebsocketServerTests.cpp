@@ -58,7 +58,7 @@ protected:
     //Connected client id's
     std::vector<TransportInterface::ClientId> connected_clients;
 
-    //Condition variable to wait for response
+    //Condition variable to wait requests
     std::condition_variable cv;
     std::mutex cv_mutex;
 
@@ -120,6 +120,24 @@ TEST_F(WebSocketServerTest, ClientCanSendAndReceiveData) {
 
     ASSERT_EQ(ws_server->connections_count(), 1);
     ASSERT_EQ(received_data[(get_connected_clients()[0])], "Hello World!");
+}
+
+// Test: Server can send data to client
+TEST_F(WebSocketServerTest, ServerCanSendDataToClient) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    ASSERT_TRUE(client.is_connected());
+
+    std::string message = "Hello from server!";
+    ws_server->send_data(get_connected_clients()[0], std::vector<uint8_t>(message.begin(), message.end()));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    std::unique_lock<std::mutex> lock(cv_mutex);
+    cv.wait_for(lock, std::chrono::seconds(1), [&] { return !client.get_received_data().empty(); });
+    lock.unlock();
+
+    ASSERT_EQ(client.get_received_data(), "Hello from server!");
 }
 
 // Test: Server kills client connection
