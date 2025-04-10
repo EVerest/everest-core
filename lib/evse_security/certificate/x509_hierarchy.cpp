@@ -4,6 +4,7 @@
 
 #include <algorithm>
 
+#include <everest/logging.hpp>
 namespace evse_security {
 
 bool X509CertificateHierarchy::is_internal_root(const X509Wrapper& certificate) const {
@@ -38,9 +39,10 @@ std::vector<X509Wrapper> X509CertificateHierarchy::collect_descendants(const X50
     return descendants;
 }
 
-CertificateHashData X509CertificateHierarchy::get_certificate_hash(const X509Wrapper& certificate) {
+bool X509CertificateHierarchy::get_certificate_hash(const X509Wrapper& certificate, CertificateHashData& out_hash) {
     if (certificate.is_selfsigned()) {
-        return certificate.get_certificate_hash_data();
+        out_hash = certificate.get_certificate_hash_data();
+        return true;
     }
 
     // Search for certificate in the hierarchy and return the hash
@@ -58,10 +60,13 @@ CertificateHashData X509CertificateHierarchy::get_certificate_hash(const X509Wra
         return true;
     });
 
-    if (found)
-        return hash;
+    if (found) {
+        out_hash = std::move(hash);
+        return true;
+    }
 
-    throw NoCertificateFound("Could not find owner for certificate: " + certificate.get_common_name());
+    EVLOG_warning << "Could not find owner for certificate: " << certificate.get_common_name();
+    return false;
 }
 
 bool X509CertificateHierarchy::contains_certificate_hash(const CertificateHashData& hash) {

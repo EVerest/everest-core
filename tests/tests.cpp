@@ -258,7 +258,8 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
     // Lowest in hierarchy
     X509Wrapper intermediate_cert = bundle.get_certificate_hierarchy().get_hierarchy().at(0).children.at(0).certificate;
 
-    CertificateHashData hash = bundle.get_certificate_hierarchy().get_certificate_hash(intermediate_cert);
+    CertificateHashData hash;
+    ASSERT_TRUE(bundle.get_certificate_hierarchy().get_certificate_hash(intermediate_cert, hash));
     bundle.delete_certificate(hash, true);
 
     // Sync deleted
@@ -283,7 +284,7 @@ TEST_F(EvseSecurityTests, verify_certificate_counts) {
     // MF is using the same V2G bundle in our case
     ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MFRootCertificate}), 3);
     // None were defined
-    ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MORootCertificate}), 0);
+    ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MORootCertificate}), 3);
 }
 
 TEST_F(EvseSecurityTestsMulti, verify_multi_root_leaf_retrieval) {
@@ -728,7 +729,7 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
     const auto r = this->evse_security->get_installed_certificates(certificate_types);
 
     ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
-    ASSERT_EQ(r.certificate_hash_data_chain.size(), 4);
+    ASSERT_EQ(r.certificate_hash_data_chain.size(), 5);
     bool found_v2g_chain = false;
 
     CertificateHashData secc_leaf_data;
@@ -801,6 +802,42 @@ TEST_F(EvseSecurityTests, verify_full_filesystem_install_reject) {
         read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA1.pem"));
     const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
     ASSERT_TRUE(result == InstallCertificateResult::CertificateStoreMaxLengthExceeded);
+}
+
+TEST_F(EvseSecurityTests, verify_oscp_request_mo_generate) {
+    // Read a leaf, should work since this SECC will be tested against both MO and V2G
+    const auto secc_leaf = read_file_to_string("certs/client/cso/SECC_LEAF.pem");
+    OCSPRequestDataList data = this->evse_security->get_mo_ocsp_request_data(secc_leaf);
+
+    // Expect 2 chain certifs, since SECC_LEAF does not have an responder URL
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
+
+    // Assert a leaf->sub2->sub1 order
+    ASSERT_TRUE(data.ocsp_request_data_list[0].certificate_hash_data.has_value());
+    ASSERT_TRUE(data.ocsp_request_data_list[1].certificate_hash_data.has_value());
+    ASSERT_EQ(data.ocsp_request_data_list[0].certificate_hash_data.value().debug_common_name, std::string("CPOSubCA2"));
+    ASSERT_EQ(data.ocsp_request_data_list[1].certificate_hash_data.value().debug_common_name, std::string("CPOSubCA1"));
+
+    // Read the MO leaf
+    const auto mo_leaf = read_file_to_string("certs/client/mo/MO_LEAF.pem");
+    data = this->evse_security->get_mo_ocsp_request_data(mo_leaf);
+
+    // Expect 2 chain certifs, since leaf does not have an responder URL
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
+    ASSERT_TRUE(data.ocsp_request_data_list[0].certificate_hash_data.has_value());
+    ASSERT_TRUE(data.ocsp_request_data_list[1].certificate_hash_data.has_value());
+    ASSERT_EQ(data.ocsp_request_data_list[0].certificate_hash_data.value().debug_common_name, std::string("MOSubCA2"));
+    ASSERT_EQ(data.ocsp_request_data_list[1].certificate_hash_data.value().debug_common_name, std::string("MOSubCA1"));
+
+    // Read the MO signed by V2G leaf
+    const auto mo_v2g_leaf = read_file_to_string("certs/client/mo/MO_LEAF_V2G.pem");
+    data = this->evse_security->get_mo_ocsp_request_data(mo_v2g_leaf);
+
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
+    ASSERT_TRUE(data.ocsp_request_data_list[0].certificate_hash_data.has_value());
+    ASSERT_TRUE(data.ocsp_request_data_list[1].certificate_hash_data.has_value());
+    ASSERT_EQ(data.ocsp_request_data_list[0].certificate_hash_data.value().debug_common_name, std::string("CPOSubCA2"));
+    ASSERT_EQ(data.ocsp_request_data_list[1].certificate_hash_data.value().debug_common_name, std::string("CPOSubCA1"));
 }
 
 TEST_F(EvseSecurityTests, verify_oscp_cache) {

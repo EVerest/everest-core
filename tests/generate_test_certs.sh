@@ -16,6 +16,7 @@ CA_INVALID_PATH="$CERT_PATH/ca/invalid"
 CLIENT_CSMS_PATH="$CERT_PATH/client/csms"
 CLIENT_CSO_PATH="$CERT_PATH/client/cso"
 CLIENT_V2G_PATH="$CERT_PATH/client/v2g"
+CLIENT_MO_PATH="$CERT_PATH/client/mo"
 CLIENT_INVALID_PATH="$CERT_PATH/client/invalid"
 VALIDITY=3650
 
@@ -30,6 +31,7 @@ mkdir -p "$CA_MO_PATH"
 mkdir -p "$CLIENT_CSMS_PATH"
 mkdir -p "$CLIENT_CSO_PATH"
 mkdir -p "$CLIENT_V2G_PATH"
+mkdir -p "$CLIENT_MO_PATH"
 mkdir -p "$CLIENT_INVALID_PATH"
 mkdir -p "$TO_BE_INSTALLED_PATH"
 
@@ -84,8 +86,21 @@ cp "$CLIENT_CSO_PATH/SECC_LEAF.key" "$CLIENT_CSMS_PATH/CSMS_LEAF.key"
 cp -r $CA_CSMS_PATH/* $CA_CSO_PATH
 cp "$CLIENT_CSO_PATH/SECC_LEAF.pem" "$CLIENT_CSMS_PATH/CSMS_LEAF.pem"
 
-# empty MO bundle
-touch "$CA_MO_PATH/MO_CA_BUNDLE.pem"
+# MO root CA
+create_certificate MO_ROOT_CA "${CA_MO_PATH}" MORootCACert.cnf 32345
+# MO Sub-CA 1
+create_certificate MO_SUB_CA1 "${CA_MO_PATH}" MOSubCA1Cert.cnf 32346 "${CA_MO_PATH}/MO_ROOT_CA.pem" "${CA_MO_PATH}/MO_ROOT_CA.key"
+# MO Sub-CA 2
+create_certificate MO_SUB_CA2 "${CA_MO_PATH}" MOSubCA2Cert.cnf 32347 "${CA_MO_PATH}/MO_SUB_CA1.pem" "${CA_MO_PATH}/MO_SUB_CA1.key"
+
+# create cert chain bundles in the MO root ca
+cat "$CA_MO_PATH/MO_SUB_CA2.pem" "$CA_MO_PATH/MO_SUB_CA1.pem" "$CA_MO_PATH/MO_ROOT_CA.pem" > "$CA_MO_PATH/MO_CA_BUNDLE.pem"
+
+# MO Leaf signed by MO Root
+create_certificate MO_LEAF "${CLIENT_MO_PATH}" MOLeafCert.cnf 32348 "${CA_MO_PATH}/MO_SUB_CA2.pem" "${CA_MO_PATH}/MO_SUB_CA2.key"
+
+# MO Leaf signed by V2G Root
+create_certificate MO_LEAF_V2G "${CLIENT_MO_PATH}" MOLeafCert_V2G.cnf 32349 "${CA_CSMS_PATH}/CPO_SUB_CA2.pem" "${CA_CSMS_PATH}/CPO_SUB_CA2.key"
 
 # Create certificates used for installation tests
 create_certificate INSTALL_TEST_ROOT_CA1 "${TO_BE_INSTALLED_PATH}" install_test.cnf 21234

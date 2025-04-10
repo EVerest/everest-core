@@ -10,6 +10,7 @@
 
 #include <map>
 #include <mutex>
+#include <set>
 
 #ifdef BUILD_TESTING_EVSE_SECURITY
 #include <gtest/gtest_prod.h>
@@ -157,9 +158,10 @@ public:
     /// @return contains OCSP request data
     OCSPRequestDataList get_v2g_ocsp_request_data();
 
-    /// @brief Retrieves the OCSP request data of the given contract \p certificate_chain
-    /// @param certificate_chain PEM formatted certificate or certificate chain
-    /// @param certificate_type type of the leaf certificate
+    /// @brief Retrieves the OCSP request data of the given MO contract \p certificate_chain. Since
+    /// the provided MO chain can be signed by both the MO_ROOT and the V2G_ROOT, the received chain
+    /// will be tested against both
+    /// @param certificate_chain PEM formatted MO certificate or MO certificate chain
     /// @return contains OCSP request data
     OCSPRequestDataList get_mo_ocsp_request_data(const std::string& certificate_chain);
 
@@ -313,8 +315,12 @@ private:
     /// @brief Retrieves information related to leaf certificates
     GetCertificateFullInfoResult get_full_leaf_certificate_info_internal(const CertificateQueryParams& params);
 
+    OCSPRequestDataList generate_ocsp_request_data_internal(const std::set<CaCertificateType>& possible_roots,
+                                                            const std::string& leaf_chain);
+
     GetCertificateInfoResult get_ca_certificate_info_internal(CaCertificateType certificate_type);
     std::optional<fs::path> retrieve_ocsp_cache_internal(const CertificateHashData& certificate_hash_data);
+
     bool is_ca_certificate_installed_internal(CaCertificateType certificate_type);
 
     GetCertificateSignRequestResult
