@@ -1,0 +1,246 @@
+description: JSON RPC API types
+types:
+  ResponseErrorEnum:
+    description: Enumeration to differentiate between the various error cases that can occur after a method request
+    type: string
+    enum:
+    - NoError
+    - ErrorInvalidParameter
+    - ErrorOutOfRange
+    - ErrorValuesNotApplied
+    - ErrorInvalidEVSEID
+    - ErrorNoDataAvailable
+    - ErrorUnknownError
+  ChargeProtocolEnum:
+    description: Charge protocol
+    type: string
+    enum:
+    - Unknown
+    - IEC61851
+    - DIN70121
+    - ISO15118
+    - ISO15118_20
+  EVSEStateEnum:
+    description: EVSE state
+    type: string
+    enum:
+    - Unplugged
+    - Disabled
+    - Preparing
+    - Reserved
+    - AuthRequired
+    - WaitingForEnergy
+    - Charging
+    - ChargingPausedEV
+    - ChargingPausedEVSE
+    - Finished
+  ConnectorTypeEnum:
+    description: Enumerator of connector types
+    type: string
+    enum:
+    - ACSinglePhaseCable
+    - ACThreePhaseCable
+    - ACSinglePhaseSocket
+    - ACThreePhaseSocket
+    - DCCore
+    - DCExtended
+    - DCDual2
+    - DCDual4
+    - Other
+  # EVSEErrorEnum:
+  #   description: >-
+  #     EVSEErrorEnum can be used to show more details of an EVSE error for example in a service tool application for the technician. The enum naming is identical to EVerest error handler semantic.
+  #   type: string
+  #   enum:
+  #   - NoError
+  #   - power_supply_DC/HardwareFault
+  #   - power_supply_DC/OverTemperature
+  #   - power_supply_DC/UnderTemperature
+  #   - power_supply_DC/UnderVoltageAC
+  #   - power_supply_DC/OverVoltageAC
+  #   - power_supply_DC/UnderVoltageDC
+  #   - power_supply_DC/OverVoltageDC
+  #   - power_supply_DC/OverCurrentAC
+  #   - power_supply_DC/OverCurrentDC
+  #   - power_supply_DC/VendorError
+  #   - power_supply_DC/VendorWarning
+  #   - evse_board_support/MREC2GroundFailure
+  #   - evse_board_support/MREC3HighTemperature
+  #   - evse_board_support/MREC4OverCurrentFailure
+  #   - evse_board_support/MREC5OverVoltage
+  #   - evse_board_support/MREC6UnderVoltage
+  #   - evse_board_support/MREC8EmergencyStop
+  #   - evse_board_support/MREC10InvalidVehicleMode
+  #   - evse_board_support/MREC14PilotFault
+  #   - evse_board_support/MREC15PowerLoss
+  #   - evse_board_support/MREC17EVSEContactorFault
+  #   - evse_board_support/MREC18CableOverTempDerate
+  #   - evse_board_support/MREC19CableOverTempStop
+  #   - evse_board_support/MREC20PartialInsertion
+  #   - evse_board_support/MREC23ProximityFault
+  #   - evse_board_support/MREC24ConnectorVoltageHigh
+  #   - evse_board_support/MREC25BrokenLatch
+  #   - evse_board_support/MREC26CutCable
+
+  # response types
+  HelloResObj:
+    description: Response to API.Hello
+    type: object
+    additionalProperties: false
+    required:
+      - authentication_required
+      - api_version
+      - everest_version
+      - charger_info
+    properties:
+      authentication_required:
+        description: FIXME
+        type: boolean
+      authenticated:
+        description: FIXME
+        type: boolean
+      # permission_scopes:
+      #   description: FIXME
+      #   type: object
+      api_version:
+        description: Version of the JSON RPC API
+        type: string
+      everest_version:
+        description: The version of the running EVerest instance
+        type: string
+      charger_info:
+        description: Charger information
+        type: object
+        $ref: /json_rpc_api#/ChargerInfoObj
+
+  # data type sub-objects
+  ConnectorInfoObj:
+    description: Static information about a connector of an EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - id
+      - type
+    properties:
+      id:
+        description: Unique identifier
+        type: integer
+      type:
+        description: Connector type
+        type: object
+        $ref: /json_rpc_api#/ConnectorTypeEnum
+
+      description:
+        description: Description
+        type: string
+  HardwareCapabilitiesObj:
+    description: Hardware capabilities
+    type: object
+    additionalProperties: false
+    required:
+      - max_current_A_export
+      - max_current_A_import
+      - max_phase_count_export
+      - max_phase_count_import
+      - min_current_A_export
+      - min_current_A_import
+      - min_phase_count_export
+      - min_phase_count_import
+      - phase_switch_during_charging
+    properties:
+      max_current_A_export:
+        description: fixme
+        type: number
+      max_current_A_import:
+        description: fixme
+        type: number
+      max_phase_count_export:
+        description: fixme
+        type: number
+      max_phase_count_import:
+        description: fixme
+        type: number
+      min_current_A_export:
+        description: fixme
+        type: number
+      min_current_A_import:
+        description: fixme
+        type: number
+      min_phase_count_export:
+        description: fixme
+        type: integer
+      min_phase_count_import:
+        description: fixme
+        type: integer
+      phase_switch_during_charging:
+        description: fixme
+        type: boolean
+  EVSEInfoObj:
+    description: Information about the EVSE
+    type: object
+    required:
+      - id
+      - available_connectors
+      - bidi_charging
+    properties:
+      id:
+        description: Unique identifier
+        type: string
+      description:
+        description: Description
+        type: string
+      available_connectors:
+        description: Available connectors
+        type: array
+        items:
+          description: Schedule periods
+          type: object
+          $ref: /ocpp#/ChargingSchedulePeriod
+      bidi_charging:
+        description: Whether bidirectional charging is supported
+        type: boolean
+  ChargerInfoObj:
+    description: Information about the charger
+    type: object
+    required:
+      - friendly_name
+      - manufacturer
+      - manufacturer_url
+      - model_url
+      - model_no
+      - revision
+      - board_revision
+    properties:
+      vendor:
+        description: EVSE vendor
+        type: string
+      model:
+        description: EVSE model
+        type: string
+      serial:
+        description: EVSE serial number
+        type: string
+      friendly_name:
+        description: EVSE friendly name
+        type: string
+      manufacturer:
+        description: EVSE manufacturer
+        type: string
+      manufacturer_url:
+        description: Manufacturer's URL
+        type: string
+      model_url:
+        description: EVSE model's URL
+        type: string
+      model_no:
+        description: EVSE model number
+        type: string
+      revision:
+        description: EVSE model revision
+        type: string
+      board_revision:
+        description: EVSE board revision
+        type: string
+      firmware_version:
+        description: EVSE firmware version
+        type: string
