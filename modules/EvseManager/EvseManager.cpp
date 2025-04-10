@@ -1095,7 +1095,8 @@ void EvseManager::ready_to_start_charging() {
     charger->enable_disable_initial_state_publish();
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
+                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
     if (!initial_powermeter_value_received) {
         EVLOG_warning << "No powermeter value received yet!";
     }
@@ -1398,6 +1399,23 @@ void EvseManager::set_central_contract_validation_allowed(const bool value) {
 }
 
 void EvseManager::set_contract_certificate_installation_enabled(const bool value) {
+    contract_certificate_installation_enabled = value;
+}
+
+void EvseManager::set_pnc_enabled(const bool value) {
+    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_set_pnc_enabled);
+    pnc_enabled = value;
+}
+
+void EvseManager::set_central_contract_validation_allowed(const bool value) {
+    Everest::scoped_lock_timeout lock(hlc_mutex,
+                                      Everest::MutexDescription::EVSE_set_central_contract_validation_allowed);
+    central_contract_validation_allowed = value;
+}
+
+void EvseManager::set_contract_certificate_installation_enabled(const bool value) {
+    Everest::scoped_lock_timeout lock(hlc_mutex,
+                                      Everest::MutexDescription::EVSE_set_contract_certificate_installation_enabled);
     contract_certificate_installation_enabled = value;
 }
 
