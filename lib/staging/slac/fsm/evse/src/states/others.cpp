@@ -269,6 +269,12 @@ FSMSimpleState::HandleEventReturnType WaitForLinkState::handle_event(AllocatorTy
         }
     } else if (ev == Event::RETRY_MATCHING) {
         ctx.log_info("Link could not be established, resetting...");
+
+        if (ctx.slac_config.reset_instead_of_fail) {
+            ctx.log_info("Going to reset state instead of failed state");
+            return sa.create_simple<ResetState>(ctx);
+        }
+
         // Notify higher layers to on CP signal
         return sa.create_simple<FailedState>(ctx);
     } else if (ev == Event::RESET) {
