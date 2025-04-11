@@ -2,6 +2,7 @@ set(TEST_TARGET_NAME ${PROJECT_NAME}_rpcapi_tests)
 
 set(TEST_SOURCES 
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/RpcHandler.cpp
+    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/rpcApi.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp
     server/WebsocketServerTests.cpp
     rpc/RpcHandlerTests.cpp
@@ -12,6 +13,7 @@ add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES})
 set(INCLUDE_DIR 
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/server"
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc"
+    "${PROJECT_SOURCE_DIR}/modules/RpcApi/data"
 )
 
 target_sources(${TEST_TARGET_NAME}
