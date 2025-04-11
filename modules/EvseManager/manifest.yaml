@@ -302,6 +302,23 @@ config:
       timeout occurs. It is recommended to disable it if OCPP1.6 is used.
     type: boolean
     default: false
+  sleep_before_enabling_pwm_hlc_mode_ms:
+    description: >- 
+      Sleep before the PWM signal is updated in HLC mode. Teslas are really fast with sending the first slac packet after
+      enabling PWM, so the sleep allows SLAC to be ready for it. Some EV testers have issues with a value >= 1000ms,
+      although ISO15118 or IEC61851 does not specify a timeout.
+    type: integer
+    default: 1000
+  central_contract_validation_allowed:
+    description: >-
+      Used for ISO15118 plug and charge: If false, Contract shall not be present in PaymentOptionList. If true, Contract may be present in PaymentOptionList if TLS is used. 
+    type: boolean
+    default: false
+  contract_certificate_installation_enabled:
+    description: >-
+      Used for ISO15118 plug and charge: Indicates if the charger support contract CertificateInstall and CertificateUpdate
+    type: boolean
+    default: true
 provides:
   evse:
     interface: evse_manager

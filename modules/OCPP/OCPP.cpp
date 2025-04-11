@@ -355,6 +355,49 @@ void OCPP::init_evse_maps() {
     }
 }
 
+void OCPP::init_module_configuration() {
+    std::vector<ocpp::CiString<50UL>> keys;
+    ocpp::v16::GetConfigurationRequest req;
+    keys.push_back("ConnectionTimeout");
+    keys.push_back("ISO15118PnCEnabled");
+    keys.push_back("CentralContractValidationAllowed");
+    req.key = keys;
+    const auto res = this->charge_point->get_configuration_key(req);
+
+    if (res.configurationKey.has_value()) {
+        return;
+    }
+
+    for (const auto kv : res.configurationKey.value()) {
+        this->handle_config_key(kv);
+    }
+}
+
+void OCPP::handle_config_key(const ocpp::v16::KeyValue& kv) {
+
+    auto set_pnc_config = [this](const types::evse_manager::PlugAndChargeConfiguration& pnc_config) {
+        for (const auto& evse_manager : this->r_evse_manager) {
+            evse_manager->call_set_plug_and_charge_configuration(pnc_config);
+        }
+    };
+
+    if (kv.key == "ConnectionTimeout" and kv.value.has_value()) {
+        try {
+            this->r_auth->call_set_connection_timeout(std::stoi(kv.value.value().get()));
+        } catch (...) {
+            EVLOG_warning << "Could not set ConnectionTimeout";
+        }
+    } else if (kv.key == "ISO15118PnCEnabled" and kv.value.has_value()) {
+        types::evse_manager::PlugAndChargeConfiguration pnc_config;
+        pnc_config.pnc_enabled = ocpp::conversions::string_to_bool(kv.value.value());
+        set_pnc_config(pnc_config);
+    } else if (kv.key == "CentralContractValidationAllowed" and kv.value.has_value()) {
+        types::evse_manager::PlugAndChargeConfiguration pnc_config;
+        pnc_config.central_contract_validation_allowed = ocpp::conversions::string_to_bool(kv.value.value());
+        set_pnc_config(pnc_config);
+    }
+}
+
 bool OCPP::all_evse_ready() {
     for (auto const& [evse, ready] : this->evse_ready_map) {
         if (!ready) {
@@ -695,9 +738,6 @@ void OCPP::ready() {
             this->p_auth_provider->publish_provided_token(provided_token);
         });
 
-    this->charge_point->register_set_connection_timeout_callback(
-        [this](int32_t connection_timeout) { this->r_auth->call_set_connection_timeout(connection_timeout); });
-
     this->charge_point->register_disable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))
@@ -910,6 +950,9 @@ void OCPP::ready() {
         this->evse_ready_cv.wait(lk);
     }
 
+    this->charge_point->register_generic_configuration_key_changed_callback(
+        [this](const ocpp::v16::KeyValue& key_value) { this->handle_config_key(key_value); });
+
     const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
     if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
         // signal that we're started
@@ -942,6 +985,8 @@ void OCPP::ready() {
             }
         }
     }
+
+    init_module_configuration();
 
     // signal to the EVSEs that OCPP is initialized
     for (const auto& evse : this->r_evse_manager) {

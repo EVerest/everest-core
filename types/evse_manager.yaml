@@ -535,3 +535,17 @@ types:
           $ref: /evse_manager#/Connector
         minItems: 1
         maxItems: 128
+  PlugAndChargeConfiguration:
+    description: Configuration for contract authorization
+    type: object
+    properties:
+      pnc_enabled:
+        description: >-
+          If false, Contract shall not be present in PaymentOptionList. If true, Contract may be present in PaymentOptionList if TLS is used. 
+        type: boolean
+      central_contract_validation_allowed:
+        description: Indicates if the contract may be forwarded to and validated by a CSMS in case local validation was not successful
+        type: boolean
+      contract_certificate_installation_enabled:
+        description: Indicates if ISO 15118 contract certificate installation/update is enabled
+        type: boolean
