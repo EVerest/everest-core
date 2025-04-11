@@ -57,13 +57,33 @@ TEST_F(RpcHandlerTest, ClientHelloRequest) {
     ASSERT_TRUE(client.is_connected());
 
     // Send API.Hello request
-    client.send(R"({"jsonrpc": "2.0", "method": "API.Hello", "params": {}, "id": 1})");
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    nlohmann::json hello_request = {
+        {"jsonrpc", "2.0"},
+        {"method", "API.Hello"},
+        {"id", 1}
+    };
+    // Expected response
+    nlohmann::json expected_response = {
+        {"jsonrpc", "2.0"},
+        {"result", {
+            {"authentication_required", false},
+            {"authenticated", true},
+            {"api_version", "1.0"},
+            {"everest_version", "2024.9.0"}
+        }},
+        {"id", 1}
+    };
+    client.send(hello_request.dump());
+    // Wait for the response
     std::unique_lock<std::mutex> lock(cv_mutex);
     cv.wait_for(lock, std::chrono::seconds(1), [&] { return !client.get_received_data().empty(); });
-    lock.unlock();
+    // Check if the response is not empty
     ASSERT_FALSE(client.get_received_data().empty());
     // Check if the response is valid
     nlohmann::json response = nlohmann::json::parse(client.get_received_data());
-    ASSERT_EQ(response.dump(), R"({"jsonrpc":"2.0","result":{"authentication_required":false,"authenticated":true,"api_version":"1.0","everest_version":"2024.9.0"},"id":1})");
+    ASSERT_EQ(response, expected_response);
+    // Wait for API.Hello timeout
+    std::this_thread::sleep_for(std::chrono::seconds(CLIENT_HELLO_TIMEOUT) + std::chrono::milliseconds(100));
+    // Check if the client is still connected
+    ASSERT_TRUE(client.is_connected());
 }
