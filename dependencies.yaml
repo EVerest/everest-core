@@ -2,6 +2,9 @@
 # For the sake of unambiguity the `git_tag` field is treated as a hash
 # only if it is 40 characters long hexadecimal string.
 ---
+liblog:
+  git: https://github.com/EVerest/liblog.git
+  git_tag: feature/eebus
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
   git_tag: v0.20.3
