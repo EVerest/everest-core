@@ -9,7 +9,8 @@ cmake \
     -DCMAKE_INSTALL_PREFIX="$EXT_MOUNT/dist" \
     -DWHEEL_INSTALL_PREFIX="$EXT_MOUNT/wheels" \
     -DBUILD_TESTING=ON \
-    -DEVEREST_ENABLE_COMPILE_WARNINGS=ON
+    -DEVEREST_ENABLE_COMPILE_WARNINGS=ON \
+    -DENABLE_GRPC_GENERATOR=ON
 retVal=$?
 if [ $retVal -ne 0 ]; then
     echo "Configuring failed with return code $retVal"
