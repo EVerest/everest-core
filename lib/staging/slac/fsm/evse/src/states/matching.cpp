@@ -163,6 +163,21 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
             std::chrono::steady_clock::now() + std::chrono::milliseconds(slac::defs::TT_EVSE_SLAC_INIT_MS);
         return sa.HANDLED_INTERNALLY;
     } else if (ev == Event::FAILED) {
+        if (ctx.slac_config.reset_instead_of_fail) {
+            ctx.log_info("Resetting MatchingState. Waiting for the next CM_SLAC_PARAM.REQ message.");
+
+            // Resetting all relevant MatchingState members
+            sessions.clear();
+            // timeout for getting CM_SLAC_PARM_REQ
+            timeout_slac_parm_req =
+                std::chrono::steady_clock::now() + std::chrono::milliseconds(slac::defs::TT_EVSE_SLAC_INIT_MS);
+            seen_slac_parm_req = false;
+            num_retries = 0;
+
+            return sa.HANDLED_INTERNALLY;
+
+            // Or return sa.create_simple<MatchingState>(ctx); // Todo(sl): Test
+        }
         return sa.create_simple<FailedState>(ctx);
     }
 
