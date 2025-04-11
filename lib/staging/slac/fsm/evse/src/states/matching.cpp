@@ -155,6 +155,10 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
         num_retries++;
         if (num_retries == slac::defs::C_EV_MATCH_RETRY) {
             ctx.log_info("Reached retry limit for matching");
+            if (ctx.slac_config.reset_instead_of_fail) {
+                ctx.log_info("Going to reset state instead of failed state");
+                return sa.create_simple<ResetState>(ctx);
+            }
             return sa.create_simple<FailedState>(ctx);
         }
 
@@ -163,6 +167,10 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
             std::chrono::steady_clock::now() + std::chrono::milliseconds(slac::defs::TT_EVSE_SLAC_INIT_MS);
         return sa.HANDLED_INTERNALLY;
     } else if (ev == Event::FAILED) {
+        if (ctx.slac_config.reset_instead_of_fail) {
+            ctx.log_info("Going to reset state instead of failed state");
+            return sa.create_simple<ResetState>(ctx);
+        }
         return sa.create_simple<FailedState>(ctx);
     }
 

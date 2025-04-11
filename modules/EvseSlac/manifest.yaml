@@ -66,6 +66,13 @@ provides:
         description: Only for debugging. Simulate failed matching by sending a wrong NMK to the EV.
         type: boolean
         default: false
+      reset_instead_of_fail:
+        description: >-
+          Go to reset state instead of failed state. This is against the ISO15118-3.
+          But some cars directly send a CM_SLAC_PARAM.req message when the SLAC process aborts.
+          To react to this message and restart the SLAC process, the EVSE go to the reset state here.
+        type: boolean
+        default: false
 metadata:
   base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
   license: https://opensource.org/licenses/Apache-2.0

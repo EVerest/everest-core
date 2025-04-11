@@ -85,6 +85,8 @@ void slacImpl::run() {
     fsm_ctx.slac_config.link_status.timeout_ms = config.link_status_timeout_ms;
     fsm_ctx.slac_config.link_status.debug_simulate_failed_matching = config.debug_simulate_failed_matching;
 
+    fsm_ctx.slac_config.reset_instead_of_fail = config.reset_instead_of_fail;
+
     fsm_ctx.slac_config.generate_nmk();
 
     fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);
