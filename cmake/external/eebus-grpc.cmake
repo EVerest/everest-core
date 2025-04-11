@@ -12,6 +12,7 @@ file(GLOB_RECURSE EEBUS_GRPC_API_SOURCE_FILES
     ${EEBUS_GRPC_API_SOURCE_DIR}/*
 )
 
+setup_go()
 add_go_target(
     NAME
         eebus_grpc_api_cmd
