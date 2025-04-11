@@ -3,6 +3,7 @@ ARG BASE_IMAGE_TAG=latest
 FROM ghcr.io/everest/everest-ci/build-kit-base:${BASE_IMAGE_TAG}
 
 # Can be used to use an other version of everest-cmake
+ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 ENV EVEREST_CMAKE_PATH=/usr/lib/cmake/everest-cmake
 ENV EVEREST_CMAKE_VERSION=tmp/eebus
 RUN rm -rf ${EVEREST_CMAKE_PATH} \
