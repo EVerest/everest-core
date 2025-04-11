@@ -1,11 +1,11 @@
 include_guard(GLOBAL)
 
-if (NOT CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR)
-    message(FATAL_ERROR "CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR not set")
+if (NOT CPM_PACKAGE_eebus-grpc_SOURCE_DIR)
+    message(FATAL_ERROR "CPM_PACKAGE_eebus-grpc_SOURCE_DIR not set")
 endif()
 
-set(EEBUS_GRPC_API_SOURCE_DIR ${CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR})
-set(EEBUS_GRPC_API_BINARY_DIR ${CMAKE_BINARY_DIR}/eebus-grpc-api)
+set(EEBUS_GRPC_API_SOURCE_DIR ${CPM_PACKAGE_eebus-grpc_SOURCE_DIR})
+set(EEBUS_GRPC_API_BINARY_DIR ${CMAKE_BINARY_DIR}/eebus-grpc)
 
 file(GLOB_RECURSE EEBUS_GRPC_API_SOURCE_FILES
     CONFIGURE_DEPENDS
