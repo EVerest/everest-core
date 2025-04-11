@@ -123,6 +123,6 @@ eebus-grpc:
   git_tag: dev
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_EEBUS_GRPC"
 grpc-extended-cpp-plugin:
-  git: git@github.com:EVerest/grpc-extended-cpp-plugin.git
+  git: https://github.com/EVerest/grpc-extended-cpp-plugin.git
   git_tag: main
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_GRPC_EXTENDED_CPP_PLUGIN AND ENABLE_GRPC_GENERATOR"
