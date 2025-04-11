@@ -6,11 +6,11 @@ set(GENERATED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/generated")
 setup_grpc()
 
 if (ENABLE_GRPC_GENERATOR)
-    if (NOT CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR)
-        message(FATAL_ERROR "CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR not set, it is required becaue it provides the protobuf files")
+    if (NOT CPM_PACKAGE_eebus-grpc_SOURCE_DIR)
+        message(FATAL_ERROR "CPM_PACKAGE_eebus-grpc_SOURCE_DIR not set, it is required becaue it provides the protobuf files")
     endif()
     get_filename_component(PROTOBUF_DIR
-        "${CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR}/protobuf/"
+        "${CPM_PACKAGE_eebus-grpc_SOURCE_DIR}/protobuf/"
         ABSOLUTE
     )
 

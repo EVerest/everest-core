@@ -115,10 +115,10 @@ grpc:
     - gRPC_BUILD_GRPC_PYTHON_PLUGIN OFF
     - gRPC_BUILD_GRPC_RUBY_PLUGIN OFF
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_GRPC AND GRPC_EDM"
-eebus-grpc-api:
-  git: git@github.com:PionixInternal/generic-eebus.git
-  git_tag: main
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_EEBUS_GRPC_API"
+eebus-grpc:
+  git: git@github.com:enbility/eebus-grpc.git
+  git_tag: dev
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_EEBUS_GRPC"
 grpc-extended-cpp-plugin:
   git: git@github.com:EVerest/grpc-extended-cpp-plugin.git
   git_tag: main

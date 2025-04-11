@@ -10,7 +10,7 @@ active_modules:
       control_service_rpc_port: 50051
       eebus_ems_ski: "fa2548488be47c89a342ea29c2fc9867df7cf700"
       private_key_path: /home/andistorm/workspaces/eebus-general/certs/evse_key
-      eebus_grpc_api_binary_path: /home/andistorm/workspaces/eebus-general/build/eebus-grpc-api/cmd
+      eebus_grpc_api_binary_path: /home/andistorm/workspaces/eebus-general/build/eebus-grpc/cmd
   eebus_energy_sink:
     module: EnergyNode
     config_module:

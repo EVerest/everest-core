@@ -72,8 +72,8 @@ ev_define_dependency(
 )
 
 ev_define_dependency(
-    DEPENDENCY_NAME eebus-grpc-api
-    OUTPUT_VARIABLE_SUFFIX EEBUS_GRPC_API
+    DEPENDENCY_NAME eebus-grpc
+    OUTPUT_VARIABLE_SUFFIX EEBUS_GRPC
     DEPENDENT_MODULES_LIST EEBUS
 )
 
