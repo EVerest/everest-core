@@ -23,6 +23,10 @@ public:
     std::string receive();
     void close();
     std::string get_received_data() const { return m_received_data; }
+    void wait_for_response(std::chrono::milliseconds timeout) {
+        std::unique_lock<std::mutex> lock(m_cv_mutex);
+        m_cv.wait_for(lock, timeout, [this] { return !m_received_data.empty(); });
+    }
 
 private:
     static int callback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
