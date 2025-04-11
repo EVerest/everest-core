@@ -86,7 +86,10 @@ endmacro()
 #   - proto_control_service
 #   - proto_cs_lpc_service
 macro(add_libraries)
-    find_package(absl CONFIG REQUIRED)
+    if(NOT TARGET absl::strings)
+        message(WARNING "absl::strings not found, is the abseil package installed? Try to find it with 'find_package(absl CONFIG REQUIRED)'")
+        find_package(absl CONFIG REQUIRED)
+    endif()
     set(COMMON_DEPS
         absl::absl_log
         gRPC::grpc++
