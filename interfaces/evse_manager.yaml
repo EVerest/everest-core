@@ -112,6 +112,14 @@ cmds:
     result:
       description: Returns true if the signal was used by the evse manager implementation
       type: boolean
+  set_plug_and_charge_configuration:
+    description: >-
+      Sets the configuration required for an ISO15118 to handle contract authorization.
+    arguments:
+      plug_and_charge_configuration:
+        description: The configuration object
+        type: object
+        $ref: /evse_manager#/PlugAndChargeConfiguration
 vars:
   session_event:
     description: Emits all events related to sessions
