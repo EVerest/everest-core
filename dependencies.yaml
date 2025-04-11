@@ -5,6 +5,7 @@
 liblog:
   git: https://github.com/EVerest/liblog.git
   git_tag: feature/eebus
+  options: ["BUILD_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
   git_tag: v0.20.3
