@@ -15,3 +15,7 @@ RUN rm -rf ${EVEREST_CMAKE_PATH} \
 RUN apt update \
     && apt install --no-install-recommends -y \
     golang-go
+
+RUN pip install --break-system-packages \
+    grpcio \
+    grpcio-tools
