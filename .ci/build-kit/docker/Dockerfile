@@ -10,3 +10,7 @@ RUN rm -rf ${EVEREST_CMAKE_PATH} \
     && cd ${EVEREST_CMAKE_PATH} \
     && git checkout ${EVEREST_CMAKE_VERSION} \
     && rm -r .git
+
+RUN apt update \
+    && apt install --no-install-recommends -y \
+    golang-go
