@@ -4,6 +4,7 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
+      verify_contract_cert_chain: true
     connections:
       security:
         - module_id: evse_security
@@ -17,6 +18,8 @@ active_modules:
       device: auto
       supported_DIN70121: false
       supported_ISO15118_2: true
+      tls_active: true
+      is_cert_install_needed: true
   evse_manager:
     module: EvseManager
     config_module:
@@ -150,23 +153,20 @@ active_modules:
       selection_algorithm: FindFirst
     connections:
       token_provider:
-        - module_id: token_provider
+        - module_id: token_provider_1
           implementation_id: main
+        - module_id: ocpp
+          implementation_id: auth_provider
+        - module_id: evse_manager
+          implementation_id: token_provider
       token_validator:
-        - module_id: token_validator
-          implementation_id: main
+        - module_id: ocpp
+          implementation_id: auth_validator
       evse_manager:
         - module_id: evse_manager
           implementation_id: evse
-  token_provider: 
-    module: DummyTokenProvider
-    config_implementation:
-      main:
-        token: TOKEN1
-    connections:
-      evse:
-        - module_id: evse_manager
-          implementation_id: evse
+  token_provider_1:
+    module: DummyTokenProviderManual
   token_validator:
     module: DummyTokenValidator
     config_implementation:
@@ -177,6 +177,14 @@ active_modules:
   evse_security:
     module: EvseSecurity
     config_module:
+      csms_ca_bundle: "ca/v2g/V2G_ROOT_CA.pem"
+      mf_ca_bundle: "ca/mf/MF_ROOT_CA.pem"
+      mo_ca_bundle: "ca/mo/MO_ROOT_CA.pem"
+      v2g_ca_bundle: "ca/v2g/V2G_ROOT_CA.pem"
+      csms_leaf_cert_directory: "client/csms"
+      csms_leaf_key_directory: "client/csms"
+      secc_leaf_cert_directory: "client/cso"
+      secc_leaf_key_directory: "client/cso"
       private_key_password: "123456"
   energy_manager:
     module: EnergyManager

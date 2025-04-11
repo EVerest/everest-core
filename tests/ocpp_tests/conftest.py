@@ -205,6 +205,13 @@ def probe_module(
     implement_command(
         module,
         skip_implementation,
+        "ProbeModuleConnectorA",
+        "set_plug_and_charge_configuration",
+        lambda arg: True,
+    )
+    implement_command(
+        module,
+        skip_implementation,
         "ProbeModuleConnectorB",
         "get_evse",
         lambda arg: {"id": 2, "connectors": [{"id": 1}]},
@@ -284,6 +291,13 @@ def probe_module(
         skip_implementation,
         "ProbeModuleConnectorB",
         "external_ready_to_start_charging",
+        lambda arg: True,
+    )
+    implement_command(
+        module,
+        skip_implementation,
+        "ProbeModuleConnectorB",
+        "set_plug_and_charge_configuration",
         lambda arg: True,
     )
     implement_command(

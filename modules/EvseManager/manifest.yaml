@@ -309,6 +309,16 @@ config:
       although ISO15118 or IEC61851 does not specify a timeout.
     type: integer
     default: 1000
+  central_contract_validation_allowed:
+    description: >-
+      Used for ISO15118 plug and charge: If false, contract shall not be present in PaymentOptionList. If true, contract may be present in PaymentOptionList if TLS is used. 
+    type: boolean
+    default: false
+  contract_certificate_installation_enabled:
+    description: >-
+      Used for ISO15118 plug and charge: Indicates if the charger support contract CertificateInstall and CertificateUpdate
+    type: boolean
+    default: true
 provides:
   evse:
     interface: evse_manager

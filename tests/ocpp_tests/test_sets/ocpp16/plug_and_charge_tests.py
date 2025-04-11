@@ -38,7 +38,7 @@ def validate_authorize_req(
 
 
 @pytest.mark.skip(
-    "Plug and charge tests do currently interfere when they are run in parallel with other tests"
+   "Plug and charge tests do currently interfere when they are run in parallel with other tests"
 )
 class TestPlugAndCharge:
 
@@ -217,6 +217,7 @@ class TestPlugAndCharge:
 
         delete_certificate_req = {"certificateHashData": certificate_hash_data}
 
+        # delete MO root
         data_transfer_response = await charge_point_v16.data_transfer_req(
             vendor_id="org.openchargealliance.iso15118pnc",
             message_id="DeleteCertificate",
@@ -270,6 +271,68 @@ class TestPlugAndCharge:
                 1, ChargePointErrorCode.no_error, ChargePointStatus.charging
             ),
         )
+
+        test_utility.messages.clear()
+        test_controller.plug_out_iso()
+
+        # expect StatusNotification with status available
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point_v16,
+            "StatusNotification",
+            call.StatusNotificationPayload(
+                1, ChargePointErrorCode.no_error, ChargePointStatus.available
+            ),
+        )
+
+    @pytest.mark.asyncio
+    @pytest.mark.source_certs_dir(Path(__file__).parent.parent / "everest-aux/certs")
+    async def test_contract_installation_and_authorization_04(
+        self,
+        request,
+        central_system_v16: CentralSystem,
+        charge_point_v16: ChargePoint16,
+        test_controller: TestController,
+        test_config,
+        test_utility: TestUtility,
+    ):
+        """
+        Test for contract installation on the vehicle and not succeeding authorization because CentralContractValidationAllowed is false
+        """
+
+        await charge_point_v16.change_configuration_req(
+            key="CentralContractValidationAllowed", value="false"
+        )
+
+        certificate_hash_data = {
+            "hashAlgorithm": "SHA256",
+            "issuerKeyHash": "66fce9295edc049f4a183458948ecaa8e3558e4aa3041f13a2363d1d953d33e5",
+            "issuerNameHash": "3a1ad85a129bd5db30c2f099a541f76e562b8a30e9f49f3f47077eeae3750a2a",
+            "serialNumber": "3041",
+        }
+
+        delete_certificate_req = {"certificateHashData": certificate_hash_data}
+
+        # delete MO root
+        data_transfer_response = await charge_point_v16.data_transfer_req(
+            vendor_id="org.openchargealliance.iso15118pnc",
+            message_id="DeleteCertificate",
+            data=json.dumps(delete_certificate_req),
+        )
+
+        # expect not found
+        assert json.loads(data_transfer_response.data) == {"status": "Accepted"}
+
+        setattr(charge_point_v16, "on_data_transfer", on_data_transfer_accept_authorize)
+        central_system_v16.chargepoint.route_map = create_route_map(
+            central_system_v16.chargepoint
+        )
+
+        test_controller.plug_in_ac_iso()
+                
+        test_utility.messages.clear()
+        test_utility.forbidden_actions.append("Authorize")
+        test_utility.forbidden_actions.append("StartTransaction")
 
         test_utility.messages.clear()
         test_controller.plug_out_iso()
