@@ -23,7 +23,7 @@ void powermeterImpl::init() {
         std::move(http_client),
         IsaIemDcrController::SnapshotConfig{
             mod->config.timezone, mod->config.timezone_handle_DST, mod->config.datetime_resync_interval,
-            mod->config.resilience_initial_connection_retry_delay, mod->config.resilience_transaction_request_retries, 
+            mod->config.resilience_initial_connection_retry_delay, mod->config.resilience_transaction_request_retries,
             mod->config.resilience_transaction_request_retry_delay, mod->config.CT, mod->config.CI,
             mod->config.TT_initial, mod->config.US});
 }
@@ -46,15 +46,16 @@ void powermeterImpl::ready() {
                         this->publish_public_key_ocmf(this->controller->get_publickey(false));
                     } else {
                         if (!this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
-                            "Communication timed out")) {
-                            auto error =
-                            this->error_factory->create_error("powermeter/CommunicationFault", "Communication timed out",
-                                                "This error is raised due to communication timeout");
+                                                                        "Communication timed out")) {
+                            auto error = this->error_factory->create_error(
+                                "powermeter/CommunicationFault", "Communication timed out",
+                                "This error is raised due to communication timeout");
                             raise_error(error);
                         }
                         EVLOG_warning << "Connecting to IEM-DCR failed. Retry in "
                                       << mod->config.resilience_initial_connection_retry_delay << " milliseconds";
-                        std::this_thread::sleep_for(std::chrono::milliseconds(mod->config.resilience_initial_connection_retry_delay));
+                        std::this_thread::sleep_for(
+                            std::chrono::milliseconds(mod->config.resilience_initial_connection_retry_delay));
                     }
                 } else {
                     // Publish metervalue node (named powermeter in EVerest) and update status information

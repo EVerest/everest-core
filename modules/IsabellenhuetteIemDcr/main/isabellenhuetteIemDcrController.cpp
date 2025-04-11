@@ -441,7 +441,7 @@ std::string IsaIemDcrController::helper_get_current_datetime() {
     // Add configured timezone information
     std::time_t now_with_offset = std::chrono::system_clock::to_time_t(now + zone_time_offset);
     // Add DST offset if configured
-    if(snapshot_config.timezone_handle_DST && helper_is_daylight_saving_time()) {
+    if (snapshot_config.timezone_handle_DST && helper_is_daylight_saving_time()) {
         now_with_offset = now_with_offset + 3600;
     }
     // Generate and return time in correct format
