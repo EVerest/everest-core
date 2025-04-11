@@ -314,6 +314,9 @@ types::evse_security::CertificateValidationResult to_everest(evse_security::Cert
         return types::evse_security::CertificateValidationResult::Expired;
     case evse_security::CertificateValidationResult::Unknown:
         return types::evse_security::CertificateValidationResult::Unknown;
+    default:
+        throw std::runtime_error("Could not convert evse_security::CertificateValidationResult to "
+                                 "types::evse_security::CertificateValidationResult");
     }
     throw std::out_of_range("Could not convert evse_security::CertificateValidationResult to "
                             "types::evse_security::CertificateValidationResult");
