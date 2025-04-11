@@ -13,21 +13,19 @@ void RpcApi::init() {
         // create on DataStore object per EVSE
         this->data.emplace_back();
     }
-}
 
-void RpcApi::ready() {
-    invoke_ready(*p_main);
-
-    using namespace server;
-    using namespace rpc;
-
-    // Start the WebSocket server
     m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port);
     // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
     transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-    m_rpc_server = std::make_unique<RpcHandler>(std::move(transport_interfaces));
+    m_rpc_server = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces));
+}
+
+void RpcApi::ready() {
+    // Start the WebSocket server
     m_rpc_server->start_server();
+
+    invoke_ready(*p_main);
 }
 
 } // namespace module
