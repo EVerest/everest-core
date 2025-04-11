@@ -1,14 +1,14 @@
 # This macro generates the C++ files from the protobuf files
-# provided by the eebus-grpc-api package
+# provided by the eebus-grpc package
 # The targets generate_proto_common_types, 
 # generate_proto_control_service and generate_proto_cs_lpc_service
 # are added to allow manual generation of the files
 macro(generate_cpp_from_protobuf)
-    if (NOT CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR)
-        message(FATAL_ERROR "CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR not set, it is required becaue it provides the protobuf files")
+    if (NOT CPM_PACKAGE_eebus-grpc_SOURCE_DIR)
+        message(FATAL_ERROR "CPM_PACKAGE_eebus-grpc_SOURCE_DIR not set, it is required becaue it provides the protobuf files")
     endif()
     get_filename_component(PROTOBUF_DIR
-        "${CPM_PACKAGE_eebus-grpc-api_SOURCE_DIR}/protobuf/"
+        "${CPM_PACKAGE_eebus-grpc_SOURCE_DIR}/protobuf/"
         ABSOLUTE
     )
 
