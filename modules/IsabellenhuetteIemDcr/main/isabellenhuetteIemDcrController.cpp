@@ -19,8 +19,7 @@ bool IsaIemDcrController::init() {
     try {
         EVLOG_info << "Isabellenhuette IEM-DCR: Connecting to module...";
         // Check connection with polling REST node gw
-        this->call_with_retry([this]() { this->get_gw(); }, snapshot_config.resilience_initial_connection_retries,
-                              snapshot_config.resilience_initial_connection_retry_delay);
+        this->get_gw();
         // Send gw information
         try {
             this->post_gw();

@@ -24,12 +24,6 @@ config:
     minimum: 1
     maximum: 24
     default: 2
-  resilience_initial_connection_retries:
-    description: For the controller resilience, the number of retries to connect to the powermeter at module initialization.
-    type: integer
-    minimum: 0
-    maximum: 50
-    default: 25
   resilience_initial_connection_retry_delay:
     description: For the controller resilience, the delay in milliseconds before a retry attempt at module initialization.
     type: integer
