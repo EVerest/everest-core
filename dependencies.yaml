@@ -106,7 +106,7 @@ grpc:
   git: https://github.com/grpc/grpc.git
   git_tag: v1.70.1
   options:
-    - gRPC_INSTALL OFF
+    - gRPC_INSTALL ON
     - gRPC_BUILD_GRPC_CSHARP_PLUGIN OFF
     - gRPC_BUILD_GRPC_NODE_PLUGIN OFF
     - gRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN OFF
