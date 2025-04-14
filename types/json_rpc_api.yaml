@@ -82,38 +82,49 @@ types:
   #   - evse_board_support/MREC25BrokenLatch
   #   - evse_board_support/MREC26CutCable
 
-  # response types
-  HelloResObj:
-    description: Response to API.Hello
-    type: object
-    additionalProperties: false
-    required:
-      - authentication_required
-      - api_version
-      - everest_version
-      - charger_info
-    properties:
-      authentication_required:
-        description: FIXME
-        type: boolean
-      authenticated:
-        description: FIXME
-        type: boolean
-      # permission_scopes:
-      #   description: FIXME
-      #   type: object
-      api_version:
-        description: Version of the JSON RPC API
-        type: string
-      everest_version:
-        description: The version of the running EVerest instance
-        type: string
-      charger_info:
-        description: Charger information
-        type: object
-        $ref: /json_rpc_api#/ChargerInfoObj
-
   # data type sub-objects
+  ChargerInfoObj:
+    description: Information about the charger
+    type: object
+    required:
+      - vendor
+      - model
+      - serial
+      - firmware_version
+    properties:
+      vendor:
+        description: EVSE vendor
+        type: string
+      model:
+        description: EVSE model
+        type: string
+      serial:
+        description: EVSE serial number
+        type: string
+      friendly_name:
+        description: EVSE friendly name
+        type: string
+      manufacturer:
+        description: EVSE manufacturer
+        type: string
+      manufacturer_url:
+        description: Manufacturer's URL
+        type: string
+      model_url:
+        description: EVSE model's URL
+        type: string
+      model_no:
+        description: EVSE model number
+        type: string
+      revision:
+        description: EVSE model revision
+        type: string
+      board_revision:
+        description: EVSE board revision
+        type: string
+      firmware_version:
+        description: EVSE firmware version
+        type: string
   ConnectorInfoObj:
     description: Static information about a connector of an EVSE
     type: object
@@ -199,48 +210,34 @@ types:
       bidi_charging:
         description: Whether bidirectional charging is supported
         type: boolean
-  ChargerInfoObj:
-    description: Information about the charger
+
+  # response types
+  HelloResObj:
+    description: Response to API.Hello
     type: object
+    additionalProperties: false
     required:
-      - friendly_name
-      - manufacturer
-      - manufacturer_url
-      - model_url
-      - model_no
-      - revision
-      - board_revision
+      - authentication_required
+      - api_version
+      - everest_version
+      - charger_info
     properties:
-      vendor:
-        description: EVSE vendor
+      authentication_required:
+        description: Whether authentication is required
+        type: boolean
+      authenticated:
+        description: Whether the client is properly authenticated
+        type: boolean
+      # permission_scopes:
+      #   description: FIXME
+      #   type: object
+      api_version:
+        description: Version of the JSON RPC API
         type: string
-      model:
-        description: EVSE model
+      everest_version:
+        description: The version of the running EVerest instance
         type: string
-      serial:
-        description: EVSE serial number
-        type: string
-      friendly_name:
-        description: EVSE friendly name
-        type: string
-      manufacturer:
-        description: EVSE manufacturer
-        type: string
-      manufacturer_url:
-        description: Manufacturer's URL
-        type: string
-      model_url:
-        description: EVSE model's URL
-        type: string
-      model_no:
-        description: EVSE model number
-        type: string
-      revision:
-        description: EVSE model revision
-        type: string
-      board_revision:
-        description: EVSE board revision
-        type: string
-      firmware_version:
-        description: EVSE firmware version
-        type: string
+      charger_info:
+        description: Charger information
+        type: object
+        $ref: /json_rpc_api#/ChargerInfoObj
