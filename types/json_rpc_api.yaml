@@ -241,3 +241,22 @@ types:
         description: Charger information
         type: object
         $ref: /json_rpc_api#/ChargerInfoObj
+  GetEVSEInfosResObj:
+    description: Response to ChargePoint.GetEVSEInfos
+    type: object
+    additionalProperties: false
+    required:
+      - infos
+      - error
+    properties:
+      infos:
+        description: Array of EVSE infos
+        type: array
+        items:
+          description: EVSE infos
+          type: object
+          $ref: /json_rpc_api#/EVSEInfoObj
+      error:
+        description: Response error
+        type: object
+        $ref: /json_rpc_api#/ResponseErrorEnum

@@ -19,7 +19,6 @@
 //     "charger_info": "$ChargerInfoObj"
 // }
 
-
 namespace rpc {
 class RpcApi {
 public:
@@ -28,8 +27,8 @@ public:
     ~RpcApi();
     // Methods
     types::json_rpc_api::HelloResObj hello();
-
+    types::json_rpc_api::GetEVSEInfosResObj chargepoint_getevseinfos();
 };
-}
+} // namespace rpc
 
 #endif // RPC_API_HPP
