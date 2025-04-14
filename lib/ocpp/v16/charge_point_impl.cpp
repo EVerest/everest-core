@@ -1864,7 +1864,7 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
                         response.status = ConfigurationStatus::Rejected;
                     }
                 } else if (call.msg.key == "ConnectionTimeout") {
-                    this->set_connection_timeout_callback(this->configuration->getConnectionTimeOut());
+                    this->call_set_connection_timeout();
                 } else if (call.msg.key == "TransactionMessageAttempts") {
                     this->message_queue->update_transaction_message_attempts(
                         this->configuration->getTransactionMessageAttempts());
