@@ -30,6 +30,7 @@ target_sources(${MODULE_NAME}
         "server/TransportInterface.cpp"
         "server/WebsocketServer.cpp"
         "rpc/RpcHandler.cpp"
+        "rpc/rpcApi.cpp"
 )
 
 target_compile_options(${MODULE_NAME}
