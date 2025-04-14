@@ -20,6 +20,8 @@ public:
                 (const std::string&, const CertificateSigningUseEnum&), (override));
     MOCK_METHOD(CertificateValidationResult, verify_certificate, (const std::string&, const LeafCertificateType&),
                 (override));
+    MOCK_METHOD(CertificateValidationResult, verify_certificate,
+                (const std::string&, const std::vector<LeafCertificateType>&), (override));
     MOCK_METHOD(std::vector<CertificateHashDataChain>, get_installed_certificates,
                 (const std::vector<CertificateType>&), (override));
     MOCK_METHOD(std::vector<OCSPRequestData>, get_v2g_ocsp_request_data, (), (override));

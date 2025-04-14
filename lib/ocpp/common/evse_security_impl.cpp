@@ -47,6 +47,18 @@ CertificateValidationResult EvseSecurityImpl::verify_certificate(const std::stri
         this->evse_security->verify_certificate(certificate_chain, conversions::from_ocpp(certificate_type)));
 }
 
+CertificateValidationResult
+EvseSecurityImpl::verify_certificate(const std::string& certificate_chain,
+                                     const std::vector<LeafCertificateType>& certificate_types) {
+    std::vector<evse_security::LeafCertificateType> _certificate_types;
+
+    for (const auto& certificate_type : certificate_types) {
+        _certificate_types.push_back(conversions::from_ocpp(certificate_type));
+    }
+
+    return conversions::to_ocpp(this->evse_security->verify_certificate(certificate_chain, _certificate_types));
+}
+
 std::vector<CertificateHashDataChain>
 EvseSecurityImpl::get_installed_certificates(const std::vector<CertificateType>& certificate_types) {
     std::vector<CertificateHashDataChain> result;

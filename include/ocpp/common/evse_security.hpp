@@ -49,6 +49,15 @@ public:
     virtual CertificateValidationResult verify_certificate(const std::string& certificate_chain,
                                                            const LeafCertificateType& certificate_type) = 0;
 
+    /// \brief Verifies the given \p certificate_chain against the respective CA
+    /// trust anchors (indicated by the given \p certificate_types) for the leaf.
+    /// \param certificate_chain PEM formatted certificate or certificate chain
+    /// \param certificate_types types of the root certificates for which the chain is verified
+    /// \return result of the operation
+    virtual CertificateValidationResult
+    verify_certificate(const std::string& certificate_chain,
+                       const std::vector<LeafCertificateType>& certificate_types) = 0;
+
     /// \brief Retrieves all certificates installed on the filesystem applying the \p certificate_types filter. This
     /// function respects the requirements of OCPP specified for the CSMS initiated message
     /// GetInstalledCertificateIds.req .

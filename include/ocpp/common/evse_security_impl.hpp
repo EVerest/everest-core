@@ -41,6 +41,8 @@ public:
                                                      const CertificateSigningUseEnum& certificate_type) override;
     CertificateValidationResult verify_certificate(const std::string& certificate_chain,
                                                    const LeafCertificateType& certificate_type) override;
+    CertificateValidationResult verify_certificate(const std::string& certificate_chain,
+                                                   const std::vector<LeafCertificateType>& certificate_types) override;
     std::vector<CertificateHashDataChain>
     get_installed_certificates(const std::vector<CertificateType>& certificate_types) override;
     std::vector<OCSPRequestData> get_v2g_ocsp_request_data() override;
