@@ -1,0 +1,14 @@
+---
+liblog:
+  git: https://github.com/EVerest/liblog.git
+  git_tag: v0.2.3
+  options: ["BUILD_EXAMPLES OFF"]
+nlohmann_json:
+  git: https://github.com/nlohmann/json
+  git_tag: v3.11.2
+  options: ["JSON_BuildTests OFF", "JSON_MultipleHeaders ON"]
+gtest:
+  # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
+  git: https://github.com/google/googletest.git
+  git_tag: release-1.12.1
+  cmake_condition: "EVEREST_SQLITE_BUILD_TESTING"
