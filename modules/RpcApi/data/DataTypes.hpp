@@ -3,7 +3,8 @@
 #ifndef DATATYPES_HPP
 #define DATATYPES_HPP
 
-#include <Enums.hpp>
+#include "Enums.hpp" // FIXME obsolete this
+#include <generated/types/json_rpc_api.hpp>
 
 // This contains types for all the JSON objects
 
