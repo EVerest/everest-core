@@ -1085,15 +1085,18 @@ void ChargePointImpl::reset_pricing_triggers(const int32_t connector_number) {
 
 bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason,
                             const std::set<std::string>& resuming_session_ids) {
+    // push transaction messages including SecurityEventNotification.req onto the message queue
+    this->message_queue->get_persisted_messages_from_db(this->configuration->getDisableSecurityEventNotifications());
+    this->try_resume_transactions(
+        resuming_session_ids); // calling resume transactions before message_queue.start() ensures that
+                               // no message handlers (e.g. for StopTransaction.conf) are
+                               // yet received that could interfere with try_resume_transactions
     this->message_queue->start();
     this->bootreason = bootreason;
     this->init_state_machine(connector_status_map);
     this->init_websocket();
     this->websocket->start_connecting();
-    // push transaction messages including SecurityEventNotification.req onto the message queue
-    this->message_queue->get_persisted_messages_from_db(this->configuration->getDisableSecurityEventNotifications());
     this->boot_notification();
-    this->try_resume_transactions(resuming_session_ids);
     this->call_set_connection_timeout();
 
     switch (bootreason) {
