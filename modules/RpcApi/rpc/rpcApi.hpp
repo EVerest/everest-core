@@ -8,6 +8,8 @@
 #include <optional>
 #include <string>
 
+#include <generated/types/json_rpc_api.hpp>
+
 // {
 //     "authentication_required": "bool",
 //     o:"authenticated": "bool",
@@ -19,38 +21,13 @@
 
 
 namespace rpc {
-
-
-struct clientHelloRes {
-    bool authentication_required;
-    bool authenticated;
-    std::string api_version;
-    std::string everest_version;
-    // ChargerInfoObj charger_info;
-};
-
-inline void to_json(nlohmann::json &j, const clientHelloRes &r) {
-    j = nlohmann::json{
-        {"authentication_required", r.authentication_required},
-        {"authenticated", r.authenticated},
-        {"api_version", r.api_version},
-        {"everest_version", r.everest_version}
-    };
-}
-inline void from_json(const nlohmann::json &j, clientHelloRes &r) {
-    j.at("authentication_required").get_to(r.authentication_required);
-    j.at("authenticated").get_to(r.authenticated);
-    j.at("api_version").get_to(r.api_version);
-    j.at("everest_version").get_to(r.everest_version);
-}
-
 class RpcApi {
 public:
     // Constructor and Destructor
     RpcApi();
     ~RpcApi();
     // Methods
-    clientHelloRes hello();
+    types::json_rpc_api::HelloResObj hello();
 
 };
 }

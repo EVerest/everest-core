@@ -150,33 +150,7 @@ struct EVSEInfoObj {
     bool bidi_charging;
 };
 
-struct ChargerInfoObj {
-    std::string vendor;
-    std::string model;
-    std::string serial;
-    std::optional<std::string> friendly_name;
-    std::optional<std::string> manufacturer;
-    std::optional<std::string> manufacturer_url;
-    std::optional<std::string> model_url;
-    std::optional<std::string> model_no;
-    std::optional<std::string> revision;
-    std::optional<std::string> board_revision;
-    std::string firmware_version;
-};
-
-struct APIHelloResponse {
-    bool authentication_required;
-    bool authenticated;
-    std::optional<std::vector<std::string>> permission_scopes; // Placeholder until PermissionScopes is defined
-    std::string api_version;
-    std::string everst_version;
-    ChargerInfoObj charger_info;
-};
-
 // Method Signatures (Pseudo RPC)
-
-// API.Hello
-APIHelloResponse API_Hello();
 
 // ChargePoint.GetEVSEInfos
 struct ChargePointGetEVSEInfosResponse {
