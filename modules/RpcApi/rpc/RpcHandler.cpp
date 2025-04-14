@@ -59,7 +59,7 @@ void RpcHandler::init_transport_interfaces() {
         if (!transport_interface) {
             throw std::runtime_error("Transport interface is null");
         }
-        m_last_tick = std::chrono::steady_clock::now();
+        m_last_req_notification = std::chrono::steady_clock::now();
 
         transport_interface->on_client_connected = [this, transport_interface](
             const server::TransportInterface::ClientId &client_id,
@@ -144,11 +144,10 @@ void RpcHandler::data_available(const std::shared_ptr<server::TransportInterface
         messages[client_id].transport_interface = transport_interface;
         EVLOG_debug << "Received message from client " << client_id << ": " << request.dump();
 
-        auto elapsed = duration_cast<milliseconds>(now - m_last_tick);
+        auto elapsed = duration_cast<milliseconds>(now - m_last_req_notification);
         if (elapsed >= REQ_COLLECTION_TIMEOUT) {
-            m_last_tick = now;  // Timer neu starten
+            m_last_req_notification = now;  // Timer neu starten
             m_cv_data_available.notify_all();
-            EVLOG_info << "Processing data available for client " << client_id;
         }
     } catch (const nlohmann::json::parse_error& e) {
         EVLOG_error << "Failed to parse JSON request from client " << client_id << ": " << e.what();
@@ -157,7 +156,64 @@ void RpcHandler::data_available(const std::shared_ptr<server::TransportInterface
     }
 }
 
+void RpcHandler::process_client_requests() {
+    while (m_is_running) {
+        std::unique_lock<std::mutex> lock(m_mtx);
+        // Wait for data to be available or timeout
+        m_cv_data_available.wait_for(lock, REQ_PROCESSING_TIMEOUT, [this]() {
+            // Interate over all clients and check if data is available
+            for (const auto& [client_id, client_req] : messages) {
+                if (!client_req.data.empty()) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        // Process requests for each client
+        bool all_requests_processed; // Flag to check if all requests are processed
+        do {
+            all_requests_processed = true;
+            for(auto& [client_id, client_req] : messages) {
+                if (client_req.data.empty()) {
+                    continue;  // Skip if no data available
+                }
+                // Process the data for this client
+                auto transport_interface = client_req.transport_interface;
+
+                if (!transport_interface) {
+                    EVLOG_error << "Skip data. Transport interface is null for client " << client_id;
+                    continue;  // Skip if transport interface is null
+                }
+
+                // Get the first request from the client
+                nlohmann::json request = client_req.data.front();
+                client_req.data.pop_front();  // Remove the processed request
+
+                // Check if next request is available
+                if (client_req.data.empty()) {
+                    all_requests_processed = false;
+                }
+
+                if (is_client_hello_req(client_id, request)) {
+                    // Notify condition variable to unblock the waiting thread
+                    m_cv_client_hello.notify_all();
+                    EVLOG_info << "API.Hello request received from client " << client_id;
+                }
+
+                // Call the RPC server with the request
+                std::string res = m_rpc_server->HandleRequest(request.dump());
+                // Send the response back to the client
+                transport_interface->send_data(client_id, res);
+                EVLOG_debug << "Sent response to client " << client_id << ": " << res;
+            }
+        } while (!all_requests_processed && m_is_running);
+    }
+}
+
 void RpcHandler::start_server() {
+    m_is_running = true;
+    // Start all transport interfaces
     for (const auto& transport_interface : m_transport_interfaces) {
         if (!transport_interface->start_server()) {
             throw std::runtime_error("Failed to start transport interface server");
@@ -166,69 +222,20 @@ void RpcHandler::start_server() {
 
     // Start RPC receiver thread
     std::thread([this]() {
-        while (true) {
-            std::unique_lock<std::mutex> lock(m_mtx);
-            // Wait for data to be available or timeout
-            m_cv_data_available.wait_for(lock, REQ_PROCESSING_TIMEOUT, [this]() {
-                // Interate over all clients and check if data is available
-                for (const auto& [client_id, client_data] : messages) {
-                    if (!client_data.data.empty()) {
-                        return true;
-                    }
-                }
-                return false;
-            });
-
-            // Process data for all clients
-
-            bool all_requests_processed;
-            do {
-                all_requests_processed = true;
-                for(auto& [client_id, client_data] : messages) {
-                    if (!client_data.data.empty()) {
-                        // Process the data for this client
-                        auto transport_interface = client_data.transport_interface;
-                        if (transport_interface) {
-                            // Get the first request from the client
-                            nlohmann::json request = client_data.data.front();
-                            client_data.data.pop_front();  // Remove the processed request
-
-                            // Check if next request is available
-                            if (client_data.data.empty()) {
-                                all_requests_processed = false;
-                            }
-
-                            // Check if it's a hello request
-                            if (request.contains("method") && request["method"] == "API.Hello") {
-                                // If it's a API.Hello request, we set the client_hello_received flag to true
-                                // and notify the condition variable to unblock the waiting thread
-                                //std::lock_guard<std::mutex> lock(m_mtx);
-                                m_client_hello_received[client_id] = true;
-                                EVLOG_debug << "Received API.Hello request from client " << client_id;
-                                // Notify condition variable to unblock the waiting thread
-                                m_cv_client_hello.notify_all();
-                            }
-
-                            // Call the RPC server with the request
-                            std::string res = m_rpc_server->HandleRequest(request.dump());
-                            // Send the response back to the client
-                            transport_interface->send_data(client_id, res);
-                            EVLOG_info << "Sent response to client " << client_id << ": " << res;
-                        } else {
-                            EVLOG_error << "Transport interface is null for client " << client_id;
-                        }
-                    }
-                }
-            } while (!all_requests_processed);
-        }
+        this->process_client_requests();
     }).detach();
 }
 
 void RpcHandler::stop_server() {
+    m_is_running = false;
+    // Notify all threads to stop
+    m_cv_data_available.notify_all();
+    m_cv_client_hello.notify_all();
+
     for (const auto& transport_interface : m_transport_interfaces) {
         if (!transport_interface->stop_server()) {
             throw std::runtime_error("Failed to stop transport interface server");
         }
     }
 }
-}
+} // namespace rpc
