@@ -87,3 +87,36 @@ TEST_F(RpcHandlerTest, ClientHelloRequest) {
     // Check if the client is still connected
     ASSERT_TRUE(client.is_connected());
 }
+
+// Test: Connect to WebSocket server and send invalid request
+TEST_F(RpcHandlerTest, InvalidRequest) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    ASSERT_TRUE(client.is_connected());
+
+    // Send invalid request
+    nlohmann::json invalid_request = {
+        {"jsonrpc", "2.0"},
+        {"method", "API.InvalidMethod"},
+        {"id", 1}
+    };
+
+    // Expected response
+    nlohmann::json expected_response = {
+        {"jsonrpc", "2.0"},
+        {"error", {
+            {"code", -32601},
+            {"message", "method not found: API.InvalidMethod"}
+        }},
+        {"id", 1}
+    };
+    client.send(invalid_request.dump());
+    // Wait for the response
+    std::unique_lock<std::mutex> lock(cv_mutex);
+    cv.wait_for(lock, std::chrono::seconds(1), [&] { return !client.get_received_data().empty(); });
+    // Check if the response is not empty
+    ASSERT_FALSE(client.get_received_data().empty());
+    // Check if the response is valid
+    nlohmann::json response = nlohmann::json::parse(client.get_received_data());
+    ASSERT_EQ(response, expected_response);
+}
