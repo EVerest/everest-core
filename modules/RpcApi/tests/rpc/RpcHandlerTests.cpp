@@ -69,7 +69,13 @@ TEST_F(RpcHandlerTest, ClientHelloRequest) {
             {"authentication_required", false},
             {"authenticated", true},
             {"api_version", "1.0"},
-            {"everest_version", "2024.9.0"}
+            {"everest_version", "2024.9.0"},
+            {"charger_info", {
+                {"firmware_version", "1.1.1beta"},
+                {"model", "DavyBox"},
+                {"serial", "1"},
+                {"vendor", "chargebyte"}
+            }}
         }},
         {"id", 1}
     };
