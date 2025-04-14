@@ -1,0 +1,62 @@
+module(
+    name = "everest-core",
+    version = "0.0.0",
+)
+
+###############################################################################
+# B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
+###############################################################################
+
+bazel_dep(name = "everest-framework", version = "0.0.0")
+local_path_override(module_name = "everest-framework", path = "/home/embedded/dima/everest-framework")
+
+bazel_dep(name = "rules_rust", version = "0.59.2")
+
+###############################################################################
+# T O O L C H A I N S
+###############################################################################
+
+# Rust toolchain
+RUST_EDITION = "2021"
+
+RUST_VERSION = "1.85.1"
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = RUST_EDITION,
+    extra_target_triples = [
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+    ],
+    versions = [RUST_VERSION],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+###############################################################################
+# C A R G O   W O R K S P A C E
+###############################################################################
+
+# https://bazelbuild.github.io/rules_rust/crate_universe_bzlmod.html
+everest_core_crate_index = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+everest_core_crate_index.from_cargo(
+    name = "everest_core_crate_index",
+    cargo_lockfile = "@everest-core//modules:Cargo.lock",
+    manifests = [
+        "@everest-core//modules:Cargo.toml",
+        "@everest-core//modules/RsIskraMeter:Cargo.toml",
+        "@everest-core//modules/RsPaymentTerminal:Cargo.toml",
+        "@everest-core//modules/rust_examples/RsExample:Cargo.toml",
+        "@everest-core//modules/rust_examples/RsExampleUser:Cargo.toml",
+    ],   
+)
+everest_core_crate_index.annotation(
+    crate = "everestrs",
+    crate_features = ["build_bazel"],
+)
+
+use_repo(
+    everest_core_crate_index,
+    "everest_core_crate_index",
+)
