@@ -486,6 +486,10 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
         EVLOG_verbose << fmt::format(
             "Incoming {}->{}", this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name);
 
+        // Prevent a race condition where some other module might have received its on-ready
+        // already, starts publishing variables and this module is not ready yet
+        ensure_ready();
+
         if (this->validate_data_with_schema) {
             // check data and ignore it if not matching (publishing it should have been prohibited already)
             try {
@@ -556,6 +560,9 @@ void Everest::subscribe_error(const Requirement& req, const error::ErrorType& er
             return;
         }
 
+        // Prevent a race condition where some other module might have received its on-ready
+        // already, starts publishing errors and this module is not ready yet
+        ensure_ready();
         switch (error.state) {
         case error::State::Active:
             EVLOG_debug << fmt::format("Incoming error {}->{}",
@@ -767,6 +774,14 @@ void Everest::signal_ready() {
     this->mqtt_abstraction->publish(ready_topic, json(true), QOS::QOS2);
 }
 
+inline void Everest::ensure_ready() const {
+    /// When calling this we actually expect that `ready_received` is true.
+    while (!ready_received) { // In C++20 we might mark it as [[unlikely]]
+        EVLOG_warning << "Module is has not processed `ready` yet.";
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
 ///
 /// \brief Ready handler for global readyness (e.g. all modules are ready now).
 /// This will called when receiving the global ready signal from manager.
@@ -792,7 +807,6 @@ void Everest::handle_ready(const json& data) {
                          "restarting a standalone module)!";
         return;
     }
-    this->ready_received = true;
 
     // call module ready handler
     EVLOG_debug << "Framework now ready to process events, calling module ready handler";
@@ -800,6 +814,8 @@ void Everest::handle_ready(const json& data) {
         const auto on_ready_handler = *on_ready;
         on_ready_handler();
     }
+
+    this->ready_received = true;
 
     // TODO(kai): make heartbeat interval configurable, disable it completely until then
     // this->heartbeat_thread = std::thread(&Everest::heartbeat, this);
@@ -822,6 +838,9 @@ void Everest::provide_cmd(const std::string& impl_id, const std::string& cmd_nam
     // define command wrapper
     const auto wrapper = [this, cmd_topic, impl_id, cmd_name, handler, cmd_definition](const std::string&, json data) {
         BOOST_LOG_FUNCTION();
+
+        // TODO(ddo) Add here the ready_received / ensure_ready() check once we can report
+        // errors from Rpcs. Right now this would lead to a deadlock.
 
         std::set<std::string> arg_names;
         if (cmd_definition.contains("arguments")) {

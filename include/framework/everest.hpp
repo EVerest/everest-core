@@ -3,6 +3,7 @@
 #ifndef FRAMEWORK_EVEREST_HPP
 #define FRAMEWORK_EVEREST_HPP
 
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <future>
@@ -201,7 +202,7 @@ private:
     std::shared_ptr<error::ErrorManagerReqGlobal> global_error_manager;   // nullptr if not enabled in manifest
     std::shared_ptr<error::ErrorStateMonitor> global_error_state_monitor; // nullptr if not enabled in manifest
     std::map<std::string, std::set<std::string>> registered_cmds;
-    bool ready_received;
+    std::atomic<bool> ready_received;
     std::chrono::seconds remote_cmd_res_timeout;
     bool validate_data_with_schema;
     std::unique_ptr<std::function<void()>> on_ready;
@@ -216,6 +217,9 @@ private:
     std::optional<TelemetryConfig> telemetry_config;
     bool telemetry_enabled;
     std::optional<ModuleTierMappings> module_tier_mappings;
+
+    /// Blocks until ready is processed;
+    void ensure_ready() const;
 
     void handle_ready(const nlohmann::json& data);
 
