@@ -21,6 +21,8 @@ target_sources(${TEST_TARGET_NAME}
         "helpers/WebSocketTestClient.cpp"
 )
 
+get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
+
 target_include_directories(${TEST_TARGET_NAME}
     PUBLIC
         ${INCLUDE_DIR}
