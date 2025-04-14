@@ -52,6 +52,7 @@ void RpcHandler::init_rpc_api() {
     m_rpc_server = std::make_unique<JsonRpc2Server>();
 //    m_rpc_server->Add("API.Hello1", GetHandle(&data::API_Hello, this), {});
     m_rpc_server->Add("API.Hello", GetHandle(&rpc::RpcApi::hello, api), {});
+    m_rpc_server->Add("ChargePoint.GetEVSEInfos", GetHandle(&rpc::RpcApi::chargepoint_getevseinfos, api), {});
 }
 
 void RpcHandler::init_transport_interfaces() {

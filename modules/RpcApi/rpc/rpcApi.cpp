@@ -25,5 +25,15 @@ types::json_rpc_api::HelloResObj RpcApi::hello() {
     res.charger_info.firmware_version = "1.1.1beta";
     return res;
 }
+
+// ChargePoint.GetEVSEInfos
+types::json_rpc_api::GetEVSEInfosResObj RpcApi::chargepoint_getevseinfos() {
+    types::json_rpc_api::GetEVSEInfosResObj res;
+
+    res.infos = {};
+    res.error = types::json_rpc_api::ResponseErrorEnum::NoError;
+
+    return res;
 }
 
+} // namespace rpc

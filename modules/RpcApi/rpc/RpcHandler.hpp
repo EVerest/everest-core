@@ -79,6 +79,6 @@ private:
     std::chrono::steady_clock::time_point m_last_req_notification; // Last tick time
     std::atomic<bool> m_is_running{false};
 };
-}
+} // namespace rpc
 
 #endif // RPCHANDLER_H
