@@ -168,8 +168,8 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
         return sa.HANDLED_INTERNALLY;
     } else if (ev == Event::FAILED) {
         if (ctx.slac_config.reset_instead_of_fail) {
-            ctx.log_info("Going to reset state instead of failed state");
-            return sa.create_simple<ResetState>(ctx);
+            ctx.log_info("Waiting for the next CM_SLAC_PARAM.REQ message");
+            return sa.HANDLED_INTERNALLY;
         }
         return sa.create_simple<FailedState>(ctx);
     }
