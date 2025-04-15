@@ -32,6 +32,7 @@ protected:
     bool data_is_valid{false};
 };
 
+class ChargerInfoStore {};
 class ConnectorInfoStore : public GenericInfoStore {
     types::json_rpc_api::ConnectorInfoObj connectorinfoobj;
     std::optional<nlohmann::json> get_data() const;
@@ -39,29 +40,18 @@ class ConnectorInfoStore : public GenericInfoStore {
     void init_data() override;
     // void register_notification_callback() override;
 };
+class EVSEInfoStore {};
+class EVSEStatusStore {};
 class HardwareCapabilitiesStore {};
 class MeterDataStore {};
-class ACChargeParametersStore {};
-class DCChargeParametersStore {};
-class ACChargeLoopStore {};
-class DCChargeLoopStore {};
-class DisplayParametersStore {};
-class EVSEStatusStore {};
-class EVSEInfoStore {};
-class ChargerInfoStore {};
 
 class DataStore {
+    ChargerInfoStore chargerinfo;
     ConnectorInfoStore connectorinfo;
+    EVSEInfoStore evseinfo;
+    EVSEStatusStore evsestatus;
     HardwareCapabilitiesStore hardwarecapabilities;
     MeterDataStore meterdata;
-    ACChargeParametersStore acchargeparameters;
-    DCChargeParametersStore dcchargeparameters;
-    ACChargeLoopStore acchargeloop;
-    DCChargeLoopStore dcchargeloop;
-    DisplayParametersStore displayparameters;
-    EVSEStatusStore evsestatus;
-    EVSEInfoStore evseinfo;
-    ChargerInfoStore chargerinfo;
 };
 
 } // namespace data
