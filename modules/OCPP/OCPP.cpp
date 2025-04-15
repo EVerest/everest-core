@@ -2,7 +2,6 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <optional>
