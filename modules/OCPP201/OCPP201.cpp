@@ -832,6 +832,28 @@ void OCPP201::ready() {
             this->charge_point->on_meter_value(evse_id, meter_value);
         });
 
+        evse->subscribe_enforced_limits([this, evse_id](types::energy::EnforcedLimits limits) {
+            ocpp::v2::MeterValue meter_value;
+            if (limits.limits_root_side.total_power_W.has_value()) {
+                ocpp::v2::SampledValue value;
+                value.value = limits.limits_root_side.total_power_W->value;
+                value.measurand = ocpp::v2::MeasurandEnum::Power_Offered;
+                value.context = ocpp::v2::ReadingContextEnum::Other;
+                meter_value.sampledValue.push_back(value);
+            }
+            if (limits.limits_root_side.ac_max_current_A.has_value()) {
+                float max_current = limits.limits_root_side.ac_max_current_A->value;
+                ocpp::v2::SampledValue value;
+                value.value = limits.limits_root_side.ac_max_current_A->value;
+                value.measurand = ocpp::v2::MeasurandEnum::Current_Offered;
+                value.context = ocpp::v2::ReadingContextEnum::Other;
+                meter_value.sampledValue.push_back(value);
+            }
+            if (!meter_value.sampledValue.empty()) {
+                this->charge_point->on_meter_value(evse_id, meter_value);
+            }
+        });
+
         evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
             if (ev_info.soc.has_value()) {
                 this->evse_soc_map[evse_id] = ev_info.soc.value();
