@@ -11,39 +11,55 @@
 
 namespace data {
 
-class GenericInfoStore {
-public:
-    explicit GenericInfoStore() {
-        this->init_data();
-    };
-    // override this to represent the collected data as json according to the JSON RPC API
-    // if the returned value has no value, the data is incomplete or not available
-    virtual std::optional<nlohmann::json> get_data() const = 0;
-    // template <> virtual std::optional<T2> get_data() const;
-    // TBD: Do we need to be able to return an error if we cannot set the data?
-    virtual void set_data(const nlohmann::json& in) = 0;
-    // register a callback which is triggered when any data in this data store changes
-    void register_notification_callback(const std::function<void()>& callback);
+namespace RPCDataTypes = types::json_rpc_api;
 
+template <typename T>
+class GenericInfoStore {
 protected:
+    // the associated data store
+    T dataobj;
+    // function to call when changes occurred
+    std::function<void()> notification_callback;
+
     // override this if structures need special (non-default) initialization
     virtual void init_data(){};
     // whether the non-optional values are valid, so that the RPC interface can generate an error
     bool data_is_valid{false};
+
+public:
+    explicit GenericInfoStore() {
+        this->init_data();
+    };
+    // if the returned value has no value, the data is incomplete or not available
+    std::optional<T> get_data() const {
+        if (this->data_is_valid) {
+            return this->dataobj;
+        } else {
+            return std::nullopt;
+        }
+    };
+    // TBD: Do we need to be able to return an error if we cannot set the data?
+    // virtual void set_data(const nlohmann::json& in) = 0;
+
+    // register a callback which is triggered when any data in the associated data store changes
+    void register_notification_callback(const std::function<void()>& callback) {
+        this->notification_callback = callback;
+    }
 };
 
-class ChargerInfoStore {};
-class ConnectorInfoStore : public GenericInfoStore {
-    types::json_rpc_api::ConnectorInfoObj connectorinfoobj;
-    std::optional<nlohmann::json> get_data() const;
+class ChargerInfoStore : public GenericInfoStore<RPCDataTypes::ChargerInfoObj> {};
+class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoObj> {
     void set_data(const nlohmann::json& in);
-    void init_data() override;
-    // void register_notification_callback() override;
+    void init_data() override {
+        // example, in case override is required
+        memset(&dataobj, 0, sizeof(dataobj));
+        dataobj.id = -1;
+    }
 };
-class EVSEInfoStore {};
-class EVSEStatusStore {};
-class HardwareCapabilitiesStore {};
-class MeterDataStore {};
+class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {};
+class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};
+class HardwareCapabilitiesStore : public GenericInfoStore<RPCDataTypes::HardwareCapabilitiesObj> {};
+class MeterDataStore : public GenericInfoStore<RPCDataTypes::MeterDataObj> {};
 
 class DataStore {
     ChargerInfoStore chargerinfo;
