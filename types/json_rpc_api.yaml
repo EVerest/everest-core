@@ -47,12 +47,13 @@ types:
     - DCDual2
     - DCDual4
     - Other
-  # EVSEErrorEnum:
-  #   description: >-
-  #     EVSEErrorEnum can be used to show more details of an EVSE error for example in a service tool application for the technician. The enum naming is identical to EVerest error handler semantic.
-  #   type: string
-  #   enum:
-  #   - NoError
+  EVSEErrorEnum:
+    description: >-
+      EVSEErrorEnum can be used to show more details of an EVSE error for example in a service tool application for the technician. The enum naming is identical to EVerest error handler semantic.
+    type: string
+    enum:
+    - NoError
+  # FIXME these should probably be transparent via EVerest error interface
   #   - power_supply_DC/HardwareFault
   #   - power_supply_DC/OverTemperature
   #   - power_supply_DC/UnderTemperature
@@ -393,6 +394,71 @@ types:
       bidi_charging:
         description: Whether bidirectional charging is supported
         type: boolean
+  EVSEStatusObj:
+    description: All information about the current status of a charge point EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - charged_energy_wh
+      - discharged_energy_wh
+      - charging_duration_s
+      - charging_allowed
+      - available
+      - active_connector_id
+      - evse_error
+      - charge_protocol
+      - state
+    properties:
+      charged_energy_wh:
+        description: charged_energy_wh
+        type: number
+      discharged_energy_wh:
+        description: discharged_energy_wh
+        type: number
+      charging_duration_s:
+        description: charging_duration_s
+        type: integer
+      charging_allowed:
+        description: charging_allowed
+        type: boolean
+      available:
+        description: available
+        type: boolean
+      active_connector_id:
+        description: active_connector_id
+        type: integer
+      evse_error:
+        description: evse_error
+        type: object
+        $ref: /json_rpc_api#/EVSEErrorEnum
+      charge_protocol:
+        description: charge_protocol
+        type: object
+        $ref: /json_rpc_api#/ChargeProtocolEnum
+      ac_charge_param:
+        description: ac_charge_param
+        type: object
+        $ref: /json_rpc_api#/ACChargeParametersObj
+      dc_charge_param:
+        description: dc_charge_param
+        type: object
+        $ref: /json_rpc_api#/DCChargeParametersObj
+      ac_charge_loop:
+        description: ac_charge_loop
+        type: object
+        $ref: /json_rpc_api#/ACChargeLoopObj
+      dc_charge_loop:
+        description: dc_charge_loop
+        type: object
+        $ref: /json_rpc_api#/DCChargeLoopObj
+      display_parameters:
+        description: display_parameters
+        type: object
+        $ref: /json_rpc_api#/DisplayParametersObj
+      state:
+        description: state
+        type: object
+        $ref: /json_rpc_api#/EVSEStateEnum
 
   # response types
   HelloResObj:
@@ -438,6 +504,51 @@ types:
           description: EVSE infos
           type: object
           $ref: /json_rpc_api#/EVSEInfoObj
+      error:
+        description: Response error
+        type: object
+        $ref: /json_rpc_api#/ResponseErrorEnum
+  EVSEGetInfoResObj:
+    description: Response to EVSE.GetInfo
+    type: object
+    additionalProperties: false
+    required:
+      - info
+      - error
+    properties:
+      info:
+        type: object
+        $ref: /json_rpc_api#/EVSEInfoObj
+      error:
+        description: Response error
+        type: object
+        $ref: /json_rpc_api#/ResponseErrorEnum
+  EVSEGetStatusResObj:
+    description: Response to EVSE.GetStatus
+    type: object
+    additionalProperties: false
+    required:
+      - status
+      - error
+    properties:
+      status:
+        type: object
+        $ref: /json_rpc_api#/EVSEStatusObj
+      error:
+        description: Response error
+        type: object
+        $ref: /json_rpc_api#/ResponseErrorEnum
+  EVSEGetHardwareCapabilitiesResObj:
+    description: Response to EVSE.GetHardwareCapabilities
+    type: object
+    additionalProperties: false
+    required:
+      - hardware_capabilities
+      - error
+    properties:
+      hardware_capabilities:
+        type: object
+        $ref: /json_rpc_api#/HardwareCapabilitiesObj
       error:
         description: Response error
         type: object
