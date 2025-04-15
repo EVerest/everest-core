@@ -144,6 +144,198 @@ types:
       description:
         description: Description
         type: string
+  ACChargeParametersObj:
+    description: AC related parameters of a charge point EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - evse_maximum_charge_power
+      - evse_minimum_charge_power
+      - evse_nominal_frequency
+    properties:
+      evse_nominal_voltage:
+        description: evse_nominal_voltage
+        type: number
+      evse_max_current:
+        description: evse_max_current
+        type: number
+      evse_maximum_charge_power:
+        description: evse_maximum_charge_power
+        type: number
+      evse_minimum_charge_power:
+        description: evse_minimum_charge_power
+        type: number
+      evse_nominal_frequency:
+        description: evse_nominal_frequency
+        type: number
+      evse_maximum_discharge_power:
+        description: evse_maximum_discharge_power
+        type: number
+      evse_minimum_discharge_power:
+        description: evse_minimum_discharge_power
+        type: number
+  DCChargeParametersObj:
+    description: DC related parameters of a charge point EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - evse_maximum_charge_current
+      - evse_maximum_charge_power
+      - evse_maximum_voltage
+      - evse_minimum_charge_current
+      - evse_minimum_charge_power
+      - evse_minimum_voltage
+    properties:
+      evse_maximum_charge_current:
+        description: evse_maximum_charge_current
+        type: number
+      evse_maximum_charge_power:
+        description: evse_maximum_charge_power
+        type: number
+      evse_maximum_voltage:
+        description: evse_maximum_voltage
+        type: number
+      evse_minimum_charge_current:
+        description: evse_minimum_charge_current
+        type: number
+      evse_minimum_charge_power:
+        description: evse_minimum_charge_power
+        type: number
+      evse_minimum_voltage:
+        description: evse_minimum_voltage
+        type: number
+      evse_energy_to_be_delivered:
+        description: evse_energy_to_be_delivered
+        type: number
+      evse_maximum_discharge_current:
+        description: evse_maximum_discharge_current
+        type: number
+      evse_maximum_discharge_power:
+        description: evse_maximum_discharge_power
+        type: number
+      evse_minimum_discharge_current:
+        description: evse_minimum_discharge_current
+        type: number
+      evse_minimum_discharge_power:
+        description: evse_minimum_discharge_power
+        type: number
+  ACChargeLoopObj:
+    description: AC related parameters during charging of a charge point EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - evse_active_phase_count
+    properties:
+      evse_active_phase_count:
+        description: evse_active_phase_count
+        type: integer
+  DCChargeLoopObj:
+    description: DC related parameters during charging of a charge point EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - evse_present_current
+      - evse_present_voltage
+      - evse_power_limit_achieved
+      - evse_current_limit_achieved
+      - evse_voltage_limit_achieved
+    properties:
+      evse_present_current:
+        description: evse_present_current
+        type: number
+      evse_present_voltage:
+        description: evse_present_voltage
+        type: number
+      evse_power_limit_achieved:
+        description: evse_power_limit_achieved
+        type: boolean
+      evse_current_limit_achieved:
+        description: evse_current_limit_achieved
+        type: boolean
+      evse_voltage_limit_achieved:
+        description: evse_voltage_limit_achieved
+        type: boolean
+  DisplayParametersObj:
+    description: Additional information which can be displayed in a GUI
+    type: object
+    additionalProperties: false
+    properties:
+      start_soc:
+        description: start_soc
+        type: integer
+      present_soc:
+        description: present_soc
+        type: integer
+      minimum_soc:
+        description: minimum_soc
+        type: integer
+      target_soc:
+        description: target_soc
+        type: integer
+      maximum_soc:
+        description: maximum_soc
+        type: integer
+      remaining_time_to_minimum_soc:
+        description: remaining_time_to_minimum_soc
+        type: integer
+      remaining_time_to_target_soc:
+        description: remaining_time_to_target_soc
+        type: integer
+      remaining_time_to_maximum_soc:
+        description: remaining_time_to_maximum_soc
+        type: integer
+      charging_complete:
+        description: charging_complete
+        type: boolean
+      battery_energy_capacity:
+        description: battery_energy_capacity
+        type: number
+      inlet_hot:
+        description: inlet_hot
+        type: boolean
+  ChargerInfoObj:
+    description: Well-known general charger information
+    type: object
+    additionalProperties: false
+    required:
+      - vendor
+      - model
+      - serial
+      - firmware_version
+    properties:
+      vendor:
+        description: vendor
+        type: string
+      model:
+        description: model
+        type: string
+      serial:
+        description: serial
+        type: string
+      friendly_name:
+        description: friendly_name
+        type: string
+      manufacturer:
+        description: manufacturer
+        type: string
+      manufacturer_url:
+        description: manufacturer_url
+        type: string
+      model_url:
+        description: model_url
+        type: string
+      model_no:
+        description: model_no
+        type: string
+      revision:
+        description: revision
+        type: string
+      board_revision:
+        description: board_revision
+        type: string
+      firmware_version:
+        description: firmware_version
+        type: string
   HardwareCapabilitiesObj:
     description: Hardware capabilities
     type: object
@@ -160,31 +352,22 @@ types:
       - phase_switch_during_charging
     properties:
       max_current_A_export:
-        description: fixme
         type: number
       max_current_A_import:
-        description: fixme
         type: number
       max_phase_count_export:
-        description: fixme
         type: number
       max_phase_count_import:
-        description: fixme
         type: number
       min_current_A_export:
-        description: fixme
         type: number
       min_current_A_import:
-        description: fixme
         type: number
       min_phase_count_export:
-        description: fixme
         type: integer
       min_phase_count_import:
-        description: fixme
         type: integer
       phase_switch_during_charging:
-        description: fixme
         type: boolean
   EVSEInfoObj:
     description: Information about the EVSE
@@ -229,7 +412,6 @@ types:
         description: Whether the client is properly authenticated
         type: boolean
       # permission_scopes:
-      #   description: FIXME
       #   type: object
       api_version:
         description: Version of the JSON RPC API
