@@ -459,6 +459,119 @@ types:
         description: state
         type: object
         $ref: /json_rpc_api#/EVSEStateEnum
+  MeterDataObj:
+    description: Meter data of a charge point EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - energy_Wh_import
+      - meter_id
+      - timestamp
+    properties:
+      current_A:
+        type: object
+        additionalProperties: false
+        required:
+          - L1
+          - L2
+          - L3
+          - N
+        properties:
+          L1:
+            type: number
+          L2:
+            type: number
+          L3:
+            type: number
+          N:
+            type: number
+      energy_Wh_import:
+        type: object
+        additionalProperties: false
+        required:
+          - L1
+          - L2
+          - L3
+          - total
+        properties:
+          L1:
+            type: number
+          L2:
+            type: number
+          L3:
+            type: number
+          total:
+            type: number
+      energy_Wh_export:
+        type: object
+        additionalProperties: false
+        required:
+          - L1
+          - L2
+          - L3
+          - total
+        properties:
+          L1:
+            type: number
+          L2:
+            type: number
+          L3:
+            type: number
+          total:
+            type: number
+      frequency_Hz:
+        type: object
+        additionalProperties: false
+        required:
+          - L1
+          - L2
+          - L3
+        properties:
+          L1:
+            type: number
+          L2:
+            type: number
+          L3:
+            type: number
+      meter_id:
+        type: string
+      serial_number:
+        type: string
+      phase_seq_error:
+        type: boolean
+      power_W:
+        type: object
+        additionalProperties: false
+        required:
+          - L1
+          - L2
+          - L3
+          - total
+        properties:
+          L1:
+            type: number
+          L2:
+            type: number
+          L3:
+            type: number
+          total:
+            type: number
+      timestamp:
+        type: number
+      voltage_V:
+        type: object
+        additionalProperties: false
+        required:
+          - L1
+          - L2
+          - L3
+        properties:
+          L1:
+            type: number
+          L2:
+            type: number
+          L3:
+            type: number
 
   # response types
   HelloResObj:
@@ -549,6 +662,21 @@ types:
       hardware_capabilities:
         type: object
         $ref: /json_rpc_api#/HardwareCapabilitiesObj
+      error:
+        description: Response error
+        type: object
+        $ref: /json_rpc_api#/ResponseErrorEnum
+  EVSEGetMeterDataResObj:
+    description: Response to EVSE.GetMeterData
+    type: object
+    additionalProperties: false
+    required:
+      - meter_data
+      - error
+    properties:
+      meter_data:
+        type: object
+        $ref: /json_rpc_api#/MeterDataObj
       error:
         description: Response error
         type: object
