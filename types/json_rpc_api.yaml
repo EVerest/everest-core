@@ -423,7 +423,7 @@ types:
         description: Charger information
         type: object
         $ref: /json_rpc_api#/ChargerInfoObj
-  GetEVSEInfosResObj:
+  ChargePointGetEVSEInfosResObj:
     description: Response to ChargePoint.GetEVSEInfos
     type: object
     additionalProperties: false
