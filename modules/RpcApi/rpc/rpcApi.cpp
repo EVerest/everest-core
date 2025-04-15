@@ -27,11 +27,11 @@ types::json_rpc_api::HelloResObj RpcApi::hello() {
 }
 
 // ChargePoint.GetEVSEInfos
-types::json_rpc_api::GetEVSEInfosResObj RpcApi::chargepoint_getevseinfos() {
-    types::json_rpc_api::GetEVSEInfosResObj res;
+types::json_rpc_api::ChargePointGetEVSEInfosResObj RpcApi::chargepoint_getevseinfos() {
+    types::json_rpc_api::ChargePointGetEVSEInfosResObj res;
 
     res.infos = {};
-    res.error = types::json_rpc_api::ResponseErrorEnum::NoError;
+    res.error = types::json_rpc_api::ResponseErrorEnum::ErrorNoDataAvailable;
 
     return res;
 }
