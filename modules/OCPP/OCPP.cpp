@@ -2,6 +2,8 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -280,6 +282,13 @@ void OCPP::init_evse_subscriptions() {
         evse->subscribe_limits([this, evse_id](types::evse_manager::Limits limits) {
             double max_current = limits.max_current;
             this->charge_point->on_max_current_offered(evse_id, max_current);
+        });
+
+        evse->subscribe_enforced_limits([this, evse_id](types::energy::EnforcedLimits limits) {
+            if (limits.limits_root_side.total_power_W.has_value()) {
+                int32_t max_power = std::floor(limits.limits_root_side.total_power_W->value);
+                this->charge_point->on_max_power_offered(evse_id, max_power);
+            }
         });
 
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
