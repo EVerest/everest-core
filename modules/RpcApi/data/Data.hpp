@@ -5,6 +5,7 @@
 
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <generated/types/json_rpc_api.hpp>
 
 // This contains types for all the data objects
 
@@ -18,6 +19,7 @@ public:
     // override this to represent the collected data as json according to the JSON RPC API
     // if the returned value has no value, the data is incomplete or not available
     virtual std::optional<nlohmann::json> get_data() const = 0;
+    // template <> virtual std::optional<T2> get_data() const;
     // TBD: Do we need to be able to return an error if we cannot set the data?
     virtual void set_data(const nlohmann::json& in) = 0;
     // register a callback which is triggered when any data in this data store changes
@@ -31,6 +33,7 @@ protected:
 };
 
 class ConnectorInfoStore : public GenericInfoStore {
+    types::json_rpc_api::ConnectorInfoObj connectorinfoobj;
     std::optional<nlohmann::json> get_data() const;
     void set_data(const nlohmann::json& in);
     void init_data() override;
