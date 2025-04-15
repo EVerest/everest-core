@@ -27,7 +27,7 @@ public:
     ~RpcApi();
     // Methods
     types::json_rpc_api::HelloResObj hello();
-    types::json_rpc_api::GetEVSEInfosResObj chargepoint_getevseinfos();
+    types::json_rpc_api::ChargePointGetEVSEInfosResObj chargepoint_getevseinfos();
 };
 } // namespace rpc
 
