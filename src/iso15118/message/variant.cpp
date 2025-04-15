@@ -70,6 +70,8 @@ static void handle_main(VariantAccess& va) {
         insert_type(va, doc.ServiceSelectionRes);
     } else if (doc.ScheduleExchangeReq_isUsed) {
         insert_type(va, doc.ScheduleExchangeReq);
+    } else if (doc.ScheduleExchangeRes_isUsed) {
+        insert_type(va, doc.ScheduleExchangeRes);
     } else if (doc.PowerDeliveryReq_isUsed) {
         insert_type(va, doc.PowerDeliveryReq);
     } else if (doc.SessionStopReq_isUsed) {

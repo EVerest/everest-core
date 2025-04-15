@@ -9,6 +9,7 @@
 #include <iso15118/io/stream_view.hpp>
 
 #define CB2CPP_STRING(property) (std::string(property.characters, property.charactersLen))
+
 #define CPP2CB_STRING(in, out)                                                                                         \
     if (in.length() > sizeof(out.characters)) {                                                                        \
         throw std::runtime_error("String too long");                                                                   \
@@ -60,6 +61,11 @@
     }                                                                                                                  \
                                                                                                                        \
     out##_isUsed = static_cast<bool>(in);
+
+#define CB2CPP_STRING_IF_USED(in, out)                                                                                 \
+    if (in##_isUsed) {                                                                                                 \
+        out = CB2CPP_STRING(in);                                                                                       \
+    }
 
 template <typename T1, typename T2> void cb_convert_enum(const T1& in, T2& out) {
     out = static_cast<T2>(in);

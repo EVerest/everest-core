@@ -18,13 +18,6 @@ void convert(const struct iso20_Scheduled_EVPPTControlModeType& in, datatypes::S
     out.selected_schedule = in.SelectedScheduleTupleID;
 }
 
-template <> void convert(const struct iso20_PowerScheduleEntryType& in, datatypes::PowerScheduleEntry& out) {
-    out.duration = in.Duration;
-    convert(in.Power, out.power);
-    CB2CPP_CONVERT_IF_USED(in.Power_L2, out.power_l2);
-    CB2CPP_CONVERT_IF_USED(in.Power_L3, out.power_l3);
-}
-
 template <> void convert(const struct iso20_EVPowerProfileType& in, datatypes::PowerProfile& out) {
     out.time_anchor = in.TimeAnchor;
 

@@ -111,6 +111,13 @@ template <> void convert(const datatypes::EvseStatus& in, iso20_EVSEStatusType& 
     cb_convert_enum(in.notification, out.EVSENotification);
 }
 
+template <> void convert(const struct iso20_PowerScheduleEntryType& in, datatypes::PowerScheduleEntry& out) {
+    out.duration = in.Duration;
+    convert(in.Power, out.power);
+    CB2CPP_CONVERT_IF_USED(in.Power_L2, out.power_l2);
+    CB2CPP_CONVERT_IF_USED(in.Power_L3, out.power_l3);
+}
+
 namespace datatypes {
 
 float from_RationalNumber(const RationalNumber& in) {
