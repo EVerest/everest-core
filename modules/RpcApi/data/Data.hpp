@@ -6,6 +6,8 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <generated/types/json_rpc_api.hpp>
+#include <functional> // for std::function
+#include <vector>
 
 // This contains types for all the data objects
 
@@ -61,13 +63,22 @@ class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};
 class HardwareCapabilitiesStore : public GenericInfoStore<RPCDataTypes::HardwareCapabilitiesObj> {};
 class MeterDataStore : public GenericInfoStore<RPCDataTypes::MeterDataObj> {};
 
-class DataStore {
-    ChargerInfoStore chargerinfo;
+struct DataStoreConnector {
     ConnectorInfoStore connectorinfo;
+    HardwareCapabilitiesStore hardwarecapabilities;
+};
+
+struct DataStoreEvse {
+    ChargerInfoStore chargerinfo;
     EVSEInfoStore evseinfo;
     EVSEStatusStore evsestatus;
-    HardwareCapabilitiesStore hardwarecapabilities;
     MeterDataStore meterdata;
+    std::vector<ConnectorInfoStore> connectors;
+};
+
+struct DataStoreCharger {
+    ChargerInfoStore chargerinfo;
+    std::vector<DataStoreEvse> evses;
 };
 
 } // namespace data
