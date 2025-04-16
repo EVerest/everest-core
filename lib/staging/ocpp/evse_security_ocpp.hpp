@@ -22,6 +22,9 @@ public:
     delete_certificate(const ocpp::CertificateHashDataType& certificate_hash_data) override;
     ocpp::CertificateValidationResult verify_certificate(const std::string& certificate_chain,
                                                          const ocpp::LeafCertificateType& certificate_type) override;
+    ocpp::CertificateValidationResult
+    verify_certificate(const std::string& certificate_chain,
+                       const std::vector<ocpp::LeafCertificateType>& certificate_types) override;
     ocpp::InstallCertificateResult
     update_leaf_certificate(const std::string& certificate_chain,
                             const ocpp::CertificateSigningUseEnum& certificate_type) override;
