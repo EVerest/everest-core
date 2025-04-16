@@ -40,17 +40,10 @@ void from_json(const nlohmann::json& j, HelloResponse& r) {
     j.at("authenticated").get_to(r.authenticated);
 }
 
-nlohmann::json hello(const nlohmann::json& params) {
-    HelloResponse res{true, false}; // Beispielwerte
-    return nlohmann::json(res);
-}
-using namespace jsonrpccxx;
-
 void RpcHandler::init_rpc_api() {
     // Initialize the RPC API here
     RpcApi api;
     m_rpc_server = std::make_unique<JsonRpc2Server>();
-//    m_rpc_server->Add("API.Hello1", GetHandle(&data::API_Hello, this), {});
     m_rpc_server->Add("API.Hello", GetHandle(&rpc::RpcApi::hello, api), {});
     m_rpc_server->Add("ChargePoint.GetEVSEInfos", GetHandle(&rpc::RpcApi::chargepoint_getevseinfos, api), {});
 }
