@@ -120,7 +120,7 @@ grpc:
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_GRPC AND GRPC_EDM"
 eebus-grpc:
   git: https://github.com/enbility/eebus-grpc.git
-  git_tag: dev
+  git_tag: tmp/initial
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_EEBUS_GRPC"
 grpc-extended-cpp-plugin:
   git: https://github.com/EVerest/grpc-extended-cpp-plugin.git
