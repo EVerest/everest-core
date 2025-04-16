@@ -130,6 +130,7 @@ struct Conf {
     std::string session_id_type;
     bool zero_power_ignore_pause;
     bool zero_power_allow_ev_to_ignore_pause;
+    int sleep_before_enabling_pwm_hlc_mode_ms;
 };
 
 class EvseManager : public Everest::ModuleBase {
