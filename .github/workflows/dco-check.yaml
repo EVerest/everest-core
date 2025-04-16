@@ -8,14 +8,22 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
+        if: github.event_name == 'pull_request'
       - name: Set up Python 3.x
+        if: github.event_name == 'pull_request'
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
       - name: Install dco-check
+        if: github.event_name == 'pull_request'
         run: pip3 install -U dco-check==0.5.0
-      - name: Check DCO
+      - name: Check DCO pull_request
+        if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           dco-check --default-branch main -v
+      - name:  Check DCO merge_group
+        if: github.event_name == 'merge_group'
+        run: |
+          echo "DCO check is skipped for merge_group events."
