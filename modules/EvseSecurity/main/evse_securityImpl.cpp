@@ -65,12 +65,21 @@ evse_securityImpl::handle_update_leaf_certificate(std::string& certificate_chain
     }
 }
 
-types::evse_security::CertificateValidationResult
-evse_securityImpl::handle_verify_certificate(std::string& certificate_chain,
-                                             types::evse_security::LeafCertificateType& certificate_type) {
+types::evse_security::CertificateValidationResult evse_securityImpl::handle_verify_certificate(
+    std::string& certificate_chain, std::vector<types::evse_security::LeafCertificateType>& certificate_types) {
+
+    std::vector<evse_security::LeafCertificateType> _certificate_types;
+
+    for (const auto& certificate_type : certificate_types) {
+        try {
+            _certificate_types.push_back(conversions::from_everest(certificate_type));
+        } catch (const std::out_of_range& e) {
+            EVLOG_warning << e.what();
+        }
+    }
+
     try {
-        return conversions::to_everest(
-            this->evse_security->verify_certificate(certificate_chain, conversions::from_everest(certificate_type)));
+        return conversions::to_everest(this->evse_security->verify_certificate(certificate_chain, _certificate_types));
     } catch (const std::out_of_range& e) {
         EVLOG_warning << e.what();
         return types::evse_security::CertificateValidationResult::Unknown;
