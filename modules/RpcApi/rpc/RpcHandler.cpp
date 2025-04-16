@@ -8,7 +8,6 @@
 #include <thread>
 #include <everest/logging.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include "../data/DataTypes.hpp"
 #include "rpcApi.hpp"
 
 namespace rpc {
