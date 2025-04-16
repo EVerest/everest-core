@@ -78,7 +78,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    std::vector<data::DataStore> data;
+    data::DataStoreCharger data;
     std::unique_ptr<server::WebSocketServer> m_websocket_server;
     std::unique_ptr<rpc::RpcHandler> m_rpc_server;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

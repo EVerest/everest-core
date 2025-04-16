@@ -11,7 +11,8 @@ void RpcApi::init() {
 
     for (const auto& evse_manager : r_evse_manager) {
         // create on DataStore object per EVSE
-        this->data.emplace_back();
+        this->data.evses.emplace_back();
+        this->data.evses.back().connectors.emplace_back();
     }
 
     m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port);
