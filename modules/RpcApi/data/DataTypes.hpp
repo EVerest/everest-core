@@ -5,6 +5,8 @@
 
 #include <generated/types/json_rpc_api.hpp>
 
+using namespace types::json_rpc_api;
+
 // This contains types for all the JSON objects
 
 namespace data {
