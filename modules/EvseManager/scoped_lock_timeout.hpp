@@ -88,6 +88,9 @@ enum class MutexDescription {
     EVSE_is_reserved,
     EVSE_get_hlc_enabled,
     EVSE_get_hlc_waiting_for_auth_pnc,
+    EVSE_set_pnc_enabled,
+    EVSE_set_central_contract_validation_allowed,
+    EVSE_set_contract_certificate_installation_enabled,
     EVSE_charger_was_authorized,
     EVSE_get_ev_info
 };
@@ -238,6 +241,12 @@ static std::string to_string(MutexDescription d) {
         return "EvseManager.cpp: get_hlc_enabled";
     case MutexDescription::EVSE_get_hlc_waiting_for_auth_pnc:
         return "EvseManager.cpp: get_hlc_waiting_for_auth_pnc";
+    case MutexDescription::EVSE_set_pnc_enabled:
+        return "EvseManager.cpp: EVSE_set_pnc_enabled";
+    case MutexDescription::EVSE_set_central_contract_validation_allowed:
+        return "EvseManager.cpp: EVSE_set_central_contract_validation_allowed";
+    case MutexDescription::EVSE_set_contract_certificate_installation_enabled:
+        return "EvseManager.cpp: EVSE_set_contract_certificate_installation_enabled";
     case MutexDescription::EVSE_charger_was_authorized:
         return "EvseManager.cpp: charger_was_authorized";
     case MutexDescription::EVSE_get_ev_info:

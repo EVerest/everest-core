@@ -10,7 +10,7 @@
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 
-#include "IsoMux.hpp"
+#include "../IsoMux.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 #include "v2g.hpp"
@@ -39,7 +39,8 @@ protected:
                               types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) override;
     virtual void handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) override;
     virtual void handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
-                                      bool& supported_certificate_service) override;
+                                      bool& supported_certificate_service,
+                                      bool& central_contract_validation_allowed) override;
     virtual void handle_authorization_response(types::authorization::AuthorizationStatus& authorization_status,
                                                types::authorization::CertificateStatus& certificate_status) override;
     virtual void handle_ac_contactor_closed(bool& status) override;
