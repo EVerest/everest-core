@@ -886,6 +886,7 @@ TEST_F(AuthorizationTest, validate_token_auth_cache_accepted) {
 }
 
 TEST_F(AuthorizationTest, validate_token_auth_local_pre_authorize_disabled) {
+    EXPECT_CALL(this->connectivity_manager, is_websocket_connected()).WillRepeatedly(Return(true));
     // Enable auth cache.
     this->set_auth_cache_enabled(this->device_model, true);
     // Disable local auth list.
@@ -897,12 +898,9 @@ TEST_F(AuthorizationTest, validate_token_auth_local_pre_authorize_disabled) {
     // Disable post authorization of the auth cache
     this->set_disable_post_authorize(this->device_model, true);
 
-    AuthorizationCacheEntry authorization_cache_entry =
-        create_authorization_cache_entry(AuthorizationStatusEnum::Accepted, true, false, false, 5000);
-
-    EXPECT_CALL(this->database_handler_mock, authorization_cache_get_entry(_))
-        .WillOnce(Return(authorization_cache_entry));
-
+    EXPECT_CALL(mock_dispatcher, dispatch_call_async(_, _)).WillOnce(Return(std::async(std::launch::deferred, [this]() {
+        return create_example_authorize_response(std::nullopt, AuthorizationStatusEnum::Accepted);
+    })));
     IdToken id_token;
     id_token.type = IdTokenEnumStringType::ISO14443;
     id_token.idToken = "test_token";
@@ -1904,4 +1902,76 @@ TEST_F(AuthorizationTest, cache_cleanup_handler_database_exception) {
 
     this->authorization->trigger_authorization_cache_cleanup();
     this->wait_for_calls(0, 2, 0);
+}
+
+TEST_F(AuthorizationTest, online_local_pre_authorize_local_list) {
+    ON_CALL(this->connectivity_manager, is_websocket_connected()).WillByDefault(Return(true));
+
+    this->set_auth_ctrlr_enabled(this->device_model, true);
+    this->set_local_auth_list_ctrlr_enabled(this->device_model, true);
+    this->set_auth_cache_enabled(this->device_model, false);
+    this->set_local_pre_authorize(this->device_model, true);
+    this->set_local_authorize_offline(this->device_model, false);
+
+    IdTokenInfo id_token_info_result;
+    id_token_info_result.status = AuthorizationStatusEnum::Accepted;
+
+    EXPECT_CALL(this->database_handler_mock, get_local_authorization_list_entry(_))
+        .WillRepeatedly(Return(id_token_info_result));
+
+    IdToken id_token;
+    id_token.type = IdTokenEnumStringType::ISO14443;
+    id_token.idToken = "test_token";
+
+    EXPECT_EQ(authorization->validate_token(id_token, std::nullopt, std::nullopt).idTokenInfo.status,
+              AuthorizationStatusEnum::Accepted);
+}
+
+TEST_F(AuthorizationTest, offline_local_pre_authorize_local_list) {
+    ON_CALL(this->connectivity_manager, is_websocket_connected()).WillByDefault(Return(false));
+
+    this->set_auth_ctrlr_enabled(this->device_model, true);
+    this->set_local_auth_list_ctrlr_enabled(this->device_model, true);
+    this->set_auth_cache_enabled(this->device_model, true);
+    this->set_local_pre_authorize(this->device_model, true);
+    this->set_local_authorize_offline(this->device_model, false);
+    this->set_offline_tx_for_unknown_id_enabled(this->device_model, false);
+
+    IdToken id_token;
+    id_token.type = IdTokenEnumStringType::ISO14443;
+    id_token.idToken = "test_token";
+
+    EXPECT_EQ(authorization->validate_token(id_token, std::nullopt, std::nullopt).idTokenInfo.status,
+              AuthorizationStatusEnum::Unknown);
+}
+
+TEST_F(AuthorizationTest, offline_local_pre_authorize_cache) {
+    ON_CALL(this->connectivity_manager, is_websocket_connected()).WillByDefault(Return(false));
+
+    this->set_auth_ctrlr_enabled(this->device_model, true);
+    this->set_local_auth_list_ctrlr_enabled(this->device_model, true);
+    this->set_auth_cache_enabled(this->device_model, true);
+    this->set_local_pre_authorize(this->device_model, true);
+    this->set_local_authorize_offline(this->device_model, false);
+    this->set_offline_tx_for_unknown_id_enabled(this->device_model, false);
+
+    IdToken id_token;
+    id_token.type = IdTokenEnumStringType::ISO14443;
+    id_token.idToken = "test_token";
+
+    EXPECT_EQ(authorization->validate_token(id_token, std::nullopt, std::nullopt).idTokenInfo.status,
+              AuthorizationStatusEnum::Unknown);
+}
+
+TEST_F(AuthorizationTest, start_button_auth) {
+    ON_CALL(this->connectivity_manager, is_websocket_connected()).WillByDefault(Return(false));
+
+    this->set_auth_ctrlr_enabled(this->device_model, true);
+
+    IdToken id_token;
+    id_token.type = IdTokenEnumStringType::NoAuthorization;
+    id_token.idToken = "";
+
+    EXPECT_EQ(authorization->validate_token(id_token, std::nullopt, std::nullopt).idTokenInfo.status,
+              AuthorizationStatusEnum::Accepted);
 }

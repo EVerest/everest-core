@@ -557,8 +557,8 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | ID        | Status | Remark |
 | --------- | ------ | ------ |
 | C02.FR.01 | ❎     |        |
-| C02.FR.02 | ❎     |        |
-| C02.FR.03 |        |        |
+| C02.FR.02 | 🌐     |        |
+| C02.FR.03 | ✅     |        |
 
 ## Authorization - Authorization using credit/debit card
 
