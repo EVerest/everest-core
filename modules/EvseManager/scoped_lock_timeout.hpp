@@ -74,21 +74,13 @@ enum class MutexDescription {
     EVSE_subscribe_dc_bulk_soc,
     EVSE_subscribe_dc_ev_remaining_time,
     EVSE_subscribe_dc_ev_status,
-    EVSE_subscribe_require_auth_eim,
-    EVSE_publish_provided_token,
     EVSE_subscribe_evcc_id,
-    EVSE_subscribe_require_auth_pnc,
-    EVSE_subscribe_require_auth_pnc2,
-    EVSE_signal_event,
     EVSE_subscribe_powermeter,
     EVSE_get_latest_powermeter_data_billing,
     EVSE_get_reservation_id,
     EVSE_reserve,
     EVSE_cancel_reservation,
     EVSE_is_reserved,
-    EVSE_get_hlc_enabled,
-    EVSE_get_hlc_waiting_for_auth_pnc,
-    EVSE_charger_was_authorized,
     EVSE_get_ev_info
 };
 
@@ -210,18 +202,8 @@ static std::string to_string(MutexDescription d) {
         return "EvseManager.cpp: subscribe_dc_ev_remaining_time";
     case MutexDescription::EVSE_subscribe_dc_ev_status:
         return "EvseManager.cpp subscribe_dc_ev_status";
-    case MutexDescription::EVSE_subscribe_require_auth_eim:
-        return "EvseManager.cpp: subscribe_require_auth_eim";
-    case MutexDescription::EVSE_publish_provided_token:
-        return "EvseManager.cpp: publish_provided_token";
     case MutexDescription::EVSE_subscribe_evcc_id:
         return "EvseManager.cpp: subscribe_evcc_id";
-    case MutexDescription::EVSE_subscribe_require_auth_pnc:
-        return "EvseManager.cpp: subscribe_require_auth_pnc 1";
-    case MutexDescription::EVSE_subscribe_require_auth_pnc2:
-        return "EvseManager.cpp: subscribe_require_auth_pnc 2";
-    case MutexDescription::EVSE_signal_event:
-        return "EvseManager.cpp: bsp->signal_event.connect";
     case MutexDescription::EVSE_subscribe_powermeter:
         return "EvseManager.cpp: subscribe_powermeter";
     case MutexDescription::EVSE_get_latest_powermeter_data_billing:
@@ -234,12 +216,6 @@ static std::string to_string(MutexDescription d) {
         return "EvseManager.cpp: cancel_reservation";
     case MutexDescription::EVSE_is_reserved:
         return "EvseManager.cpp: is_reserved";
-    case MutexDescription::EVSE_get_hlc_enabled:
-        return "EvseManager.cpp: get_hlc_enabled";
-    case MutexDescription::EVSE_get_hlc_waiting_for_auth_pnc:
-        return "EvseManager.cpp: get_hlc_waiting_for_auth_pnc";
-    case MutexDescription::EVSE_charger_was_authorized:
-        return "EvseManager.cpp: charger_was_authorized";
     case MutexDescription::EVSE_get_ev_info:
         return "EvseManager.cpp: get_ev_info";
     }
