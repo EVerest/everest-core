@@ -329,7 +329,6 @@ class TestPlugAndCharge:
         )
 
         test_controller.plug_in_ac_iso()
-                
         test_utility.messages.clear()
         test_utility.forbidden_actions.append("Authorize")
         test_utility.forbidden_actions.append("StartTransaction")
