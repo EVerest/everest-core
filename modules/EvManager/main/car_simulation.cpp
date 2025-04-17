@@ -207,15 +207,18 @@ bool CarSimulation::iso_dc_power_on(const CmdArguments& arguments) {
 
 bool CarSimulation::iso_start_v2g_session(const CmdArguments& arguments, bool three_phases) {
     const auto& energy_mode = arguments[0];
-
+    const auto& departure_time = sim_data.iso_departure_time;
+    const auto& e_amount = sim_data.iso_eamount;
+    EVLOG_debug << "energy mode: " << energy_mode << " departure time: " << departure_time << " eamount: " << e_amount << " three phases: " << three_phases;
+    
     if (energy_mode == constants::AC) {
         if (three_phases == false) {
-            r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::AC_single_phase_core);
+            r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::AC_single_phase_core, departure_time, e_amount);
         } else {
-            r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::AC_three_phase_core);
+            r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::AC_three_phase_core, departure_time, e_amount);
         }
     } else if (energy_mode == constants::DC) {
-        r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::DC_extended);
+        r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::DC_extended, departure_time, e_amount);
     } else {
         return false;
     }
@@ -302,3 +305,24 @@ bool CarSimulation::wait_for_real_plugin(const CmdArguments& arguments) {
     }
     return false;
 }
+
+
+bool CarSimulation::iso_set_departure_time(const CmdArguments& arguments) {
+    EVLOG_debug << "Before setting departure time is " << sim_data.iso_departure_time << " and eamount is " << sim_data.iso_eamount;
+
+    try {
+       sim_data.iso_departure_time = std::stof(arguments[0]);
+    } catch (const std::invalid_argument&) {
+        EVLOG_debug << "keeping current departure time " << sim_data.iso_departure_time;
+    }
+    try {
+        sim_data.iso_eamount = std::stof(arguments[1]);
+    } catch (const std::invalid_argument&) {
+        EVLOG_debug << "keeping current eamount " << sim_data.iso_eamount;
+    }
+
+    EVLOG_debug << "After setting departure time is " << sim_data.iso_departure_time << " and eamount is " << sim_data.iso_eamount;
+
+    return true;
+}
+

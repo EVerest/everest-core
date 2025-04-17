@@ -175,6 +175,9 @@ void car_simulatorImpl::register_all_commands() {
         command_registry->register_command("iso_start_bcb_toggle", 1, [this](const CmdArguments& arguments) {
             return this->car_simulation->iso_start_bcb_toggle(arguments);
         });
+	command_registry->register_command("iso_set_departure_time", 2, [this](const CmdArguments& arguments) {
+            return this->car_simulation->iso_set_departure_time(arguments);
+        });
     }
 }
 
