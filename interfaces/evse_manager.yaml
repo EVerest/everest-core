@@ -114,7 +114,7 @@ cmds:
       type: boolean
   set_plug_and_charge_configuration:
     description: >-
-      Sets the configuration required for an ISO15118 to handle contract authorization.
+      Sets the configuration required for ISO15118 to handle contract authorization.
     arguments:
       plug_and_charge_configuration:
         description: The configuration object
