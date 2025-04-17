@@ -3534,8 +3534,8 @@ ocpp::v2::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
         forward_to_csms = true;
     } else if (certificate.has_value()) {
         // First try to validate the contract certificate locally
-        CertificateValidationResult local_verify_result =
-            this->evse_security->verify_certificate(certificate.value(), ocpp::LeafCertificateType::MO);
+        CertificateValidationResult local_verify_result = this->evse_security->verify_certificate(
+            certificate.value(), {ocpp::LeafCertificateType::MO, ocpp::LeafCertificateType::V2G});
         EVLOG_info << "Local contract validation result: " << local_verify_result;
         const auto central_contract_validation_allowed =
             this->configuration->getCentralContractValidationAllowed().value_or(false);

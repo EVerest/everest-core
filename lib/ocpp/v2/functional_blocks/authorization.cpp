@@ -180,7 +180,7 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
         } else if (certificate.has_value()) {
             // First try to validate the contract certificate locally
             CertificateValidationResult local_verify_result = this->context.evse_security.verify_certificate(
-                certificate.value().get(), ocpp::LeafCertificateType::MO);
+                certificate.value().get(), {ocpp::LeafCertificateType::MO, ocpp::LeafCertificateType::V2G});
             EVLOG_info << "Local contract validation result: " << local_verify_result;
 
             bool central_contract_validation_allowed =

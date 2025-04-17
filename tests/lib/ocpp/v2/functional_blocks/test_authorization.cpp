@@ -705,7 +705,8 @@ TEST_F(AuthorizationTest,
     // And offline contract validation is not allowed.
     this->set_allow_contract_validation_offline(this->device_model, true);
     this->set_local_authorize_offline(this->device_model, false);
-    ON_CALL(this->evse_security, verify_certificate(_, ocpp::LeafCertificateType::MO))
+    std::vector<ocpp::LeafCertificateType> types({ocpp::LeafCertificateType::MO, ocpp::LeafCertificateType::V2G});
+    ON_CALL(this->evse_security, verify_certificate(_, types))
         .WillByDefault(Return(ocpp::CertificateValidationResult::Expired));
 
     IdToken id_token;
