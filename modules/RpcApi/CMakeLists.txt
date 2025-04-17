@@ -26,11 +26,10 @@ target_link_libraries(${MODULE_NAME}
 
 target_sources(${MODULE_NAME}
     PRIVATE
-        "data/Data.cpp"
+        "data/GenericInfoStore.cpp"
         "server/TransportInterface.cpp"
         "server/WebsocketServer.cpp"
         "rpc/RpcHandler.cpp"
-        "rpc/rpcApi.cpp"
 )
 
 target_compile_options(${MODULE_NAME}

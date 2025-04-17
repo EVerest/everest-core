@@ -5,6 +5,7 @@
 #include "../helpers/WebSocketTestClient.hpp"
 #include "../rpc/RpcHandler.hpp"
 #include "../server/WebsocketServer.hpp"
+#include "../data/DataStore.hpp"
 
 using namespace server;
 using namespace rpc;
@@ -20,8 +21,26 @@ protected:
         // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
         std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
         transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-        m_rpc_server = std::make_unique<RpcHandler>(std::move(transport_interfaces));
+        m_rpc_server = std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store);
         m_rpc_server->start_server();
+
+        data_store.chargerinfo.set_data({
+            {"firmware_version", "1.1.1beta"},
+            {"model", "Test Charger"},
+            {"serial", "1"},
+            {"vendor", "Test Company"}
+        });
+        data_store.everest_version = "2025.1.0";
+        data_store.evses.emplace_back().connectors.emplace_back();
+        types::json_rpc_api::ConnectorInfoObj connector_info;
+        connector_info.id = 1;
+        connector_info.type = types::json_rpc_api::ConnectorTypeEnum::DCExtended;
+
+        data_store.evses[0].connectors[0].connectorinfo.set_data(connector_info);
+        types::json_rpc_api::EVSEInfoObj evse_info;
+        evse_info.id = "DE1235251";
+        //TODO: evse_info.available_connectors = ...
+        data_store.evses[0].evseinfo.set_data(evse_info);
     }
 
     void TearDown() override {
@@ -34,6 +53,9 @@ protected:
     //Condition variable to wait for response
     std::condition_variable cv;
     std::mutex cv_mutex;
+
+    // data store object
+    data::DataStoreCharger data_store;
 };
 
 // Test: Connect to WebSocket server and check if API.hello timeout occurs
