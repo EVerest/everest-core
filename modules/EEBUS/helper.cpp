@@ -17,7 +17,10 @@ types::energy::ScheduleReqEntry create_active_schedule_req_entry(std::chrono::ti
     types::energy::ScheduleReqEntry schedule_req_entry;
     types::energy::LimitsReq limits_req;
     schedule_req_entry.timestamp = Everest::Date::to_rfc3339(timestamp);
-    limits_req.total_power_W = total_power_W;
+    types::energy::NumberWithSource total_power;
+    total_power.value = total_power_W;
+    total_power.source = "EEBUS LPC";
+    limits_req.total_power_W = total_power;
     schedule_req_entry.limits_to_leaves = limits_req;
     schedule_req_entry.limits_to_root = limits_req;
     return schedule_req_entry;
