@@ -108,7 +108,7 @@ catch2:
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 grpc:
   git: https://github.com/grpc/grpc.git
-  git_tag: v1.68.0
+  git_tag: v1.71.0
   options:
     - gRPC_INSTALL ON
     - gRPC_BUILD_GRPC_CSHARP_PLUGIN OFF
