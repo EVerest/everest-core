@@ -117,7 +117,7 @@ cmds:
       Sets the configuration required for ISO15118 to handle contract authorization.
     arguments:
       plug_and_charge_configuration:
-        description: The configuration object
+        description: The plug and charge configuration object
         type: object
         $ref: /evse_manager#/PlugAndChargeConfiguration
 vars:
