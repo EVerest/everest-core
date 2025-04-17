@@ -384,7 +384,6 @@ void OCPP::init_module_configuration() {
 }
 
 void OCPP::handle_config_key(const ocpp::v16::KeyValue& kv) {
-
     if (!kv.value.has_value()) {
         return;
     }
