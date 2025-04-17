@@ -366,7 +366,7 @@ void OCPP::init_evse_maps() {
 }
 
 void OCPP::init_module_configuration() {
-    std::vector<ocpp::CiString<50UL>> keys;
+    std::vector<ocpp::CiString<50>> keys;
     ocpp::v16::GetConfigurationRequest req;
     keys.push_back(CONNECTION_TIMEOUT_CONFIG_KEY);
     keys.push_back(ISO15118_PNC_ENABLED_CONFIG_KEY);
