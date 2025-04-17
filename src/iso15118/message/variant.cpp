@@ -93,6 +93,8 @@ static void handle_dc(VariantAccess& va) {
 
     if (doc.DC_ChargeParameterDiscoveryReq_isUsed) {
         insert_type(va, doc.DC_ChargeParameterDiscoveryReq);
+    } else if (doc.DC_ChargeParameterDiscoveryRes_isUsed) {
+        insert_type(va, doc.DC_ChargeParameterDiscoveryRes);
     } else if (doc.DC_CableCheckReq_isUsed) {
         insert_type(va, doc.DC_CableCheckReq);
     } else if (doc.DC_PreChargeReq_isUsed) {
