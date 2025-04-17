@@ -15,9 +15,15 @@ template <> void convert(const struct iso20_dc_DC_CableCheckReqType& in, DC_Cabl
     convert(in.Header, out.header);
 }
 
-template <> void insert_type(VariantAccess& va, const struct iso20_dc_DC_CableCheckReqType& in) {
-    va.insert_type<DC_CableCheckRequest>(in);
+template <> void convert(const struct iso20_dc_DC_CableCheckResType& in, DC_CableCheckResponse& out) {
+    cb_convert_enum(in.ResponseCode, out.response_code);
+    cb_convert_enum(in.EVSEProcessing, out.processing);
+    convert(in.Header, out.header);
 }
+
+template <> void insert_type(VariantAccess& va, const struct iso20_dc_DC_CableCheckResType& in) {
+    va.insert_type<DC_CableCheckResponse>(in);
+};
 
 template <> void convert(const DC_CableCheckResponse& in, struct iso20_dc_DC_CableCheckResType& out) {
     init_iso20_dc_DC_CableCheckResType(&out);
@@ -38,6 +44,30 @@ template <> int serialize_to_exi(const DC_CableCheckResponse& in, exi_bitstream_
 }
 
 template <> size_t serialize(const DC_CableCheckResponse& in, const io::StreamOutputView& out) {
+    return serialize_helper(in, out);
+}
+
+template <> void insert_type(VariantAccess& va, const struct iso20_dc_DC_CableCheckReqType& in) {
+    va.insert_type<DC_CableCheckRequest>(in);
+}
+
+template <> void convert(const DC_CableCheckRequest& in, iso20_dc_DC_CableCheckReqType& out) {
+    init_iso20_dc_DC_CableCheckReqType(&out);
+    convert(in.header, out.Header);
+}
+
+template <> int serialize_to_exi(const DC_CableCheckRequest& in, exi_bitstream_t& out) {
+    iso20_dc_exiDocument doc;
+    init_iso20_dc_exiDocument(&doc);
+
+    CB_SET_USED(doc.DC_CableCheckReq);
+
+    convert(in, doc.DC_CableCheckReq);
+
+    return encode_iso20_dc_exiDocument(&out, &doc);
+}
+
+template <> size_t serialize(const DC_CableCheckRequest& in, const io::StreamOutputView& out) {
     return serialize_helper(in, out);
 }
 
