@@ -311,7 +311,9 @@ config:
     default: 1000
   central_contract_validation_allowed:
     description: >-
-      Used for ISO15118 plug and charge: If false, contract shall not be present in PaymentOptionList. If true, contract may be present in PaymentOptionList if TLS is used. 
+      Used for ISO15118 plug and charge: 
+      If false, contract shall not be present in PaymentOptionList.
+      If true, contract may be present in PaymentOptionList if TLS is used. 
     type: boolean
     default: false
   contract_certificate_installation_enabled:
