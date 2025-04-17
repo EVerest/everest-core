@@ -20,6 +20,7 @@
 #include <atomic>
 
 #include "../server/TransportInterface.hpp"
+#include "methods/Api.hpp"
 
 using namespace server;
 using namespace jsonrpccxx;
@@ -41,7 +42,7 @@ public:
     // Consturctor and Destructor
     RpcHandler() = delete;
     // RpcHandler just needs just a tranport interface array
-    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transportInterfaces);
+    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transportInterfaces, DataStoreCharger &dataobj);
     ~RpcHandler() = default;
     // Methods
     void start_server();
@@ -58,7 +59,7 @@ private:
     inline bool is_client_hello_req(const TransportInterface::ClientId &client_id,
                                     const nlohmann::json &request) {
         // Check if the request is a hello request
-        if (request.contains("method") && request["method"] == "API.Hello") {
+        if (request.contains("method") && request["method"] == methods::METHOD_API_HELLO) {
             // If it's a API.Hello request, we set the client_hello_received flag to true
             // and notify the condition variable to unblock the waiting thread
             m_client_hello_received[client_id] = true;
@@ -78,6 +79,8 @@ private:
     std::unordered_map<TransportInterface::ClientId, ClientReq> messages;
     std::chrono::steady_clock::time_point m_last_req_notification; // Last tick time
     std::atomic<bool> m_is_running{false};
+
+    methods::Api m_methods_api;
 };
 } // namespace rpc
 

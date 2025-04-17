@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright chargebyte GmbH and Contributors to EVerest
+
 #include "RpcHandler.hpp"
 
 #include <jsonrpccxx/client.hpp>
@@ -8,7 +11,6 @@
 #include <thread>
 #include <everest/logging.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include "rpcApi.hpp"
 
 namespace rpc {
 
@@ -16,8 +18,8 @@ static const std::chrono::milliseconds REQ_COLLECTION_TIMEOUT(10); // Timeout fo
 static const std::chrono::milliseconds REQ_PROCESSING_TIMEOUT(50); // Timeout for processing requests. After this timeout, the request will be processed.
 
 // RpcHandler just needs just a tranport interface array
-RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces)
-    : m_transport_interfaces(std::move(transport_interfaces)) {
+RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces, DataStoreCharger &dataobj)
+    : m_transport_interfaces(std::move(transport_interfaces)), m_methods_api(dataobj) {
     init_rpc_api();
     init_transport_interfaces();
 }
@@ -41,10 +43,10 @@ void from_json(const nlohmann::json& j, HelloResponse& r) {
 
 void RpcHandler::init_rpc_api() {
     // Initialize the RPC API here
-    RpcApi api;
+    m_methods_api.set_authentication_required(false);
+    m_methods_api.set_api_version("1.0");
     m_rpc_server = std::make_unique<JsonRpc2Server>();
-    m_rpc_server->Add("API.Hello", GetHandle(&rpc::RpcApi::hello, api), {});
-    m_rpc_server->Add("ChargePoint.GetEVSEInfos", GetHandle(&rpc::RpcApi::chargepoint_getevseinfos, api), {});
+    m_rpc_server->Add(methods::METHOD_API_HELLO, GetHandle(&methods::Api::hello, m_methods_api), {});
 }
 
 void RpcHandler::init_transport_interfaces() {

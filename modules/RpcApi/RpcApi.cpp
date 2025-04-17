@@ -11,15 +11,14 @@ void RpcApi::init() {
 
     for (const auto& evse_manager : r_evse_manager) {
         // create on DataStore object per EVSE
-        this->data.evses.emplace_back();
-        this->data.evses.back().connectors.emplace_back();
+        this->data.evses.emplace_back().connectors.emplace_back();
     }
 
     m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port);
     // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
     transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-    m_rpc_server = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces));
+    m_rpc_server = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data);
 }
 
 void RpcApi::ready() {
