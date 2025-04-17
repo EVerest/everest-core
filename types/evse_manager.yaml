@@ -541,7 +541,8 @@ types:
     properties:
       pnc_enabled:
         description: >-
-          If false, contract shall not be present in PaymentOptionList. If true, contract may be present in PaymentOptionList if TLS is used. 
+          If false, contract shall not be present in PaymentOptionList.
+          If true, contract may be present in PaymentOptionList if TLS is used.
         type: boolean
       central_contract_validation_allowed:
         description: Indicates if the contract may be forwarded to and validated by a CSMS in case local validation was not successful
