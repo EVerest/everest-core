@@ -1872,7 +1872,7 @@ TEST_F(AuthTest, test_token_swipe_race_with_timeout) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Rejected));
 
     TokenHandlingResult result;
 
@@ -1892,8 +1892,8 @@ TEST_F(AuthTest, test_token_swipe_race_with_timeout) {
     timeout_simulation_thread.join();
 
     ASSERT_TRUE(timeout_triggered);
-    ASSERT_EQ(result, TokenHandlingResult::ACCEPTED);
-    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_EQ(result, TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
 }
 
 } // namespace module

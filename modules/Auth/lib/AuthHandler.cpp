@@ -198,7 +198,11 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         validation_result.parent_id_token = provided_token.parent_id_token;
         validation_results.push_back(validation_result);
     } else {
+        // release event_mutex before potentially blocking callback(s) via MQTT
+        // validate_token_callback does not touch any shared state
+        lk.unlock();
         validation_results = this->validate_token_callback(provided_token);
+        lk.lock();
     }
 
     bool attempt_stop_with_parent_id_token = false;

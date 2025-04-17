@@ -65,13 +65,13 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.4
+  git_tag: v0.9.5
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 3b1edda8c4e721a5bde3ce16fd9190263358a063
+  git_tag: a43df192cd0712cf71e921058021f9a78ccdabcd
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -94,14 +94,9 @@ gtest:
   git: https://github.com/google/googletest.git
   git_tag: release-1.12.1
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
-sqlite_cpp:
-  git: https://github.com/SRombauts/SQLiteCpp.git
-  git_tag: 3.3.1
-  options:
-  - SQLITECPP_RUN_CPPLINT OFF
-  - SQLITECPP_RUN_CPPCHECK OFF
-  - SQLITECPP_INTERNAL_SQLITE OFF
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SQLITE_CPP"
+everest-sqlite:
+  git: https://github.com/EVerest/everest-sqlite.git
+  git_tag: v0.1.0
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0

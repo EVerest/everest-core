@@ -2241,6 +2241,10 @@ async def test_set_configuration(
     assert response.configuration_key[0]["value"] == "15"
 
 
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP16ConfigAdjustment(
+        [("Core", "MeterValuesSampledData", "Energy.Active.Import.Register,SoC,Current.Offered,Power.Offered")])
+)
 @pytest.mark.asyncio
 async def test_sampled_meter_values(
     test_config: OcppTestConfiguration,
@@ -2275,7 +2279,7 @@ async def test_sampled_meter_values(
                 {
                     "key": "MeterValuesSampledData",
                     "readonly": False,
-                    "value": "Energy.Active.Import.Register",
+                    "value": "Energy.Active.Import.Register,SoC,Current.Offered,Power.Offered",
                 }
             ]
         ),

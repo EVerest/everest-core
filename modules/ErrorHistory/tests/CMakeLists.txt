@@ -16,7 +16,7 @@ target_link_libraries(${TARGET_NAME}
     PRIVATE
         everest::framework
         everest::log
-        SQLiteCpp
+        everest::sqlite
         SQLite::SQLite3
         Catch2::Catch2WithMain
 )
