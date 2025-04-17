@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef DATA_HPP
-#define DATA_HPP
+#ifndef GENERICINFOSTORE_HPP
+#define GENERICINFOSTORE_HPP
 
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -40,6 +40,18 @@ public:
             return std::nullopt;
         }
     };
+    // set the data object. This method must be overridden if the data object is not a simple type
+    // e.g. pointers
+    void set_data(const T& in) {
+        this->dataobj = in;
+        this->data_is_valid = true;
+        // call the notification callback if it is set
+        // TODO: check if the data has changed
+        if (this->notification_callback) {
+            this->notification_callback();
+        }
+    };
+
     // TBD: Do we need to be able to return an error if we cannot set the data?
     // virtual void set_data(const nlohmann::json& in) = 0;
 
@@ -49,38 +61,6 @@ public:
     }
 };
 
-class ChargerInfoStore : public GenericInfoStore<RPCDataTypes::ChargerInfoObj> {};
-class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoObj> {
-    void set_data(const nlohmann::json& in);
-    void init_data() override {
-        // example, in case override is required
-        memset(&dataobj, 0, sizeof(dataobj));
-        dataobj.id = -1;
-    }
-};
-class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {};
-class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};
-class HardwareCapabilitiesStore : public GenericInfoStore<RPCDataTypes::HardwareCapabilitiesObj> {};
-class MeterDataStore : public GenericInfoStore<RPCDataTypes::MeterDataObj> {};
-
-struct DataStoreConnector {
-    ConnectorInfoStore connectorinfo;
-    HardwareCapabilitiesStore hardwarecapabilities;
-};
-
-struct DataStoreEvse {
-    ChargerInfoStore chargerinfo;
-    EVSEInfoStore evseinfo;
-    EVSEStatusStore evsestatus;
-    MeterDataStore meterdata;
-    std::vector<ConnectorInfoStore> connectors;
-};
-
-struct DataStoreCharger {
-    ChargerInfoStore chargerinfo;
-    std::vector<DataStoreEvse> evses;
-};
-
 } // namespace data
 
-#endif // DATA_HPP
+#endif // GENERICINFOSTORE_HPP
