@@ -316,7 +316,7 @@ config:
     default: false
   contract_certificate_installation_enabled:
     description: >-
-      Used for ISO15118 plug and charge: Indicates if the charger support contract CertificateInstall and CertificateUpdate
+      Used for ISO15118 plug and charge: Indicates if the charger supports contract CertificateInstall and CertificateUpdate
     type: boolean
     default: true
 provides:
