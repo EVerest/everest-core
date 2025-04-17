@@ -12,9 +12,15 @@ RUN rm -rf ${EVEREST_CMAKE_PATH} \
     && git checkout ${EVEREST_CMAKE_VERSION} \
     && rm -r .git
 
-RUN apt update \
-    && apt install --no-install-recommends -y \
-    golang-go
+ARG GO_VERSION=1.24.2
+ADD https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz /tmp/go.tar.gz
+RUN if [ -d /usr/local/go ]; then \
+        echo "Go is already installed"; \
+    else \
+        tar -C /usr/local -xzf /tmp/go.tar.gz; \
+    fi
+ENV PATH="/usr/local/go/bin:${PATH}"
+RUN go version
 
 RUN pip install --break-system-packages \
     grpcio \
