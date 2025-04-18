@@ -6,6 +6,8 @@
 #include "extensions/trusted_ca_keys.hpp"
 #include "openssl_util.hpp"
 
+#include <evse_security/crypto/openssl/openssl_provider.hpp>
+
 #include <arpa/inet.h>
 #include <array>
 #include <cassert>
@@ -70,6 +72,7 @@ using ::openssl::log_info;
 using ::openssl::log_warning;
 
 namespace {
+using evse_security::OpenSSLProvider;
 
 /**
  * \brief signal handler that does nothing
@@ -404,7 +407,8 @@ ssl_result_t ssl_shutdown(SSL* ctx) {
 
 /**
  * \brief configure SSL context with certificates and keys
- * \param[in] ctx is SSL context data
+ * \param[in] is_server a server context is needed
+ * \param[inout] ctx is SSL context data
  * \param[in] ciphersuites are the TLS 1.3 cipher suites,
  *            nullptr means use default, "" disables TSL 1.3
  * \param[in] cipher_list are the TLS 1.2 ciphers, nullptr means use default
@@ -413,11 +417,38 @@ ssl_result_t ssl_shutdown(SSL* ctx) {
  * \return true when successful
  * \note required will be true for a TLS server and can be false for a TLS client
  */
-bool configure_ssl_ctx(SSL_CTX* ctx, const char* ciphersuites, const char* cipher_list,
+bool configure_ssl_ctx(bool is_server, SSL_CTX*& ctx, const char* ciphersuites, const char* cipher_list,
                        const tls::Server::certificate_config_t& cert_config, bool required) {
     bool result{true};
 
-    // TODO(james-ctc) TPM2 support
+    // TPM2 support is via the OpenSSL provider class OpenSSLProvider in
+    // libevse-security. This needs to be performed before
+    // SSL_CTX_use_PrivateKey_file() or configure_ssl_ctx()  is called
+
+    if (is_server) {
+        bool custom_key = false;
+
+        if (cert_config.private_key_file != nullptr) {
+            fs::path keyfile{std::string(cert_config.private_key_file)};
+            custom_key = evse_security::is_custom_private_key_file(keyfile);
+        }
+
+        OpenSSLProvider provider;
+
+        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+
+        if (custom_key) {
+            provider.set_tls_mode(OpenSSLProvider::mode_t::custom_provider);
+        } else {
+            provider.set_tls_mode(OpenSSLProvider::mode_t::default_provider);
+        }
+
+        const SSL_METHOD* method = TLS_server_method();
+        ctx = SSL_CTX_new_ex(provider, provider.propquery_tls_str(), method);
+    } else {
+        const SSL_METHOD* method = TLS_client_method();
+        ctx = SSL_CTX_new(method);
+    }
 
     if (ctx == nullptr) {
         log_error("server_init::SSL_CTX_new");
@@ -921,14 +952,12 @@ bool Server::init_socket(const config_t& cfg) {
 bool Server::init_ssl(const config_t& cfg) {
     assert(m_context != nullptr);
 
-    const SSL_METHOD* method = TLS_server_method();
-    auto* ctx = SSL_CTX_new(method);
-    bool result = ctx != nullptr;
-    result = result && (cfg.chains.size() > 0);
+    bool result = (cfg.chains.size() > 0);
+    SSL_CTX* ctx = nullptr;
 
     if (result) {
         // use the first server chain
-        result = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cfg.chains[0], true);
+        result = configure_ssl_ctx(true, ctx, cfg.ciphersuites, cfg.cipher_list, cfg.chains[0], true);
         if (result) {
 
             if (cfg.tls_key_logging) {
@@ -1273,15 +1302,14 @@ bool Client::init(const config_t& cfg, const override_t& override) {
 
     m_timeout_ms = cfg.io_timeout_ms;
     m_trusted_ca_keys = cfg.trusted_ca_keys_data;
-    const SSL_METHOD* method = TLS_client_method();
-    auto* ctx = SSL_CTX_new(method);
+    SSL_CTX* ctx = nullptr;
     const Server::certificate_config_t cert_config = {
         cfg.certificate_chain_file,
         nullptr,
         cfg.private_key_file,
         cfg.private_key_password,
     };
-    auto result = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cert_config, false);
+    auto result = configure_ssl_ctx(false, ctx, cfg.ciphersuites, cfg.cipher_list, cert_config, false);
     if (result) {
         int mode = SSL_VERIFY_NONE;
 

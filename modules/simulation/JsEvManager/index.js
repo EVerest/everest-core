@@ -473,24 +473,24 @@ function registerAllCmds(mod) {
 
 function get_hlc_dc_parameters(mod) {
   return {
-    EV_Parameters: {
-      MaxCurrentLimit: mod.config.module.dc_max_current_limit,
-      MaxPowerLimit: mod.config.module.dc_max_power_limit,
-      MaxVoltageLimit: mod.config.module.dc_max_voltage_limit,
-      EnergyCapacity: mod.config.module.dc_energy_capacity,
-      TargetCurrent: mod.config.module.dc_target_current,
-      TargetVoltage: mod.config.module.dc_target_voltage,
+    EvParameters: {
+      max_current_limit: mod.config.module.dc_max_current_limit,
+      max_power_limit: mod.config.module.dc_max_power_limit,
+      max_voltage_limit: mod.config.module.dc_max_voltage_limit,
+      energy_capacity: mod.config.module.dc_energy_capacity,
+      target_current: mod.config.module.dc_target_current,
+      target_voltage: mod.config.module.dc_target_voltage,
     },
   };
 }
 
 function get_hlc_bpt_dc_parameters(mod) {
   return {
-    EV_BPT_Parameters: {
-      DischargeMaxCurrentLimit: mod.config.module.dc_discharge_max_current_limit,
-      DischargeMaxPowerLimit: mod.config.module.dc_discharge_max_power_limit,
-      DischargeTargetCurrent: mod.config.module.dc_discharge_target_current,
-      DischargeMinimalSoC: mod.config.module.dc_discharge_v2g_minimal_soc,
+    EvBPTParameters: {
+      discharge_max_current_limit: mod.config.module.dc_discharge_max_current_limit,
+      discharge_max_power_limit: mod.config.module.dc_discharge_max_power_limit,
+      discharge_target_current: mod.config.module.dc_discharge_target_current,
+      discharge_minimal_soC: mod.config.module.dc_discharge_v2g_minimal_soc,
     },
   };
 }

@@ -1124,7 +1124,6 @@ function simulation_statemachine(mod) {
     case STATE_A:
       mod.use_three_phases_confirmed = mod.use_three_phases;
       pwmOff(mod);
-      reset_powermeter(mod);
       mod.simplified_mode = false;
 
       if (mod.last_state !== STATE_A && mod.last_state !== STATE_DISABLED
@@ -1149,6 +1148,10 @@ function simulation_statemachine(mod) {
       // Table A.6: Sequence 1.1 Plug-in
       if (mod.last_state === STATE_A) {
         mod.simplified_mode = false;
+        // Fix a race-condition between resetting powermeter parameters and reporting powermeter to the EvseManager back.
+        // The EvseManager reports in the transaction_finished event the total charged kWh.
+        // With resetting the powermeter too quickly, sometimes the EvseManager reports 0.00 kWh back.
+        reset_powermeter(mod);
       }
 
       break;

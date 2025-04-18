@@ -51,8 +51,11 @@ void evse_board_supportImpl::init() {
     mod->serial.signal_pp_state.connect([this](int connector, PpState s) {
         if (connector == 2) {
             EVLOG_info << "[2] PpState " << s;
+            if (last_pp_state != s) {
+                publish_ac_pp_ampacity(to_pp_ampacity(s));
+            }
+            last_pp_state = s;
         }
-        last_pp_state = s;
     });
 
     mod->gpio.signal_stop_button_state.connect([this](int connector, bool state) {
@@ -120,26 +123,7 @@ void evse_board_supportImpl::handle_evse_replug(int& value) {
 }
 
 types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
-    switch (last_pp_state) {
-    case PpState_STATE_NC: {
-        return {types::board_support_common::Ampacity::None};
-    }
-    case PpState_STATE_13A: {
-        return {types::board_support_common::Ampacity::A_13};
-    }
-    case PpState_STATE_20A: {
-        return {types::board_support_common::Ampacity::A_20};
-    }
-    case PpState_STATE_32A: {
-        return {types::board_support_common::Ampacity::A_32};
-    }
-    case PpState_STATE_70A: {
-        return {types::board_support_common::Ampacity::A_63_3ph_70_1ph};
-    }
-    default: {
-        return {types::board_support_common::Ampacity::None};
-    }
-    }
+    return to_pp_ampacity(last_pp_state);
 }
 
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {

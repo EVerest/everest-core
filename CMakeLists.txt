@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2024.11.0
+    VERSION 2025.3.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -70,10 +70,6 @@ if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
 
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-
-    evc_include(CodeCoverage)
-
-    append_coverage_compiler_flags()
 endif()
 
 include(ev-define-dependency)
@@ -99,7 +95,6 @@ if(NOT DISABLE_EDM)
     set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
 else()
     find_package(everest-framework REQUIRED)
-    find_package(everest-modbus REQUIRED)
     find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
     find_package(iso15118 REQUIRED)
@@ -115,7 +110,6 @@ else()
     find_package(ryml REQUIRED)
 endif()
 
-add_subdirectory(lib)
 
 include(ev-project-bootstrap)
 
@@ -125,6 +119,8 @@ ev_add_project()
 if (ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES)
     file(TOUCH config/certs/ca/mf/MF_ROOT_CA.pem)
 endif()
+
+add_subdirectory(lib)
 
 # config
 # FIXME (aw): this should be optional
@@ -148,18 +144,6 @@ endif()
 # testing
 if(EVEREST_CORE_BUILD_TESTING)
     add_subdirectory(tests)
-
-    setup_target_for_coverage_gcovr_html(
-        NAME ${PROJECT_NAME}_gcovr_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-
-    setup_target_for_coverage_lcov(
-        NAME ${PROJECT_NAME}_lcov_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
 else()
     message("Not running unit tests")
 endif()

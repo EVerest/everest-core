@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 everestrs = { workspace=true  }
 anyhow = "1.0.75"
-zvt_feig_terminal = { git="https://github.com/Everest/zvt.git", rev="843ecf44ab592216bd4a483a07543c329d2baee1" }
+zvt_feig_terminal = { git="https://github.com/Everest/zvt.git", rev="9922e83c5b32b38b3f4858ecee84e28738b0ec1e" }
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "net", "sync"] }
 log = "0.4.20"
 mockall = { version = "0.12.1", optional = true }

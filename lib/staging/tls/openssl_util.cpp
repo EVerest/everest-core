@@ -11,6 +11,8 @@
 
 #include "openssl_util.hpp"
 
+#include <evse_security/crypto/openssl/openssl_provider.hpp>
+
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/ecdsa.h>
@@ -130,6 +132,7 @@ template <> bool sha(const void* data, std::size_t len, openssl::sha_512_digest_
 } // namespace
 
 namespace openssl {
+using evse_security::OpenSSLProvider;
 
 DER::DER(std::size_t size) : DER(nullptr, size) {
 }
@@ -388,6 +391,28 @@ std::string base64_encode(const std::uint8_t* data, std::size_t len, bool newLin
 }
 
 pkey_ptr load_private_key(const char* filename, const char* password) {
+    /*
+     * should read the file into memory to check the key type so the correct
+     * provider can be selected. For simplicity reuse existing function
+     * that causes key file to be opened an additional time
+     */
+
+    bool custom_key = false;
+
+    if (filename != nullptr) {
+        fs::path keyfile{std::string(filename)};
+        custom_key = evse_security::is_custom_private_key_file(keyfile);
+    }
+
+    OpenSSLProvider provider;
+
+    if (custom_key) {
+        // set global provider to custom settings
+        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
+    } else {
+        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+    }
+
     pkey_ptr private_key{nullptr, nullptr};
     auto* bio = BIO_new_file(filename, "r");
     if (bio != nullptr) {
@@ -399,6 +424,12 @@ pkey_ptr load_private_key(const char* filename, const char* password) {
         }
         BIO_free(bio);
     }
+
+    if (custom_key) {
+        // reset global provider back to default settings
+        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+    }
+
     return private_key;
 }
 

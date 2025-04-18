@@ -26,7 +26,6 @@ from everest_test_utils import *
 
 from everest_test_utils_probe_modules import (probe_module,
                                               ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment,
-                                              ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment,
                                               ProbeModuleCostAndPriceSessionCostConfigurationAdjustment)
 
 # fmt: on
@@ -128,7 +127,7 @@ class TestOcpp16CostAndPrice:
             await asyncio.sleep(0.1)
 
     @pytest.mark.probe_module
-    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment())
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
     @pytest.mark.asyncio
     async def test_cost_and_price_set_user_price_no_transaction(self, test_config: OcppTestConfiguration,
                                                                       test_utility: TestUtility,
@@ -151,17 +150,8 @@ class TestOcpp16CostAndPrice:
                                ]
         }
 
-        probe_module_mock_fn = Mock()
-        probe_module_mock_fn.return_value = {
-            "status": "Accepted"
-        }
-
-        probe_module.implement_command("ProbeModuleDisplayMessage", "set_display_message",
-                                       probe_module_mock_fn)
-        probe_module.implement_command("ProbeModuleDisplayMessage", "get_display_messages",
-                                       probe_module_mock_fn)
-        probe_module.implement_command("ProbeModuleDisplayMessage", "clear_display_message",
-                                       probe_module_mock_fn)
+        session_cost_mock = Mock()
+        probe_module.subscribe_variable("session_cost", "tariff_message", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -178,16 +168,19 @@ class TestOcpp16CostAndPrice:
                                            call_result.DataTransferPayload(DataTransferStatus.accepted), timeout=5)
 
         # Display message should have received a message with the current price information
-        data_received = {
-            'request': [{'identifier_id': test_config.authorization_info.valid_id_tag_1, 'identifier_type': 'IdToken',
-                         'message': {'content': 'GBP 0.12/kWh, no idle fee', 'language': 'en'}},
-                        {'identifier_id': test_config.authorization_info.valid_id_tag_1, 'identifier_type': 'IdToken',
-                         'message': {'content': '€0.12/kWh, geen idle fee', 'format': 'UTF8', 'language': 'nl'}},
-                        {'identifier_id': test_config.authorization_info.valid_id_tag_1, 'identifier_type': 'IdToken',
-                         'message': {'content': '€0,12/kWh, keine Leerlaufgebühr', 'format': 'UTF8', 'language': 'de'}}]
-        }
+        data_received = {'identifier_id': test_config.authorization_info.valid_id_tag_1, 'identifier_type': 'IdToken',
+                         'messages': [{'content': 'GBP 0.12/kWh, no idle fee', 'language': 'en'},
+                                      {'content': '€0.12/kWh, geen idle fee', 'format': 'UTF8', 'language': 'nl'},
+                                      {'content': '€0,12/kWh, keine Leerlaufgebühr', 'format': 'UTF8',
+                                       'language': 'de'}]
+                         }
 
-        probe_module_mock_fn.assert_called_once_with(data_received)
+        await self.await_mock_called(session_cost_mock)
+
+        assert session_cost_mock.call_count == 1
+
+        # And it should contain the correct data
+        session_cost_mock.assert_called_once_with(data_received)
 
     @pytest.mark.asyncio
     async def test_cost_and_price_set_user_price_no_transaction_no_id_token(self, test_config: OcppTestConfiguration,
@@ -217,7 +210,7 @@ class TestOcpp16CostAndPrice:
                                            call_result.DataTransferPayload(DataTransferStatus.rejected), timeout=5)
 
     @pytest.mark.probe_module
-    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment())
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
     @pytest.mark.asyncio
     async def test_cost_and_price_set_user_price_with_transaction(self, test_config: OcppTestConfiguration,
                                                                         test_utility: TestUtility,
@@ -239,17 +232,8 @@ class TestOcpp16CostAndPrice:
                                ]
         }
 
-        probe_module_mock_fn = Mock()
-        probe_module_mock_fn.return_value = {
-            "status": "Accepted"
-        }
-
-        probe_module.implement_command("ProbeModuleDisplayMessage", "set_display_message",
-                                       probe_module_mock_fn)
-        probe_module.implement_command("ProbeModuleDisplayMessage", "get_display_messages",
-                                       probe_module_mock_fn)
-        probe_module.implement_command("ProbeModuleDisplayMessage", "clear_display_message",
-                                       probe_module_mock_fn)
+        session_cost_mock = Mock()
+        probe_module.subscribe_variable("session_cost", "tariff_message", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -266,22 +250,24 @@ class TestOcpp16CostAndPrice:
                                                     data=json.dumps(data))
 
         # Datatransfer should be successful.
-        success = await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
                                               call_result.DataTransferPayload(DataTransferStatus.accepted), timeout=5)
 
         # Display message should have received a message with the current price information
-        data_received = {
-            'request': [{'identifier_id': ANY, 'identifier_type': 'SessionId',
-                         'message': {'content': 'GBP 0.12/kWh, no idle fee', 'language': 'en'}},
-                        {'identifier_id': ANY, 'identifier_type': 'SessionId',
-                         'message': {'content': '€0.12/kWh, geen idle fee', 'format': 'UTF8', 'language': 'nl'}},
-                        {'identifier_id': ANY, 'identifier_type': 'SessionId',
-                         'message': {'content': '€0,12/kWh, keine Leerlaufgebühr', 'format': 'UTF8', 'language': 'de'}}]
-        }
+        data_received = {'identifier_id': ANY, 'identifier_type': 'SessionId',
+                         'messages': [{'content': 'GBP 0.12/kWh, no idle fee', 'language': 'en'},
+                                      {'content': '€0.12/kWh, geen idle fee', 'format': 'UTF8', 'language': 'nl'},
+                                      {'content': '€0,12/kWh, keine Leerlaufgebühr', 'format': 'UTF8',
+                                       'language': 'de'}],
+                         "ocpp_transaction_id": "1"
+                         }
 
-        probe_module_mock_fn.assert_called_once_with(data_received)
+        await self.await_mock_called(session_cost_mock)
 
-        assert success
+        assert session_cost_mock.call_count == 1
+
+        # And it should contain the correct data
+        session_cost_mock.assert_called_once_with(data_received)
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.asyncio
@@ -850,6 +836,11 @@ class TestOcpp16CostAndPrice:
         # swipe id tag to finish transaction
         test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
 
+        # expect StopTransaction.req
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction",
+                                           call.StopTransactionPayload(0, "", 1, Reason.local),
+                                           validate_standard_stop_transaction)
+
         # expect StatusNotification with status finishing
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
                                            call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
@@ -860,13 +851,7 @@ class TestOcpp16CostAndPrice:
                                            call.MeterValuesPayload(1, meter_value=[{'sampledValue': [
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Energy.Active.Import.Register', 'unit': 'Wh',
-                                                'value': '1.00'}], 'timestamp': timestamp[:-9] + 'Z'}],
-                                                                   transaction_id=1))
-
-        # expect StopTransaction.req
-        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction",
-                                           call.StopTransactionPayload(0, "", 1, Reason.local),
-                                           validate_standard_stop_transaction)
+                                                'value': '1.00'}], 'timestamp': timestamp[:-9] + 'Z'}]))
 
         test_controller.plug_out()
 

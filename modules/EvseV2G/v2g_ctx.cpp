@@ -67,20 +67,6 @@ void populate_physical_value_float(struct iso2_PhysicalValueType* pv, float valu
     pv->Value = value;
 }
 
-void setMinPhysicalValue(struct iso2_PhysicalValueType* ADstPhyValue, const struct iso2_PhysicalValueType* ASrcPhyValue,
-                         unsigned int* AIsUsed) {
-
-    if (((NULL != AIsUsed) && (0 == *AIsUsed)) || ((pow(10, ASrcPhyValue->Multiplier) * ASrcPhyValue->Value) <
-                                                   (pow(10, ADstPhyValue->Multiplier) * ADstPhyValue->Value))) {
-        ADstPhyValue->Multiplier = ASrcPhyValue->Multiplier;
-        ADstPhyValue->Value = ASrcPhyValue->Value;
-
-        if (NULL != AIsUsed) {
-            *AIsUsed = 1;
-        }
-    }
-}
-
 static void* v2g_ctx_eventloop(void* data) {
     struct v2g_context* ctx = static_cast<struct v2g_context*>(data);
 
@@ -132,12 +118,6 @@ void v2g_ctx_init_charging_state(struct v2g_context* const ctx, bool is_connecti
     ctx->selected_protocol = V2G_UNKNOWN_PROTOCOL;
     ctx->session.renegotiation_required = false;
     ctx->session.is_charging = false;
-
-    /* Reset timer */
-    if (ctx->com_setup_timeout != NULL) {
-        event_free(ctx->com_setup_timeout);
-        ctx->com_setup_timeout = NULL;
-    }
 }
 
 void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
@@ -292,7 +272,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     initialize_once = true;
 }
 
-struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase, evse_securityIntf* r_security) {
+struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
+                                   iso15118_extensionsImplBase* p_extensions, evse_securityIntf* r_security) {
     struct v2g_context* ctx;
 
     // TODO There are c++ objects within v2g_context and calloc doesn't call initialisers.
@@ -303,6 +284,7 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase, 
 
     ctx->r_security = r_security;
     ctx->p_charger = p_chargerImplBase;
+    ctx->p_extensions = p_extensions;
 
     ctx->tls_security = TLS_SECURITY_PROHIBIT; // default
 
@@ -325,9 +307,6 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase, 
     ctx->sdp_socket = -1;
     ctx->tcp_socket = -1;
     ctx->tls_socket.fd = -1;
-#ifdef EVEREST_MBED_TLS
-    memset(&ctx->tls_log_ctx, 0, sizeof(keylogDebugCtx));
-#endif // EVEREST_MBED_TLS
     ctx->tls_key_logging = false;
     ctx->debugMode = false;
 
@@ -347,8 +326,6 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase, 
     if (v2g_ctx_start_events(ctx) != 0)
         goto free_out;
 
-    ctx->com_setup_timeout = NULL;
-
     ctx->hlc_pause_active = false;
 
     return ctx;
@@ -364,30 +341,6 @@ free_out:
     return NULL;
 }
 
-static void v2g_ctx_free_tls(struct v2g_context* ctx) {
-#ifdef EVEREST_MBED_TLS
-    mbedtls_net_free(&ctx->tls_socket);
-
-    for (uint8_t idx = 0; idx < ctx->num_of_tls_crt; idx++) {
-        mbedtls_pk_free(&ctx->evse_tls_crt_key[idx]);
-        mbedtls_x509_crt_free(&ctx->evseTlsCrt[idx]);
-    }
-
-    free(ctx->evseTlsCrt);
-    ctx->evseTlsCrt = NULL;
-    free(ctx->evse_tls_crt_key);
-    ctx->evse_tls_crt_key = NULL;
-
-    mbedtls_x509_crt_free(&ctx->v2g_root_crt);
-    mbedtls_ssl_config_free(&ctx->ssl_config);
-
-    if (NULL != ctx->tls_log_ctx.file) {
-        fclose(ctx->tls_log_ctx.file);
-        memset(&ctx->tls_log_ctx, 0, sizeof(ctx->tls_log_ctx));
-    }
-#endif // EVEREST_MBED_TLS
-}
-
 void v2g_ctx_free(struct v2g_context* ctx) {
     if (ctx->event_base) {
         event_base_loopbreak(ctx->event_base);
@@ -397,25 +350,11 @@ void v2g_ctx_free(struct v2g_context* ctx) {
     pthread_cond_destroy(&ctx->mqtt_cond);
     pthread_mutex_destroy(&ctx->mqtt_lock);
 
-    v2g_ctx_free_tls(ctx);
-
     free(ctx->local_tls_addr);
     ctx->local_tls_addr = NULL;
     free(ctx->local_tcp_addr);
     ctx->local_tcp_addr = NULL;
     free(ctx);
-}
-
-void stop_timer(struct event** event_timer, char const* const timer_name, struct v2g_context* ctx) {
-    pthread_mutex_lock(&ctx->mqtt_lock);
-    if (NULL != *event_timer) {
-        event_free(*event_timer);
-        *event_timer = NULL; // Reset timer pointer
-        if (NULL != timer_name) {
-            dlog(DLOG_LEVEL_TRACE, "%s stopped", (timer_name == NULL) ? "Timer" : timer_name);
-        }
-    }
-    pthread_mutex_unlock(&ctx->mqtt_lock);
 }
 
 void publish_dc_ev_maximum_limits(struct v2g_context* ctx, const float& v2g_dc_ev_max_current_limit,
@@ -424,7 +363,7 @@ void publish_dc_ev_maximum_limits(struct v2g_context* ctx, const float& v2g_dc_e
                                   const unsigned int& v2g_dc_ev_max_power_limit_is_used,
                                   const float& v2g_dc_ev_max_voltage_limit,
                                   const unsigned int& v2g_dc_ev_max_voltage_limit_is_used) {
-    types::iso15118_charger::DcEvMaximumLimits dc_ev_maximum_limits;
+    types::iso15118::DcEvMaximumLimits dc_ev_maximum_limits;
     bool publish_message = false;
 
     if (v2g_dc_ev_max_current_limit_is_used == (unsigned int)1) {
@@ -458,7 +397,7 @@ void publish_dc_ev_target_voltage_current(struct v2g_context* ctx, const float& 
                                           const float& v2g_dc_ev_target_current) {
     if ((ctx->ev_v2g_data.v2g_target_voltage != v2g_dc_ev_target_voltage) ||
         (ctx->ev_v2g_data.v2g_target_current != v2g_dc_ev_target_current)) {
-        types::iso15118_charger::DcEvTargetValues dc_ev_target_values;
+        types::iso15118::DcEvTargetValues dc_ev_target_values;
         dc_ev_target_values.dc_ev_target_voltage = v2g_dc_ev_target_voltage;
         dc_ev_target_values.dc_ev_target_current = v2g_dc_ev_target_current;
 
@@ -473,7 +412,7 @@ void publish_dc_ev_remaining_time(struct v2g_context* ctx, const float& v2g_dc_e
                                   const unsigned int& v2g_dc_ev_remaining_time_to_full_soc_is_used,
                                   const float& v2g_dc_ev_remaining_time_to_bulk_soc,
                                   const unsigned int& v2g_dc_ev_remaining_time_to_bulk_soc_is_used) {
-    types::iso15118_charger::DcEvRemainingTime dc_ev_remaining_time;
+    types::iso15118::DcEvRemainingTime dc_ev_remaining_time;
     const char* format = "%Y-%m-%dT%H:%M:%SZ";
     char buffer[100];
     std::time_t time_now_in_sec = time(NULL);

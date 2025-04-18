@@ -3,6 +3,10 @@ active_modules:
     module: Evse15118D20
     config_module:
       device: auto
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
   iso15118_car:
     module: PyEvJosev
     config_module:
@@ -11,6 +15,7 @@ active_modules:
       supported_ISO15118_2: false
       supported_ISO15118_20_DC: true
       tls_active: true
+      enable_tls_1_3: true
   evse_manager:
     module: EvseManager
     config_module:
@@ -44,7 +49,7 @@ active_modules:
   powersupply_dc:
     module: DCSupplySimulator
   yeti_driver:
-    module: JsYetiSimulator
+    module: YetiSimulator
     config_module:
       connector_id: 1
   slac:

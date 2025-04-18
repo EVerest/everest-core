@@ -14,7 +14,7 @@ active_modules:
         - module_id: yeti_driver
           implementation_id: powermeter
   yeti_driver:
-    module: JsYetiSimulator
+    module: YetiSimulator
     config_module:
       connector_id: 1
   ev_manager:
@@ -65,10 +65,7 @@ active_modules:
       security:
         - module_id: evse_security
           implementation_id: main
-      display_message:
-        - module_id: display_message
-          implementation_id: display_message
-  display_message:
+  session_cost:
     module: TerminalCostAndPriceMessage
     connections:
       session_cost:

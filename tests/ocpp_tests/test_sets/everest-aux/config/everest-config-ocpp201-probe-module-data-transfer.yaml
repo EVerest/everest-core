@@ -21,5 +21,8 @@ active_modules:
       data_transfer:
         - module_id: probe
           implementation_id: ProbeModuleDataTransfer
+      extensions_15118:
+        - module_id: probe
+          implementation_id: ProbeModuleIso15118Extensions
 x-module-layout: {}
 

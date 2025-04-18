@@ -36,11 +36,11 @@ active_modules:
         - module_id: yeti_driver_2
           implementation_id: powermeter
   yeti_driver_1:
-    module: JsYetiSimulator
+    module: YetiSimulator
     config_module:
       connector_id: 1
   yeti_driver_2:
-    module: JsYetiSimulator
+    module: YetiSimulator
     config_module:
       connector_id: 2
   auth:
@@ -89,6 +89,8 @@ active_modules:
     config_module:
       sqlite_db_file_path: persistent_store.db
   display_message:
+    module: TerminalDisplayMessage
+  session_cost:
     module: TerminalCostAndPriceMessage
     connections:
       session_cost:

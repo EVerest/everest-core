@@ -28,6 +28,7 @@ struct Conf {
     std::string reset_gpio_chip;
     int reset_gpio;
     int dc_max_voltage;
+    int connector_id;
 };
 
 class MicroMegaWattBSP : public Everest::ModuleBase {

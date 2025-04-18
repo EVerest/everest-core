@@ -16,7 +16,7 @@ target_link_libraries(${TARGET_NAME}
     PRIVATE
         everest::framework
         everest::log
-        SQLiteCpp
+        everest::sqlite
         SQLite::SQLite3
         Catch2::Catch2WithMain
 )
@@ -27,3 +27,4 @@ if(NOT DISABLE_EDM)
 endif()
 
 add_test(${TARGET_NAME} ${TARGET_NAME})
+ev_register_test_target(${TARGET_NAME})

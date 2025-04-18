@@ -72,7 +72,8 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
 
     if (!seen_slac_parm_req) {
         if (now_tp >= timeout_slac_parm_req) {
-            return Event::RETRY_MATCHING;
+            ctx.log_info("CM_SLAC_PARM_REQ timed out -> FAILED");
+            return Event::FAILED;
         }
 
         call_back_ms = remaining_milliseconds(timeout_slac_parm_req, now_tp);
@@ -110,9 +111,16 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
                 session.set_next_timeout(FINALIZE_SOUNDING_DELAY_MS);
             } else if (session.state == MatchingSubState::FINALIZE_SOUNDING) {
                 finalize_sounding(session);
+                session.num_retries = 0;
             } else if (session.state == MatchingSubState::WAIT_FOR_ATTEN_CHAR_RSP) {
-                session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timed out -> failed");
-                session.state = MatchingSubState::FAILED;
+                session.num_retries++;
+                if (session.num_retries <= slac::defs::C_EV_MATCH_RETRY) {
+                    session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timed out -> retry matching");
+                    finalize_sounding(session);
+                } else {
+                    session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timed out -> failed");
+                    session.state = MatchingSubState::FAILED;
+                }
             } else if (session.state == MatchingSubState::WAIT_FOR_SLAC_MATCH) {
                 session_log(ctx, session, "Wating for CM_SLAC_MATCH_REQ timed out -> failed");
                 session.state = MatchingSubState::FAILED;
@@ -139,7 +147,7 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
     } else if (ev == Event::MATCH_COMPLETE) {
         // Wait for link up to be confirmed before going to MATCHED state if enabled in config
         if (ctx.slac_config.link_status.do_detect) {
-            return sa.create_simple<WaitForLinkState>(ctx);
+            return sa.create_simple<WaitForLinkState>(ctx, std::move(match_cnf_message));
         } else {
             return sa.create_simple<MatchedState>(ctx);
         }

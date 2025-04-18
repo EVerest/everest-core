@@ -294,7 +294,8 @@ async def test_cleanup_transaction_events_after_max_attempts_exhausted(
     assert central_system.mock.on_transaction_event.call_count == 1
 
     # return a CALLERROR for the transaction event
-    central_system.mock.on_transaction_event.side_effect = [NotImplementedError()]
+    central_system.mock.on_transaction_event.side_effect = [
+        NotImplementedError()]
 
     await asyncio.sleep(10)
 
@@ -329,7 +330,8 @@ async def test_cleanup_transaction_events_after_max_attempts_exhausted(
     )
 
     test_controller.stop()
-
+    # add a sleep to allow time for reboot
+    await asyncio.sleep(2)
     test_controller.start()
 
     # no attempts on delivering the transaction message should be made

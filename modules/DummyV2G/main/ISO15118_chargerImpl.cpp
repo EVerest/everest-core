@@ -13,25 +13,19 @@ void ISO15118_chargerImpl::ready() {
 }
 
 void ISO15118_chargerImpl::handle_setup(
-    types::iso15118_charger::EVSEID& evse_id,
-    std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    types::iso15118::EVSEID& evse_id,
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
+    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
     // your code for cmd setup goes here
 }
 
-void ISO15118_chargerImpl::handle_set_charging_parameters(
-    types::iso15118_charger::SetupPhysicalValues& physical_values) {
+void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
     // your code for cmd set_charging_parameters goes here
 }
 
-void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
+void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
                                                 bool& supported_certificate_service) {
     // your code for cmd session_setup goes here
-}
-
-void ISO15118_chargerImpl::handle_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
-    // your code for cmd certificate_response goes here
 }
 
 void ISO15118_chargerImpl::handle_authorization_response(
@@ -64,22 +58,20 @@ void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     // your code for cmd update_ac_max_current goes here
 }
 
-void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
-    types::iso15118_charger::DcEvseMaximumLimits& maximum_limits) {
+void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
     // your code for cmd update_dc_maximum_limits goes here
 }
 
-void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
-    types::iso15118_charger::DcEvseMinimumLimits& minimum_limits) {
+void ISO15118_chargerImpl::handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) {
     // your code for cmd update_dc_minimum_limits goes here
 }
 
-void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charger::IsolationStatus& isolation_status) {
+void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118::IsolationStatus& isolation_status) {
     // your code for cmd update_isolation_status goes here
 }
 
 void ISO15118_chargerImpl::handle_update_dc_present_values(
-    types::iso15118_charger::DcEvsePresentVoltageCurrent& present_voltage_current) {
+    types::iso15118::DcEvsePresentVoltageCurrent& present_voltage_current) {
     // your code for cmd update_dc_present_values goes here
 }
 
@@ -87,7 +79,7 @@ void ISO15118_chargerImpl::handle_update_meter_info(types::powermeter::Powermete
     // your code for cmd update_meter_info goes here
 }
 
-void ISO15118_chargerImpl::handle_send_error(types::iso15118_charger::EvseError& error) {
+void ISO15118_chargerImpl::handle_send_error(types::iso15118::EvseError& error) {
     // your code for cmd send_error goes here
 }
 

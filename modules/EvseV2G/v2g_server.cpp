@@ -9,10 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef EVEREST_MBED_TLS
-#include <mbedtls/base64.h>
-#endif // EVEREST_MBED_TLS
-
 #include <cbv2g/app_handshake/appHand_Decoder.h>
 #include <cbv2g/app_handshake/appHand_Encoder.h>
 #include <cbv2g/common/exi_basetypes.h>
@@ -30,74 +26,72 @@
 
 #define MAX_RES_TIME 98
 
-static types::iso15118_charger::V2gMessageId get_v2g_message_id(enum V2gMsgTypeId v2g_msg,
-                                                                enum v2g_protocol selected_protocol, bool is_req) {
+static types::iso15118::V2gMessageId get_v2g_message_id(enum V2gMsgTypeId v2g_msg, enum v2g_protocol selected_protocol,
+                                                        bool is_req) {
     switch (v2g_msg) {
     case V2G_SUPPORTED_APP_PROTOCOL_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::SupportedAppProtocolReq
-                              : types::iso15118_charger::V2gMessageId::SupportedAppProtocolRes;
+        return is_req == true ? types::iso15118::V2gMessageId::SupportedAppProtocolReq
+                              : types::iso15118::V2gMessageId::SupportedAppProtocolRes;
     case V2G_SESSION_SETUP_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::SessionSetupReq
-                              : types::iso15118_charger::V2gMessageId::SessionSetupRes;
+        return is_req == true ? types::iso15118::V2gMessageId::SessionSetupReq
+                              : types::iso15118::V2gMessageId::SessionSetupRes;
     case V2G_SERVICE_DISCOVERY_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::ServiceDiscoveryReq
-                              : types::iso15118_charger::V2gMessageId::ServiceDiscoveryRes;
+        return is_req == true ? types::iso15118::V2gMessageId::ServiceDiscoveryReq
+                              : types::iso15118::V2gMessageId::ServiceDiscoveryRes;
     case V2G_SERVICE_DETAIL_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::ServiceDetailReq
-                              : types::iso15118_charger::V2gMessageId::ServiceDetailRes;
+        return is_req == true ? types::iso15118::V2gMessageId::ServiceDetailReq
+                              : types::iso15118::V2gMessageId::ServiceDetailRes;
     case V2G_PAYMENT_SERVICE_SELECTION_MSG:
-        return is_req == true ? selected_protocol == V2G_PROTO_DIN70121
-                                    ? types::iso15118_charger::V2gMessageId::ServicePaymentSelectionReq
-                                    : types::iso15118_charger::V2gMessageId::PaymentServiceSelectionReq
-               : selected_protocol == V2G_PROTO_DIN70121
-                   ? types::iso15118_charger::V2gMessageId::ServicePaymentSelectionRes
-                   : types::iso15118_charger::V2gMessageId::PaymentServiceSelectionRes;
+        return is_req == true                            ? selected_protocol == V2G_PROTO_DIN70121
+                                                               ? types::iso15118::V2gMessageId::ServicePaymentSelectionReq
+                                                               : types::iso15118::V2gMessageId::PaymentServiceSelectionReq
+               : selected_protocol == V2G_PROTO_DIN70121 ? types::iso15118::V2gMessageId::ServicePaymentSelectionRes
+                                                         : types::iso15118::V2gMessageId::PaymentServiceSelectionRes;
     case V2G_PAYMENT_DETAILS_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::PaymentDetailsReq
-                              : types::iso15118_charger::V2gMessageId::PaymentDetailsRes;
+        return is_req == true ? types::iso15118::V2gMessageId::PaymentDetailsReq
+                              : types::iso15118::V2gMessageId::PaymentDetailsRes;
     case V2G_AUTHORIZATION_MSG:
-        return is_req == true ? selected_protocol == V2G_PROTO_DIN70121
-                                    ? types::iso15118_charger::V2gMessageId::ContractAuthenticationReq
-                                    : types::iso15118_charger::V2gMessageId::AuthorizationReq
-               : selected_protocol == V2G_PROTO_DIN70121
-                   ? types::iso15118_charger::V2gMessageId::ContractAuthenticationRes
-                   : types::iso15118_charger::V2gMessageId::AuthorizationRes;
+        return is_req == true                            ? selected_protocol == V2G_PROTO_DIN70121
+                                                               ? types::iso15118::V2gMessageId::ContractAuthenticationReq
+                                                               : types::iso15118::V2gMessageId::AuthorizationReq
+               : selected_protocol == V2G_PROTO_DIN70121 ? types::iso15118::V2gMessageId::ContractAuthenticationRes
+                                                         : types::iso15118::V2gMessageId::AuthorizationRes;
     case V2G_CHARGE_PARAMETER_DISCOVERY_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::ChargeParameterDiscoveryReq
-                              : types::iso15118_charger::V2gMessageId::ChargeParameterDiscoveryRes;
+        return is_req == true ? types::iso15118::V2gMessageId::ChargeParameterDiscoveryReq
+                              : types::iso15118::V2gMessageId::ChargeParameterDiscoveryRes;
     case V2G_METERING_RECEIPT_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::MeteringReceiptReq
-                              : types::iso15118_charger::V2gMessageId::MeteringReceiptRes;
+        return is_req == true ? types::iso15118::V2gMessageId::MeteringReceiptReq
+                              : types::iso15118::V2gMessageId::MeteringReceiptRes;
     case V2G_CERTIFICATE_UPDATE_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::CertificateUpdateReq
-                              : types::iso15118_charger::V2gMessageId::CertificateUpdateRes;
+        return is_req == true ? types::iso15118::V2gMessageId::CertificateUpdateReq
+                              : types::iso15118::V2gMessageId::CertificateUpdateRes;
     case V2G_CERTIFICATE_INSTALLATION_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::CertificateInstallationReq
-                              : types::iso15118_charger::V2gMessageId::CertificateInstallationRes;
+        return is_req == true ? types::iso15118::V2gMessageId::CertificateInstallationReq
+                              : types::iso15118::V2gMessageId::CertificateInstallationRes;
     case V2G_CHARGING_STATUS_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::ChargingStatusReq
-                              : types::iso15118_charger::V2gMessageId::ChargingStatusRes;
+        return is_req == true ? types::iso15118::V2gMessageId::ChargingStatusReq
+                              : types::iso15118::V2gMessageId::ChargingStatusRes;
     case V2G_CABLE_CHECK_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::CableCheckReq
-                              : types::iso15118_charger::V2gMessageId::CableCheckRes;
+        return is_req == true ? types::iso15118::V2gMessageId::CableCheckReq
+                              : types::iso15118::V2gMessageId::CableCheckRes;
     case V2G_PRE_CHARGE_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::PreChargeReq
-                              : types::iso15118_charger::V2gMessageId::PreChargeRes;
+        return is_req == true ? types::iso15118::V2gMessageId::PreChargeReq
+                              : types::iso15118::V2gMessageId::PreChargeRes;
     case V2G_POWER_DELIVERY_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::PowerDeliveryReq
-                              : types::iso15118_charger::V2gMessageId::PowerDeliveryRes;
+        return is_req == true ? types::iso15118::V2gMessageId::PowerDeliveryReq
+                              : types::iso15118::V2gMessageId::PowerDeliveryRes;
     case V2G_CURRENT_DEMAND_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::CurrentDemandReq
-                              : types::iso15118_charger::V2gMessageId::CurrentDemandRes;
+        return is_req == true ? types::iso15118::V2gMessageId::CurrentDemandReq
+                              : types::iso15118::V2gMessageId::CurrentDemandRes;
     case V2G_WELDING_DETECTION_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::WeldingDetectionReq
-                              : types::iso15118_charger::V2gMessageId::WeldingDetectionRes;
+        return is_req == true ? types::iso15118::V2gMessageId::WeldingDetectionReq
+                              : types::iso15118::V2gMessageId::WeldingDetectionRes;
     case V2G_SESSION_STOP_MSG:
-        return is_req == true ? types::iso15118_charger::V2gMessageId::SessionStopReq
-                              : types::iso15118_charger::V2gMessageId::SessionStopRes;
+        return is_req == true ? types::iso15118::V2gMessageId::SessionStopReq
+                              : types::iso15118::V2gMessageId::SessionStopRes;
     case V2G_UNKNOWN_MSG:
     default:
-        return types::iso15118_charger::V2gMessageId::UnknownMessage;
+        return types::iso15118::V2gMessageId::UnknownMessage;
     }
 }
 
@@ -107,7 +101,7 @@ static types::iso15118_charger::V2gMessageId get_v2g_message_id(enum V2gMsgTypeI
  * \param is_req if it is a V2G request or response: 'true' if a request, and 'false' if a response
  */
 static void publish_var_V2G_Message(v2g_connection* conn, bool is_req) {
-    types::iso15118_charger::V2gMessages v2g_message;
+    types::iso15118::V2gMessages v2g_message;
 
     u_int8_t* tempbuff = conn->buffer;
     std::string msg_as_hex_string;
@@ -122,27 +116,10 @@ static void publish_var_V2G_Message(v2g_connection* conn, bool is_req) {
 
     std::string EXI_Base64;
 
-#ifdef EVEREST_MBED_TLS
-    unsigned char* base64_buffer = NULL;
-    size_t base64_buffer_len = 0;
-    mbedtls_base64_encode(NULL, 0, &base64_buffer_len, conn->buffer, (size_t)conn->payload_len + V2GTP_HEADER_LENGTH);
-    base64_buffer = static_cast<unsigned char*>(malloc(base64_buffer_len));
-    if ((base64_buffer == NULL) || (mbedtls_base64_encode(base64_buffer, base64_buffer_len, &base64_buffer_len,
-                                                          static_cast<unsigned char*>(conn->buffer),
-                                                          (size_t)conn->payload_len + V2GTP_HEADER_LENGTH) != 0)) {
-        dlog(DLOG_LEVEL_WARNING, "Unable to base64 encode EXI buffer");
-    }
-
-    EXI_Base64 = std::string(reinterpret_cast<char const*>(base64_buffer), base64_buffer_len);
-    if (base64_buffer != NULL) {
-        free(base64_buffer);
-    }
-#else
     EXI_Base64 = openssl::base64_encode(conn->buffer, conn->payload_len + V2GTP_HEADER_LENGTH);
     if (EXI_Base64.size() == 0) {
         dlog(DLOG_LEVEL_WARNING, "Unable to base64 encode EXI buffer");
     }
-#endif // EVEREST_MBED_TLS
 
     v2g_message.exi_base64 = EXI_Base64;
     v2g_message.id = get_v2g_message_id(conn->ctx->current_v2g_msg, conn->ctx->selected_protocol, is_req);
@@ -264,7 +241,7 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
                                                // (e.g. after an unexpected message)
     }
 
-    types::iso15118_charger::AppProtocols app_protocols; // to publish supported app protocol array
+    types::iso15118::AppProtocols app_protocols; // to publish supported app protocol array
 
     for (i = 0; i < conn->handshake_req.supportedAppProtocolReq.AppProtocol.arrayLen; i++) {
         struct appHand_AppProtocolType* app_proto = &conn->handshake_req.supportedAppProtocolReq.AppProtocol.array[i];
@@ -302,7 +279,7 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
         }
 
         if (conn->ctx->debugMode == true) {
-            const types::iso15118_charger::AppProtocol protocol = {
+            const types::iso15118::AppProtocol protocol = {
                 std::string(proto_ns), static_cast<int32_t>(app_proto->VersionNumberMajor),
                 static_cast<int32_t>(app_proto->VersionNumberMinor), static_cast<int32_t>(app_proto->SchemaID),
                 static_cast<int32_t>(app_proto->Priority)};

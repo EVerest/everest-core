@@ -50,11 +50,11 @@ private: // Members
     std::set<int32_t> last_reserved_status;
 
     /// \brief worker for the timers.
-    boost::shared_ptr<boost::asio::io_service::work> work;
-    /// \brief io_service for the worker for the timers.
-    boost::asio::io_service io_service;
-    /// \brief io service thread for the timers.
-    std::thread io_service_thread;
+    boost::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work;
+    /// \brief io_context for the worker for the timers.
+    boost::asio::io_context io_context;
+    /// \brief io context thread for the timers.
+    std::thread io_context_thread;
 
 public:
     ///

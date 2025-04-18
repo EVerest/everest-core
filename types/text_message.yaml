@@ -1,0 +1,25 @@
+description: >-
+  Message to send, for example to show on a display
+types:
+  MessageContent:
+    description: Contains message details
+    required:
+      - content
+    type: object
+    properties:
+      format:
+        type: string
+        $ref: /text_message#/MessageFormat
+      language:
+        type: string
+      content:
+        type: string
+  MessageFormat:
+    description: Format of the message to be displayed
+    type: string
+    enum:
+      - ASCII
+      - HTML
+      - URI
+      - UTF8
+      - QRCODE

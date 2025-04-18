@@ -11,6 +11,8 @@ find_package(Threads REQUIRED)
 
 # add the executable
 add_library(umwc_comms STATIC)
+ev_register_library_target(umwc_comms)
+
 target_sources(umwc_comms
     PRIVATE
         evSerial.cpp

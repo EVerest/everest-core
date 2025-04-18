@@ -48,6 +48,9 @@ active_modules:
       store:
         - module_id: persistent_store
           implementation_id: main
+      connector_lock:
+        - module_id: yeti_driver_1
+          implementation_id: connector_lock
   evse_manager_2:
     module: EvseManager
     mapping:
@@ -78,15 +81,21 @@ active_modules:
       hlc:
         - module_id: iso15118_charger
           implementation_id: charger
+      store:
+        - module_id: persistent_store
+          implementation_id: main
+      connector_lock:
+        - module_id: yeti_driver_2
+          implementation_id: connector_lock
   yeti_driver_1:
-    module: JsYetiSimulator
+    module: YetiSimulator
     mapping:
       module:
         evse: 1
     config_module:
       connector_id: 1
   yeti_driver_2:
-    module: JsYetiSimulator
+    module: YetiSimulator
     mapping:
       module:
         evse: 2
@@ -179,6 +188,8 @@ active_modules:
         - module_id: evse_manager_2_ocpp_sink
           implementation_id: external_limits
   display_message:
+    module: TerminalDisplayMessage
+  session_cost:
     module: TerminalCostAndPriceMessage
     connections:
       session_cost:

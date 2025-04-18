@@ -75,14 +75,14 @@ active_modules:
         - module_id: iso15118_charger
           implementation_id: charger
   yeti_driver_1:
-    module: JsYetiSimulator
+    module: YetiSimulator
     mapping:
       module:
         evse: 1
     config_module:
       connector_id: 1
   yeti_driver_2:
-    module: JsYetiSimulator
+    module: YetiSimulator
     mapping:
       module:
         evse: 2
@@ -176,6 +176,9 @@ active_modules:
           implementation_id: external_limits
         - module_id: evse_manager_2_ocpp_sink
           implementation_id: external_limits
+      extensions_15118:
+        - module_id: iso15118_charger
+          implementation_id: extensions
   evse_security:
     module: EvseSecurity
     config_module:

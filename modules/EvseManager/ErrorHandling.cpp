@@ -15,6 +15,8 @@ static const struct IgnoreErrors {
     ErrorList ac_rcd{"ac_rcd/VendorWarning"};
     ErrorList imd{"isolation_monitor/VendorWarning"};
     ErrorList powersupply{"power_supply_DC/VendorWarning"};
+    ErrorList powermeter{};
+    ErrorList over_voltage_monitor{"over_voltage_monitor/VendorWarning"};
 } ignore_errors;
 
 ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_bsp,
@@ -23,14 +25,18 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                              const std::vector<std::unique_ptr<ac_rcdIntf>>& _r_ac_rcd,
                              const std::unique_ptr<evse_managerImplBase>& _p_evse,
                              const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd,
-                             const std::vector<std::unique_ptr<power_supply_DCIntf>>& _r_powersupply) :
+                             const std::vector<std::unique_ptr<power_supply_DCIntf>>& _r_powersupply,
+                             const std::vector<std::unique_ptr<powermeterIntf>>& _r_powermeter,
+                             const std::vector<std::unique_ptr<over_voltage_monitorIntf>>& _r_over_voltage_monitor) :
     r_bsp(_r_bsp),
     r_hlc(_r_hlc),
     r_connector_lock(_r_connector_lock),
     r_ac_rcd(_r_ac_rcd),
     p_evse(_p_evse),
     r_imd(_r_imd),
-    r_powersupply(_r_powersupply) {
+    r_powersupply(_r_powersupply),
+    r_powermeter(_r_powermeter),
+    r_over_voltage_monitor(_r_over_voltage_monitor) {
 
     // Subscribe to bsp driver to receive Errors from the bsp hardware
     r_bsp->subscribe_all_errors([this](const Everest::error::Error& error) { process_error(); },
@@ -58,6 +64,19 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
     if (r_powersupply.size() > 0) {
         r_powersupply[0]->subscribe_all_errors([this](const Everest::error::Error& error) { process_error(); },
                                                [this](const Everest::error::Error& error) { process_error(); });
+    }
+
+    // Subscribe to powermeter to receive errors from powermeter hardware
+    if (r_powermeter.size() > 0) {
+        r_powermeter[0]->subscribe_all_errors([this](const Everest::error::Error& error) { process_error(); },
+                                              [this](const Everest::error::Error& error) { process_error(); });
+    }
+
+    // Subscribe to over_voltage_monitor to receive errors from over voltage monitor hardware
+    if (r_over_voltage_monitor.size() > 0) {
+        r_over_voltage_monitor[0]->subscribe_all_errors(
+            [this](const Everest::error::Error& error) { process_error(); },
+            [this](const Everest::error::Error& error) { process_error(); });
     }
 }
 
@@ -102,7 +121,8 @@ void ErrorHandling::process_error() {
     const int error_count = p_evse->error_state_monitor->get_active_errors().size() +
                             r_bsp->error_state_monitor->get_active_errors().size() +
                             number_of_active_errors(r_connector_lock) + number_of_active_errors(r_ac_rcd) +
-                            number_of_active_errors(r_imd) + number_of_active_errors(r_powersupply);
+                            number_of_active_errors(r_imd) + number_of_active_errors(r_powersupply) +
+                            number_of_active_errors(r_powermeter);
 
     if (error_count == 0) {
         signal_all_errors_cleared();
@@ -159,6 +179,21 @@ std::optional<std::string> ErrorHandling::errors_prevent_charging() {
         }
     }
 
+    if (r_powermeter.size() > 0) {
+        fatal = is_fatal(r_powermeter[0]->error_state_monitor->get_active_errors(), ignore_errors.powermeter);
+        if (fatal) {
+            return fatal;
+        }
+    }
+
+    if (r_over_voltage_monitor.size() > 0) {
+        fatal = is_fatal(r_over_voltage_monitor[0]->error_state_monitor->get_active_errors(),
+                         ignore_errors.over_voltage_monitor);
+        if (fatal) {
+            return fatal;
+        }
+    }
+
     return std::nullopt;
 }
 
@@ -169,7 +204,7 @@ void ErrorHandling::raise_inoperative_error(const std::string& caused_by) {
     }
 
     if (r_hlc.size() > 0) {
-        r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+        r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
     }
 
     // raise externally
@@ -200,6 +235,22 @@ void ErrorHandling::clear_internal_error() {
     // clear externally
     if (p_evse->error_state_monitor->is_error_active("evse_manager/Internal", "")) {
         p_evse->clear_error("evse_manager/Internal");
+        process_error();
+    }
+}
+
+void ErrorHandling::raise_authorization_timeout_error(const std::string& description) {
+    // raise externally
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/MREC9AuthorizationTimeout", "", description, Everest::error::Severity::High);
+    p_evse->raise_error(error_object);
+    process_error();
+}
+
+void ErrorHandling::clear_authorization_timeout_error() {
+    // clear externally
+    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC9AuthorizationTimeout", "")) {
+        p_evse->clear_error("evse_manager/MREC9AuthorizationTimeout");
         process_error();
     }
 }

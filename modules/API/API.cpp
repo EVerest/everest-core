@@ -8,6 +8,7 @@
 namespace module {
 
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
+static const std::string API_MODULE_SOURCE = "API_module";
 
 SessionInfo::SessionInfo() :
     start_energy_import_wh(0),
@@ -53,19 +54,49 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = 0;
+    zero_entry.limits_to_leaves.total_power_W = {0};
 
     if (is_watts) {
-        target_entry.limits_to_leaves.total_power_W = std::fabs(limit);
+        target_entry.limits_to_leaves.total_power_W = {std::fabs(limit), API_MODULE_SOURCE};
     } else {
-        target_entry.limits_to_leaves.ac_max_current_A = std::fabs(limit);
+        target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(limit), API_MODULE_SOURCE};
     }
 
     if (limit > 0) {
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     } else {
-        external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
-        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
+    }
+    return external_limits;
+}
+
+types::energy::ExternalLimits get_external_limits(int32_t phases, float amps) {
+    const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    types::energy::ExternalLimits external_limits;
+    types::energy::ScheduleReqEntry target_entry;
+    target_entry.timestamp = timestamp;
+
+    types::energy::ScheduleReqEntry zero_entry;
+    zero_entry.timestamp = timestamp;
+    zero_entry.limits_to_leaves.total_power_W = {0, API_MODULE_SOURCE};
+
+    // check if phases are 1 or 3, otherwise throw an exception
+    const auto is_valid = (phases == 1 || phases == 3);
+    if (is_valid) {
+        target_entry.limits_to_leaves.ac_max_phase_count = {phases, API_MODULE_SOURCE};
+        target_entry.limits_to_leaves.ac_min_phase_count = {phases, API_MODULE_SOURCE};
+        target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(amps), API_MODULE_SOURCE};
+    } else {
+        std::string error_msg = "Invalid phase count " + std::to_string(phases);
+        throw std::out_of_range(error_msg);
+    }
+
+    if (amps > 0) {
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+    } else {
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
     }
     return external_limits;
 }
@@ -76,13 +107,13 @@ static void remove_error_from_list(std::vector<module::SessionInfo::Error>& list
                list.end());
 }
 
-void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event) {
+void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     using Event = types::evse_manager::SessionEventEnum;
 
     // using switch since some code analysis tools can detect missing cases
     // (when new events are added)
-    switch (event) {
+    switch (event.event) {
     case Event::Enabled:
         this->state = State::Unplugged;
         break;
@@ -111,10 +142,21 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         this->state = State::WaitingForEnergy;
         break;
     case Event::ChargingFinished:
-    case Event::PluginTimeout:
-    case Event::StoppingCharging:
-    case Event::TransactionFinished:
         this->state = State::Finished;
+        break;
+    case Event::StoppingCharging:
+        this->state = State::FinishedEV;
+        break;
+    case Event::TransactionFinished: {
+        if (event.transaction_finished->reason == types::evse_manager::StopTransactionReason::Local) {
+            this->state = State::FinishedEVSE;
+        } else {
+            this->state = State::Finished;
+        }
+        break;
+    }
+    case Event::PluginTimeout:
+        this->state = State::AuthTimeout;
         break;
     case Event::ReservationStart:
         this->state = State::Reserved;
@@ -154,6 +196,12 @@ std::string SessionInfo::state_to_string(SessionInfo::State s) {
         return "Charging";
     case SessionInfo::State::Finished:
         return "Finished";
+    case SessionInfo::State::FinishedEVSE:
+        return "FinishedEVSE";
+    case SessionInfo::State::FinishedEV:
+        return "FinishedEV";
+    case SessionInfo::State::AuthTimeout:
+        return "AuthTimeout";
     }
     return "Unknown";
 }
@@ -270,7 +318,7 @@ void API::init() {
     // ensure all evse_energy_sink(s) that are connected have an evse id mapping
     for (const auto& evse_sink : this->r_evse_energy_sink) {
         if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+            EVLOG_critical << "Please configure an evse mapping in your configuration file for the connected "
                               "r_evse_energy_sink with module_id: "
                            << evse_sink->module_id;
             throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
@@ -364,7 +412,7 @@ void API::init() {
 
         evse->subscribe_session_event(
             [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
-                session_info->update_state(session_event.event);
+                session_info->update_state(session_event);
 
                 if (session_event.source.has_value()) {
                     const auto source = session_event.source.value();
@@ -439,9 +487,11 @@ void API::init() {
 
                 } catch (const std::exception& e) {
                     EVLOG_error << "enable: Cannot parse argument, command ignored: " << e.what();
+                    return;
                 }
             } else {
                 EVLOG_error << "enable: No argument specified, ignoring command";
+                return;
             }
             this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
@@ -459,9 +509,11 @@ void API::init() {
                     EVLOG_warning << "disable: Argument is an integer, using deprecated compatibility mode";
                 } catch (const std::exception& e) {
                     EVLOG_error << "disable: Cannot parse argument, ignoring command";
+                    return;
                 }
             } else {
                 EVLOG_error << "disable: No argument specified, ignoring command";
+                return;
             }
             this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
@@ -479,9 +531,11 @@ void API::init() {
                     EVLOG_warning << "disable: Argument is an integer, using deprecated compatibility mode";
                 } catch (const std::exception& e) {
                     EVLOG_error << "disable: Cannot parse argument, ignoring command";
+                    return;
                 }
             } else {
                 EVLOG_error << "disable: No argument specified, ignoring command";
+                return;
             }
             this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
@@ -526,6 +580,37 @@ void API::init() {
                     evse_energy_sink.call_set_external_limits(external_limits);
                 } catch (const std::invalid_argument& e) {
                     EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                }
+            });
+
+            std::string cmd_set_limit_phases = cmd_base + "set_limit_amps_phases";
+
+            this->mqtt.subscribe(cmd_set_limit_phases, [&evse_manager_check = this->evse_manager_check,
+                                                        &evse_energy_sink = evse_energy_sink](const std::string& data) {
+                int32_t phases;
+                float amps;
+                try {
+                    auto arg = json::parse(data);
+                    if (arg.contains("amps") && arg.contains("phases")) {
+                        amps = arg.at("amps");
+                        phases = arg.at("phases");
+                    } else {
+                        EVLOG_error << "Invalid limit: Missing amps or phases.";
+                        return;
+                    }
+                } catch (const std::exception& e) {
+                    EVLOG_error << "set_limit_amps_phases: Cannot parse argument, command ignored: " << e.what();
+                    return;
+                }
+                try {
+                    const auto external_limits = get_external_limits(phases, amps);
+                    evse_manager_check.wait_ready();
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                } catch (const std::out_of_range& e) {
+                    EVLOG_warning << "Invalid limit: Out of range "
+                                  << ", error: " << e.what();
                 }
             });
         } else {
@@ -579,9 +664,9 @@ void API::init() {
                     try {
                         seconds = std::stoi(data);
                     } catch (const std::exception& e) {
-                        EVLOG_error
-                            << "Could not parse connector duration value for uk_random_delay_set_max_duration_s: "
-                            << e.what();
+                        EVLOG_error << "Could not parse connector duration value for "
+                                       "uk_random_delay_set_max_duration_s, using default value of "
+                                    << seconds << " seconds, error: " << e.what();
                     }
                     random_delay->call_set_duration_s(seconds);
                 });

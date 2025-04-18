@@ -4,6 +4,7 @@
 #define EVSE_SLAC_STATES_MATCHING_HPP
 
 #include <chrono>
+#include <memory>
 
 #include <slac/slac.hpp>
 
@@ -43,6 +44,8 @@ struct MatchingSession {
     int captured_aags[slac::defs::AAG_LIST_LEN];
     bool received_mnbc_sound{false};
 
+    int num_retries{0};
+
     // helper functions
     void set_next_timeout(int delay_ms);
     void ack_timeout();
@@ -77,8 +80,11 @@ struct MatchingState : public FSMSimpleState {
     const uint8_t* tmp_ev_mac;
 
     MatchingTimepoint timeout_slac_parm_req;
+
     bool seen_slac_parm_req{false};
     int num_retries{0};
+
+    std::unique_ptr<slac::messages::cm_slac_match_cnf> match_cnf_message;
 };
 
 } // namespace slac::fsm::evse

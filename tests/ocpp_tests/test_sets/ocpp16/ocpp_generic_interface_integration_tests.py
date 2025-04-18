@@ -96,9 +96,6 @@ async def _env(
         )
         _add_pm_command_mock(evse_manager, "force_unlock", True, skip_implementation)
         _add_pm_command_mock(
-            evse_manager, "set_get_certificate_response", None, skip_implementation
-        )
-        _add_pm_command_mock(
             evse_manager, "external_ready_to_start_charging", True, skip_implementation
         )
     _add_pm_command_mock(
@@ -163,6 +160,7 @@ async def _env(
         skip_implementation,
     )
     _add_pm_command_mock("auth", "set_connection_timeout", None, skip_implementation)
+    _add_pm_command_mock("auth", "withdraw_authorization", "Accepted", skip_implementation)
     _add_pm_command_mock("auth", "set_master_pass_group_id", None, skip_implementation)
     _add_pm_command_mock(
         "reservation", "cancel_reservation", "Accepted", skip_implementation

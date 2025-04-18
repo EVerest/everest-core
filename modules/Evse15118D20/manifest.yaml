@@ -7,10 +7,6 @@ config:
       link-local and a MAC addr will work
     type: string
     default: eth0
-  certificate_path:
-    description: Path to certificate directories
-    type: string
-    default: ""
   logging_path:
     description: Path to logging directory (will be created if non existent)
     type: string
@@ -22,11 +18,11 @@ config:
       - ACCEPT_CLIENT_OFFER
       - ENFORCE_TLS
       - ENFORCE_NO_TLS
-    default: ACCEPT_CLIENT_OFFER
-  private_key_password:
-    description: Password for private key files (USE ONLY FOR TESTING)
-    type: string
-    default: "123456"
+    default: ACCEPT_CLIENT_OFFER  
+  enforce_tls_1_3:
+    description: Enforcing tls version 1.3. Only applies if tls_negotiation_strategy is ENFORCE_TLS.
+    type: boolean
+    default: false
   enable_ssl_logging:
     description: Verbosely log the ssl/tls connection
     type: boolean
@@ -38,6 +34,11 @@ config:
       simulation purpose only
     type: boolean
     default: false
+  tls_key_logging_path:
+    description:  >-
+      Output directory for the TLS key log file
+    type: string
+    default: /tmp
   enable_sdp_server:
     description: >-
       Enable the built-in SDP server
@@ -62,6 +63,15 @@ provides:
     interface: ISO15118_charger
     description: >-
       This interface provides limited access to iso15118-20
+  extensions:
+    interface: iso15118_extensions
+    description: >-
+      This interface is used to share data between ISO15118 and OCPP modules
+      to support the requirements of the OCPP protocol
+requires:
+  security:
+    interface: evse_security
+
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
