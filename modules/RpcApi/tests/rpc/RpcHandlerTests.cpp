@@ -23,24 +23,6 @@ protected:
         transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
         m_rpc_server = std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store);
         m_rpc_server->start_server();
-
-        data_store.chargerinfo.set_data({
-            {"firmware_version", "1.1.1beta"},
-            {"model", "Test Charger"},
-            {"serial", "1"},
-            {"vendor", "Test Company"}
-        });
-        data_store.everest_version = "2025.1.0";
-        data_store.evses.emplace_back().connectors.emplace_back();
-        types::json_rpc_api::ConnectorInfoObj connector_info;
-        connector_info.id = 1;
-        connector_info.type = types::json_rpc_api::ConnectorTypeEnum::DCExtended;
-
-        data_store.evses[0].connectors[0].connectorinfo.set_data(connector_info);
-        types::json_rpc_api::EVSEInfoObj evse_info;
-        evse_info.id = "DE1235251";
-        //TODO: evse_info.available_connectors = ...
-        data_store.evses[0].evseinfo.set_data(evse_info);
     }
 
     void TearDown() override {
@@ -84,23 +66,36 @@ TEST_F(RpcHandlerTest, ClientHelloRequest) {
         {"method", "API.Hello"},
         {"id", 1}
     };
-    // Expected response
+    // Set up the data store with test data
+    RPCDataTypes::ChargerInfoObj charger_info;
+    charger_info.firmware_version = "1.0.0";
+    charger_info.model = "Test Charger";
+    charger_info.serial = "123456789";
+    charger_info.vendor = "Test Vendor";
+    data_store.chargerinfo.set_data(charger_info);
+
+    data_store.everest_version = "2025.1.0";
+    data_store.evses.emplace_back().connectors.emplace_back();
+    RPCDataTypes::ConnectorInfoObj connector_info;
+    connector_info.id = 1;
+    connector_info.type = types::json_rpc_api::ConnectorTypeEnum::DCExtended;
+
+    data_store.evses[0].connectors[0].connectorinfo.set_data(connector_info);
+
+    // Set up the expected response
+    RPCDataTypes::HelloResObj result;
+    result.authentication_required = false;
+    result.api_version = API_VERSION;
+    result.charger_info = charger_info;
+    result.everest_version = data_store.everest_version;
+
     nlohmann::json expected_response = {
         {"jsonrpc", "2.0"},
-        {"result", {
-            {"authentication_required", false},
-            {"authenticated", true},
-            {"api_version", "1.0"},
-            {"everest_version", "2024.9.0"},
-            {"charger_info", {
-                {"firmware_version", "1.1.1beta"},
-                {"model", "DavyBox"},
-                {"serial", "1"},
-                {"vendor", "chargebyte"}
-            }}
-        }},
+        {"result", result},
         {"id", 1}
     };
+    
+    // Send the request
     client.send(hello_request.dump());
     // Wait for the response
     std::unique_lock<std::mutex> lock(cv_mutex);
