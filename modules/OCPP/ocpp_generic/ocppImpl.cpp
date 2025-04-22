@@ -128,7 +128,12 @@ void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
     if (event.timestamp.has_value()) {
         timestamp = ocpp_conversions::to_ocpp_datetime_or_now(event.timestamp.value());
     }
-    this->mod->charge_point->on_security_event(event.type, event.info, event.critical, timestamp);
+    const auto event_type = ocpp::CiString<50>(event.type, ocpp::StringTooLarge::Truncate);
+    std::optional<ocpp::CiString<255>> tech_info;
+    if (event.info.has_value()) {
+        tech_info = ocpp::CiString<255>(event.info.value(), ocpp::StringTooLarge::Truncate);
+    }
+    this->mod->charge_point->on_security_event(event_type, tech_info, event.critical, timestamp);
 }
 
 std::vector<types::ocpp::GetVariableResult>

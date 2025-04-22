@@ -225,7 +225,9 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         }
         std::optional<ocpp::CiString<20>> id_tag_opt = std::nullopt;
         if (transaction_finished.id_tag.has_value()) {
-            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token.value));
+            // we truncate potentially too large tokens
+            id_tag_opt.emplace(
+                ocpp::CiString<20>(transaction_finished.id_tag.value().id_token.value, ocpp::StringTooLarge::Truncate));
         }
         std::optional<std::string> signed_meter_data;
         if (signed_meter_value.has_value()) {
@@ -652,7 +654,11 @@ void OCPP::ready() {
         const auto upload_logs_response = this->r_system->call_upload_logs(upload_logs_request);
         ocpp::v16::GetLogResponse response;
         if (upload_logs_response.file_name.has_value()) {
-            response.filename.emplace(ocpp::CiString<255>(upload_logs_response.file_name.value()));
+            // we just truncate here since the upload operation could have already been started by the system module and
+            // we cant do much about it, so best we can do is truncate the filename and rather make sure in the system
+            // module that shorter filenames are used
+            response.filename.emplace(
+                ocpp::CiString<255>(upload_logs_response.file_name.value(), ocpp::StringTooLarge::Truncate));
         }
         response.status = conversions::to_ocpp_log_status_enum_type(upload_logs_response.upload_logs_status);
         return response;
@@ -681,7 +687,11 @@ void OCPP::ready() {
 
         ocpp::v16::GetLogResponse response;
         if (upload_logs_response.file_name.has_value()) {
-            response.filename.emplace(ocpp::CiString<255>(upload_logs_response.file_name.value()));
+            // we just truncate here since the upload operation could have already been started by the system module and
+            // we cant do much about it, so best we can do is truncate the filename and rather make sure in the system
+            // module that shorter filenames are used
+            response.filename.emplace(
+                ocpp::CiString<255>(upload_logs_response.file_name.value(), ocpp::StringTooLarge::Truncate));
         }
         response.status = conversions::to_ocpp_log_status_enum_type(upload_logs_response.upload_logs_status);
         return response;

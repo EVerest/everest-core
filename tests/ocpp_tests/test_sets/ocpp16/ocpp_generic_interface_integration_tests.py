@@ -272,9 +272,34 @@ class TestOCPP16GenericInterfaceIntegration:
                 type="SecurityLogWasCleared",
             ),
         )
+
+        string_too_long = "WAYTOOLONG"*255
+        res = await _env.probe_module.call_command(
+            "ocpp",
+            "security_event",
+            {
+                "event": {
+                    "type": string_too_long,
+                    "info": string_too_long,
+                    "critical": True,
+                    "timestamp": "2024-01-01T12:00:00",
+                }
+            },
+        )
+        await wait_for_mock_called(
+            _env.csms_mock.on_security_event_notification,
+            mock_call(
+                # truncated to 255 characters
+                tech_info=string_too_long[0:255],
+                timestamp=ANY,
+                # truncated to 50 characters
+                type=string_too_long[0:50],
+            ),
+        )
+
         assert (
-            len(_env.csms_mock.on_security_event_notification.mock_calls) == 2
-        )  # we expect 2 because of the StartupOfTheDevice
+            len(_env.csms_mock.on_security_event_notification.mock_calls) == 3
+        )  # we expect 3 because of the StartupOfTheDevice, SecurityLogWasCleared, StringTooLong
 
     @pytest.mark.ocpp_config_adaptions(
         GenericOCPP16ConfigAdjustment(
