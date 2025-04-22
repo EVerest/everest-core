@@ -21,6 +21,7 @@
 
 #include "../server/TransportInterface.hpp"
 #include "methods/Api.hpp"
+#include "methods/ChargePoint.hpp"
 
 using namespace server;
 using namespace jsonrpccxx;
@@ -81,6 +82,7 @@ private:
     std::atomic<bool> m_is_running{false};
 
     methods::Api m_methods_api;
+    methods::ChargePoint m_methods_chargepoint;
 };
 } // namespace rpc
 
