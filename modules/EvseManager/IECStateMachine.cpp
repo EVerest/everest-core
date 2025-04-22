@@ -276,14 +276,14 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 events.push(CPEvent::CarRequestedPower);
             }
 
-            if (!pwm_running && last_pwm_running) { // X2->C1
+            if ((!pwm_running && last_pwm_running) || (!ce_is_set && last_ce_is_set)) { // X2->C1
                                                     // Table A.6 Sequence 10.2: EV does not stop drawing power
                                                     // even if PWM stops. Stop within 6 seconds (E.g. Kona1!)
                 timer_state_C1 = TimerControl::start;
             }
 
             // PWM switches on while in state C
-            if ((pwm_running && !last_pwm_running) || ce_is_set) {
+            if ((pwm_running && !last_pwm_running) || (ce_is_set && !last_ce_is_set)) {
                 // when resuming after a pause before the EV goes to state B, stop the timer.
                 timer_state_C1 = TimerControl::stop;
 
@@ -365,6 +365,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         last_cp_state = cp_state;
         last_pwm_running = pwm_running;
         last_power_on_allowed = power_on_allowed;
+        last_ce_is_set = ce_is_set;
 
         // end of mutex protected section
     }

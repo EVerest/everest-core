@@ -480,7 +480,7 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118::EVSEID& evse_id,
     std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode, bool& mcs_used) {
 
     std::scoped_lock lock(GEL);
     setup_config.evse_id = evse_id.evse_id; // TODO(SL): Check format for d20
@@ -499,10 +499,14 @@ void ISO15118_chargerImpl::handle_setup(
                    mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_extended ||
                    mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_combo_core ||
                    mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_unique) {
-            if (mode.bidirectional) {
+            if (mode.bidirectional and not mcs_used) {
                 services.push_back(dt::ServiceCategory::DC_BPT);
-            } else {
+            } else if (not mode.bidirectional and not mcs_used){
                 services.push_back(dt::ServiceCategory::DC);
+            } else if (mode.bidirectional and mcs_used) {
+                services.push_back(dt::ServiceCategory::MCS_BPT);
+            } else {
+                services.push_back(dt::ServiceCategory::MCS);
             }
         }
     }

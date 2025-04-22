@@ -114,6 +114,7 @@ private:
     bool pwm_running{false};
     bool last_pwm_running{false};
     bool ce_is_set{false};
+    bool last_ce_is_set{false};
     bool id_is_set{false};
 
     static constexpr float ev_simplified_mode_evse_limit_pwm{10 / 0.6 / 100.}; // Fixed 10A limit

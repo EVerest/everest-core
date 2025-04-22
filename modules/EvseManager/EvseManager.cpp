@@ -617,7 +617,7 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, config.mcs_enable);
 
         // reset error flags
         r_hlc[0]->call_reset_error();
@@ -1125,7 +1125,7 @@ void EvseManager::setup_fake_DC_mode() {
 
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
-    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, false);
 }
 
 void EvseManager::setup_AC_mode() {
@@ -1152,7 +1152,7 @@ void EvseManager::setup_AC_mode() {
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
     if (get_hlc_enabled()) {
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, false);
     }
 }
 

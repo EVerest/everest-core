@@ -69,7 +69,7 @@ void ISO15118_chargerImpl::ready() {
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118::EVSEID& evse_id,
     std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode, bool& mcs_enabled) {
 
     uint8_t len = evse_id.evse_id.length();
     if (len < iso2_EVSEID_CHARACTER_SIZE) {

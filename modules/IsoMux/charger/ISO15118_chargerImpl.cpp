@@ -473,9 +473,9 @@ void ISO15118_chargerImpl::ready() {
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118::EVSEID& evse_id,
     std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
-    mod->r_iso20->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode);
-    mod->r_iso2->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode);
+    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode, bool& mcs_enabled) {
+    mod->r_iso20->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode, false);
+    mod->r_iso2->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode, false);
 }
 
 void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
