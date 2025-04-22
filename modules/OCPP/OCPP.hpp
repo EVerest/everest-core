@@ -150,6 +150,8 @@ private:
     void init_evse_subscriptions(); // initialize subscriptions to all EVSEs provided by r_evse_manager
     void init_evse_connector_map();
     void init_evse_maps();
+    void init_module_configuration();
+    void handle_config_key(const ocpp::v16::KeyValue& kv);
     EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
     std::map<int32_t, int32_t>
         connector_evse_index_map; // provides access to r_evse_manager index by using OCPP connector id
