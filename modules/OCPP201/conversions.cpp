@@ -492,7 +492,13 @@ ocpp::v2::LogStatusEnum to_ocpp_log_status_enum(types::system::UploadLogsStatus 
 ocpp::v2::GetLogResponse to_ocpp_get_log_response(const types::system::UploadLogsResponse& response) {
     ocpp::v2::GetLogResponse _response;
     _response.status = to_ocpp_log_status_enum(response.upload_logs_status);
-    _response.filename = response.file_name;
+
+    if (response.file_name.has_value()) {
+        // we just truncate here since the upload operation could have already been started by the system module and
+        // we cant do much about it, so best we can do is truncate the filename and rather make sure in the system
+        // module that shorter filenames are used
+        _response.filename = ocpp::CiString<255>(response.file_name.value(), ocpp::StringTooLarge::Truncate);
+    }
     return _response;
 }
 
