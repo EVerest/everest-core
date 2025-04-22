@@ -17,11 +17,13 @@ on:
 jobs:
   ci:
     name: Build, Lint and Test
-    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.4.2
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.5.2
     permissions:
       contents: read
+      actions: read
     secrets:
       coverage_deploy_token: ${{ secrets.SA_GITHUB_PAT }}
+      SA_GITHUB_SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
     with:
       runner: ${{ inputs.runner || 'ubuntu-22.04' }}
       artifact_deploy_target_repo: EVerest/everest.github.io

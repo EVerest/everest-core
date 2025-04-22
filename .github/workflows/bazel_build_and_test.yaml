@@ -8,6 +8,20 @@ jobs:
       - run: echo branch name is ${{ github.ref }}
       - name: Checkout
         uses: actions/checkout@v4.1.0
+
+      - name: Set up SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          # Check if github.com is already in known_hosts, if not, add it
+          if ! grep -q "^github.com " ~/.ssh/known_hosts; then
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+          fi
+
       - name: Mount bazel cache
         uses: actions/cache@v3
         with:
