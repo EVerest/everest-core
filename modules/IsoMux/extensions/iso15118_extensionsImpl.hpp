@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef extensions_ISO15118_EXTENSIONS_IMPL_HPP
-#define extensions_ISO15118_EXTENSIONS_IMPL_HPP
+#ifndef EXTENSIONS_ISO15118_EXTENSIONS_IMPL_HPP
+#define EXTENSIONS_ISO15118_EXTENSIONS_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -10,7 +10,7 @@
 
 #include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
-#include "IsoMux.hpp"
+#include "../IsoMux.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 extern struct v2g_context* v2g_ctx;
@@ -59,4 +59,4 @@ private:
 } // namespace extensions
 } // namespace module
 
-#endif // extensions_ISO15118_EXTENSIONS_IMPL_HPP
+#endif // EXTENSIONS_ISO15118_EXTENSIONS_IMPL_HPP

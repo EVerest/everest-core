@@ -484,9 +484,12 @@ void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::Setup
 }
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
-                                                bool& supported_certificate_service) {
-    mod->r_iso20->call_session_setup(payment_options, supported_certificate_service);
-    mod->r_iso2->call_session_setup(payment_options, supported_certificate_service);
+                                                bool& supported_certificate_service,
+                                                bool& central_contract_validation_allowed) {
+    mod->r_iso20->call_session_setup(payment_options, supported_certificate_service,
+                                     central_contract_validation_allowed);
+    mod->r_iso2->call_session_setup(payment_options, supported_certificate_service,
+                                    central_contract_validation_allowed);
 }
 
 void ISO15118_chargerImpl::handle_authorization_response(

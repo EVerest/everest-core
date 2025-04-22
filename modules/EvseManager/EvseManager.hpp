@@ -106,6 +106,8 @@ struct Conf {
     bool fail_on_powermeter_errors;
     bool raise_mrec9;
     int sleep_before_enabling_pwm_hlc_mode_ms;
+    bool central_contract_validation_allowed;
+    bool contract_certificate_installation_enabled;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -194,6 +196,10 @@ public:
 
     bool get_hlc_enabled();
     bool get_hlc_waiting_for_auth_pnc();
+    void set_pnc_enabled(const bool pnc_enabled);
+    void set_central_contract_validation_allowed(const bool central_contract_validation_allowed);
+    void set_contract_certificate_installation_enabled(const bool contract_certificate_installation_enabled);
+
     sigslot::signal<types::evse_manager::SessionEvent> signalReservationEvent;
 
     void charger_was_authorized();
@@ -299,6 +305,10 @@ private:
 
     bool hlc_waiting_for_auth_eim;
     bool hlc_waiting_for_auth_pnc;
+
+    bool pnc_enabled{false};
+    bool central_contract_validation_allowed{false};
+    bool contract_certificate_installation_enabled{false};
 
     VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;

@@ -931,6 +931,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                                                               mo_root_cert_path.c_str(), conn->ctx->debugMode);
 
             err = -1;
+            bool forward_contract = false;
             switch (vRes) {
             case crypto::verify_result_t::Verified:
                 err = 0;
@@ -939,10 +940,20 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                 res->ResponseCode = iso2_responseCodeType_FAILED_CertificateExpired;
                 break;
             case crypto::verify_result_t::CertificateRevoked:
-                res->ResponseCode = iso2_responseCodeType_FAILED_CertificateRevoked;
+                // forward to csms if central_contract_validation_allowed is true
+                if (conn->ctx->evse_v2g_data.central_contract_validation_allowed) {
+                    forward_contract = true;
+                } else {
+                    res->ResponseCode = iso2_responseCodeType_FAILED_CertificateRevoked;
+                }
                 break;
             case crypto::verify_result_t::NoCertificateAvailable:
-                res->ResponseCode = iso2_responseCodeType_FAILED_NoCertificateAvailable;
+                // forward to csms if central_contract_validation_allowed is true
+                if (conn->ctx->evse_v2g_data.central_contract_validation_allowed) {
+                    forward_contract = true;
+                } else {
+                    res->ResponseCode = iso2_responseCodeType_FAILED_NoCertificateAvailable;
+                }
                 break;
             case crypto::verify_result_t::CertChainError:
             default:
@@ -952,18 +963,25 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
 
             if (err == -1) {
                 dlog(DLOG_LEVEL_ERROR, "Validation of the contract certificate failed!");
-                // EVSETimeStamp and GenChallenge are mandatory, GenChallenge has fixed size
-                res->EVSETimeStamp = time(NULL);
-                memset(res->GenChallenge.bytes, 0, GEN_CHALLENGE_SIZE);
-                res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
-                goto error_out;
+                if (!forward_contract) {
+                    dlog(DLOG_LEVEL_ERROR, "Central contract validation is not allowed.");
+                    // EVSETimeStamp and GenChallenge are mandatory, GenChallenge has fixed size
+                    res->EVSETimeStamp = time(NULL);
+                    memset(res->GenChallenge.bytes, 0, GEN_CHALLENGE_SIZE);
+                    res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
+                    goto error_out;
+                } else {
+                    dlog(DLOG_LEVEL_INFO, "Central contract validation is allowed: Forwarding contract");
+                }
+            } else {
+                dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
+
+                // contract chain ocsp data can only be retrieved if the MO root is present and the chain could be
+                // verified
+                const auto ocsp_response =
+                    conn->ctx->r_security->call_get_mo_ocsp_request_data(contract_cert_chain_pem);
+                iso15118_certificate_hash_data = convert_to_certificate_hash_data_info_vector(ocsp_response);
             }
-
-            dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
-
-            // contract chain ocsp data can only be retrieved if the MO root is present and the chain could be verified
-            const auto ocsp_response = conn->ctx->r_security->call_get_mo_ocsp_request_data(contract_cert_chain_pem);
-            iso15118_certificate_hash_data = convert_to_certificate_hash_data_info_vector(ocsp_response);
         }
 
         generate_random_data(&conn->ctx->session.gen_challenge, GEN_CHALLENGE_SIZE);

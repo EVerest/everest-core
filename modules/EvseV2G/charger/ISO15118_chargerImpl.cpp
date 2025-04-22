@@ -162,9 +162,9 @@ void ISO15118_chargerImpl::handle_setup(
 }
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
-                                                bool& supported_certificate_service) {
+                                                bool& supported_certificate_service,
+                                                bool& central_contract_validation_allowed) {
     if (v2g_ctx->hlc_pause_active != true) {
-
         v2g_ctx->evse_v2g_data.payment_option_list_len = 0;
 
         for (auto option : payment_options) {
@@ -206,6 +206,8 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
         add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id,
                                     sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
     }
+
+    v2g_ctx->evse_v2g_data.central_contract_validation_allowed = central_contract_validation_allowed;
 }
 
 void ISO15118_chargerImpl::handle_authorization_response(
