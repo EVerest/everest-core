@@ -60,6 +60,11 @@ cmds:
         description: The required capabilities from the power supply
         type: object
         $ref: /power_supply_DC#/Capabilities
+  central_contract_validation_allowed:
+    description: >-
+      Indicates if the vehicle contract may be forwarded to and validated by a CSMS in case 
+      local validation was not successful
+    type: boolean
 # Response messages to vars:
   certificate_response:
     description: >-

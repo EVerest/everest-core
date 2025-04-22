@@ -305,6 +305,7 @@ struct v2g_context {
 
         iso2_paymentOptionType payment_option_list[iso2_paymentOptionType_2_ARRAY_SIZE];
         uint8_t payment_option_list_len;
+        bool central_contract_validation_allowed;
 
         bool cert_install_status;
         std::string cert_install_res_b64_buffer;

@@ -95,6 +95,10 @@ void EvseManager::init() {
         EVLOG_warning << "DC mode without isolation monitoring configured, please check your national regulations.";
     }
 
+    pnc_enabled = config.payment_enable_contract;
+    central_contract_validation_allowed = config.central_contract_validation_allowed;
+    contract_certificate_installation_enabled = config.contract_certificate_installation_enabled;
+
     reserved = false;
     reservation_id = -1;
 
@@ -196,14 +200,15 @@ void EvseManager::ready() {
         if (config.payment_enable_eim) {
             payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
         }
-        if (config.payment_enable_contract) {
+        if (pnc_enabled) {
             payment_options.push_back(types::iso15118_charger::PaymentOption::Contract);
         }
-        if (config.payment_enable_eim == false and config.payment_enable_contract == false) {
+        if (config.payment_enable_eim == false and pnc_enabled == false) {
             EVLOG_warning << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
             payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
         }
-        r_hlc[0]->call_session_setup(payment_options, config.payment_enable_contract);
+        r_hlc[0]->call_session_setup(payment_options, contract_certificate_installation_enabled,
+                                     central_contract_validation_allowed);
 
         r_hlc[0]->subscribe_dlink_error([this] {
             session_log.evse(true, "D-LINK_ERROR.req");
@@ -900,15 +905,16 @@ void EvseManager::ready() {
             if (config.payment_enable_eim) {
                 payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
             }
-            if (config.payment_enable_contract) {
+            if (pnc_enabled) {
                 payment_options.push_back(types::iso15118_charger::PaymentOption::Contract);
             }
-            if (config.payment_enable_eim == false and config.payment_enable_contract == false) {
+            if (config.payment_enable_eim == false and pnc_enabled == false) {
                 EVLOG_warning
                     << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
                 payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
             }
-            r_hlc[0]->call_session_setup(payment_options, config.payment_enable_contract);
+            r_hlc[0]->call_session_setup(payment_options, contract_certificate_installation_enabled,
+                                         central_contract_validation_allowed);
         }
     });
 
@@ -921,9 +927,21 @@ void EvseManager::ready() {
 
             std::vector<types::iso15118_charger::PaymentOption> payment_options;
 
-            if (hlc_enabled and start_reason == types::evse_manager::StartSessionReason::Authorized) {
-                payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
-                r_hlc[0]->call_session_setup(payment_options, false);
+            if (hlc_enabled) {
+                if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
+                    // Session is already authorized, only use ExternalPayment in PaymentOptions
+                    payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
+                } else {
+                    // Set payment options according to configuration
+                    if (config.payment_enable_eim) {
+                        payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
+                    }
+                    if (pnc_enabled) {
+                        payment_options.push_back(types::iso15118_charger::PaymentOption::Contract);
+                    }
+                }
+                r_hlc[0]->call_session_setup(payment_options, contract_certificate_installation_enabled,
+                                             central_contract_validation_allowed);
             }
         });
 
@@ -1384,6 +1402,18 @@ bool EvseManager::is_reserved() {
 
 bool EvseManager::get_hlc_waiting_for_auth_pnc() {
     return hlc_waiting_for_auth_pnc;
+}
+
+void EvseManager::set_pnc_enabled(const bool value) {
+    pnc_enabled = value;
+}
+
+void EvseManager::set_central_contract_validation_allowed(const bool value) {
+    central_contract_validation_allowed = value;
+}
+
+void EvseManager::set_contract_certificate_installation_enabled(const bool value) {
+    contract_certificate_installation_enabled = value;
 }
 
 void EvseManager::log_v2g_message(types::iso15118_charger::V2gMessages v2g_messages) {

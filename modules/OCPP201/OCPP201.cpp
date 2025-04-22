@@ -141,6 +141,54 @@ void OCPP201::init_evse_maps() {
     }
 }
 
+void OCPP201::init_module_configuration() {
+    const auto ev_connection_timeout_request_value_response = this->charge_point->request_value<int32_t>(
+        ocpp::v201::ControllerComponents::TxCtrlr, ocpp::v201::Variable{"EVConnectionTimeOut"},
+        ocpp::v201::AttributeEnum::Actual);
+    if (ev_connection_timeout_request_value_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
+        ev_connection_timeout_request_value_response.value.has_value()) {
+        this->r_auth->call_set_connection_timeout(ev_connection_timeout_request_value_response.value.value());
+    }
+
+    const auto master_pass_group_id_response = this->charge_point->request_value<std::string>(
+        ocpp::v201::ControllerComponents::AuthCtrlr, ocpp::v201::Variable{"MasterPassGroupId"},
+        ocpp::v201::AttributeEnum::Actual);
+    if (master_pass_group_id_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
+        master_pass_group_id_response.value.has_value()) {
+        this->r_auth->call_set_master_pass_group_id(master_pass_group_id_response.value.value());
+    }
+
+    types::evse_manager::PlugAndChargeConfiguration pnc_config;
+    const auto iso15118_pnc_enabled_response =
+        this->charge_point->request_value<bool>(ocpp::v201::ControllerComponents::ISO15118Ctrlr,
+                                                ocpp::v201::Variable{"PncEnabled"}, ocpp::v201::AttributeEnum::Actual);
+    if (iso15118_pnc_enabled_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
+        iso15118_pnc_enabled_response.value.has_value()) {
+        pnc_config.pnc_enabled = iso15118_pnc_enabled_response.value.value();
+    }
+
+    const auto central_contract_validation_allowed_response = this->charge_point->request_value<bool>(
+        ocpp::v201::ControllerComponents::ISO15118Ctrlr, ocpp::v201::Variable{"CentralContractValidationAllowed"},
+        ocpp::v201::AttributeEnum::Actual);
+    if (central_contract_validation_allowed_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
+        central_contract_validation_allowed_response.value.has_value()) {
+        pnc_config.central_contract_validation_allowed = central_contract_validation_allowed_response.value.value();
+    }
+
+    const auto contract_certificate_installation_enabled_response = this->charge_point->request_value<bool>(
+        ocpp::v201::ControllerComponents::ISO15118Ctrlr, ocpp::v201::Variable{"ContractCertificateInstallationEnabled"},
+        ocpp::v201::AttributeEnum::Actual);
+    if (contract_certificate_installation_enabled_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
+        contract_certificate_installation_enabled_response.value.has_value()) {
+        pnc_config.contract_certificate_installation_enabled =
+            contract_certificate_installation_enabled_response.value.value();
+    }
+
+    for (const auto& evse_manager : this->r_evse_manager) {
+        evse_manager->call_set_plug_and_charge_configuration(pnc_config);
+    }
+}
+
 std::map<int32_t, int32_t> OCPP201::get_connector_structure() {
     std::map<int32_t, int32_t> evse_connector_structure;
     int evse_id = 1;
@@ -491,7 +539,7 @@ void OCPP201::ready() {
     };
 
     callbacks.variable_changed_callback = [this](const ocpp::v201::SetVariableData& set_variable_data) {
-        if (set_variable_data.component.name == "TxCtrlr" and
+        if (set_variable_data.component == ocpp::v201::ControllerComponents::TxCtrlr and
             set_variable_data.variable.name == "EVConnectionTimeOut") {
             try {
                 auto ev_connection_timeout = std::stoi(set_variable_data.attributeValue.get());
@@ -501,10 +549,10 @@ void OCPP201::ready() {
                             << e.what();
                 return;
             }
-        } else if (set_variable_data.component.name == "AuthCtrlr" and
+        } else if (set_variable_data.component == ocpp::v201::ControllerComponents::AuthCtrlr and
                    set_variable_data.variable.name == "MasterPassGroupId") {
             this->r_auth->call_set_master_pass_group_id(set_variable_data.attributeValue.get());
-        } else if (set_variable_data.component.name == "TxCtrlr" and
+        } else if (set_variable_data.component == ocpp::v201::ControllerComponents::TxCtrlr and
                    set_variable_data.variable.name == "TxStartPoint") {
             const auto tx_start_points = get_tx_start_stop_points(set_variable_data.attributeValue.get());
             if (tx_start_points.empty()) {
@@ -512,13 +560,37 @@ void OCPP201::ready() {
                 return;
             }
             this->transaction_handler->set_tx_start_points(tx_start_points);
-        } else if (set_variable_data.component.name == "TxCtrlr" and set_variable_data.variable.name == "TxStopPoint") {
+        } else if (set_variable_data.component == ocpp::v201::ControllerComponents::TxCtrlr and
+                   set_variable_data.variable.name == "TxStopPoint") {
             const auto tx_stop_points = get_tx_start_stop_points(set_variable_data.attributeValue.get());
             if (tx_stop_points.empty()) {
                 EVLOG_warning << "Could not set TxStartPoints";
                 return;
             }
             this->transaction_handler->set_tx_stop_points(tx_stop_points);
+        } else if (set_variable_data.component == ocpp::v201::ControllerComponents::ISO15118Ctrlr and
+                   set_variable_data.variable.name == "PncEnabled") {
+            types::evse_manager::PlugAndChargeConfiguration pnc_config;
+            pnc_config.pnc_enabled = ocpp::conversions::string_to_bool(set_variable_data.attributeValue.get());
+            for (const auto& evse_manager : this->r_evse_manager) {
+                evse_manager->call_set_plug_and_charge_configuration(pnc_config);
+            }
+        } else if (set_variable_data.component == ocpp::v201::ControllerComponents::ISO15118Ctrlr and
+                   set_variable_data.variable.name == "CentralContractValidationAllowed") {
+            types::evse_manager::PlugAndChargeConfiguration pnc_config;
+            pnc_config.central_contract_validation_allowed =
+                ocpp::conversions::string_to_bool(set_variable_data.attributeValue.get());
+            for (const auto& evse_manager : this->r_evse_manager) {
+                evse_manager->call_set_plug_and_charge_configuration(pnc_config);
+            }
+        } else if (set_variable_data.component == ocpp::v201::ControllerComponents::ISO15118Ctrlr and
+                   set_variable_data.variable.name == "ContractCertificateInstallationEnabled") {
+            types::evse_manager::PlugAndChargeConfiguration pnc_config;
+            pnc_config.contract_certificate_installation_enabled =
+                ocpp::conversions::string_to_bool(set_variable_data.attributeValue.get());
+            for (const auto& evse_manager : this->r_evse_manager) {
+                evse_manager->call_set_plug_and_charge_configuration(pnc_config);
+            }
         }
     };
 
@@ -776,21 +848,7 @@ void OCPP201::ready() {
                                                 std::chrono::seconds(this->config.CompositeScheduleIntervalS));
     }
 
-    const auto ev_connection_timeout_request_value_response = this->charge_point->request_value<int32_t>(
-        ocpp::v201::Component{"TxCtrlr"}, ocpp::v201::Variable{"EVConnectionTimeOut"},
-        ocpp::v201::AttributeEnum::Actual);
-    if (ev_connection_timeout_request_value_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
-        ev_connection_timeout_request_value_response.value.has_value()) {
-        this->r_auth->call_set_connection_timeout(ev_connection_timeout_request_value_response.value.value());
-    }
-
-    const auto master_pass_group_id_response = this->charge_point->request_value<std::string>(
-        ocpp::v201::Component{"AuthCtrlr"}, ocpp::v201::Variable{"MasterPassGroupId"},
-        ocpp::v201::AttributeEnum::Actual);
-    if (master_pass_group_id_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
-        master_pass_group_id_response.value.has_value()) {
-        this->r_auth->call_set_master_pass_group_id(master_pass_group_id_response.value.value());
-    }
+    this->init_module_configuration();
 
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";

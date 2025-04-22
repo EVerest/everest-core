@@ -10,7 +10,7 @@
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 
-#include "IsoMux.hpp"
+#include "../IsoMux.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 #include "v2g.hpp"
@@ -34,13 +34,13 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void
-    handle_setup(types::iso15118_charger::EVSEID& evse_id,
-                 std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
-                 types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) override;
+    virtual void handle_setup(types::iso15118_charger::EVSEID& evse_id,
+                              std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
+                              types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) override;
     virtual void handle_set_charging_parameters(types::iso15118_charger::SetupPhysicalValues& physical_values) override;
     virtual void handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
-                                      bool& supported_certificate_service) override;
+                                      bool& supported_certificate_service,
+                                      bool& central_contract_validation_allowed) override;
     virtual void
     handle_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) override;
     virtual void handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) override;

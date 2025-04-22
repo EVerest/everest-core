@@ -343,7 +343,8 @@ void ISO15118_chargerImpl::handle_set_charging_parameters(
 }
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
-                                                bool& supported_certificate_service) {
+                                                bool& supported_certificate_service,
+                                                bool& central_contract_validation_allowed) {
     std::scoped_lock lock(GEL);
 
     std::vector<dt::Authorization> auth_services;
