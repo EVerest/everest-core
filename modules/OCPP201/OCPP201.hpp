@@ -133,6 +133,7 @@ private:
     std::mutex session_event_mutex;
     std::condition_variable evse_ready_cv;
     void init_evse_maps();
+    void init_module_configuration();
     bool all_evse_ready();
     std::map<int32_t, int32_t> get_connector_structure();
     void process_session_event(const int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
