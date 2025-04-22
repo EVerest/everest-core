@@ -44,7 +44,7 @@ void from_json(const nlohmann::json& j, HelloResponse& r) {
 void RpcHandler::init_rpc_api() {
     // Initialize the RPC API here
     m_methods_api.set_authentication_required(false);
-    m_methods_api.set_api_version("1.0");
+    m_methods_api.set_api_version(API_VERSION);
     m_rpc_server = std::make_unique<JsonRpc2Server>();
     m_rpc_server->Add(methods::METHOD_API_HELLO, GetHandle(&methods::Api::hello, m_methods_api), {});
 }
