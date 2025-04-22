@@ -76,7 +76,7 @@ bool Connection::open_connection() {
         EVLOG_error << "Error opening database at " << this->database_file_path << ": " << sqlite3_errmsg(db);
         return false;
     }
-    EVLOG_info << "Established connection to database: " << this->database_file_path;
+    EVLOG_debug << "Established connection to database: " << this->database_file_path;
     return true;
 }
 
@@ -105,7 +105,7 @@ bool Connection::close_connection_internal(bool force_close) {
         EVLOG_error << "Error closing database file " << this->database_file_path << ": " << this->get_error_message();
         return false;
     }
-    EVLOG_info << "Successfully closed database: " << this->database_file_path;
+    EVLOG_debug << "Successfully closed database: " << this->database_file_path;
     this->db = nullptr;
     return true;
 }
