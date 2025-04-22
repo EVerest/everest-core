@@ -333,6 +333,10 @@ void ChargePointImpl::init_websocket() {
             this->securityEventNotification(CiString<50>(ocpp::security_events::FAILEDTOAUTHENTICATEATCSMS),
                                             std::nullopt, true);
         }
+        if (reason == ocpp::ConnectionFailedReason::InvalidCSMSCertificate) {
+            this->securityEventNotification(CiString<50>(ocpp::security_events::INVALIDCENTRALSYSTEMCERTIFICATE),
+                                            std::nullopt, true);
+        }
     });
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
@@ -2943,7 +2947,10 @@ void ChargePointImpl::securityEventNotification(const CiString<50>& event_type,
         critical_security_event = utils::is_critical(event_type);
     }
 
-    if (critical_security_event and !this->configuration->getDisableSecurityEventNotifications()) {
+    bool send_event =
+        (critical_security_event || event_type == CiString<50>(ocpp::security_events::INVALIDCENTRALSYSTEMCERTIFICATE));
+
+    if (send_event and !this->configuration->getDisableSecurityEventNotifications()) {
         ocpp::Call<SecurityEventNotificationRequest> call(req);
         this->message_dispatcher->dispatch_call(call);
     }
