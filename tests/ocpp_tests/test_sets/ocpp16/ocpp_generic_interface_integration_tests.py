@@ -299,7 +299,7 @@ class TestOCPP16GenericInterfaceIntegration:
 
         assert (
             len(_env.csms_mock.on_security_event_notification.mock_calls) == 3
-        )  # we expect 3 because of the StartupOfTheDevice
+        )  # we expect 3 because of the StartupOfTheDevice, SecurityLogWasCleared, StringTooLong
 
     @pytest.mark.ocpp_config_adaptions(
         GenericOCPP16ConfigAdjustment(
