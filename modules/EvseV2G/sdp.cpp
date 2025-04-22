@@ -138,9 +138,15 @@ int sdp_send_response(int sdp_socket, struct sdp_query* sdp_query) {
         return 1;
     }
 
+    using state_t = tls::Server::state_t;
+    const auto tls_server_state = sdp_query->v2g_ctx->tls_server->state();
+
+    const auto tls_server_available =
+        (tls_server_state == state_t::init_complete or tls_server_state == state_t::running);
+
     switch (sdp_query->security_requested) {
     case SDP_SECURITY_TLS:
-        if (sdp_query->v2g_ctx->local_tls_addr) {
+        if (sdp_query->v2g_ctx->local_tls_addr and tls_server_available) {
             dlog(DLOG_LEVEL_INFO, "SDP requested TLS, announcing TLS");
             sdp_create_response(buffer, sdp_query->v2g_ctx->local_tls_addr, SDP_SECURITY_TLS,
                                 SDP_TRANSPORT_PROTOCOL_TCP);
@@ -162,7 +168,7 @@ int sdp_send_response(int sdp_socket, struct sdp_query* sdp_query) {
                                 SDP_TRANSPORT_PROTOCOL_TCP);
             break;
         }
-        if (sdp_query->v2g_ctx->local_tls_addr) {
+        if (sdp_query->v2g_ctx->local_tls_addr and tls_server_available) {
             dlog(DLOG_LEVEL_INFO, "SDP requested NO-TLS, announcing TLS");
             sdp_create_response(buffer, sdp_query->v2g_ctx->local_tls_addr, SDP_SECURITY_TLS,
                                 SDP_TRANSPORT_PROTOCOL_TCP);

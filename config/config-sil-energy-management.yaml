@@ -66,11 +66,11 @@ active_modules:
         - module_id: yeti_driver_2
           implementation_id: powermeter
   yeti_driver_1:
-    module: JsYetiSimulator
+    module: YetiSimulator
     config_module:
       connector_id: 1
   yeti_driver_2:
-    module: JsYetiSimulator
+    module: YetiSimulator
     config_module:
       connector_id: 2
   slac:

@@ -67,20 +67,6 @@ void populate_physical_value_float(struct iso2_PhysicalValueType* pv, float valu
     pv->Value = value;
 }
 
-void setMinPhysicalValue(struct iso2_PhysicalValueType* ADstPhyValue, const struct iso2_PhysicalValueType* ASrcPhyValue,
-                         unsigned int* AIsUsed) {
-
-    if (((NULL != AIsUsed) && (0 == *AIsUsed)) || ((pow(10, ASrcPhyValue->Multiplier) * ASrcPhyValue->Value) <
-                                                   (pow(10, ADstPhyValue->Multiplier) * ADstPhyValue->Value))) {
-        ADstPhyValue->Multiplier = ASrcPhyValue->Multiplier;
-        ADstPhyValue->Value = ASrcPhyValue->Value;
-
-        if (NULL != AIsUsed) {
-            *AIsUsed = 1;
-        }
-    }
-}
-
 static void* v2g_ctx_eventloop(void* data) {
     struct v2g_context* ctx = static_cast<struct v2g_context*>(data);
 
@@ -132,12 +118,6 @@ void v2g_ctx_init_charging_state(struct v2g_context* const ctx, bool is_connecti
     ctx->selected_protocol = V2G_UNKNOWN_PROTOCOL;
     ctx->session.renegotiation_required = false;
     ctx->session.is_charging = false;
-
-    /* Reset timer */
-    if (ctx->com_setup_timeout != NULL) {
-        event_free(ctx->com_setup_timeout);
-        ctx->com_setup_timeout = NULL;
-    }
 }
 
 void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
@@ -327,9 +307,6 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
     ctx->sdp_socket = -1;
     ctx->tcp_socket = -1;
     ctx->tls_socket.fd = -1;
-#ifdef EVEREST_MBED_TLS
-    memset(&ctx->tls_log_ctx, 0, sizeof(keylogDebugCtx));
-#endif // EVEREST_MBED_TLS
     ctx->tls_key_logging = false;
     ctx->debugMode = false;
 
@@ -349,8 +326,6 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
     if (v2g_ctx_start_events(ctx) != 0)
         goto free_out;
 
-    ctx->com_setup_timeout = NULL;
-
     ctx->hlc_pause_active = false;
 
     return ctx;
@@ -366,30 +341,6 @@ free_out:
     return NULL;
 }
 
-static void v2g_ctx_free_tls(struct v2g_context* ctx) {
-#ifdef EVEREST_MBED_TLS
-    mbedtls_net_free(&ctx->tls_socket);
-
-    for (uint8_t idx = 0; idx < ctx->num_of_tls_crt; idx++) {
-        mbedtls_pk_free(&ctx->evse_tls_crt_key[idx]);
-        mbedtls_x509_crt_free(&ctx->evseTlsCrt[idx]);
-    }
-
-    free(ctx->evseTlsCrt);
-    ctx->evseTlsCrt = NULL;
-    free(ctx->evse_tls_crt_key);
-    ctx->evse_tls_crt_key = NULL;
-
-    mbedtls_x509_crt_free(&ctx->v2g_root_crt);
-    mbedtls_ssl_config_free(&ctx->ssl_config);
-
-    if (NULL != ctx->tls_log_ctx.file) {
-        fclose(ctx->tls_log_ctx.file);
-        memset(&ctx->tls_log_ctx, 0, sizeof(ctx->tls_log_ctx));
-    }
-#endif // EVEREST_MBED_TLS
-}
-
 void v2g_ctx_free(struct v2g_context* ctx) {
     if (ctx->event_base) {
         event_base_loopbreak(ctx->event_base);
@@ -399,25 +350,11 @@ void v2g_ctx_free(struct v2g_context* ctx) {
     pthread_cond_destroy(&ctx->mqtt_cond);
     pthread_mutex_destroy(&ctx->mqtt_lock);
 
-    v2g_ctx_free_tls(ctx);
-
     free(ctx->local_tls_addr);
     ctx->local_tls_addr = NULL;
     free(ctx->local_tcp_addr);
     ctx->local_tcp_addr = NULL;
     free(ctx);
-}
-
-void stop_timer(struct event** event_timer, char const* const timer_name, struct v2g_context* ctx) {
-    pthread_mutex_lock(&ctx->mqtt_lock);
-    if (NULL != *event_timer) {
-        event_free(*event_timer);
-        *event_timer = NULL; // Reset timer pointer
-        if (NULL != timer_name) {
-            dlog(DLOG_LEVEL_TRACE, "%s stopped", (timer_name == NULL) ? "Timer" : timer_name);
-        }
-    }
-    pthread_mutex_unlock(&ctx->mqtt_lock);
 }
 
 void publish_dc_ev_maximum_limits(struct v2g_context* ctx, const float& v2g_dc_ev_max_current_limit,

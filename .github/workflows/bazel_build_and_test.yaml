@@ -1,6 +1,8 @@
 name: Bazel Build
 run-name: ${{ github.actor }} is building with bazel
-on: [pull_request]
+on:
+  pull_request: {}
+  merge_group: {}
 jobs:
   bazel-build-and-test:
     runs-on: ubuntu-22.04

@@ -28,6 +28,7 @@ TxEvent get_tx_event(const ocpp::v2::ReasonEnum reason) {
     case ocpp::v2::ReasonEnum::Local:
     case ocpp::v2::ReasonEnum::MasterPass:
     case ocpp::v2::ReasonEnum::StoppedByEV:
+    case ocpp::v2::ReasonEnum::ReqEnergyTransferRejected:
         return TxEvent::DEAUTHORIZED;
     case ocpp::v2::ReasonEnum::EVDisconnected:
         return TxEvent::EV_DISCONNECTED;
@@ -121,6 +122,8 @@ ocpp::v2::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v2::R
         return ocpp::v2::TriggerReasonEnum::TimeLimitReached;
     case ocpp::v2::ReasonEnum::Timeout:
         return ocpp::v2::TriggerReasonEnum::EVConnectTimeout;
+    case ocpp::v2::ReasonEnum::ReqEnergyTransferRejected:
+        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     default:
         return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     }
@@ -277,10 +280,12 @@ void OCPP201::init() {
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
 
+    source_ext_limit = info.id + "/OCPP_set_external_limits";
+
     // ensure all evse_energy_sink(s) that are connected have an evse id mapping
     for (const auto& evse_sink : this->r_evse_energy_sink) {
         if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+            EVLOG_critical << "Please configure an evse mapping in your configuration file for the connected "
                               "r_evse_energy_sink with module_id: "
                            << evse_sink->module_id;
             throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
@@ -449,8 +454,8 @@ void OCPP201::ready() {
         return conversions::to_ocpp_get_log_response(response);
     };
 
-    callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<36> idToken,
-                                                         const std::optional<ocpp::CiString<36>> groupIdToken) {
+    callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<255> idToken,
+                                                         const std::optional<ocpp::CiString<255>> groupIdToken) {
         if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
             return ocpp::ReservationCheckStatus::NotReserved;
         }
@@ -646,15 +651,14 @@ void OCPP201::ready() {
 
     callbacks.connection_state_changed_callback =
         [this](const bool is_connected, const int /*configuration_slot*/,
-               const ocpp::v2::NetworkConnectionProfile& /*network_connection_profile*/) {
-            this->p_ocpp_generic->publish_is_connected(is_connected);
-        };
+               const ocpp::v2::NetworkConnectionProfile& /*network_connection_profile*/,
+               const auto) { this->p_ocpp_generic->publish_is_connected(is_connected); };
 
     callbacks.security_event_callback = [this](const ocpp::CiString<50>& event_type,
                                                const std::optional<ocpp::CiString<255>>& tech_info) {
         types::ocpp::SecurityEvent event;
         event.type = event_type.get();
-        EVLOG_info << "Security Event in OCPP occured: " << event.type;
+        EVLOG_info << "Security Event in OCPP occurred: " << event.type;
         if (tech_info.has_value()) {
             event.info = tech_info.value().get();
         }
@@ -695,7 +699,8 @@ void OCPP201::ready() {
             reservation.parent_id_token = request.groupIdToken.value().idToken;
         }
         if (request.connectorType.has_value()) {
-            reservation.connector_type = conversions::to_everest_connector_type_enum(request.connectorType.value());
+            reservation.connector_type =
+                types::evse_manager::string_to_connector_type_enum(request.connectorType.value());
         }
 
         types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(reservation);
@@ -865,6 +870,24 @@ void OCPP201::ready() {
 
                 this->r_extensions_15118.at(extensions_id)->call_set_get_certificate_response(everest_response);
             });
+
+        extension->subscribe_charging_needs([this,
+                                             extensions_id](const types::iso15118::ChargingNeeds& charging_needs) {
+            const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
+            if (mapping.has_value()) {
+                try {
+                    auto charge_needs = conversions::to_ocpp_notify_ev_charging_needs_request(charging_needs);
+                    charge_needs.evseId = mapping.value().evse;
+
+                    this->charge_point->on_ev_charging_needs(charge_needs);
+                } catch (const std::out_of_range& e) {
+                    EVLOG_warning << "Could not convert iso15118 ChargingNeeds to OCPP NotifyEVChargingNeedsRequest: "
+                                  << e.what();
+                }
+            } else {
+                EVLOG_warning << "ISO15118 Extension interface mapping not set! Not sending 'ChargingNeeds'!";
+            }
+        });
 
         extensions_id++;
     }
@@ -1316,12 +1339,16 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (composite_schedule.chargingRateUnit == ocpp::v2::ChargingRateUnitEnum::A) {
-                limits_req.ac_max_current_A = period.limit;
+                if (period.limit.has_value()) {
+                    limits_req.ac_max_current_A = {period.limit.value(), source_ext_limit};
+                }
                 if (period.numberPhases.has_value()) {
-                    limits_req.ac_max_phase_count = period.numberPhases.value();
+                    limits_req.ac_max_phase_count = {period.numberPhases.value(), source_ext_limit};
                 }
             } else {
-                limits_req.total_power_W = period.limit;
+                if (period.limit.has_value()) {
+                    limits_req.total_power_W = {period.limit.value(), source_ext_limit};
+                }
             }
             schedule_req_entry.limits_to_leaves = limits_req;
             schedule_import.push_back(schedule_req_entry);

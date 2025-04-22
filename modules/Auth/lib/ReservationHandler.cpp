@@ -32,7 +32,7 @@ ReservationHandler::~ReservationHandler() {
 void ReservationHandler::load_reservations() {
     std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     if (this->store == nullptr) {
-        EVLOG_info << "Can not load reservations because the store is a nullptr.";
+        EVLOG_warning << "Can not load reservations because no storage was configured.";
         return;
     }
 

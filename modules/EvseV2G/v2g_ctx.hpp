@@ -56,16 +56,6 @@ void populate_physical_value_float(struct iso2_PhysicalValueType* pv, float valu
                                    iso2_unitSymbolType unit);
 
 /*!
- * \brief setMinPhysicalValue This function sets the minimum value of ASrcPhyValue and ADstPhyValue in ADstPhyValue.
- * \param ADstPhyValue is the destination value, where the minimum value will be stored.
- * \param ASrcPhyValue is the source value, which will be compared with the ADstPhyValue value.
- * \param AIsUsed If AIsUsed is \c 0 ASrcPhyValue will be used to initialize ADstPhyValue and AIsUsed will be set to
- * \c 1. Can be set to \c NULL
- */
-void setMinPhysicalValue(struct iso2_PhysicalValueType* ADstPhyValue, const struct iso2_PhysicalValueType* ASrcPhyValue,
-                         unsigned int* AIsUsed);
-
-/*!
  * \brief v2g_ctx_init_charging_state This function inits the charging state. This should be called afer a terminated
  * charging session.
  * \param ctx is a pointer of type \c v2g_context. It holds the charging values.
@@ -85,14 +75,6 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx);
  * \param ctx
  */
 void v2g_ctx_free(struct v2g_context* ctx);
-
-/*!
- * \brief stop_timer This function stops a event timer. Note: mqtt_lock mutex must be unclocked before
- *  calling of this function.
- * \param event_timer is the event timer.
- * \param timer_name is the name of the event timer.
- */
-void stop_timer(struct event** event_timer, char const* const timer_name, struct v2g_context* ctx);
 
 /*!
  * \brief publish_dc_ev_maximum_limits This function publishes the dc_ev_maximum_limits

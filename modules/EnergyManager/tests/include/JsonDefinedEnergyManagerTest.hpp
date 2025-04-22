@@ -27,13 +27,13 @@ public:
 
 protected:
     void load_test(const std::filesystem::path& path);
-    void run_test(date::utc_clock::time_point _start_time);
+    void run_test(std::vector<date::utc_clock::time_point> _start_times);
 
     std::unique_ptr<EnergyManagerImpl> impl;
-    date::utc_clock::time_point start_time;
+    std::vector<date::utc_clock::time_point> start_times;
     EnergyManagerConfig config;
     types::energy::EnergyFlowRequest request;
-    std::vector<types::energy::EnforcedLimits> expected_result;
+    std::vector<std::vector<types::energy::EnforcedLimits>> expected_results;
 
 private:
     std::string comment;

@@ -245,6 +245,10 @@ void EvseManager::ready() {
         // Ask HLC to stop charging session
         charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });
 
+        // Charger needs to inform ISO stack about emergency stop
+        charger->signal_hlc_error.connect(
+            [this](types::iso15118::EvseError error) { r_hlc[0]->call_send_error(error); });
+
         auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
@@ -894,7 +898,8 @@ void EvseManager::ready() {
                        config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
                        config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A,
                        config.switch_3ph1ph_delay_s, config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms,
-                       config.state_F_after_fault_ms, config.fail_on_powermeter_errors, config.raise_mrec9);
+                       config.state_F_after_fault_ms, config.fail_on_powermeter_errors, config.raise_mrec9,
+                       config.sleep_before_enabling_pwm_hlc_mode_ms);
     }
 
     telemetryThreadHandle = std::thread([this]() {
@@ -1034,13 +1039,7 @@ void EvseManager::ready_to_start_charging() {
 
     // this will publish a session event Enabled or Disabled that allows other modules the retrieve this state on
     // startup
-    if (this->charger->get_current_state() == Charger::EvseState::Disabled) {
-        charger->enable_disable(
-            0, {types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Disable, 10000});
-    } else {
-        charger->enable_disable(
-            0, {types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Enable, 10000});
-    }
+    charger->enable_disable_initial_state_publish();
 
     this->p_evse->publish_ready(true);
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
@@ -1081,7 +1080,7 @@ void EvseManager::setup_fake_DC_mode() {
                    config.ac_enforce_hlc, false, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
-                   config.fail_on_powermeter_errors, config.raise_mrec9);
+                   config.fail_on_powermeter_errors, config.raise_mrec9, config.sleep_before_enabling_pwm_hlc_mode_ms);
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1121,7 +1120,7 @@ void EvseManager::setup_AC_mode() {
                    config.ac_enforce_hlc, true, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
-                   config.fail_on_powermeter_errors, config.raise_mrec9);
+                   config.fail_on_powermeter_errors, config.raise_mrec9, config.sleep_before_enabling_pwm_hlc_mode_ms);
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1177,14 +1176,15 @@ void EvseManager::setup_v2h_mode() {
     types::energy::ExternalLimits external_limits;
     types::energy::ScheduleReqEntry target_entry;
     target_entry.timestamp = timestamp;
-    target_entry.limits_to_leaves.total_power_W = powersupply_capabilities.max_import_power_W.value();
+    target_entry.limits_to_leaves.total_power_W = {powersupply_capabilities.max_import_power_W.value_or(0.),
+                                                   info.id + "/setup_v2h_mode"};
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = 0;
+    zero_entry.limits_to_leaves.total_power_W = {0};
 
-    external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
-    external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+    external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+    external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
 
     update_local_energy_limit(external_limits);
 }
@@ -1215,14 +1215,14 @@ bool EvseManager::update_max_watt_limit(types::energy::ExternalLimits& limits, f
     types::energy::ScheduleReqEntry e;
     e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     if (max_watt >= 0) {
-        e.limits_to_leaves.total_power_W = max_watt;
+        e.limits_to_leaves.total_power_W = {max_watt, info.id + "update_max_watt_limit"};
         limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.total_power_W = 0;
+        e.limits_to_leaves.total_power_W = {0, info.id + "update_max_watt_limit"};
         limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
     } else {
-        e.limits_to_leaves.total_power_W = -max_watt;
+        e.limits_to_leaves.total_power_W = {-max_watt, info.id + "update_max_watt_limit"};
         limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.total_power_W = 0;
+        e.limits_to_leaves.total_power_W = {0, info.id + "update_max_watt_limit"};
         limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
     }
     return true;
@@ -1238,14 +1238,14 @@ bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits
     e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
     if (max_current >= 0) {
-        e.limits_to_leaves.ac_max_current_A = max_current;
+        e.limits_to_leaves.ac_max_current_A = {max_current, info.id + "update_max_current_limit"};
         limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.ac_max_current_A = 0;
+        e.limits_to_leaves.ac_max_current_A = {0, info.id + "update_max_current_limit"};
         limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
     } else {
-        e.limits_to_leaves.ac_max_current_A = -max_current;
+        e.limits_to_leaves.ac_max_current_A = {-max_current, info.id + "update_max_current_limit"};
         limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.ac_max_current_A = 0;
+        e.limits_to_leaves.ac_max_current_A = {0, info.id + "update_max_current_limit"};
         limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
     }
 
@@ -1865,8 +1865,7 @@ types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
     std::scoped_lock lock(external_local_limits_mutex);
 
     // external limits are empty
-    if (not external_local_energy_limits.schedule_import.has_value() and
-        not external_local_energy_limits.schedule_export.has_value()) {
+    if (external_local_energy_limits.schedule_import.empty() and external_local_energy_limits.schedule_export.empty()) {
         if (config.charge_mode == "AC") {
             // by default we import energy
             update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import);
