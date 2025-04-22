@@ -78,25 +78,34 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
 
 types::authorization::ValidationResult
 auth_token_validatorImpl::validate_standard_request(const types::authorization::ProvidedIdToken& provided_token) {
-    const auto id_tag_info = mod->charge_point->authorize_id_token(ocpp::CiString<20>(provided_token.id_token.value));
     types::authorization::ValidationResult result;
+    try {
+        const auto id_tag_info =
+            mod->charge_point->authorize_id_token(ocpp::CiString<20>(provided_token.id_token.value));
+        result.authorization_status = conversions::to_everest_authorization_status(id_tag_info.status);
+        if (id_tag_info.expiryDate) {
+            result.expiry_time = id_tag_info.expiryDate->to_rfc3339();
+        }
+        if (id_tag_info.parentIdTag) {
+            result.parent_id_token = {
+                id_tag_info.parentIdTag->get(),
+                types::authorization::IdTokenType::Central}; // For OCPP1.6 no IdTokenType is given,
+                                                             // so we assume it is a central token
+        }
 
-    result.authorization_status = conversions::to_everest_authorization_status(id_tag_info.status);
-    if (id_tag_info.expiryDate) {
-        result.expiry_time = id_tag_info.expiryDate->to_rfc3339();
+        result.reason = types::authorization::TokenValidationStatusMessage();
+        result.reason->messages = std::vector<types::text_message::MessageContent>();
+        types::text_message::MessageContent content;
+        content.content = "Validation by OCPP 1.6 Central System";
+        result.reason->messages->push_back(content);
+
+    } catch (const ocpp::StringConversionException& e) {
+        EVLOG_warning << "Error converting id token to validate: " << e.what();
+        result.authorization_status = types::authorization::AuthorizationStatus::Unknown;
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Unknown error during validation of id token: " << e.what();
+        result.authorization_status = types::authorization::AuthorizationStatus::Unknown;
     }
-    if (id_tag_info.parentIdTag) {
-        result.parent_id_token = {id_tag_info.parentIdTag->get(),
-                                  types::authorization::IdTokenType::Central}; // For OCPP1.6 no IdTokenType is given,
-                                                                               // so we assume it is a central token
-    }
-
-    result.reason = types::authorization::TokenValidationStatusMessage();
-    result.reason->messages = std::vector<types::text_message::MessageContent>();
-    types::text_message::MessageContent content;
-    content.content = "Validation by OCPP 1.6 Central System";
-    result.reason->messages->push_back(content);
-
     return result;
 };
 
