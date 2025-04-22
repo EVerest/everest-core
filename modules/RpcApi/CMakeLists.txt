@@ -10,6 +10,10 @@ ev_setup_cpp_module()
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
 
+target_compile_definitions(${MODULE_NAME} PRIVATE
+    API_VERSION=\"0.0.1\"
+)
+
 target_compile_features(${MODULE_NAME} PRIVATE cxx_std_17)
 set_target_properties(${MODULE_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 
@@ -36,6 +40,7 @@ target_compile_options(${MODULE_NAME}
     PRIVATE
         -Wimplicit-fallthrough
 #        -Werror=switch-enum
+#        -DAPI_VERSION=\"0.0.1\"
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
