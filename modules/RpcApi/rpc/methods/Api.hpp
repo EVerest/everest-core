@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
 
+#ifndef API_HPP
+#define API_HPP
+
 #include <vector>
+#include <optional>
 
 #include "../../data/DataStore.hpp"
 
@@ -78,3 +82,5 @@ private:
 };
 
 } // namespace rpc_methods
+
+#endif // API_HPP
