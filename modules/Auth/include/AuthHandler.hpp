@@ -27,14 +27,6 @@ using namespace types::reservation;
 namespace types {
 namespace authorization {
 
-inline bool operator==(const IdToken& lhs, const IdToken& rhs) {
-    return lhs.value == rhs.value and lhs.type == rhs.type;
-}
-
-inline bool operator==(const ProvidedIdToken& lhs, const ProvidedIdToken& rhs) {
-    return lhs.id_token == rhs.id_token;
-}
-
 inline bool operator<(const IdToken& lhs, const IdToken& rhs) {
     return lhs.value < rhs.value;
 }
