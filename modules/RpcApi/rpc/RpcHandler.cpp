@@ -85,11 +85,11 @@ void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterfa
     // Launch a detached thread to wait for the client hello message
     std::thread([this, client_id, transport_interface]() {
         std::unique_lock<std::mutex> lock(m_mtx);
-        if (m_cv_client_hello.wait_for(lock, CLIENT_HELLO_TIMEOUT, [this, client_id] {
-            return m_client_hello_received.find(client_id) != m_client_hello_received.end();
+        if (m_cv_api_hello.wait_for(lock, CLIENT_HELLO_TIMEOUT, [this, client_id] {
+            return m_api_hello_received.find(client_id) != m_api_hello_received.end();
         })) {
             // Client sent hello
-            m_client_hello_received.erase(client_id);
+            m_api_hello_received.erase(client_id);
         } else {
             // Client did not send hello, close connection
             if (transport_interface) {
@@ -106,7 +106,7 @@ void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterfa
 void RpcHandler::client_disconnected(const std::shared_ptr<server::TransportInterface> &transport_interface, const server::TransportInterface::ClientId &client_id) {
     if (transport_interface) {
         std::lock_guard<std::mutex> lock(m_mtx);
-        m_client_hello_received.erase(client_id);
+        m_api_hello_received.erase(client_id);
     } else {
         // Log the error instead of throwing an exception in a detached thread
         // to avoid undefined behavior.
@@ -191,9 +191,9 @@ void RpcHandler::process_client_requests() {
                     all_requests_processed = false;
                 }
 
-                if (is_client_hello_req(client_id, request)) {
+                if (is_api_hello_req(client_id, request)) {
                     // Notify condition variable to unblock the waiting thread
-                    m_cv_client_hello.notify_all();
+                    m_cv_api_hello.notify_all();
                     EVLOG_info << "API.Hello request received from client " << client_id;
                 }
 
@@ -226,7 +226,7 @@ void RpcHandler::stop_server() {
     m_is_running = false;
     // Notify all threads to stop
     m_cv_data_available.notify_all();
-    m_cv_client_hello.notify_all();
+    m_cv_api_hello.notify_all();
 
     for (const auto& transport_interface : m_transport_interfaces) {
         if (!transport_interface->stop_server()) {
