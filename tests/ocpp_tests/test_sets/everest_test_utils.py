@@ -401,7 +401,7 @@ def get_everest_config(function_name, module_name):
         )
 
 
-def test_config(request):
+def load_test_config() -> OcppTestConfiguration:
     data = json.loads((Path(__file__).parent / "test_config.json").read_text())
 
     ocpp_test_config = OcppTestConfiguration(
