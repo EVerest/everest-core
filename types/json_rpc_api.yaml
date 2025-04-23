@@ -465,73 +465,78 @@ types:
     additionalProperties: false
     required:
       - energy_Wh_import
-      - meter_id
       - timestamp
     properties:
       current_A:
+        description: Current in Ampere
         type: object
         additionalProperties: false
-        required:
-          - L1
-          - L2
-          - L3
-          - N
         properties:
           L1:
+            description: AC L1 value only
             type: number
           L2:
+            description: AC L2 value only
             type: number
           L3:
+            description: AC L3 value only
             type: number
           N:
+            description: AC Neutral value only
             type: number
       energy_Wh_import:
+        description: Imported energy in Wh (from grid)
         type: object
         additionalProperties: false
         required:
-          - L1
-          - L2
-          - L3
           - total
         properties:
           L1:
+            description: AC L1 value only
             type: number
           L2:
+            description: AC L2 value only
             type: number
           L3:
+            description: AC L3 value only
             type: number
           total:
+            description: DC / AC Sum value (which is relevant for billing)
             type: number
       energy_Wh_export:
+        description: Exported energy in Wh (to grid)
         type: object
         additionalProperties: false
         required:
-          - L1
-          - L2
-          - L3
           - total
         properties:
           L1:
+            description: AC L1 value only
             type: number
           L2:
+            description: AC L2 value only
             type: number
           L3:
+            description: AC L3 value only
             type: number
           total:
+            description: DC / AC Sum value (which is relevant for billing)
             type: number
       frequency_Hz:
+        description: Grid frequency in Hertz
         type: object
         additionalProperties: false
         required:
           - L1
-          - L2
-          - L3
         properties:
           L1:
+            description: AC L1 value
             type: number
           L2:
+            description: AC L2 value
             type: number
           L3:
+            description: AC L3 value
             type: number
       meter_id:
         type: string
@@ -540,37 +545,41 @@ types:
       phase_seq_error:
         type: boolean
       power_W:
+        description:
+          Instantaneous power in Watt. Negative values are exported, positive
+          values imported energy.
         type: object
         additionalProperties: false
         required:
-          - L1
-          - L2
-          - L3
           - total
         properties:
           L1:
+            description: AC L1 value only
             type: number
           L2:
+            description: AC L2 value only
             type: number
           L3:
+            description: AC L3 value only
             type: number
           total:
+            description: DC / AC Sum value
             type: number
       timestamp:
         type: number
       voltage_V:
+        description: Voltage in Volts
         type: object
         additionalProperties: false
-        required:
-          - L1
-          - L2
-          - L3
         properties:
           L1:
+            description: AC L1 value only
             type: number
           L2:
+            description: AC L2 value only
             type: number
           L3:
+            description: AC L3 value only
             type: number
 
   # response types
