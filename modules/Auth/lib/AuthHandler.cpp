@@ -279,8 +279,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     - compare referenced_evses against the evses listed in the validation_result
                 */
                 int evse_id = this->select_evse(referenced_evses, lk); // might block
-                EVLOG_debug << "Selected evse#" << evse_id
-                            << " for token: " << provided_token.id_token.value;
+                EVLOG_debug << "Selected evse#" << evse_id << " for token: " << provided_token.id_token.value;
                 if (evse_id != -1) { // indicates timeout of evse selection
                     std::optional<std::string> parent_id_token;
                     if (validation_result.parent_id_token.has_value()) {
