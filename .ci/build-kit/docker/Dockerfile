@@ -25,3 +25,14 @@ RUN go version
 RUN pip install --break-system-packages \
     grpcio \
     grpcio-tools
+
+ENV GRPC_VERSION=v1.71.0
+ENV GRPC_EXTENDED_CPP_PLUGIN_VERSION=main
+RUN tmpdir=$(mktemp -d) \
+    && cd $tmpdir \
+    && git clone --depth 1 --recurse-submodules --shallow-submodules --branch ${GRPC_VERSION} https://github.com/grpc/grpc.git \
+    && git clone --branch ${GRPC_EXTENDED_CPP_PLUGIN_VERSION} https://github.com/EVerest/grpc-extended-cpp-plugin.git \
+    && cmake -B build -S grpc-extended-cpp-plugin -G Ninja -D gRPC_INSTALL=ON \
+    && cmake --build build \
+    && cmake --install build \
+    && rm -rf $tmpdir
