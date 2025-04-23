@@ -447,14 +447,4 @@ protected:
 
 } // namespace module
 
-namespace types::evse_manager {
-constexpr bool operator==(const EnableDisableSource& lhs, const EnableDisableSource& rhs) {
-    return lhs.enable_source == rhs.enable_source && lhs.enable_state == rhs.enable_state &&
-           lhs.enable_priority == rhs.enable_priority;
-}
-constexpr bool operator!=(const EnableDisableSource& lhs, const EnableDisableSource& rhs) {
-    return !operator==(lhs, rhs);
-}
-} // namespace types::evse_manager
-
 #endif // SRC_EVDRIVERS_CHARGER_H_

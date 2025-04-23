@@ -64,7 +64,9 @@ from everest.testing.ocpp_utils.charge_point_utils import (
 
 from ocpp.charge_point import snake_to_camel_case, asdict, remove_nones
 from ocpp.v16 import call, call_result
+from ocpp.v201 import call as call201
 from ocpp.v16.enums import Action, DataTransferStatus
+from ocpp.v201.enums import Action as Action201
 from ocpp.routing import on
 
 # for OCPP1.6 PnC whitepaper:
@@ -357,6 +359,20 @@ def on_data_transfer_reject_authorize(**kwargs):
     return on_data_transfer(accept_pnc_authorize=False, **kwargs)
 
 
+@on(Action201.Get15118EVCertificate)
+def on_get_15118_ev_certificate(**kwargs):
+    certs_path: str = Path(__file__).parent.resolve() / "everest-aux/certs/"
+    generator: EXIGenerator = EXIGenerator(certs_path)
+    payload = call201.Get15118EVCertificatePayload(**kwargs)
+
+    return call_result201.Get15118EVCertificatePayload(
+        status=GenericStatusType.accepted,
+        exi_response=generator.generate_certificate_installation_res(
+            payload.exi_request, payload.iso15118_schema_version
+        ),
+    )
+
+
 def get_everest_config_path_str(config_name):
     return (Path(__file__).parent / "everest-aux" / "config" / config_name).as_posix()
 
@@ -385,7 +401,7 @@ def get_everest_config(function_name, module_name):
         )
 
 
-def test_config(request):
+def load_test_config() -> OcppTestConfiguration:
     data = json.loads((Path(__file__).parent / "test_config.json").read_text())
 
     ocpp_test_config = OcppTestConfiguration(

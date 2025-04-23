@@ -24,7 +24,7 @@ ev_define_dependency(
 
 ev_define_dependency(
     DEPENDENCY_NAME libcurl
-    DEPENDENT_MODULES_LIST LemDCBM400600)
+    DEPENDENT_MODULES_LIST LemDCBM400600 IsabellenhuetteIemDcr)
 
 ev_define_dependency(
     DEPENDENCY_NAME libocpp

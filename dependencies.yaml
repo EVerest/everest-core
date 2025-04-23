@@ -54,11 +54,12 @@ libiso15118:
   git_tag: v0.5.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
-# LEM DCBM 400/600 module
+# LEM DCBM 400/600, IsabellenhuetteIemDcr modules
 libcurl:
   git: https://github.com/curl/curl.git
-  git_tag: curl-8_4_0
+  git_tag: curl-8_13_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
+  options: ["CURL_USE_LIBPSL OFF"]
 
 # EvseSecurity
 # This has to appear before libocpp in this file since it is also a direct dependency
@@ -71,7 +72,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: a43df192cd0712cf71e921058021f9a78ccdabcd
+  git_tag: v0.26.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -81,7 +82,7 @@ Josev:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.5.1
+  git_tag: v0.5.2
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git

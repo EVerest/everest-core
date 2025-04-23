@@ -25,6 +25,9 @@ const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
 const std::string INOPERATIVE_ERROR_TYPE = "evse_manager/Inoperative";
 const std::string SWITCHING_PHASES_REASON = "SwitchingPhases";
+const ocpp::CiString<50> CONNECTION_TIMEOUT_CONFIG_KEY = "ConnectionTimeout";
+const ocpp::CiString<50> ISO15118_PNC_ENABLED_CONFIG_KEY = "ISO15118PnCEnabled";
+const ocpp::CiString<50> CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY = "CentralContractValidationAllowed";
 
 namespace fs = std::filesystem;
 
@@ -222,7 +225,9 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         }
         std::optional<ocpp::CiString<20>> id_tag_opt = std::nullopt;
         if (transaction_finished.id_tag.has_value()) {
-            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token.value));
+            // we truncate potentially too large tokens
+            id_tag_opt.emplace(
+                ocpp::CiString<20>(transaction_finished.id_tag.value().id_token.value, ocpp::StringTooLarge::Truncate));
         }
         std::optional<std::string> signed_meter_data;
         if (signed_meter_value.has_value()) {
@@ -359,6 +364,52 @@ void OCPP::init_evse_maps() {
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->evse_ready_map[evse_id] = false;
         this->evse_soc_map[evse_id] = std::nullopt;
+    }
+}
+
+void OCPP::init_module_configuration() {
+    std::vector<ocpp::CiString<50>> keys;
+    ocpp::v16::GetConfigurationRequest req;
+    keys.push_back(CONNECTION_TIMEOUT_CONFIG_KEY);
+    keys.push_back(ISO15118_PNC_ENABLED_CONFIG_KEY);
+    keys.push_back(CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY);
+    req.key = keys;
+    const auto res = this->charge_point->get_configuration_key(req);
+
+    if (!res.configurationKey.has_value()) {
+        return;
+    }
+
+    for (const auto kv : res.configurationKey.value()) {
+        this->handle_config_key(kv);
+    }
+}
+
+void OCPP::handle_config_key(const ocpp::v16::KeyValue& kv) {
+    if (!kv.value.has_value()) {
+        return;
+    }
+
+    const auto set_pnc_config = [this](const types::evse_manager::PlugAndChargeConfiguration& pnc_config) {
+        for (const auto& evse_manager : this->r_evse_manager) {
+            evse_manager->call_set_plug_and_charge_configuration(pnc_config);
+        }
+    };
+
+    if (kv.key == CONNECTION_TIMEOUT_CONFIG_KEY and kv.value.has_value()) {
+        try {
+            this->r_auth->call_set_connection_timeout(std::stoi(kv.value.value().get()));
+        } catch (...) {
+            EVLOG_warning << "Could not set ConnectionTimeout";
+        }
+    } else if (kv.key == ISO15118_PNC_ENABLED_CONFIG_KEY and kv.value.has_value()) {
+        types::evse_manager::PlugAndChargeConfiguration pnc_config;
+        pnc_config.pnc_enabled = ocpp::conversions::string_to_bool(kv.value.value());
+        set_pnc_config(pnc_config);
+    } else if (kv.key == CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY and kv.value.has_value()) {
+        types::evse_manager::PlugAndChargeConfiguration pnc_config;
+        pnc_config.central_contract_validation_allowed = ocpp::conversions::string_to_bool(kv.value.value());
+        set_pnc_config(pnc_config);
     }
 }
 
@@ -603,7 +654,11 @@ void OCPP::ready() {
         const auto upload_logs_response = this->r_system->call_upload_logs(upload_logs_request);
         ocpp::v16::GetLogResponse response;
         if (upload_logs_response.file_name.has_value()) {
-            response.filename.emplace(ocpp::CiString<255>(upload_logs_response.file_name.value()));
+            // we just truncate here since the upload operation could have already been started by the system module and
+            // we cant do much about it, so best we can do is truncate the filename and rather make sure in the system
+            // module that shorter filenames are used
+            response.filename.emplace(
+                ocpp::CiString<255>(upload_logs_response.file_name.value(), ocpp::StringTooLarge::Truncate));
         }
         response.status = conversions::to_ocpp_log_status_enum_type(upload_logs_response.upload_logs_status);
         return response;
@@ -632,7 +687,11 @@ void OCPP::ready() {
 
         ocpp::v16::GetLogResponse response;
         if (upload_logs_response.file_name.has_value()) {
-            response.filename.emplace(ocpp::CiString<255>(upload_logs_response.file_name.value()));
+            // we just truncate here since the upload operation could have already been started by the system module and
+            // we cant do much about it, so best we can do is truncate the filename and rather make sure in the system
+            // module that shorter filenames are used
+            response.filename.emplace(
+                ocpp::CiString<255>(upload_logs_response.file_name.value(), ocpp::StringTooLarge::Truncate));
         }
         response.status = conversions::to_ocpp_log_status_enum_type(upload_logs_response.upload_logs_status);
         return response;
@@ -701,9 +760,6 @@ void OCPP::ready() {
             provided_token.prevalidated.emplace(prevalidated);
             this->p_auth_provider->publish_provided_token(provided_token);
         });
-
-    this->charge_point->register_set_connection_timeout_callback(
-        [this](int32_t connection_timeout) { this->r_auth->call_set_connection_timeout(connection_timeout); });
 
     this->charge_point->register_disable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
@@ -916,6 +972,11 @@ void OCPP::ready() {
     while (!this->all_evse_ready()) {
         this->evse_ready_cv.wait(lk);
     }
+
+    this->charge_point->register_generic_configuration_key_changed_callback(
+        [this](const ocpp::v16::KeyValue& key_value) { this->handle_config_key(key_value); });
+
+    this->init_module_configuration();
 
     const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
     if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
