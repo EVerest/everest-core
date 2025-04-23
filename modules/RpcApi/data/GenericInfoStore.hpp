@@ -43,12 +43,14 @@ public:
     // set the data object. This method must be overridden if the data object is not a simple type
     // e.g. pointers
     void set_data(const T& in) {
-        this->dataobj = in;
-        this->data_is_valid = true;
-        // call the notification callback if it is set
-        // TODO: check if the data has changed
-        if (this->notification_callback) {
-            this->notification_callback();
+        // check for changes
+        if (in != this->dataobj) {
+            this->dataobj = in;
+            this->data_is_valid = true;
+            // call the notification callback if it is set
+            if (this->notification_callback) {
+                this->notification_callback();
+            }
         }
     };
 
