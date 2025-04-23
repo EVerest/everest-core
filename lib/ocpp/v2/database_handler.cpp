@@ -193,7 +193,8 @@ void DatabaseHandler::authorization_cache_delete_expired_entries(
     DateTime now;
     delete_stmt->bind_int64("@before_date", to_unix_milliseconds(now));
     if (auth_cache_lifetime.has_value()) {
-        delete_stmt->bind_int64("@before_last_used", to_unix_milliseconds(DateTime(now)));
+        delete_stmt->bind_int64("@before_last_used",
+                                to_unix_milliseconds(DateTime(now.to_time_point() - auth_cache_lifetime.value())));
     } else {
         delete_stmt->bind_null("@before_last_used");
     }
