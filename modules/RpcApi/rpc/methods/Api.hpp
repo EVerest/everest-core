@@ -32,11 +32,10 @@ class Api {
     RPCDataTypes::HelloResObj hello() {
         RPCDataTypes::HelloResObj res;
         // check if data is valid
-        if (m_dataobj.chargerinfo.get_data().has_value()) {
-            res.charger_info = m_dataobj.chargerinfo.get_data().value();
-        } else {
+        if (!m_dataobj.chargerinfo.get_data().has_value()) {
             throw std::runtime_error("Data is not valid");
         }
+        res.charger_info = m_dataobj.chargerinfo.get_data().value();
         res.authentication_required = is_authentication_required();
         res.api_version = get_api_version();
         res.everest_version = m_dataobj.everest_version;
