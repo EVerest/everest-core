@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Pionix GmbH and Contributors to EVerest
 
-from datetime import datetime
+from datetime import datetime, timezone
 import pytest
 # fmt: off
 import sys
@@ -351,7 +351,7 @@ async def test_F06(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result201.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=300,
             status=RegistrationStatusType.accepted,
         )
@@ -714,8 +714,8 @@ async def test_F06(
     # Waiting for the log callback to be implemented in the everest core
     # log_param = LogParametersType(
     #     remote_location="ftp://user:12345@localhost:2121",
-    #     oldest_timestamp=(datetime.utcnow() - timedelta(days=1)).isoformat(),
-    #     latest_timestamp=datetime.utcnow().isoformat()
+    #     oldest_timestamp=(datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+    #     latest_timestamp=datetime.now(timezone.utc).isoformat()
     # )
 
     # r: call_result201.TriggerMessagePayload = await charge_point_v201.get_log_req(log=log_param, log_type=LogType.diagnostics_log, request_id=10)
@@ -746,7 +746,7 @@ async def test_F06(
     # Waiting for the update firmware callback to be implemented in the everest core
     # firmware_type = FirmwareType(
     #     location="ftp://user:12345@localhost:2121",
-    #     retrieve_date_time=(datetime.utcnow() + timedelta(seconds=10)).isoformat()
+    #     retrieve_date_time=(datetime.now(timezone.utc) + timedelta(seconds=10)).isoformat()
     # )
 
     # test_utility.validation_mode = ValidationMode.STRICT
