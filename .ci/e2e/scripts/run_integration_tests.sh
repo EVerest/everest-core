@@ -8,7 +8,7 @@ pytest \
   --self-contained-html \
   core_tests/*.py \
   framework_tests/*.py \
-  eebus_tests/eebus_tests.py \
+  eebus_tests/*.py \
   --everest-prefix "$EXT_MOUNT/dist"
 retVal=$?
 
