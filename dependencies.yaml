@@ -120,7 +120,11 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.5.0
+  # FIXME update to latest tag before merging to main
+  # PR https://github.com/EVerest/everest-utils/pull/184
+  # or rely on PR https://github.com/EVerest/everest-core/pull/1138
+  # This points to HEAD of branch feature/types_comparison_operators
+  git_tag: b4e670e5ab136d83e1001ac7caec95d1a4a2410c
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
