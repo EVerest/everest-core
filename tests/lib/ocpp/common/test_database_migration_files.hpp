@@ -4,7 +4,7 @@
 #pragma once
 
 #include "database_testing_utils.hpp"
-#include <ocpp/common/database/database_schema_updater.hpp>
+#include <everest/database/sqlite/schema_updater.hpp>
 
 class DatabaseMigrationFilesTest : public DatabaseTestingUtils,
                                    public ::testing::WithParamInterface<std::tuple<std::filesystem::path, uint32_t>> {

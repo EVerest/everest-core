@@ -3,9 +3,12 @@
 
 #include "device_model_test_helper.hpp"
 
-#include <ocpp/common/database/database_connection.hpp>
+#include <everest/database/sqlite/connection.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
+
+using namespace everest::db;
+using namespace everest::db::sqlite;
 
 namespace ocpp::v2 {
 DeviceModelTestHelper::DeviceModelTestHelper(const std::string& database_path, const std::string& migration_files_path,
@@ -13,7 +16,7 @@ DeviceModelTestHelper::DeviceModelTestHelper(const std::string& database_path, c
     database_path(database_path),
     migration_files_path(migration_files_path),
     config_path(config_path),
-    database_connection(std::make_unique<ocpp::common::DatabaseConnection>(database_path)) {
+    database_connection(std::make_unique<everest::db::sqlite::Connection>(database_path)) {
     this->database_connection->open_connection();
     this->device_model = create_device_model();
 }
@@ -39,9 +42,9 @@ bool DeviceModelTestHelper::remove_variable_from_db(const std::string& component
                                      "AND NAME = ? AND INSTANCE IS ?)";
 
     auto delete_stmt = this->database_connection->new_statement(delete_query);
-    delete_stmt->bind_text(1, component_name, common::SQLiteString::Transient);
+    delete_stmt->bind_text(1, component_name, SQLiteString::Transient);
     if (component_instance.has_value()) {
-        delete_stmt->bind_text(2, component_instance.value(), common::SQLiteString::Transient);
+        delete_stmt->bind_text(2, component_instance.value(), SQLiteString::Transient);
     } else {
         delete_stmt->bind_null(2);
     }
@@ -57,9 +60,9 @@ bool DeviceModelTestHelper::remove_variable_from_db(const std::string& component
         delete_stmt->bind_null(4);
     }
 
-    delete_stmt->bind_text(5, variable_name, common::SQLiteString::Transient);
+    delete_stmt->bind_text(5, variable_name, SQLiteString::Transient);
     if (variable_instance.has_value()) {
-        delete_stmt->bind_text(6, variable_instance.value(), common::SQLiteString::Transient);
+        delete_stmt->bind_text(6, variable_instance.value(), SQLiteString::Transient);
     } else {
         delete_stmt->bind_null(6);
     }
@@ -88,10 +91,10 @@ bool DeviceModelTestHelper::update_variable_characteristics(const VariableCharac
         "EVSE_ID IS @evse_id AND CONNECTOR_ID IS @connector_id) "
         "AND NAME = @variable_name AND INSTANCE IS @variable_instance)";
 
-    std::unique_ptr<common::SQLiteStatementInterface> update_statement;
+    std::unique_ptr<StatementInterface> update_statement;
     try {
         update_statement = this->database_connection->new_statement(update_query);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + update_query);
     }
 
@@ -101,14 +104,13 @@ bool DeviceModelTestHelper::update_variable_characteristics(const VariableCharac
     update_statement->bind_int("@supports_monitoring", supports_monitoring);
 
     if (characteristics.unit.has_value()) {
-        update_statement->bind_text("@unit", characteristics.unit.value(), ocpp::common::SQLiteString::Transient);
+        update_statement->bind_text("@unit", characteristics.unit.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@unit");
     }
 
     if (characteristics.valuesList.has_value()) {
-        update_statement->bind_text("@values_list", characteristics.valuesList.value(),
-                                    ocpp::common::SQLiteString::Transient);
+        update_statement->bind_text("@values_list", characteristics.valuesList.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@values_list");
     }
@@ -125,9 +127,9 @@ bool DeviceModelTestHelper::update_variable_characteristics(const VariableCharac
         update_statement->bind_null("@min_limit");
     }
 
-    update_statement->bind_text("@component_name", component_name, common::SQLiteString::Transient);
+    update_statement->bind_text("@component_name", component_name, SQLiteString::Transient);
     if (component_instance.has_value()) {
-        update_statement->bind_text("@component_instance", component_instance.value(), common::SQLiteString::Transient);
+        update_statement->bind_text("@component_instance", component_instance.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@component_instance");
     }
@@ -143,9 +145,9 @@ bool DeviceModelTestHelper::update_variable_characteristics(const VariableCharac
         update_statement->bind_null("@connector_id");
     }
 
-    update_statement->bind_text("@variable_name", variable_name, common::SQLiteString::Transient);
+    update_statement->bind_text("@variable_name", variable_name, SQLiteString::Transient);
     if (variable_instance.has_value()) {
-        update_statement->bind_text("@variable_instance", variable_instance.value(), common::SQLiteString::Transient);
+        update_statement->bind_text("@variable_instance", variable_instance.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@variable_instance");
     }
@@ -174,9 +176,9 @@ bool DeviceModelTestHelper::set_variable_attribute_value_null(const std::string&
         "AND TYPE_ID=@type_id";
     auto update_statement = this->database_connection->new_statement(update_query);
 
-    update_statement->bind_text("@component_name", component_name, common::SQLiteString::Transient);
+    update_statement->bind_text("@component_name", component_name, SQLiteString::Transient);
     if (component_instance.has_value()) {
-        update_statement->bind_text("@component_instance", component_instance.value(), common::SQLiteString::Transient);
+        update_statement->bind_text("@component_instance", component_instance.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@component_instance");
     }
@@ -192,9 +194,9 @@ bool DeviceModelTestHelper::set_variable_attribute_value_null(const std::string&
         update_statement->bind_null("@connector_id");
     }
 
-    update_statement->bind_text("@variable_name", variable_name, common::SQLiteString::Transient);
+    update_statement->bind_text("@variable_name", variable_name, SQLiteString::Transient);
     if (variable_instance.has_value()) {
-        update_statement->bind_text("@variable_instance", variable_instance.value(), common::SQLiteString::Transient);
+        update_statement->bind_text("@variable_instance", variable_instance.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@variable_instance");
     }

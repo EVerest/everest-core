@@ -16,7 +16,7 @@ INSTANTIATE_TEST_SUITE_P(V2, DatabaseMigrationFilesTestV2,
                                                            MIGRATION_FILE_VERSION_V2)));
 
 TEST_P(DatabaseMigrationFilesTestV2, V2_MigrationFile2_AuthCacheManagement) {
-    DatabaseSchemaUpdater updater{this->database.get()};
+    everest::db::sqlite::SchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 1));
     this->ExpectUserVersion(1);

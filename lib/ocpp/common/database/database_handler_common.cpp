@@ -3,12 +3,15 @@
 
 #include <ocpp/common/database/database_handler_common.hpp>
 
+#include <everest/database/sqlite/schema_updater.hpp>
 #include <everest/logging.hpp>
-#include <ocpp/common/database/database_schema_updater.hpp>
+
+using namespace everest::db;
+using namespace everest::db::sqlite;
 
 namespace ocpp::common {
 
-DatabaseHandlerCommon::DatabaseHandlerCommon(std::unique_ptr<DatabaseConnectionInterface> database,
+DatabaseHandlerCommon::DatabaseHandlerCommon(std::unique_ptr<ConnectionInterface> database,
                                              const fs::path& sql_migration_files_path,
                                              uint32_t target_schema_version) noexcept :
     database(std::move(database)),
@@ -17,14 +20,14 @@ DatabaseHandlerCommon::DatabaseHandlerCommon(std::unique_ptr<DatabaseConnectionI
 }
 
 void DatabaseHandlerCommon::open_connection() {
-    DatabaseSchemaUpdater updater{this->database.get()};
+    SchemaUpdater updater{this->database.get()};
 
     if (!updater.apply_migration_files(this->sql_migration_files_path, target_schema_version)) {
-        throw DatabaseMigrationException("SQL migration failed");
+        throw MigrationException("SQL migration failed");
     }
 
     if (!this->database->open_connection()) {
-        throw DatabaseConnectionException("Could not open database at provided path.");
+        throw ConnectionException("Could not open database at provided path.");
     }
 
     this->init_sql();

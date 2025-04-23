@@ -14,6 +14,9 @@
 const static std::string STANDARDIZED_COMPONENT_CONFIG_DIR = "standardized";
 const static std::string CUSTOM_COMPONENT_CONFIG_DIR = "custom";
 
+using namespace everest::db;
+using namespace everest::db::sqlite;
+
 namespace ocpp::v2 {
 
 // Forward declarations.
@@ -41,7 +44,7 @@ static std::string get_variable_name_for_logging(const DeviceModelVariable& vari
 
 InitDeviceModelDb::InitDeviceModelDb(const std::filesystem::path& database_path,
                                      const std::filesystem::path& migration_files_path) :
-    common::DatabaseHandlerCommon(std::make_unique<common::DatabaseConnection>(database_path), migration_files_path,
+    common::DatabaseHandlerCommon(std::make_unique<Connection>(database_path), migration_files_path,
                                   MIGRATION_DEVICE_MODEL_FILE_VERSION_V2),
     database_path(database_path),
     database_exists(std::filesystem::exists(database_path)) {
@@ -74,7 +77,7 @@ void InitDeviceModelDb::initialize_database(const std::filesystem::path& config_
 
     // Starting a transaction makes this a lot faster (inserting all components takes a few seconds without it and a
     // few milliseconds if it is done inside a transaction).
-    std::unique_ptr<common::DatabaseTransactionInterface> transaction = database->begin_transaction();
+    std::unique_ptr<TransactionInterface> transaction = database->begin_transaction();
     insert_components(component_configs, existing_components);
     transaction->commit();
 }
@@ -164,14 +167,14 @@ void InitDeviceModelDb::insert_component(const ComponentKey& component_key,
     static const std::string statement = "INSERT OR REPLACE INTO COMPONENT (NAME, INSTANCE, EVSE_ID, CONNECTOR_ID) "
                                          "VALUES (@name, @instance, @evse_id, @connector_id)";
 
-    std::unique_ptr<common::SQLiteStatementInterface> insert_component_statement;
+    std::unique_ptr<StatementInterface> insert_component_statement;
     try {
         insert_component_statement = this->database->new_statement(statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + statement);
     }
 
-    insert_component_statement->bind_text("@name", component_key.name, ocpp::common::SQLiteString::Transient);
+    insert_component_statement->bind_text("@name", component_key.name, SQLiteString::Transient);
     if (component_key.connector_id.has_value()) {
         insert_component_statement->bind_int("@connector_id", component_key.connector_id.value());
     } else {
@@ -185,8 +188,7 @@ void InitDeviceModelDb::insert_component(const ComponentKey& component_key,
     }
 
     if (component_key.instance.has_value() && !component_key.instance.value().empty()) {
-        insert_component_statement->bind_text("@instance", component_key.instance.value(),
-                                              ocpp::common::SQLiteString::Transient);
+        insert_component_statement->bind_text("@instance", component_key.instance.value(), SQLiteString::Transient);
     } else {
         insert_component_statement->bind_null("@instance");
     }
@@ -251,10 +253,10 @@ void InitDeviceModelDb::insert_variable_characteristics(const VariableCharacteri
                                          "UNIT, VALUES_LIST) VALUES (@datatype_id, @variable_id, @max_limit, "
                                          "@min_limit, @supports_monitoring, @unit, @values_list)";
 
-    std::unique_ptr<common::SQLiteStatementInterface> insert_characteristics_statement;
+    std::unique_ptr<StatementInterface> insert_characteristics_statement;
     try {
         insert_characteristics_statement = this->database->new_statement(statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + statement);
     }
 
@@ -266,15 +268,14 @@ void InitDeviceModelDb::insert_variable_characteristics(const VariableCharacteri
     insert_characteristics_statement->bind_int("@supports_monitoring", supports_monitoring);
 
     if (characteristics.unit.has_value()) {
-        insert_characteristics_statement->bind_text("@unit", characteristics.unit.value(),
-                                                    ocpp::common::SQLiteString::Transient);
+        insert_characteristics_statement->bind_text("@unit", characteristics.unit.value(), SQLiteString::Transient);
     } else {
         insert_characteristics_statement->bind_null("@unit");
     }
 
     if (characteristics.valuesList.has_value()) {
         insert_characteristics_statement->bind_text("@values_list", characteristics.valuesList.value(),
-                                                    ocpp::common::SQLiteString::Transient);
+                                                    SQLiteString::Transient);
     } else {
         insert_characteristics_statement->bind_null("@values_list");
     }
@@ -305,10 +306,10 @@ void InitDeviceModelDb::update_variable_characteristics(const VariableCharacteri
         "MIN_LIMIT=@min_limit, SUPPORTS_MONITORING=@supports_monitoring, UNIT=@unit, VALUES_LIST=@values_list WHERE "
         "ID=@characteristics_id";
 
-    std::unique_ptr<common::SQLiteStatementInterface> update_statement;
+    std::unique_ptr<StatementInterface> update_statement;
     try {
         update_statement = this->database->new_statement(update_characteristics_statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + update_characteristics_statement);
     }
 
@@ -321,14 +322,13 @@ void InitDeviceModelDb::update_variable_characteristics(const VariableCharacteri
     update_statement->bind_int("@supports_monitoring", supports_monitoring);
 
     if (characteristics.unit.has_value()) {
-        update_statement->bind_text("@unit", characteristics.unit.value(), ocpp::common::SQLiteString::Transient);
+        update_statement->bind_text("@unit", characteristics.unit.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@unit");
     }
 
     if (characteristics.valuesList.has_value()) {
-        update_statement->bind_text("@values_list", characteristics.valuesList.value(),
-                                    ocpp::common::SQLiteString::Transient);
+        update_statement->bind_text("@values_list", characteristics.valuesList.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@values_list");
     }
@@ -356,19 +356,18 @@ void InitDeviceModelDb::insert_variable(const DeviceModelVariable& variable, con
         "INSERT OR REPLACE INTO VARIABLE (NAME, INSTANCE, COMPONENT_ID, SOURCE) VALUES "
         "(@name, @instance, @component_id, @source)";
 
-    std::unique_ptr<common::SQLiteStatementInterface> insert_variable_statement;
+    std::unique_ptr<StatementInterface> insert_variable_statement;
     try {
         insert_variable_statement = this->database->new_statement(statement);
-    } catch (const common::QueryExecutionException& e) {
+    } catch (const QueryExecutionException& e) {
         throw InitDeviceModelDbError("Could not create statement " + statement + ": " + e.what());
     }
 
-    insert_variable_statement->bind_text("@name", variable.name, ocpp::common::SQLiteString::Transient);
+    insert_variable_statement->bind_text("@name", variable.name, SQLiteString::Transient);
     insert_variable_statement->bind_int("@component_id", static_cast<int>(component_id));
 
     if (variable.instance.has_value() && !variable.instance.value().empty()) {
-        insert_variable_statement->bind_text("@instance", variable.instance.value(),
-                                             ocpp::common::SQLiteString::Transient);
+        insert_variable_statement->bind_text("@instance", variable.instance.value(), SQLiteString::Transient);
     } else {
         insert_variable_statement->bind_null("@instance");
     }
@@ -402,25 +401,25 @@ void InitDeviceModelDb::update_variable(const DeviceModelVariable& variable, con
         "UPDATE VARIABLE SET NAME=@name, INSTANCE=@instance, COMPONENT_ID=@component_id, "
         "SOURCE=@source WHERE ID=@variable_id";
 
-    std::unique_ptr<common::SQLiteStatementInterface> update_statement;
+    std::unique_ptr<StatementInterface> update_statement;
     try {
         update_statement = this->database->new_statement(update_variable_statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + update_variable_statement);
     }
 
     update_statement->bind_int("@variable_id", static_cast<int>(db_variable.db_id.value()));
-    update_statement->bind_text("@name", variable.name, ocpp::common::SQLiteString::Transient);
+    update_statement->bind_text("@name", variable.name, SQLiteString::Transient);
     update_statement->bind_int("@component_id", static_cast<int>(component_id));
 
     if (variable.instance.has_value() && !variable.instance.value().empty()) {
-        update_statement->bind_text("@instance", variable.instance.value(), ocpp::common::SQLiteString::Transient);
+        update_statement->bind_text("@instance", variable.instance.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@instance");
     }
 
     if (variable.source.has_value()) {
-        update_statement->bind_text("@source", variable.source.value(), ocpp::common::SQLiteString::Transient);
+        update_statement->bind_text("@source", variable.source.value(), SQLiteString::Transient);
     } else {
         update_statement->bind_null("@source");
     }
@@ -455,10 +454,10 @@ void InitDeviceModelDb::delete_variable(const DeviceModelVariable& variable) {
 
     static const std::string delete_variable_statement = "DELETE FROM VARIABLE WHERE ID=@variable_id";
 
-    std::unique_ptr<common::SQLiteStatementInterface> delete_statement;
+    std::unique_ptr<StatementInterface> delete_statement;
     try {
         delete_statement = this->database->new_statement(delete_variable_statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + delete_variable_statement);
     }
 
@@ -478,10 +477,10 @@ void InitDeviceModelDb::insert_attribute(const VariableAttribute& attribute, con
         "INSERT OR REPLACE INTO VARIABLE_ATTRIBUTE (VARIABLE_ID, MUTABILITY_ID, PERSISTENT, CONSTANT, TYPE_ID) "
         "VALUES(@variable_id, @mutability_id, @persistent, @constant, @type_id)";
 
-    std::unique_ptr<common::SQLiteStatementInterface> insert_attributes_statement;
+    std::unique_ptr<StatementInterface> insert_attributes_statement;
     try {
         insert_attributes_statement = this->database->new_statement(statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + statement);
     }
 
@@ -565,10 +564,10 @@ void InitDeviceModelDb::update_attribute(const VariableAttribute& attribute, con
         "UPDATE VARIABLE_ATTRIBUTE SET MUTABILITY_ID=@mutability_id, PERSISTENT=@persistent, CONSTANT=@constant, "
         "TYPE_ID=@type_id WHERE ID=@id";
 
-    std::unique_ptr<common::SQLiteStatementInterface> update_statement;
+    std::unique_ptr<StatementInterface> update_statement;
     try {
         update_statement = this->database->new_statement(update_attribute_statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + update_attribute_statement);
     }
 
@@ -627,10 +626,10 @@ void InitDeviceModelDb::delete_attribute(const DbVariableAttribute& attribute) {
 
     static const std::string delete_attribute_statement = "DELETE FROM VARIABLE_ATTRIBUTE WHERE ID=@attribute_id";
 
-    std::unique_ptr<common::SQLiteStatementInterface> delete_statement;
+    std::unique_ptr<StatementInterface> delete_statement;
     try {
         delete_statement = this->database->new_statement(delete_attribute_statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + delete_attribute_statement);
     }
 
@@ -653,17 +652,16 @@ bool InitDeviceModelDb::insert_variable_attribute_value(const int64_t& variable_
                                          "WHERE ID = @variable_attribute_id "
                                          "AND (VALUE_SOURCE = 'default' OR VALUE_SOURCE = '' OR VALUE_SOURCE IS NULL)";
 
-    std::unique_ptr<common::SQLiteStatementInterface> insert_variable_attribute_statement;
+    std::unique_ptr<StatementInterface> insert_variable_attribute_statement;
     try {
         insert_variable_attribute_statement = this->database->new_statement(statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + statement);
     }
 
     insert_variable_attribute_statement->bind_int("@variable_attribute_id",
                                                   static_cast<int32_t>(variable_attribute_id));
-    insert_variable_attribute_statement->bind_text("@value", variable_attribute_value,
-                                                   ocpp::common::SQLiteString::Transient);
+    insert_variable_attribute_statement->bind_text("@value", variable_attribute_value, SQLiteString::Transient);
 
     if (insert_variable_attribute_statement->step() != SQLITE_DONE) {
         throw InitDeviceModelDbError("Could not set value '" + variable_attribute_value +
@@ -697,7 +695,7 @@ void InitDeviceModelDb::insert_variable_monitor(const VariableMonitoringMeta& mo
     }
 
     if (monitor.reference_value.has_value()) {
-        insert_stmt->bind_text(7, monitor.reference_value.value(), ocpp::common::SQLiteString::Transient);
+        insert_stmt->bind_text(7, monitor.reference_value.value(), SQLiteString::Transient);
     } else {
         insert_stmt->bind_null(7);
     }
@@ -731,7 +729,7 @@ void InitDeviceModelDb::update_variable_monitor(const VariableMonitoringMeta& ne
     update_stmt->bind_double(5, new_monitor.monitor.value);
 
     if (new_monitor.reference_value.has_value()) {
-        update_stmt->bind_text(6, new_monitor.reference_value.value(), ocpp::common::SQLiteString::Transient);
+        update_stmt->bind_text(6, new_monitor.reference_value.value(), SQLiteString::Transient);
     } else {
         update_stmt->bind_null(6);
     }
@@ -790,7 +788,7 @@ void InitDeviceModelDb::delete_variable_monitor(const VariableMonitoringMeta& mo
         if (delete_stmt->step() != SQLITE_DONE) {
             throw InitDeviceModelDbError("Can not delete monitor: " + std::string(this->database->get_error_message()));
         }
-    } catch (const common::QueryExecutionException& e) {
+    } catch (const QueryExecutionException& e) {
         throw InitDeviceModelDbError("Delete monitor error: " + std::string(e.what()));
     }
 }
@@ -810,10 +808,10 @@ std::map<ComponentKey, std::vector<DeviceModelVariable>> InitDeviceModelDb::get_
             "JOIN VARIABLE_ATTRIBUTE va ON va.VARIABLE_ID = v.ID";
     /* clang-format on */
 
-    std::unique_ptr<common::SQLiteStatementInterface> select_statement;
+    std::unique_ptr<StatementInterface> select_statement;
     try {
         select_statement = this->database->new_statement(statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + statement);
     }
 
@@ -966,10 +964,10 @@ void InitDeviceModelDb::remove_not_existing_components_from_db(
 bool InitDeviceModelDb::remove_component_from_db(const ComponentKey& component) {
     const std::string& delete_component_statement = "DELETE FROM COMPONENT WHERE ID = @component_id";
 
-    std::unique_ptr<common::SQLiteStatementInterface> delete_statement;
+    std::unique_ptr<StatementInterface> delete_statement;
     try {
         delete_statement = this->database->new_statement(delete_component_statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + delete_component_statement);
     }
 
@@ -1035,10 +1033,10 @@ std::vector<DbVariableAttribute> InitDeviceModelDb::get_variable_attributes_from
     static const std::string get_attributes_statement = "SELECT ID, MUTABILITY_ID, PERSISTENT, CONSTANT, TYPE_ID FROM "
                                                         "VARIABLE_ATTRIBUTE WHERE VARIABLE_ID=(@variable_id)";
 
-    std::unique_ptr<common::SQLiteStatementInterface> select_statement;
+    std::unique_ptr<StatementInterface> select_statement;
     try {
         select_statement = this->database->new_statement(get_attributes_statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + get_attributes_statement);
     }
 
@@ -1126,10 +1124,10 @@ std::vector<VariableMonitoringMeta> InitDeviceModelDb::get_variable_monitors_fro
 void InitDeviceModelDb::init_sql() {
     static const std::string foreign_keys_on_statement = "PRAGMA foreign_keys = ON;";
 
-    std::unique_ptr<common::SQLiteStatementInterface> statement;
+    std::unique_ptr<StatementInterface> statement;
     try {
         statement = this->database->new_statement(foreign_keys_on_statement);
-    } catch (const common::QueryExecutionException&) {
+    } catch (const QueryExecutionException&) {
         throw InitDeviceModelDbError("Could not create statement " + foreign_keys_on_statement);
     }
 

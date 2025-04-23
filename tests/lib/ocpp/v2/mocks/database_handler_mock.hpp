@@ -69,6 +69,6 @@ public:
     typedef std::map<int32_t, std::vector<ChargingProfile>> charging_profiles_grouped_by_evse;
     MOCK_METHOD(charging_profiles_grouped_by_evse, get_all_charging_profiles_group_by_evse, ());
     MOCK_METHOD(CiString<20>, get_charging_limit_source_for_profile, (const int profile_id));
-    MOCK_METHOD(std::unique_ptr<common::SQLiteStatementInterface>, new_statement, (const std::string& sql));
+    MOCK_METHOD(std::unique_ptr<everest::db::sqlite::StatementInterface>, new_statement, (const std::string& sql));
 };
 } // namespace ocpp::v2

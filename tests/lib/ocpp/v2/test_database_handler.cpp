@@ -24,7 +24,7 @@ const int DEFAULT_EVSE_ID = 1;
 
 class DatabaseHandlerTest : public DatabaseTestingUtils {
 public:
-    DatabaseHandler database_handler{std::make_unique<DatabaseConnection>("file::memory:?cache=shared"),
+    DatabaseHandler database_handler{std::make_unique<everest::db::sqlite::Connection>("file::memory:?cache=shared"),
                                      std::filesystem::path(MIGRATION_FILES_LOCATION_V2)};
 
     DatabaseHandlerTest() {
@@ -83,7 +83,7 @@ TEST_F(DatabaseHandlerTest, TransactionInsertDuplicateTransactionId) {
 
     this->database_handler.transaction_insert(*transaction, evse_id);
 
-    EXPECT_THROW(this->database_handler.transaction_insert(*transaction, evse_id + 1), DatabaseException);
+    EXPECT_THROW(this->database_handler.transaction_insert(*transaction, evse_id + 1), everest::db::Exception);
 }
 
 TEST_F(DatabaseHandlerTest, TransactionInsertDuplicateEvseId) {
@@ -95,7 +95,7 @@ TEST_F(DatabaseHandlerTest, TransactionInsertDuplicateEvseId) {
 
     transaction->transactionId = "txId2";
 
-    EXPECT_THROW(this->database_handler.transaction_insert(*transaction, evse_id), DatabaseException);
+    EXPECT_THROW(this->database_handler.transaction_insert(*transaction, evse_id), everest::db::Exception);
 }
 
 TEST_F(DatabaseHandlerTest, TransactionUpdateSeqNo) {

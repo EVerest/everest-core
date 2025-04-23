@@ -428,8 +428,8 @@ CompositeScheduleTestFixtureV2::CompositeScheduleTestFixtureV2() :
 }
 
 std::unique_ptr<TestSmartCharging> CompositeScheduleTestFixtureV2::create_smart_charging_handler() {
-    std::unique_ptr<common::DatabaseConnection> database_connection =
-        std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
+    std::unique_ptr<everest::db::sqlite::Connection> database_connection =
+        std::make_unique<everest::db::sqlite::Connection>(fs::path("/tmp/ocpp201") / "cp.db");
     this->database_handler =
         std::make_unique<DatabaseHandlerFake>(std::move(database_connection), MIGRATION_FILES_LOCATION_V2);
     database_handler->open_connection();

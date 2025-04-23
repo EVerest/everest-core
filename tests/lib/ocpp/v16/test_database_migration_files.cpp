@@ -16,7 +16,7 @@ INSTANTIATE_TEST_SUITE_P(V16, DatabaseMigrationFilesTestV16,
                                                            MIGRATION_FILE_VERSION_V16)));
 
 TEST_P(DatabaseMigrationFilesTestV16, V16_MigrationFile2) {
-    DatabaseSchemaUpdater updater{this->database.get()};
+    everest::db::sqlite::SchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 1));
     this->ExpectUserVersion(1);

@@ -18,8 +18,8 @@
 
 #include <optional>
 
-using QueryExecutionException = ocpp::common::QueryExecutionException;
-using RequiredEntryNotFoundException = ocpp::common::RequiredEntryNotFoundException;
+using QueryExecutionException = everest::db::QueryExecutionException;
+using RequiredEntryNotFoundException = everest::db::RequiredEntryNotFoundException;
 
 namespace ocpp {
 namespace v16 {
@@ -52,8 +52,8 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     this->configuration = std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path);
     this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() { this->heartbeat(); });
     this->heartbeat_interval = this->configuration->getHeartbeatInterval();
-    auto database_connection =
-        std::make_unique<common::DatabaseConnection>(database_path / (this->configuration->getChargePointId() + ".db"));
+    auto database_connection = std::make_unique<everest::db::sqlite::Connection>(
+        database_path / (this->configuration->getChargePointId() + ".db"));
     this->database_handler = std::make_shared<DatabaseHandler>(std::move(database_connection), sql_init_path,
                                                                this->configuration->getNumberOfConnectors());
     this->database_handler->open_connection();

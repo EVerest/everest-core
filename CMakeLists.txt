@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(ocpp
-    VERSION 0.25.0
+    VERSION 0.26.0
     DESCRIPTION "A C++ implementation of the Open Charge Point Protocol"
     LANGUAGES CXX
 )
@@ -55,6 +55,7 @@ else()
     find_package(everest-timer REQUIRED)
     find_package(everest-log REQUIRED)
     find_package(everest-evse_security REQUIRED)
+    find_package(everest-sqlite REQUIRED)
 endif()
 
 # config and auxillary files
@@ -91,6 +92,7 @@ if (OCPP_INSTALL)
             "find_dependency(libwebsockets)"
             "find_dependency(everest-timer)"
             "find_dependency(everest-evse_security)"
+            "find_dependency(everest-sqlite)"
     )
 endif()
 

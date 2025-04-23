@@ -11,7 +11,7 @@ class DatabaseHandlerFake : public DatabaseHandlerMock {
     DatabaseHandler handler;
 
 public:
-    DatabaseHandlerFake(std::unique_ptr<common::DatabaseConnectionInterface> database,
+    DatabaseHandlerFake(std::unique_ptr<everest::db::sqlite::ConnectionInterface> database,
                         const fs::path& sql_migration_files_path) :
         handler(std::move(database), sql_migration_files_path) {
 

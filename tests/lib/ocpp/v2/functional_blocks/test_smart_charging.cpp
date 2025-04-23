@@ -81,8 +81,8 @@ protected:
     }
 
     TestSmartCharging create_smart_charging(const std::optional<std::string> ac_phase_switching_supported = "true") {
-        std::unique_ptr<common::DatabaseConnection> database_connection =
-            std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
+        std::unique_ptr<everest::db::sqlite::Connection> database_connection =
+            std::make_unique<everest::db::sqlite::Connection>(fs::path("/tmp/ocpp201") / "cp.db");
         database_handler =
             std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V2);
         database_handler->open_connection();

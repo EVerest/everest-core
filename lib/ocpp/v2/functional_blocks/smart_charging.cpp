@@ -499,7 +499,7 @@ ProfileValidationResultEnum SmartCharging::validate_tx_profile(const ChargingPro
     conflicts_stmt->bind_int("@id", profile.id);
     if (profile.transactionId.has_value()) {
         conflicts_stmt->bind_text("@transaction_id", profile.transactionId.value().get(),
-                                  common::SQLiteString::Transient);
+                                  everest::db::sqlite::SQLiteString::Transient);
     } else {
         conflicts_stmt->bind_null("@transaction_id");
     }
@@ -626,7 +626,7 @@ SetChargingProfileResponse SmartCharging::add_profile(ChargingProfile& profile, 
         // K01.FR05 - replace non-ChargingStationExternalConstraints profiles if id exists.
         // K01.FR27 - add profiles to database when valid
         this->context.database_handler.insert_or_update_charging_profile(evse_id, profile, charging_limit_source);
-    } catch (const QueryExecutionException& e) {
+    } catch (const everest::db::QueryExecutionException& e) {
         EVLOG_error << "Could not store ChargingProfile in the database: " << e.what();
         response.status = ChargingProfileStatusEnum::Rejected;
         response.statusInfo = StatusInfo();
@@ -913,7 +913,7 @@ bool SmartCharging::is_overlapping_validity_period(const ChargingProfile& candid
     overlap_stmt->bind_int("@stack_level", candidate_profile.stackLevel);
     overlap_stmt->bind_text(
         "@purpose", conversions::charging_profile_purpose_enum_to_string(candidate_profile.chargingProfilePurpose),
-        common::SQLiteString::Transient);
+        everest::db::sqlite::SQLiteString::Transient);
     while (overlap_stmt->step() != SQLITE_DONE) {
         ChargingProfile existing_profile = json::parse(overlap_stmt->column_text(0));
         if (candidate_profile.validFrom <= existing_profile.validTo &&

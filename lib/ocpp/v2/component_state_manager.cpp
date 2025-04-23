@@ -4,8 +4,6 @@
 #include <ocpp/v2/component_state_manager.hpp>
 #include <utility>
 
-using QueryExecutionException = ocpp::common::QueryExecutionException;
-
 namespace ocpp::v2 {
 
 ComponentStateManagerInterface::~ComponentStateManagerInterface() {
@@ -194,7 +192,7 @@ void ComponentStateManager::set_cs_individual_operational_status(OperationalStat
     if (persist) {
         try {
             this->database->insert_cs_availability(new_status, true);
-        } catch (const QueryExecutionException& e) {
+        } catch (const everest::db::QueryExecutionException& e) {
             EVLOG_warning << "Could not insert charging station availability of id into database: " << e.what();
         }
     }
@@ -206,7 +204,7 @@ void ComponentStateManager::set_evse_individual_operational_status(int32_t evse_
     if (persist) {
         try {
             this->database->insert_evse_availability(evse_id, new_status, true);
-        } catch (const QueryExecutionException& e) {
+        } catch (const everest::db::QueryExecutionException& e) {
             EVLOG_warning << "Could not insert evse availability of id " << evse_id << " into database: " << e.what();
         }
         this->database->insert_evse_availability(evse_id, new_status, true);
@@ -220,7 +218,7 @@ void ComponentStateManager::set_connector_individual_operational_status(int32_t 
     if (persist) {
         try {
             this->database->insert_connector_availability(evse_id, connector_id, new_status, true);
-        } catch (const QueryExecutionException& e) {
+        } catch (const everest::db::QueryExecutionException& e) {
             EVLOG_warning << "Could not insert connector availability of id " << connector_id
                           << " into database: " << e.what();
         }

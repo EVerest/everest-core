@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/common/database/database_exceptions.hpp>
+#include <everest/database/exceptions.hpp>
 #include <ocpp/common/utils.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
@@ -11,8 +11,6 @@
 namespace ocpp {
 
 namespace v2 {
-
-using DatabaseException = ocpp::common::DatabaseException;
 
 /// \brief For AlignedDataInterval, SampledDataTxUpdatedInterval and SampledDataTxEndedInterval, zero is allowed
 static bool allow_zero(const Component& component, const Variable& variable) {
@@ -612,7 +610,7 @@ bool DeviceModel::update_monitor_reference(int32_t monitor_id, const std::string
                 EVLOG_warning << "Could not update in DB trivial delta monitor with ID: " << monitor_id
                               << ". Reference value not updated!";
             }
-        } catch (const DatabaseException& e) {
+        } catch (const everest::db::Exception& e) {
             EVLOG_error << "Exception while updating trivial delta monitor reference with ID: " << monitor_id;
             throw DeviceModelError(e.what());
         }
@@ -788,7 +786,7 @@ std::vector<SetMonitoringResult> DeviceModel::set_monitors(const std::vector<Set
             } else {
                 result.status = SetMonitoringStatusEnum::Rejected;
             }
-        } catch (const DatabaseException& e) {
+        } catch (const everest::db::Exception& e) {
             EVLOG_error << "Set monitors failed:" << e.what();
             throw DeviceModelError(e.what());
         }
@@ -926,7 +924,7 @@ std::vector<ClearMonitoringResult> DeviceModel::clear_monitors(const std::vector
             }
 
             clear_monitor_res.status = clear_result;
-        } catch (const DatabaseException& e) {
+        } catch (const everest::db::Exception& e) {
             EVLOG_error << "Clear monitors failed:" << e.what();
             throw DeviceModelError(e.what());
         }
@@ -956,7 +954,7 @@ int32_t DeviceModel::clear_custom_monitors() {
         }
 
         return deleted;
-    } catch (const DatabaseException& e) {
+    } catch (const everest::db::Exception& e) {
         EVLOG_error << "Clear custom monitors failed:" << e.what();
         throw DeviceModelError(e.what());
     }

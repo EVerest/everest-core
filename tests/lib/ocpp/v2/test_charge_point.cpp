@@ -79,7 +79,8 @@ public:
     }
 
     std::shared_ptr<DatabaseHandler> create_database_handler() {
-        auto database_connection = std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
+        auto database_connection =
+            std::make_unique<everest::db::sqlite::Connection>(fs::path("/tmp/ocpp201") / "cp.db");
         return std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V2);
     }
 

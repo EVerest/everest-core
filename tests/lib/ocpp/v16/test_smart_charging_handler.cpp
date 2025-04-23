@@ -206,7 +206,7 @@ protected:
         const std::string chargepoint_id = "1";
         const fs::path database_path = "na";
         const fs::path init_script_path = "na";
-        auto database = std::make_unique<common::DatabaseConnection>(database_path / (chargepoint_id + ".db"));
+        auto database = std::make_unique<everest::db::sqlite::Connection>(database_path / (chargepoint_id + ".db"));
         std::shared_ptr<DatabaseHandlerMock> database_handler =
             std::make_shared<DatabaseHandlerMock>(std::move(database), init_script_path);
         addConnector(0);
@@ -223,7 +223,7 @@ protected:
         const fs::path database_path = "na";
         const fs::path init_script_path = "na";
 
-        auto database = std::make_unique<common::DatabaseConnection>(database_path / (chargepoint_id + ".db"));
+        auto database = std::make_unique<everest::db::sqlite::Connection>(database_path / (chargepoint_id + ".db"));
         std::shared_ptr<DatabaseHandlerMock> database_handler =
             std::make_shared<DatabaseHandlerMock>(std::move(database), init_script_path);
         auto handler = new SmartChargingHandler(connectors, database_handler, *configuration);

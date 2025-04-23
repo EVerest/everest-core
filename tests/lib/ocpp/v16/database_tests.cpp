@@ -8,6 +8,9 @@
 #include <optional>
 #include <thread>
 
+using namespace everest::db;
+using namespace everest::db::sqlite;
+
 namespace ocpp {
 namespace v16 {
 
@@ -52,7 +55,7 @@ ChargingProfile get_sample_charging_profile() {
 class DatabaseTest : public ::testing::Test {
 public:
     DatabaseTest() {
-        auto database_connection = std::make_unique<common::DatabaseConnection>("file::memory:?cache=shared");
+        auto database_connection = std::make_unique<Connection>("file::memory:?cache=shared");
         database_connection->open_connection(); // Open connection so memory stays shared
         this->db_handler = std::make_unique<DatabaseHandler>(std::move(database_connection),
                                                              std::filesystem::path(MIGRATION_FILES_LOCATION_V16), 2);
@@ -380,15 +383,15 @@ TEST_F(DatabaseTest, test_delete_profile) {
 }
 
 TEST_F(DatabaseTest, test_unknown_connector) {
-    ASSERT_THROW(this->db_handler->get_connector_availability(5), ocpp::common::RequiredEntryNotFoundException);
-    ASSERT_THROW(this->db_handler->get_connector_id(5), ocpp::common::RequiredEntryNotFoundException);
+    ASSERT_THROW(this->db_handler->get_connector_availability(5), RequiredEntryNotFoundException);
+    ASSERT_THROW(this->db_handler->get_connector_id(5), RequiredEntryNotFoundException);
 
-    auto database_connection = std::make_unique<common::DatabaseConnection>("file::memory:?cache=shared");
+    auto database_connection = std::make_unique<Connection>("file::memory:?cache=shared");
     database_connection->open_connection(); // Open connection so memory stays shared
 
     database_connection->execute_statement("DROP TABLE CHARGING_PROFILES");
 
-    ASSERT_THROW(this->db_handler->get_charging_profiles(), ocpp::common::QueryExecutionException);
+    ASSERT_THROW(this->db_handler->get_charging_profiles(), QueryExecutionException);
 }
 
 } // namespace v16

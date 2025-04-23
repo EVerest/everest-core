@@ -24,7 +24,7 @@ const static std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=s
 
 namespace ocpp {
 namespace common {
-class DatabaseConnection;
+class Connection;
 }
 
 namespace v2 {
@@ -101,9 +101,9 @@ private:
     const std::string& migration_files_path;
     const std::string& config_path;
 
-    // DatabaseConnection as member so the database keeps open and is not destroyed (because this is an in memory
+    // Connection as member so the database keeps open and is not destroyed (because this is an in memory
     // database).
-    std::unique_ptr<ocpp::common::DatabaseConnection> database_connection;
+    std::unique_ptr<everest::db::sqlite::Connection> database_connection;
     // Device model is a unique ptr here because of the database: it is stored in memory so as soon as the handle to
     // the database closes, the database is removed. So the handle should be opened before creating the devide model.
     // So the device model is initialized on nullptr, then the handle is opened, the devide model is created and the

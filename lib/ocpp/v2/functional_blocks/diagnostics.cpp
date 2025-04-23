@@ -371,7 +371,7 @@ std::string Diagnostics::get_customer_information(const std::optional<Certificat
                 s << "Hashed id_token stored in cache: " + hashed_id_token + "\n";
                 s << "IdTokenInfo: " << entry->id_token_info;
             }
-        } catch (const common::DatabaseException& e) {
+        } catch (const everest::db::Exception& e) {
             EVLOG_warning << "Could not get authorization cache entry from database";
         } catch (const json::exception& e) {
             EVLOG_warning << "Could not parse data of IdTokenInfo: " << e.what();
@@ -394,7 +394,7 @@ void Diagnostics::clear_customer_information(const std::optional<CertificateHash
         const auto hashed_id_token = utils::generate_token_hash(id_token.value());
         try {
             this->authorization.authorization_cache_delete_entry(hashed_id_token);
-        } catch (const common::DatabaseException& e) {
+        } catch (const everest::db::Exception& e) {
             EVLOG_error << "Could not delete from table: " << e.what();
         } catch (const std::exception& e) {
             EVLOG_error << "Exception while deleting from auth cache table: " << e.what();

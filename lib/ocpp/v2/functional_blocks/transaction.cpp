@@ -123,7 +123,7 @@ void TransactionBlock::on_transaction_finished(const int32_t evse_id, const Date
         if (meter_values.value().empty()) {
             meter_values.reset();
         }
-    } catch (const common::DatabaseException& e) {
+    } catch (const everest::db::Exception& e) {
         EVLOG_warning << "Could not get metervalues of transaction: " << e.what();
     }
 
@@ -302,7 +302,7 @@ void TransactionBlock::handle_transaction_event_response(const EnhancedMessage<M
         try {
             this->authorization.authorization_cache_insert_entry(utils::generate_token_hash(id_token),
                                                                  msg.idTokenInfo.value());
-        } catch (const common::DatabaseException& e) {
+        } catch (const everest::db::Exception& e) {
             EVLOG_warning << "Could not insert into authorization cache entry: " << e.what();
         }
         this->authorization.trigger_authorization_cache_cleanup();

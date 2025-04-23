@@ -5,13 +5,16 @@
 
 #include <ocpp/v16/database_handler.hpp>
 
+using namespace everest::db;
+using namespace everest::db::sqlite;
+
 namespace ocpp {
 
 using namespace common;
 
 namespace v16 {
 
-DatabaseHandler::DatabaseHandler(std::unique_ptr<DatabaseConnectionInterface> database,
+DatabaseHandler::DatabaseHandler(std::unique_ptr<ConnectionInterface> database,
                                  const fs::path& sql_migration_files_path, int32_t number_of_connectors) :
     DatabaseHandlerCommon(std::move(database), sql_migration_files_path, MIGRATION_FILE_VERSION_V16),
     number_of_connectors(number_of_connectors) {

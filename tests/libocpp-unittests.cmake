@@ -48,6 +48,7 @@ set(LIBOCPP_TEST_DEFAULT_LINK_LIBRARIES
         date::date-tz
         everest::log
         everest::evse_security
+        everest::sqlite
 )
 
 # If the test is not linked against the ocpp library, those default sources can be linked against, they will often
@@ -57,10 +58,7 @@ set(LIBOCPP_TEST_INCLUDE_COMMON_SOURCES ${LIBOCPP_LIB_PATH}/ocpp/common/types.cp
                                         ${LIBOCPP_LIB_PATH}/ocpp/common/utils.cpp
                                         ${LIBOCPP_LIB_PATH}/ocpp/common/call_types.cpp
                                         ${LIBOCPP_LIB_PATH}/ocpp/common/evse_security.cpp
-                                        ${LIBOCPP_LIB_PATH}/ocpp/common/database/database_connection.cpp
                                         ${LIBOCPP_LIB_PATH}/ocpp/common/database/database_handler_common.cpp
-                                        ${LIBOCPP_LIB_PATH}/ocpp/common/database/sqlite_statement.cpp
-                                        ${LIBOCPP_LIB_PATH}/ocpp/common/database/database_schema_updater.cpp
 )
 
 # If the test is not linked against the ocpp library, those default sources for ocpp v2.0.1 can be linked against, they

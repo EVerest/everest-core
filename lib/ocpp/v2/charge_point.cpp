@@ -40,8 +40,6 @@
 
 using namespace std::chrono_literals;
 
-using DatabaseException = ocpp::common::DatabaseException;
-
 namespace ocpp {
 namespace v2 {
 
@@ -88,7 +86,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     ChargePoint(
         evse_connector_structure, std::make_shared<DeviceModel>(std::move(device_model_storage_interface)),
         std::make_shared<DatabaseHandler>(
-            std::make_unique<common::DatabaseConnection>(fs::path(core_database_path) / "cp.db"), sql_init_path),
+            std::make_unique<everest::db::sqlite::Connection>(fs::path(core_database_path) / "cp.db"), sql_init_path),
         nullptr /* message_queue initialized in this constructor */, message_log_path, evse_security, callbacks) {
 }
 
@@ -1104,7 +1102,7 @@ void ChargePoint::clear_invalid_charging_profiles() {
                             ProfileValidationResultEnum::Valid) {
                         this->database_handler->delete_charging_profile(profile.id);
                     }
-                } catch (const QueryExecutionException& e) {
+                } catch (const everest::db::QueryExecutionException& e) {
                     EVLOG_warning << "Failed database operation for ChargingProfiles: " << e.what();
                 }
             }

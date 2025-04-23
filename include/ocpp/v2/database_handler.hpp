@@ -8,7 +8,7 @@
 #include <memory>
 #include <ocpp/common/support_older_cpp_versions.hpp>
 
-#include <ocpp/common/database/database_connection.hpp>
+#include <everest/database/sqlite/connection.hpp>
 #include <ocpp/common/database/database_handler_common.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 #include <ocpp/v2/transaction.hpp>
@@ -198,7 +198,7 @@ public:
 
     virtual CiString<20> get_charging_limit_source_for_profile(const int profile_id) = 0;
 
-    virtual std::unique_ptr<common::SQLiteStatementInterface> new_statement(const std::string& sql) = 0;
+    virtual std::unique_ptr<everest::db::sqlite::StatementInterface> new_statement(const std::string& sql) = 0;
 };
 
 class DatabaseHandler : public DatabaseHandlerInterface, public common::DatabaseHandlerCommon {
@@ -218,7 +218,7 @@ private:
     OperationalStatusEnum get_availability(int32_t evse_id, int32_t connector_id);
 
 public:
-    DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface> database,
+    DatabaseHandler(std::unique_ptr<everest::db::sqlite::ConnectionInterface> database,
                     const fs::path& sql_migration_files_path);
 
     // Authorization cache management
@@ -284,7 +284,7 @@ public:
     virtual std::map<int32_t, std::vector<v2::ChargingProfile>> get_all_charging_profiles_group_by_evse() override;
     CiString<20> get_charging_limit_source_for_profile(const int profile_id) override;
 
-    std::unique_ptr<common::SQLiteStatementInterface> new_statement(const std::string& sql) override;
+    std::unique_ptr<everest::db::sqlite::StatementInterface> new_statement(const std::string& sql) override;
 };
 
 } // namespace v2

@@ -7,8 +7,8 @@
 #include <filesystem>
 #include <sqlite3.h>
 
+#include <everest/database/sqlite/connection.hpp>
 #include <everest/logging.hpp>
-#include <ocpp/common/database/database_connection.hpp>
 #include <ocpp/v2/device_model_storage_interface.hpp>
 
 namespace ocpp {
@@ -17,7 +17,7 @@ namespace v2 {
 class DeviceModelStorageSqlite : public DeviceModelStorageInterface {
 
 private:
-    std::unique_ptr<ocpp::common::DatabaseConnectionInterface> db;
+    std::unique_ptr<everest::db::sqlite::ConnectionInterface> db;
 
     int get_component_id(const Component& component_id);
 

@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include <ocpp/common/database/database_connection.hpp>
-#include <ocpp/common/database/database_exceptions.hpp>
+#include <everest/database/exceptions.hpp>
+#include <everest/database/sqlite/connection.hpp>
 #include <ocpp/common/types.hpp>
 
 namespace ocpp::common {
@@ -23,7 +23,7 @@ struct DBTransactionMessage {
 
 class DatabaseHandlerCommon {
 protected:
-    std::unique_ptr<DatabaseConnectionInterface> database;
+    std::unique_ptr<everest::db::sqlite::ConnectionInterface> database;
     const fs::path sql_migration_files_path;
     const uint32_t target_schema_version;
 
@@ -37,7 +37,7 @@ public:
     /// \param database Interface for the database connection
     /// \param sql_migration_files_path Filesystem path to migration file folder
     /// \param target_schema_version The required schema version of the database
-    explicit DatabaseHandlerCommon(std::unique_ptr<DatabaseConnectionInterface> database,
+    explicit DatabaseHandlerCommon(std::unique_ptr<everest::db::sqlite::ConnectionInterface> database,
                                    const fs::path& sql_migration_files_path, uint32_t target_schema_version) noexcept;
 
     ~DatabaseHandlerCommon() = default;

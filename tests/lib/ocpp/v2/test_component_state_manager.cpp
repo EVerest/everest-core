@@ -30,7 +30,7 @@ private:
     }
 
 public:
-    DatabaseHandlerMock() : DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface>(), "/dev/null") {
+    DatabaseHandlerMock() : DatabaseHandler(std::unique_ptr<everest::db::sqlite::ConnectionInterface>(), "/dev/null") {
     }
 
     virtual void insert_cs_availability(OperationalStatusEnum operational_status, bool replace) override {

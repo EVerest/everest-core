@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #include "everest/logging.hpp"
-#include "ocpp/common/database/sqlite_statement.hpp"
 #include "ocpp/v2/ocpp_enums.hpp"
 #include "ocpp/v2/ocpp_types.hpp"
 #include <boost/algorithm/string/join.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include <everest/database/sqlite/statement.hpp>
 #include <numeric>
 #include <ocpp/common/message_queue.hpp>
 #include <ocpp/v2/database_handler.hpp>
@@ -15,13 +15,24 @@
 #include <string>
 #include <vector>
 
+using namespace everest::db;
+using namespace everest::db::sqlite;
+
 namespace ocpp {
 
 using namespace common;
 
+int64_t to_unix_milliseconds(const DateTime& dt) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(dt.to_time_point().time_since_epoch()).count();
+}
+
+DateTime from_unix_milliseconds(int64_t ms_since_epoch) {
+    return DateTime(date::utc_clock::time_point(std::chrono::milliseconds(ms_since_epoch)));
+}
+
 namespace v2 {
 
-DatabaseHandler::DatabaseHandler(std::unique_ptr<DatabaseConnectionInterface> database,
+DatabaseHandler::DatabaseHandler(std::unique_ptr<ConnectionInterface> database,
                                  const fs::path& sql_migration_files_path) :
     DatabaseHandlerCommon(std::move(database), sql_migration_files_path, MIGRATION_FILE_VERSION_V2) {
 }
@@ -104,9 +115,9 @@ void DatabaseHandler::authorization_cache_insert_entry(const std::string& id_tok
 
     insert_stmt->bind_text("@id_token_hash", id_token_hash);
     insert_stmt->bind_text("@id_token_info", json(id_token_info).dump(), SQLiteString::Transient);
-    insert_stmt->bind_datetime("@last_used", DateTime());
+    insert_stmt->bind_int64("@last_used", to_unix_milliseconds(DateTime()));
     if (id_token_info.cacheExpiryDateTime.has_value()) {
-        insert_stmt->bind_datetime("@expiry_date", id_token_info.cacheExpiryDateTime.value());
+        insert_stmt->bind_int64("@expiry_date", to_unix_milliseconds(id_token_info.cacheExpiryDateTime.value()));
     } else {
         insert_stmt->bind_null("@expiry_date");
     }
@@ -120,7 +131,7 @@ void DatabaseHandler::authorization_cache_update_last_used(const std::string& id
     std::string sql = "UPDATE AUTH_CACHE SET LAST_USED = @last_used WHERE ID_TOKEN_HASH = @id_token_hash";
     auto insert_stmt = this->database->new_statement(sql);
 
-    insert_stmt->bind_datetime("@last_used", DateTime());
+    insert_stmt->bind_int64("@last_used", to_unix_milliseconds(DateTime()));
     insert_stmt->bind_text("@id_token_hash", id_token_hash);
 
     if (insert_stmt->step() != SQLITE_DONE) {
@@ -142,7 +153,8 @@ DatabaseHandler::authorization_cache_get_entry(const std::string& id_token_hash)
     }
 
     if (status == SQLITE_ROW) {
-        return AuthorizationCacheEntry{json::parse(select_stmt->column_text(0)), select_stmt->column_datetime(1)};
+        return AuthorizationCacheEntry{json::parse(select_stmt->column_text(0)),
+                                       from_unix_milliseconds(select_stmt->column_int64(1))};
     }
 
     throw QueryExecutionException(this->database->get_error_message());
@@ -179,9 +191,9 @@ void DatabaseHandler::authorization_cache_delete_expired_entries(
     auto delete_stmt = this->database->new_statement(sql);
 
     DateTime now;
-    delete_stmt->bind_datetime("@before_date", now);
+    delete_stmt->bind_int64("@before_date", to_unix_milliseconds(now));
     if (auth_cache_lifetime.has_value()) {
-        delete_stmt->bind_datetime("@before_last_used", DateTime(now.to_time_point() - auth_cache_lifetime.value()));
+        delete_stmt->bind_int64("@before_last_used", to_unix_milliseconds(DateTime(now)));
     } else {
         delete_stmt->bind_null("@before_last_used");
     }
@@ -244,7 +256,7 @@ OperationalStatusEnum DatabaseHandler::get_availability(int32_t evse_id, int32_t
     int status = select_stmt->step();
 
     if (status == SQLITE_DONE) {
-        throw RequiredEntryNotFoundException("Could not find operational status for connector");
+        throw everest::db::RequiredEntryNotFoundException("Could not find operational status for connector");
     }
 
     if (status != SQLITE_ROW) {
@@ -386,7 +398,7 @@ void DatabaseHandler::transaction_metervalues_insert(const std::string& transact
     auto stmt = this->database->new_statement(sql1);
 
     stmt->bind_text("@transaction_id", transaction_id);
-    stmt->bind_datetime("@timestamp", meter_value.timestamp);
+    stmt->bind_int64("@timestamp", to_unix_milliseconds(meter_value.timestamp));
     stmt->bind_int("@context", static_cast<int>(context));
     stmt->bind_null("@custom_data");
 
@@ -497,8 +509,7 @@ std::vector<MeterValue> DatabaseHandler::transaction_metervalues_get_all(const s
     int status;
     while ((status = select_stmt->step()) == SQLITE_ROW) {
         MeterValue value;
-
-        value.timestamp = select_stmt->column_datetime(2);
+        value.timestamp = from_unix_milliseconds(select_stmt->column_int64(2));
 
         if (select_stmt->column_type(4) == SQLITE_TEXT) {
             value.customData = CustomData{select_stmt->column_text(4)};
@@ -652,7 +663,7 @@ void DatabaseHandler::transaction_insert(const EnhancedTransaction& transaction,
     insert_stmt->bind_text("@transaction_id", transaction.transactionId.get(), SQLiteString::Transient);
     insert_stmt->bind_int("@evse_id", evse_id);
     insert_stmt->bind_int("@connector_id", transaction.connector_id);
-    insert_stmt->bind_datetime("@time_start", transaction.start_time);
+    insert_stmt->bind_int64("@time_start", to_unix_milliseconds(transaction.start_time));
     insert_stmt->bind_int("@seq_no", transaction.seq_no);
     insert_stmt->bind_text("@charging_state",
                            conversions::charging_state_enum_to_string(transaction.chargingState.value()),
@@ -680,7 +691,7 @@ std::unique_ptr<EnhancedTransaction> DatabaseHandler::transaction_get(const int3
     // Fill transaction
     transaction->transactionId = get_stmt->column_text(0);
     transaction->connector_id = get_stmt->column_int(1);
-    transaction->start_time = get_stmt->column_datetime(2);
+    transaction->start_time = from_unix_milliseconds(get_stmt->column_int64(2));
     transaction->seq_no = get_stmt->column_int(3);
     transaction->chargingState = conversions::string_to_charging_state_enum(get_stmt->column_text(4));
     transaction->id_token_sent = get_stmt->column_int(5) != 0;
@@ -1010,7 +1021,7 @@ CiString<20> DatabaseHandler::get_charging_limit_source_for_profile(const int pr
     return res;
 }
 
-std::unique_ptr<SQLiteStatementInterface> DatabaseHandler::new_statement(const std::string& sql) {
+std::unique_ptr<StatementInterface> DatabaseHandler::new_statement(const std::string& sql) {
     return this->database->new_statement(sql);
 }
 

@@ -49,7 +49,7 @@ private:
     void init_connector_table();
 
 public:
-    DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface> database,
+    DatabaseHandler(std::unique_ptr<everest::db::sqlite::ConnectionInterface> database,
                     const fs::path& sql_migration_files_path, int32_t number_of_connectors);
 
     // transactions

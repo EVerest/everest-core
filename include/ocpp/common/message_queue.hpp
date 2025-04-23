@@ -24,8 +24,6 @@
 
 namespace ocpp {
 
-using QueryExecutionException = common::QueryExecutionException;
-
 template <typename M> struct MessageQueueConfig {
     int transaction_message_attempts;
     int transaction_message_retry_interval; // seconds
@@ -251,7 +249,7 @@ private:
                     message->timestamp, message->uniqueId()};
                 try {
                     this->database_handler->insert_message_queue_message(db_message, QueueType::Normal);
-                } catch (const QueryExecutionException& e) {
+                } catch (const everest::db::QueryExecutionException& e) {
                     EVLOG_warning << "Could not insert message into transaction queue: " << e.what();
                 }
             }
@@ -271,7 +269,7 @@ private:
                                                           message->uniqueId()};
             try {
                 this->database_handler->insert_message_queue_message(db_message);
-            } catch (const QueryExecutionException& e) {
+            } catch (const everest::db::QueryExecutionException& e) {
                 EVLOG_warning << "Could not insert message into transaction queue: " << e.what();
             }
             this->new_message = true;
@@ -314,7 +312,7 @@ private:
                 try {
                     database_handler->remove_message_queue_message(
                         this->normal_message_queue.front()->initial_unique_id, QueueType::Normal);
-                } catch (const QueryExecutionException& e) {
+                } catch (const everest::db::QueryExecutionException& e) {
                     EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
                 } catch (const std::exception& e) {
                     EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
@@ -343,7 +341,7 @@ private:
                 EVLOG_debug << "Drop transactional message " << element->initial_unique_id;
                 try {
                     database_handler->remove_message_queue_message(element->initial_unique_id);
-                } catch (const QueryExecutionException& e) {
+                } catch (const everest::db::QueryExecutionException& e) {
                     EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
                 } catch (const std::exception& e) {
                     EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
@@ -591,7 +589,7 @@ public:
                             // remove from database in case SecurityEventNotification.req should not be sent
                             this->database_handler->remove_message_queue_message(persisted_message.unique_id,
                                                                                  queue_type);
-                        } catch (const QueryExecutionException& e) {
+                        } catch (const everest::db::QueryExecutionException& e) {
                             EVLOG_warning << "Could not delete message from message queue: " << e.what();
                         } catch (const std::exception& e) {
                             EVLOG_warning << "Could not delete message from message queue: " << e.what();
@@ -787,7 +785,7 @@ public:
                     // if the charging station just boots after sending, but before receiving the result.
                     this->database_handler->remove_message_queue_message(this->in_flight->initial_unique_id,
                                                                          queue_type);
-                } catch (const QueryExecutionException& e) {
+                } catch (const everest::db::QueryExecutionException& e) {
                     EVLOG_warning << "Could not delete message from message queue: " << e.what();
                 } catch (const std::exception& e) {
                     EVLOG_warning << "Could not delete message from message queue: " << e.what();
@@ -872,7 +870,7 @@ public:
                     // also drop the message from the database
                     this->database_handler->remove_message_queue_message(this->in_flight->initial_unique_id,
                                                                          queue_type);
-                } catch (const QueryExecutionException& e) {
+                } catch (const everest::db::QueryExecutionException& e) {
                     EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
                 } catch (const std::exception& e) {
                     EVLOG_warning << "Could not delete message from transaction queue: " << e.what();

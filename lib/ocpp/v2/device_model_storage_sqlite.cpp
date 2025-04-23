@@ -4,10 +4,13 @@
 #include "ocpp/v2/init_device_model_db.hpp"
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
 
+#include <everest/database/sqlite/statement.hpp>
 #include <everest/logging.hpp>
-#include <ocpp/common/database/sqlite_statement.hpp>
 #include <ocpp/v2/charge_point.hpp>
 #include <ocpp/v2/init_device_model_db.hpp>
+
+using namespace everest::db;
+using namespace everest::db::sqlite;
 
 namespace ocpp {
 
@@ -28,7 +31,7 @@ DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path, cons
         init_device_model_db.initialize_database(config_path, false);
     }
 
-    db = std::make_unique<ocpp::common::DatabaseConnection>(db_path);
+    db = std::make_unique<Connection>(db_path);
 
     if (!db->open_connection()) {
         EVLOG_AND_THROW(

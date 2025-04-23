@@ -4,7 +4,6 @@
 // execute: ./libocpp_unit_tests --gtest_filter=ProfileTests.*
 
 #include "database_stub.hpp"
-#include "ocpp/common/database/sqlite_statement.hpp"
 #include "ocpp/v16/ocpp_types.hpp"
 #include "ocpp/v16/types.hpp"
 #include "profile_tests_common.hpp"
@@ -29,7 +28,6 @@ using json = nlohmann::json;
 // Test anonymous namespace
 namespace {
 using namespace std::chrono;
-using ocpp::common::SQLiteString;
 
 // ----------------------------------------------------------------------------
 // Test charging profiles

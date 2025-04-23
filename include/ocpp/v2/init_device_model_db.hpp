@@ -153,8 +153,8 @@ public:
     ///                                 - Foreign keys could not be turned on or
     ///                                 - Something could not be added to, retrieved or removed from the database
     /// \throws std::runtime_error      If something went wrong during migration
-    /// \throws DatabaseMigrationException  If something went wrong during migration
-    /// \throws DatabaseConnectionException If the database could not be opened
+    /// \throws MigrationException  If something went wrong during migration
+    /// \throws ConnectionException If the database could not be opened
     /// \throws std::filesystem::filesystem_error   If the component config path does not exist
     ///
     ///

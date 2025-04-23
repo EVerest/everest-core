@@ -55,7 +55,7 @@ protected:
         const fs::path database_path = "na";
         const fs::path init_script_path = "na";
 
-        auto database = std::make_unique<common::DatabaseConnection>(database_path / (chargepoint_id + ".db"));
+        auto database = std::make_unique<everest::db::sqlite::Connection>(database_path / (chargepoint_id + ".db"));
         std::shared_ptr<testing::NiceMock<DatabaseHandlerMock>> database_handler =
             std::make_shared<testing::NiceMock<DatabaseHandlerMock>>(std::move(database), init_script_path);
 
