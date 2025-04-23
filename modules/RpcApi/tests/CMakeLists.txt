@@ -9,6 +9,13 @@ set(TEST_SOURCES
 
 add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES})
 
+// The following is needed to import target compile definitions from the module
+get_target_property(RPCAPI_COMPILE_DEFINITIONS ${MODULE_NAME} COMPILE_DEFINITIONS)
+
+if (RPCAPI_COMPILE_DEFINITIONS)
+    target_compile_definitions(${TEST_TARGET_NAME} PRIVATE ${RPCAPI_COMPILE_DEFINITIONS})
+endif()
+
 set(INCLUDE_DIR 
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/server"
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc"
