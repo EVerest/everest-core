@@ -29,7 +29,6 @@ struct DataStoreConnector {
 
 // This is the data store for a single EVSE. An EVSE can have multiple connectors.
 struct DataStoreEvse {
-    ChargerInfoStore chargerinfo;
     EVSEInfoStore evseinfo;
     EVSEStatusStore evsestatus;
     MeterDataStore meterdata;
