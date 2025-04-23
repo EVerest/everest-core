@@ -3,12 +3,13 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('4') }}
+{{ print_template_info('5') }}
 
 #include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <nlohmann/json.hpp>
@@ -54,7 +55,7 @@ inline std::string {{ enum.enum_type | snake_case }}_to_string({{ enum.enum_type
 /// \returns a {{ enum.enum_type }} from a string representation
 inline {{ enum.enum_type }} string_to_{{ enum.enum_type | snake_case }}(const std::string& s) {
     {% for e in enum.enum %}
-    if(s == "{{e}}") {
+    if (s == "{{e}}") {
         return {{ enum.enum_type }}::{{ e }};
     }
     {% endfor %}
@@ -87,54 +88,52 @@ namespace {{ namespace }} {
 {% for parsed_type in types %}
 {% if parsed_type.properties|length > 0 %}
 struct {{ parsed_type.name }} {
-    {% for property in parsed_type.properties %}
-        {# Constraints will be checked by the framework #}
-        {{ 'std::optional<' if not property.required -}}
-        {{ property.type -}}
-        {{ '>' if not property.required -}}
-        {{ ' ' + property.name + ';' }} ///< {{ property.info.description }}
-    {% endfor %}
+{% for property in parsed_type.properties %}
+    {# Constraints will be checked by the framework #}
+    {{ 'std::optional<' if not property.required -}}
+    {{ property.type -}}
+    {{ '>' if not property.required -}}
+    {{ ' ' + property.name + ';' }} ///< {{ property.info.description }}
+{% endfor %}
 
     /// \brief Conversion from a given {{ parsed_type.name }} \p k to a given json object \p j
     friend void to_json(json& j, const {{ parsed_type.name }}& k) {
         // the required parts of the type
         {% if parsed_type.properties|selectattr('required')|list|length %}
-                j = json{
+        j = json{
         {%- endif %}
         {%- for property in parsed_type.properties %}
-        {%- if property.required %}{"{{property.name}}",
-            {%- if property.enum %}
-                {{ enum_to_string(property.type) }}(k.{{ property.name }})
+        {%- if property.required +%}
+            {"{{property.name}}",
+            {%- if property.enum %} {{ enum_to_string(property.type) }}(k.{{ property.name }})
             {%- else %}
-                {%- if property.type == 'DateTime' %}
-        k.{{property.name}}.to_rfc3339()
-                {%- else %}
-        k.{{property.name}}
+                {%- if property.type == 'DateTime' %} k.{{property.name}}.to_rfc3339()
+                {%- else %} k.{{property.name}}
                 {%- endif %}
             {%- endif %}},
         {%- endif %}
         {%- endfor %}
         {% if not parsed_type.properties|selectattr('required')|list|length %}
-                j = json ({});
-        {%- else %}
+        j = json ({});
+        {%- else +%}
         };
         {%- endif %}
 
-                // the optional parts of the type
+        // the optional parts of the type
         {% for property in parsed_type.properties %}
         {% if not property.required %}
-                if (k.{{property.name}}) {
+        if (k.{{property.name}}) {
                     {% if property.type.startswith('std::vector<') %}
                     {%- if parsed_type.properties|selectattr('required')|list|length %}
-        j["{{property.name}}"] = json::array();
+            j["{{property.name}}"] = json::array();
                     {%- else %}
         {#only optional keys in json#}
         {#TODO: add key to json when there are no required keys but multiple optional keys#}
-        if (j.size() == 0) {
-                        j = json{{'{{"'+property.name+'", json::array()}};'}}
-                    } else {
-                        j["{{property.name}}"] = json::array();
-                    }
+            if (j.size() == 0) {
+                j = json{{'{{"'+property.name+'", json::array()}};'}}
+            } else {
+                j["{{property.name}}"] = json::array();
+            }
         {% endif %}
                     for (auto val : k.{{property.name}}.value()) {
                         j["{{property.name}}"].push_back(val);
@@ -144,14 +143,14 @@ struct {{ parsed_type.name }} {
         j["{{property.name}}"] = {{ enum_to_string(property.type) }}(k.{{ property.name }}.value());
             {%- else %}
                 {%- if property.type == 'DateTime' %}
-        j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
+            j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
                 {%- else %}
-        j["{{property.name}}"] = k.{{property.name}}.value();
+            j["{{property.name}}"] = k.{{property.name}}.value();
                 {%- endif %}
             {%- endif %}
         {% endif %}
 
-                }
+        }
         {% endif %}
         {% endfor %}
     }
@@ -160,47 +159,63 @@ struct {{ parsed_type.name }} {
     friend void from_json(const json& j, {{ parsed_type.name }}& k) {
         // the required parts of the type
         {% for property in parsed_type.properties %}
-            {% if property.required %}
-                {% if property.type.startswith('std::vector<') %}
-                    for (auto val : j.at("{{property.name}}")) {
-                        k.{{property.name}}.push_back(val);
-                    }
-                {% else %}
-                    k.{{property.name}} =
-                    {%- if property.enum %}
-                        {{ string_to_enum(property.type) }}(j.at("{{property.name}}"))
-                    {%- else %}
-                        {%- if property.type == 'DateTime' %}
-                            DateTime(std::string(j.at("{{property.name}}")));
-                        {%- else %}
-                            j.at("{{property.name}}")
-                        {%- endif %}
-                    {%- endif %};
-                {% endif %}
-            {% endif %}
+        {% if property.required %}
+        {% if property.type.startswith('std::vector<') %}
+        for (auto val : j.at("{{property.name}}")) {
+            k.{{property.name}}.push_back(val);
+        }
+        {% else %}
+        k.{{property.name}} =
+            {%- if property.enum %} {{ string_to_enum(property.type) }}(j.at("{{property.name}}"))
+            {%- else %}
+                {%- if property.type == 'DateTime' %} DateTime(std::string(j.at("{{property.name}}")));
+                {%- else %} j.at("{{property.name}}")
+                {%- endif %}
+            {%- endif %};
+        {% endif %}
+        {% endif %}
         {%- endfor %}
 
         // the optional parts of the type
         {% for property in parsed_type.properties %}
             {% if not property.required %}
-            if (j.contains("{{property.name}}")) {
+        if (j.contains("{{property.name}}")) {
                 {% if property.type.startswith('std::vector<') %}
-                    json arr = j.at("{{property.name}}");
-                    {{property.type}} vec;
-                    for (auto val : arr) {
-                        vec.push_back(val);
-                    }
-                    k.{{property.name}}.emplace(vec);
+            json arr = j.at("{{property.name}}");
+            {{property.type}} vec;
+            for (auto val : arr) {
+                vec.push_back(val);
+            }
+            k.{{property.name}}.emplace(vec);
                 {% else %}
                     {%- if property.enum %}
-                    k.{{property.name}}.emplace({{ string_to_enum(property.type) }}(j.at("{{property.name}}")));
+            k.{{property.name}}.emplace({{ string_to_enum(property.type) }}(j.at("{{property.name}}")));
                     {%- else %}
-                    k.{{property.name}}.emplace(j.at("{{property.name}}"));
+            k.{{property.name}}.emplace(j.at("{{property.name}}"));
                     {% endif %}
                 {% endif %}
-            }
+        }
             {% endif %}
         {% endfor %}
+    }
+
+    /// \brief Compares objects of type {{ parsed_type.name }} for equality
+    friend constexpr bool operator==(const {{ parsed_type.name }}& k, const {{ parsed_type.name }}& l) {
+        {%- for var, tuple in [('k.', 'lhs'), ('l.', 'rhs')] +%}
+        const auto& {{ tuple }}_tuple = std::tie(
+        {%- for property in parsed_type.properties +%}
+            {{ var }}{{ property.name }}
+            {%- if not loop.last %},
+            {%- endif %}
+        {%- endfor +%}
+        );
+        {%- endfor +%}
+        return lhs_tuple == rhs_tuple;
+    }
+
+    /// \brief Compares objects of type {{ parsed_type.name }} for inequality
+    friend constexpr bool operator!=(const {{ parsed_type.name }}& k, const {{ parsed_type.name }}& l) {
+        return not operator==(k, l);
     }
 
     /// \brief Writes the string representation of the given {{ parsed_type.name }} \p k to the given output stream \p os
