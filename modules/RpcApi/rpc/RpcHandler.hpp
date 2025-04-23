@@ -57,13 +57,13 @@ private:
     void data_available(const std::shared_ptr<server::TransportInterface> &transport_interfaces,
                         const TransportInterface::ClientId &client_id,
                         const TransportInterface::Data &data);
-    inline bool is_client_hello_req(const TransportInterface::ClientId &client_id,
+    inline bool is_api_hello_req(const TransportInterface::ClientId &client_id,
                                     const nlohmann::json &request) {
         // Check if the request is a hello request
         if (request.contains("method") && request["method"] == methods::METHOD_API_HELLO) {
-            // If it's a API.Hello request, we set the client_hello_received flag to true
+            // If it's a API.Hello request, we set the api_hello_received flag to true
             // and notify the condition variable to unblock the waiting thread
-            m_client_hello_received[client_id] = true;
+            m_api_hello_received[client_id] = true;
             return true;
         }
         return false;
@@ -73,9 +73,9 @@ private:
     // Members
     std::vector<std::shared_ptr<TransportInterface>> m_transport_interfaces;
     std::mutex m_mtx;
-    std::condition_variable m_cv_client_hello;
+    std::condition_variable m_cv_api_hello;
     std::condition_variable m_cv_data_available;
-    std::unordered_map<TransportInterface::ClientId, bool> m_client_hello_received;
+    std::unordered_map<TransportInterface::ClientId, bool> m_api_hello_received;
     std::unique_ptr<JsonRpc2Server> m_rpc_server;
     std::unordered_map<TransportInterface::ClientId, ClientReq> messages;
     std::chrono::steady_clock::time_point m_last_req_notification; // Last tick time
