@@ -3,7 +3,7 @@
 
 import pytest
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 from everest.testing.core_utils.controller.test_controller_interface import (
     TestController,
@@ -22,7 +22,8 @@ from validations import (validate_composite_schedule,
                                validate_standard_start_transaction)
 
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v16
+from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 
 from smart_charging_profiles.absolute_profiles import *
@@ -73,7 +74,7 @@ async def test_absolute_1(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -124,7 +125,7 @@ async def test_absolute_2(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -174,7 +175,7 @@ async def test_absolute_3(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -229,7 +230,7 @@ async def test_absolute_4(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -282,7 +283,7 @@ async def test_absolute_5(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -304,7 +305,7 @@ async def test_absolute_5(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -393,7 +394,7 @@ async def test_absolute_6(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -431,7 +432,7 @@ async def test_absolute_6(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req2.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -857,7 +858,7 @@ async def test_clear_charging_profiles_for_connector_0(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -881,7 +882,7 @@ async def test_clear_charging_profiles_for_connector_0(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req2.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -915,7 +916,7 @@ async def test_clear_charging_profiles_for_connector_0(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )

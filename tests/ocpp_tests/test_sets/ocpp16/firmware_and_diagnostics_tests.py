@@ -2,7 +2,7 @@
 # Copyright Pionix GmbH and Contributors to EVerest
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import asyncio
 import getpass
@@ -13,7 +13,7 @@ from ocpp.v16.enums import *
 # fmt: off
 from validations import (validate_get_log)
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v16
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 from everest_test_utils import *
 # fmt: on
@@ -29,7 +29,7 @@ async def test_get_diagnostics_retries(
 
     # FIXME: make sure this port does not exist? or username and password are wrong?
     location = f"ftp://{getpass.getuser()}:12345@localhost:2121"
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     stop_time = start_time + timedelta(days=3)
     retries = 2
     retry_interval = 2
@@ -96,7 +96,7 @@ async def test_upload_security_log_retries(
 ):
     logging.info("######### test_upload_security_log_retries #########")
 
-    oldest_timestamp = datetime.utcnow()
+    oldest_timestamp = datetime.now(timezone.utc)
     latest_timestamp = oldest_timestamp + timedelta(days=3)
     retries = 2
     retry_interval = 2
@@ -180,7 +180,7 @@ async def test_firwmare_update_retries(
 
     await asyncio.sleep(1)
 
-    retrieve_date = datetime.utcnow()
+    retrieve_date = datetime.now(timezone.utc)
     location = f"ftp://{getpass.getuser()}:12345@localhost:2121/firmware_update.pnx"
     retries = 2
     retry_interval = 2
@@ -268,7 +268,7 @@ async def test_signed_update_firmware_retries(
     location = f"ftp://{getpass.getuser()}:12345@localhost:2121/firmware_update.pnx"
     retries = 2
     retry_interval = 2
-    retrieve_date_time = datetime.utcnow()
+    retrieve_date_time = datetime.now(timezone.utc)
     mf_root_ca = open(test_config.certificate_info.mf_root_ca).read()
     fw_signature = open(test_config.firmware_info.update_file_signature).read()
 

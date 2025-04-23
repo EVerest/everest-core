@@ -8,7 +8,7 @@ from everest.testing.core_utils.controller.test_controller_interface import (
 from ocpp.routing import create_route_map, on
 from ocpp.v16.enums import *
 from ocpp.v16 import call
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 import logging
 import pytest
@@ -17,7 +17,7 @@ from validations import (validate_standard_start_transaction,
                                validate_boot_notification
                                )
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility, OcppTestConfiguration
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v16
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP16ConfigAdjustment
@@ -105,7 +105,7 @@ async def test_change_authorization_key_in_pending(
     @on(Action.BootNotification)
     def on_boot_notification_pending(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.pending,
         )
@@ -113,7 +113,7 @@ async def test_change_authorization_key_in_pending(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
         )
@@ -188,7 +188,7 @@ async def test_remote_start_stop_in_pending(
     @on(Action.BootNotification)
     def on_boot_notification_pending(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.pending,
         )
@@ -224,7 +224,7 @@ async def test_boot_notification_rejected(
     @on(Action.BootNotification)
     def on_boot_notification_rejected(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.rejected,
         )
@@ -232,7 +232,7 @@ async def test_boot_notification_rejected(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
         )
@@ -290,7 +290,7 @@ async def test_boot_notification_callerror(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
         )
@@ -392,7 +392,7 @@ async def test_initiate_message_in_pending(
     @on(Action.BootNotification)
     def on_boot_notification_pending(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.pending,
         )
@@ -400,7 +400,7 @@ async def test_initiate_message_in_pending(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
         )
@@ -555,7 +555,7 @@ async def test_boot_notification_rejected_and_call_by_csms(
     @on(Action.BootNotification)
     def on_boot_notification_rejected(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.rejected,
         )

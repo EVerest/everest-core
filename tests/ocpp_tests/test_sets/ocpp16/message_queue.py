@@ -17,7 +17,8 @@ from ocpp.v16.enums import *
 # fmt: off
 from validations import (validate_standard_start_transaction)
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility, OcppTestConfiguration
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v16
+from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 from everest_test_utils import *
 # fmt: on

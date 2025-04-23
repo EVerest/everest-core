@@ -3,7 +3,7 @@
 
 import pytest
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import asyncio
 
@@ -29,7 +29,8 @@ from ocpp.v16.enums import (
 
 # fmt: off
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v16
+from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 from everest_test_utils import *
 from validations import (validate_standard_start_transaction,
@@ -210,7 +211,7 @@ async def test_parent_id_tag_reservation_1(
         key="AuthorizeRemoteTxRequests", value="true"
     )
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v16.reserve_now_req(
         connector_id=1,
@@ -331,7 +332,7 @@ async def test_parent_id_tag_reservation_2(
         key="AuthorizeRemoteTxRequests", value="true"
     )
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v16.reserve_now_req(
         connector_id=1,
@@ -452,7 +453,7 @@ async def test_parent_id_tag_reservation_3(
         key="AuthorizeRemoteTxRequests", value="true"
     )
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v16.reserve_now_req(
         connector_id=1,
@@ -921,7 +922,7 @@ async def test_authorization_cache_entry_3(
         # accepted but expires just now
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
-            expiry_date=datetime.utcnow().isoformat(),
+            expiry_date=datetime.now(timezone.utc).isoformat(),
         )
         return call_result.AuthorizePayload(id_tag_info=id_tag_info)
 
@@ -929,7 +930,7 @@ async def test_authorization_cache_entry_3(
     def on_start_transaction(**kwargs):
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
-            expiry_date=datetime.utcnow().isoformat(),
+            expiry_date=datetime.now(timezone.utc).isoformat(),
         )
         return call_result.StartTransactionPayload(
             transaction_id=1, id_tag_info=id_tag_info

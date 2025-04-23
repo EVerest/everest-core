@@ -1,10 +1,15 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+
+from datetime import datetime, timezone
 import pytest
 import logging
 from unittest.mock import ANY
 
+from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v201
 from everest.testing.core_utils.controller.test_controller_interface import TestController
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP201ConfigAdjustment
 from everest_test_utils import *
@@ -32,7 +37,7 @@ async def test_reservation_local_start_tx(
     """
     logging.info("######### test_reservation_local_start_tx #########")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v201.reserve_now_req(
         id=0,
@@ -118,7 +123,7 @@ async def test_reservation_local_start_tx_plugin_first(
     """
     logging.info("######### test_reservation_local_start_tx #########")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v201.reserve_now_req(
         id=0,
@@ -197,7 +202,7 @@ async def test_reservation_plug_in_other_idtoken(
      """
     logging.info("######### test_reservation_plug_in_other_idtoken #########")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v201.reserve_now_req(
         id=0,
@@ -300,7 +305,7 @@ async def test_reservation_remote_start_tx(
     """
     logging.info("######### test_reservation_remote_start_tx #########")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     # Make reservation for evse id 1.
     await charge_point_v201.reserve_now_req(
@@ -397,7 +402,7 @@ async def test_reservation_connector_expire(
     logging.info("######### test_reservation_connector_expire #########")
 
     # Make a reservation with an expiry time ten seconds from now.
-    t = datetime.utcnow() + timedelta(seconds=10)
+    t = datetime.now(timezone.utc) + timedelta(seconds=10)
 
     await charge_point_v201.reserve_now_req(
         id=5,
@@ -531,7 +536,7 @@ async def test_reservation_connector_faulted(
 
     await asyncio.sleep(1)
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     # Send a reserve new request
     await charge_point_v201.reserve_now_req(
@@ -577,7 +582,7 @@ async def test_reservation_connector_faulted_after_reservation(
     """
     logging.info("######### test_reservation_connector_faulted_after_reservation #########")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
     await charge_point_v201.reserve_now_req(
         id=42,
         id_token=IdTokenType(id_token=test_config.authorization_info.valid_id_tag_1,
@@ -639,7 +644,7 @@ async def test_reservation_connector_occupied(
         ),
     )
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await asyncio.sleep(2)
 
@@ -678,7 +683,7 @@ async def test_reservation_connector_unavailable(
         evse={'id': 1}, operational_status=OperationalStatusType.inoperative
     )
 
-    t = datetime.utcnow() + timedelta(seconds=30)
+    t = datetime.now(timezone.utc) + timedelta(seconds=30)
 
     # Make a reservation for evse id 1.
     await charge_point_v201.reserve_now_req(
@@ -723,7 +728,7 @@ async def test_reservation_connector_rejected(
     """
     logging.info("######### test_reservation_connector_rejected #########")
 
-    t = datetime.utcnow() + timedelta(seconds=10)
+    t = datetime.now(timezone.utc) + timedelta(seconds=10)
 
     # Try to make reservation.
     await charge_point_v201.reserve_now_req(
@@ -764,7 +769,7 @@ async def test_reservation_non_evse_specific_rejected(
     """
     logging.info("######### test_reservation_non_evse_specific_rejected #########")
 
-    t = datetime.utcnow() + timedelta(seconds=30)
+    t = datetime.now(timezone.utc) + timedelta(seconds=30)
 
     # Try to make a reservation without evse id.
     await charge_point_v201.reserve_now_req(
@@ -808,7 +813,7 @@ async def test_reservation_non_evse_specific_accepted(
     """
     logging.info("######### test_reservation_non_evse_specific_accepted #########")
 
-    t = datetime.utcnow() + timedelta(seconds=30)
+    t = datetime.now(timezone.utc) + timedelta(seconds=30)
 
     # Make reservation without evse id.
     await charge_point_v201.reserve_now_req(
@@ -885,7 +890,7 @@ async def test_reservation_non_evse_specific_accepted_multiple(
     """
     logging.info("######### test_reservation_non_evse_specific_accepted_multiple #########")
 
-    t = datetime.utcnow() + timedelta(seconds=30)
+    t = datetime.now(timezone.utc) + timedelta(seconds=30)
 
     # Make reservation
     await charge_point_v201.reserve_now_req(
@@ -1046,7 +1051,7 @@ async def test_reservation_faulted_state(
 
     await asyncio.sleep(1)
 
-    t = datetime.utcnow() + timedelta(seconds=30)
+    t = datetime.now(timezone.utc) + timedelta(seconds=30)
 
     # Try to make the reservation.
     await charge_point_v201.reserve_now_req(
@@ -1092,7 +1097,7 @@ async def test_reservation_cancel(
     """
     logging.info("######### test_reservation_cancel #########")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     # Make the reservation
     await charge_point_v201.reserve_now_req(
@@ -1198,7 +1203,7 @@ async def test_reservation_cancel_rejected(
     """
     logging.info("######### test_reservation_cancel_rejected #########")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     # Make a reservation with reservation id 5
     await charge_point_v201.reserve_now_req(
@@ -1293,7 +1298,7 @@ async def test_reservation_with_parentid(
     )
     assert set_variable_result.attribute_status == SetVariableStatusType.accepted
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     # Make a new reservation.
     await charge_point_v201.reserve_now_req(
