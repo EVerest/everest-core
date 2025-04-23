@@ -3,7 +3,7 @@
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ocpp.routing import on
 from ocpp.v201 import ChargePoint as cp
@@ -85,7 +85,7 @@ class ChargePoint201(cp):
 
     @on(Action.Heartbeat)
     def on_heartbeat(self, **kwargs):
-        return call_result.HeartbeatPayload(current_time=datetime.utcnow().isoformat())
+        return call_result.HeartbeatPayload(current_time=datetime.now(timezone.utc).isoformat())
 
     @on(Action.Authorize)
     def on_authorize(self, **kwargs):

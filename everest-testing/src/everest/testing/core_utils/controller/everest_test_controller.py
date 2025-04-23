@@ -36,7 +36,7 @@ class EverestTestController(TestController):
             self._mqtt_client = mqtt.Client(self._everest_core.everest_uuid)
         else:
             self._mqtt_client = mqtt.Client(
-                callback_api_version=mqtt.CallbackAPIVersion.VERSION1, client_id=self._everest_core.everest_uuid)
+                callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=self._everest_core.everest_uuid)
         self._mqtt_client.connect(mqtt_server_uri, mqtt_server_port)
 
     def _initialize_nodered_sil(self):

@@ -6,7 +6,7 @@ import json
 import OpenSSL.crypto as crypto
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 from ocpp.messages import unpack
@@ -99,14 +99,14 @@ class ChargePoint16(cp):
         logging.debug("Received a BootNotification")
         # connecting to mqtt server
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=1440,
             status=RegistrationStatus.accepted,
         )
 
     @on(Action.Heartbeat)
     def on_heartbeat(self, **kwargs):
-        return call_result.HeartbeatPayload(current_time=datetime.utcnow().isoformat())
+        return call_result.HeartbeatPayload(current_time=datetime.now(timezone.utc).isoformat())
 
     @on(Action.Authorize)
     def on_authorize(self, **kwargs):
