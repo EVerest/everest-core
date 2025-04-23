@@ -9,7 +9,7 @@ set(TEST_SOURCES
 
 add_executable(${TEST_TARGET_NAME} ${TEST_SOURCES})
 
-// The following is needed to import target compile definitions from the module
+# The following is needed to import target compile definitions from the module
 get_target_property(RPCAPI_COMPILE_DEFINITIONS ${MODULE_NAME} COMPILE_DEFINITIONS)
 
 if (RPCAPI_COMPILE_DEFINITIONS)
