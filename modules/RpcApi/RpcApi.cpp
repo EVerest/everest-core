@@ -3,6 +3,7 @@
 #include "RpcApi.hpp"
 
 #include <boost/uuid/uuid_io.hpp>
+#include <utils/date.hpp>
 
 namespace module {
 
@@ -42,14 +43,45 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
 void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter, data::MeterDataStore& meter_data) {
     types::json_rpc_api::MeterDataObj meter_data_new; // default initialized
     if (meter_data.get_data().has_value()) {
+        // initialize with existing values
         meter_data_new == meter_data.get_data().value();
     }
-    // FIXME: copy all interface meter values to our internal object
+
+    // mandatory objects from the EVerest powermeter interface
+    // timestamp
+    const std::chrono::time_point<date::utc_clock> ts = Everest::Date::from_rfc3339(powermeter.timestamp);
+    // const std::chrono::milliseconds ts_millis = std::chrono::duration_cast<std::chrono::milliseconds>(ts);
+    const std::chrono::nanoseconds ts_nanos = ts.time_since_epoch();
+    // FIXME this is only a hack, as it only accepts nanos
+    meter_data_new.timestamp = ts_nanos.count() * 1000000000.f; // nanoseconds integer  precision back to float seconds
+    // energy_Wh_import
     if (powermeter.energy_Wh_import.L1.has_value()) {
         meter_data_new.energy_Wh_import.L1 = powermeter.energy_Wh_import.L1.value();
     }
+    if (powermeter.energy_Wh_import.L2.has_value()) {
+        meter_data_new.energy_Wh_import.L2 = powermeter.energy_Wh_import.L2.value();
+    }
+    if (powermeter.energy_Wh_import.L3.has_value()) {
+        meter_data_new.energy_Wh_import.L3 = powermeter.energy_Wh_import.L3.value();
+    }
+    meter_data_new.energy_Wh_import.total = powermeter.energy_Wh_import.total;
+
+    // optional objects from the EVerest powermeter interface
+    // template
+    // if (powermeter.objectname.has_value()) {
+    //     meter_data_new.objectname = powermeter.objectname.value();
+    // }
+    if (powermeter.current_A.has_value()) {
+        meter_data_new.current_A.emplace();
+        const auto& cur = powermeter.current_A.value();
+        if (cur.L1.has_value()) {
+            meter_data_new.current_A.value().L1 = cur.L1.value();
+        }
+    }
+    // FIXME: copy all further interface meter values to our internal object
 
     // submit changes
+    // Note: timestamp will skew this, as it will always change, and therefore always trigger a notification for the complete dataset
     meter_data.set_data(meter_data_new);
 }
 
