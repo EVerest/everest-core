@@ -3,7 +3,7 @@
 
 import pytest
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from everest.testing.core_utils.controller.test_controller_interface import (
     TestController,
@@ -19,9 +19,10 @@ from ocpp.routing import on, create_route_map
 
 # fmt: off
 from validations import wait_for_callerror_and_validate, validate_boot_notification
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v16, test_utility
+from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
-from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate
+from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
 from everest_test_utils import *
 # fmt: on
 
@@ -286,7 +287,7 @@ async def test_boot_notification_call_error(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
         )

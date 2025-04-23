@@ -4,6 +4,7 @@
 # noinspection PyUnresolvedReferences
 from everest.testing.core_utils.fixtures import *
 from everest.testing.core_utils.probe_module import ProbeModule
+from everest.testing.ocpp_utils.charge_point_utils import OcppTestConfiguration
 
 # pylint: disable-next=unused-import
 from everest.testing.ocpp_utils.fixtures import (
@@ -24,6 +25,8 @@ from typing import Any, Callable
 
 import logging
 
+import pytest
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -39,8 +42,8 @@ def pytest_sessionfinish(session, exitstatus):
 
 
 @pytest.fixture
-def test_config(request):
-    return everest_test_utils.test_config(request)
+def test_config() -> OcppTestConfiguration:
+    return everest_test_utils.load_test_config()
 
 
 @pytest.fixture
