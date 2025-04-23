@@ -14,6 +14,8 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include <optional>
+#include <string>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -102,7 +104,6 @@ private:
     };
 
     std::vector<RegisterData> pm_configuration;
-    bool config_loaded_successfully = {false};
 
     types::powermeter::Powermeter pm_last_values;
 
@@ -113,17 +114,17 @@ private:
 
     void init_default_values();
     void init_register_assignments(const json& loaded_registers);
-    int assign_register_data(const json& registers, const PowermeterRegisters register_type,
-                             const std::string& register_selector);
+    bool assign_register_data(const json& registers, const PowermeterRegisters register_type,
+                              const std::string& register_selector);
     void assign_register_sublevel_data(const json& registers, const PowermeterRegisters& register_type,
                                        const std::string& register_selector, const std::string& sublevel_selector,
                                        const uint8_t offset);
     powermeterImpl::ModbusFunctionType select_modbus_function(const uint8_t function_code);
     void read_powermeter_values();
-    void readRegister(const RegisterData& register_config);
-    void process_response(const RegisterData& message_type,
-                          const types::serial_comm_hub_requests::Result register_message,
-                          const types::serial_comm_hub_requests::Result exponent_message);
+    bool read_register(const RegisterData& register_config);
+    bool process_response(
+        const RegisterData& register_data, const types::serial_comm_hub_requests::Result& register_message,
+        std::optional<std::reference_wrapper<const types::serial_comm_hub_requests::Result>> exponent_message);
     float merge_register_values_into_element(const RegisterData& reg_data, const int16_t exponent,
                                              const types::serial_comm_hub_requests::Result& reg_message);
     void process_current_rate_message(const types::serial_comm_hub_requests::Result message);
