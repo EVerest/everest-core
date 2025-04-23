@@ -31,10 +31,6 @@ class ChargePoint {
     // Methods
     RPCDataTypes::ChargePointGetEVSEInfosResObj getEVSEInfos() {
         RPCDataTypes::ChargePointGetEVSEInfosResObj res;
-        // check if data is valid
-        if (!m_dataobj.chargerinfo.get_data().has_value()) {
-            throw std::runtime_error("Data is not valid");
-        }
         // Iterate over all EVSEs and add the EVSEInfo objects to the response
         for (const auto &evse : m_dataobj.evses) {
             if (evse.evseinfo.get_data().has_value()) {
