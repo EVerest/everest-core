@@ -600,6 +600,12 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
     // res->SASchedules.noContent
     res->SASchedules_isUsed = (unsigned int)0;
 
+    conn->ctx->ChargingProfile.PMaxScheduleEntry_PMax =
+        res->SAScheduleList.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].PMax;
+    conn->ctx->ChargingProfile.RelativeTimeInterval_start =
+        res->SAScheduleList.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].RelativeTimeInterval.start;
+    conn->ctx->ChargingProfile.SAScheduleTupleID = res->SAScheduleList.SAScheduleTuple.array[0].SAScheduleTupleID;
+
     /* Check the current response code and check if no external error has occurred */
     nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
@@ -659,21 +665,29 @@ static enum v2g_event handle_din_power_delivery(struct v2g_connection* conn) {
     /* Check response code */
     if (req->ChargingProfile_isUsed == (unsigned int)1) {
         /* Check the selected SAScheduleTupleID */
-        res->ResponseCode = (req->ChargingProfile.SAScheduleTupleID != (int16_t)SASCHEDULETUPLEID)
-                                ? din_responseCodeType_FAILED_TariffSelectionInvalid
-                                : res->ResponseCode; // [V2G-DC-400]
+        if (req->ChargingProfile.SAScheduleTupleID != conn->ctx->ChargingProfile.SAScheduleTupleID) {
+            dlog(DLOG_LEVEL_WARNING, "SAScheduleTupleID mismatch: req=%d, expected=%d",
+                 req->ChargingProfile.SAScheduleTupleID, conn->ctx->ChargingProfile.SAScheduleTupleID);
+            res->ResponseCode = din_responseCodeType_FAILED_TariffSelectionInvalid;
+        }
 
         for (uint16_t idx = 0; idx < req->ChargingProfile.ProfileEntry.arrayLen; idx++) {
-            bool entry_found = (req->ChargingProfile.ProfileEntry.array[idx].ChargingProfileEntryStart <=
-                                (uint32_t)SA_SCHEDULE_DURATION);
+            uint32_t entryStart = req->ChargingProfile.ProfileEntry.array[idx].ChargingProfileEntryStart;
+            uint32_t expectedStart = conn->ctx->ChargingProfile.RelativeTimeInterval_start;
+            int16_t entryPower = req->ChargingProfile.ProfileEntry.array[idx].ChargingProfileEntryMaxPower;
+            int16_t expectedPower = conn->ctx->ChargingProfile.PMaxScheduleEntry_PMax;
 
-            if ((entry_found == false) || (req->ChargingProfile.ProfileEntry.array[idx].ChargingProfileEntryMaxPower >
-                                           (conn->ctx->evse_v2g_data.evse_maximum_power_limit.Value *
-                                            pow(10, conn->ctx->evse_v2g_data.evse_maximum_power_limit.Multiplier)))) {
-                // res->ResponseCode = din_responseCodeType_FAILED_ChargingProfileInvalid; //[V2G-DC-399]. Currently
-                // commented to increase compatibility with EV'S
-                dlog(DLOG_LEVEL_WARNING, "EV's charging profile is invalid (ChargingProfileEntryMaxPower %d too high)!",
-                     req->ChargingProfile.ProfileEntry.array[idx].ChargingProfileEntryMaxPower);
+            if (entryStart != expectedStart) {
+                dlog(DLOG_LEVEL_WARNING, "ProfileEntry[%u] start time mismatch: req=%u, expected=%u", idx, entryStart,
+                     expectedStart);
+                res->ResponseCode = din_responseCodeType_FAILED_ChargingProfileInvalid;
+                break;
+            }
+
+            if (entryPower != expectedPower) {
+                dlog(DLOG_LEVEL_WARNING, "ProfileEntry[%u] max power mismatch: req=%d, expected=%d", idx, entryPower,
+                     expectedPower);
+                res->ResponseCode = din_responseCodeType_FAILED_ChargingProfileInvalid;
                 break;
             }
         }

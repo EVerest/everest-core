@@ -298,6 +298,12 @@ struct v2g_context {
     } evse_v2g_data;
 
     struct {
+        int16_t PMaxScheduleEntry_PMax;
+        uint32_t RelativeTimeInterval_start;
+        int16_t SAScheduleTupleID;
+    } ChargingProfile;
+
+    struct {
         /* V2G session values */
         iso2_paymentOptionType iso_selected_payment_option;
         long long int auth_start_timeout;
