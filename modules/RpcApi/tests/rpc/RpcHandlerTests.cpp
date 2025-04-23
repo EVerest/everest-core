@@ -41,7 +41,7 @@ protected:
 };
 
 // Test: Connect to WebSocket server and check if API.hello timeout occurs
-TEST_F(RpcHandlerTest, ClientHelloTimeout) {
+TEST_F(RpcHandlerTest, ApiHelloTimeout) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
     ASSERT_TRUE(client.is_connected());
@@ -55,13 +55,13 @@ TEST_F(RpcHandlerTest, ClientHelloTimeout) {
 }
 
 // Test: Connect to WebSocket server and send API.Hello request
-TEST_F(RpcHandlerTest, ClientHelloRequest) {
+TEST_F(RpcHandlerTest, ApiHelloReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
     ASSERT_TRUE(client.is_connected());
 
     // Send API.Hello request
-    nlohmann::json hello_request = {
+    nlohmann::json apiHelloReq = {
         {"jsonrpc", "2.0"},
         {"method", "API.Hello"},
         {"id", 1}
@@ -96,7 +96,7 @@ TEST_F(RpcHandlerTest, ClientHelloRequest) {
     };
     
     // Send the request
-    client.send(hello_request.dump());
+    client.send(apiHelloReq.dump());
     // Wait for the response
     std::unique_lock<std::mutex> lock(cv_mutex);
     cv.wait_for(lock, std::chrono::seconds(1), [&] { return !client.get_received_data().empty(); });
