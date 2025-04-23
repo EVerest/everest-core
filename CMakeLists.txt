@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(everest-sqlite VERSION 0.1
+project(everest-sqlite VERSION 0.1.1
         DESCRIPTION "SQLite wrapper for EVerest"
         LANGUAGES CXX C
 )
