@@ -20,14 +20,31 @@ public:
     bool connect();
     bool is_connected();
     void send(const std::string& message);
+    void sendApiHelloReq();
     std::string receive();
     void close();
-    std::string get_received_data() const { return m_received_data; }
+    std::string get_received_data() {
+        std::string data;
+        {
+            std::lock_guard<std::mutex> lock(m_cv_mutex);
+            data = m_received_data;
+            m_received_data.clear(); // Clear the received data after getting it
+        }
+        return data;
+    }
+    std::string wait_for_data(std::chrono::milliseconds timeout) {
+        std::unique_lock<std::mutex> lock(m_cv_mutex);
+        m_cv.wait_for(lock, timeout, [this] { return !m_received_data.empty(); });
+        std::string data = m_received_data;
+        m_received_data.clear(); // Clear the received data after getting it
+        return data;
+    }
+
     void wait_for_response(std::chrono::milliseconds timeout) {
         std::unique_lock<std::mutex> lock(m_cv_mutex);
         m_cv.wait_for(lock, timeout, [this] { return !m_received_data.empty(); });
     }
-
+    
 private:
     static int callback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
 
@@ -41,6 +58,7 @@ private:
     std::thread m_client_thread;
     std::string m_received_data;
 
+public:
     //Condition variable to wait for response
     std::condition_variable m_cv;
     std::mutex m_cv_mutex;
