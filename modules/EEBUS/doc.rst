@@ -20,3 +20,17 @@ EEBUS
 
 :ref:`Link <everest_modules_EEBUS>` to the module's reference.
 EEBUS module
+
+Acknowledgment
+==============
+
+This module has thankfully received support from the German Federal Ministry
+for Economic Affairs and Climate Action.
+Information on the corresponding research project can be found here (in
+German only):
+`InterBDL research project <https://www.thu.de/de/org/iea/smartgrids/Seiten/InterBDL.aspx>`_
+
+.. image:: https://raw.githubusercontent.com/EVerest/EVerest/main/docs/img/bmwk-logo-incl-supporting.png
+    :name: bmwk-logo
+    :align: left
+    :alt: Supported by Federal Ministry for Economic Affairs and Climate Action.
