@@ -9,12 +9,11 @@ namespace data {
 
 class ChargerInfoStore : public GenericInfoStore<RPCDataTypes::ChargerInfoObj> {};
 class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoObj> {
-    //void set_data(const nlohmann::json& in);
-    void init_data() override {
-        // example, in case override is required
-        memset(&dataobj, 0, sizeof(dataobj));
-        dataobj.id = -1;
-    }
+    // example, in case override is required
+    // void init_data() override {
+    //     memset(&dataobj, 0, sizeof(dataobj));
+    //     dataobj.id = -1;
+    // }
 };
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {};
 class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};

@@ -3,10 +3,10 @@
 #ifndef GENERICINFOSTORE_HPP
 #define GENERICINFOSTORE_HPP
 
+#include <functional> // for std::function
+#include <generated/types/json_rpc_api.hpp>
 #include <nlohmann/json.hpp>
 #include <optional>
-#include <generated/types/json_rpc_api.hpp>
-#include <functional> // for std::function
 #include <vector>
 
 // This contains types for all the data objects
@@ -15,8 +15,7 @@ namespace data {
 
 namespace RPCDataTypes = types::json_rpc_api;
 
-template <typename T>
-class GenericInfoStore {
+template <typename T> class GenericInfoStore {
 protected:
     // the associated data store
     T dataobj;

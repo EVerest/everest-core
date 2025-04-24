@@ -33,14 +33,15 @@ void RpcApi::ready() {
     invoke_ready(*p_main);
 }
 
-void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager, data::DataStoreEvse& evse_data) {
+void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager,
+                                    data::DataStoreEvse& evse_data) {
     evse_manager->subscribe_powermeter([this, &evse_data](const types::powermeter::Powermeter& powermeter) {
         this->meter_interface_to_datastore(powermeter, evse_data.meterdata);
     });
-
 }
 
-void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter, data::MeterDataStore& meter_data) {
+void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter,
+                                          data::MeterDataStore& meter_data) {
     types::json_rpc_api::MeterDataObj meter_data_new; // default initialized
     if (meter_data.get_data().has_value()) {
         // initialize with existing values
@@ -152,7 +153,8 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
     // FIXME: copy all further interface meter values to our internal object
 
     // submit changes
-    // Note: timestamp will skew this, as it will always change, and therefore always trigger a notification for the complete dataset
+    // Note: timestamp will skew this, as it will always change, and therefore always trigger a notification for the
+    // complete dataset
     meter_data.set_data(meter_data_new);
 }
 

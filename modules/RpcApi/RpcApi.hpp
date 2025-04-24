@@ -20,11 +20,11 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include "data/DataStore.hpp"
+#include "rpc/RpcHandler.hpp"
+#include "server/WebsocketServer.hpp"
 #include <generated/types/json_rpc_api.hpp>
 #include <vector>
-#include "data/DataStore.hpp"
-#include "server/WebsocketServer.hpp"
-#include "rpc/RpcHandler.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -84,7 +84,8 @@ private:
     std::unique_ptr<rpc::RpcHandler> m_rpc_server;
 
     void subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager, data::DataStoreEvse& evse_data);
-    void meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter, data::MeterDataStore& meter_data);
+    void meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter,
+                                      data::MeterDataStore& meter_data);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
