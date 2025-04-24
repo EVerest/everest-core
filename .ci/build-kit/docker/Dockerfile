@@ -49,6 +49,7 @@ ENV PYTHON_VERSION=3.13.3
 ENV PYTHON_SOURCE_URL=https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
 RUN tmpdir=$(mktemp -d) \
     && cd $tmpdir \
+    && python3 -m pip freeze > requirements.txt \
     && wget ${PYTHON_SOURCE_URL} \
     && tar -xzvf Python-${PYTHON_VERSION}.tgz \
     && cd Python-${PYTHON_VERSION} \
@@ -57,7 +58,8 @@ RUN tmpdir=$(mktemp -d) \
     && make install \
     && short_version=$(echo ${PYTHON_VERSION} | cut -d. -f1-2) \
     && rm /usr/local/bin/python3 \
-    && ln -s /usr/local/bin/python${short_version} /usr/local/bin/python3
+    && ln -s /usr/local/bin/python${short_version} /usr/local/bin/python3 \
+    && python3 -m pip install -r requirements.txt
 
 RUN python3 -m pip install --break-system-packages \
     grpcio \
