@@ -38,15 +38,28 @@ types:
     description: Enumerator of connector types
     type: string
     enum:
-    - ACSinglePhaseCable
-    - ACThreePhaseCable
-    - ACSinglePhaseSocket
-    - ACThreePhaseSocket
-    - DCCore
-    - DCExtended
-    - DCDual2
-    - DCDual4
-    - Other
+    - cCCS1
+    - cCCS2
+    - cG105
+    - cTesla
+    - cType1
+    - cType2
+    - s309_1P_16A
+    - s309_1P_32A
+    - s309_3P_16A
+    - s309_3P_32A
+    - sBS1361
+    - sCEE_7_7
+    - sType2
+    - sType3
+    - Other1PhMax16A
+    - Other1PhOver16A
+    - Other3Ph
+    - Pan
+    - wInductive
+    - wResonant
+    - Undetermined
+    - Unknown
   EVSEErrorEnum:
     description: >-
       EVSEErrorEnum can be used to show more details of an EVSE error for example in a service tool application for the technician. The enum naming is identical to EVerest error handler semantic.
