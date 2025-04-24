@@ -155,6 +155,61 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     //sleep(10);
 }
 
+// Test: Connect to WebSocket server and send EVSE.Info request with valid evse_id
+TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    ASSERT_TRUE(client.is_connected());
+
+    // Set up the data store with test data
+    RPCDataTypes::EVSEInfoObj evse_info;
+    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    evse_info.available_connectors.emplace_back();
+    evse_info.available_connectors[0].id = 1;
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
+    evse_info.available_connectors[1].id = 2;
+    evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
+    evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
+    evse_info.description = "Test EVSE 1";
+    data_store.evses[0].evseinfo.set_data(evse_info);
+
+    // Expected response
+    RPCDataTypes::EVSEGetInfoResObj result;
+    result.info = evse_info;
+    result.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
+
+    nlohmann::json expected_response = {
+        {"jsonrpc", "2.0"},
+        {"result", result},
+        {"id", 1}
+    };
+    
+    nlohmann::json evseGetEVSEInfosReq = {
+        {"jsonrpc", "2.0"},
+        {"method", "EVSE.GetEVSEInfos"},
+        {"params", {{"evse_id", "DEA12E000001"}}},
+        {"id", 1}
+    };
+
+    // Send Api.Hello request
+    client.sendApiHelloReq();
+    client.wait_for_data(std::chrono::seconds(1));
+    
+    // Send EVSE.GetEVSEInfos request
+    client.send(evseGetEVSEInfosReq.dump());
+    
+    // Wait for the response
+    std::string received_data = client.wait_for_data(std::chrono::seconds(1));
+    
+    // Check if the response is not empty
+    ASSERT_FALSE(received_data.empty());
+    
+    // Check if the response is valid
+    nlohmann::json response = nlohmann::json::parse(received_data);
+    
+    ASSERT_EQ(response, expected_response);
+}
+
 // Test: Connect to WebSocket server and send invalid request
 TEST_F(RpcHandlerTest, InvalidRequest) {
     WebSocketTestClient client("localhost", test_port);
