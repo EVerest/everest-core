@@ -15,9 +15,9 @@ namespace RPCDataTypes = types::json_rpc_api;
 
 namespace methods {
 
-static const std::string METHOD_GET_EVSE_INFOS = "ChargePoint.GetEVSEInfos";
+static const std::string METHOD_CHARGEPOINT_GET_EVSE_INFOS = "ChargePoint.GetEVSEInfos";
 
-/// This is the ChargePoint class for the RPC methods.
+/// This class includes all methods of the ChargePoint namespace.
 /// It contains the data object and the methods to access it.
 class ChargePoint {
     public:
