@@ -36,3 +36,29 @@ RUN tmpdir=$(mktemp -d) \
     && cmake --build build \
     && cmake --install build \
     && rm -rf $tmpdir
+
+RUN apt update \
+    && apt install -y \
+        build-essential \
+        zlib1g-dev \
+        libncurses5-dev \
+        libgdbm-dev \
+        libnss3-dev \
+        libssl-dev \
+        libreadline-dev \
+        libffi-dev \
+        libsqlite3-dev \
+        wget
+ENV PYTHON_VERSION=3.13.3
+ENV PYTHON_SOURCE_URL=https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
+RUN tmpdir=$(mktemp -d) \
+    && cd $tmpdir \
+    && wget ${PYTHON_SOURCE_URL} \
+    && tar -xzvf Python-${PYTHON_VERSION}.tgz \
+    && cd Python-${PYTHON_VERSION} \
+    && ./configure --enable-optimizations \
+    && make -j $(nproc) \
+    && make install \
+    && short_version=$(echo ${PYTHON_VERSION} | cut -d. -f1-2) \
+    && rm /usr/local/bin/python3 \
+    && ln -s /usr/local/bin/python${short_version} /usr/local/bin/python3
