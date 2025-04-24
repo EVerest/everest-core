@@ -19,7 +19,7 @@ static const std::chrono::milliseconds REQ_PROCESSING_TIMEOUT(50); // Timeout fo
 
 // RpcHandler just needs just a tranport interface array
 RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces, DataStoreCharger &dataobj)
-    : m_transport_interfaces(std::move(transport_interfaces)), m_methods_api(dataobj), m_methods_chargepoint(dataobj) {
+    : m_transport_interfaces(std::move(transport_interfaces)), m_methods_api(dataobj), m_methods_chargepoint(dataobj), m_methods_evse(dataobj) {
     init_rpc_api();
     init_transport_interfaces();
 }
@@ -47,7 +47,8 @@ void RpcHandler::init_rpc_api() {
     m_methods_api.set_api_version(API_VERSION);
     m_rpc_server = std::make_unique<JsonRpc2Server>();
     m_rpc_server->Add(methods::METHOD_API_HELLO, GetHandle(&methods::Api::hello, m_methods_api), {});
-    m_rpc_server->Add(methods::METHOD_GET_EVSE_INFOS, GetHandle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
+    m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS, GetHandle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_EVSE_INFO, GetHandle(&methods::Evse::getEVSEInfos, m_methods_evse), {"evse_id"});
 }
 
 void RpcHandler::init_transport_interfaces() {
