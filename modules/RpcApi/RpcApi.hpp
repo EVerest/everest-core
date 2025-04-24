@@ -86,6 +86,8 @@ private:
     void subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager, data::DataStoreEvse& evse_data);
     void meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter,
                                       data::MeterDataStore& meter_data);
+    void hwcaps_interface_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
+                                       data::HardwareCapabilitiesStore& hw_caps_data);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

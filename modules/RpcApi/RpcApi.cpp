@@ -38,6 +38,11 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_powermeter([this, &evse_data](const types::powermeter::Powermeter& powermeter) {
         this->meter_interface_to_datastore(powermeter, evse_data.meterdata);
     });
+    evse_manager->subscribe_hw_capabilities(
+        [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
+            // there is only one connector supported currently
+            this->hwcaps_interface_to_datastore(hwcaps, evse_data.connectors[0].hardwarecapabilities);
+        });
 }
 
 void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter,
@@ -155,6 +160,30 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
     // Note: timestamp will skew this, as it will always change, and therefore always trigger a notification for the
     // complete dataset
     meter_data.set_data(meter_data_new);
+}
+
+void RpcApi::hwcaps_interface_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
+                                           data::HardwareCapabilitiesStore& hw_caps_data) {
+    types::json_rpc_api::HardwareCapabilitiesObj hw_caps_data_new; // default initialized
+    if (hw_caps_data.get_data().has_value()) {
+        // initialize with existing values
+        hw_caps_data_new = hw_caps_data.get_data().value();
+    }
+
+    // mandatory objects from the EVerest hw_capabilites interface variable
+    hw_caps_data_new.max_current_A_export = hwcaps.max_current_A_import;
+    hw_caps_data_new.max_current_A_import = hwcaps.max_current_A_import;
+    hw_caps_data_new.max_phase_count_export = hwcaps.max_phase_count_export;
+    hw_caps_data_new.max_phase_count_import = hwcaps.max_phase_count_import;
+    hw_caps_data_new.min_current_A_export = hwcaps.min_current_A_export;
+    hw_caps_data_new.min_current_A_import = hwcaps.min_current_A_import;
+    hw_caps_data_new.min_phase_count_export = hwcaps.min_phase_count_export;
+    hw_caps_data_new.min_phase_count_import = hwcaps.min_phase_count_import;
+    hw_caps_data_new.phase_switch_during_charging = hwcaps.supports_changing_phases_during_charging;
+    // FIXME: the interface variable's connector_type is covered elsewhere?
+
+    // submit changes
+    hw_caps_data.set_data(hw_caps_data_new);
 }
 
 } // namespace module
