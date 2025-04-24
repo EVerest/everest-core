@@ -87,10 +87,7 @@ void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterfa
         std::unique_lock<std::mutex> lock(m_mtx);
         if (m_cv_api_hello.wait_for(lock, CLIENT_HELLO_TIMEOUT, [this, client_id] {
             return m_api_hello_received.find(client_id) != m_api_hello_received.end();
-        })) {
-            // Client sent hello
-            m_api_hello_received.erase(client_id);
-        } else {
+        }) == false) {
             // Client did not send hello, close connection
             if (transport_interface) {
                 transport_interface->kill_client_connection(client_id, "Disconnected due to timeout");
@@ -191,10 +188,21 @@ void RpcHandler::process_client_requests() {
                     all_requests_processed = false;
                 }
 
+                // Check if the request is an API.Hello request
                 if (is_api_hello_req(client_id, request)) {
                     // Notify condition variable to unblock the waiting thread
                     m_cv_api_hello.notify_all();
                     EVLOG_info << "API.Hello request received from client " << client_id;
+                }
+                else {
+                    // If it is not an API.Hello request, we need to check if the client has already sent an API.Hello request,
+                    // if not, close the connection
+                    if (m_api_hello_received.find(client_id) == m_api_hello_received.end()) {
+                        EVLOG_debug << "Client " << client_id << " did not send API.Hello request. Closing connection.";
+                        transport_interface->kill_client_connection(client_id, "Disconnected due to missing API.Hello request");
+                        continue;  // Skip processing this request
+                    }
+
                 }
 
                 // Call the RPC server with the request
