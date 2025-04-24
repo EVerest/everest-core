@@ -25,9 +25,9 @@ RUN rm -rf ${EVEREST_CMAKE_PATH} \
 ARG GO_VERSION=1.24.2
 ADD https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz /tmp/go.tar.gz
 RUN if [ -d /usr/local/go ]; then \
-        echo "Go is already installed"; \
+    echo "Go is already installed"; \
     else \
-        tar -C /usr/local -xzf /tmp/go.tar.gz; \
+    tar -C /usr/local -xzf /tmp/go.tar.gz; \
     fi
 ENV PATH="/usr/local/go/bin:${PATH}"
 RUN go version
@@ -45,16 +45,16 @@ RUN tmpdir=$(mktemp -d) \
 
 RUN apt update \
     && apt install -y \
-        build-essential \
-        zlib1g-dev \
-        libncurses5-dev \
-        libgdbm-dev \
-        libnss3-dev \
-        libssl-dev \
-        libreadline-dev \
-        libffi-dev \
-        libsqlite3-dev \
-        wget
+    build-essential \
+    zlib1g-dev \
+    libncurses5-dev \
+    libgdbm-dev \
+    libnss3-dev \
+    libssl-dev \
+    libreadline-dev \
+    libffi-dev \
+    libsqlite3-dev \
+    wget
 ENV PYTHON_VERSION=3.13.3
 ENV PYTHON_SOURCE_URL=https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
 RUN tmpdir=$(mktemp -d) \
@@ -69,8 +69,18 @@ RUN tmpdir=$(mktemp -d) \
     && short_version=$(echo ${PYTHON_VERSION} | cut -d. -f1-2) \
     && rm /usr/local/bin/python3 \
     && ln -s /usr/local/bin/python${short_version} /usr/local/bin/python3 \
-    && python3 -m pip install -r requirements.txt
+    && python3 -m pip install --break-system-packages -r requirements.txt
 
 RUN python3 -m pip install --break-system-packages \
     grpcio \
     grpcio-tools
+
+# Can be used to use an other version of everest-cmake
+ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
+ENV EVEREST_CMAKE_PATH=/usr/lib/cmake/everest-cmake
+ENV EVEREST_CMAKE_VERSION=tmp/eebus
+RUN rm -rf ${EVEREST_CMAKE_PATH} \
+    && git clone https://github.com/EVerest/everest-cmake.git ${EVEREST_CMAKE_PATH} \
+    && cd ${EVEREST_CMAKE_PATH} \
+    && git checkout ${EVEREST_CMAKE_VERSION} \
+    && rm -r .git
