@@ -48,7 +48,7 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
         meter_data_new = meter_data.get_data().value();
     }
 
-    // mandatory objects from the EVerest powermeter interface
+    // mandatory objects from the EVerest powermeter interface variable
     // timestamp
     const std::chrono::time_point<date::utc_clock> ts = Everest::Date::from_rfc3339(powermeter.timestamp);
     // const std::chrono::milliseconds ts_millis = std::chrono::duration_cast<std::chrono::milliseconds>(ts);
@@ -150,7 +150,6 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
             newobj.L3 = inobj.L3.value();
         }
     }
-    // FIXME: copy all further interface meter values to our internal object
 
     // submit changes
     // Note: timestamp will skew this, as it will always change, and therefore always trigger a notification for the
