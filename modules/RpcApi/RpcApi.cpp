@@ -44,7 +44,7 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
     types::json_rpc_api::MeterDataObj meter_data_new; // default initialized
     if (meter_data.get_data().has_value()) {
         // initialize with existing values
-        meter_data_new == meter_data.get_data().value();
+        meter_data_new = meter_data.get_data().value();
     }
 
     // mandatory objects from the EVerest powermeter interface
@@ -73,10 +73,28 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
     // }
     if (powermeter.current_A.has_value()) {
         meter_data_new.current_A.emplace();
-        const auto& cur = powermeter.current_A.value();
-        if (cur.L1.has_value()) {
-            meter_data_new.current_A.value().L1 = cur.L1.value();
+        const auto& inobj = powermeter.current_A.value();
+        if (inobj.L1.has_value()) {
+            meter_data_new.current_A.value().L1 = inobj.L1.value();
         }
+    }
+    if (powermeter.energy_Wh_export.has_value()) {
+        // a shortcut reference to the input data sub-object
+        const auto& inobj = powermeter.energy_Wh_export.value();
+        // a shortcut reference to the output data sub-object optional
+        auto& export_opt = meter_data_new.energy_Wh_export;
+        // keep original (copied) optional value, or emplace empty if non exist
+        auto& newobj = export_opt.emplace(export_opt.value_or(types::json_rpc_api::Energy_Wh_export{}));
+        if (inobj.L1.has_value()) {
+            newobj.L1 = inobj.L1.value();
+        }
+        if (inobj.L2.has_value()) {
+            newobj.L2 = inobj.L2.value();
+        }
+        if (inobj.L3.has_value()) {
+            newobj.L3 = inobj.L3.value();
+        }
+        newobj.total = inobj.total;
     }
     // FIXME: copy all further interface meter values to our internal object
 
