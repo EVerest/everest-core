@@ -10,6 +10,7 @@
 
 namespace iso15118::message_20 {
 
+// Begin conversion for deserializing a PowerDeliveryRequest (EVSEside)
 template <>
 void convert(const struct iso20_Scheduled_EVPPTControlModeType& in, datatypes::Scheduled_EVPPTControlMode& out) {
     if (in.PowerToleranceAcceptance_isUsed) {
@@ -53,6 +54,65 @@ template <> void convert(const struct iso20_PowerDeliveryReqType& in, PowerDeliv
     CB2CPP_CONVERT_IF_USED(in.EVPowerProfile, out.power_profile);
     CB2CPP_CONVERT_IF_USED(in.BPT_ChannelSelection, out.channel_selection);
 }
+// End conversion for deserializing a PowerDeliveryRequest (EVSEside)
+
+// Begin conversion for deserializing a PowerDeliveryResponse (EVside)
+template <> void convert(const struct iso20_EVSEStatusType& in, datatypes::EvseStatus& out) {
+    cb_convert_enum(in.EVSENotification, out.notification);
+    out.notification_max_delay = in.NotificationMaxDelay;
+}
+
+template <> void convert(const struct iso20_PowerDeliveryResType& in, PowerDeliveryResponse& out) {
+
+    cb_convert_enum(in.ResponseCode, out.response_code);
+
+    CB2CPP_CONVERT_IF_USED(in.EVSEStatus, out.status);
+
+    convert(in.Header, out.header);
+}
+// End conversion for deserializing a PowerDeliveryResponse (EVside)
+
+// Begin conversion for serializing a PowerDeliveryResponse (EVSEside)
+template <> void convert(const datatypes::PowerToleranceAcceptance& in, iso20_powerToleranceAcceptanceType& out) {
+    cb_convert_enum(in, out);
+}
+
+template <> void convert(const datatypes::Scheduled_EVPPTControlMode& in, iso20_Scheduled_EVPPTControlModeType& out) {
+    init_iso20_Scheduled_EVPPTControlModeType(&out);
+
+    CPP2CB_CONVERT_IF_USED(in.power_tolerance_acceptance, out.PowerToleranceAcceptance);
+    out.SelectedScheduleTupleID = in.selected_schedule;
+}
+
+template <> void convert(const datatypes::PowerScheduleEntry& in, iso20_PowerScheduleEntryType& out) {
+    init_iso20_PowerScheduleEntryType(&out);
+
+    out.Duration = in.duration;
+    convert(in.power, out.Power);
+    CPP2CB_CONVERT_IF_USED(in.power_l2, out.Power_L2);
+    CPP2CB_CONVERT_IF_USED(in.power_l3, out.Power_L3);
+}
+
+template <> void convert(const datatypes::PowerProfile& in, iso20_EVPowerProfileType& out) {
+    init_iso20_EVPowerProfileType(&out);
+
+    out.TimeAnchor = in.time_anchor;
+
+    if (std::holds_alternative<datatypes::Dynamic_EVPPTControlMode>(in.control_mode)) {
+        out.Dynamic_EVPPTControlMode_isUsed = true;
+    } else if (std::holds_alternative<datatypes::Scheduled_EVPPTControlMode>(in.control_mode)) {
+        out.Scheduled_EVPPTControlMode_isUsed = true;
+        convert(std::get<datatypes::Scheduled_EVPPTControlMode>(in.control_mode), out.Scheduled_EVPPTControlMode);
+    } else {
+        throw std::runtime_error("PowerProfile control mode not defined");
+    }
+
+    auto& entries_out = out.EVPowerProfileEntries.EVPowerProfileEntry;
+    entries_out.arrayLen = static_cast<uint32_t>(in.entries.size());
+    for (size_t i = 0; i < in.entries.size(); ++i) {
+        convert(in.entries[i], entries_out.array[i]);
+    }
+}
 
 template <> void convert(const PowerDeliveryResponse& in, iso20_PowerDeliveryResType& out) {
     init_iso20_PowerDeliveryResType(&out);
@@ -63,8 +123,8 @@ template <> void convert(const PowerDeliveryResponse& in, iso20_PowerDeliveryRes
     CPP2CB_CONVERT_IF_USED(in.status, out.EVSEStatus);
 }
 
-template <> void insert_type(VariantAccess& va, const struct iso20_PowerDeliveryReqType& in) {
-    va.insert_type<PowerDeliveryRequest>(in);
+template <> void insert_type(VariantAccess& va, const struct iso20_PowerDeliveryResType& in) {
+    va.insert_type<PowerDeliveryResponse>(in);
 };
 
 template <> int serialize_to_exi(const PowerDeliveryResponse& in, exi_bitstream_t& out) {
@@ -81,5 +141,42 @@ template <> int serialize_to_exi(const PowerDeliveryResponse& in, exi_bitstream_
 template <> size_t serialize(const PowerDeliveryResponse& in, const io::StreamOutputView& out) {
     return serialize_helper(in, out);
 }
+// End conversion for serializing a PowerDeliveryResponse (EVSEside)
+
+// Begin conversion for serializing a PowerDeliveryRequest (EVside)
+template <> void convert(const datatypes::ChannelSelection& in, iso20_channelSelectionType& out) {
+    cb_convert_enum(in, out);
+}
+
+template <> void convert(const PowerDeliveryRequest& in, iso20_PowerDeliveryReqType& out) {
+    init_iso20_PowerDeliveryReqType(&out);
+
+    cb_convert_enum(in.charge_progress, out.ChargeProgress);
+    cb_convert_enum(in.processing, out.EVProcessing);
+    CPP2CB_CONVERT_IF_USED(in.power_profile, out.EVPowerProfile);
+    CPP2CB_CONVERT_IF_USED(in.channel_selection, out.BPT_ChannelSelection);
+
+    convert(in.header, out.Header);
+}
+
+template <> void insert_type(VariantAccess& va, const struct iso20_PowerDeliveryReqType& in) {
+    va.insert_type<PowerDeliveryRequest>(in);
+};
+
+template <> int serialize_to_exi(const PowerDeliveryRequest& in, exi_bitstream_t& out) {
+    iso20_exiDocument doc;
+    init_iso20_exiDocument(&doc);
+
+    CB_SET_USED(doc.PowerDeliveryReq);
+
+    convert(in, doc.PowerDeliveryReq);
+
+    return encode_iso20_exiDocument(&out, &doc);
+}
+
+template <> size_t serialize(const PowerDeliveryRequest& in, const io::StreamOutputView& out) {
+    return serialize_helper(in, out);
+}
+// End conversion for serializing a PowerDeliveryRequest (EVside)
 
 } // namespace iso15118::message_20

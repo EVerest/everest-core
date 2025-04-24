@@ -74,6 +74,8 @@ static void handle_main(VariantAccess& va) {
         insert_type(va, doc.ScheduleExchangeRes);
     } else if (doc.PowerDeliveryReq_isUsed) {
         insert_type(va, doc.PowerDeliveryReq);
+    } else if (doc.PowerDeliveryRes_isUsed) {
+        insert_type(va, doc.PowerDeliveryRes);
     } else if (doc.SessionStopReq_isUsed) {
         insert_type(va, doc.SessionStopReq);
     } else {
