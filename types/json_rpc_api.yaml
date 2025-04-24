@@ -388,9 +388,9 @@ types:
         description: Available connectors
         type: array
         items:
-          description: Schedule periods
+          description: Connector infomation object
           type: object
-          $ref: /ocpp#/ChargingSchedulePeriod
+          $ref: /json_rpc_api#/ConnectorInfoObj
       bidi_charging:
         description: Whether bidirectional charging is supported
         type: boolean
