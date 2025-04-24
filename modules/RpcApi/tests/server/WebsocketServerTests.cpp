@@ -132,12 +132,10 @@ TEST_F(WebSocketServerTest, ServerCanSendDataToClient) {
     std::string message = "Hello from server!";
     ws_server->send_data(get_connected_clients()[0], std::vector<uint8_t>(message.begin(), message.end()));
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::string received_data = client.wait_for_data(std::chrono::seconds(1));
 
-    std::unique_lock<std::mutex> lock(cv_mutex);
-    cv.wait_for(lock, std::chrono::seconds(1), [&] { return !client.get_received_data().empty(); });
-    lock.unlock();
-
-    ASSERT_EQ(client.get_received_data(), "Hello from server!");
+    ASSERT_FALSE(received_data.empty());
+    ASSERT_EQ(received_data, "Hello from server!");
 }
 
 // Test: Server kills client connection
@@ -150,9 +148,7 @@ TEST_F(WebSocketServerTest, ServerCanKillClientConnection) {
     client.send("Hello World!");
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-    std::unique_lock<std::mutex> lock(cv_mutex);
-    cv.wait_for(lock, std::chrono::seconds(1), [&] { return !received_data.empty(); });
-    lock.unlock();
+    client.wait_for_data(std::chrono::seconds(1));
 
     ASSERT_EQ(ws_server->connections_count(), 1);
     ASSERT_EQ(received_data[get_connected_clients()[0]], "Hello World!");
