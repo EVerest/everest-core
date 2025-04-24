@@ -1,5 +1,7 @@
 #include "WebSocketTestClient.hpp"
 
+#include <nlohmann/json.hpp>
+
 WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
     : m_address(address), m_port(port), m_context(nullptr), m_wsi(nullptr), m_connected(false) {
 
@@ -147,3 +149,13 @@ void WebSocketTestClient::close() {
 
     EVLOG_info << "WebSocket client closed";
 }
+
+void WebSocketTestClient::sendApiHelloReq() {
+    nlohmann::json apiHelloReq = {
+        {"jsonrpc", "2.0"},
+        {"method", "API.Hello"},
+        {"id", 1}
+    };
+    send(apiHelloReq.dump());
+}
+
