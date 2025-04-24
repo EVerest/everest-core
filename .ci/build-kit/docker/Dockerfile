@@ -22,10 +22,6 @@ RUN if [ -d /usr/local/go ]; then \
 ENV PATH="/usr/local/go/bin:${PATH}"
 RUN go version
 
-RUN pip install --break-system-packages \
-    grpcio \
-    grpcio-tools
-
 ENV GRPC_VERSION=v1.71.0
 ENV GRPC_EXTENDED_CPP_PLUGIN_VERSION=main
 RUN tmpdir=$(mktemp -d) \
@@ -62,3 +58,7 @@ RUN tmpdir=$(mktemp -d) \
     && short_version=$(echo ${PYTHON_VERSION} | cut -d. -f1-2) \
     && rm /usr/local/bin/python3 \
     && ln -s /usr/local/bin/python${short_version} /usr/local/bin/python3
+
+RUN pip install --break-system-packages \
+    grpcio \
+    grpcio-tools
