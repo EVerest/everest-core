@@ -33,7 +33,7 @@ use anyhow::Result;
 use generated::types::{
     authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
     money::MoneyAmount,
-    payment_terminal::{BankSessionToken, BankTransactionSummary, CardType},
+    payment_terminal::{BankSessionToken, BankTransactionSummary, CardType, RejectionReason},
     session_cost::{SessionCost, SessionStatus, TariffMessage},
 };
 use generated::{
@@ -165,6 +165,19 @@ pub struct PaymentTerminalModule {
     connector_to_card_type: Mutex<HashMap<i64, Vec<CardType>>>,
 }
 
+impl From<u8> for RejectionReason {
+    fn from(code: u8) -> Self {
+        match code {
+            0x41 | 0x13 | 0xEC | 0xFC => RejectionReason::PinRequired,
+            0x71 => RejectionReason::InsufficientFunds,
+            0xC5 => RejectionReason::CardNotSupported,
+            0x6C => RejectionReason::Aborted,
+            0x05 | 0xA0 | 0xFF | 0x61 | 0x9B => RejectionReason::Timeout,
+            _ => RejectionReason::Unknown,
+        }
+    }
+}
+
 impl PaymentTerminalModule {
     /// Waits for a card and begins a transaction (sends an auth token).
     ///
@@ -208,9 +221,10 @@ impl PaymentTerminalModule {
                             match e.downcast_ref::<ErrorMessages>() {
                                 Some(rejection_reason) => {
                                     log::info!("Recieved rejection reason {}", rejection_reason);
+
                                     publishers
                                         .payment_terminal
-                                        .rejection_reason(*rejection_reason as u8 as i64)?;
+                                        .rejection_reason((*rejection_reason as u8).into())?;
                                 }
                                 None => log::debug!("No error code provided"),
                             };

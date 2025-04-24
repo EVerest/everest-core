@@ -28,7 +28,6 @@ vars:
   rejection_reason:
     description: >-
       Provides a rejection reason for the rejected credit card read.
-      It's opaque data as most of the terminals report errors as integers
-      It has to be evaluated by the receiver
-    type: integer
+    type: string
+    $ref: /payment_terminal#/RejectionReason
 
