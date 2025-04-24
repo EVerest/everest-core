@@ -59,6 +59,6 @@ RUN tmpdir=$(mktemp -d) \
     && rm /usr/local/bin/python3 \
     && ln -s /usr/local/bin/python${short_version} /usr/local/bin/python3
 
-RUN pip install --break-system-packages \
+RUN python3 -m pip install --break-system-packages \
     grpcio \
     grpcio-tools
