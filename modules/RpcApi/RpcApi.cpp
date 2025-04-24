@@ -67,10 +67,6 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
     meter_data_new.energy_Wh_import.total = powermeter.energy_Wh_import.total;
 
     // optional objects from the EVerest powermeter interface
-    // template
-    // if (powermeter.objectname.has_value()) {
-    //     meter_data_new.objectname = powermeter.objectname.value();
-    // }
     if (powermeter.current_A.has_value()) {
         meter_data_new.current_A.emplace();
         const auto& inobj = powermeter.current_A.value();
@@ -95,6 +91,63 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
             newobj.L3 = inobj.L3.value();
         }
         newobj.total = inobj.total;
+    }
+    if (powermeter.frequency_Hz.has_value()) {
+        // a shortcut reference to the input data sub-object
+        const auto& inobj = powermeter.frequency_Hz.value();
+        // a shortcut reference to the output data sub-object optional
+        auto& frequency_optional = meter_data_new.frequency_Hz;
+        // keep original (copied) optional value, or emplace empty if non exist
+        auto& newobj = frequency_optional.emplace(frequency_optional.value_or(types::json_rpc_api::Frequency_Hz{}));
+        newobj.L1 = inobj.L1;
+        if (inobj.L2.has_value()) {
+            newobj.L2 = inobj.L2.value();
+        }
+        if (inobj.L3.has_value()) {
+            newobj.L3 = inobj.L3.value();
+        }
+    }
+    if (powermeter.meter_id.has_value()) {
+        meter_data_new.meter_id = powermeter.meter_id.value();
+    }
+    // serial_number  is not yet available
+    if (powermeter.phase_seq_error.has_value()) {
+        meter_data_new.phase_seq_error = powermeter.phase_seq_error.value();
+    }
+    if (powermeter.power_W.has_value()) {
+        // a shortcut reference to the input data sub-object
+        const auto& inobj = powermeter.power_W.value();
+        // a shortcut reference to the output data sub-object optional
+        auto& export_opt = meter_data_new.power_W;
+        // keep original (copied) optional value, or emplace empty if non exist
+        auto& newobj = export_opt.emplace(export_opt.value_or(types::json_rpc_api::Power_W{}));
+        if (inobj.L1.has_value()) {
+            newobj.L1 = inobj.L1.value();
+        }
+        if (inobj.L2.has_value()) {
+            newobj.L2 = inobj.L2.value();
+        }
+        if (inobj.L3.has_value()) {
+            newobj.L3 = inobj.L3.value();
+        }
+        newobj.total = inobj.total;
+    }
+    if (powermeter.voltage_V.has_value()) {
+        // a shortcut reference to the input data sub-object
+        const auto& inobj = powermeter.voltage_V.value();
+        // a shortcut reference to the output data sub-object optional
+        auto& export_opt = meter_data_new.voltage_V;
+        // keep original (copied) optional value, or emplace empty if non exist
+        auto& newobj = export_opt.emplace(export_opt.value_or(types::json_rpc_api::Voltage_V{}));
+        if (inobj.L1.has_value()) {
+            newobj.L1 = inobj.L1.value();
+        }
+        if (inobj.L2.has_value()) {
+            newobj.L2 = inobj.L2.value();
+        }
+        if (inobj.L3.has_value()) {
+            newobj.L3 = inobj.L3.value();
+        }
     }
     // FIXME: copy all further interface meter values to our internal object
 
