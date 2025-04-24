@@ -3,6 +3,4 @@
 
 #include "GenericInfoStore.hpp"
 
-namespace data {
-
-} // namespace data
+namespace data {} // namespace data
