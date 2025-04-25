@@ -6,9 +6,11 @@
 #include "../rpc/RpcHandler.hpp"
 #include "../server/WebsocketServer.hpp"
 #include "../data/DataStore.hpp"
+#include "../helpers/JsonRpcUtils.hpp"
 
 using namespace server;
 using namespace rpc;
+using namespace json_rpc_utils;
 
 class RpcHandlerTest : public ::testing::Test {
 protected:
@@ -129,22 +131,15 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     result.infos.push_back(evse_info);
     result.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
 
-    nlohmann::json expected_response = {
-        {"jsonrpc", "2.0"},
-        {"result", result},
-        {"id", 1}
-    };
-    nlohmann::json chargePointgetEVSEInfosReq = {
-        {"jsonrpc", "2.0"},
-        {"method", "ChargePoint.GetEVSEInfos"},
-        {"id", 1}
-    };
+    // Set up request and expected response
+    nlohmann::json charge_point_get_evse_infos_req = create_json_rpc_request("ChargePoint.GetEVSEInfos", {}, 1);
+    nlohmann::json expected_response = create_json_rpc_response(result, 1);
 
     // Send Api.Hello request
     client.sendApiHelloReq();
     client.wait_for_data(std::chrono::seconds(1));
     // Send ChargePoint.GetEVSEInfos request
-    client.send(chargePointgetEVSEInfosReq.dump());
+    client.send(charge_point_get_evse_infos_req.dump());
     // Wait for the response
     std::string received_data = client.wait_for_data(std::chrono::seconds(1));
     // Check if the response is not empty
@@ -173,41 +168,51 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     evse_info.description = "Test EVSE 1";
     data_store.evses[0].evseinfo.set_data(evse_info);
 
-    // Expected response
-    RPCDataTypes::EVSEGetInfoResObj result;
-    result.info = evse_info;
-    result.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
+    // Expected response 1
+    RPCDataTypes::EVSEGetInfoResObj result_1;
+    result_1.info = evse_info;
+    result_1.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
 
-    nlohmann::json expected_response = {
-        {"jsonrpc", "2.0"},
-        {"result", result},
-        {"id", 1}
-    };
+    evse_info.id = "DEA12E000002";
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cType2;
+    evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::sType2;
+    data_store.evses.emplace_back();
+    data_store.evses[1].evseinfo.set_data(evse_info);
+
+    nlohmann::json expected_response_1 = create_json_rpc_response(result_1, 1);
+
+    // Expected response 2
+    RPCDataTypes::EVSEGetInfoResObj result_2;
+    result_2.info = evse_info;
+    result_2.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
+
+    nlohmann::json expected_response_2 = create_json_rpc_response(result_2, 1);
     
-    nlohmann::json evseGetEVSEInfosReq = {
-        {"jsonrpc", "2.0"},
-        {"method", "EVSE.GetEVSEInfos"},
-        {"params", {{"evse_id", "DEA12E000001"}}},
-        {"id", 1}
-    };
+    // Set up the request
+    nlohmann::json evse_get_evse_infos_req_1 = create_json_rpc_request("EVSE.GetEVSEInfos", {{"evse_id", "DEA12E000001"}}, 1);
+    nlohmann::json evse_get_evse_infos_req_2 = create_json_rpc_request("EVSE.GetEVSEInfos", {{"evse_id", "DEA12E000002"}}, 1);
 
     // Send Api.Hello request
     client.sendApiHelloReq();
     client.wait_for_data(std::chrono::seconds(1));
-    
-    // Send EVSE.GetEVSEInfos request
-    client.send(evseGetEVSEInfosReq.dump());
-    
+    // Send EVSE.GetEVSEInfos request 1
+    client.send(evse_get_evse_infos_req_1.dump());
     // Wait for the response
     std::string received_data = client.wait_for_data(std::chrono::seconds(1));
-    
     // Check if the response is not empty
     ASSERT_FALSE(received_data.empty());
-    
     // Check if the response is valid
     nlohmann::json response = nlohmann::json::parse(received_data);
-    
-    ASSERT_EQ(response, expected_response);
+    ASSERT_EQ(response, expected_response_1);
+    // Send EVSE.GetEVSEInfos request 2
+    client.send(evse_get_evse_infos_req_2.dump());
+    // Wait for the response
+    received_data = client.wait_for_data(std::chrono::seconds(1));
+    // Check if the response is not empty
+    ASSERT_FALSE(received_data.empty());
+    // Check if the response is valid
+    response = nlohmann::json::parse(received_data);
+    ASSERT_EQ(response, expected_response_2);
 }
 
 // Test: Connect to WebSocket server and send invalid request
@@ -218,26 +223,13 @@ TEST_F(RpcHandlerTest, InvalidRequest) {
 
     // Send Api.Hello request
     client.sendApiHelloReq();
-
     // Wait for the response
     client.wait_for_data(std::chrono::seconds(1));
-
     // Send invalid request
-    nlohmann::json invalid_request = {
-        {"jsonrpc", "2.0"},
-        {"method", "API.InvalidMethod"},
-        {"id", 1}
-    };
-
+    nlohmann::json invalid_request = create_json_rpc_request("API.InvalidMethod", {}, 1);
     // Expected response
-    nlohmann::json expected_response = {
-        {"jsonrpc", "2.0"},
-        {"error", {
-            {"code", -32601},
-            {"message", "method not found: API.InvalidMethod"}
-        }},
-        {"id", 1}
-    };
+    nlohmann::json expected_response = create_json_rpc_error_response(-32601, "method not found: API.InvalidMethod", 1);
+    // Send invalid request
     client.send(invalid_request.dump());
     // Wait for the response
     std::string received_data = client.wait_for_data(std::chrono::seconds(1));

@@ -2,6 +2,10 @@
 
 #include <nlohmann/json.hpp>
 
+#include "JsonRpcUtils.hpp"
+
+using namespace json_rpc_utils;
+
 WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
     : m_address(address), m_port(port), m_context(nullptr), m_wsi(nullptr), m_connected(false) {
 
@@ -151,11 +155,8 @@ void WebSocketTestClient::close() {
 }
 
 void WebSocketTestClient::sendApiHelloReq() {
-    nlohmann::json apiHelloReq = {
-        {"jsonrpc", "2.0"},
-        {"method", "API.Hello"},
-        {"id", 1}
-    };
+    nlohmann::json apiHelloReq = create_json_rpc_request("API.Hello", {}, 1);
+
     send(apiHelloReq.dump());
 }
 
