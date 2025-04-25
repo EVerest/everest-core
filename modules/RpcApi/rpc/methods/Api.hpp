@@ -5,7 +5,6 @@
 #define API_HPP
 
 #include <vector>
-#include <optional>
 
 #include "../../data/DataStore.hpp"
 
@@ -17,7 +16,7 @@ namespace methods {
 
 static const std::string METHOD_API_HELLO = "API.Hello";
 
-/// This is the API class for the RPC methods.
+/// This class includes all methods of the API namespace.
 /// It contains the data object and the methods to access it.
 class Api {
     public:
