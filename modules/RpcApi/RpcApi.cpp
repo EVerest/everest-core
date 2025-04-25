@@ -12,7 +12,11 @@ void RpcApi::init() {
 
     for (const auto& evse_manager : r_evse_manager) {
         // create one DataStore object per EVSE
+        // and create one connector per EVSE
+        // TODO: expand this when EVerest supports more connectors
         this->data.evses.emplace_back().connectors.emplace_back();
+        // initialize id, counting from 0
+        this->data.evses.emplace_back().connectors[0].connectorinfo.set_id(0);
         data::DataStoreEvse& evse_data = this->data.evses.back();
 
         // subscribe to interface variables
