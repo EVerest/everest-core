@@ -890,6 +890,18 @@ void OCPP::ready() {
             tevent.session_id = session_id;
             tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+            if (id_tag_info.parentIdTag.has_value()) {
+                types::authorization::ValidationResultUpdate result_update;
+                types::authorization::IdToken id_token;
+                id_token.value = id_tag_info.parentIdTag.value();
+                // Default to RFID auth type for parentIdTag since we have no information about it in ocpp1.6
+                id_token.type = types::authorization::IdTokenType::ISO14443;
+                result_update.validation_result.parent_id_token = id_token;
+                result_update.validation_result.authorization_status =
+                    conversions::to_everest_authorization_status(id_tag_info.status);
+                result_update.connector_id = connector;
+                p_auth_validator->publish_validate_result_update(result_update);
+            }
         });
 
     this->charge_point->register_transaction_stopped_callback(
