@@ -40,9 +40,9 @@ public:
         return data;
     }
 
-    void wait_for_response(std::chrono::milliseconds timeout) {
+    bool wait_for_response(std::chrono::milliseconds timeout) {
         std::unique_lock<std::mutex> lock(m_cv_mutex);
-        m_cv.wait_for(lock, timeout, [this] { return !m_received_data.empty(); });
+        return m_cv.wait_for(lock, timeout, [this] { return !m_received_data.empty(); });
     }
     
 private:
