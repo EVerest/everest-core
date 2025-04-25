@@ -31,8 +31,20 @@ class Evse {
     // Methods
     RPCDataTypes::EVSEGetInfoResObj getEVSEInfos(std::string evse_id) {
         RPCDataTypes::EVSEGetInfoResObj res;
+
+        // Check if evse info is available
+        if (m_dataobj.evses.empty()) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
+            return res;
+        }
+
         // Iterate over all EVSEs and add the EVSEInfo objects to the response
         for (const auto &evse : m_dataobj.evses) {
+            if (!evse.evseinfo.get_data().has_value()) {
+                res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
+                return res;
+            }
+
             if (evse.evseinfo.get_data().has_value() && evse.evseinfo.get_data().value().id == evse_id) {
                 res.info = evse.evseinfo.get_data().value();
                 res.error = RPCDataTypes::ResponseErrorEnum::NoError;
