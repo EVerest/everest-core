@@ -9,6 +9,7 @@
 
 namespace ocpp::v2 {
 class ComponentStateManagerMock : public ComponentStateManagerInterface {
+public:
     MOCK_METHOD(void, set_cs_effective_availability_changed_callback,
                 (const std::function<void(const OperationalStatusEnum new_status)>& callback));
 

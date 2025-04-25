@@ -106,12 +106,10 @@ public:
         return dynamic_cast<EvseMock&>(*evses.at(evse_id - 1).get());
     }
 
-    bool any_transaction_active(const std::optional<EVSE>& /*evse*/) const override {
-        return false;
-    }
+    MOCK_METHOD(bool, any_transaction_active, (const std::optional<EVSE>& evse), (const));
 
     bool is_valid_evse(const EVSE& evse) const override {
-        return (static_cast<int32_t>(evses.size()) > evse.id);
+        return (static_cast<int32_t>(evses.size()) >= evse.id);
     }
 };
 
