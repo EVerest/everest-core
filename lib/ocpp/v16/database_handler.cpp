@@ -518,10 +518,33 @@ int32_t DatabaseHandler::get_local_authorization_list_number_of_entries() {
 }
 
 void DatabaseHandler::insert_or_update_charging_profile(const int connector_id, const v16::ChargingProfile& profile) {
-    // add or replace
-    std::string sql = "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, CONNECTOR_ID, PROFILE) VALUES "
-                      "(@id, @connector_id, @profile)";
+
+    // Ensure compliance with OCPP 1.6 3.13.2. Stacking charging profiles:
+    //     To avoid conflicts, the existence of multiple Charging Profiles with
+    //     the same stackLevel and Purposes in a Charge Point is not allowed.
+    //     Whenever a Charge Point receives a Charging Profile with a stackLevel
+    //     and Purpose that already exists in the Charge Point, the Charge Point
+    //     SHALL replace the existing profile.
+
+    std::string sql = "DELETE FROM CHARGING_PROFILES WHERE "
+                      "Json_extract(PROFILE, '$.stackLevel') = @level AND "
+                      "Json_extract(PROFILE, '$.chargingProfilePurpose') = @purpose";
     auto stmt = this->database->new_statement(sql);
+
+    const std::string purpose =
+        ocpp::v16::conversions::charging_profile_purpose_type_to_string(profile.chargingProfilePurpose);
+
+    stmt->bind_int("@level", profile.stackLevel);
+    stmt->bind_text("@purpose", purpose, SQLiteString::Transient);
+
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+
+    // add or replace
+    sql = "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, CONNECTOR_ID, PROFILE) VALUES "
+          "(@id, @connector_id, @profile)";
+    stmt = this->database->new_statement(sql);
 
     json json_profile(profile);
 

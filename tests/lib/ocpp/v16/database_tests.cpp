@@ -359,11 +359,43 @@ TEST_F(DatabaseTest, test_update_profile_same_profile_id) {
     ASSERT_EQ(profiles.size(), 1);
 }
 
+TEST_F(DatabaseTest, test_update_profile_same_purpose_and_level_non_zero) {
+    const auto profile1 = get_sample_charging_profile();
+    auto profile2 = get_sample_charging_profile();
+
+    profile2.chargingProfileId++; // different profile ID
+
+    this->db_handler->insert_or_update_charging_profile(1, profile1);
+    this->db_handler->insert_or_update_charging_profile(2, profile2);
+
+    const auto profiles = this->db_handler->get_charging_profiles();
+
+    ASSERT_EQ(profiles.size(), 1);
+}
+
+TEST_F(DatabaseTest, test_update_profile_same_purpose_and_level_connector_zero) {
+    const auto profile1 = get_sample_charging_profile();
+    auto profile2 = get_sample_charging_profile();
+
+    profile2.chargingProfileId++; // different profile ID
+
+    this->db_handler->insert_or_update_charging_profile(0, profile1);
+    this->db_handler->insert_or_update_charging_profile(0, profile2);
+
+    const auto profiles = this->db_handler->get_charging_profiles();
+
+    ASSERT_EQ(profiles.size(), 1);
+}
+
 TEST_F(DatabaseTest, test_delete_profile) {
     const auto profile1 = get_sample_charging_profile();
     auto profile2 = get_sample_charging_profile();
 
     profile2.chargingProfileId = 2;
+
+    // two profiles with same purpose and level are not allowed
+    // see OCPP 1.6 3.13.2. Stacking charging profiles
+    profile2.stackLevel++;
 
     this->db_handler->insert_or_update_charging_profile(1, profile1);
     this->db_handler->insert_or_update_charging_profile(2, profile2);
