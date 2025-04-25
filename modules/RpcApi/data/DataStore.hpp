@@ -14,6 +14,10 @@ class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoOb
     //     memset(&dataobj, 0, sizeof(dataobj));
     //     dataobj.id = -1;
     // }
+public:
+    void set_id(int id) {
+        this->dataobj.id = id;
+    }
 };
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {};
 class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};
