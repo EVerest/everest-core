@@ -19,17 +19,6 @@ using ::testing::StrictMock;
 
 class kvsIntf;
 
-namespace types {
-namespace authorization {
-
-// Define operator== for types::authorization::IdToken
-bool operator==(const types::authorization::IdToken& lhs, const types::authorization::IdToken& rhs) {
-    return lhs.value == rhs.value;
-}
-
-} // namespace authorization
-} // namespace types
-
 namespace module {
 
 const static std::string VALID_TOKEN_1 = "VALID_RFID_1"; // SAME PARENT_ID
