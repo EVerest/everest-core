@@ -1,0 +1,50 @@
+description: >-
+  Simulated Session Accountant module for SIL testing.
+  Can provide both, pre-validated and non pre-validated tokens, in order to simulate closed-loop (RFID) and open-loop (VISA, giro, ...) cards.
+config:
+  start_session_price_mau:
+    description: Price to start a charging session in minimal accountable unit (offset)
+    default: 0
+    type: integer
+  kWh_price_millimau:
+    description: Price of a kWh in units of 'thousanth of minmal accountable unit per kWh' (i.e. 1/1000ct / kWh; e.g. 1€/kWh translates to 100000)
+    default: 0
+    type: integer
+  idle_hourly_price_mau:
+    description: Price for idle time after charging in minimal accountable units
+    default: 100
+    type: integer
+  currency:
+    description: Currency in ISO 4217 format.
+    default: 978
+    type: integer
+  pre_authorization_amount_mau:
+    description: Pre authentication amount in minimal accountable unit (cents).
+    default: 5000
+    type: integer
+  session_timeout_s:
+    description: Time a payment session is allowed to be active. Charging is forced to stop when time runs out.
+    default: 50
+    type: integer
+  powermeter_timeout_s:
+    description: Maximum allowed interval between powermeter updates. On exceeding this time, charging is stopped.
+    default: 5
+    type: integer
+  grace_period_minutes:
+    description: Grace period in minutes before idle time is charged.
+    default: 10
+    type: integer
+requires:
+  evse_manager:
+    interface: evse_manager
+    min_connections: 1
+    max_connections: 128
+provides:
+  session_cost:
+    description: Provides billable prices for finished charging sessions.
+    interface: session_cost
+enable_external_mqtt: true
+metadata:
+  license: https://pionix.com/pionix-license-terms
+  authors:
+    - Christoph Burandt (Pionix GmbH)

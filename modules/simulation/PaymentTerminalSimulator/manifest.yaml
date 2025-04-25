@@ -1,0 +1,39 @@
+description: >-
+  Simulated Payment Terminal module for SIL testing.
+  Can provide both, pre-validated and non pre-validated tokens, in order to simulate closed-loop (RFID) and open-loop (VISA, giro, ...) cards.
+config:
+  currency:
+    description: Currency in ISO 4217 format.
+    default: 978
+    type: integer
+  pre_authorization_amount:
+    description: Pre authentication amount in minimal accountable unit (cents).
+    default: 5000
+    type: integer
+  token_debounce_interval_ms:
+    description: Minimal wait time in ms until next token will be published. 
+    default: 2000
+    type: integer
+  simulated_PT_has_open_preauthorizations:
+    description: A real PT could have open transaction in its memory, when the module is initialized.
+    default: false
+    type: boolean
+  max_open_transactions:
+    description: >-
+      The maximum number open pre-authorizations. Additional transactions will be rejected.
+    default: 3
+    type: integer
+requires:
+  cost_provider:
+    interface: session_cost
+#  session_token_provider:
+#    interface: bank_session_token_provider
+provides:
+  token_provider:
+    interface: auth_token_provider
+    description: Provides authentication tokens.
+enable_external_mqtt: true
+metadata:
+  license: https://pionix.com/pionix-license-terms
+  authors:
+    - Christoph Burandt (Pionix GmbH)

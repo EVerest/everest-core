@@ -1,4 +1,5 @@
 generate_config_run_script(CONFIG sil)
+generate_config_run_script(CONFIG sil-payment)
 generate_config_run_script(CONFIG sil-two-evse)
 generate_config_run_script(CONFIG sil-ocpp)
 generate_config_run_script(CONFIG sil-ocpp201)
