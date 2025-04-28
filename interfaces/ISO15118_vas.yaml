@@ -1,0 +1,32 @@
+description: Custom VAS provider for ISO 15118-20
+vars:
+  service_ids:
+    description: List of offered service IDs
+    type: array
+    items:
+      type: integer
+      description: Service ID
+
+cmds:
+  get_service_details:
+    description: Called upon ServiceDetailReq, returns the payload of ServiceDetailRes
+    arguments:
+      service_id:
+        type: integer
+        description: Service ID
+    result:
+      type: array
+      description: ParameterSets
+      items:
+        type: object
+        $ref: /iso15118_vas#/ParameterSet
+
+  on_service_selected:
+    description: Called upon ServiceSelectionReq
+    arguments:
+      selected_services:
+        description: List of selected services and their parameter set IDs
+        type: array
+        items:
+          type: object
+          $ref: /iso15118_vas#/SelectedService

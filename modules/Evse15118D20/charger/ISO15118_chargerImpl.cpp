@@ -6,6 +6,7 @@
 #include "utils.hpp"
 
 #include <iso15118/io/logging.hpp>
+#include <iso15118/message/service_detail.hpp>
 #include <iso15118/session/logger.hpp>
 
 namespace module {
@@ -87,6 +88,55 @@ convert_dynamic_values(const iso15118::message_20::datatypes::BPT_Dynamic_DC_CLR
             dt::from_RationalNumber(in.max_discharge_current),
             convert_from_optional<float>(in.max_v2x_energy_request),
             convert_from_optional<float>(in.min_v2x_energy_request)};
+}
+
+iso15118::message_20::datatypes::Parameter convert_parameter(const types::iso15118_vas::Parameter& parameter) {
+    iso15118::message_20::datatypes::Parameter out;
+    out.name = parameter.name;
+
+    switch (parameter.type) {
+    case types::iso15118_vas::ParameterType::Int32:
+        out.value = static_cast<int32_t>(parameter.value.value_integer.value());
+        break;
+    case types::iso15118_vas::ParameterType::Int16:
+        out.value = static_cast<int16_t>(parameter.value.value_integer.value());
+        break;
+    case types::iso15118_vas::ParameterType::Int8:
+        out.value = static_cast<int8_t>(parameter.value.value_integer.value());
+        break;
+    case types::iso15118_vas::ParameterType::String:
+        out.value = parameter.value.value_string.value();
+        break;
+    case types::iso15118_vas::ParameterType::RationalNumber:
+        out.value = iso15118::message_20::datatypes::from_float(parameter.value.value_rational.value());
+        break;
+    case types::iso15118_vas::ParameterType::Boolean:
+        out.value = parameter.value.value_bool.value();
+        break;
+    }
+
+    return out;
+}
+
+iso15118::message_20::datatypes::ParameterSet
+convert_parameter_set(const types::iso15118_vas::ParameterSet& parameter_set) {
+    std::vector<iso15118::message_20::datatypes::Parameter> parameters;
+    parameters.reserve(parameter_set.parameters.size());
+    for (const auto& parameter : parameter_set.parameters) {
+        parameters.push_back(convert_parameter(parameter));
+    }
+
+    return iso15118::message_20::datatypes::ParameterSet(parameter_set.set_id, parameters);
+}
+
+std::vector<iso15118::message_20::datatypes::ParameterSet>
+convert_parameter_set_list(const std::vector<types::iso15118_vas::ParameterSet>& parameter_set_list) {
+    std::vector<iso15118::message_20::datatypes::ParameterSet> out;
+    out.reserve(parameter_set_list.size());
+    for (const auto& parameter_set : parameter_set_list) {
+        out.push_back(convert_parameter_set(parameter_set));
+    }
+    return out;
 }
 
 auto fill_mobility_needs_modes_from_config(const module::Conf& module_config) {
