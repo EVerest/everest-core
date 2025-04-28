@@ -1,6 +1,8 @@
 #!/bin/sh
 
 cd tests
+pytest --help
+echo "pytest version: $(pytest --version)"
 pytest \
   -rA \
   --junitxml="$EXT_MOUNT/result.xml" \
