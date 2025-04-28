@@ -6,7 +6,7 @@ PARALLEL_TESTS=$(nproc)
 
 echo "Running $PARALLEL_TESTS ocpp tests in parallel"
 
-python3 -m pytest \
+pytest \
   -rA \
   -d --tx "$PARALLEL_TESTS"*popen//python=python3 \
   --max-worker-restart=0 \
