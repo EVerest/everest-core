@@ -343,6 +343,13 @@ void OCPP201::init() {
     this->init_evse_maps();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+        this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
+            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+            if (ready) {
+                this->evse_ready_map[evse_id] = true;
+                this->evse_ready_cv.notify_one();
+            }
+        });
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
             std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
             if (ready) {
@@ -982,6 +989,8 @@ void OCPP201::ready() {
             });
     }
 
+    // wait for all EVSE to be ready before we can initialize libocpp before being able to trigger enable/disable
+    // connector callbacks
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {
         this->evse_ready_cv.wait(lk);
@@ -991,7 +1000,20 @@ void OCPP201::ready() {
 
     const auto boot_reason = conversions::to_ocpp_boot_reason(this->r_system->call_get_boot_reason());
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(this->config.MessageQueueResumeDelay));
-    this->charge_point->start(boot_reason);
+    // we can now initialize the charge point's state machine. It reads the connector availability from the internal
+    // database and potentially triggers enable/disable callbacks at the evse.
+    this->charge_point->start(boot_reason, false);
+
+    // Signal to EVSEs to start their internal state machines
+    for (const auto& evse : this->r_evse_manager) {
+        evse->call_external_ready_to_start_charging();
+    }
+
+    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
+    // plugged in at startup)
+    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
+    // start OCPP connection
+    this->charge_point->connect_websocket();
 }
 
 void OCPP201::process_session_event(const int32_t evse_id, const types::evse_manager::SessionEvent& session_event) {
