@@ -99,7 +99,7 @@ int decode_exi_type_integer8(exi_bitstream_t* stream, int8_t* value)
         error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
         if (error == 0)
         {
-            if(eventCode != 0)
+            if (eventCode != 0)
             {
                 /* deviants are not supported or also typecast and nillable */
                 error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
@@ -136,7 +136,7 @@ int decode_exi_type_integer16(exi_bitstream_t* stream, int16_t* value)
         error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
         if (error == 0)
         {
-            if(eventCode != 0)
+            if (eventCode != 0)
             {
                 /* deviants are not supported or also typecast and nillable */
                 error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
@@ -173,7 +173,7 @@ int decode_exi_type_integer32(exi_bitstream_t* stream, int32_t* value)
         error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
         if (error == 0)
         {
-            if(eventCode != 0)
+            if (eventCode != 0)
             {
                 /* deviants are not supported or also typecast and nillable */
                 error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
@@ -210,7 +210,7 @@ int decode_exi_type_integer64(exi_bitstream_t* stream, int64_t* value)
         error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
         if (error == 0)
         {
-            if(eventCode != 0)
+            if (eventCode != 0)
             {
                 /* deviants are not supported or also typecast and nillable */
                 error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;

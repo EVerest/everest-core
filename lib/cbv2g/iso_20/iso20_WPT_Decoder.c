@@ -108,16 +108,16 @@ static int decode_iso20_wpt_TransformType(exi_bitstream_t* stream, struct iso20_
 
     init_iso20_wpt_TransformType(TransformType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 0:
             // Grammar: ID=0; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=1
@@ -150,7 +150,7 @@ static int decode_iso20_wpt_TransformType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (XPath, string (string)); next=2
@@ -233,7 +233,7 @@ static int decode_iso20_wpt_TransformType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -261,7 +261,7 @@ static int decode_iso20_wpt_TransformType(exi_bitstream_t* stream, struct iso20_
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Transform, TransformType (1, 1);
+// Particle: Transform, TransformType (1, 1) (original max unbounded);
 static int decode_iso20_wpt_TransformsType(exi_bitstream_t* stream, struct iso20_wpt_TransformsType* TransformsType) {
     int grammar_id = 4;
     int done = 0;
@@ -270,16 +270,16 @@ static int decode_iso20_wpt_TransformsType(exi_bitstream_t* stream, struct iso20
 
     init_iso20_wpt_TransformsType(TransformsType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 4:
             // Grammar: ID=4; read/write bits=1; START (Transform)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transform, TransformType (TransformType)); next=5
@@ -301,16 +301,13 @@ static int decode_iso20_wpt_TransformsType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transform, TransformType (TransformType)); next=2
                     // decode: element
-                    error = decode_iso20_wpt_TransformType(stream, &TransformsType->Transform);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -328,7 +325,7 @@ static int decode_iso20_wpt_TransformsType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -356,7 +353,7 @@ static int decode_iso20_wpt_TransformsType(exi_bitstream_t* stream, struct iso20
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DSAKeyValue; type={http://www.w3.org/2000/09/xmldsig#}DSAKeyValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: P, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); Q, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']);
+// Particle: P, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); Q, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']);
 static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_wpt_DSAKeyValueType* DSAKeyValueType) {
     int grammar_id = 6;
     int done = 0;
@@ -365,16 +362,16 @@ static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso2
 
     init_iso20_wpt_DSAKeyValueType(DSAKeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 6:
             // Grammar: ID=6; read/write bits=2; START (P), START (G), START (Y)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (P, CryptoBinary (base64Binary)); next=7
@@ -416,7 +413,7 @@ static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Q, CryptoBinary (base64Binary)); next=8
@@ -439,7 +436,7 @@ static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (G, CryptoBinary (base64Binary)); next=9
@@ -471,7 +468,7 @@ static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Y, CryptoBinary (base64Binary)); next=10
@@ -493,7 +490,7 @@ static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (J, CryptoBinary (base64Binary)); next=11
@@ -531,7 +528,7 @@ static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Seed, CryptoBinary (base64Binary)); next=12
@@ -559,7 +556,7 @@ static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PgenCounter, CryptoBinary (base64Binary)); next=2
@@ -587,7 +584,7 @@ static int decode_iso20_wpt_DSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -624,16 +621,16 @@ static int decode_iso20_wpt_X509IssuerSerialType(exi_bitstream_t* stream, struct
 
     init_iso20_wpt_X509IssuerSerialType(X509IssuerSerialType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 13:
             // Grammar: ID=13; read/write bits=1; START (X509IssuerName)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509IssuerName, string (string)); next=14
@@ -695,7 +692,7 @@ static int decode_iso20_wpt_X509IssuerSerialType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509SerialNumber, integer (decimal)); next=2
@@ -722,7 +719,7 @@ static int decode_iso20_wpt_X509IssuerSerialType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -759,16 +756,16 @@ static int decode_iso20_wpt_DigestMethodType(exi_bitstream_t* stream, struct iso
 
     init_iso20_wpt_DigestMethodType(DigestMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 15:
             // Grammar: ID=15; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=16
@@ -801,7 +798,7 @@ static int decode_iso20_wpt_DigestMethodType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -834,7 +831,7 @@ static int decode_iso20_wpt_DigestMethodType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -871,16 +868,16 @@ static int decode_iso20_wpt_RSAKeyValueType(exi_bitstream_t* stream, struct iso2
 
     init_iso20_wpt_RSAKeyValueType(RSAKeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 17:
             // Grammar: ID=17; read/write bits=1; START (Modulus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Modulus, CryptoBinary (base64Binary)); next=18
@@ -902,7 +899,7 @@ static int decode_iso20_wpt_RSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Exponent, CryptoBinary (base64Binary)); next=2
@@ -924,7 +921,7 @@ static int decode_iso20_wpt_RSAKeyValueType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -961,16 +958,16 @@ static int decode_iso20_wpt_CanonicalizationMethodType(exi_bitstream_t* stream, 
 
     init_iso20_wpt_CanonicalizationMethodType(CanonicalizationMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 19:
             // Grammar: ID=19; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=20
@@ -1003,7 +1000,7 @@ static int decode_iso20_wpt_CanonicalizationMethodType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -1036,7 +1033,7 @@ static int decode_iso20_wpt_CanonicalizationMethodType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1073,16 +1070,16 @@ static int decode_iso20_wpt_WPT_TxRxPulseOrderType(exi_bitstream_t* stream, stru
 
     init_iso20_wpt_WPT_TxRxPulseOrderType(WPT_TxRxPulseOrderType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 21:
             // Grammar: ID=21; read/write bits=1; START (IndexNumber)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (IndexNumber, unsignedShort (unsignedInt)); next=22
@@ -1104,7 +1101,7 @@ static int decode_iso20_wpt_WPT_TxRxPulseOrderType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (TxRxIdentifier, numericIDType (unsignedInt)); next=2
@@ -1126,7 +1123,7 @@ static int decode_iso20_wpt_WPT_TxRxPulseOrderType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1163,16 +1160,16 @@ static int decode_iso20_wpt_SignatureMethodType(exi_bitstream_t* stream, struct 
 
     init_iso20_wpt_SignatureMethodType(SignatureMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 23:
             // Grammar: ID=23; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=24
@@ -1205,7 +1202,7 @@ static int decode_iso20_wpt_SignatureMethodType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (HMACOutputLength, HMACOutputLengthType (integer)); next=25
@@ -1253,7 +1250,7 @@ static int decode_iso20_wpt_SignatureMethodType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -1286,7 +1283,7 @@ static int decode_iso20_wpt_SignatureMethodType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1323,16 +1320,16 @@ static int decode_iso20_wpt_KeyValueType(exi_bitstream_t* stream, struct iso20_w
 
     init_iso20_wpt_KeyValueType(KeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 26:
             // Grammar: ID=26; read/write bits=2; START (DSAKeyValue), START (RSAKeyValue), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DSAKeyValue, DSAKeyValueType (DSAKeyValueType)); next=2
@@ -1375,7 +1372,7 @@ static int decode_iso20_wpt_KeyValueType(exi_bitstream_t* stream, struct iso20_w
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1412,16 +1409,16 @@ static int decode_iso20_wpt_WPT_CoordinateXYZType(exi_bitstream_t* stream, struc
 
     init_iso20_wpt_WPT_CoordinateXYZType(WPT_CoordinateXYZType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 27:
             // Grammar: ID=27; read/write bits=1; START (Coord_X)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Coord_X, short (int)); next=28
@@ -1443,7 +1440,7 @@ static int decode_iso20_wpt_WPT_CoordinateXYZType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Coord_Y, short (int)); next=29
@@ -1465,7 +1462,7 @@ static int decode_iso20_wpt_WPT_CoordinateXYZType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Coord_Z, short (int)); next=2
@@ -1487,7 +1484,7 @@ static int decode_iso20_wpt_WPT_CoordinateXYZType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1524,16 +1521,16 @@ static int decode_iso20_wpt_ReferenceType(exi_bitstream_t* stream, struct iso20_
 
     init_iso20_wpt_ReferenceType(ReferenceType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 30:
             // Grammar: ID=30; read/write bits=3; START (Id), START (Type), START (URI), START (Transforms), START (DigestMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Id, ID (NCName)); next=31
@@ -1628,7 +1625,7 @@ static int decode_iso20_wpt_ReferenceType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Type, anyURI (anyURI)); next=32
@@ -1702,7 +1699,7 @@ static int decode_iso20_wpt_ReferenceType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (URI, anyURI (anyURI)); next=33
@@ -1755,7 +1752,7 @@ static int decode_iso20_wpt_ReferenceType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transforms, TransformsType (TransformsType)); next=34
@@ -1787,7 +1784,7 @@ static int decode_iso20_wpt_ReferenceType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=35
@@ -1809,7 +1806,7 @@ static int decode_iso20_wpt_ReferenceType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DigestValue, DigestValueType (base64Binary)); next=2
@@ -1831,7 +1828,7 @@ static int decode_iso20_wpt_ReferenceType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1868,16 +1865,16 @@ static int decode_iso20_wpt_RetrievalMethodType(exi_bitstream_t* stream, struct 
 
     init_iso20_wpt_RetrievalMethodType(RetrievalMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 36:
             // Grammar: ID=36; read/write bits=3; START (Type), START (URI), START (Transforms), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Type, anyURI (anyURI)); next=37
@@ -1947,7 +1944,7 @@ static int decode_iso20_wpt_RetrievalMethodType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (URI, anyURI (anyURI)); next=38
@@ -1996,7 +1993,7 @@ static int decode_iso20_wpt_RetrievalMethodType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transforms, TransformsType (TransformsType)); next=2
@@ -2024,7 +2021,7 @@ static int decode_iso20_wpt_RetrievalMethodType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2061,16 +2058,16 @@ static int decode_iso20_wpt_X509DataType(exi_bitstream_t* stream, struct iso20_w
 
     init_iso20_wpt_X509DataType(X509DataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 39:
             // Grammar: ID=39; read/write bits=3; START (X509IssuerSerial), START (X509SKI), START (X509SubjectName), START (X509Certificate), START (X509CRL), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509IssuerSerial, X509IssuerSerialType (X509IssuerSerialType)); next=2
@@ -2183,7 +2180,7 @@ static int decode_iso20_wpt_X509DataType(exi_bitstream_t* stream, struct iso20_w
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2220,16 +2217,16 @@ static int decode_iso20_wpt_PGPDataType(exi_bitstream_t* stream, struct iso20_wp
 
     init_iso20_wpt_PGPDataType(PGPDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 40:
             // Grammar: ID=40; read/write bits=2; START (PGPKeyID), START (PGPKeyPacket)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyID, base64Binary (base64Binary)); next=41
@@ -2261,7 +2258,7 @@ static int decode_iso20_wpt_PGPDataType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=42
@@ -2304,7 +2301,7 @@ static int decode_iso20_wpt_PGPDataType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=43
@@ -2342,7 +2339,7 @@ static int decode_iso20_wpt_PGPDataType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=44
@@ -2364,7 +2361,7 @@ static int decode_iso20_wpt_PGPDataType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=43
@@ -2397,7 +2394,7 @@ static int decode_iso20_wpt_PGPDataType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2434,16 +2431,16 @@ static int decode_iso20_wpt_SPKIDataType(exi_bitstream_t* stream, struct iso20_w
 
     init_iso20_wpt_SPKIDataType(SPKIDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 45:
             // Grammar: ID=45; read/write bits=1; START (SPKISexp)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SPKISexp, base64Binary (base64Binary)); next=46
@@ -2465,7 +2462,7 @@ static int decode_iso20_wpt_SPKIDataType(exi_bitstream_t* stream, struct iso20_w
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -2498,7 +2495,7 @@ static int decode_iso20_wpt_SPKIDataType(exi_bitstream_t* stream, struct iso20_w
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2526,7 +2523,7 @@ static int decode_iso20_wpt_SPKIDataType(exi_bitstream_t* stream, struct iso20_w
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4);
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20_wpt_SignedInfoType* SignedInfoType) {
     int grammar_id = 47;
     int done = 0;
@@ -2535,16 +2532,16 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
 
     init_iso20_wpt_SignedInfoType(SignedInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 47:
             // Grammar: ID=47; read/write bits=2; START (Id), START (CanonicalizationMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Id, ID (NCName)); next=48
@@ -2587,7 +2584,7 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=49
@@ -2609,7 +2606,7 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignatureMethod, SignatureMethodType (SignatureMethodType)); next=50
@@ -2631,7 +2628,7 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Reference, ReferenceType (ReferenceType)); next=51
@@ -2642,6 +2639,7 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     grammar_id = 51;
@@ -2657,7 +2655,7 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=51
@@ -2668,40 +2666,10 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     grammar_id = 51;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 52:
-            // Grammar: ID=52; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (SignedInfoType->Reference.arrayLen < iso20_wpt_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -2719,7 +2687,7 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2749,26 +2717,26 @@ static int decode_iso20_wpt_SignedInfoType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
 static int decode_iso20_wpt_SignatureValueType(exi_bitstream_t* stream, struct iso20_wpt_SignatureValueType* SignatureValueType) {
-    int grammar_id = 53;
+    int grammar_id = 52;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_SignatureValueType(SignatureValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 53:
-            // Grammar: ID=53; read/write bits=2; START (Id), START (CONTENT)
+        case 52:
+            // Grammar: ID=52; read/write bits=2; START (Id), START (CONTENT)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=54
+                    // Event: START (Id, ID (NCName)); next=53
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->Id.charactersLen);
                     if (error == 0)
@@ -2786,7 +2754,7 @@ static int decode_iso20_wpt_SignatureValueType(exi_bitstream_t* stream, struct i
                         }
                     }
                     SignatureValueType->Id_isUsed = 1u;
-                    grammar_id = 54;
+                    grammar_id = 53;
                     break;
                 case 1:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=2
@@ -2807,12 +2775,12 @@ static int decode_iso20_wpt_SignatureValueType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 54:
-            // Grammar: ID=54; read/write bits=1; START (CONTENT)
+        case 53:
+            // Grammar: ID=53; read/write bits=1; START (CONTENT)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=2
@@ -2838,7 +2806,7 @@ static int decode_iso20_wpt_SignatureValueType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2868,26 +2836,26 @@ static int decode_iso20_wpt_SignatureValueType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False;
 // Particle: Exponent, byte (1, 1); Value, short (1, 1);
 static int decode_iso20_wpt_RationalNumberType(exi_bitstream_t* stream, struct iso20_wpt_RationalNumberType* RationalNumberType) {
-    int grammar_id = 55;
+    int grammar_id = 54;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_RationalNumberType(RationalNumberType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 55:
-            // Grammar: ID=55; read/write bits=1; START (Exponent)
+        case 54:
+            // Grammar: ID=54; read/write bits=1; START (Exponent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Exponent, byte (short)); next=56
+                    // Event: START (Exponent, byte (short)); next=55
                     // decode: byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -2918,7 +2886,7 @@ static int decode_iso20_wpt_RationalNumberType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 56;
+                                grammar_id = 55;
                             }
                             else
                             {
@@ -2933,12 +2901,12 @@ static int decode_iso20_wpt_RationalNumberType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 56:
-            // Grammar: ID=56; read/write bits=1; START (Value)
+        case 55:
+            // Grammar: ID=55; read/write bits=1; START (Value)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Value, short (int)); next=2
@@ -2960,7 +2928,7 @@ static int decode_iso20_wpt_RationalNumberType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2990,31 +2958,31 @@ static int decode_iso20_wpt_RationalNumberType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False;
 // Particle: TxIdentifier, numericIDType (1, 1); RSSI, RationalNumberType (1, 1);
 static int decode_iso20_wpt_WPT_LF_RxRSSIType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_RxRSSIType* WPT_LF_RxRSSIType) {
-    int grammar_id = 57;
+    int grammar_id = 56;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_RxRSSIType(WPT_LF_RxRSSIType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 57:
-            // Grammar: ID=57; read/write bits=1; START (TxIdentifier)
+        case 56:
+            // Grammar: ID=56; read/write bits=1; START (TxIdentifier)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TxIdentifier, numericIDType (unsignedInt)); next=58
+                    // Event: START (TxIdentifier, numericIDType (unsignedInt)); next=57
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &WPT_LF_RxRSSIType->TxIdentifier);
                     if (error == 0)
                     {
-                        grammar_id = 58;
+                        grammar_id = 57;
                     }
                     break;
                 default:
@@ -3023,12 +2991,12 @@ static int decode_iso20_wpt_WPT_LF_RxRSSIType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 58:
-            // Grammar: ID=58; read/write bits=1; START (RSSI)
+        case 57:
+            // Grammar: ID=57; read/write bits=1; START (RSSI)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (RSSI, RationalNumberType (RationalNumberType)); next=2
@@ -3050,7 +3018,7 @@ static int decode_iso20_wpt_WPT_LF_RxRSSIType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3080,23 +3048,23 @@ static int decode_iso20_wpt_WPT_LF_RxRSSIType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False;
 // Particle: RSSIDataList, WPT_LF_RxRSSIType (1, 1);
 static int decode_iso20_wpt_WPT_LF_RxRSSIListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_RxRSSIListType* WPT_LF_RxRSSIListType) {
-    int grammar_id = 59;
+    int grammar_id = 58;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_RxRSSIListType(WPT_LF_RxRSSIListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 59:
-            // Grammar: ID=59; read/write bits=1; START (RSSIDataList)
+        case 58:
+            // Grammar: ID=58; read/write bits=1; START (RSSIDataList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (RSSIDataList, WPT_LF_RxRSSIType (WPT_LF_RxRSSIType)); next=2
@@ -3118,7 +3086,7 @@ static int decode_iso20_wpt_WPT_LF_RxRSSIListType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3148,31 +3116,31 @@ static int decode_iso20_wpt_WPT_LF_RxRSSIListType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: TxIdentifier, numericIDType (1, 1); EIRP, RationalNumberType (1, 1);
 static int decode_iso20_wpt_WPT_LF_TxDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_TxDataType* WPT_LF_TxDataType) {
-    int grammar_id = 60;
+    int grammar_id = 59;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_TxDataType(WPT_LF_TxDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 60:
-            // Grammar: ID=60; read/write bits=1; START (TxIdentifier)
+        case 59:
+            // Grammar: ID=59; read/write bits=1; START (TxIdentifier)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TxIdentifier, numericIDType (unsignedInt)); next=61
+                    // Event: START (TxIdentifier, numericIDType (unsignedInt)); next=60
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &WPT_LF_TxDataType->TxIdentifier);
                     if (error == 0)
                     {
-                        grammar_id = 61;
+                        grammar_id = 60;
                     }
                     break;
                 default:
@@ -3181,12 +3149,12 @@ static int decode_iso20_wpt_WPT_LF_TxDataType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 61:
-            // Grammar: ID=61; read/write bits=1; START (EIRP)
+        case 60:
+            // Grammar: ID=60; read/write bits=1; START (EIRP)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EIRP, RationalNumberType (RationalNumberType)); next=2
@@ -3208,7 +3176,7 @@ static int decode_iso20_wpt_WPT_LF_TxDataType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3238,31 +3206,31 @@ static int decode_iso20_wpt_WPT_LF_TxDataType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False;
 // Particle: RxIdentifier, numericIDType (1, 1); RSSIData, WPT_LF_RxRSSIListType (1, 1);
 static int decode_iso20_wpt_WPT_LF_RxDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_RxDataType* WPT_LF_RxDataType) {
-    int grammar_id = 62;
+    int grammar_id = 61;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_RxDataType(WPT_LF_RxDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 62:
-            // Grammar: ID=62; read/write bits=1; START (RxIdentifier)
+        case 61:
+            // Grammar: ID=61; read/write bits=1; START (RxIdentifier)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RxIdentifier, numericIDType (unsignedInt)); next=63
+                    // Event: START (RxIdentifier, numericIDType (unsignedInt)); next=62
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &WPT_LF_RxDataType->RxIdentifier);
                     if (error == 0)
                     {
-                        grammar_id = 63;
+                        grammar_id = 62;
                     }
                     break;
                 default:
@@ -3271,12 +3239,12 @@ static int decode_iso20_wpt_WPT_LF_RxDataType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 63:
-            // Grammar: ID=63; read/write bits=1; START (RSSIData)
+        case 62:
+            // Grammar: ID=62; read/write bits=1; START (RSSIData)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (RSSIData, WPT_LF_RxRSSIListType (WPT_LF_RxRSSIListType)); next=2
@@ -3298,7 +3266,7 @@ static int decode_iso20_wpt_WPT_LF_RxDataType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3328,23 +3296,23 @@ static int decode_iso20_wpt_WPT_LF_RxDataType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False;
 // Particle: WPT_LF_TxDataList, WPT_LF_TxDataType (1, 1);
 static int decode_iso20_wpt_WPT_LF_TxDataListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_TxDataListType* WPT_LF_TxDataListType) {
-    int grammar_id = 64;
+    int grammar_id = 63;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_TxDataListType(WPT_LF_TxDataListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 64:
-            // Grammar: ID=64; read/write bits=1; START (WPT_LF_TxDataList)
+        case 63:
+            // Grammar: ID=63; read/write bits=1; START (WPT_LF_TxDataList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (WPT_LF_TxDataList, WPT_LF_TxDataType (WPT_LF_TxDataType)); next=2
@@ -3366,7 +3334,7 @@ static int decode_iso20_wpt_WPT_LF_TxDataListType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3396,26 +3364,26 @@ static int decode_iso20_wpt_WPT_LF_TxDataListType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); KeyName, string (0, 1); KeyValue, KeyValueType (0, 1); RetrievalMethod, RetrievalMethodType (0, 1); X509Data, X509DataType (0, 1); PGPData, PGPDataType (0, 1); SPKIData, SPKIDataType (0, 1); MgmtData, string (0, 1); ANY, anyType (0, 1);
 static int decode_iso20_wpt_KeyInfoType(exi_bitstream_t* stream, struct iso20_wpt_KeyInfoType* KeyInfoType) {
-    int grammar_id = 65;
+    int grammar_id = 64;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_KeyInfoType(KeyInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 65:
-            // Grammar: ID=65; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 64:
+            // Grammar: ID=64; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=66
+                    // Event: START (Id, ID (NCName)); next=65
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &KeyInfoType->Id.charactersLen);
                     if (error == 0)
@@ -3433,7 +3401,7 @@ static int decode_iso20_wpt_KeyInfoType(exi_bitstream_t* stream, struct iso20_wp
                         }
                     }
                     KeyInfoType->Id_isUsed = 1u;
-                    grammar_id = 66;
+                    grammar_id = 65;
                     break;
                 case 1:
                     // Event: START (KeyName, string (string)); next=2
@@ -3601,12 +3569,12 @@ static int decode_iso20_wpt_KeyInfoType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 66:
-            // Grammar: ID=66; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 65:
+            // Grammar: ID=65; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (KeyName, string (string)); next=2
@@ -3779,7 +3747,7 @@ static int decode_iso20_wpt_KeyInfoType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3809,28 +3777,50 @@ static int decode_iso20_wpt_KeyInfoType(exi_bitstream_t* stream, struct iso20_wp
 //          abstract=False; final=False;
 // Particle: TxRxIdentifier, numericIDType (1, 1); TxRxPosition, WPT_CoordinateXYZType (1, 1); TxRxOrientation, WPT_CoordinateXYZType (1, 1);
 static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_TxRxSpecDataType* WPT_TxRxSpecDataType) {
-    int grammar_id = 67;
+    int grammar_id = 66;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_TxRxSpecDataType(WPT_TxRxSpecDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 67:
-            // Grammar: ID=67; read/write bits=1; START (TxRxIdentifier)
+        case 66:
+            // Grammar: ID=66; read/write bits=1; START (TxRxIdentifier)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TxRxIdentifier, numericIDType (unsignedInt)); next=68
+                    // Event: START (TxRxIdentifier, numericIDType (unsignedInt)); next=67
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &WPT_TxRxSpecDataType->TxRxIdentifier);
+                    if (error == 0)
+                    {
+                        grammar_id = 67;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 67:
+            // Grammar: ID=67; read/write bits=1; START (TxRxPosition)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (TxRxPosition, WPT_CoordinateXYZType (WPT_CoordinateXYZType)); next=68
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_CoordinateXYZType(stream, &WPT_TxRxSpecDataType->TxRxPosition);
                     if (error == 0)
                     {
                         grammar_id = 68;
@@ -3843,33 +3833,11 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
             }
             break;
         case 68:
-            // Grammar: ID=68; read/write bits=1; START (TxRxPosition)
+            // Grammar: ID=68; read/write bits=1; START (TxRxOrientation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (TxRxPosition, WPT_CoordinateXYZType (WPT_CoordinateXYZType)); next=69
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_CoordinateXYZType(stream, &WPT_TxRxSpecDataType->TxRxPosition);
-                    if (error == 0)
-                    {
-                        grammar_id = 69;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 69:
-            // Grammar: ID=69; read/write bits=1; START (TxRxOrientation)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (TxRxOrientation, WPT_CoordinateXYZType (WPT_CoordinateXYZType)); next=2
@@ -3891,7 +3859,7 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3921,23 +3889,23 @@ static int decode_iso20_wpt_WPT_TxRxSpecDataType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False;
 // Particle: WPT_LF_RxDataList, WPT_LF_RxDataType (1, 1);
 static int decode_iso20_wpt_WPT_LF_RxDataListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_RxDataListType* WPT_LF_RxDataListType) {
-    int grammar_id = 70;
+    int grammar_id = 69;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_RxDataListType(WPT_LF_RxDataListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 70:
-            // Grammar: ID=70; read/write bits=1; START (WPT_LF_RxDataList)
+        case 69:
+            // Grammar: ID=69; read/write bits=1; START (WPT_LF_RxDataList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (WPT_LF_RxDataList, WPT_LF_RxDataType (WPT_LF_RxDataType)); next=2
@@ -3959,7 +3927,7 @@ static int decode_iso20_wpt_WPT_LF_RxDataListType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3987,28 +3955,28 @@ static int decode_iso20_wpt_WPT_LF_RxDataListType(exi_bitstream_t* stream, struc
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Object; type={http://www.w3.org/2000/09/xmldsig#}ObjectType; base type=; content type=mixed;
 //          abstract=False; final=False;
-// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1)(old 1, 1);
+// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1) (old 1, 1);
 static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt_ObjectType* ObjectType) {
-    int grammar_id = 71;
+    int grammar_id = 70;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_ObjectType(ObjectType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 71:
-            // Grammar: ID=71; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 70:
+            // Grammar: ID=70; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Encoding, anyURI (anyURI)); next=72
+                    // Event: START (Encoding, anyURI (anyURI)); next=71
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Encoding.charactersLen);
                     if (error == 0)
@@ -4026,10 +3994,10 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                         }
                     }
                     ObjectType->Encoding_isUsed = 1u;
-                    grammar_id = 72;
+                    grammar_id = 71;
                     break;
                 case 1:
-                    // Event: START (Id, ID (NCName)); next=73
+                    // Event: START (Id, ID (NCName)); next=72
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -4047,10 +4015,10 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 73;
+                    grammar_id = 72;
                     break;
                 case 2:
-                    // Event: START (MimeType, string (string)); next=74
+                    // Event: START (MimeType, string (string)); next=73
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -4068,7 +4036,7 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 74;
+                    grammar_id = 73;
                     break;
                 case 3:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -4096,15 +4064,15 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                 }
             }
             break;
-        case 72:
-            // Grammar: ID=72; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 71:
+            // Grammar: ID=71; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=73
+                    // Event: START (Id, ID (NCName)); next=72
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -4122,10 +4090,10 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 73;
+                    grammar_id = 72;
                     break;
                 case 1:
-                    // Event: START (MimeType, string (string)); next=74
+                    // Event: START (MimeType, string (string)); next=73
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -4143,7 +4111,7 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 74;
+                    grammar_id = 73;
                     break;
                 case 2:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -4171,15 +4139,15 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                 }
             }
             break;
-        case 73:
-            // Grammar: ID=73; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
+        case 72:
+            // Grammar: ID=72; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MimeType, string (string)); next=74
+                    // Event: START (MimeType, string (string)); next=73
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -4197,7 +4165,7 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 74;
+                    grammar_id = 73;
                     break;
                 case 1:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -4225,12 +4193,12 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
                 }
             }
             break;
-        case 74:
-            // Grammar: ID=74; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 73:
+            // Grammar: ID=73; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -4263,7 +4231,7 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4293,26 +4261,26 @@ static int decode_iso20_wpt_ObjectType(exi_bitstream_t* stream, struct iso20_wpt
 //          abstract=False; final=False;
 // Particle: PulseSequenceOrder, WPT_TxRxPulseOrderType (2, 255); PulseSeparationTime, unsignedShort (1, 1); PulseDuration, unsignedShort (1, 1); PackageSeparationTime, unsignedShort (1, 1);
 static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_TxRxPackageSpecDataType* WPT_TxRxPackageSpecDataType) {
-    int grammar_id = 75;
+    int grammar_id = 74;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_TxRxPackageSpecDataType(WPT_TxRxPackageSpecDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 75:
-            // Grammar: ID=75; read/write bits=1; START (PulseSequenceOrder)
+        case 74:
+            // Grammar: ID=74; read/write bits=1; START (PulseSequenceOrder)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PulseSequenceOrder, WPT_TxRxPulseOrderType (WPT_TxRxPulseOrderType)); next=76
+                    // Event: START (PulseSequenceOrder, WPT_TxRxPulseOrderType (WPT_TxRxPulseOrderType)); next=75
                     // decode: element array
                     if (WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen < iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE)
                     {
@@ -4320,9 +4288,45 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 76;
+                    grammar_id = 75;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 75:
+            // Grammar: ID=75; read/write bits=1; LOOP (PulseSequenceOrder)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (PulseSequenceOrder, WPT_TxRxPulseOrderType (WPT_TxRxPulseOrderType)); next=75
+                    // decode: element array
+                    if (WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen < iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_WPT_TxRxPulseOrderType(stream, &WPT_TxRxPackageSpecDataType->PulseSequenceOrder.array[WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen++]);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen < 255)
+                    {
+                        grammar_id = 75;
+                    }
+                    else
+                    {
+                        grammar_id = -1;
+                    }
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4331,24 +4335,20 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
             }
             break;
         case 76:
-            // Grammar: ID=76; read/write bits=1; LOOP (PulseSequenceOrder)
+            // Grammar: ID=76; read/write bits=1; START (PulseSeparationTime)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (PulseSequenceOrder, WPT_TxRxPulseOrderType (WPT_TxRxPulseOrderType)); next=76
-                    // decode: element array
-                    if (WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen < iso20_wpt_WPT_TxRxPulseOrderType_255_ARRAY_SIZE)
+                    // Event: START (PulseSeparationTime, unsignedShort (unsignedInt)); next=77
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &WPT_TxRxPackageSpecDataType->PulseSeparationTime);
+                    if (error == 0)
                     {
-                        error = decode_iso20_wpt_WPT_TxRxPulseOrderType(stream, &WPT_TxRxPackageSpecDataType->PulseSequenceOrder.array[WPT_TxRxPackageSpecDataType->PulseSequenceOrder.arrayLen++]);
+                        grammar_id = 77;
                     }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 76;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4357,16 +4357,16 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
             }
             break;
         case 77:
-            // Grammar: ID=77; read/write bits=1; START (PulseSeparationTime)
+            // Grammar: ID=77; read/write bits=1; START (PulseDuration)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PulseSeparationTime, unsignedShort (unsignedInt)); next=78
+                    // Event: START (PulseDuration, unsignedShort (unsignedInt)); next=78
                     // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &WPT_TxRxPackageSpecDataType->PulseSeparationTime);
+                    error = decode_exi_type_uint16(stream, &WPT_TxRxPackageSpecDataType->PulseDuration);
                     if (error == 0)
                     {
                         grammar_id = 78;
@@ -4379,33 +4379,11 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
             }
             break;
         case 78:
-            // Grammar: ID=78; read/write bits=1; START (PulseDuration)
+            // Grammar: ID=78; read/write bits=1; START (PackageSeparationTime)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (PulseDuration, unsignedShort (unsignedInt)); next=79
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &WPT_TxRxPackageSpecDataType->PulseDuration);
-                    if (error == 0)
-                    {
-                        grammar_id = 79;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 79:
-            // Grammar: ID=79; read/write bits=1; START (PackageSeparationTime)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PackageSeparationTime, unsignedShort (unsignedInt)); next=2
@@ -4427,7 +4405,7 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4457,26 +4435,26 @@ static int decode_iso20_wpt_WPT_TxRxPackageSpecDataType(exi_bitstream_t* stream,
 //          abstract=False; final=False;
 // Particle: NumberOfTransmitters, unsignedByte (1, 1); SignalFrequency, RationalNumberType (1, 1); TxSpecData, WPT_TxRxSpecDataType (2, 255); TxPackageSpecData, WPT_TxRxPackageSpecDataType (0, 1);
 static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_TransmitterDataType* WPT_LF_TransmitterDataType) {
-    int grammar_id = 80;
+    int grammar_id = 79;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_TransmitterDataType(WPT_LF_TransmitterDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 80:
-            // Grammar: ID=80; read/write bits=1; START (NumberOfTransmitters)
+        case 79:
+            // Grammar: ID=79; read/write bits=1; START (NumberOfTransmitters)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NumberOfTransmitters, unsignedByte (unsignedShort)); next=81
+                    // Event: START (NumberOfTransmitters, unsignedByte (unsignedShort)); next=80
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4506,7 +4484,7 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 81;
+                                grammar_id = 80;
                             }
                             else
                             {
@@ -4521,20 +4499,20 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 81:
-            // Grammar: ID=81; read/write bits=1; START (SignalFrequency)
+        case 80:
+            // Grammar: ID=80; read/write bits=1; START (SignalFrequency)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignalFrequency, RationalNumberType (RationalNumberType)); next=82
+                    // Event: START (SignalFrequency, RationalNumberType (RationalNumberType)); next=81
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_LF_TransmitterDataType->SignalFrequency);
                     if (error == 0)
                     {
-                        grammar_id = 82;
+                        grammar_id = 81;
                     }
                     break;
                 default:
@@ -4543,15 +4521,15 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 82:
-            // Grammar: ID=82; read/write bits=2; START (TxSpecData), END Element
+        case 81:
+            // Grammar: ID=81; read/write bits=2; START (TxSpecData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=83
+                    // Event: START (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=82
                     // decode: element array
                     if (WPT_LF_TransmitterDataType->TxSpecData.arrayLen < iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE)
                     {
@@ -4559,9 +4537,10 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 83;
+                    grammar_id = 82;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -4574,15 +4553,15 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 83:
-            // Grammar: ID=83; read/write bits=1; LOOP (TxSpecData)
+        case 82:
+            // Grammar: ID=82; read/write bits=1; LOOP (TxSpecData)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=83
+                    // Event: LOOP (TxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=82
                     // decode: element array
                     if (WPT_LF_TransmitterDataType->TxSpecData.arrayLen < iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE)
                     {
@@ -4590,9 +4569,18 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 83;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (WPT_LF_TransmitterDataType->TxSpecData.arrayLen < 255)
+                    {
+                        grammar_id = 82;
+                    }
+                    else
+                    {
+                        grammar_id = -1;
+                    }
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4600,12 +4588,12 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 84:
-            // Grammar: ID=84; read/write bits=2; START (TxPackageSpecData), END Element
+        case 83:
+            // Grammar: ID=83; read/write bits=2; START (TxPackageSpecData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (TxPackageSpecData, WPT_TxRxPackageSpecDataType (WPT_TxRxPackageSpecDataType)); next=2
@@ -4633,7 +4621,7 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4663,26 +4651,26 @@ static int decode_iso20_wpt_WPT_LF_TransmitterDataType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: SSID, identifierType (0, 1); BSSID, bssidType (0, 1); IPAddress, ipaddressType (0, 1); Port, unsignedShort (0, 1);
 static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct iso20_wpt_AlternativeSECCType* AlternativeSECCType) {
-    int grammar_id = 85;
+    int grammar_id = 84;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_AlternativeSECCType(AlternativeSECCType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 85:
-            // Grammar: ID=85; read/write bits=3; START (SSID), START (BSSID), START (IPAddress), START (Port), END Element
+        case 84:
+            // Grammar: ID=84; read/write bits=3; START (SSID), START (BSSID), START (IPAddress), START (Port), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SSID, identifierType (string)); next=86
+                    // Event: START (SSID, identifierType (string)); next=85
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4722,7 +4710,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->SSID_isUsed = 1u;
-                                grammar_id = 86;
+                                grammar_id = 85;
                             }
                             else
                             {
@@ -4732,7 +4720,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (BSSID, bssidType (string)); next=87
+                    // Event: START (BSSID, bssidType (string)); next=86
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4772,7 +4760,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->BSSID_isUsed = 1u;
-                                grammar_id = 87;
+                                grammar_id = 86;
                             }
                             else
                             {
@@ -4782,7 +4770,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 2:
-                    // Event: START (IPAddress, ipaddressType (string)); next=88
+                    // Event: START (IPAddress, ipaddressType (string)); next=87
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4822,7 +4810,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->IPAddress_isUsed = 1u;
-                                grammar_id = 88;
+                                grammar_id = 87;
                             }
                             else
                             {
@@ -4852,15 +4840,15 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 86:
-            // Grammar: ID=86; read/write bits=3; START (BSSID), START (IPAddress), START (Port), END Element
+        case 85:
+            // Grammar: ID=85; read/write bits=3; START (BSSID), START (IPAddress), START (Port), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BSSID, bssidType (string)); next=87
+                    // Event: START (BSSID, bssidType (string)); next=86
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4900,7 +4888,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->BSSID_isUsed = 1u;
-                                grammar_id = 87;
+                                grammar_id = 86;
                             }
                             else
                             {
@@ -4910,7 +4898,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (IPAddress, ipaddressType (string)); next=88
+                    // Event: START (IPAddress, ipaddressType (string)); next=87
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4950,7 +4938,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->IPAddress_isUsed = 1u;
-                                grammar_id = 88;
+                                grammar_id = 87;
                             }
                             else
                             {
@@ -4980,15 +4968,15 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 87:
-            // Grammar: ID=87; read/write bits=2; START (IPAddress), START (Port), END Element
+        case 86:
+            // Grammar: ID=86; read/write bits=2; START (IPAddress), START (Port), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (IPAddress, ipaddressType (string)); next=88
+                    // Event: START (IPAddress, ipaddressType (string)); next=87
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5028,7 +5016,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                             if (eventCode == 0)
                             {
                                 AlternativeSECCType->IPAddress_isUsed = 1u;
-                                grammar_id = 88;
+                                grammar_id = 87;
                             }
                             else
                             {
@@ -5058,12 +5046,12 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 88:
-            // Grammar: ID=88; read/write bits=2; START (Port), END Element
+        case 87:
+            // Grammar: ID=87; read/write bits=2; START (Port), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Port, unsignedShort (unsignedInt)); next=2
@@ -5091,7 +5079,7 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5121,26 +5109,26 @@ static int decode_iso20_wpt_AlternativeSECCType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False;
 // Particle: NumberOfReceivers, unsignedByte (1, 1); RxSpecData, WPT_TxRxSpecDataType (2, 255);
 static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_ReceiverDataType* WPT_LF_ReceiverDataType) {
-    int grammar_id = 89;
+    int grammar_id = 88;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_ReceiverDataType(WPT_LF_ReceiverDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 89:
-            // Grammar: ID=89; read/write bits=1; START (NumberOfReceivers)
+        case 88:
+            // Grammar: ID=88; read/write bits=1; START (NumberOfReceivers)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NumberOfReceivers, unsignedByte (unsignedShort)); next=90
+                    // Event: START (NumberOfReceivers, unsignedByte (unsignedShort)); next=89
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5170,7 +5158,7 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 90;
+                                grammar_id = 89;
                             }
                             else
                             {
@@ -5185,15 +5173,15 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 90:
-            // Grammar: ID=90; read/write bits=2; START (RxSpecData), END Element
+        case 89:
+            // Grammar: ID=89; read/write bits=2; START (RxSpecData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=91
+                    // Event: START (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=90
                     // decode: element array
                     if (WPT_LF_ReceiverDataType->RxSpecData.arrayLen < iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE)
                     {
@@ -5201,9 +5189,10 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 91;
+                    grammar_id = 90;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -5216,15 +5205,15 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 91:
-            // Grammar: ID=91; read/write bits=1; LOOP (RxSpecData)
+        case 90:
+            // Grammar: ID=90; read/write bits=1; LOOP (RxSpecData)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=91
+                    // Event: LOOP (RxSpecData, WPT_TxRxSpecDataType (WPT_TxRxSpecDataType)); next=90
                     // decode: element array
                     if (WPT_LF_ReceiverDataType->RxSpecData.arrayLen < iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE)
                     {
@@ -5232,9 +5221,18 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_WPT_TxRxSpecDataType_255_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 91;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (WPT_LF_ReceiverDataType->RxSpecData.arrayLen < 255)
+                    {
+                        grammar_id = 90;
+                    }
+                    else
+                    {
+                        grammar_id = -1;
+                    }
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -5247,7 +5245,7 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5277,26 +5275,26 @@ static int decode_iso20_wpt_WPT_LF_ReceiverDataType(exi_bitstream_t* stream, str
 //          abstract=False; final=False;
 // Particle: PackageIndex, unsignedByte (1, 1); LF_TxData, WPT_LF_TxDataListType (0, 1); LF_RxData, WPT_LF_RxDataListType (0, 1);
 static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_DataPackageType* WPT_LF_DataPackageType) {
-    int grammar_id = 92;
+    int grammar_id = 91;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_DataPackageType(WPT_LF_DataPackageType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 92:
-            // Grammar: ID=92; read/write bits=1; START (PackageIndex)
+        case 91:
+            // Grammar: ID=91; read/write bits=1; START (PackageIndex)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PackageIndex, unsignedByte (unsignedShort)); next=93
+                    // Event: START (PackageIndex, unsignedByte (unsignedShort)); next=92
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5326,7 +5324,7 @@ static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 93;
+                                grammar_id = 92;
                             }
                             else
                             {
@@ -5341,12 +5339,12 @@ static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 93:
-            // Grammar: ID=93; read/write bits=2; START (LF_TxData), START (LF_RxData)
+        case 92:
+            // Grammar: ID=92; read/write bits=2; START (LF_TxData), START (LF_RxData)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (LF_TxData, WPT_LF_TxDataListType (WPT_LF_TxDataListType)); next=2
@@ -5379,7 +5377,7 @@ static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5409,31 +5407,31 @@ static int decode_iso20_wpt_WPT_LF_DataPackageType(exi_bitstream_t* stream, stru
 //          abstract=False; final=False;
 // Particle: Amount, RationalNumberType (1, 1); CostPerUnit, RationalNumberType (1, 1);
 static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso20_wpt_DetailedCostType* DetailedCostType) {
-    int grammar_id = 94;
+    int grammar_id = 93;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_DetailedCostType(DetailedCostType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 94:
-            // Grammar: ID=94; read/write bits=1; START (Amount)
+        case 93:
+            // Grammar: ID=93; read/write bits=1; START (Amount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Amount, RationalNumberType (RationalNumberType)); next=95
+                    // Event: START (Amount, RationalNumberType (RationalNumberType)); next=94
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DetailedCostType->Amount);
                     if (error == 0)
                     {
-                        grammar_id = 95;
+                        grammar_id = 94;
                     }
                     break;
                 default:
@@ -5442,12 +5440,12 @@ static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 95:
-            // Grammar: ID=95; read/write bits=1; START (CostPerUnit)
+        case 94:
+            // Grammar: ID=94; read/write bits=1; START (CostPerUnit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CostPerUnit, RationalNumberType (RationalNumberType)); next=2
@@ -5469,7 +5467,7 @@ static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5497,28 +5495,28 @@ static int decode_iso20_wpt_DetailedCostType(exi_bitstream_t* stream, struct iso
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Signature; type={http://www.w3.org/2000/09/xmldsig#}SignatureType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1);
+// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1) (original max unbounded);
 static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_wpt_SignatureType* SignatureType) {
-    int grammar_id = 96;
+    int grammar_id = 95;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_SignatureType(SignatureType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 96:
-            // Grammar: ID=96; read/write bits=2; START (Id), START (SignedInfo)
+        case 95:
+            // Grammar: ID=95; read/write bits=2; START (Id), START (SignedInfo)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=97
+                    // Event: START (Id, ID (NCName)); next=96
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureType->Id.charactersLen);
                     if (error == 0)
@@ -5536,15 +5534,37 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
                         }
                     }
                     SignatureType->Id_isUsed = 1u;
-                    grammar_id = 97;
+                    grammar_id = 96;
                     break;
                 case 1:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=98
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=97
                     // decode: element
                     error = decode_iso20_wpt_SignedInfoType(stream, &SignatureType->SignedInfo);
                     if (error == 0)
                     {
-                        grammar_id = 98;
+                        grammar_id = 97;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 96:
+            // Grammar: ID=96; read/write bits=1; START (SignedInfo)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=97
+                    // decode: element
+                    error = decode_iso20_wpt_SignedInfoType(stream, &SignatureType->SignedInfo);
+                    if (error == 0)
+                    {
+                        grammar_id = 97;
                     }
                     break;
                 default:
@@ -5554,16 +5574,16 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
             }
             break;
         case 97:
-            // Grammar: ID=97; read/write bits=1; START (SignedInfo)
+            // Grammar: ID=97; read/write bits=1; START (SignatureValue)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=98
+                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=98
                     // decode: element
-                    error = decode_iso20_wpt_SignedInfoType(stream, &SignatureType->SignedInfo);
+                    error = decode_iso20_wpt_SignatureValueType(stream, &SignatureType->SignatureValue);
                     if (error == 0)
                     {
                         grammar_id = 98;
@@ -5576,20 +5596,36 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
             }
             break;
         case 98:
-            // Grammar: ID=98; read/write bits=1; START (SignatureValue)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=98; read/write bits=2; START (KeyInfo), START (Object), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=99
+                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=100
                     // decode: element
-                    error = decode_iso20_wpt_SignatureValueType(stream, &SignatureType->SignatureValue);
+                    error = decode_iso20_wpt_KeyInfoType(stream, &SignatureType->KeyInfo);
                     if (error == 0)
                     {
+                        SignatureType->KeyInfo_isUsed = 1u;
+                        grammar_id = 100;
+                    }
+                    break;
+                case 1:
+                    // Event: START (Object, ObjectType (ObjectType)); next=99
+                    // decode: element
+                    error = decode_iso20_wpt_ObjectType(stream, &SignatureType->Object);
+                    if (error == 0)
+                    {
+                        SignatureType->Object_isUsed = 1u;
                         grammar_id = 99;
                     }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -5598,33 +5634,19 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
             }
             break;
         case 99:
-            // Grammar: ID=99; read/write bits=2; START (KeyInfo), START (Object), END Element
+            // Grammar: ID=99; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=101
+                    // Event: START (Object, ObjectType (ObjectType)); next=2
                     // decode: element
-                    error = decode_iso20_wpt_KeyInfoType(stream, &SignatureType->KeyInfo);
-                    if (error == 0)
-                    {
-                        SignatureType->KeyInfo_isUsed = 1u;
-                        grammar_id = 101;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
-                    // Event: START (Object, ObjectType (ObjectType)); next=100
-                    // decode: element
-                    error = decode_iso20_wpt_ObjectType(stream, &SignatureType->Object);
-                    if (error == 0)
-                    {
-                        SignatureType->Object_isUsed = 1u;
-                        grammar_id = 100;
-                    }
-                    break;
-                case 2:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -5640,16 +5662,16 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Object, ObjectType (ObjectType)); next=2
+                    // Event: START (Object, ObjectType (ObjectType)); next=101
                     // decode: element
                     error = decode_iso20_wpt_ObjectType(stream, &SignatureType->Object);
                     if (error == 0)
                     {
                         SignatureType->Object_isUsed = 1u;
-                        grammar_id = 2;
+                        grammar_id = 101;
                     }
                     break;
                 case 1:
@@ -5668,45 +5690,13 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Object, ObjectType (ObjectType)); next=102
-                    // decode: element
-                    error = decode_iso20_wpt_ObjectType(stream, &SignatureType->Object);
-                    if (error == 0)
-                    {
-                        SignatureType->Object_isUsed = 1u;
-                        grammar_id = 102;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 102:
-            // Grammar: ID=102; read/write bits=2; START (Object), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Object, ObjectType (ObjectType)); next=2
                     // decode: element
-                    error = decode_iso20_wpt_ObjectType(stream, &SignatureType->Object);
-                    if (error == 0)
-                    {
-                        SignatureType->Object_isUsed = 1u;
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -5724,7 +5714,7 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5754,31 +5744,31 @@ static int decode_iso20_wpt_SignatureType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False;
 // Particle: TaxRuleID, numericIDType (1, 1); Amount, RationalNumberType (1, 1);
 static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso20_wpt_DetailedTaxType* DetailedTaxType) {
-    int grammar_id = 103;
+    int grammar_id = 102;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_DetailedTaxType(DetailedTaxType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 103:
-            // Grammar: ID=103; read/write bits=1; START (TaxRuleID)
+        case 102:
+            // Grammar: ID=102; read/write bits=1; START (TaxRuleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=104
+                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=103
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DetailedTaxType->TaxRuleID);
                     if (error == 0)
                     {
-                        grammar_id = 104;
+                        grammar_id = 103;
                     }
                     break;
                 default:
@@ -5787,12 +5777,12 @@ static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 104:
-            // Grammar: ID=104; read/write bits=1; START (Amount)
+        case 103:
+            // Grammar: ID=103; read/write bits=1; START (Amount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Amount, RationalNumberType (RationalNumberType)); next=2
@@ -5814,7 +5804,7 @@ static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5844,28 +5834,50 @@ static int decode_iso20_wpt_DetailedTaxType(exi_bitstream_t* stream, struct iso2
 //          abstract=False; final=False;
 // Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
 static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct iso20_wpt_MessageHeaderType* MessageHeaderType) {
-    int grammar_id = 105;
+    int grammar_id = 104;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_MessageHeaderType(MessageHeaderType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 105:
-            // Grammar: ID=105; read/write bits=1; START (SessionID)
+        case 104:
+            // Grammar: ID=104; read/write bits=1; START (SessionID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SessionID, sessionIDType (hexBinary)); next=106
+                    // Event: START (SessionID, sessionIDType (hexBinary)); next=105
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &MessageHeaderType->SessionID.bytesLen, &MessageHeaderType->SessionID.bytes[0], iso20_wpt_sessionIDType_BYTES_SIZE);
+                    if (error == 0)
+                    {
+                        grammar_id = 105;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 105:
+            // Grammar: ID=105; read/write bits=1; START (TimeStamp)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=106
+                    // decode: unsigned long int
+                    error = decode_exi_type_uint64(stream, &MessageHeaderType->TimeStamp);
                     if (error == 0)
                     {
                         grammar_id = 106;
@@ -5878,33 +5890,11 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
             }
             break;
         case 106:
-            // Grammar: ID=106; read/write bits=1; START (TimeStamp)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=107
-                    // decode: unsigned long int
-                    error = decode_exi_type_uint64(stream, &MessageHeaderType->TimeStamp);
-                    if (error == 0)
-                    {
-                        grammar_id = 107;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 107:
-            // Grammar: ID=107; read/write bits=2; START (Signature), END Element
+            // Grammar: ID=106; read/write bits=2; START (Signature), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Signature, SignatureType (SignatureType)); next=2
@@ -5932,7 +5922,7 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5962,26 +5952,26 @@ static int decode_iso20_wpt_MessageHeaderType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
 static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struct iso20_wpt_SignaturePropertyType* SignaturePropertyType) {
-    int grammar_id = 108;
+    int grammar_id = 107;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_SignaturePropertyType(SignaturePropertyType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 108:
-            // Grammar: ID=108; read/write bits=2; START (Id), START (Target)
+        case 107:
+            // Grammar: ID=107; read/write bits=2; START (Id), START (Target)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=109
+                    // Event: START (Id, ID (NCName)); next=108
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Id.charactersLen);
                     if (error == 0)
@@ -5999,10 +5989,10 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
                         }
                     }
                     SignaturePropertyType->Id_isUsed = 1u;
-                    grammar_id = 109;
+                    grammar_id = 108;
                     break;
                 case 1:
-                    // Event: START (Target, anyURI (anyURI)); next=110
+                    // Event: START (Target, anyURI (anyURI)); next=109
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
                     if (error == 0)
@@ -6019,7 +6009,40 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 110;
+                    grammar_id = 109;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 108:
+            // Grammar: ID=108; read/write bits=1; START (Target)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Target, anyURI (anyURI)); next=109
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
+                    if (error == 0)
+                    {
+                        if (SignaturePropertyType->Target.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            SignaturePropertyType->Target.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, SignaturePropertyType->Target.charactersLen, SignaturePropertyType->Target.characters, iso20_wpt_Target_CHARACTER_SIZE);
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    grammar_id = 109;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -6028,44 +6051,11 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
             }
             break;
         case 109:
-            // Grammar: ID=109; read/write bits=1; START (Target)
+            // Grammar: ID=109; read/write bits=1; START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Target, anyURI (anyURI)); next=110
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
-                    if (error == 0)
-                    {
-                        if (SignaturePropertyType->Target.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            SignaturePropertyType->Target.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, SignaturePropertyType->Target.charactersLen, SignaturePropertyType->Target.characters, iso20_wpt_Target_CHARACTER_SIZE);
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    grammar_id = 110;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 110:
-            // Grammar: ID=110; read/write bits=1; START (ANY)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -6088,7 +6078,7 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -6118,26 +6108,26 @@ static int decode_iso20_wpt_SignaturePropertyType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: PresentSOC, percentValueType (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); MaximumSOC, percentValueType (0, 1); RemainingTimeToMinimumSOC, unsignedInt (0, 1); RemainingTimeToTargetSOC, unsignedInt (0, 1); RemainingTimeToMaximumSOC, unsignedInt (0, 1); ChargingComplete, boolean (0, 1); BatteryEnergyCapacity, RationalNumberType (0, 1); InletHot, boolean (0, 1);
 static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struct iso20_wpt_DisplayParametersType* DisplayParametersType) {
-    int grammar_id = 111;
+    int grammar_id = 110;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_DisplayParametersType(DisplayParametersType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 111:
-            // Grammar: ID=111; read/write bits=4; START (PresentSOC), START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 110:
+            // Grammar: ID=110; read/write bits=4; START (PresentSOC), START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PresentSOC, percentValueType (byte)); next=112
+                    // Event: START (PresentSOC, percentValueType (byte)); next=111
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6168,7 +6158,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 112;
+                                grammar_id = 111;
                             }
                             else
                             {
@@ -6178,7 +6168,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=113
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=112
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6209,7 +6199,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 113;
+                                grammar_id = 112;
                             }
                             else
                             {
@@ -6219,7 +6209,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=114
+                    // Event: START (TargetSOC, percentValueType (byte)); next=113
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6250,7 +6240,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 113;
                             }
                             else
                             {
@@ -6260,7 +6250,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=115
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=114
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6291,7 +6281,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 115;
+                                grammar_id = 114;
                             }
                             else
                             {
@@ -6301,37 +6291,37 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=116
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=115
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 116;
+                        grammar_id = 115;
                     }
                     break;
                 case 5:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=117
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=116
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 117;
+                        grammar_id = 116;
                     }
                     break;
                 case 6:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=118
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=117
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 118;
+                        grammar_id = 117;
                     }
                     break;
                 case 7:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=119
+                    // Event: START (ChargingComplete, boolean (boolean)); next=118
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6362,7 +6352,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 118;
                             }
                             else
                             {
@@ -6372,13 +6362,13 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 8:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 9:
@@ -6433,15 +6423,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 112:
-            // Grammar: ID=112; read/write bits=4; START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 111:
+            // Grammar: ID=111; read/write bits=4; START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=113
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=112
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6472,7 +6462,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 113;
+                                grammar_id = 112;
                             }
                             else
                             {
@@ -6482,7 +6472,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=114
+                    // Event: START (TargetSOC, percentValueType (byte)); next=113
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6513,7 +6503,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 113;
                             }
                             else
                             {
@@ -6523,7 +6513,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=115
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=114
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6554,7 +6544,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 115;
+                                grammar_id = 114;
                             }
                             else
                             {
@@ -6564,37 +6554,37 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=116
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=115
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 116;
+                        grammar_id = 115;
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=117
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=116
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 117;
+                        grammar_id = 116;
                     }
                     break;
                 case 5:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=118
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=117
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 118;
+                        grammar_id = 117;
                     }
                     break;
                 case 6:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=119
+                    // Event: START (ChargingComplete, boolean (boolean)); next=118
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6625,7 +6615,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 118;
                             }
                             else
                             {
@@ -6635,13 +6625,13 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 7:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 8:
@@ -6696,15 +6686,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 113:
-            // Grammar: ID=113; read/write bits=4; START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 112:
+            // Grammar: ID=112; read/write bits=4; START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=114
+                    // Event: START (TargetSOC, percentValueType (byte)); next=113
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6735,7 +6725,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 114;
+                                grammar_id = 113;
                             }
                             else
                             {
@@ -6745,7 +6735,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=115
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=114
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6776,7 +6766,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 115;
+                                grammar_id = 114;
                             }
                             else
                             {
@@ -6786,37 +6776,37 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=116
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=115
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 116;
+                        grammar_id = 115;
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=117
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=116
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 117;
+                        grammar_id = 116;
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=118
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=117
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 118;
+                        grammar_id = 117;
                     }
                     break;
                 case 5:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=119
+                    // Event: START (ChargingComplete, boolean (boolean)); next=118
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6847,7 +6837,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 118;
                             }
                             else
                             {
@@ -6857,13 +6847,13 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 6:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 7:
@@ -6918,15 +6908,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 114:
-            // Grammar: ID=114; read/write bits=4; START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 113:
+            // Grammar: ID=113; read/write bits=4; START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=115
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=114
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6957,7 +6947,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 115;
+                                grammar_id = 114;
                             }
                             else
                             {
@@ -6967,37 +6957,37 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=116
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=115
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 116;
+                        grammar_id = 115;
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=117
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=116
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 117;
+                        grammar_id = 116;
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=118
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=117
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 118;
+                        grammar_id = 117;
                     }
                     break;
                 case 4:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=119
+                    // Event: START (ChargingComplete, boolean (boolean)); next=118
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -7028,7 +7018,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 118;
                             }
                             else
                             {
@@ -7038,13 +7028,13 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 5:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 6:
@@ -7099,45 +7089,45 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 115:
-            // Grammar: ID=115; read/write bits=3; START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 114:
+            // Grammar: ID=114; read/write bits=3; START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=116
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=115
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 116;
+                        grammar_id = 115;
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=117
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=116
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 117;
+                        grammar_id = 116;
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=118
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=117
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 118;
+                        grammar_id = 117;
                     }
                     break;
                 case 3:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=119
+                    // Event: START (ChargingComplete, boolean (boolean)); next=118
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -7168,7 +7158,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 118;
                             }
                             else
                             {
@@ -7178,13 +7168,13 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 4:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 5:
@@ -7239,35 +7229,35 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 116:
-            // Grammar: ID=116; read/write bits=3; START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 115:
+            // Grammar: ID=115; read/write bits=3; START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=117
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=116
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 117;
+                        grammar_id = 116;
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=118
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=117
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 118;
+                        grammar_id = 117;
                     }
                     break;
                 case 2:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=119
+                    // Event: START (ChargingComplete, boolean (boolean)); next=118
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -7298,7 +7288,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 118;
                             }
                             else
                             {
@@ -7308,13 +7298,13 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 3:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 4:
@@ -7369,25 +7359,25 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 117:
-            // Grammar: ID=117; read/write bits=3; START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 116:
+            // Grammar: ID=116; read/write bits=3; START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=118
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=117
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 118;
+                        grammar_id = 117;
                     }
                     break;
                 case 1:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=119
+                    // Event: START (ChargingComplete, boolean (boolean)); next=118
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -7418,7 +7408,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 118;
                             }
                             else
                             {
@@ -7428,13 +7418,13 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 2:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 3:
@@ -7489,15 +7479,15 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 118:
-            // Grammar: ID=118; read/write bits=3; START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 117:
+            // Grammar: ID=117; read/write bits=3; START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=119
+                    // Event: START (ChargingComplete, boolean (boolean)); next=118
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -7528,7 +7518,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 119;
+                                grammar_id = 118;
                             }
                             else
                             {
@@ -7538,13 +7528,13 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 2:
@@ -7599,21 +7589,21 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 119:
-            // Grammar: ID=119; read/write bits=2; START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 118:
+            // Grammar: ID=118; read/write bits=2; START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 120;
+                        grammar_id = 119;
                     }
                     break;
                 case 1:
@@ -7668,12 +7658,12 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 120:
-            // Grammar: ID=120; read/write bits=2; START (InletHot), END Element
+        case 119:
+            // Grammar: ID=119; read/write bits=2; START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (InletHot, boolean (boolean)); next=2
@@ -7732,7 +7722,7 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7762,26 +7752,26 @@ static int decode_iso20_wpt_DisplayParametersType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: WPT_FinePositioningMethod, WPT_FinePositioningMethodType (1, 8);
 static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningMethodListType* WPT_FinePositioningMethodListType) {
-    int grammar_id = 121;
+    int grammar_id = 120;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_FinePositioningMethodListType(WPT_FinePositioningMethodListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 121:
-            // Grammar: ID=121; read/write bits=1; START (WPT_FinePositioningMethod)
+        case 120:
+            // Grammar: ID=120; read/write bits=1; START (WPT_FinePositioningMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=122
+                    // Event: START (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=121
                     // decode: enum array
                     if (WPT_FinePositioningMethodListType->WPT_FinePositioningMethod.arrayLen < iso20_wpt_WPT_FinePositioningMethodType_8_ARRAY_SIZE)
                     {
@@ -7818,7 +7808,7 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 122;
+                                grammar_id = 121;
                             }
                             else
                             {
@@ -7833,15 +7823,15 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
                 }
             }
             break;
-        case 122:
-            // Grammar: ID=122; read/write bits=2; LOOP (WPT_FinePositioningMethod), END Element
+        case 121:
+            // Grammar: ID=121; read/write bits=2; LOOP (WPT_FinePositioningMethod), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=122
+                    // Event: LOOP (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=121
                     // decode: enum array
                     if (WPT_FinePositioningMethodListType->WPT_FinePositioningMethod.arrayLen < iso20_wpt_WPT_FinePositioningMethodType_8_ARRAY_SIZE)
                     {
@@ -7878,72 +7868,7 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 122;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 123:
-            // Grammar: ID=123; read/write bits=2; LOOP (WPT_FinePositioningMethod), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (WPT_FinePositioningMethod, WPT_FinePositioningMethodType (string)); next=2
-                    // decode: enum array
-                    if (WPT_FinePositioningMethodListType->WPT_FinePositioningMethod.arrayLen < iso20_wpt_WPT_FinePositioningMethodType_8_ARRAY_SIZE)
-                    {
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                uint32_t value;
-                                error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
-                                if (error == 0)
-                                {
-                                    WPT_FinePositioningMethodListType->WPT_FinePositioningMethod.array[WPT_FinePositioningMethodListType->WPT_FinePositioningMethod.arrayLen] = (iso20_wpt_WPT_FinePositioningMethodType)value;
-                                    WPT_FinePositioningMethodListType->WPT_FinePositioningMethod.arrayLen++;
-                                }
-                            }
-                            else
-                            {
-                                // second level event is not supported
-                                error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 2;
+                                grammar_id = 121;
                             }
                             else
                             {
@@ -7968,7 +7893,7 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7998,31 +7923,31 @@ static int decode_iso20_wpt_WPT_FinePositioningMethodListType(exi_bitstream_t* s
 //          abstract=False; final=False;
 // Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, evseNotificationType (1, 1);
 static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20_wpt_EVSEStatusType* EVSEStatusType) {
-    int grammar_id = 124;
+    int grammar_id = 122;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_EVSEStatusType(EVSEStatusType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 124:
-            // Grammar: ID=124; read/write bits=1; START (NotificationMaxDelay)
+        case 122:
+            // Grammar: ID=122; read/write bits=1; START (NotificationMaxDelay)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=125
+                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=123
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &EVSEStatusType->NotificationMaxDelay);
                     if (error == 0)
                     {
-                        grammar_id = 125;
+                        grammar_id = 123;
                     }
                     break;
                 default:
@@ -8031,12 +7956,12 @@ static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 125:
-            // Grammar: ID=125; read/write bits=1; START (EVSENotification)
+        case 123:
+            // Grammar: ID=123; read/write bits=1; START (EVSENotification)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSENotification, evseNotificationType (string)); next=2
@@ -8089,7 +8014,7 @@ static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8119,26 +8044,26 @@ static int decode_iso20_wpt_EVSEStatusType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False;
 // Particle: WPT_PairingMethod, WPT_PairingMethodType (1, 8);
 static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_PairingMethodListType* WPT_PairingMethodListType) {
-    int grammar_id = 126;
+    int grammar_id = 124;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_PairingMethodListType(WPT_PairingMethodListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 126:
-            // Grammar: ID=126; read/write bits=1; START (WPT_PairingMethod)
+        case 124:
+            // Grammar: ID=124; read/write bits=1; START (WPT_PairingMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (WPT_PairingMethod, WPT_PairingMethodType (string)); next=127
+                    // Event: START (WPT_PairingMethod, WPT_PairingMethodType (string)); next=125
                     // decode: enum array
                     if (WPT_PairingMethodListType->WPT_PairingMethod.arrayLen < iso20_wpt_WPT_PairingMethodType_8_ARRAY_SIZE)
                     {
@@ -8175,7 +8100,7 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 127;
+                                grammar_id = 125;
                             }
                             else
                             {
@@ -8190,15 +8115,15 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 127:
-            // Grammar: ID=127; read/write bits=2; LOOP (WPT_PairingMethod), END Element
+        case 125:
+            // Grammar: ID=125; read/write bits=2; LOOP (WPT_PairingMethod), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (WPT_PairingMethod, WPT_PairingMethodType (string)); next=127
+                    // Event: LOOP (WPT_PairingMethod, WPT_PairingMethodType (string)); next=125
                     // decode: enum array
                     if (WPT_PairingMethodListType->WPT_PairingMethod.arrayLen < iso20_wpt_WPT_PairingMethodType_8_ARRAY_SIZE)
                     {
@@ -8235,72 +8160,7 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 127;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 128:
-            // Grammar: ID=128; read/write bits=2; LOOP (WPT_PairingMethod), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (WPT_PairingMethod, WPT_PairingMethodType (string)); next=2
-                    // decode: enum array
-                    if (WPT_PairingMethodListType->WPT_PairingMethod.arrayLen < iso20_wpt_WPT_PairingMethodType_8_ARRAY_SIZE)
-                    {
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                uint32_t value;
-                                error = exi_basetypes_decoder_nbit_uint(stream, 3, &value);
-                                if (error == 0)
-                                {
-                                    WPT_PairingMethodListType->WPT_PairingMethod.array[WPT_PairingMethodListType->WPT_PairingMethod.arrayLen] = (iso20_wpt_WPT_PairingMethodType)value;
-                                    WPT_PairingMethodListType->WPT_PairingMethod.arrayLen++;
-                                }
-                            }
-                            else
-                            {
-                                // second level event is not supported
-                                error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 2;
+                                grammar_id = 125;
                             }
                             else
                             {
@@ -8325,7 +8185,7 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8355,26 +8215,26 @@ static int decode_iso20_wpt_WPT_PairingMethodListType(exi_bitstream_t* stream, s
 //          abstract=False; final=False;
 // Particle: MeterID, meterIDType (1, 1); ChargedEnergyReadingWh, unsignedLong (1, 1); BPT_DischargedEnergyReadingWh, unsignedLong (0, 1); CapacitiveEnergyReadingVARh, unsignedLong (0, 1); BPT_InductiveEnergyReadingVARh, unsignedLong (0, 1); MeterSignature, meterSignatureType (0, 1); MeterStatus, short (0, 1); MeterTimestamp, unsignedLong (0, 1);
 static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_wpt_MeterInfoType* MeterInfoType) {
-    int grammar_id = 129;
+    int grammar_id = 126;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_MeterInfoType(MeterInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 129:
-            // Grammar: ID=129; read/write bits=1; START (MeterID)
+        case 126:
+            // Grammar: ID=126; read/write bits=1; START (MeterID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterID, meterIDType (string)); next=130
+                    // Event: START (MeterID, meterIDType (string)); next=127
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -8413,7 +8273,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 130;
+                                grammar_id = 127;
                             }
                             else
                             {
@@ -8428,20 +8288,20 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 130:
-            // Grammar: ID=130; read/write bits=1; START (ChargedEnergyReadingWh)
+        case 127:
+            // Grammar: ID=127; read/write bits=1; START (ChargedEnergyReadingWh)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=131
+                    // Event: START (ChargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=128
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->ChargedEnergyReadingWh);
                     if (error == 0)
                     {
-                        grammar_id = 131;
+                        grammar_id = 128;
                     }
                     break;
                 default:
@@ -8450,61 +8310,61 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 131:
-            // Grammar: ID=131; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 128:
+            // Grammar: ID=128; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_DischargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=132
+                    // Event: START (BPT_DischargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=129
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_DischargedEnergyReadingWh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_DischargedEnergyReadingWh_isUsed = 1u;
-                        grammar_id = 132;
+                        grammar_id = 129;
                     }
                     break;
                 case 1:
-                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=133
+                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=130
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->CapacitiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->CapacitiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 133;
+                        grammar_id = 130;
                     }
                     break;
                 case 2:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=134
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=131
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 134;
+                        grammar_id = 131;
                     }
                     break;
                 case 3:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=135
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=132
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_wpt_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 135;
+                        grammar_id = 132;
                     }
                     break;
                 case 4:
-                    // Event: START (MeterStatus, short (int)); next=136
+                    // Event: START (MeterStatus, short (int)); next=133
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 136;
+                        grammar_id = 133;
                     }
                     break;
                 case 5:
@@ -8528,51 +8388,51 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 132:
-            // Grammar: ID=132; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 129:
+            // Grammar: ID=129; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=133
+                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=130
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->CapacitiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->CapacitiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 133;
+                        grammar_id = 130;
                     }
                     break;
                 case 1:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=134
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=131
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 134;
+                        grammar_id = 131;
                     }
                     break;
                 case 2:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=135
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=132
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_wpt_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 135;
+                        grammar_id = 132;
                     }
                     break;
                 case 3:
-                    // Event: START (MeterStatus, short (int)); next=136
+                    // Event: START (MeterStatus, short (int)); next=133
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 136;
+                        grammar_id = 133;
                     }
                     break;
                 case 4:
@@ -8596,41 +8456,41 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 133:
-            // Grammar: ID=133; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 130:
+            // Grammar: ID=130; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=134
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=131
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 134;
+                        grammar_id = 131;
                     }
                     break;
                 case 1:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=135
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=132
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_wpt_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 135;
+                        grammar_id = 132;
                     }
                     break;
                 case 2:
-                    // Event: START (MeterStatus, short (int)); next=136
+                    // Event: START (MeterStatus, short (int)); next=133
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 136;
+                        grammar_id = 133;
                     }
                     break;
                 case 3:
@@ -8654,31 +8514,31 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 134:
-            // Grammar: ID=134; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 131:
+            // Grammar: ID=131; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=135
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=132
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_wpt_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 135;
+                        grammar_id = 132;
                     }
                     break;
                 case 1:
-                    // Event: START (MeterStatus, short (int)); next=136
+                    // Event: START (MeterStatus, short (int)); next=133
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 136;
+                        grammar_id = 133;
                     }
                     break;
                 case 2:
@@ -8702,21 +8562,21 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 135:
-            // Grammar: ID=135; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
+        case 132:
+            // Grammar: ID=132; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterStatus, short (int)); next=136
+                    // Event: START (MeterStatus, short (int)); next=133
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 136;
+                        grammar_id = 133;
                     }
                     break;
                 case 1:
@@ -8740,12 +8600,12 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 136:
-            // Grammar: ID=136; read/write bits=2; START (MeterTimestamp), END Element
+        case 133:
+            // Grammar: ID=133; read/write bits=2; START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (MeterTimestamp, unsignedLong (nonNegativeInteger)); next=2
@@ -8773,7 +8633,7 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8803,26 +8663,26 @@ static int decode_iso20_wpt_MeterInfoType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False;
 // Particle: WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (1, 8);
 static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_AlignmentCheckMethodListType* WPT_AlignmentCheckMethodListType) {
-    int grammar_id = 137;
+    int grammar_id = 134;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_AlignmentCheckMethodListType(WPT_AlignmentCheckMethodListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 137:
-            // Grammar: ID=137; read/write bits=1; START (WPT_AlignmentCheckMethod)
+        case 134:
+            // Grammar: ID=134; read/write bits=1; START (WPT_AlignmentCheckMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=138
+                    // Event: START (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=135
                     // decode: enum array
                     if (WPT_AlignmentCheckMethodListType->WPT_AlignmentCheckMethod.arrayLen < iso20_wpt_WPT_AlignmentCheckMethodType_8_ARRAY_SIZE)
                     {
@@ -8859,7 +8719,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 138;
+                                grammar_id = 135;
                             }
                             else
                             {
@@ -8874,15 +8734,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
                 }
             }
             break;
-        case 138:
-            // Grammar: ID=138; read/write bits=2; LOOP (WPT_AlignmentCheckMethod), END Element
+        case 135:
+            // Grammar: ID=135; read/write bits=2; LOOP (WPT_AlignmentCheckMethod), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=138
+                    // Event: LOOP (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=135
                     // decode: enum array
                     if (WPT_AlignmentCheckMethodListType->WPT_AlignmentCheckMethod.arrayLen < iso20_wpt_WPT_AlignmentCheckMethodType_8_ARRAY_SIZE)
                     {
@@ -8919,72 +8779,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 138;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 139:
-            // Grammar: ID=139; read/write bits=2; LOOP (WPT_AlignmentCheckMethod), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (WPT_AlignmentCheckMethod, WPT_AlignmentCheckMethodType (string)); next=2
-                    // decode: enum array
-                    if (WPT_AlignmentCheckMethodListType->WPT_AlignmentCheckMethod.arrayLen < iso20_wpt_WPT_AlignmentCheckMethodType_8_ARRAY_SIZE)
-                    {
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                uint32_t value;
-                                error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                                if (error == 0)
-                                {
-                                    WPT_AlignmentCheckMethodListType->WPT_AlignmentCheckMethod.array[WPT_AlignmentCheckMethodListType->WPT_AlignmentCheckMethod.arrayLen] = (iso20_wpt_WPT_AlignmentCheckMethodType)value;
-                                    WPT_AlignmentCheckMethodListType->WPT_AlignmentCheckMethod.arrayLen++;
-                                }
-                            }
-                            else
-                            {
-                                // second level event is not supported
-                                error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 2;
+                                grammar_id = 135;
                             }
                             else
                             {
@@ -9009,7 +8804,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -9039,26 +8834,26 @@ static int decode_iso20_wpt_WPT_AlignmentCheckMethodListType(exi_bitstream_t* st
 //          abstract=False; final=False;
 // Particle: NumPackages, unsignedByte (1, 1); WPT_LF_DataPackage, WPT_LF_DataPackageType (1, 1);
 static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_DataPackageListType* WPT_LF_DataPackageListType) {
-    int grammar_id = 140;
+    int grammar_id = 136;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_DataPackageListType(WPT_LF_DataPackageListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 140:
-            // Grammar: ID=140; read/write bits=1; START (NumPackages)
+        case 136:
+            // Grammar: ID=136; read/write bits=1; START (NumPackages)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NumPackages, unsignedByte (unsignedShort)); next=141
+                    // Event: START (NumPackages, unsignedByte (unsignedShort)); next=137
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9088,7 +8883,7 @@ static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 141;
+                                grammar_id = 137;
                             }
                             else
                             {
@@ -9103,12 +8898,12 @@ static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 141:
-            // Grammar: ID=141; read/write bits=1; START (WPT_LF_DataPackage)
+        case 137:
+            // Grammar: ID=137; read/write bits=1; START (WPT_LF_DataPackage)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (WPT_LF_DataPackage, WPT_LF_DataPackageType (WPT_LF_DataPackageType)); next=2
@@ -9130,7 +8925,7 @@ static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -9160,26 +8955,26 @@ static int decode_iso20_wpt_WPT_LF_DataPackageListType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: AlternativeSECC, AlternativeSECCType (1, 8);
 static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, struct iso20_wpt_AlternativeSECCListType* AlternativeSECCListType) {
-    int grammar_id = 142;
+    int grammar_id = 138;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_AlternativeSECCListType(AlternativeSECCListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 142:
-            // Grammar: ID=142; read/write bits=1; START (AlternativeSECC)
+        case 138:
+            // Grammar: ID=138; read/write bits=1; START (AlternativeSECC)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=143
+                    // Event: START (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=139
                     // decode: element array
                     if (AlternativeSECCListType->AlternativeSECC.arrayLen < iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE)
                     {
@@ -9187,9 +8982,10 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 143;
+                    grammar_id = 139;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -9197,15 +8993,15 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 143:
-            // Grammar: ID=143; read/write bits=2; LOOP (AlternativeSECC), END Element
+        case 139:
+            // Grammar: ID=139; read/write bits=2; LOOP (AlternativeSECC), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=143
+                    // Event: LOOP (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=139
                     // decode: element array
                     if (AlternativeSECCListType->AlternativeSECC.arrayLen < iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE)
                     {
@@ -9213,40 +9009,18 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 143;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 144:
-            // Grammar: ID=144; read/write bits=2; LOOP (AlternativeSECC), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (AlternativeSECC, AlternativeSECCType (AlternativeSECCType)); next=2
-                    // decode: element array
-                    if (AlternativeSECCListType->AlternativeSECC.arrayLen < iso20_wpt_AlternativeSECCType_8_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (AlternativeSECCListType->AlternativeSECC.arrayLen < 8)
                     {
-                        error = decode_iso20_wpt_AlternativeSECCType(stream, &AlternativeSECCListType->AlternativeSECC.array[AlternativeSECCListType->AlternativeSECC.arrayLen++]);
+                        grammar_id = 139;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9264,7 +9038,7 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -9294,31 +9068,31 @@ static int decode_iso20_wpt_AlternativeSECCListType(exi_bitstream_t* stream, str
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); EnergyCosts, DetailedCostType (0, 1); OccupancyCosts, DetailedCostType (0, 1); AdditionalServicesCosts, DetailedCostType (0, 1); OverstayCosts, DetailedCostType (0, 1); TaxCosts, DetailedTaxType (0, 10);
 static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wpt_ReceiptType* ReceiptType) {
-    int grammar_id = 145;
+    int grammar_id = 140;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_ReceiptType(ReceiptType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 145:
-            // Grammar: ID=145; read/write bits=1; START (TimeAnchor)
+        case 140:
+            // Grammar: ID=140; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=146
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=141
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &ReceiptType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 146;
+                        grammar_id = 141;
                     }
                     break;
                 default:
@@ -9327,55 +9101,55 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 146:
-            // Grammar: ID=146; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 141:
+            // Grammar: ID=141; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EnergyCosts, DetailedCostType (DetailedCostType)); next=149
+                    // Event: START (EnergyCosts, DetailedCostType (DetailedCostType)); next=143
                     // decode: element
                     error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->EnergyCosts);
                     if (error == 0)
                     {
                         ReceiptType->EnergyCosts_isUsed = 1u;
-                        grammar_id = 149;
+                        grammar_id = 143;
                     }
                     break;
                 case 1:
-                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=152
+                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=145
                     // decode: element
                     error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
                     if (error == 0)
                     {
                         ReceiptType->OccupancyCosts_isUsed = 1u;
-                        grammar_id = 152;
+                        grammar_id = 145;
                     }
                     break;
                 case 2:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=155
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=147
                     // decode: element
                     error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 155;
+                        grammar_id = 147;
                     }
                     break;
                 case 3:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=158
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=149
                     // decode: element
                     error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 158;
+                        grammar_id = 149;
                     }
                     break;
                 case 4:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=147
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=142
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9383,9 +9157,10 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 147;
+                    grammar_id = 142;
                     break;
                 case 5:
                     // Event: END Element; next=3
@@ -9398,15 +9173,15 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                 }
             }
             break;
-        case 147:
-            // Grammar: ID=147; read/write bits=2; LOOP (TaxCosts), END Element
+        case 142:
+            // Grammar: ID=142; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=147
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=142
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9414,11 +9189,256 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 147;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 142;
+                    }
+                    else
+                    {
+                        grammar_id = 143;
+                    }
                     break;
                 case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 143:
+            // Grammar: ID=143; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=145
+                    // decode: element
+                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->OccupancyCosts_isUsed = 1u;
+                        grammar_id = 145;
+                    }
+                    break;
+                case 1:
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=147
+                    // decode: element
+                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->AdditionalServicesCosts_isUsed = 1u;
+                        grammar_id = 147;
+                    }
+                    break;
+                case 2:
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=149
+                    // decode: element
+                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->OverstayCosts_isUsed = 1u;
+                        grammar_id = 149;
+                    }
+                    break;
+                case 3:
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=144
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 144;
+                    break;
+                case 4:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 144:
+            // Grammar: ID=144; read/write bits=2; LOOP (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=144
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 144;
+                    }
+                    else
+                    {
+                        grammar_id = 145;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 145:
+            // Grammar: ID=145; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=147
+                    // decode: element
+                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->AdditionalServicesCosts_isUsed = 1u;
+                        grammar_id = 147;
+                    }
+                    break;
+                case 1:
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=149
+                    // decode: element
+                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->OverstayCosts_isUsed = 1u;
+                        grammar_id = 149;
+                    }
+                    break;
+                case 2:
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=146
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 146;
+                    break;
+                case 3:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 146:
+            // Grammar: ID=146; read/write bits=2; LOOP (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=146
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 146;
+                    }
+                    else
+                    {
+                        grammar_id = 147;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 147:
+            // Grammar: ID=147; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=149
+                    // decode: element
+                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->OverstayCosts_isUsed = 1u;
+                        grammar_id = 149;
+                    }
+                    break;
+                case 1:
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=148
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 148;
+                    break;
+                case 2:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -9434,10 +9454,10 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=148
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9445,9 +9465,18 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 2;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 148;
+                    }
+                    else
+                    {
+                        grammar_id = 149;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9461,43 +9490,13 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
             }
             break;
         case 149:
-            // Grammar: ID=149; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=149; read/write bits=2; START (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=152
-                    // decode: element
-                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->OccupancyCosts_isUsed = 1u;
-                        grammar_id = 152;
-                    }
-                    break;
-                case 1:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=155
-                    // decode: element
-                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 155;
-                    }
-                    break;
-                case 2:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=158
-                    // decode: element
-                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 158;
-                    }
-                    break;
-                case 3:
                     // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=150
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
@@ -9506,11 +9505,12 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     grammar_id = 150;
                     break;
-                case 4:
+                case 1:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -9526,7 +9526,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=150
@@ -9537,349 +9537,18 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 150;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 151:
-            // Grammar: ID=151; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
                     {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                        grammar_id = 150;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 152:
-            // Grammar: ID=152; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=155
-                    // decode: element
-                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 155;
-                    }
-                    break;
-                case 1:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=158
-                    // decode: element
-                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 158;
-                    }
-                    break;
-                case 2:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=153
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 153;
-                    break;
-                case 3:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 153:
-            // Grammar: ID=153; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=153
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 153;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 154:
-            // Grammar: ID=154; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 155:
-            // Grammar: ID=155; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=158
-                    // decode: element
-                    error = decode_iso20_wpt_DetailedCostType(stream, &ReceiptType->OverstayCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 158;
-                    }
-                    break;
-                case 1:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=156
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 156;
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 156:
-            // Grammar: ID=156; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=156
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 156;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 157:
-            // Grammar: ID=157; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 158:
-            // Grammar: ID=158; read/write bits=2; START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=159
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 159;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 159:
-            // Grammar: ID=159; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=159
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 159;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 160:
-            // Grammar: ID=160; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_wpt_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9897,7 +9566,7 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -9927,23 +9596,23 @@ static int decode_iso20_wpt_ReceiptType(exi_bitstream_t* stream, struct iso20_wp
 //          abstract=False; final=False;
 // Particle: LF_TransmitterSetupData, WPT_LF_TransmitterDataType (0, 1); LF_ReceiverSetupData, WPT_LF_ReceiverDataType (0, 1);
 static int decode_iso20_wpt_WPT_LF_SystemSetupDataType(exi_bitstream_t* stream, struct iso20_wpt_WPT_LF_SystemSetupDataType* WPT_LF_SystemSetupDataType) {
-    int grammar_id = 161;
+    int grammar_id = 151;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_LF_SystemSetupDataType(WPT_LF_SystemSetupDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 161:
-            // Grammar: ID=161; read/write bits=2; START (LF_TransmitterSetupData), START (LF_ReceiverSetupData)
+        case 151:
+            // Grammar: ID=151; read/write bits=2; START (LF_TransmitterSetupData), START (LF_ReceiverSetupData)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (LF_TransmitterSetupData, WPT_LF_TransmitterDataType (WPT_LF_TransmitterDataType)); next=2
@@ -9976,7 +9645,7 @@ static int decode_iso20_wpt_WPT_LF_SystemSetupDataType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10006,31 +9675,31 @@ static int decode_iso20_wpt_WPT_LF_SystemSetupDataType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: EVPCCoilCurrentRequest, RationalNumberType (1, 1); EVPCCoilCurrentInformation, RationalNumberType (1, 1); EVPCCurrentOutputInformation, RationalNumberType (1, 1); EVPCVoltageOutputInformation, RationalNumberType (1, 1);
 static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* stream, struct iso20_wpt_WPT_EVPCPowerControlParameterType* WPT_EVPCPowerControlParameterType) {
-    int grammar_id = 162;
+    int grammar_id = 152;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_EVPCPowerControlParameterType(WPT_EVPCPowerControlParameterType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 162:
-            // Grammar: ID=162; read/write bits=1; START (EVPCCoilCurrentRequest)
+        case 152:
+            // Grammar: ID=152; read/write bits=1; START (EVPCCoilCurrentRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCCoilCurrentRequest, RationalNumberType (RationalNumberType)); next=163
+                    // Event: START (EVPCCoilCurrentRequest, RationalNumberType (RationalNumberType)); next=153
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_EVPCPowerControlParameterType->EVPCCoilCurrentRequest);
                     if (error == 0)
                     {
-                        grammar_id = 163;
+                        grammar_id = 153;
                     }
                     break;
                 default:
@@ -10039,20 +9708,20 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                 }
             }
             break;
-        case 163:
-            // Grammar: ID=163; read/write bits=1; START (EVPCCoilCurrentInformation)
+        case 153:
+            // Grammar: ID=153; read/write bits=1; START (EVPCCoilCurrentInformation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCCoilCurrentInformation, RationalNumberType (RationalNumberType)); next=164
+                    // Event: START (EVPCCoilCurrentInformation, RationalNumberType (RationalNumberType)); next=154
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_EVPCPowerControlParameterType->EVPCCoilCurrentInformation);
                     if (error == 0)
                     {
-                        grammar_id = 164;
+                        grammar_id = 154;
                     }
                     break;
                 default:
@@ -10061,20 +9730,20 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                 }
             }
             break;
-        case 164:
-            // Grammar: ID=164; read/write bits=1; START (EVPCCurrentOutputInformation)
+        case 154:
+            // Grammar: ID=154; read/write bits=1; START (EVPCCurrentOutputInformation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCCurrentOutputInformation, RationalNumberType (RationalNumberType)); next=165
+                    // Event: START (EVPCCurrentOutputInformation, RationalNumberType (RationalNumberType)); next=155
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_EVPCPowerControlParameterType->EVPCCurrentOutputInformation);
                     if (error == 0)
                     {
-                        grammar_id = 165;
+                        grammar_id = 155;
                     }
                     break;
                 default:
@@ -10083,12 +9752,12 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
                 }
             }
             break;
-        case 165:
-            // Grammar: ID=165; read/write bits=1; START (EVPCVoltageOutputInformation)
+        case 155:
+            // Grammar: ID=155; read/write bits=1; START (EVPCVoltageOutputInformation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVPCVoltageOutputInformation, RationalNumberType (RationalNumberType)); next=2
@@ -10110,7 +9779,7 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10140,23 +9809,23 @@ static int decode_iso20_wpt_WPT_EVPCPowerControlParameterType(exi_bitstream_t* s
 //          abstract=False; final=False;
 // Particle: SPCPrimaryDeviceCoilCurrentInformation, RationalNumberType (1, 1);
 static int decode_iso20_wpt_WPT_SPCPowerControlParameterType(exi_bitstream_t* stream, struct iso20_wpt_WPT_SPCPowerControlParameterType* WPT_SPCPowerControlParameterType) {
-    int grammar_id = 166;
+    int grammar_id = 156;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_SPCPowerControlParameterType(WPT_SPCPowerControlParameterType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 166:
-            // Grammar: ID=166; read/write bits=1; START (SPCPrimaryDeviceCoilCurrentInformation)
+        case 156:
+            // Grammar: ID=156; read/write bits=1; START (SPCPrimaryDeviceCoilCurrentInformation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SPCPrimaryDeviceCoilCurrentInformation, RationalNumberType (RationalNumberType)); next=2
@@ -10178,7 +9847,7 @@ static int decode_iso20_wpt_WPT_SPCPowerControlParameterType(exi_bitstream_t* st
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10208,31 +9877,31 @@ static int decode_iso20_wpt_WPT_SPCPowerControlParameterType(exi_bitstream_t* st
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (1, 1); EVDevicePairingMethodList, WPT_PairingMethodListType (1, 1); EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (1, 1); NaturalOffset, unsignedShort (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); LF_SystemSetupData, WPT_LF_SystemSetupDataType (0, 1);
 static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningSetupReqType* WPT_FinePositioningSetupReqType) {
-    int grammar_id = 167;
+    int grammar_id = 157;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_FinePositioningSetupReqType(WPT_FinePositioningSetupReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 167:
-            // Grammar: ID=167; read/write bits=1; START (Header)
+        case 157:
+            // Grammar: ID=157; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=168
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=158
                     // decode: element
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningSetupReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 168;
+                        grammar_id = 158;
                     }
                     break;
                 default:
@@ -10241,15 +9910,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 168:
-            // Grammar: ID=168; read/write bits=1; START (EVProcessing)
+        case 158:
+            // Grammar: ID=158; read/write bits=1; START (EVProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVProcessing, processingType (string)); next=169
+                    // Event: START (EVProcessing, processingType (string)); next=159
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10279,7 +9948,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 169;
+                                grammar_id = 159;
                             }
                             else
                             {
@@ -10294,20 +9963,20 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 169:
-            // Grammar: ID=169; read/write bits=1; START (EVDeviceFinePositioningMethodList)
+        case 159:
+            // Grammar: ID=159; read/write bits=1; START (EVDeviceFinePositioningMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (WPT_FinePositioningMethodListType)); next=170
+                    // Event: START (EVDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (WPT_FinePositioningMethodListType)); next=160
                     // decode: element
                     error = decode_iso20_wpt_WPT_FinePositioningMethodListType(stream, &WPT_FinePositioningSetupReqType->EVDeviceFinePositioningMethodList);
                     if (error == 0)
                     {
-                        grammar_id = 170;
+                        grammar_id = 160;
                     }
                     break;
                 default:
@@ -10316,20 +9985,20 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 170:
-            // Grammar: ID=170; read/write bits=1; START (EVDevicePairingMethodList)
+        case 160:
+            // Grammar: ID=160; read/write bits=1; START (EVDevicePairingMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVDevicePairingMethodList, WPT_PairingMethodListType (WPT_PairingMethodListType)); next=171
+                    // Event: START (EVDevicePairingMethodList, WPT_PairingMethodListType (WPT_PairingMethodListType)); next=161
                     // decode: element
                     error = decode_iso20_wpt_WPT_PairingMethodListType(stream, &WPT_FinePositioningSetupReqType->EVDevicePairingMethodList);
                     if (error == 0)
                     {
-                        grammar_id = 171;
+                        grammar_id = 161;
                     }
                     break;
                 default:
@@ -10338,20 +10007,20 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 171:
-            // Grammar: ID=171; read/write bits=1; START (EVDeviceAlignmentCheckMethodList)
+        case 161:
+            // Grammar: ID=161; read/write bits=1; START (EVDeviceAlignmentCheckMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (WPT_AlignmentCheckMethodListType)); next=172
+                    // Event: START (EVDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (WPT_AlignmentCheckMethodListType)); next=162
                     // decode: element
                     error = decode_iso20_wpt_WPT_AlignmentCheckMethodListType(stream, &WPT_FinePositioningSetupReqType->EVDeviceAlignmentCheckMethodList);
                     if (error == 0)
                     {
-                        grammar_id = 172;
+                        grammar_id = 162;
                     }
                     break;
                 default:
@@ -10360,20 +10029,20 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 172:
-            // Grammar: ID=172; read/write bits=1; START (NaturalOffset)
+        case 162:
+            // Grammar: ID=162; read/write bits=1; START (NaturalOffset)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NaturalOffset, unsignedShort (unsignedInt)); next=173
+                    // Event: START (NaturalOffset, unsignedShort (unsignedInt)); next=163
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &WPT_FinePositioningSetupReqType->NaturalOffset);
                     if (error == 0)
                     {
-                        grammar_id = 173;
+                        grammar_id = 163;
                     }
                     break;
                 default:
@@ -10382,15 +10051,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 173:
-            // Grammar: ID=173; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 163:
+            // Grammar: ID=163; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=174
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=164
                     // decode exi type: base64Binary (Array)
                     if (WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -10399,7 +10068,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                         {
                             WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.arrayLen++;
                             WPT_FinePositioningSetupReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 174;
+                            grammar_id = 164;
                         }
                     }
                     else
@@ -10418,15 +10087,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 174:
-            // Grammar: ID=174; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
+        case 164:
+            // Grammar: ID=164; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=175
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=165
                     // decode exi type: base64Binary (Array)
                     if (WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -10435,53 +10104,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                         {
                             WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.arrayLen++;
                             WPT_FinePositioningSetupReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 175;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: START (LF_SystemSetupData, WPT_LF_SystemSetupDataType (WPT_LF_SystemSetupDataType)); next=2
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_LF_SystemSetupDataType(stream, &WPT_FinePositioningSetupReqType->LF_SystemSetupData);
-                    if (error == 0)
-                    {
-                        WPT_FinePositioningSetupReqType->LF_SystemSetupData_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 175:
-            // Grammar: ID=175; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=176
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.array[WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.array[WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_FinePositioningSetupReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_FinePositioningSetupReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 176;
+                            grammar_id = 165;
                         }
                     }
                     else
@@ -10510,12 +10133,12 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 176:
-            // Grammar: ID=176; read/write bits=2; START (LF_SystemSetupData), END Element
+        case 165:
+            // Grammar: ID=165; read/write bits=2; START (LF_SystemSetupData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (LF_SystemSetupData, WPT_LF_SystemSetupDataType (WPT_LF_SystemSetupDataType)); next=2
@@ -10543,7 +10166,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10573,31 +10196,31 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupReqType(exi_bitstream_t* str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (1, 1); PrimaryDevicePairingMethodList, WPT_PairingMethodListType (1, 1); PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (1, 1); NaturalOffset, unsignedShort (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); LF_SystemSetupData, WPT_LF_SystemSetupDataType (0, 1);
 static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningSetupResType* WPT_FinePositioningSetupResType) {
-    int grammar_id = 177;
+    int grammar_id = 166;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_FinePositioningSetupResType(WPT_FinePositioningSetupResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 177:
-            // Grammar: ID=177; read/write bits=1; START (Header)
+        case 166:
+            // Grammar: ID=166; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=178
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=167
                     // decode: element
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningSetupResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 178;
+                        grammar_id = 167;
                     }
                     break;
                 default:
@@ -10606,15 +10229,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 178:
-            // Grammar: ID=178; read/write bits=1; START (ResponseCode)
+        case 167:
+            // Grammar: ID=167; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=179
+                    // Event: START (ResponseCode, responseCodeType (string)); next=168
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10644,7 +10267,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 179;
+                                grammar_id = 168;
                             }
                             else
                             {
@@ -10659,20 +10282,20 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 179:
-            // Grammar: ID=179; read/write bits=1; START (PrimaryDeviceFinePositioningMethodList)
+        case 168:
+            // Grammar: ID=168; read/write bits=1; START (PrimaryDeviceFinePositioningMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (WPT_FinePositioningMethodListType)); next=180
+                    // Event: START (PrimaryDeviceFinePositioningMethodList, WPT_FinePositioningMethodListType (WPT_FinePositioningMethodListType)); next=169
                     // decode: element
                     error = decode_iso20_wpt_WPT_FinePositioningMethodListType(stream, &WPT_FinePositioningSetupResType->PrimaryDeviceFinePositioningMethodList);
                     if (error == 0)
                     {
-                        grammar_id = 180;
+                        grammar_id = 169;
                     }
                     break;
                 default:
@@ -10681,20 +10304,20 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 180:
-            // Grammar: ID=180; read/write bits=1; START (PrimaryDevicePairingMethodList)
+        case 169:
+            // Grammar: ID=169; read/write bits=1; START (PrimaryDevicePairingMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PrimaryDevicePairingMethodList, WPT_PairingMethodListType (WPT_PairingMethodListType)); next=181
+                    // Event: START (PrimaryDevicePairingMethodList, WPT_PairingMethodListType (WPT_PairingMethodListType)); next=170
                     // decode: element
                     error = decode_iso20_wpt_WPT_PairingMethodListType(stream, &WPT_FinePositioningSetupResType->PrimaryDevicePairingMethodList);
                     if (error == 0)
                     {
-                        grammar_id = 181;
+                        grammar_id = 170;
                     }
                     break;
                 default:
@@ -10703,20 +10326,20 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 181:
-            // Grammar: ID=181; read/write bits=1; START (PrimaryDeviceAlignmentCheckMethodList)
+        case 170:
+            // Grammar: ID=170; read/write bits=1; START (PrimaryDeviceAlignmentCheckMethodList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (WPT_AlignmentCheckMethodListType)); next=182
+                    // Event: START (PrimaryDeviceAlignmentCheckMethodList, WPT_AlignmentCheckMethodListType (WPT_AlignmentCheckMethodListType)); next=171
                     // decode: element
                     error = decode_iso20_wpt_WPT_AlignmentCheckMethodListType(stream, &WPT_FinePositioningSetupResType->PrimaryDeviceAlignmentCheckMethodList);
                     if (error == 0)
                     {
-                        grammar_id = 182;
+                        grammar_id = 171;
                     }
                     break;
                 default:
@@ -10725,20 +10348,20 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 182:
-            // Grammar: ID=182; read/write bits=1; START (NaturalOffset)
+        case 171:
+            // Grammar: ID=171; read/write bits=1; START (NaturalOffset)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NaturalOffset, unsignedShort (unsignedInt)); next=183
+                    // Event: START (NaturalOffset, unsignedShort (unsignedInt)); next=172
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &WPT_FinePositioningSetupResType->NaturalOffset);
                     if (error == 0)
                     {
-                        grammar_id = 183;
+                        grammar_id = 172;
                     }
                     break;
                 default:
@@ -10747,15 +10370,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 183:
-            // Grammar: ID=183; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 172:
+            // Grammar: ID=172; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=184
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=173
                     // decode exi type: base64Binary (Array)
                     if (WPT_FinePositioningSetupResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -10764,7 +10387,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                         {
                             WPT_FinePositioningSetupResType->VendorSpecificDataContainer.arrayLen++;
                             WPT_FinePositioningSetupResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 184;
+                            grammar_id = 173;
                         }
                     }
                     else
@@ -10783,15 +10406,15 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 184:
-            // Grammar: ID=184; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
+        case 173:
+            // Grammar: ID=173; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=185
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=174
                     // decode exi type: base64Binary (Array)
                     if (WPT_FinePositioningSetupResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -10800,53 +10423,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                         {
                             WPT_FinePositioningSetupResType->VendorSpecificDataContainer.arrayLen++;
                             WPT_FinePositioningSetupResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 185;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: START (LF_SystemSetupData, WPT_LF_SystemSetupDataType (WPT_LF_SystemSetupDataType)); next=2
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_LF_SystemSetupDataType(stream, &WPT_FinePositioningSetupResType->LF_SystemSetupData);
-                    if (error == 0)
-                    {
-                        WPT_FinePositioningSetupResType->LF_SystemSetupData_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 185:
-            // Grammar: ID=185; read/write bits=2; LOOP (VendorSpecificDataContainer), START (LF_SystemSetupData), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=186
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_FinePositioningSetupResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningSetupResType->VendorSpecificDataContainer.array[WPT_FinePositioningSetupResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningSetupResType->VendorSpecificDataContainer.array[WPT_FinePositioningSetupResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_FinePositioningSetupResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_FinePositioningSetupResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 186;
+                            grammar_id = 174;
                         }
                     }
                     else
@@ -10875,12 +10452,12 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 186:
-            // Grammar: ID=186; read/write bits=2; START (LF_SystemSetupData), END Element
+        case 174:
+            // Grammar: ID=174; read/write bits=2; START (LF_SystemSetupData), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (LF_SystemSetupData, WPT_LF_SystemSetupDataType (WPT_LF_SystemSetupDataType)); next=2
@@ -10908,7 +10485,7 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10938,28 +10515,596 @@ static int decode_iso20_wpt_WPT_FinePositioningSetupResType(exi_bitstream_t* str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
 static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningReqType* WPT_FinePositioningReqType) {
-    int grammar_id = 187;
+    int grammar_id = 175;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_FinePositioningReqType(WPT_FinePositioningReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
+        {
+        case 175:
+            // Grammar: ID=175; read/write bits=1; START (Header)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=176
+                    // decode: element
+                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningReqType->Header);
+                    if (error == 0)
+                    {
+                        grammar_id = 176;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 176:
+            // Grammar: ID=176; read/write bits=1; START (EVProcessing)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVProcessing, processingType (string)); next=177
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                WPT_FinePositioningReqType->EVProcessing = (iso20_wpt_processingType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 177;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 177:
+            // Grammar: ID=177; read/write bits=1; START (EVResultCode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=178
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                WPT_FinePositioningReqType->EVResultCode = (iso20_wpt_WPT_EVResultType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 178;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 178:
+            // Grammar: ID=178; read/write bits=2; START (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=179
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_FinePositioningReqType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 179;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 179:
+            // Grammar: ID=179; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=180
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_FinePositioningReqType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 180;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningReqType->WPT_LF_DataPackageList);
+                    if (error == 0)
+                    {
+                        WPT_FinePositioningReqType->WPT_LF_DataPackageList_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 180:
+            // Grammar: ID=180; read/write bits=2; START (WPT_LF_DataPackageList), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningReqType->WPT_LF_DataPackageList);
+                    if (error == 0)
+                    {
+                        WPT_FinePositioningReqType->WPT_LF_DataPackageList_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 2:
+            // Grammar: ID=2; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
+static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningResType* WPT_FinePositioningResType) {
+    int grammar_id = 181;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso20_wpt_WPT_FinePositioningResType(WPT_FinePositioningResType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 181:
+            // Grammar: ID=181; read/write bits=1; START (Header)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=182
+                    // decode: element
+                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningResType->Header);
+                    if (error == 0)
+                    {
+                        grammar_id = 182;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 182:
+            // Grammar: ID=182; read/write bits=1; START (ResponseCode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ResponseCode, responseCodeType (string)); next=183
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 6, &value);
+                            if (error == 0)
+                            {
+                                WPT_FinePositioningResType->ResponseCode = (iso20_wpt_responseCodeType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 183;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 183:
+            // Grammar: ID=183; read/write bits=1; START (EVSEProcessing)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEProcessing, processingType (string)); next=184
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                WPT_FinePositioningResType->EVSEProcessing = (iso20_wpt_processingType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 184;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 184:
+            // Grammar: ID=184; read/write bits=2; START (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=185
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_FinePositioningResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 185;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 185:
+            // Grammar: ID=185; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=186
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_FinePositioningResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 186;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningResType->WPT_LF_DataPackageList);
+                    if (error == 0)
+                    {
+                        WPT_FinePositioningResType->WPT_LF_DataPackageList_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 186:
+            // Grammar: ID=186; read/write bits=2; START (WPT_LF_DataPackageList), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningResType->WPT_LF_DataPackageList);
+                    if (error == 0)
+                    {
+                        WPT_FinePositioningResType->WPT_LF_DataPackageList_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 2:
+            // Grammar: ID=2; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
+static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_PairingReqType* WPT_PairingReqType) {
+    int grammar_id = 187;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso20_wpt_WPT_PairingReqType(WPT_PairingReqType);
+
+    while (!done)
+    {
+        switch (grammar_id)
         {
         case 187:
             // Grammar: ID=187; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=188
                     // decode: element
-                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningReqType->Header);
+                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_PairingReqType->Header);
                     if (error == 0)
                     {
                         grammar_id = 188;
@@ -10976,7 +11121,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVProcessing, processingType (string)); next=189
@@ -10990,7 +11135,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                             error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
                             if (error == 0)
                             {
-                                WPT_FinePositioningReqType->EVProcessing = (iso20_wpt_processingType)value;
+                                WPT_PairingReqType->EVProcessing = (iso20_wpt_processingType)value;
                             }
                         }
                         else
@@ -11025,14 +11170,24 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
             }
             break;
         case 189:
-            // Grammar: ID=189; read/write bits=1; START (EVResultCode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=189; read/write bits=2; START (ObservedIDCode), START (EVResultCode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=190
+                    // Event: START (ObservedIDCode, numericIDType (unsignedInt)); next=190
+                    // decode: unsigned int
+                    error = decode_exi_type_uint32(stream, &WPT_PairingReqType->ObservedIDCode);
+                    if (error == 0)
+                    {
+                        WPT_PairingReqType->ObservedIDCode_isUsed = 1u;
+                        grammar_id = 190;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=191
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -11043,7 +11198,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                             error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
                             if (error == 0)
                             {
-                                WPT_FinePositioningReqType->EVResultCode = (iso20_wpt_WPT_EVResultType)value;
+                                WPT_PairingReqType->EVResultCode = (iso20_wpt_WPT_EVResultType)value;
                             }
                         }
                         else
@@ -11062,7 +11217,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 190;
+                                grammar_id = 191;
                             }
                             else
                             {
@@ -11078,34 +11233,51 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
             }
             break;
         case 190:
-            // Grammar: ID=190; read/write bits=2; START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=190; read/write bits=1; START (EVResultCode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=191
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=191
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
+                        if (eventCode == 0)
                         {
-                            WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_FinePositioningReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 191;
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                WPT_PairingReqType->EVResultCode = (iso20_wpt_WPT_EVResultType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
                         }
                     }
-                    else
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 191;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
                     }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -11114,22 +11286,22 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
             }
             break;
         case 191:
-            // Grammar: ID=191; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
+            // Grammar: ID=191; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=192
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=192
                     // decode exi type: base64Binary (Array)
-                    if (WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    if (WPT_PairingReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_FinePositioningReqType->VendorSpecificDataContainer_isUsed = 1u;
+                            WPT_PairingReqType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingReqType->VendorSpecificDataContainer_isUsed = 1u;
                             grammar_id = 192;
                         }
                     }
@@ -11139,16 +11311,6 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
                     }
                     break;
                 case 1:
-                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningReqType->WPT_LF_DataPackageList);
-                    if (error == 0)
-                    {
-                        WPT_FinePositioningReqType->WPT_LF_DataPackageList_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 2:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -11160,66 +11322,28 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
             }
             break;
         case 192:
-            // Grammar: ID=192; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
+            // Grammar: ID=192; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=193
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=192
                     // decode exi type: base64Binary (Array)
-                    if (WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    if (WPT_PairingReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningReqType->VendorSpecificDataContainer.array[WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            WPT_FinePositioningReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_FinePositioningReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 193;
+                            WPT_PairingReqType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingReqType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 192;
                         }
                     }
                     else
                     {
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningReqType->WPT_LF_DataPackageList);
-                    if (error == 0)
-                    {
-                        WPT_FinePositioningReqType->WPT_LF_DataPackageList_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 193:
-            // Grammar: ID=193; read/write bits=2; START (WPT_LF_DataPackageList), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningReqType->WPT_LF_DataPackageList);
-                    if (error == 0)
-                    {
-                        WPT_FinePositioningReqType->WPT_LF_DataPackageList_isUsed = 1u;
-                        grammar_id = 2;
                     }
                     break;
                 case 1:
@@ -11238,7 +11362,7 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11264,35 +11388,35 @@ static int decode_iso20_wpt_WPT_FinePositioningReqType(exi_bitstream_t* stream, 
     return error;
 }
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_FinePositioningResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16); WPT_LF_DataPackageList, WPT_LF_DataPackageListType (0, 1);
-static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_FinePositioningResType* WPT_FinePositioningResType) {
-    int grammar_id = 194;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); AlternativeSECCList, AlternativeSECCListType (0, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
+static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_PairingResType* WPT_PairingResType) {
+    int grammar_id = 193;
     int done = 0;
     uint32_t eventCode;
     int error;
 
-    init_iso20_wpt_WPT_FinePositioningResType(WPT_FinePositioningResType);
+    init_iso20_wpt_WPT_PairingResType(WPT_PairingResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 194:
-            // Grammar: ID=194; read/write bits=1; START (Header)
+        case 193:
+            // Grammar: ID=193; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=195
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=194
                     // decode: element
-                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_FinePositioningResType->Header);
+                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_PairingResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 195;
+                        grammar_id = 194;
                     }
                     break;
                 default:
@@ -11301,15 +11425,15 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 195:
-            // Grammar: ID=195; read/write bits=1; START (ResponseCode)
+        case 194:
+            // Grammar: ID=194; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=196
+                    // Event: START (ResponseCode, responseCodeType (string)); next=195
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -11320,7 +11444,60 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                             error = exi_basetypes_decoder_nbit_uint(stream, 6, &value);
                             if (error == 0)
                             {
-                                WPT_FinePositioningResType->ResponseCode = (iso20_wpt_responseCodeType)value;
+                                WPT_PairingResType->ResponseCode = (iso20_wpt_responseCodeType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 195;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 195:
+            // Grammar: ID=195; read/write bits=1; START (EVSEProcessing)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEProcessing, processingType (string)); next=196
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                WPT_PairingResType->EVSEProcessing = (iso20_wpt_processingType)value;
                             }
                         }
                         else
@@ -11355,51 +11532,54 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
             }
             break;
         case 196:
-            // Grammar: ID=196; read/write bits=1; START (EVSEProcessing)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=196; read/write bits=3; START (ObservedIDCode), START (AlternativeSECCList), START (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=197
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    // Event: START (ObservedIDCode, numericIDType (unsignedInt)); next=198
+                    // decode: unsigned int
+                    error = decode_exi_type_uint32(stream, &WPT_PairingResType->ObservedIDCode);
                     if (error == 0)
                     {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                WPT_FinePositioningResType->EVSEProcessing = (iso20_wpt_processingType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
+                        WPT_PairingResType->ObservedIDCode_isUsed = 1u;
+                        grammar_id = 198;
                     }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    break;
+                case 1:
+                    // Event: START (AlternativeSECCList, AlternativeSECCListType (AlternativeSECCListType)); next=200
+                    // decode: element
+                    error = decode_iso20_wpt_AlternativeSECCListType(stream, &WPT_PairingResType->AlternativeSECCList);
                     if (error == 0)
                     {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        WPT_PairingResType->AlternativeSECCList_isUsed = 1u;
+                        grammar_id = 200;
+                    }
+                    break;
+                case 2:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=197
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 197;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 197;
                         }
                     }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 3:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -11408,23 +11588,23 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
             }
             break;
         case 197:
-            // Grammar: ID=197; read/write bits=2; START (VendorSpecificDataContainer), END Element
+            // Grammar: ID=197; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=198
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=197
                     // decode exi type: base64Binary (Array)
-                    if (WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_FinePositioningResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 198;
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 197;
                         }
                     }
                     else
@@ -11444,38 +11624,38 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
             }
             break;
         case 198:
-            // Grammar: ID=198; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
+            // Grammar: ID=198; read/write bits=2; START (AlternativeSECCList), START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=199
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    // Event: START (AlternativeSECCList, AlternativeSECCListType (AlternativeSECCListType)); next=200
+                    // decode: element
+                    error = decode_iso20_wpt_AlternativeSECCListType(stream, &WPT_PairingResType->AlternativeSECCList);
+                    if (error == 0)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        WPT_PairingResType->AlternativeSECCList_isUsed = 1u;
+                        grammar_id = 200;
+                    }
+                    break;
+                case 1:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=199
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_FinePositioningResType->VendorSpecificDataContainer_isUsed = 1u;
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
                             grammar_id = 199;
                         }
                     }
                     else
                     {
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningResType->WPT_LF_DataPackageList);
-                    if (error == 0)
-                    {
-                        WPT_FinePositioningResType->WPT_LF_DataPackageList_isUsed = 1u;
-                        grammar_id = 2;
                     }
                     break;
                 case 2:
@@ -11490,23 +11670,23 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
             }
             break;
         case 199:
-            // Grammar: ID=199; read/write bits=2; LOOP (VendorSpecificDataContainer), START (WPT_LF_DataPackageList), END Element
+            // Grammar: ID=199; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=200
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=199
                     // decode exi type: base64Binary (Array)
-                    if (WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_FinePositioningResType->VendorSpecificDataContainer.array[WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            WPT_FinePositioningResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_FinePositioningResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 200;
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 199;
                         }
                     }
                     else
@@ -11515,16 +11695,6 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                     }
                     break;
                 case 1:
-                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningResType->WPT_LF_DataPackageList);
-                    if (error == 0)
-                    {
-                        WPT_FinePositioningResType->WPT_LF_DataPackageList_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 2:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -11536,20 +11706,28 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
             }
             break;
         case 200:
-            // Grammar: ID=200; read/write bits=2; START (WPT_LF_DataPackageList), END Element
+            // Grammar: ID=200; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (WPT_LF_DataPackageList, WPT_LF_DataPackageListType (WPT_LF_DataPackageListType)); next=2
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_LF_DataPackageListType(stream, &WPT_FinePositioningResType->WPT_LF_DataPackageList);
-                    if (error == 0)
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=201
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
-                        WPT_FinePositioningResType->WPT_LF_DataPackageList_isUsed = 1u;
-                        grammar_id = 2;
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 201;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     break;
                 case 1:
@@ -11563,333 +11741,24 @@ static int decode_iso20_wpt_WPT_FinePositioningResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 2:
-            // Grammar: ID=2; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingReqType; base type=V2GRequestType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
-static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_PairingReqType* WPT_PairingReqType) {
-    int grammar_id = 201;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso20_wpt_WPT_PairingReqType(WPT_PairingReqType);
-
-    while(!done)
-    {
-        switch(grammar_id)
-        {
         case 201:
-            // Grammar: ID=201; read/write bits=1; START (Header)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=202
-                    // decode: element
-                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_PairingReqType->Header);
-                    if (error == 0)
-                    {
-                        grammar_id = 202;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 202:
-            // Grammar: ID=202; read/write bits=1; START (EVProcessing)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVProcessing, processingType (string)); next=203
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                WPT_PairingReqType->EVProcessing = (iso20_wpt_processingType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 203;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 203:
-            // Grammar: ID=203; read/write bits=2; START (ObservedIDCode), START (EVResultCode)
+            // Grammar: ID=201; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ObservedIDCode, numericIDType (unsignedInt)); next=204
-                    // decode: unsigned int
-                    error = decode_exi_type_uint32(stream, &WPT_PairingReqType->ObservedIDCode);
-                    if (error == 0)
-                    {
-                        WPT_PairingReqType->ObservedIDCode_isUsed = 1u;
-                        grammar_id = 204;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=205
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                WPT_PairingReqType->EVResultCode = (iso20_wpt_WPT_EVResultType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 205;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 204:
-            // Grammar: ID=204; read/write bits=1; START (EVResultCode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=205
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                WPT_PairingReqType->EVResultCode = (iso20_wpt_WPT_EVResultType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 205;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 205:
-            // Grammar: ID=205; read/write bits=2; START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=206
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=201
                     // decode exi type: base64Binary (Array)
-                    if (WPT_PairingReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
                         if (error == 0)
                         {
-                            WPT_PairingReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 206;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 206:
-            // Grammar: ID=206; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=206
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 206;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 207:
-            // Grammar: ID=207; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingReqType->VendorSpecificDataContainer.array[WPT_PairingReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
+                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 201;
                         }
                     }
                     else
@@ -11913,535 +11782,7 @@ static int decode_iso20_wpt_WPT_PairingReqType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_PairingRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_PairingResType; base type=V2GResponseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); ObservedIDCode, numericIDType (0, 1); AlternativeSECCList, AlternativeSECCListType (0, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
-static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_PairingResType* WPT_PairingResType) {
-    int grammar_id = 208;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso20_wpt_WPT_PairingResType(WPT_PairingResType);
-
-    while(!done)
-    {
-        switch(grammar_id)
-        {
-        case 208:
-            // Grammar: ID=208; read/write bits=1; START (Header)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=209
-                    // decode: element
-                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_PairingResType->Header);
-                    if (error == 0)
-                    {
-                        grammar_id = 209;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 209:
-            // Grammar: ID=209; read/write bits=1; START (ResponseCode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=210
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 6, &value);
-                            if (error == 0)
-                            {
-                                WPT_PairingResType->ResponseCode = (iso20_wpt_responseCodeType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 210;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 210:
-            // Grammar: ID=210; read/write bits=1; START (EVSEProcessing)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=211
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                WPT_PairingResType->EVSEProcessing = (iso20_wpt_processingType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 211;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 211:
-            // Grammar: ID=211; read/write bits=3; START (ObservedIDCode), START (AlternativeSECCList), START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (ObservedIDCode, numericIDType (unsignedInt)); next=214
-                    // decode: unsigned int
-                    error = decode_exi_type_uint32(stream, &WPT_PairingResType->ObservedIDCode);
-                    if (error == 0)
-                    {
-                        WPT_PairingResType->ObservedIDCode_isUsed = 1u;
-                        grammar_id = 214;
-                    }
-                    break;
-                case 1:
-                    // Event: START (AlternativeSECCList, AlternativeSECCListType (AlternativeSECCListType)); next=217
-                    // decode: element
-                    error = decode_iso20_wpt_AlternativeSECCListType(stream, &WPT_PairingResType->AlternativeSECCList);
-                    if (error == 0)
-                    {
-                        WPT_PairingResType->AlternativeSECCList_isUsed = 1u;
-                        grammar_id = 217;
-                    }
-                    break;
-                case 2:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=212
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 212;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 3:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 212:
-            // Grammar: ID=212; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=212
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 212;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 213:
-            // Grammar: ID=213; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 214:
-            // Grammar: ID=214; read/write bits=2; START (AlternativeSECCList), START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (AlternativeSECCList, AlternativeSECCListType (AlternativeSECCListType)); next=217
-                    // decode: element
-                    error = decode_iso20_wpt_AlternativeSECCListType(stream, &WPT_PairingResType->AlternativeSECCList);
-                    if (error == 0)
-                    {
-                        WPT_PairingResType->AlternativeSECCList_isUsed = 1u;
-                        grammar_id = 217;
-                    }
-                    break;
-                case 1:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=215
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 215;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 215:
-            // Grammar: ID=215; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=215
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 215;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 216:
-            // Grammar: ID=216; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 217:
-            // Grammar: ID=217; read/write bits=2; START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=218
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 218;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 218:
-            // Grammar: ID=218; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=218
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 218;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 219:
-            // Grammar: ID=219; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_PairingResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_PairingResType->VendorSpecificDataContainer.array[WPT_PairingResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_PairingResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_PairingResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 2:
-            // Grammar: ID=2; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12471,31 +11812,31 @@ static int decode_iso20_wpt_WPT_PairingResType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVPCMaxReceivablePower, RationalNumberType (1, 1); SDMaxGroundClearence, unsignedShort (1, 1); SDMinGroundClearence, unsignedShort (1, 1); EVPCNaturalFrequency, RationalNumberType (1, 1); EVPCDeviceLocalControl, boolean (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeParameterDiscoveryReqType* WPT_ChargeParameterDiscoveryReqType) {
-    int grammar_id = 220;
+    int grammar_id = 202;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(WPT_ChargeParameterDiscoveryReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 220:
-            // Grammar: ID=220; read/write bits=1; START (Header)
+        case 202:
+            // Grammar: ID=202; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=221
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=203
                     // decode: element
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeParameterDiscoveryReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 221;
+                        grammar_id = 203;
                     }
                     break;
                 default:
@@ -12504,20 +11845,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 221:
-            // Grammar: ID=221; read/write bits=1; START (EVPCMaxReceivablePower)
+        case 203:
+            // Grammar: ID=203; read/write bits=1; START (EVPCMaxReceivablePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCMaxReceivablePower, RationalNumberType (RationalNumberType)); next=222
+                    // Event: START (EVPCMaxReceivablePower, RationalNumberType (RationalNumberType)); next=204
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryReqType->EVPCMaxReceivablePower);
                     if (error == 0)
                     {
-                        grammar_id = 222;
+                        grammar_id = 204;
                     }
                     break;
                 default:
@@ -12526,20 +11867,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 222:
-            // Grammar: ID=222; read/write bits=1; START (SDMaxGroundClearence)
+        case 204:
+            // Grammar: ID=204; read/write bits=1; START (SDMaxGroundClearence)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMaxGroundClearence, unsignedShort (unsignedInt)); next=223
+                    // Event: START (SDMaxGroundClearence, unsignedShort (unsignedInt)); next=205
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &WPT_ChargeParameterDiscoveryReqType->SDMaxGroundClearence);
                     if (error == 0)
                     {
-                        grammar_id = 223;
+                        grammar_id = 205;
                     }
                     break;
                 default:
@@ -12548,20 +11889,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 223:
-            // Grammar: ID=223; read/write bits=1; START (SDMinGroundClearence)
+        case 205:
+            // Grammar: ID=205; read/write bits=1; START (SDMinGroundClearence)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMinGroundClearence, unsignedShort (unsignedInt)); next=224
+                    // Event: START (SDMinGroundClearence, unsignedShort (unsignedInt)); next=206
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &WPT_ChargeParameterDiscoveryReqType->SDMinGroundClearence);
                     if (error == 0)
                     {
-                        grammar_id = 224;
+                        grammar_id = 206;
                     }
                     break;
                 default:
@@ -12570,20 +11911,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 224:
-            // Grammar: ID=224; read/write bits=1; START (EVPCNaturalFrequency)
+        case 206:
+            // Grammar: ID=206; read/write bits=1; START (EVPCNaturalFrequency)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCNaturalFrequency, RationalNumberType (RationalNumberType)); next=225
+                    // Event: START (EVPCNaturalFrequency, RationalNumberType (RationalNumberType)); next=207
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryReqType->EVPCNaturalFrequency);
                     if (error == 0)
                     {
-                        grammar_id = 225;
+                        grammar_id = 207;
                     }
                     break;
                 default:
@@ -12592,15 +11933,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 225:
-            // Grammar: ID=225; read/write bits=1; START (EVPCDeviceLocalControl)
+        case 207:
+            // Grammar: ID=207; read/write bits=1; START (EVPCDeviceLocalControl)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPCDeviceLocalControl, boolean (boolean)); next=226
+                    // Event: START (EVPCDeviceLocalControl, boolean (boolean)); next=208
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12630,7 +11971,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 226;
+                                grammar_id = 208;
                             }
                             else
                             {
@@ -12645,15 +11986,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 226:
-            // Grammar: ID=226; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 208:
+            // Grammar: ID=208; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=227
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=209
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -12662,7 +12003,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                         {
                             WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.arrayLen++;
                             WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 227;
+                            grammar_id = 209;
                         }
                     }
                     else
@@ -12681,15 +12022,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                 }
             }
             break;
-        case 227:
-            // Grammar: ID=227; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+        case 209:
+            // Grammar: ID=209; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=227
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=209
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -12698,43 +12039,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
                         {
                             WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.arrayLen++;
                             WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 227;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 228:
-            // Grammar: ID=228; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.array[WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.array[WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_ChargeParameterDiscoveryReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
+                            grammar_id = 209;
                         }
                     }
                     else
@@ -12758,7 +12063,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12788,31 +12093,31 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryReqType(exi_bitstream_t*
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); PDInputPowerClass, WPT_PowerClassType (1, 1); SDMinOutputPower, RationalNumberType (1, 1); SDMaxOutputPower, RationalNumberType (1, 1); SDMaxGroundClearanceSupport, unsignedShort (1, 1); SDMinGroundClearanceSupport, unsignedShort (1, 1); PDMinCoilCurrent, RationalNumberType (1, 1); PDMaxCoilCurrent, RationalNumberType (1, 1); SDManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeParameterDiscoveryResType* WPT_ChargeParameterDiscoveryResType) {
-    int grammar_id = 229;
+    int grammar_id = 210;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_ChargeParameterDiscoveryResType(WPT_ChargeParameterDiscoveryResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 229:
-            // Grammar: ID=229; read/write bits=1; START (Header)
+        case 210:
+            // Grammar: ID=210; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=230
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=211
                     // decode: element
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeParameterDiscoveryResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 230;
+                        grammar_id = 211;
                     }
                     break;
                 default:
@@ -12821,15 +12126,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 230:
-            // Grammar: ID=230; read/write bits=1; START (ResponseCode)
+        case 211:
+            // Grammar: ID=211; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=231
+                    // Event: START (ResponseCode, responseCodeType (string)); next=212
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12859,7 +12164,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 231;
+                                grammar_id = 212;
                             }
                             else
                             {
@@ -12874,15 +12179,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 231:
-            // Grammar: ID=231; read/write bits=1; START (PDInputPowerClass)
+        case 212:
+            // Grammar: ID=212; read/write bits=1; START (PDInputPowerClass)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PDInputPowerClass, WPT_PowerClassType (string)); next=232
+                    // Event: START (PDInputPowerClass, WPT_PowerClassType (string)); next=213
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12912,7 +12217,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 232;
+                                grammar_id = 213;
                             }
                             else
                             {
@@ -12927,20 +12232,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 232:
-            // Grammar: ID=232; read/write bits=1; START (SDMinOutputPower)
+        case 213:
+            // Grammar: ID=213; read/write bits=1; START (SDMinOutputPower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMinOutputPower, RationalNumberType (RationalNumberType)); next=233
+                    // Event: START (SDMinOutputPower, RationalNumberType (RationalNumberType)); next=214
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryResType->SDMinOutputPower);
                     if (error == 0)
                     {
-                        grammar_id = 233;
+                        grammar_id = 214;
                     }
                     break;
                 default:
@@ -12949,20 +12254,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 233:
-            // Grammar: ID=233; read/write bits=1; START (SDMaxOutputPower)
+        case 214:
+            // Grammar: ID=214; read/write bits=1; START (SDMaxOutputPower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMaxOutputPower, RationalNumberType (RationalNumberType)); next=234
+                    // Event: START (SDMaxOutputPower, RationalNumberType (RationalNumberType)); next=215
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryResType->SDMaxOutputPower);
                     if (error == 0)
                     {
-                        grammar_id = 234;
+                        grammar_id = 215;
                     }
                     break;
                 default:
@@ -12971,20 +12276,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 234:
-            // Grammar: ID=234; read/write bits=1; START (SDMaxGroundClearanceSupport)
+        case 215:
+            // Grammar: ID=215; read/write bits=1; START (SDMaxGroundClearanceSupport)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMaxGroundClearanceSupport, unsignedShort (unsignedInt)); next=235
+                    // Event: START (SDMaxGroundClearanceSupport, unsignedShort (unsignedInt)); next=216
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &WPT_ChargeParameterDiscoveryResType->SDMaxGroundClearanceSupport);
                     if (error == 0)
                     {
-                        grammar_id = 235;
+                        grammar_id = 216;
                     }
                     break;
                 default:
@@ -12993,20 +12298,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 235:
-            // Grammar: ID=235; read/write bits=1; START (SDMinGroundClearanceSupport)
+        case 216:
+            // Grammar: ID=216; read/write bits=1; START (SDMinGroundClearanceSupport)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDMinGroundClearanceSupport, unsignedShort (unsignedInt)); next=236
+                    // Event: START (SDMinGroundClearanceSupport, unsignedShort (unsignedInt)); next=217
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &WPT_ChargeParameterDiscoveryResType->SDMinGroundClearanceSupport);
                     if (error == 0)
                     {
-                        grammar_id = 236;
+                        grammar_id = 217;
                     }
                     break;
                 default:
@@ -13015,20 +12320,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 236:
-            // Grammar: ID=236; read/write bits=1; START (PDMinCoilCurrent)
+        case 217:
+            // Grammar: ID=217; read/write bits=1; START (PDMinCoilCurrent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PDMinCoilCurrent, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (PDMinCoilCurrent, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryResType->PDMinCoilCurrent);
                     if (error == 0)
                     {
-                        grammar_id = 237;
+                        grammar_id = 218;
                     }
                     break;
                 default:
@@ -13037,20 +12342,20 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 237:
-            // Grammar: ID=237; read/write bits=1; START (PDMaxCoilCurrent)
+        case 218:
+            // Grammar: ID=218; read/write bits=1; START (PDMaxCoilCurrent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PDMaxCoilCurrent, RationalNumberType (RationalNumberType)); next=238
+                    // Event: START (PDMaxCoilCurrent, RationalNumberType (RationalNumberType)); next=219
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeParameterDiscoveryResType->PDMaxCoilCurrent);
                     if (error == 0)
                     {
-                        grammar_id = 238;
+                        grammar_id = 219;
                     }
                     break;
                 default:
@@ -13059,15 +12364,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 238:
-            // Grammar: ID=238; read/write bits=2; START (SDManufacturerSpecificDataContainer), END Element
+        case 219:
+            // Grammar: ID=219; read/write bits=2; START (SDManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=239
+                    // Event: START (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=220
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -13076,7 +12381,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                         {
                             WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.arrayLen++;
                             WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 239;
+                            grammar_id = 220;
                         }
                     }
                     else
@@ -13095,15 +12400,15 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                 }
             }
             break;
-        case 239:
-            // Grammar: ID=239; read/write bits=2; LOOP (SDManufacturerSpecificDataContainer), END Element
+        case 220:
+            // Grammar: ID=220; read/write bits=2; LOOP (SDManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=239
+                    // Event: LOOP (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=220
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -13112,43 +12417,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
                         {
                             WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.arrayLen++;
                             WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 239;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 240:
-            // Grammar: ID=240; read/write bits=2; LOOP (SDManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (SDManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.array[WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.array[WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeParameterDiscoveryResType->SDManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
+                            grammar_id = 220;
                         }
                     }
                     else
@@ -13172,7 +12441,7 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -13202,31 +12471,31 @@ static int decode_iso20_wpt_WPT_ChargeParameterDiscoveryResType(exi_bitstream_t*
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); TargetCoilCurrent, RationalNumberType (0, 1); EVResultCode, WPT_EVResultType (1, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_AlignmentCheckReqType* WPT_AlignmentCheckReqType) {
-    int grammar_id = 241;
+    int grammar_id = 221;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_AlignmentCheckReqType(WPT_AlignmentCheckReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 241:
-            // Grammar: ID=241; read/write bits=1; START (Header)
+        case 221:
+            // Grammar: ID=221; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=242
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=222
                     // decode: element
                     error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_AlignmentCheckReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 242;
+                        grammar_id = 222;
                     }
                     break;
                 default:
@@ -13235,15 +12504,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 242:
-            // Grammar: ID=242; read/write bits=1; START (EVProcessing)
+        case 222:
+            // Grammar: ID=222; read/write bits=1; START (EVProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVProcessing, processingType (string)); next=243
+                    // Event: START (EVProcessing, processingType (string)); next=223
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13273,7 +12542,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 243;
+                                grammar_id = 223;
                             }
                             else
                             {
@@ -13288,25 +12557,25 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 243:
-            // Grammar: ID=243; read/write bits=2; START (TargetCoilCurrent), START (EVResultCode)
+        case 223:
+            // Grammar: ID=223; read/write bits=2; START (TargetCoilCurrent), START (EVResultCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetCoilCurrent, RationalNumberType (RationalNumberType)); next=244
+                    // Event: START (TargetCoilCurrent, RationalNumberType (RationalNumberType)); next=224
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckReqType->TargetCoilCurrent);
                     if (error == 0)
                     {
                         WPT_AlignmentCheckReqType->TargetCoilCurrent_isUsed = 1u;
-                        grammar_id = 244;
+                        grammar_id = 224;
                     }
                     break;
                 case 1:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=245
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=225
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13336,7 +12605,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 245;
+                                grammar_id = 225;
                             }
                             else
                             {
@@ -13351,15 +12620,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 244:
-            // Grammar: ID=244; read/write bits=1; START (EVResultCode)
+        case 224:
+            // Grammar: ID=224; read/write bits=1; START (EVResultCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=245
+                    // Event: START (EVResultCode, WPT_EVResultType (string)); next=225
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13389,7 +12658,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 245;
+                                grammar_id = 225;
                             }
                             else
                             {
@@ -13404,15 +12673,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 245:
-            // Grammar: ID=245; read/write bits=2; START (VendorSpecificDataContainer), END Element
+        case 225:
+            // Grammar: ID=225; read/write bits=2; START (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=246
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=226
                     // decode exi type: base64Binary (Array)
                     if (WPT_AlignmentCheckReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -13421,7 +12690,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                         {
                             WPT_AlignmentCheckReqType->VendorSpecificDataContainer.arrayLen++;
                             WPT_AlignmentCheckReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 246;
+                            grammar_id = 226;
                         }
                     }
                     else
@@ -13440,15 +12709,15 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 246:
-            // Grammar: ID=246; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+        case 226:
+            // Grammar: ID=226; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=246
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=226
                     // decode exi type: base64Binary (Array)
                     if (WPT_AlignmentCheckReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -13457,43 +12726,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
                         {
                             WPT_AlignmentCheckReqType->VendorSpecificDataContainer.arrayLen++;
                             WPT_AlignmentCheckReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 246;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 247:
-            // Grammar: ID=247; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckReqType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckReqType->VendorSpecificDataContainer.array[WPT_AlignmentCheckReqType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckReqType->VendorSpecificDataContainer.array[WPT_AlignmentCheckReqType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckReqType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckReqType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
+                            grammar_id = 226;
                         }
                     }
                     else
@@ -13517,7 +12750,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -13547,28 +12780,975 @@ static int decode_iso20_wpt_WPT_AlignmentCheckReqType(exi_bitstream_t* stream, s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); PowerTransmitted, RationalNumberType (0, 1); SupplyDeviceCurrent, RationalNumberType (0, 1); VendorSpecificDataContainer, WPT_DataContainerType (0, 16);
 static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_AlignmentCheckResType* WPT_AlignmentCheckResType) {
-    int grammar_id = 248;
+    int grammar_id = 227;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_WPT_AlignmentCheckResType(WPT_AlignmentCheckResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
+        {
+        case 227:
+            // Grammar: ID=227; read/write bits=1; START (Header)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=228
+                    // decode: element
+                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_AlignmentCheckResType->Header);
+                    if (error == 0)
+                    {
+                        grammar_id = 228;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 228:
+            // Grammar: ID=228; read/write bits=1; START (ResponseCode)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ResponseCode, responseCodeType (string)); next=229
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 6, &value);
+                            if (error == 0)
+                            {
+                                WPT_AlignmentCheckResType->ResponseCode = (iso20_wpt_responseCodeType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 229;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 229:
+            // Grammar: ID=229; read/write bits=1; START (EVSEProcessing)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEProcessing, processingType (string)); next=230
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                WPT_AlignmentCheckResType->EVSEProcessing = (iso20_wpt_processingType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 230;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 230:
+            // Grammar: ID=230; read/write bits=3; START (PowerTransmitted), START (SupplyDeviceCurrent), START (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (PowerTransmitted, RationalNumberType (RationalNumberType)); next=232
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckResType->PowerTransmitted);
+                    if (error == 0)
+                    {
+                        WPT_AlignmentCheckResType->PowerTransmitted_isUsed = 1u;
+                        grammar_id = 232;
+                    }
+                    break;
+                case 1:
+                    // Event: START (SupplyDeviceCurrent, RationalNumberType (RationalNumberType)); next=234
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckResType->SupplyDeviceCurrent);
+                    if (error == 0)
+                    {
+                        WPT_AlignmentCheckResType->SupplyDeviceCurrent_isUsed = 1u;
+                        grammar_id = 234;
+                    }
+                    break;
+                case 2:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=231
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 231;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 3:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 231:
+            // Grammar: ID=231; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=231
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 231;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 232:
+            // Grammar: ID=232; read/write bits=2; START (SupplyDeviceCurrent), START (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SupplyDeviceCurrent, RationalNumberType (RationalNumberType)); next=234
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckResType->SupplyDeviceCurrent);
+                    if (error == 0)
+                    {
+                        WPT_AlignmentCheckResType->SupplyDeviceCurrent_isUsed = 1u;
+                        grammar_id = 234;
+                    }
+                    break;
+                case 1:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=233
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 233;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 233:
+            // Grammar: ID=233; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=233
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 233;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 234:
+            // Grammar: ID=234; read/write bits=2; START (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=235
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 235;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 235:
+            // Grammar: ID=235; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=235
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
+                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 235;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 2:
+            // Grammar: ID=2; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeLoopReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeLoopReqType; base type=ChargeLoopReqType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); DisplayParameters, DisplayParametersType (0, 1); MeterInfoRequested, boolean (1, 1); EVPCPowerRequest, RationalNumberType (1, 1); EVPCPowerOutput, RationalNumberType (1, 1); EVPCChargeDiagnostics, WPT_EVPCChargeDiagnosticsType (1, 1); EVPCOperatingFrequency, RationalNumberType (0, 1); EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (0, 1); ManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
+static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeLoopReqType* WPT_ChargeLoopReqType) {
+    int grammar_id = 236;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso20_wpt_WPT_ChargeLoopReqType(WPT_ChargeLoopReqType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 236:
+            // Grammar: ID=236; read/write bits=1; START (Header)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=237
+                    // decode: element
+                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeLoopReqType->Header);
+                    if (error == 0)
+                    {
+                        grammar_id = 237;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 237:
+            // Grammar: ID=237; read/write bits=2; START (DisplayParameters), START (MeterInfoRequested)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (DisplayParameters, DisplayParametersType (DisplayParametersType)); next=238
+                    // decode: element
+                    error = decode_iso20_wpt_DisplayParametersType(stream, &WPT_ChargeLoopReqType->DisplayParameters);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopReqType->DisplayParameters_isUsed = 1u;
+                        grammar_id = 238;
+                    }
+                    break;
+                case 1:
+                    // Event: START (MeterInfoRequested, boolean (boolean)); next=239
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                WPT_ChargeLoopReqType->MeterInfoRequested = value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 239;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 238:
+            // Grammar: ID=238; read/write bits=1; START (MeterInfoRequested)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (MeterInfoRequested, boolean (boolean)); next=239
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                WPT_ChargeLoopReqType->MeterInfoRequested = value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 239;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 239:
+            // Grammar: ID=239; read/write bits=1; START (EVPCPowerRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=240
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopReqType->EVPCPowerRequest);
+                    if (error == 0)
+                    {
+                        grammar_id = 240;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 240:
+            // Grammar: ID=240; read/write bits=1; START (EVPCPowerOutput)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPCPowerOutput, RationalNumberType (RationalNumberType)); next=241
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopReqType->EVPCPowerOutput);
+                    if (error == 0)
+                    {
+                        grammar_id = 241;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 241:
+            // Grammar: ID=241; read/write bits=1; START (EVPCChargeDiagnostics)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPCChargeDiagnostics, WPT_EVPCChargeDiagnosticsType (string)); next=242
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                WPT_ChargeLoopReqType->EVPCChargeDiagnostics = (iso20_wpt_WPT_EVPCChargeDiagnosticsType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 242;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 242:
+            // Grammar: ID=242; read/write bits=3; START (EVPCOperatingFrequency), START (EVPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPCOperatingFrequency, RationalNumberType (RationalNumberType)); next=244
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopReqType->EVPCOperatingFrequency);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopReqType->EVPCOperatingFrequency_isUsed = 1u;
+                        grammar_id = 244;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (WPT_EVPCPowerControlParameterType)); next=246
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_EVPCPowerControlParameterType(stream, &WPT_ChargeLoopReqType->EVPCPowerControlParameter);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopReqType->EVPCPowerControlParameter_isUsed = 1u;
+                        grammar_id = 246;
+                    }
+                    break;
+                case 2:
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=243
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 243;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 3:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 243:
+            // Grammar: ID=243; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=243
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 243;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 244:
+            // Grammar: ID=244; read/write bits=2; START (EVPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (WPT_EVPCPowerControlParameterType)); next=246
+                    // decode: element
+                    error = decode_iso20_wpt_WPT_EVPCPowerControlParameterType(stream, &WPT_ChargeLoopReqType->EVPCPowerControlParameter);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopReqType->EVPCPowerControlParameter_isUsed = 1u;
+                        grammar_id = 246;
+                    }
+                    break;
+                case 1:
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=245
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 245;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 245:
+            // Grammar: ID=245; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=245
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 245;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 246:
+            // Grammar: ID=246; read/write bits=2; START (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=247
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 247;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 247:
+            // Grammar: ID=247; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=247
+                    // decode exi type: base64Binary (Array)
+                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    {
+                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
+                        if (error == 0)
+                        {
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
+                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
+                            grammar_id = 247;
+                        }
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 2:
+            // Grammar: ID=2; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeLoopRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeLoopResType; base type=ChargeLoopResType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEStatus, EVSEStatusType (0, 1); MeterInfo, MeterInfoType (0, 1); Receipt, ReceiptType (0, 1); EVPCPowerRequest, RationalNumberType (1, 1); SDPowerInput, RationalNumberType (0, 1); SPCMaxOutputPowerLimit, RationalNumberType (1, 1); SPCMinOutputPowerLimit, RationalNumberType (1, 1); SPCChargeDiagnostics, WPT_SPCChargeDiagnosticsType (1, 1); SPCOperatingFrequency, RationalNumberType (0, 1); SPCPowerControlParameter, WPT_SPCPowerControlParameterType (0, 1); ManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
+static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeLoopResType* WPT_ChargeLoopResType) {
+    int grammar_id = 248;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso20_wpt_WPT_ChargeLoopResType(WPT_ChargeLoopResType);
+
+    while (!done)
+    {
+        switch (grammar_id)
         {
         case 248:
             // Grammar: ID=248; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=249
                     // decode: element
-                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_AlignmentCheckResType->Header);
+                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeLoopResType->Header);
                     if (error == 0)
                     {
                         grammar_id = 249;
@@ -13585,7 +13765,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ResponseCode, responseCodeType (string)); next=250
@@ -13599,7 +13779,7 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
                             error = exi_basetypes_decoder_nbit_uint(stream, 6, &value);
                             if (error == 0)
                             {
-                                WPT_AlignmentCheckResType->ResponseCode = (iso20_wpt_responseCodeType)value;
+                                WPT_ChargeLoopResType->ResponseCode = (iso20_wpt_responseCodeType)value;
                             }
                         }
                         else
@@ -13634,50 +13814,49 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 250:
-            // Grammar: ID=250; read/write bits=1; START (EVSEProcessing)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=250; read/write bits=3; START (EVSEStatus), START (MeterInfo), START (Receipt), START (EVPCPowerRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=251
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    // Event: START (EVSEStatus, EVSEStatusType (EVSEStatusType)); next=251
+                    // decode: element
+                    error = decode_iso20_wpt_EVSEStatusType(stream, &WPT_ChargeLoopResType->EVSEStatus);
                     if (error == 0)
                     {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                WPT_AlignmentCheckResType->EVSEProcessing = (iso20_wpt_processingType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
+                        WPT_ChargeLoopResType->EVSEStatus_isUsed = 1u;
+                        grammar_id = 251;
                     }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    break;
+                case 1:
+                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=252
+                    // decode: element
+                    error = decode_iso20_wpt_MeterInfoType(stream, &WPT_ChargeLoopResType->MeterInfo);
                     if (error == 0)
                     {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 251;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
+                        WPT_ChargeLoopResType->MeterInfo_isUsed = 1u;
+                        grammar_id = 252;
+                    }
+                    break;
+                case 2:
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=253
+                    // decode: element
+                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt);
+                    if (error == 0)
+                    {
+                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
+                        grammar_id = 253;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=254
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest);
+                    if (error == 0)
+                    {
+                        grammar_id = 254;
                     }
                     break;
                 default:
@@ -13687,54 +13866,40 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 251:
-            // Grammar: ID=251; read/write bits=3; START (PowerTransmitted), START (SupplyDeviceCurrent), START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=251; read/write bits=2; START (MeterInfo), START (Receipt), START (EVPCPowerRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PowerTransmitted, RationalNumberType (RationalNumberType)); next=254
+                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=252
                     // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckResType->PowerTransmitted);
+                    error = decode_iso20_wpt_MeterInfoType(stream, &WPT_ChargeLoopResType->MeterInfo);
                     if (error == 0)
                     {
-                        WPT_AlignmentCheckResType->PowerTransmitted_isUsed = 1u;
-                        grammar_id = 254;
+                        WPT_ChargeLoopResType->MeterInfo_isUsed = 1u;
+                        grammar_id = 252;
                     }
                     break;
                 case 1:
-                    // Event: START (SupplyDeviceCurrent, RationalNumberType (RationalNumberType)); next=257
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=253
                     // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckResType->SupplyDeviceCurrent);
+                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt);
                     if (error == 0)
                     {
-                        WPT_AlignmentCheckResType->SupplyDeviceCurrent_isUsed = 1u;
-                        grammar_id = 257;
+                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
+                        grammar_id = 253;
                     }
                     break;
                 case 2:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=252
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=254
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest);
+                    if (error == 0)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 252;
-                        }
+                        grammar_id = 254;
                     }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 3:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -13743,34 +13908,30 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 252:
-            // Grammar: ID=252; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
+            // Grammar: ID=252; read/write bits=2; START (Receipt), START (EVPCPowerRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=252
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=253
+                    // decode: element
+                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt);
+                    if (error == 0)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 252;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
+                        grammar_id = 253;
                     }
                     break;
                 case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=254
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest);
+                    if (error == 0)
+                    {
+                        grammar_id = 254;
+                    }
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -13779,34 +13940,20 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 253:
-            // Grammar: ID=253; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=253; read/write bits=1; START (EVPCPowerRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=254
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest);
+                    if (error == 0)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
+                        grammar_id = 254;
                     }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -13815,44 +13962,30 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 254:
-            // Grammar: ID=254; read/write bits=2; START (SupplyDeviceCurrent), START (VendorSpecificDataContainer), END Element
+            // Grammar: ID=254; read/write bits=2; START (SDPowerInput), START (SPCMaxOutputPowerLimit)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SupplyDeviceCurrent, RationalNumberType (RationalNumberType)); next=257
+                    // Event: START (SDPowerInput, RationalNumberType (RationalNumberType)); next=255
                     // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_AlignmentCheckResType->SupplyDeviceCurrent);
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SDPowerInput);
                     if (error == 0)
                     {
-                        WPT_AlignmentCheckResType->SupplyDeviceCurrent_isUsed = 1u;
-                        grammar_id = 257;
+                        WPT_ChargeLoopResType->SDPowerInput_isUsed = 1u;
+                        grammar_id = 255;
                     }
                     break;
                 case 1:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=255
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    // Event: START (SPCMaxOutputPowerLimit, RationalNumberType (RationalNumberType)); next=256
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMaxOutputPowerLimit);
+                    if (error == 0)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 255;
-                        }
+                        grammar_id = 256;
                     }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -13861,34 +13994,20 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 255:
-            // Grammar: ID=255; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=255; read/write bits=1; START (SPCMaxOutputPowerLimit)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=255
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    // Event: START (SPCMaxOutputPowerLimit, RationalNumberType (RationalNumberType)); next=256
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMaxOutputPowerLimit);
+                    if (error == 0)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 255;
-                        }
+                        grammar_id = 256;
                     }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -13897,34 +14016,20 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 256:
-            // Grammar: ID=256; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=256; read/write bits=1; START (SPCMinOutputPowerLimit)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
+                    // Event: START (SPCMinOutputPowerLimit, RationalNumberType (RationalNumberType)); next=257
+                    // decode: element
+                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMinOutputPowerLimit);
+                    if (error == 0)
                     {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
+                        grammar_id = 257;
                     }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -13933,1102 +14038,14 @@ static int decode_iso20_wpt_WPT_AlignmentCheckResType(exi_bitstream_t* stream, s
             }
             break;
         case 257:
-            // Grammar: ID=257; read/write bits=2; START (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=258
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 258;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 258:
-            // Grammar: ID=258; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=258
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 258;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 259:
-            // Grammar: ID=259; read/write bits=2; LOOP (VendorSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (VendorSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytesLen, &WPT_AlignmentCheckResType->VendorSpecificDataContainer.array[WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer.arrayLen++;
-                            WPT_AlignmentCheckResType->VendorSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 2:
-            // Grammar: ID=2; read/write bits=1; END Element
+            // Grammar: ID=257; read/write bits=1; START (SPCChargeDiagnostics)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeLoopReq; type={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeLoopReqType; base type=ChargeLoopReqType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); DisplayParameters, DisplayParametersType (0, 1); MeterInfoRequested, boolean (1, 1); EVPCPowerRequest, RationalNumberType (1, 1); EVPCPowerOutput, RationalNumberType (1, 1); EVPCChargeDiagnostics, WPT_EVPCChargeDiagnosticsType (1, 1); EVPCOperatingFrequency, RationalNumberType (0, 1); EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (0, 1); ManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
-static int decode_iso20_wpt_WPT_ChargeLoopReqType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeLoopReqType* WPT_ChargeLoopReqType) {
-    int grammar_id = 260;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso20_wpt_WPT_ChargeLoopReqType(WPT_ChargeLoopReqType);
-
-    while(!done)
-    {
-        switch(grammar_id)
-        {
-        case 260:
-            // Grammar: ID=260; read/write bits=1; START (Header)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=261
-                    // decode: element
-                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeLoopReqType->Header);
-                    if (error == 0)
-                    {
-                        grammar_id = 261;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 261:
-            // Grammar: ID=261; read/write bits=2; START (DisplayParameters), START (MeterInfoRequested)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (DisplayParameters, DisplayParametersType (DisplayParametersType)); next=262
-                    // decode: element
-                    error = decode_iso20_wpt_DisplayParametersType(stream, &WPT_ChargeLoopReqType->DisplayParameters);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopReqType->DisplayParameters_isUsed = 1u;
-                        grammar_id = 262;
-                    }
-                    break;
-                case 1:
-                    // Event: START (MeterInfoRequested, boolean (boolean)); next=263
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                WPT_ChargeLoopReqType->MeterInfoRequested = value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 263;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 262:
-            // Grammar: ID=262; read/write bits=1; START (MeterInfoRequested)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (MeterInfoRequested, boolean (boolean)); next=263
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                WPT_ChargeLoopReqType->MeterInfoRequested = value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 263;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 263:
-            // Grammar: ID=263; read/write bits=1; START (EVPCPowerRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=264
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopReqType->EVPCPowerRequest);
-                    if (error == 0)
-                    {
-                        grammar_id = 264;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 264:
-            // Grammar: ID=264; read/write bits=1; START (EVPCPowerOutput)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPCPowerOutput, RationalNumberType (RationalNumberType)); next=265
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopReqType->EVPCPowerOutput);
-                    if (error == 0)
-                    {
-                        grammar_id = 265;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 265:
-            // Grammar: ID=265; read/write bits=1; START (EVPCChargeDiagnostics)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPCChargeDiagnostics, WPT_EVPCChargeDiagnosticsType (string)); next=266
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                WPT_ChargeLoopReqType->EVPCChargeDiagnostics = (iso20_wpt_WPT_EVPCChargeDiagnosticsType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 266;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 266:
-            // Grammar: ID=266; read/write bits=3; START (EVPCOperatingFrequency), START (EVPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPCOperatingFrequency, RationalNumberType (RationalNumberType)); next=269
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopReqType->EVPCOperatingFrequency);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopReqType->EVPCOperatingFrequency_isUsed = 1u;
-                        grammar_id = 269;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (WPT_EVPCPowerControlParameterType)); next=272
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_EVPCPowerControlParameterType(stream, &WPT_ChargeLoopReqType->EVPCPowerControlParameter);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopReqType->EVPCPowerControlParameter_isUsed = 1u;
-                        grammar_id = 272;
-                    }
-                    break;
-                case 2:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=267
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 267;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 3:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 267:
-            // Grammar: ID=267; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=267
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 267;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 268:
-            // Grammar: ID=268; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 269:
-            // Grammar: ID=269; read/write bits=2; START (EVPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPCPowerControlParameter, WPT_EVPCPowerControlParameterType (WPT_EVPCPowerControlParameterType)); next=272
-                    // decode: element
-                    error = decode_iso20_wpt_WPT_EVPCPowerControlParameterType(stream, &WPT_ChargeLoopReqType->EVPCPowerControlParameter);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopReqType->EVPCPowerControlParameter_isUsed = 1u;
-                        grammar_id = 272;
-                    }
-                    break;
-                case 1:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=270
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 270;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 270:
-            // Grammar: ID=270; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=270
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 270;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 271:
-            // Grammar: ID=271; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 272:
-            // Grammar: ID=272; read/write bits=2; START (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=273
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 273;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 273:
-            // Grammar: ID=273; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=273
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 273;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 274:
-            // Grammar: ID=274; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopReqType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 2:
-            // Grammar: ID=2; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeLoopRes; type={urn:iso:std:iso:15118:-20:WPT}WPT_ChargeLoopResType; base type=ChargeLoopResType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEStatus, EVSEStatusType (0, 1); MeterInfo, MeterInfoType (0, 1); Receipt, ReceiptType (0, 1); EVPCPowerRequest, RationalNumberType (1, 1); SDPowerInput, RationalNumberType (0, 1); SPCMaxOutputPowerLimit, RationalNumberType (1, 1); SPCMinOutputPowerLimit, RationalNumberType (1, 1); SPCChargeDiagnostics, WPT_SPCChargeDiagnosticsType (1, 1); SPCOperatingFrequency, RationalNumberType (0, 1); SPCPowerControlParameter, WPT_SPCPowerControlParameterType (0, 1); ManufacturerSpecificDataContainer, WPT_DataContainerType (0, 16);
-static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struct iso20_wpt_WPT_ChargeLoopResType* WPT_ChargeLoopResType) {
-    int grammar_id = 275;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso20_wpt_WPT_ChargeLoopResType(WPT_ChargeLoopResType);
-
-    while(!done)
-    {
-        switch(grammar_id)
-        {
-        case 275:
-            // Grammar: ID=275; read/write bits=1; START (Header)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=276
-                    // decode: element
-                    error = decode_iso20_wpt_MessageHeaderType(stream, &WPT_ChargeLoopResType->Header);
-                    if (error == 0)
-                    {
-                        grammar_id = 276;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 276:
-            // Grammar: ID=276; read/write bits=1; START (ResponseCode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=277
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 6, &value);
-                            if (error == 0)
-                            {
-                                WPT_ChargeLoopResType->ResponseCode = (iso20_wpt_responseCodeType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 277;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 277:
-            // Grammar: ID=277; read/write bits=3; START (EVSEStatus), START (MeterInfo), START (Receipt), START (EVPCPowerRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEStatus, EVSEStatusType (EVSEStatusType)); next=278
-                    // decode: element
-                    error = decode_iso20_wpt_EVSEStatusType(stream, &WPT_ChargeLoopResType->EVSEStatus);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->EVSEStatus_isUsed = 1u;
-                        grammar_id = 278;
-                    }
-                    break;
-                case 1:
-                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=279
-                    // decode: element
-                    error = decode_iso20_wpt_MeterInfoType(stream, &WPT_ChargeLoopResType->MeterInfo);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->MeterInfo_isUsed = 1u;
-                        grammar_id = 279;
-                    }
-                    break;
-                case 2:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=280
-                    // decode: element
-                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 280;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=281
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest);
-                    if (error == 0)
-                    {
-                        grammar_id = 281;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 278:
-            // Grammar: ID=278; read/write bits=2; START (MeterInfo), START (Receipt), START (EVPCPowerRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=279
-                    // decode: element
-                    error = decode_iso20_wpt_MeterInfoType(stream, &WPT_ChargeLoopResType->MeterInfo);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->MeterInfo_isUsed = 1u;
-                        grammar_id = 279;
-                    }
-                    break;
-                case 1:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=280
-                    // decode: element
-                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 280;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=281
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest);
-                    if (error == 0)
-                    {
-                        grammar_id = 281;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 279:
-            // Grammar: ID=279; read/write bits=2; START (Receipt), START (EVPCPowerRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=280
-                    // decode: element
-                    error = decode_iso20_wpt_ReceiptType(stream, &WPT_ChargeLoopResType->Receipt);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 280;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=281
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest);
-                    if (error == 0)
-                    {
-                        grammar_id = 281;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 280:
-            // Grammar: ID=280; read/write bits=1; START (EVPCPowerRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPCPowerRequest, RationalNumberType (RationalNumberType)); next=281
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->EVPCPowerRequest);
-                    if (error == 0)
-                    {
-                        grammar_id = 281;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 281:
-            // Grammar: ID=281; read/write bits=2; START (SDPowerInput), START (SPCMaxOutputPowerLimit)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (SDPowerInput, RationalNumberType (RationalNumberType)); next=282
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SDPowerInput);
-                    if (error == 0)
-                    {
-                        WPT_ChargeLoopResType->SDPowerInput_isUsed = 1u;
-                        grammar_id = 282;
-                    }
-                    break;
-                case 1:
-                    // Event: START (SPCMaxOutputPowerLimit, RationalNumberType (RationalNumberType)); next=283
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMaxOutputPowerLimit);
-                    if (error == 0)
-                    {
-                        grammar_id = 283;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 282:
-            // Grammar: ID=282; read/write bits=1; START (SPCMaxOutputPowerLimit)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (SPCMaxOutputPowerLimit, RationalNumberType (RationalNumberType)); next=283
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMaxOutputPowerLimit);
-                    if (error == 0)
-                    {
-                        grammar_id = 283;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 283:
-            // Grammar: ID=283; read/write bits=1; START (SPCMinOutputPowerLimit)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (SPCMinOutputPowerLimit, RationalNumberType (RationalNumberType)); next=284
-                    // decode: element
-                    error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCMinOutputPowerLimit);
-                    if (error == 0)
-                    {
-                        grammar_id = 284;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 284:
-            // Grammar: ID=284; read/write bits=1; START (SPCChargeDiagnostics)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (SPCChargeDiagnostics, WPT_SPCChargeDiagnosticsType (string)); next=285
+                    // Event: START (SPCChargeDiagnostics, WPT_SPCChargeDiagnosticsType (string)); next=258
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15058,7 +14075,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 285;
+                                grammar_id = 258;
                             }
                             else
                             {
@@ -15073,35 +14090,35 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 285:
-            // Grammar: ID=285; read/write bits=3; START (SPCOperatingFrequency), START (SPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
+        case 258:
+            // Grammar: ID=258; read/write bits=3; START (SPCOperatingFrequency), START (SPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SPCOperatingFrequency, RationalNumberType (RationalNumberType)); next=288
+                    // Event: START (SPCOperatingFrequency, RationalNumberType (RationalNumberType)); next=260
                     // decode: element
                     error = decode_iso20_wpt_RationalNumberType(stream, &WPT_ChargeLoopResType->SPCOperatingFrequency);
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->SPCOperatingFrequency_isUsed = 1u;
-                        grammar_id = 288;
+                        grammar_id = 260;
                     }
                     break;
                 case 1:
-                    // Event: START (SPCPowerControlParameter, WPT_SPCPowerControlParameterType (WPT_SPCPowerControlParameterType)); next=291
+                    // Event: START (SPCPowerControlParameter, WPT_SPCPowerControlParameterType (WPT_SPCPowerControlParameterType)); next=262
                     // decode: element
                     error = decode_iso20_wpt_WPT_SPCPowerControlParameterType(stream, &WPT_ChargeLoopResType->SPCPowerControlParameter);
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->SPCPowerControlParameter_isUsed = 1u;
-                        grammar_id = 291;
+                        grammar_id = 262;
                     }
                     break;
                 case 2:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=286
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=259
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -15110,7 +14127,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 286;
+                            grammar_id = 259;
                         }
                     }
                     else
@@ -15129,15 +14146,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 286:
-            // Grammar: ID=286; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+        case 259:
+            // Grammar: ID=259; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=286
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=259
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -15146,7 +14163,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 286;
+                            grammar_id = 259;
                         }
                     }
                     else
@@ -15165,61 +14182,25 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 287:
-            // Grammar: ID=287; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+        case 260:
+            // Grammar: ID=260; read/write bits=2; START (SPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 288:
-            // Grammar: ID=288; read/write bits=2; START (SPCPowerControlParameter), START (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (SPCPowerControlParameter, WPT_SPCPowerControlParameterType (WPT_SPCPowerControlParameterType)); next=291
+                    // Event: START (SPCPowerControlParameter, WPT_SPCPowerControlParameterType (WPT_SPCPowerControlParameterType)); next=262
                     // decode: element
                     error = decode_iso20_wpt_WPT_SPCPowerControlParameterType(stream, &WPT_ChargeLoopResType->SPCPowerControlParameter);
                     if (error == 0)
                     {
                         WPT_ChargeLoopResType->SPCPowerControlParameter_isUsed = 1u;
-                        grammar_id = 291;
+                        grammar_id = 262;
                     }
                     break;
                 case 1:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=289
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=261
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -15228,7 +14209,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 289;
+                            grammar_id = 261;
                         }
                     }
                     else
@@ -15247,15 +14228,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 289:
-            // Grammar: ID=289; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+        case 261:
+            // Grammar: ID=261; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=289
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=261
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -15264,7 +14245,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 289;
+                            grammar_id = 261;
                         }
                     }
                     else
@@ -15283,15 +14264,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 290:
-            // Grammar: ID=290; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
+        case 262:
+            // Grammar: ID=262; read/write bits=2; START (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
+                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=263
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -15300,7 +14281,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
+                            grammar_id = 263;
                         }
                     }
                     else
@@ -15319,15 +14300,15 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 291:
-            // Grammar: ID=291; read/write bits=2; START (ManufacturerSpecificDataContainer), END Element
+        case 263:
+            // Grammar: ID=263; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=292
+                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=263
                     // decode exi type: base64Binary (Array)
                     if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
                     {
@@ -15336,79 +14317,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
                         {
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
                             WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 292;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 292:
-            // Grammar: ID=292; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=292
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 292;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 293:
-            // Grammar: ID=293; read/write bits=2; LOOP (ManufacturerSpecificDataContainer), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ManufacturerSpecificDataContainer, WPT_DataContainerType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen < iso20_wpt_WPT_DataContainerType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytesLen, &WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.array[WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen].bytes[0], iso20_wpt_WPT_DataContainerType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer.arrayLen++;
-                            WPT_ChargeLoopResType->ManufacturerSpecificDataContainer_isUsed = 1u;
-                            grammar_id = 2;
+                            grammar_id = 263;
                         }
                     }
                     else
@@ -15432,7 +14341,7 @@ static int decode_iso20_wpt_WPT_ChargeLoopResType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15498,28 +14407,28 @@ static int decode_iso20_wpt_CLResControlModeType(exi_bitstream_t* stream, struct
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Manifest; type={http://www.w3.org/2000/09/xmldsig#}ManifestType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4);
+// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_wpt_ManifestType* ManifestType) {
-    int grammar_id = 294;
+    int grammar_id = 264;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_ManifestType(ManifestType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 294:
-            // Grammar: ID=294; read/write bits=2; START (Id), START (Reference)
+        case 264:
+            // Grammar: ID=264; read/write bits=2; START (Id), START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=297
+                    // Event: START (Id, ID (NCName)); next=266
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ManifestType->Id.charactersLen);
                     if (error == 0)
@@ -15537,10 +14446,10 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                         }
                     }
                     ManifestType->Id_isUsed = 1u;
-                    grammar_id = 297;
+                    grammar_id = 266;
                     break;
                 case 1:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=295
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=265
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_wpt_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -15548,9 +14457,10 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 295;
+                    grammar_id = 265;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -15558,15 +14468,15 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                 }
             }
             break;
-        case 295:
-            // Grammar: ID=295; read/write bits=2; LOOP (Reference), END Element
+        case 265:
+            // Grammar: ID=265; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=295
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=265
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_wpt_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -15574,9 +14484,10 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 295;
+                    grammar_id = 265;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -15589,46 +14500,15 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                 }
             }
             break;
-        case 296:
-            // Grammar: ID=296; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_wpt_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 297:
-            // Grammar: ID=297; read/write bits=1; START (Reference)
+        case 266:
+            // Grammar: ID=266; read/write bits=1; START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=298
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=267
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_wpt_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -15636,9 +14516,10 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 298;
+                    grammar_id = 267;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -15646,15 +14527,15 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                 }
             }
             break;
-        case 298:
-            // Grammar: ID=298; read/write bits=2; LOOP (Reference), END Element
+        case 267:
+            // Grammar: ID=267; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=298
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=267
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_wpt_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -15662,40 +14543,10 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
                     }
                     else
                     {
+                        // static array not large enough, only iso20_wpt_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 298;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 299:
-            // Grammar: ID=299; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_wpt_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_wpt_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
+                    grammar_id = 267;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -15713,7 +14564,7 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15741,28 +14592,28 @@ static int decode_iso20_wpt_ManifestType(exi_bitstream_t* stream, struct iso20_w
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperties; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertiesType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1);
+// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1) (original max unbounded);
 static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, struct iso20_wpt_SignaturePropertiesType* SignaturePropertiesType) {
-    int grammar_id = 300;
+    int grammar_id = 268;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_wpt_SignaturePropertiesType(SignaturePropertiesType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 300:
-            // Grammar: ID=300; read/write bits=2; START (Id), START (SignatureProperty)
+        case 268:
+            // Grammar: ID=268; read/write bits=2; START (Id), START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=302
+                    // Event: START (Id, ID (NCName)); next=270
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertiesType->Id.charactersLen);
                     if (error == 0)
@@ -15780,15 +14631,15 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                         }
                     }
                     SignaturePropertiesType->Id_isUsed = 1u;
-                    grammar_id = 302;
+                    grammar_id = 270;
                     break;
                 case 1:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=301
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=269
                     // decode: element
                     error = decode_iso20_wpt_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == 0)
                     {
-                        grammar_id = 301;
+                        grammar_id = 269;
                     }
                     break;
                 default:
@@ -15797,21 +14648,18 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 301:
-            // Grammar: ID=301; read/write bits=2; START (SignatureProperty), END Element
+        case 269:
+            // Grammar: ID=269; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=2
                     // decode: element
-                    error = decode_iso20_wpt_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -15824,20 +14672,20 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 302:
-            // Grammar: ID=302; read/write bits=1; START (SignatureProperty)
+        case 270:
+            // Grammar: ID=270; read/write bits=1; START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=303
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=271
                     // decode: element
                     error = decode_iso20_wpt_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == 0)
                     {
-                        grammar_id = 303;
+                        grammar_id = 271;
                     }
                     break;
                 default:
@@ -15846,21 +14694,18 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 303:
-            // Grammar: ID=303; read/write bits=2; START (SignatureProperty), END Element
+        case 271:
+            // Grammar: ID=271; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=2
                     // decode: element
-                    error = decode_iso20_wpt_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -15878,7 +14723,7 @@ static int decode_iso20_wpt_SignaturePropertiesType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15917,7 +14762,7 @@ int decode_iso20_wpt_exiDocument(exi_bitstream_t* stream, struct iso20_wpt_exiDo
         error = exi_basetypes_decoder_nbit_uint(stream, 6, &eventCode);
         if (error == 0)
         {
-            switch(eventCode)
+            switch (eventCode)
             {
             case 0:
                 error = decode_iso20_wpt_CLReqControlModeType(stream, &exiDoc->CLReqControlMode);

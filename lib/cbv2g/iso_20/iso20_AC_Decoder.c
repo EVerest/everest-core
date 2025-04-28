@@ -58,8 +58,8 @@ static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stre
 static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct iso20_ac_DisplayParametersType* DisplayParametersType);
 static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stream, struct iso20_ac_AC_CPDResEnergyTransferModeType* AC_CPDResEnergyTransferModeType);
 static int decode_iso20_ac_EVSEStatusType(exi_bitstream_t* stream, struct iso20_ac_EVSEStatusType* EVSEStatusType);
-static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType);
 static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLReqControlModeType* Dynamic_AC_CLReqControlModeType);
+static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType);
 static int decode_iso20_ac_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_CLReqControlModeType* CLReqControlModeType);
 static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_ac_MeterInfoType* MeterInfoType);
 static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_ReceiptType* ReceiptType);
@@ -90,16 +90,16 @@ static int decode_iso20_ac_TransformType(exi_bitstream_t* stream, struct iso20_a
 
     init_iso20_ac_TransformType(TransformType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 0:
             // Grammar: ID=0; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=1
@@ -132,7 +132,7 @@ static int decode_iso20_ac_TransformType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (XPath, string (string)); next=2
@@ -215,7 +215,7 @@ static int decode_iso20_ac_TransformType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -243,7 +243,7 @@ static int decode_iso20_ac_TransformType(exi_bitstream_t* stream, struct iso20_a
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Transform, TransformType (1, 1);
+// Particle: Transform, TransformType (1, 1) (original max unbounded);
 static int decode_iso20_ac_TransformsType(exi_bitstream_t* stream, struct iso20_ac_TransformsType* TransformsType) {
     int grammar_id = 4;
     int done = 0;
@@ -252,16 +252,16 @@ static int decode_iso20_ac_TransformsType(exi_bitstream_t* stream, struct iso20_
 
     init_iso20_ac_TransformsType(TransformsType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 4:
             // Grammar: ID=4; read/write bits=1; START (Transform)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transform, TransformType (TransformType)); next=5
@@ -283,16 +283,13 @@ static int decode_iso20_ac_TransformsType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transform, TransformType (TransformType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_TransformType(stream, &TransformsType->Transform);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -310,7 +307,7 @@ static int decode_iso20_ac_TransformsType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -338,7 +335,7 @@ static int decode_iso20_ac_TransformsType(exi_bitstream_t* stream, struct iso20_
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DSAKeyValue; type={http://www.w3.org/2000/09/xmldsig#}DSAKeyValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: P, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); Q, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']);
+// Particle: P, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); Q, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']);
 static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_ac_DSAKeyValueType* DSAKeyValueType) {
     int grammar_id = 6;
     int done = 0;
@@ -347,16 +344,16 @@ static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20
 
     init_iso20_ac_DSAKeyValueType(DSAKeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 6:
             // Grammar: ID=6; read/write bits=2; START (P), START (G), START (Y)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (P, CryptoBinary (base64Binary)); next=7
@@ -398,7 +395,7 @@ static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Q, CryptoBinary (base64Binary)); next=8
@@ -421,7 +418,7 @@ static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (G, CryptoBinary (base64Binary)); next=9
@@ -453,7 +450,7 @@ static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Y, CryptoBinary (base64Binary)); next=10
@@ -475,7 +472,7 @@ static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (J, CryptoBinary (base64Binary)); next=11
@@ -513,7 +510,7 @@ static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Seed, CryptoBinary (base64Binary)); next=12
@@ -541,7 +538,7 @@ static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PgenCounter, CryptoBinary (base64Binary)); next=2
@@ -569,7 +566,7 @@ static int decode_iso20_ac_DSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -606,16 +603,16 @@ static int decode_iso20_ac_X509IssuerSerialType(exi_bitstream_t* stream, struct 
 
     init_iso20_ac_X509IssuerSerialType(X509IssuerSerialType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 13:
             // Grammar: ID=13; read/write bits=1; START (X509IssuerName)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509IssuerName, string (string)); next=14
@@ -677,7 +674,7 @@ static int decode_iso20_ac_X509IssuerSerialType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509SerialNumber, integer (decimal)); next=2
@@ -704,7 +701,7 @@ static int decode_iso20_ac_X509IssuerSerialType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -741,16 +738,16 @@ static int decode_iso20_ac_DigestMethodType(exi_bitstream_t* stream, struct iso2
 
     init_iso20_ac_DigestMethodType(DigestMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 15:
             // Grammar: ID=15; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=16
@@ -783,7 +780,7 @@ static int decode_iso20_ac_DigestMethodType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -816,7 +813,7 @@ static int decode_iso20_ac_DigestMethodType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -853,16 +850,16 @@ static int decode_iso20_ac_RSAKeyValueType(exi_bitstream_t* stream, struct iso20
 
     init_iso20_ac_RSAKeyValueType(RSAKeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 17:
             // Grammar: ID=17; read/write bits=1; START (Modulus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Modulus, CryptoBinary (base64Binary)); next=18
@@ -884,7 +881,7 @@ static int decode_iso20_ac_RSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Exponent, CryptoBinary (base64Binary)); next=2
@@ -906,7 +903,7 @@ static int decode_iso20_ac_RSAKeyValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -943,16 +940,16 @@ static int decode_iso20_ac_CanonicalizationMethodType(exi_bitstream_t* stream, s
 
     init_iso20_ac_CanonicalizationMethodType(CanonicalizationMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 19:
             // Grammar: ID=19; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=20
@@ -985,7 +982,7 @@ static int decode_iso20_ac_CanonicalizationMethodType(exi_bitstream_t* stream, s
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -1018,7 +1015,7 @@ static int decode_iso20_ac_CanonicalizationMethodType(exi_bitstream_t* stream, s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1055,16 +1052,16 @@ static int decode_iso20_ac_SignatureMethodType(exi_bitstream_t* stream, struct i
 
     init_iso20_ac_SignatureMethodType(SignatureMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 21:
             // Grammar: ID=21; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=22
@@ -1097,7 +1094,7 @@ static int decode_iso20_ac_SignatureMethodType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (HMACOutputLength, HMACOutputLengthType (integer)); next=23
@@ -1145,7 +1142,7 @@ static int decode_iso20_ac_SignatureMethodType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -1178,7 +1175,7 @@ static int decode_iso20_ac_SignatureMethodType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1215,16 +1212,16 @@ static int decode_iso20_ac_KeyValueType(exi_bitstream_t* stream, struct iso20_ac
 
     init_iso20_ac_KeyValueType(KeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 24:
             // Grammar: ID=24; read/write bits=2; START (DSAKeyValue), START (RSAKeyValue), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DSAKeyValue, DSAKeyValueType (DSAKeyValueType)); next=2
@@ -1267,7 +1264,7 @@ static int decode_iso20_ac_KeyValueType(exi_bitstream_t* stream, struct iso20_ac
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1304,16 +1301,16 @@ static int decode_iso20_ac_ReferenceType(exi_bitstream_t* stream, struct iso20_a
 
     init_iso20_ac_ReferenceType(ReferenceType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 25:
             // Grammar: ID=25; read/write bits=3; START (Id), START (Type), START (URI), START (Transforms), START (DigestMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Id, ID (NCName)); next=26
@@ -1408,7 +1405,7 @@ static int decode_iso20_ac_ReferenceType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Type, anyURI (anyURI)); next=27
@@ -1482,7 +1479,7 @@ static int decode_iso20_ac_ReferenceType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (URI, anyURI (anyURI)); next=28
@@ -1535,7 +1532,7 @@ static int decode_iso20_ac_ReferenceType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transforms, TransformsType (TransformsType)); next=29
@@ -1567,7 +1564,7 @@ static int decode_iso20_ac_ReferenceType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=30
@@ -1589,7 +1586,7 @@ static int decode_iso20_ac_ReferenceType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DigestValue, DigestValueType (base64Binary)); next=2
@@ -1611,7 +1608,7 @@ static int decode_iso20_ac_ReferenceType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1648,16 +1645,16 @@ static int decode_iso20_ac_RetrievalMethodType(exi_bitstream_t* stream, struct i
 
     init_iso20_ac_RetrievalMethodType(RetrievalMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 31:
             // Grammar: ID=31; read/write bits=3; START (Type), START (URI), START (Transforms), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Type, anyURI (anyURI)); next=32
@@ -1727,7 +1724,7 @@ static int decode_iso20_ac_RetrievalMethodType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (URI, anyURI (anyURI)); next=33
@@ -1776,7 +1773,7 @@ static int decode_iso20_ac_RetrievalMethodType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transforms, TransformsType (TransformsType)); next=2
@@ -1804,7 +1801,7 @@ static int decode_iso20_ac_RetrievalMethodType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1841,16 +1838,16 @@ static int decode_iso20_ac_X509DataType(exi_bitstream_t* stream, struct iso20_ac
 
     init_iso20_ac_X509DataType(X509DataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 34:
             // Grammar: ID=34; read/write bits=3; START (X509IssuerSerial), START (X509SKI), START (X509SubjectName), START (X509Certificate), START (X509CRL), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509IssuerSerial, X509IssuerSerialType (X509IssuerSerialType)); next=2
@@ -1963,7 +1960,7 @@ static int decode_iso20_ac_X509DataType(exi_bitstream_t* stream, struct iso20_ac
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2000,16 +1997,16 @@ static int decode_iso20_ac_PGPDataType(exi_bitstream_t* stream, struct iso20_ac_
 
     init_iso20_ac_PGPDataType(PGPDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 35:
             // Grammar: ID=35; read/write bits=2; START (PGPKeyID), START (PGPKeyPacket)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyID, base64Binary (base64Binary)); next=36
@@ -2041,7 +2038,7 @@ static int decode_iso20_ac_PGPDataType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=37
@@ -2084,7 +2081,7 @@ static int decode_iso20_ac_PGPDataType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=38
@@ -2122,7 +2119,7 @@ static int decode_iso20_ac_PGPDataType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=39
@@ -2144,7 +2141,7 @@ static int decode_iso20_ac_PGPDataType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=38
@@ -2177,7 +2174,7 @@ static int decode_iso20_ac_PGPDataType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2214,16 +2211,16 @@ static int decode_iso20_ac_SPKIDataType(exi_bitstream_t* stream, struct iso20_ac
 
     init_iso20_ac_SPKIDataType(SPKIDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 40:
             // Grammar: ID=40; read/write bits=1; START (SPKISexp)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SPKISexp, base64Binary (base64Binary)); next=41
@@ -2245,7 +2242,7 @@ static int decode_iso20_ac_SPKIDataType(exi_bitstream_t* stream, struct iso20_ac
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -2278,7 +2275,7 @@ static int decode_iso20_ac_SPKIDataType(exi_bitstream_t* stream, struct iso20_ac
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2306,7 +2303,7 @@ static int decode_iso20_ac_SPKIDataType(exi_bitstream_t* stream, struct iso20_ac
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4);
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_ac_SignedInfoType* SignedInfoType) {
     int grammar_id = 42;
     int done = 0;
@@ -2315,16 +2312,16 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
 
     init_iso20_ac_SignedInfoType(SignedInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 42:
             // Grammar: ID=42; read/write bits=2; START (Id), START (CanonicalizationMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Id, ID (NCName)); next=43
@@ -2367,7 +2364,7 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=44
@@ -2389,7 +2386,7 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignatureMethod, SignatureMethodType (SignatureMethodType)); next=45
@@ -2411,7 +2408,7 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Reference, ReferenceType (ReferenceType)); next=46
@@ -2422,6 +2419,7 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     grammar_id = 46;
@@ -2437,7 +2435,7 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=46
@@ -2448,40 +2446,10 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     grammar_id = 46;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 47:
-            // Grammar: ID=47; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (SignedInfoType->Reference.arrayLen < iso20_ac_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -2499,7 +2467,7 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2529,26 +2497,26 @@ static int decode_iso20_ac_SignedInfoType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
 static int decode_iso20_ac_SignatureValueType(exi_bitstream_t* stream, struct iso20_ac_SignatureValueType* SignatureValueType) {
-    int grammar_id = 48;
+    int grammar_id = 47;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_SignatureValueType(SignatureValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 48:
-            // Grammar: ID=48; read/write bits=2; START (Id), START (CONTENT)
+        case 47:
+            // Grammar: ID=47; read/write bits=2; START (Id), START (CONTENT)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=49
+                    // Event: START (Id, ID (NCName)); next=48
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->Id.charactersLen);
                     if (error == 0)
@@ -2566,7 +2534,7 @@ static int decode_iso20_ac_SignatureValueType(exi_bitstream_t* stream, struct is
                         }
                     }
                     SignatureValueType->Id_isUsed = 1u;
-                    grammar_id = 49;
+                    grammar_id = 48;
                     break;
                 case 1:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=2
@@ -2587,12 +2555,12 @@ static int decode_iso20_ac_SignatureValueType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 49:
-            // Grammar: ID=49; read/write bits=1; START (CONTENT)
+        case 48:
+            // Grammar: ID=48; read/write bits=1; START (CONTENT)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=2
@@ -2618,7 +2586,7 @@ static int decode_iso20_ac_SignatureValueType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2648,26 +2616,26 @@ static int decode_iso20_ac_SignatureValueType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); KeyName, string (0, 1); KeyValue, KeyValueType (0, 1); RetrievalMethod, RetrievalMethodType (0, 1); X509Data, X509DataType (0, 1); PGPData, PGPDataType (0, 1); SPKIData, SPKIDataType (0, 1); MgmtData, string (0, 1); ANY, anyType (0, 1);
 static int decode_iso20_ac_KeyInfoType(exi_bitstream_t* stream, struct iso20_ac_KeyInfoType* KeyInfoType) {
-    int grammar_id = 50;
+    int grammar_id = 49;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_KeyInfoType(KeyInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 50:
-            // Grammar: ID=50; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 49:
+            // Grammar: ID=49; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=51
+                    // Event: START (Id, ID (NCName)); next=50
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &KeyInfoType->Id.charactersLen);
                     if (error == 0)
@@ -2685,7 +2653,7 @@ static int decode_iso20_ac_KeyInfoType(exi_bitstream_t* stream, struct iso20_ac_
                         }
                     }
                     KeyInfoType->Id_isUsed = 1u;
-                    grammar_id = 51;
+                    grammar_id = 50;
                     break;
                 case 1:
                     // Event: START (KeyName, string (string)); next=2
@@ -2853,12 +2821,12 @@ static int decode_iso20_ac_KeyInfoType(exi_bitstream_t* stream, struct iso20_ac_
                 }
             }
             break;
-        case 51:
-            // Grammar: ID=51; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 50:
+            // Grammar: ID=50; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (KeyName, string (string)); next=2
@@ -3031,7 +2999,7 @@ static int decode_iso20_ac_KeyInfoType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3059,28 +3027,28 @@ static int decode_iso20_ac_KeyInfoType(exi_bitstream_t* stream, struct iso20_ac_
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Object; type={http://www.w3.org/2000/09/xmldsig#}ObjectType; base type=; content type=mixed;
 //          abstract=False; final=False;
-// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1)(old 1, 1);
+// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1) (old 1, 1);
 static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_ObjectType* ObjectType) {
-    int grammar_id = 52;
+    int grammar_id = 51;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_ObjectType(ObjectType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 52:
-            // Grammar: ID=52; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 51:
+            // Grammar: ID=51; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Encoding, anyURI (anyURI)); next=53
+                    // Event: START (Encoding, anyURI (anyURI)); next=52
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Encoding.charactersLen);
                     if (error == 0)
@@ -3098,10 +3066,10 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                         }
                     }
                     ObjectType->Encoding_isUsed = 1u;
-                    grammar_id = 53;
+                    grammar_id = 52;
                     break;
                 case 1:
-                    // Event: START (Id, ID (NCName)); next=54
+                    // Event: START (Id, ID (NCName)); next=53
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -3119,10 +3087,10 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 54;
+                    grammar_id = 53;
                     break;
                 case 2:
-                    // Event: START (MimeType, string (string)); next=55
+                    // Event: START (MimeType, string (string)); next=54
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -3140,7 +3108,7 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 55;
+                    grammar_id = 54;
                     break;
                 case 3:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -3168,15 +3136,15 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                 }
             }
             break;
-        case 53:
-            // Grammar: ID=53; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 52:
+            // Grammar: ID=52; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=54
+                    // Event: START (Id, ID (NCName)); next=53
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -3194,10 +3162,10 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 54;
+                    grammar_id = 53;
                     break;
                 case 1:
-                    // Event: START (MimeType, string (string)); next=55
+                    // Event: START (MimeType, string (string)); next=54
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -3215,7 +3183,7 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 55;
+                    grammar_id = 54;
                     break;
                 case 2:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -3243,15 +3211,15 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                 }
             }
             break;
-        case 54:
-            // Grammar: ID=54; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
+        case 53:
+            // Grammar: ID=53; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MimeType, string (string)); next=55
+                    // Event: START (MimeType, string (string)); next=54
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -3269,7 +3237,7 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 55;
+                    grammar_id = 54;
                     break;
                 case 1:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -3297,12 +3265,12 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
                 }
             }
             break;
-        case 55:
-            // Grammar: ID=55; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 54:
+            // Grammar: ID=54; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -3335,7 +3303,7 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3365,26 +3333,26 @@ static int decode_iso20_ac_ObjectType(exi_bitstream_t* stream, struct iso20_ac_O
 //          abstract=False; final=False;
 // Particle: Exponent, byte (1, 1); Value, short (1, 1);
 static int decode_iso20_ac_RationalNumberType(exi_bitstream_t* stream, struct iso20_ac_RationalNumberType* RationalNumberType) {
-    int grammar_id = 56;
+    int grammar_id = 55;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_RationalNumberType(RationalNumberType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 56:
-            // Grammar: ID=56; read/write bits=1; START (Exponent)
+        case 55:
+            // Grammar: ID=55; read/write bits=1; START (Exponent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Exponent, byte (short)); next=57
+                    // Event: START (Exponent, byte (short)); next=56
                     // decode: byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3415,7 +3383,7 @@ static int decode_iso20_ac_RationalNumberType(exi_bitstream_t* stream, struct is
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 57;
+                                grammar_id = 56;
                             }
                             else
                             {
@@ -3430,12 +3398,12 @@ static int decode_iso20_ac_RationalNumberType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 57:
-            // Grammar: ID=57; read/write bits=1; START (Value)
+        case 56:
+            // Grammar: ID=56; read/write bits=1; START (Value)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Value, short (int)); next=2
@@ -3457,7 +3425,7 @@ static int decode_iso20_ac_RationalNumberType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3487,31 +3455,31 @@ static int decode_iso20_ac_RationalNumberType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False;
 // Particle: Amount, RationalNumberType (1, 1); CostPerUnit, RationalNumberType (1, 1);
 static int decode_iso20_ac_DetailedCostType(exi_bitstream_t* stream, struct iso20_ac_DetailedCostType* DetailedCostType) {
-    int grammar_id = 58;
+    int grammar_id = 57;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_DetailedCostType(DetailedCostType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 58:
-            // Grammar: ID=58; read/write bits=1; START (Amount)
+        case 57:
+            // Grammar: ID=57; read/write bits=1; START (Amount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Amount, RationalNumberType (RationalNumberType)); next=59
+                    // Event: START (Amount, RationalNumberType (RationalNumberType)); next=58
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DetailedCostType->Amount);
                     if (error == 0)
                     {
-                        grammar_id = 59;
+                        grammar_id = 58;
                     }
                     break;
                 default:
@@ -3520,12 +3488,12 @@ static int decode_iso20_ac_DetailedCostType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 59:
-            // Grammar: ID=59; read/write bits=1; START (CostPerUnit)
+        case 58:
+            // Grammar: ID=58; read/write bits=1; START (CostPerUnit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CostPerUnit, RationalNumberType (RationalNumberType)); next=2
@@ -3547,7 +3515,7 @@ static int decode_iso20_ac_DetailedCostType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3575,28 +3543,28 @@ static int decode_iso20_ac_DetailedCostType(exi_bitstream_t* stream, struct iso2
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Signature; type={http://www.w3.org/2000/09/xmldsig#}SignatureType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1);
+// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1) (original max unbounded);
 static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_ac_SignatureType* SignatureType) {
-    int grammar_id = 60;
+    int grammar_id = 59;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_SignatureType(SignatureType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 60:
-            // Grammar: ID=60; read/write bits=2; START (Id), START (SignedInfo)
+        case 59:
+            // Grammar: ID=59; read/write bits=2; START (Id), START (SignedInfo)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=61
+                    // Event: START (Id, ID (NCName)); next=60
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureType->Id.charactersLen);
                     if (error == 0)
@@ -3614,15 +3582,37 @@ static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_a
                         }
                     }
                     SignatureType->Id_isUsed = 1u;
-                    grammar_id = 61;
+                    grammar_id = 60;
                     break;
                 case 1:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=62
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=61
                     // decode: element
                     error = decode_iso20_ac_SignedInfoType(stream, &SignatureType->SignedInfo);
                     if (error == 0)
                     {
-                        grammar_id = 62;
+                        grammar_id = 61;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 60:
+            // Grammar: ID=60; read/write bits=1; START (SignedInfo)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=61
+                    // decode: element
+                    error = decode_iso20_ac_SignedInfoType(stream, &SignatureType->SignedInfo);
+                    if (error == 0)
+                    {
+                        grammar_id = 61;
                     }
                     break;
                 default:
@@ -3632,16 +3622,16 @@ static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_a
             }
             break;
         case 61:
-            // Grammar: ID=61; read/write bits=1; START (SignedInfo)
+            // Grammar: ID=61; read/write bits=1; START (SignatureValue)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=62
+                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=62
                     // decode: element
-                    error = decode_iso20_ac_SignedInfoType(stream, &SignatureType->SignedInfo);
+                    error = decode_iso20_ac_SignatureValueType(stream, &SignatureType->SignatureValue);
                     if (error == 0)
                     {
                         grammar_id = 62;
@@ -3654,20 +3644,36 @@ static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_a
             }
             break;
         case 62:
-            // Grammar: ID=62; read/write bits=1; START (SignatureValue)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=62; read/write bits=2; START (KeyInfo), START (Object), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=63
+                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=64
                     // decode: element
-                    error = decode_iso20_ac_SignatureValueType(stream, &SignatureType->SignatureValue);
+                    error = decode_iso20_ac_KeyInfoType(stream, &SignatureType->KeyInfo);
                     if (error == 0)
                     {
+                        SignatureType->KeyInfo_isUsed = 1u;
+                        grammar_id = 64;
+                    }
+                    break;
+                case 1:
+                    // Event: START (Object, ObjectType (ObjectType)); next=63
+                    // decode: element
+                    error = decode_iso20_ac_ObjectType(stream, &SignatureType->Object);
+                    if (error == 0)
+                    {
+                        SignatureType->Object_isUsed = 1u;
                         grammar_id = 63;
                     }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -3676,33 +3682,19 @@ static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_a
             }
             break;
         case 63:
-            // Grammar: ID=63; read/write bits=2; START (KeyInfo), START (Object), END Element
+            // Grammar: ID=63; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=65
+                    // Event: START (Object, ObjectType (ObjectType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_KeyInfoType(stream, &SignatureType->KeyInfo);
-                    if (error == 0)
-                    {
-                        SignatureType->KeyInfo_isUsed = 1u;
-                        grammar_id = 65;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
-                    // Event: START (Object, ObjectType (ObjectType)); next=64
-                    // decode: element
-                    error = decode_iso20_ac_ObjectType(stream, &SignatureType->Object);
-                    if (error == 0)
-                    {
-                        SignatureType->Object_isUsed = 1u;
-                        grammar_id = 64;
-                    }
-                    break;
-                case 2:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -3718,16 +3710,16 @@ static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Object, ObjectType (ObjectType)); next=2
+                    // Event: START (Object, ObjectType (ObjectType)); next=65
                     // decode: element
                     error = decode_iso20_ac_ObjectType(stream, &SignatureType->Object);
                     if (error == 0)
                     {
                         SignatureType->Object_isUsed = 1u;
-                        grammar_id = 2;
+                        grammar_id = 65;
                     }
                     break;
                 case 1:
@@ -3746,45 +3738,13 @@ static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Object, ObjectType (ObjectType)); next=66
-                    // decode: element
-                    error = decode_iso20_ac_ObjectType(stream, &SignatureType->Object);
-                    if (error == 0)
-                    {
-                        SignatureType->Object_isUsed = 1u;
-                        grammar_id = 66;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 66:
-            // Grammar: ID=66; read/write bits=2; START (Object), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Object, ObjectType (ObjectType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_ObjectType(stream, &SignatureType->Object);
-                    if (error == 0)
-                    {
-                        SignatureType->Object_isUsed = 1u;
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -3802,7 +3762,7 @@ static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3832,31 +3792,31 @@ static int decode_iso20_ac_SignatureType(exi_bitstream_t* stream, struct iso20_a
 //          abstract=False; final=False;
 // Particle: TaxRuleID, numericIDType (1, 1); Amount, RationalNumberType (1, 1);
 static int decode_iso20_ac_DetailedTaxType(exi_bitstream_t* stream, struct iso20_ac_DetailedTaxType* DetailedTaxType) {
-    int grammar_id = 67;
+    int grammar_id = 66;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_DetailedTaxType(DetailedTaxType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 67:
-            // Grammar: ID=67; read/write bits=1; START (TaxRuleID)
+        case 66:
+            // Grammar: ID=66; read/write bits=1; START (TaxRuleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=68
+                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=67
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DetailedTaxType->TaxRuleID);
                     if (error == 0)
                     {
-                        grammar_id = 68;
+                        grammar_id = 67;
                     }
                     break;
                 default:
@@ -3865,12 +3825,12 @@ static int decode_iso20_ac_DetailedTaxType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 68:
-            // Grammar: ID=68; read/write bits=1; START (Amount)
+        case 67:
+            // Grammar: ID=67; read/write bits=1; START (Amount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Amount, RationalNumberType (RationalNumberType)); next=2
@@ -3892,7 +3852,7 @@ static int decode_iso20_ac_DetailedTaxType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3922,28 +3882,50 @@ static int decode_iso20_ac_DetailedTaxType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False;
 // Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
 static int decode_iso20_ac_MessageHeaderType(exi_bitstream_t* stream, struct iso20_ac_MessageHeaderType* MessageHeaderType) {
-    int grammar_id = 69;
+    int grammar_id = 68;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_MessageHeaderType(MessageHeaderType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 69:
-            // Grammar: ID=69; read/write bits=1; START (SessionID)
+        case 68:
+            // Grammar: ID=68; read/write bits=1; START (SessionID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SessionID, sessionIDType (hexBinary)); next=70
+                    // Event: START (SessionID, sessionIDType (hexBinary)); next=69
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &MessageHeaderType->SessionID.bytesLen, &MessageHeaderType->SessionID.bytes[0], iso20_ac_sessionIDType_BYTES_SIZE);
+                    if (error == 0)
+                    {
+                        grammar_id = 69;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 69:
+            // Grammar: ID=69; read/write bits=1; START (TimeStamp)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=70
+                    // decode: unsigned long int
+                    error = decode_exi_type_uint64(stream, &MessageHeaderType->TimeStamp);
                     if (error == 0)
                     {
                         grammar_id = 70;
@@ -3956,33 +3938,11 @@ static int decode_iso20_ac_MessageHeaderType(exi_bitstream_t* stream, struct iso
             }
             break;
         case 70:
-            // Grammar: ID=70; read/write bits=1; START (TimeStamp)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=71
-                    // decode: unsigned long int
-                    error = decode_exi_type_uint64(stream, &MessageHeaderType->TimeStamp);
-                    if (error == 0)
-                    {
-                        grammar_id = 71;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 71:
-            // Grammar: ID=71; read/write bits=2; START (Signature), END Element
+            // Grammar: ID=70; read/write bits=2; START (Signature), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Signature, SignatureType (SignatureType)); next=2
@@ -4010,7 +3970,7 @@ static int decode_iso20_ac_MessageHeaderType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4040,26 +4000,26 @@ static int decode_iso20_ac_MessageHeaderType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
 static int decode_iso20_ac_SignaturePropertyType(exi_bitstream_t* stream, struct iso20_ac_SignaturePropertyType* SignaturePropertyType) {
-    int grammar_id = 72;
+    int grammar_id = 71;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_SignaturePropertyType(SignaturePropertyType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 72:
-            // Grammar: ID=72; read/write bits=2; START (Id), START (Target)
+        case 71:
+            // Grammar: ID=71; read/write bits=2; START (Id), START (Target)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=73
+                    // Event: START (Id, ID (NCName)); next=72
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Id.charactersLen);
                     if (error == 0)
@@ -4077,10 +4037,10 @@ static int decode_iso20_ac_SignaturePropertyType(exi_bitstream_t* stream, struct
                         }
                     }
                     SignaturePropertyType->Id_isUsed = 1u;
-                    grammar_id = 73;
+                    grammar_id = 72;
                     break;
                 case 1:
-                    // Event: START (Target, anyURI (anyURI)); next=74
+                    // Event: START (Target, anyURI (anyURI)); next=73
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
                     if (error == 0)
@@ -4097,7 +4057,40 @@ static int decode_iso20_ac_SignaturePropertyType(exi_bitstream_t* stream, struct
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 74;
+                    grammar_id = 73;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 72:
+            // Grammar: ID=72; read/write bits=1; START (Target)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Target, anyURI (anyURI)); next=73
+                    // decode: string (len, characters) (Attribute)
+                    error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
+                    if (error == 0)
+                    {
+                        if (SignaturePropertyType->Target.charactersLen >= 2)
+                        {
+                            // string tables and table partitions are not supported, so the length has to be decremented by 2
+                            SignaturePropertyType->Target.charactersLen -= 2;
+                            error = exi_basetypes_decoder_characters(stream, SignaturePropertyType->Target.charactersLen, SignaturePropertyType->Target.characters, iso20_ac_Target_CHARACTER_SIZE);
+                        }
+                        else
+                        {
+                            // the string seems to be in the table, but this is not supported
+                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
+                        }
+                    }
+                    grammar_id = 73;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4106,44 +4099,11 @@ static int decode_iso20_ac_SignaturePropertyType(exi_bitstream_t* stream, struct
             }
             break;
         case 73:
-            // Grammar: ID=73; read/write bits=1; START (Target)
+            // Grammar: ID=73; read/write bits=1; START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Target, anyURI (anyURI)); next=74
-                    // decode: string (len, characters) (Attribute)
-                    error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
-                    if (error == 0)
-                    {
-                        if (SignaturePropertyType->Target.charactersLen >= 2)
-                        {
-                            // string tables and table partitions are not supported, so the length has to be decremented by 2
-                            SignaturePropertyType->Target.charactersLen -= 2;
-                            error = exi_basetypes_decoder_characters(stream, SignaturePropertyType->Target.charactersLen, SignaturePropertyType->Target.characters, iso20_ac_Target_CHARACTER_SIZE);
-                        }
-                        else
-                        {
-                            // the string seems to be in the table, but this is not supported
-                            error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                        }
-                    }
-                    grammar_id = 74;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 74:
-            // Grammar: ID=74; read/write bits=1; START (ANY)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -4166,7 +4126,7 @@ static int decode_iso20_ac_SignaturePropertyType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4196,31 +4156,73 @@ static int decode_iso20_ac_SignaturePropertyType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False;
 // Particle: EVMaximumChargePower, RationalNumberType (1, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stream, struct iso20_ac_AC_CPDReqEnergyTransferModeType* AC_CPDReqEnergyTransferModeType) {
-    int grammar_id = 75;
+    int grammar_id = 74;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_AC_CPDReqEnergyTransferModeType(AC_CPDReqEnergyTransferModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 75:
-            // Grammar: ID=75; read/write bits=1; START (EVMaximumChargePower)
+        case 74:
+            // Grammar: ID=74; read/write bits=1; START (EVMaximumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=76
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=75
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMaximumChargePower);
                     if (error == 0)
                     {
+                        grammar_id = 75;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 75:
+            // Grammar: ID=75; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=76
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L2_isUsed = 1u;
                         grammar_id = 76;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=77
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 77;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=78
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 78;
                     }
                     break;
                 default:
@@ -4230,39 +4232,29 @@ static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 76:
-            // Grammar: ID=76; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            // Grammar: ID=76; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=77
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 77;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=78
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=77
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3);
                     if (error == 0)
                     {
                         AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 78;
+                        grammar_id = 77;
                     }
                     break;
-                case 2:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=79
+                case 1:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=78
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
-                        grammar_id = 79;
+                        grammar_id = 78;
                     }
                     break;
                 default:
@@ -4272,29 +4264,19 @@ static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 77:
-            // Grammar: ID=77; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=77; read/write bits=1; START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=78
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 78;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=79
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=78
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
-                        grammar_id = 79;
+                        grammar_id = 78;
                     }
                     break;
                 default:
@@ -4304,42 +4286,20 @@ static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 78:
-            // Grammar: ID=78; read/write bits=1; START (EVMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=79
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 79;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 79:
-            // Grammar: ID=79; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), END Element
+            // Grammar: ID=78; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=80
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=79
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L2);
                     if (error == 0)
                     {
                         AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 80;
+                        grammar_id = 79;
                     }
                     break;
                 case 1:
@@ -4363,12 +4323,12 @@ static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 80:
-            // Grammar: ID=80; read/write bits=2; START (EVMinimumChargePower_L3), END Element
+        case 79:
+            // Grammar: ID=79; read/write bits=2; START (EVMinimumChargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -4396,7 +4356,7 @@ static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stre
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4426,26 +4386,26 @@ static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stre
 //          abstract=False; final=False;
 // Particle: PresentSOC, percentValueType (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); MaximumSOC, percentValueType (0, 1); RemainingTimeToMinimumSOC, unsignedInt (0, 1); RemainingTimeToTargetSOC, unsignedInt (0, 1); RemainingTimeToMaximumSOC, unsignedInt (0, 1); ChargingComplete, boolean (0, 1); BatteryEnergyCapacity, RationalNumberType (0, 1); InletHot, boolean (0, 1);
 static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct iso20_ac_DisplayParametersType* DisplayParametersType) {
-    int grammar_id = 81;
+    int grammar_id = 80;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_DisplayParametersType(DisplayParametersType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 81:
-            // Grammar: ID=81; read/write bits=4; START (PresentSOC), START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 80:
+            // Grammar: ID=80; read/write bits=4; START (PresentSOC), START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PresentSOC, percentValueType (byte)); next=82
+                    // Event: START (PresentSOC, percentValueType (byte)); next=81
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4476,7 +4436,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 82;
+                                grammar_id = 81;
                             }
                             else
                             {
@@ -4486,7 +4446,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 1:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=83
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=82
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4517,7 +4477,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 83;
+                                grammar_id = 82;
                             }
                             else
                             {
@@ -4527,7 +4487,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 2:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=84
+                    // Event: START (TargetSOC, percentValueType (byte)); next=83
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4558,7 +4518,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 84;
+                                grammar_id = 83;
                             }
                             else
                             {
@@ -4568,7 +4528,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 3:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=85
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=84
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4599,7 +4559,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 85;
+                                grammar_id = 84;
                             }
                             else
                             {
@@ -4609,37 +4569,37 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=86
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=85
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 86;
+                        grammar_id = 85;
                     }
                     break;
                 case 5:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=87
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=86
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 87;
+                        grammar_id = 86;
                     }
                     break;
                 case 6:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=88
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=87
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 88;
+                        grammar_id = 87;
                     }
                     break;
                 case 7:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=89
+                    // Event: START (ChargingComplete, boolean (boolean)); next=88
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4670,7 +4630,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -4680,13 +4640,13 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 8:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 9:
@@ -4741,15 +4701,15 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 82:
-            // Grammar: ID=82; read/write bits=4; START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 81:
+            // Grammar: ID=81; read/write bits=4; START (MinimumSOC), START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=83
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=82
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4780,7 +4740,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 83;
+                                grammar_id = 82;
                             }
                             else
                             {
@@ -4790,7 +4750,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 1:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=84
+                    // Event: START (TargetSOC, percentValueType (byte)); next=83
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4821,7 +4781,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 84;
+                                grammar_id = 83;
                             }
                             else
                             {
@@ -4831,7 +4791,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 2:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=85
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=84
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4862,7 +4822,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 85;
+                                grammar_id = 84;
                             }
                             else
                             {
@@ -4872,37 +4832,37 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=86
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=85
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 86;
+                        grammar_id = 85;
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=87
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=86
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 87;
+                        grammar_id = 86;
                     }
                     break;
                 case 5:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=88
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=87
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 88;
+                        grammar_id = 87;
                     }
                     break;
                 case 6:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=89
+                    // Event: START (ChargingComplete, boolean (boolean)); next=88
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4933,7 +4893,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -4943,13 +4903,13 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 7:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 8:
@@ -5004,15 +4964,15 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 83:
-            // Grammar: ID=83; read/write bits=4; START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 82:
+            // Grammar: ID=82; read/write bits=4; START (TargetSOC), START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=84
+                    // Event: START (TargetSOC, percentValueType (byte)); next=83
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5043,7 +5003,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 84;
+                                grammar_id = 83;
                             }
                             else
                             {
@@ -5053,7 +5013,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 1:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=85
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=84
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5084,7 +5044,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 85;
+                                grammar_id = 84;
                             }
                             else
                             {
@@ -5094,37 +5054,37 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=86
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=85
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 86;
+                        grammar_id = 85;
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=87
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=86
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 87;
+                        grammar_id = 86;
                     }
                     break;
                 case 4:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=88
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=87
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 88;
+                        grammar_id = 87;
                     }
                     break;
                 case 5:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=89
+                    // Event: START (ChargingComplete, boolean (boolean)); next=88
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5155,7 +5115,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -5165,13 +5125,13 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 6:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 7:
@@ -5226,15 +5186,15 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 84:
-            // Grammar: ID=84; read/write bits=4; START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 83:
+            // Grammar: ID=83; read/write bits=4; START (MaximumSOC), START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MaximumSOC, percentValueType (byte)); next=85
+                    // Event: START (MaximumSOC, percentValueType (byte)); next=84
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5265,7 +5225,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 85;
+                                grammar_id = 84;
                             }
                             else
                             {
@@ -5275,37 +5235,37 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=86
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=85
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 86;
+                        grammar_id = 85;
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=87
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=86
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 87;
+                        grammar_id = 86;
                     }
                     break;
                 case 3:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=88
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=87
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 88;
+                        grammar_id = 87;
                     }
                     break;
                 case 4:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=89
+                    // Event: START (ChargingComplete, boolean (boolean)); next=88
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5336,7 +5296,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -5346,13 +5306,13 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 5:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 6:
@@ -5407,45 +5367,45 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 85:
-            // Grammar: ID=85; read/write bits=3; START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 84:
+            // Grammar: ID=84; read/write bits=3; START (RemainingTimeToMinimumSOC), START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=86
+                    // Event: START (RemainingTimeToMinimumSOC, unsignedInt (unsignedLong)); next=85
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMinimumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMinimumSOC_isUsed = 1u;
-                        grammar_id = 86;
+                        grammar_id = 85;
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=87
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=86
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 87;
+                        grammar_id = 86;
                     }
                     break;
                 case 2:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=88
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=87
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 88;
+                        grammar_id = 87;
                     }
                     break;
                 case 3:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=89
+                    // Event: START (ChargingComplete, boolean (boolean)); next=88
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5476,7 +5436,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -5486,13 +5446,13 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 4:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 5:
@@ -5547,35 +5507,35 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 86:
-            // Grammar: ID=86; read/write bits=3; START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 85:
+            // Grammar: ID=85; read/write bits=3; START (RemainingTimeToTargetSOC), START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=87
+                    // Event: START (RemainingTimeToTargetSOC, unsignedInt (unsignedLong)); next=86
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToTargetSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToTargetSOC_isUsed = 1u;
-                        grammar_id = 87;
+                        grammar_id = 86;
                     }
                     break;
                 case 1:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=88
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=87
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 88;
+                        grammar_id = 87;
                     }
                     break;
                 case 2:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=89
+                    // Event: START (ChargingComplete, boolean (boolean)); next=88
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5606,7 +5566,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -5616,13 +5576,13 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 3:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 4:
@@ -5677,25 +5637,25 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 87:
-            // Grammar: ID=87; read/write bits=3; START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 86:
+            // Grammar: ID=86; read/write bits=3; START (RemainingTimeToMaximumSOC), START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=88
+                    // Event: START (RemainingTimeToMaximumSOC, unsignedInt (unsignedLong)); next=87
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DisplayParametersType->RemainingTimeToMaximumSOC);
                     if (error == 0)
                     {
                         DisplayParametersType->RemainingTimeToMaximumSOC_isUsed = 1u;
-                        grammar_id = 88;
+                        grammar_id = 87;
                     }
                     break;
                 case 1:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=89
+                    // Event: START (ChargingComplete, boolean (boolean)); next=88
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5726,7 +5686,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -5736,13 +5696,13 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 2:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 3:
@@ -5797,15 +5757,15 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 88:
-            // Grammar: ID=88; read/write bits=3; START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 87:
+            // Grammar: ID=87; read/write bits=3; START (ChargingComplete), START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargingComplete, boolean (boolean)); next=89
+                    // Event: START (ChargingComplete, boolean (boolean)); next=88
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5836,7 +5796,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 89;
+                                grammar_id = 88;
                             }
                             else
                             {
@@ -5846,13 +5806,13 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                     }
                     break;
                 case 1:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 2:
@@ -5907,21 +5867,21 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 89:
-            // Grammar: ID=89; read/write bits=2; START (BatteryEnergyCapacity), START (InletHot), END Element
+        case 88:
+            // Grammar: ID=88; read/write bits=2; START (BatteryEnergyCapacity), START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=90
+                    // Event: START (BatteryEnergyCapacity, RationalNumberType (RationalNumberType)); next=89
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &DisplayParametersType->BatteryEnergyCapacity);
                     if (error == 0)
                     {
                         DisplayParametersType->BatteryEnergyCapacity_isUsed = 1u;
-                        grammar_id = 90;
+                        grammar_id = 89;
                     }
                     break;
                 case 1:
@@ -5976,12 +5936,12 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 90:
-            // Grammar: ID=90; read/write bits=2; START (InletHot), END Element
+        case 89:
+            // Grammar: ID=89; read/write bits=2; START (InletHot), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (InletHot, boolean (boolean)); next=2
@@ -6040,7 +6000,7 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -6070,31 +6030,73 @@ static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False;
 // Particle: EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMaximumChargePower_L2, RationalNumberType (0, 1); EVSEMaximumChargePower_L3, RationalNumberType (0, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower_L2, RationalNumberType (0, 1); EVSEMinimumChargePower_L3, RationalNumberType (0, 1); EVSENominalFrequency, RationalNumberType (1, 1); MaximumPowerAsymmetry, RationalNumberType (0, 1); EVSEPowerRampLimitation, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stream, struct iso20_ac_AC_CPDResEnergyTransferModeType* AC_CPDResEnergyTransferModeType) {
-    int grammar_id = 91;
+    int grammar_id = 90;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_AC_CPDResEnergyTransferModeType(AC_CPDResEnergyTransferModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 91:
-            // Grammar: ID=91; read/write bits=1; START (EVSEMaximumChargePower)
+        case 90:
+            // Grammar: ID=90; read/write bits=1; START (EVSEMaximumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumChargePower, RationalNumberType (RationalNumberType)); next=92
+                    // Event: START (EVSEMaximumChargePower, RationalNumberType (RationalNumberType)); next=91
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower);
                     if (error == 0)
                     {
+                        grammar_id = 91;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 91:
+            // Grammar: ID=91; read/write bits=2; START (EVSEMaximumChargePower_L2), START (EVSEMaximumChargePower_L3), START (EVSEMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=92
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L2_isUsed = 1u;
                         grammar_id = 92;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=93
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 93;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=94
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 94;
                     }
                     break;
                 default:
@@ -6104,39 +6106,29 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 92:
-            // Grammar: ID=92; read/write bits=2; START (EVSEMaximumChargePower_L2), START (EVSEMaximumChargePower_L3), START (EVSEMinimumChargePower)
+            // Grammar: ID=92; read/write bits=2; START (EVSEMaximumChargePower_L3), START (EVSEMinimumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=93
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 93;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=94
+                    // Event: START (EVSEMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=93
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 94;
+                        grammar_id = 93;
                     }
                     break;
-                case 2:
-                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=95
+                case 1:
+                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=94
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
                     if (error == 0)
                     {
-                        grammar_id = 95;
+                        grammar_id = 94;
                     }
                     break;
                 default:
@@ -6146,29 +6138,19 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 93:
-            // Grammar: ID=93; read/write bits=2; START (EVSEMaximumChargePower_L3), START (EVSEMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=93; read/write bits=1; START (EVSEMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=94
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 94;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=95
+                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=94
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
                     if (error == 0)
                     {
-                        grammar_id = 95;
+                        grammar_id = 94;
                     }
                     break;
                 default:
@@ -6178,19 +6160,39 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 94:
-            // Grammar: ID=94; read/write bits=1; START (EVSEMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=94; read/write bits=2; START (EVSEMinimumChargePower_L2), START (EVSEMinimumChargePower_L3), START (EVSENominalFrequency)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=95
+                    // Event: START (EVSEMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=95
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L2);
                     if (error == 0)
                     {
+                        AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L2_isUsed = 1u;
                         grammar_id = 95;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=96
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 96;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=97
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
+                    if (error == 0)
+                    {
+                        grammar_id = 97;
                     }
                     break;
                 default:
@@ -6200,39 +6202,29 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 95:
-            // Grammar: ID=95; read/write bits=2; START (EVSEMinimumChargePower_L2), START (EVSEMinimumChargePower_L3), START (EVSENominalFrequency)
+            // Grammar: ID=95; read/write bits=2; START (EVSEMinimumChargePower_L3), START (EVSENominalFrequency)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=96
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 96;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=97
+                    // Event: START (EVSEMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=96
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 97;
+                        grammar_id = 96;
                     }
                     break;
-                case 2:
-                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=98
+                case 1:
+                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=97
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
                     if (error == 0)
                     {
-                        grammar_id = 98;
+                        grammar_id = 97;
                     }
                     break;
                 default:
@@ -6242,29 +6234,19 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 96:
-            // Grammar: ID=96; read/write bits=2; START (EVSEMinimumChargePower_L3), START (EVSENominalFrequency)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=96; read/write bits=1; START (EVSENominalFrequency)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=97
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 97;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=98
+                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=97
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
                     if (error == 0)
                     {
-                        grammar_id = 98;
+                        grammar_id = 97;
                     }
                     break;
                 default:
@@ -6274,72 +6256,50 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
             }
             break;
         case 97:
-            // Grammar: ID=97; read/write bits=1; START (EVSENominalFrequency)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=98
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
-                    if (error == 0)
-                    {
-                        grammar_id = 98;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 98:
-            // Grammar: ID=98; read/write bits=3; START (MaximumPowerAsymmetry), START (EVSEPowerRampLimitation), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+            // Grammar: ID=97; read/write bits=3; START (MaximumPowerAsymmetry), START (EVSEPowerRampLimitation), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MaximumPowerAsymmetry, RationalNumberType (RationalNumberType)); next=99
+                    // Event: START (MaximumPowerAsymmetry, RationalNumberType (RationalNumberType)); next=98
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->MaximumPowerAsymmetry);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->MaximumPowerAsymmetry_isUsed = 1u;
-                        grammar_id = 99;
+                        grammar_id = 98;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPowerRampLimitation, RationalNumberType (RationalNumberType)); next=100
+                    // Event: START (EVSEPowerRampLimitation, RationalNumberType (RationalNumberType)); next=99
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation_isUsed = 1u;
-                        grammar_id = 100;
+                        grammar_id = 99;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=101
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=100
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 101;
+                        grammar_id = 100;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=102
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=101
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 102;
+                        grammar_id = 101;
                     }
                     break;
                 case 4:
@@ -6363,41 +6323,41 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 99:
-            // Grammar: ID=99; read/write bits=3; START (EVSEPowerRampLimitation), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 98:
+            // Grammar: ID=98; read/write bits=3; START (EVSEPowerRampLimitation), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPowerRampLimitation, RationalNumberType (RationalNumberType)); next=100
+                    // Event: START (EVSEPowerRampLimitation, RationalNumberType (RationalNumberType)); next=99
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation_isUsed = 1u;
-                        grammar_id = 100;
+                        grammar_id = 99;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=101
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=100
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 101;
+                        grammar_id = 100;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=102
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=101
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 102;
+                        grammar_id = 101;
                     }
                     break;
                 case 3:
@@ -6421,31 +6381,31 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 100:
-            // Grammar: ID=100; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 99:
+            // Grammar: ID=99; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=101
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=100
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 101;
+                        grammar_id = 100;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=102
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=101
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 102;
+                        grammar_id = 101;
                     }
                     break;
                 case 2:
@@ -6469,21 +6429,21 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 101:
-            // Grammar: ID=101; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 100:
+            // Grammar: ID=100; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=102
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=101
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 102;
+                        grammar_id = 101;
                     }
                     break;
                 case 1:
@@ -6507,12 +6467,12 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 102:
-            // Grammar: ID=102; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
+        case 101:
+            // Grammar: ID=101; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -6540,7 +6500,7 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -6570,31 +6530,31 @@ static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stre
 //          abstract=False; final=False;
 // Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, evseNotificationType (1, 1);
 static int decode_iso20_ac_EVSEStatusType(exi_bitstream_t* stream, struct iso20_ac_EVSEStatusType* EVSEStatusType) {
-    int grammar_id = 103;
+    int grammar_id = 102;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_EVSEStatusType(EVSEStatusType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 103:
-            // Grammar: ID=103; read/write bits=1; START (NotificationMaxDelay)
+        case 102:
+            // Grammar: ID=102; read/write bits=1; START (NotificationMaxDelay)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=104
+                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=103
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &EVSEStatusType->NotificationMaxDelay);
                     if (error == 0)
                     {
-                        grammar_id = 104;
+                        grammar_id = 103;
                     }
                     break;
                 default:
@@ -6603,12 +6563,12 @@ static int decode_iso20_ac_EVSEStatusType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 104:
-            // Grammar: ID=104; read/write bits=1; START (EVSENotification)
+        case 103:
+            // Grammar: ID=103; read/write bits=1; START (EVSENotification)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSENotification, evseNotificationType (string)); next=2
@@ -6661,963 +6621,7 @@ static int decode_iso20_ac_EVSEStatusType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLReqControlModeType; base type=Scheduled_CLReqControlModeType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVMaximumChargePower, RationalNumberType (0, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (0, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (0, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1);
-static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType) {
-    int grammar_id = 105;
-    int done = 0;
-    uint32_t eventCode;
-    int error;
-
-    init_iso20_ac_Scheduled_AC_CLReqControlModeType(Scheduled_AC_CLReqControlModeType);
-
-    while(!done)
-    {
-        switch(grammar_id)
-        {
-        case 105:
-            // Grammar: ID=105; read/write bits=4; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=106
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest_isUsed = 1u;
-                        grammar_id = 106;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=107
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
-                        grammar_id = 107;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=108
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 108;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=109
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 109;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=110
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 110;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 7:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 8:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 9:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 106:
-            // Grammar: ID=106; read/write bits=4; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=107
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
-                        grammar_id = 107;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=108
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 108;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=109
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 109;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=110
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 110;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 7:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 8:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 107:
-            // Grammar: ID=107; read/write bits=4; START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=108
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 108;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=109
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 109;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=110
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 110;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 7:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 108:
-            // Grammar: ID=108; read/write bits=3; START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=109
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 109;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=110
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 110;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 109:
-            // Grammar: ID=109; read/write bits=3; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=110
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 110;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 110:
-            // Grammar: ID=110; read/write bits=3; START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 111:
-            // Grammar: ID=111; read/write bits=3; START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 112:
-            // Grammar: ID=112; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 113:
-            // Grammar: ID=113; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 114:
-            // Grammar: ID=114; read/write bits=1; START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 115;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 115:
-            // Grammar: ID=115; read/write bits=3; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 117;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=118
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
-                        grammar_id = 118;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=119
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 119;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 5:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 116:
-            // Grammar: ID=116; read/write bits=3; START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 117;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=118
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
-                        grammar_id = 118;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=119
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 119;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 4:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 117:
-            // Grammar: ID=117; read/write bits=3; START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=118
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
-                        grammar_id = 118;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=119
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 119;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 3:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 118:
-            // Grammar: ID=118; read/write bits=2; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=119
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 119;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 119:
-            // Grammar: ID=119; read/write bits=2; START (EVPresentReactivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 2:
-            // Grammar: ID=2; read/write bits=1; END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7647,41 +6651,41 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
 //          abstract=False; final=False; derivation=extension;
 // Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (1, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLReqControlModeType* Dynamic_AC_CLReqControlModeType) {
-    int grammar_id = 120;
+    int grammar_id = 104;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_Dynamic_AC_CLReqControlModeType(Dynamic_AC_CLReqControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 120:
-            // Grammar: ID=120; read/write bits=2; START (DepartureTime), START (EVTargetEnergyRequest)
+        case 104:
+            // Grammar: ID=104; read/write bits=2; START (DepartureTime), START (EVTargetEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=121
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=105
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Dynamic_AC_CLReqControlModeType->DepartureTime);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->DepartureTime_isUsed = 1u;
-                        grammar_id = 121;
+                        grammar_id = 105;
                     }
                     break;
                 case 1:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=122
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=106
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 122;
+                        grammar_id = 106;
                     }
                     break;
                 default:
@@ -7690,20 +6694,20 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 121:
-            // Grammar: ID=121; read/write bits=1; START (EVTargetEnergyRequest)
+        case 105:
+            // Grammar: ID=105; read/write bits=1; START (EVTargetEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=122
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=106
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 122;
+                        grammar_id = 106;
                     }
                     break;
                 default:
@@ -7712,20 +6716,20 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 122:
-            // Grammar: ID=122; read/write bits=1; START (EVMaximumEnergyRequest)
+        case 106:
+            // Grammar: ID=106; read/write bits=1; START (EVMaximumEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=123
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=107
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 123;
+                        grammar_id = 107;
                     }
                     break;
                 default:
@@ -7734,20 +6738,20 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 123:
-            // Grammar: ID=123; read/write bits=1; START (EVMinimumEnergyRequest)
+        case 107:
+            // Grammar: ID=107; read/write bits=1; START (EVMinimumEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=124
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=108
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 124;
+                        grammar_id = 108;
                     }
                     break;
                 default:
@@ -7756,20 +6760,20 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 124:
-            // Grammar: ID=124; read/write bits=1; START (EVMaximumChargePower)
+        case 108:
+            // Grammar: ID=108; read/write bits=1; START (EVMaximumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=125
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=109
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower);
                     if (error == 0)
                     {
-                        grammar_id = 125;
+                        grammar_id = 109;
                     }
                     break;
                 default:
@@ -7778,40 +6782,40 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 125:
-            // Grammar: ID=125; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+        case 109:
+            // Grammar: ID=109; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=126
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=110
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 126;
+                        grammar_id = 110;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=127
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=111
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 127;
+                        grammar_id = 111;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=128
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
-                        grammar_id = 128;
+                        grammar_id = 112;
                     }
                     break;
                 default:
@@ -7820,30 +6824,30 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 126:
-            // Grammar: ID=126; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+        case 110:
+            // Grammar: ID=110; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=127
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=111
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 127;
+                        grammar_id = 111;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=128
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
-                        grammar_id = 128;
+                        grammar_id = 112;
                     }
                     break;
                 default:
@@ -7852,20 +6856,20 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 127:
-            // Grammar: ID=127; read/write bits=1; START (EVMinimumChargePower)
+        case 111:
+            // Grammar: ID=111; read/write bits=1; START (EVMinimumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=128
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=112
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
-                        grammar_id = 128;
+                        grammar_id = 112;
                     }
                     break;
                 default:
@@ -7874,40 +6878,40 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 128:
-            // Grammar: ID=128; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+        case 112:
+            // Grammar: ID=112; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=129
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 129;
+                        grammar_id = 113;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=130
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 130;
+                        grammar_id = 114;
                     }
                     break;
                 case 2:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=131
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 131;
+                        grammar_id = 115;
                     }
                     break;
                 default:
@@ -7916,30 +6920,30 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 129:
-            // Grammar: ID=129; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+        case 113:
+            // Grammar: ID=113; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=130
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 130;
+                        grammar_id = 114;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=131
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 131;
+                        grammar_id = 115;
                     }
                     break;
                 default:
@@ -7948,20 +6952,20 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 130:
-            // Grammar: ID=130; read/write bits=1; START (EVPresentActivePower)
+        case 114:
+            // Grammar: ID=114; read/write bits=1; START (EVPresentActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=131
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=115
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 131;
+                        grammar_id = 115;
                     }
                     break;
                 default:
@@ -7970,40 +6974,40 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 131:
-            // Grammar: ID=131; read/write bits=2; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower)
+        case 115:
+            // Grammar: ID=115; read/write bits=2; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=132
+                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=116
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 132;
+                        grammar_id = 116;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=133
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=117
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 133;
+                        grammar_id = 117;
                     }
                     break;
                 case 2:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=134
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=118
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
-                        grammar_id = 134;
+                        grammar_id = 118;
                     }
                     break;
                 default:
@@ -8012,30 +7016,30 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 132:
-            // Grammar: ID=132; read/write bits=2; START (EVPresentActivePower_L3), START (EVPresentReactivePower)
+        case 116:
+            // Grammar: ID=116; read/write bits=2; START (EVPresentActivePower_L3), START (EVPresentReactivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=133
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=117
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 133;
+                        grammar_id = 117;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=134
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=118
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
-                        grammar_id = 134;
+                        grammar_id = 118;
                     }
                     break;
                 default:
@@ -8044,20 +7048,20 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 133:
-            // Grammar: ID=133; read/write bits=1; START (EVPresentReactivePower)
+        case 117:
+            // Grammar: ID=117; read/write bits=1; START (EVPresentReactivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=134
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=118
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
-                        grammar_id = 134;
+                        grammar_id = 118;
                     }
                     break;
                 default:
@@ -8066,21 +7070,21 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 134:
-            // Grammar: ID=134; read/write bits=2; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+        case 118:
+            // Grammar: ID=118; read/write bits=2; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=135
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 135;
+                        grammar_id = 119;
                     }
                     break;
                 case 1:
@@ -8104,12 +7108,12 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 135:
-            // Grammar: ID=135; read/write bits=2; START (EVPresentReactivePower_L3), END Element
+        case 119:
+            // Grammar: ID=119; read/write bits=2; START (EVPresentReactivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -8137,7 +7141,963 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLReqControlModeType; base type=Scheduled_CLReqControlModeType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVMaximumChargePower, RationalNumberType (0, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (0, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (0, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1);
+static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType) {
+    int grammar_id = 120;
+    int done = 0;
+    uint32_t eventCode;
+    int error;
+
+    init_iso20_ac_Scheduled_AC_CLReqControlModeType(Scheduled_AC_CLReqControlModeType);
+
+    while (!done)
+    {
+        switch (grammar_id)
+        {
+        case 120:
+            // Grammar: ID=120; read/write bits=4; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=121
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest_isUsed = 1u;
+                        grammar_id = 121;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=122
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
+                        grammar_id = 122;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=123
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
+                        grammar_id = 123;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=124
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 124;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=125
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 125;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=126
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 126;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 8:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 9:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 121:
+            // Grammar: ID=121; read/write bits=4; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=122
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
+                        grammar_id = 122;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=123
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
+                        grammar_id = 123;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=124
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 124;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=125
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 125;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=126
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 126;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 8:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 122:
+            // Grammar: ID=122; read/write bits=4; START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=123
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
+                        grammar_id = 123;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=124
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 124;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=125
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 125;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=126
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 126;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 123:
+            // Grammar: ID=123; read/write bits=3; START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=124
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 124;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=125
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 125;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=126
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 126;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 124:
+            // Grammar: ID=124; read/write bits=3; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=125
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 125;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=126
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 126;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 125:
+            // Grammar: ID=125; read/write bits=3; START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=126
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 126;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 126:
+            // Grammar: ID=126; read/write bits=3; START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 127:
+            // Grammar: ID=127; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 128:
+            // Grammar: ID=128; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 129:
+            // Grammar: ID=129; read/write bits=1; START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 130;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 130:
+            // Grammar: ID=130; read/write bits=3; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=131
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 131;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
+                        grammar_id = 133;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=134
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        grammar_id = 134;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 5:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 131:
+            // Grammar: ID=131; read/write bits=3; START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
+                        grammar_id = 133;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=134
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        grammar_id = 134;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 4:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 132:
+            // Grammar: ID=132; read/write bits=3; START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
+                        grammar_id = 133;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=134
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        grammar_id = 134;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 3:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 133:
+            // Grammar: ID=133; read/write bits=2; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=134
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        grammar_id = 134;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 2:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 134:
+            // Grammar: ID=134; read/write bits=2; START (EVPresentReactivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 2:
+            // Grammar: ID=2; read/write bits=1; END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8186,26 +8146,26 @@ static int decode_iso20_ac_CLReqControlModeType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False;
 // Particle: MeterID, meterIDType (1, 1); ChargedEnergyReadingWh, unsignedLong (1, 1); BPT_DischargedEnergyReadingWh, unsignedLong (0, 1); CapacitiveEnergyReadingVARh, unsignedLong (0, 1); BPT_InductiveEnergyReadingVARh, unsignedLong (0, 1); MeterSignature, meterSignatureType (0, 1); MeterStatus, short (0, 1); MeterTimestamp, unsignedLong (0, 1);
 static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_ac_MeterInfoType* MeterInfoType) {
-    int grammar_id = 136;
+    int grammar_id = 135;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_MeterInfoType(MeterInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 136:
-            // Grammar: ID=136; read/write bits=1; START (MeterID)
+        case 135:
+            // Grammar: ID=135; read/write bits=1; START (MeterID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterID, meterIDType (string)); next=137
+                    // Event: START (MeterID, meterIDType (string)); next=136
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -8244,7 +8204,7 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 137;
+                                grammar_id = 136;
                             }
                             else
                             {
@@ -8259,20 +8219,20 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
                 }
             }
             break;
-        case 137:
-            // Grammar: ID=137; read/write bits=1; START (ChargedEnergyReadingWh)
+        case 136:
+            // Grammar: ID=136; read/write bits=1; START (ChargedEnergyReadingWh)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=138
+                    // Event: START (ChargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=137
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->ChargedEnergyReadingWh);
                     if (error == 0)
                     {
-                        grammar_id = 138;
+                        grammar_id = 137;
                     }
                     break;
                 default:
@@ -8281,61 +8241,61 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
                 }
             }
             break;
-        case 138:
-            // Grammar: ID=138; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 137:
+            // Grammar: ID=137; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_DischargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=139
+                    // Event: START (BPT_DischargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=138
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_DischargedEnergyReadingWh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_DischargedEnergyReadingWh_isUsed = 1u;
-                        grammar_id = 139;
+                        grammar_id = 138;
                     }
                     break;
                 case 1:
-                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=140
+                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=139
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->CapacitiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->CapacitiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 140;
+                        grammar_id = 139;
                     }
                     break;
                 case 2:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=141
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=140
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 141;
+                        grammar_id = 140;
                     }
                     break;
                 case 3:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=142
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=141
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_ac_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 142;
+                        grammar_id = 141;
                     }
                     break;
                 case 4:
-                    // Event: START (MeterStatus, short (int)); next=143
+                    // Event: START (MeterStatus, short (int)); next=142
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 143;
+                        grammar_id = 142;
                     }
                     break;
                 case 5:
@@ -8359,51 +8319,51 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
                 }
             }
             break;
-        case 139:
-            // Grammar: ID=139; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 138:
+            // Grammar: ID=138; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=140
+                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=139
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->CapacitiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->CapacitiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 140;
+                        grammar_id = 139;
                     }
                     break;
                 case 1:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=141
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=140
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 141;
+                        grammar_id = 140;
                     }
                     break;
                 case 2:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=142
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=141
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_ac_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 142;
+                        grammar_id = 141;
                     }
                     break;
                 case 3:
-                    // Event: START (MeterStatus, short (int)); next=143
+                    // Event: START (MeterStatus, short (int)); next=142
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 143;
+                        grammar_id = 142;
                     }
                     break;
                 case 4:
@@ -8427,41 +8387,41 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
                 }
             }
             break;
-        case 140:
-            // Grammar: ID=140; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 139:
+            // Grammar: ID=139; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=141
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=140
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 141;
+                        grammar_id = 140;
                     }
                     break;
                 case 1:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=142
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=141
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_ac_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 142;
+                        grammar_id = 141;
                     }
                     break;
                 case 2:
-                    // Event: START (MeterStatus, short (int)); next=143
+                    // Event: START (MeterStatus, short (int)); next=142
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 143;
+                        grammar_id = 142;
                     }
                     break;
                 case 3:
@@ -8485,31 +8445,31 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
                 }
             }
             break;
-        case 141:
-            // Grammar: ID=141; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 140:
+            // Grammar: ID=140; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=142
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=141
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_ac_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 142;
+                        grammar_id = 141;
                     }
                     break;
                 case 1:
-                    // Event: START (MeterStatus, short (int)); next=143
+                    // Event: START (MeterStatus, short (int)); next=142
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 143;
+                        grammar_id = 142;
                     }
                     break;
                 case 2:
@@ -8533,21 +8493,21 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
                 }
             }
             break;
-        case 142:
-            // Grammar: ID=142; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
+        case 141:
+            // Grammar: ID=141; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterStatus, short (int)); next=143
+                    // Event: START (MeterStatus, short (int)); next=142
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 143;
+                        grammar_id = 142;
                     }
                     break;
                 case 1:
@@ -8571,12 +8531,12 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
                 }
             }
             break;
-        case 143:
-            // Grammar: ID=143; read/write bits=2; START (MeterTimestamp), END Element
+        case 142:
+            // Grammar: ID=142; read/write bits=2; START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (MeterTimestamp, unsignedLong (nonNegativeInteger)); next=2
@@ -8604,7 +8564,7 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8634,31 +8594,31 @@ static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_a
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); EnergyCosts, DetailedCostType (0, 1); OccupancyCosts, DetailedCostType (0, 1); AdditionalServicesCosts, DetailedCostType (0, 1); OverstayCosts, DetailedCostType (0, 1); TaxCosts, DetailedTaxType (0, 10);
 static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_ReceiptType* ReceiptType) {
-    int grammar_id = 144;
+    int grammar_id = 143;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_ReceiptType(ReceiptType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 144:
-            // Grammar: ID=144; read/write bits=1; START (TimeAnchor)
+        case 143:
+            // Grammar: ID=143; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=145
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=144
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &ReceiptType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 145;
+                        grammar_id = 144;
                     }
                     break;
                 default:
@@ -8667,55 +8627,55 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                 }
             }
             break;
-        case 145:
-            // Grammar: ID=145; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 144:
+            // Grammar: ID=144; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EnergyCosts, DetailedCostType (DetailedCostType)); next=148
+                    // Event: START (EnergyCosts, DetailedCostType (DetailedCostType)); next=146
                     // decode: element
                     error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->EnergyCosts);
                     if (error == 0)
                     {
                         ReceiptType->EnergyCosts_isUsed = 1u;
-                        grammar_id = 148;
+                        grammar_id = 146;
                     }
                     break;
                 case 1:
-                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=151
+                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=148
                     // decode: element
                     error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
                     if (error == 0)
                     {
                         ReceiptType->OccupancyCosts_isUsed = 1u;
-                        grammar_id = 151;
+                        grammar_id = 148;
                     }
                     break;
                 case 2:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=154
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=150
                     // decode: element
                     error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 154;
+                        grammar_id = 150;
                     }
                     break;
                 case 3:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=157
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=152
                     // decode: element
                     error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 157;
+                        grammar_id = 152;
                     }
                     break;
                 case 4:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=146
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=145
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -8723,9 +8683,10 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 146;
+                    grammar_id = 145;
                     break;
                 case 5:
                     // Event: END Element; next=3
@@ -8738,15 +8699,15 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                 }
             }
             break;
-        case 146:
-            // Grammar: ID=146; read/write bits=2; LOOP (TaxCosts), END Element
+        case 145:
+            // Grammar: ID=145; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=146
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=145
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -8754,11 +8715,82 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 146;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 145;
+                    }
+                    else
+                    {
+                        grammar_id = 146;
+                    }
                     break;
                 case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 146:
+            // Grammar: ID=146; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=148
+                    // decode: element
+                    error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->OccupancyCosts_isUsed = 1u;
+                        grammar_id = 148;
+                    }
+                    break;
+                case 1:
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=150
+                    // decode: element
+                    error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->AdditionalServicesCosts_isUsed = 1u;
+                        grammar_id = 150;
+                    }
+                    break;
+                case 2:
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=152
+                    // decode: element
+                    error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OverstayCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->OverstayCosts_isUsed = 1u;
+                        grammar_id = 152;
+                    }
+                    break;
+                case 3:
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=147
+                    // decode: element array
+                    if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_ac_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 147;
+                    break;
+                case 4:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -8774,10 +8806,10 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=147
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -8785,9 +8817,18 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 2;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 147;
+                    }
+                    else
+                    {
+                        grammar_id = 148;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -8801,43 +8842,33 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
             }
             break;
         case 148:
-            // Grammar: ID=148; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+            // Grammar: ID=148; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=151
-                    // decode: element
-                    error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->OccupancyCosts_isUsed = 1u;
-                        grammar_id = 151;
-                    }
-                    break;
-                case 1:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=154
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=150
                     // decode: element
                     error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 154;
+                        grammar_id = 150;
                     }
                     break;
-                case 2:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=157
+                case 1:
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=152
                     // decode: element
                     error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 157;
+                        grammar_id = 152;
                     }
                     break;
-                case 3:
+                case 2:
                     // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=149
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
@@ -8846,11 +8877,12 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     grammar_id = 149;
                     break;
-                case 4:
+                case 3:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -8866,7 +8898,7 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=149
@@ -8877,9 +8909,18 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 149;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 149;
+                    }
+                    else
+                    {
+                        grammar_id = 150;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -8893,14 +8934,24 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
             }
             break;
         case 150:
-            // Grammar: ID=150; read/write bits=2; LOOP (TaxCosts), END Element
+            // Grammar: ID=150; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=152
+                    // decode: element
+                    error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OverstayCosts);
+                    if (error == 0)
+                    {
+                        ReceiptType->OverstayCosts_isUsed = 1u;
+                        grammar_id = 152;
+                    }
+                    break;
+                case 1:
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=151
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -8908,11 +8959,12 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 2;
+                    grammar_id = 151;
                     break;
-                case 1:
+                case 2:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -8924,34 +8976,14 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
             }
             break;
         case 151:
-            // Grammar: ID=151; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=151; read/write bits=2; LOOP (TaxCosts), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=154
-                    // decode: element
-                    error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 154;
-                    }
-                    break;
-                case 1:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=157
-                    // decode: element
-                    error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OverstayCosts);
-                    if (error == 0)
-                    {
-                        ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 157;
-                    }
-                    break;
-                case 2:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=152
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=151
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -8959,11 +8991,20 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 152;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 151;
+                    }
+                    else
+                    {
+                        grammar_id = 152;
+                    }
                     break;
-                case 3:
+                case 1:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -8975,14 +9016,14 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
             }
             break;
         case 152:
-            // Grammar: ID=152; read/write bits=2; LOOP (TaxCosts), END Element
+            // Grammar: ID=152; read/write bits=2; START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=152
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=153
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -8990,9 +9031,10 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 152;
+                    grammar_id = 153;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9010,10 +9052,10 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=153
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9021,205 +9063,18 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 154:
-            // Grammar: ID=154; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=157
-                    // decode: element
-                    error = decode_iso20_ac_DetailedCostType(stream, &ReceiptType->OverstayCosts);
-                    if (error == 0)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
                     {
-                        ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 157;
-                    }
-                    break;
-                case 1:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=155
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                        grammar_id = 153;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 155;
-                    break;
-                case 2:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 155:
-            // Grammar: ID=155; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=155
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 155;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 156:
-            // Grammar: ID=156; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 157:
-            // Grammar: ID=157; read/write bits=2; START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=158
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 158;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 158:
-            // Grammar: ID=158; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=158
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 158;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 159:
-            // Grammar: ID=159; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_ac_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9237,7 +9092,7 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -9267,102 +9122,102 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVSETargetActivePower, RationalNumberType (0, 1); EVSETargetActivePower_L2, RationalNumberType (0, 1); EVSETargetActivePower_L3, RationalNumberType (0, 1); EVSETargetReactivePower, RationalNumberType (0, 1); EVSETargetReactivePower_L2, RationalNumberType (0, 1); EVSETargetReactivePower_L3, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLResControlModeType* Scheduled_AC_CLResControlModeType) {
-    int grammar_id = 160;
+    int grammar_id = 154;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_Scheduled_AC_CLResControlModeType(Scheduled_AC_CLResControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 160:
-            // Grammar: ID=160; read/write bits=4; START (EVSETargetActivePower), START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 154:
+            // Grammar: ID=154; read/write bits=4; START (EVSETargetActivePower), START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=161
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=155
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetActivePower_isUsed = 1u;
-                        grammar_id = 161;
+                        grammar_id = 155;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=162
+                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=156
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
-                        grammar_id = 162;
+                        grammar_id = 156;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=163
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=157
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 163;
+                        grammar_id = 157;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=164
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=158
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 164;
+                        grammar_id = 158;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=165
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=159
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 165;
+                        grammar_id = 159;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=166
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=160
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 166;
+                        grammar_id = 160;
                     }
                     break;
                 case 6:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=167
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=161
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 167;
+                        grammar_id = 161;
                     }
                     break;
                 case 7:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=162
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 162;
                     }
                     break;
                 case 8:
@@ -9386,81 +9241,81 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 161:
-            // Grammar: ID=161; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 155:
+            // Grammar: ID=155; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=162
+                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=156
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
-                        grammar_id = 162;
+                        grammar_id = 156;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=163
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=157
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 163;
+                        grammar_id = 157;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=164
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=158
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 164;
+                        grammar_id = 158;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=165
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=159
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 165;
+                        grammar_id = 159;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=166
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=160
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 166;
+                        grammar_id = 160;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=167
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=161
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 167;
+                        grammar_id = 161;
                     }
                     break;
                 case 6:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=162
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 162;
                     }
                     break;
                 case 7:
@@ -9484,71 +9339,71 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 162:
-            // Grammar: ID=162; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 156:
+            // Grammar: ID=156; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=163
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=157
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 163;
+                        grammar_id = 157;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=164
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=158
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 164;
+                        grammar_id = 158;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=165
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=159
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 165;
+                        grammar_id = 159;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=166
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=160
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 166;
+                        grammar_id = 160;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=167
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=161
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 167;
+                        grammar_id = 161;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=162
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 162;
                     }
                     break;
                 case 6:
@@ -9572,61 +9427,61 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 163:
-            // Grammar: ID=163; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 157:
+            // Grammar: ID=157; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=164
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=158
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 164;
+                        grammar_id = 158;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=165
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=159
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 165;
+                        grammar_id = 159;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=166
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=160
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 166;
+                        grammar_id = 160;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=167
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=161
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 167;
+                        grammar_id = 161;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=162
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 162;
                     }
                     break;
                 case 5:
@@ -9650,51 +9505,51 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 164:
-            // Grammar: ID=164; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 158:
+            // Grammar: ID=158; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=165
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=159
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 165;
+                        grammar_id = 159;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=166
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=160
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 166;
+                        grammar_id = 160;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=167
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=161
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 167;
+                        grammar_id = 161;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=162
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 162;
                     }
                     break;
                 case 4:
@@ -9718,41 +9573,41 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 165:
-            // Grammar: ID=165; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 159:
+            // Grammar: ID=159; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=166
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=160
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 166;
+                        grammar_id = 160;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=167
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=161
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 167;
+                        grammar_id = 161;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=162
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 162;
                     }
                     break;
                 case 3:
@@ -9776,31 +9631,31 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 166:
-            // Grammar: ID=166; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 160:
+            // Grammar: ID=160; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=167
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=161
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 167;
+                        grammar_id = 161;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=162
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 162;
                     }
                     break;
                 case 2:
@@ -9824,21 +9679,21 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 167:
-            // Grammar: ID=167; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 161:
+            // Grammar: ID=161; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=168
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=162
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 168;
+                        grammar_id = 162;
                     }
                     break;
                 case 1:
@@ -9862,12 +9717,12 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 168:
-            // Grammar: ID=168; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
+        case 162:
+            // Grammar: ID=162; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -9895,7 +9750,7 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -9925,36 +9780,36 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
 //          abstract=False; final=False; derivation=extension;
 // Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AckMaxDelay, unsignedShort (0, 1); EVSETargetActivePower, RationalNumberType (1, 1); EVSETargetActivePower_L2, RationalNumberType (0, 1); EVSETargetActivePower_L3, RationalNumberType (0, 1); EVSETargetReactivePower, RationalNumberType (0, 1); EVSETargetReactivePower_L2, RationalNumberType (0, 1); EVSETargetReactivePower_L3, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLResControlModeType* Dynamic_AC_CLResControlModeType) {
-    int grammar_id = 169;
+    int grammar_id = 163;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_Dynamic_AC_CLResControlModeType(Dynamic_AC_CLResControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 169:
-            // Grammar: ID=169; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+        case 163:
+            // Grammar: ID=163; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=170
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=164
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Dynamic_AC_CLResControlModeType->DepartureTime);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->DepartureTime_isUsed = 1u;
-                        grammar_id = 170;
+                        grammar_id = 164;
                     }
                     break;
                 case 1:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=171
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=165
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9985,7 +9840,7 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 171;
+                                grammar_id = 165;
                             }
                             else
                             {
@@ -9995,7 +9850,7 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                     }
                     break;
                 case 2:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=172
+                    // Event: START (TargetSOC, percentValueType (byte)); next=166
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10026,7 +9881,7 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 172;
+                                grammar_id = 166;
                             }
                             else
                             {
@@ -10036,22 +9891,22 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                     }
                     break;
                 case 3:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=173
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=167
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 173;
+                        grammar_id = 167;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=174
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=168
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 174;
+                        grammar_id = 168;
                     }
                     break;
                 default:
@@ -10060,15 +9915,15 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 170:
-            // Grammar: ID=170; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+        case 164:
+            // Grammar: ID=164; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=171
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=165
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10099,7 +9954,7 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 171;
+                                grammar_id = 165;
                             }
                             else
                             {
@@ -10109,7 +9964,7 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                     }
                     break;
                 case 1:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=172
+                    // Event: START (TargetSOC, percentValueType (byte)); next=166
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10140,7 +9995,7 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 172;
+                                grammar_id = 166;
                             }
                             else
                             {
@@ -10150,22 +10005,22 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                     }
                     break;
                 case 2:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=173
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=167
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 173;
+                        grammar_id = 167;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=174
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=168
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 174;
+                        grammar_id = 168;
                     }
                     break;
                 default:
@@ -10174,15 +10029,15 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 171:
-            // Grammar: ID=171; read/write bits=2; START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+        case 165:
+            // Grammar: ID=165; read/write bits=2; START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=172
+                    // Event: START (TargetSOC, percentValueType (byte)); next=166
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10213,7 +10068,7 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 172;
+                                grammar_id = 166;
                             }
                             else
                             {
@@ -10223,22 +10078,22 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                     }
                     break;
                 case 1:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=173
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=167
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 173;
+                        grammar_id = 167;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=174
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=168
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 174;
+                        grammar_id = 168;
                     }
                     break;
                 default:
@@ -10247,30 +10102,30 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 172:
-            // Grammar: ID=172; read/write bits=2; START (AckMaxDelay), START (EVSETargetActivePower)
+        case 166:
+            // Grammar: ID=166; read/write bits=2; START (AckMaxDelay), START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=173
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=167
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 173;
+                        grammar_id = 167;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=174
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=168
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 174;
+                        grammar_id = 168;
                     }
                     break;
                 default:
@@ -10279,20 +10134,20 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 173:
-            // Grammar: ID=173; read/write bits=1; START (EVSETargetActivePower)
+        case 167:
+            // Grammar: ID=167; read/write bits=1; START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=174
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=168
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 174;
+                        grammar_id = 168;
                     }
                     break;
                 default:
@@ -10301,81 +10156,81 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 174:
-            // Grammar: ID=174; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 168:
+            // Grammar: ID=168; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=175
+                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=169
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
-                        grammar_id = 175;
+                        grammar_id = 169;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=176
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=170
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 176;
+                        grammar_id = 170;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=177
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=171
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 177;
+                        grammar_id = 171;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=178
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=172
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 178;
+                        grammar_id = 172;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=179
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=173
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 179;
+                        grammar_id = 173;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=180
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=174
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 174;
                     }
                     break;
                 case 6:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=181
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=175
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 181;
+                        grammar_id = 175;
                     }
                     break;
                 case 7:
@@ -10399,71 +10254,71 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 175:
-            // Grammar: ID=175; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 169:
+            // Grammar: ID=169; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=176
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=170
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 176;
+                        grammar_id = 170;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=177
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=171
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 177;
+                        grammar_id = 171;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=178
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=172
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 178;
+                        grammar_id = 172;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=179
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=173
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 179;
+                        grammar_id = 173;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=180
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=174
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 174;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=181
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=175
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 181;
+                        grammar_id = 175;
                     }
                     break;
                 case 6:
@@ -10487,61 +10342,61 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 176:
-            // Grammar: ID=176; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 170:
+            // Grammar: ID=170; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=177
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=171
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 177;
+                        grammar_id = 171;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=178
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=172
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 178;
+                        grammar_id = 172;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=179
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=173
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 179;
+                        grammar_id = 173;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=180
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=174
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 174;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=181
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=175
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 181;
+                        grammar_id = 175;
                     }
                     break;
                 case 5:
@@ -10565,51 +10420,51 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 177:
-            // Grammar: ID=177; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 171:
+            // Grammar: ID=171; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=178
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=172
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 178;
+                        grammar_id = 172;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=179
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=173
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 179;
+                        grammar_id = 173;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=180
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=174
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 174;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=181
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=175
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 181;
+                        grammar_id = 175;
                     }
                     break;
                 case 4:
@@ -10633,41 +10488,41 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 178:
-            // Grammar: ID=178; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 172:
+            // Grammar: ID=172; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=179
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=173
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 179;
+                        grammar_id = 173;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=180
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=174
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 174;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=181
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=175
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 181;
+                        grammar_id = 175;
                     }
                     break;
                 case 3:
@@ -10691,31 +10546,31 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 179:
-            // Grammar: ID=179; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 173:
+            // Grammar: ID=173; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=180
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=174
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 174;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=181
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=175
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 181;
+                        grammar_id = 175;
                     }
                     break;
                 case 2:
@@ -10739,21 +10594,21 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 180:
-            // Grammar: ID=180; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 174:
+            // Grammar: ID=174; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=181
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=175
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 181;
+                        grammar_id = 175;
                     }
                     break;
                 case 1:
@@ -10777,12 +10632,12 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 }
             }
             break;
-        case 181:
-            // Grammar: ID=181; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
+        case 175:
+            // Grammar: ID=175; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -10810,7 +10665,7 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10859,28 +10714,220 @@ static int decode_iso20_ac_CLResControlModeType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVMaximumChargePower, RationalNumberType (1, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVMaximumDischargePower, RationalNumberType (1, 1); EVMaximumDischargePower_L2, RationalNumberType (0, 1); EVMaximumDischargePower_L3, RationalNumberType (0, 1); EVMinimumDischargePower, RationalNumberType (1, 1); EVMinimumDischargePower_L2, RationalNumberType (0, 1); EVMinimumDischargePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stream, struct iso20_ac_BPT_AC_CPDReqEnergyTransferModeType* BPT_AC_CPDReqEnergyTransferModeType) {
-    int grammar_id = 182;
+    int grammar_id = 176;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(BPT_AC_CPDReqEnergyTransferModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 182:
-            // Grammar: ID=182; read/write bits=1; START (EVMaximumChargePower)
+        case 176:
+            // Grammar: ID=176; read/write bits=1; START (EVMaximumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=183
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=177
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 177;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 177:
+            // Grammar: ID=177; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=178
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 178;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=179
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 179;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=180
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 180;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 178:
+            // Grammar: ID=178; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=179
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 179;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=180
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 180;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 179:
+            // Grammar: ID=179; read/write bits=1; START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=180
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 180;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 180:
+            // Grammar: ID=180; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVMaximumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=181
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 181;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=182
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 182;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=183
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 183;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 181:
+            // Grammar: ID=181; read/write bits=2; START (EVMinimumChargePower_L3), START (EVMaximumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=182
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 182;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=183
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 183;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 182:
+            // Grammar: ID=182; read/write bits=1; START (EVMaximumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=183
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 183;
@@ -10893,36 +10940,36 @@ static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 183:
-            // Grammar: ID=183; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            // Grammar: ID=183; read/write bits=2; START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=184
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=184
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L2_isUsed = 1u;
                         grammar_id = 184;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=185
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=185
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L3_isUsed = 1u;
                         grammar_id = 185;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=186
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=186
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 186;
@@ -10935,26 +10982,26 @@ static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 184:
-            // Grammar: ID=184; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            // Grammar: ID=184; read/write bits=2; START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=185
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=185
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L3_isUsed = 1u;
                         grammar_id = 185;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=186
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=186
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 186;
@@ -10967,16 +11014,16 @@ static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 185:
-            // Grammar: ID=185; read/write bits=1; START (EVMinimumChargePower)
+            // Grammar: ID=185; read/write bits=1; START (EVMinimumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=186
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=186
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 186;
@@ -10989,212 +11036,20 @@ static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 186:
-            // Grammar: ID=186; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVMaximumDischargePower)
+            // Grammar: ID=186; read/write bits=2; START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=187
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 187;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=188
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 188;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=189
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 189;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 187:
-            // Grammar: ID=187; read/write bits=2; START (EVMinimumChargePower_L3), START (EVMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=188
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 188;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=189
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 189;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 188:
-            // Grammar: ID=188; read/write bits=1; START (EVMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=189
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 189;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 189:
-            // Grammar: ID=189; read/write bits=2; START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=190
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 190;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=191
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 191;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=192
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 192;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 190:
-            // Grammar: ID=190; read/write bits=2; START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=191
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDReqEnergyTransferModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 191;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=192
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 192;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 191:
-            // Grammar: ID=191; read/write bits=1; START (EVMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=192
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 192;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 192:
-            // Grammar: ID=192; read/write bits=2; START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=193
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=187
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDReqEnergyTransferModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_AC_CPDReqEnergyTransferModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 193;
+                        grammar_id = 187;
                     }
                     break;
                 case 1:
@@ -11218,12 +11073,12 @@ static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 193:
-            // Grammar: ID=193; read/write bits=2; START (EVMinimumDischargePower_L3), END Element
+        case 187:
+            // Grammar: ID=187; read/write bits=2; START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVMinimumDischargePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -11251,7 +11106,7 @@ static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11281,31 +11136,31 @@ static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); AC_CPDReqEnergyTransferMode, AC_CPDReqEnergyTransferModeType (0, 1); BPT_AC_CPDReqEnergyTransferMode, BPT_AC_CPDReqEnergyTransferModeType (0, 1);
 static int decode_iso20_ac_AC_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, struct iso20_ac_AC_ChargeParameterDiscoveryReqType* AC_ChargeParameterDiscoveryReqType) {
-    int grammar_id = 194;
+    int grammar_id = 188;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_AC_ChargeParameterDiscoveryReqType(AC_ChargeParameterDiscoveryReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 194:
-            // Grammar: ID=194; read/write bits=1; START (Header)
+        case 188:
+            // Grammar: ID=188; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=195
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=189
                     // decode: element
                     error = decode_iso20_ac_MessageHeaderType(stream, &AC_ChargeParameterDiscoveryReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 195;
+                        grammar_id = 189;
                     }
                     break;
                 default:
@@ -11314,12 +11169,12 @@ static int decode_iso20_ac_AC_ChargeParameterDiscoveryReqType(exi_bitstream_t* s
                 }
             }
             break;
-        case 195:
-            // Grammar: ID=195; read/write bits=2; START (AC_CPDReqEnergyTransferMode), START (BPT_AC_CPDReqEnergyTransferMode)
+        case 189:
+            // Grammar: ID=189; read/write bits=2; START (AC_CPDReqEnergyTransferMode), START (BPT_AC_CPDReqEnergyTransferMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (AC_CPDReqEnergyTransferMode, AC_CPDReqEnergyTransferModeType (AC_CPDReqEnergyTransferModeType)); next=2
@@ -11352,7 +11207,7 @@ static int decode_iso20_ac_AC_ChargeParameterDiscoveryReqType(exi_bitstream_t* s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11382,28 +11237,220 @@ static int decode_iso20_ac_AC_ChargeParameterDiscoveryReqType(exi_bitstream_t* s
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVSEMaximumChargePower, RationalNumberType (1, 1); EVSEMaximumChargePower_L2, RationalNumberType (0, 1); EVSEMaximumChargePower_L3, RationalNumberType (0, 1); EVSEMinimumChargePower, RationalNumberType (1, 1); EVSEMinimumChargePower_L2, RationalNumberType (0, 1); EVSEMinimumChargePower_L3, RationalNumberType (0, 1); EVSENominalFrequency, RationalNumberType (1, 1); MaximumPowerAsymmetry, RationalNumberType (0, 1); EVSEPowerRampLimitation, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1); EVSEMaximumDischargePower, RationalNumberType (1, 1); EVSEMaximumDischargePower_L2, RationalNumberType (0, 1); EVSEMaximumDischargePower_L3, RationalNumberType (0, 1); EVSEMinimumDischargePower, RationalNumberType (1, 1); EVSEMinimumDischargePower_L2, RationalNumberType (0, 1); EVSEMinimumDischargePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stream, struct iso20_ac_BPT_AC_CPDResEnergyTransferModeType* BPT_AC_CPDResEnergyTransferModeType) {
-    int grammar_id = 196;
+    int grammar_id = 190;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(BPT_AC_CPDResEnergyTransferModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 196:
-            // Grammar: ID=196; read/write bits=1; START (EVSEMaximumChargePower)
+        case 190:
+            // Grammar: ID=190; read/write bits=1; START (EVSEMaximumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumChargePower, RationalNumberType (RationalNumberType)); next=197
+                    // Event: START (EVSEMaximumChargePower, RationalNumberType (RationalNumberType)); next=191
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 191;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 191:
+            // Grammar: ID=191; read/write bits=2; START (EVSEMaximumChargePower_L2), START (EVSEMaximumChargePower_L3), START (EVSEMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=192
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 192;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=193
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 193;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=194
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 194;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 192:
+            // Grammar: ID=192; read/write bits=2; START (EVSEMaximumChargePower_L3), START (EVSEMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=193
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 193;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=194
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 194;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 193:
+            // Grammar: ID=193; read/write bits=1; START (EVSEMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=194
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 194;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 194:
+            // Grammar: ID=194; read/write bits=2; START (EVSEMinimumChargePower_L2), START (EVSEMinimumChargePower_L3), START (EVSENominalFrequency)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=195
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 195;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=196
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 196;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=197
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
+                    if (error == 0)
+                    {
+                        grammar_id = 197;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 195:
+            // Grammar: ID=195; read/write bits=2; START (EVSEMinimumChargePower_L3), START (EVSENominalFrequency)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=196
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 196;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=197
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
+                    if (error == 0)
+                    {
+                        grammar_id = 197;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 196:
+            // Grammar: ID=196; read/write bits=1; START (EVSENominalFrequency)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=197
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
                     if (error == 0)
                     {
                         grammar_id = 197;
@@ -11416,39 +11463,69 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 197:
-            // Grammar: ID=197; read/write bits=2; START (EVSEMaximumChargePower_L2), START (EVSEMaximumChargePower_L3), START (EVSEMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=197; read/write bits=3; START (MaximumPowerAsymmetry), START (EVSEPowerRampLimitation), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=198
+                    // Event: START (MaximumPowerAsymmetry, RationalNumberType (RationalNumberType)); next=198
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->MaximumPowerAsymmetry);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L2_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->MaximumPowerAsymmetry_isUsed = 1u;
                         grammar_id = 198;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=199
+                    // Event: START (EVSEPowerRampLimitation, RationalNumberType (RationalNumberType)); next=199
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation_isUsed = 1u;
                         grammar_id = 199;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=200
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=200
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 200;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=201
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 201;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=202
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 202;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=203
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 203;
                     }
                     break;
                 default:
@@ -11458,29 +11535,59 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 198:
-            // Grammar: ID=198; read/write bits=2; START (EVSEMaximumChargePower_L3), START (EVSEMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=198; read/write bits=3; START (EVSEPowerRampLimitation), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=199
+                    // Event: START (EVSEPowerRampLimitation, RationalNumberType (RationalNumberType)); next=199
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumChargePower_L3_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation_isUsed = 1u;
                         grammar_id = 199;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=200
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=200
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 200;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=201
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 201;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=202
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 202;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=203
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 203;
                     }
                     break;
                 default:
@@ -11490,19 +11597,49 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 199:
-            // Grammar: ID=199; read/write bits=1; START (EVSEMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=199; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMinimumChargePower, RationalNumberType (RationalNumberType)); next=200
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=200
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 200;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=201
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 201;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=202
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 202;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=203
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 203;
                     }
                     break;
                 default:
@@ -11512,36 +11649,36 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 200:
-            // Grammar: ID=200; read/write bits=2; START (EVSEMinimumChargePower_L2), START (EVSEMinimumChargePower_L3), START (EVSENominalFrequency)
+            // Grammar: ID=200; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=201
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=201
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L2_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 201;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=202
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=202
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 202;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=203
+                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=203
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 203;
@@ -11554,26 +11691,26 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 201:
-            // Grammar: ID=201; read/write bits=2; START (EVSEMinimumChargePower_L3), START (EVSENominalFrequency)
+            // Grammar: ID=201; read/write bits=2; START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=202
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=202
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumChargePower_L3_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 202;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=203
+                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=203
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 203;
@@ -11586,16 +11723,16 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 202:
-            // Grammar: ID=202; read/write bits=1; START (EVSENominalFrequency)
+            // Grammar: ID=202; read/write bits=1; START (EVSEMaximumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSENominalFrequency, RationalNumberType (RationalNumberType)); next=203
+                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=203
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSENominalFrequency);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 203;
@@ -11608,69 +11745,39 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 203:
-            // Grammar: ID=203; read/write bits=3; START (MaximumPowerAsymmetry), START (EVSEPowerRampLimitation), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=203; read/write bits=2; START (EVSEMaximumDischargePower_L2), START (EVSEMaximumDischargePower_L3), START (EVSEMinimumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MaximumPowerAsymmetry, RationalNumberType (RationalNumberType)); next=204
+                    // Event: START (EVSEMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=204
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->MaximumPowerAsymmetry);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L2);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->MaximumPowerAsymmetry_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L2_isUsed = 1u;
                         grammar_id = 204;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPowerRampLimitation, RationalNumberType (RationalNumberType)); next=205
+                    // Event: START (EVSEMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=205
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L3);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L3_isUsed = 1u;
                         grammar_id = 205;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=206
+                    // Event: START (EVSEMinimumDischargePower, RationalNumberType (RationalNumberType)); next=206
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumDischargePower);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 206;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=207
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 207;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=208
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 208;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=209
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 209;
                     }
                     break;
                 default:
@@ -11680,59 +11787,29 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 204:
-            // Grammar: ID=204; read/write bits=3; START (EVSEPowerRampLimitation), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=204; read/write bits=2; START (EVSEMaximumDischargePower_L3), START (EVSEMinimumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPowerRampLimitation, RationalNumberType (RationalNumberType)); next=205
+                    // Event: START (EVSEMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=205
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L3);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPowerRampLimitation_isUsed = 1u;
+                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L3_isUsed = 1u;
                         grammar_id = 205;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=206
+                    // Event: START (EVSEMinimumDischargePower, RationalNumberType (RationalNumberType)); next=206
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumDischargePower);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 206;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=207
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 207;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=208
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 208;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=209
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 209;
                     }
                     break;
                 default:
@@ -11742,49 +11819,19 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 205:
-            // Grammar: ID=205; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=205; read/write bits=1; START (EVSEMinimumDischargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=206
+                    // Event: START (EVSEMinimumDischargePower, RationalNumberType (RationalNumberType)); next=206
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumDischargePower);
                     if (error == 0)
                     {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 206;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=207
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 207;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=208
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 208;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=209
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 209;
                     }
                     break;
                 default:
@@ -11794,212 +11841,20 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             }
             break;
         case 206:
-            // Grammar: ID=206; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
+            // Grammar: ID=206; read/write bits=2; START (EVSEMinimumDischargePower_L2), START (EVSEMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=207
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 207;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=208
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 208;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=209
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 209;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 207:
-            // Grammar: ID=207; read/write bits=2; START (EVSEPresentActivePower_L3), START (EVSEMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=208
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 208;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=209
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 209;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 208:
-            // Grammar: ID=208; read/write bits=1; START (EVSEMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEMaximumDischargePower, RationalNumberType (RationalNumberType)); next=209
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 209;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 209:
-            // Grammar: ID=209; read/write bits=2; START (EVSEMaximumDischargePower_L2), START (EVSEMaximumDischargePower_L3), START (EVSEMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=210
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 210;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=211
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 211;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVSEMinimumDischargePower, RationalNumberType (RationalNumberType)); next=212
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 212;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 210:
-            // Grammar: ID=210; read/write bits=2; START (EVSEMaximumDischargePower_L3), START (EVSEMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=211
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_AC_CPDResEnergyTransferModeType->EVSEMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 211;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSEMinimumDischargePower, RationalNumberType (RationalNumberType)); next=212
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 212;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 211:
-            // Grammar: ID=211; read/write bits=1; START (EVSEMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEMinimumDischargePower, RationalNumberType (RationalNumberType)); next=212
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 212;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 212:
-            // Grammar: ID=212; read/write bits=2; START (EVSEMinimumDischargePower_L2), START (EVSEMinimumDischargePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=213
+                    // Event: START (EVSEMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=207
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_AC_CPDResEnergyTransferModeType->EVSEMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 213;
+                        grammar_id = 207;
                     }
                     break;
                 case 1:
@@ -12023,12 +11878,12 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 213:
-            // Grammar: ID=213; read/write bits=2; START (EVSEMinimumDischargePower_L3), END Element
+        case 207:
+            // Grammar: ID=207; read/write bits=2; START (EVSEMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEMinimumDischargePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -12056,7 +11911,7 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12086,31 +11941,31 @@ static int decode_iso20_ac_BPT_AC_CPDResEnergyTransferModeType(exi_bitstream_t* 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); AC_CPDResEnergyTransferMode, AC_CPDResEnergyTransferModeType (0, 1); BPT_AC_CPDResEnergyTransferMode, BPT_AC_CPDResEnergyTransferModeType (0, 1);
 static int decode_iso20_ac_AC_ChargeParameterDiscoveryResType(exi_bitstream_t* stream, struct iso20_ac_AC_ChargeParameterDiscoveryResType* AC_ChargeParameterDiscoveryResType) {
-    int grammar_id = 214;
+    int grammar_id = 208;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_AC_ChargeParameterDiscoveryResType(AC_ChargeParameterDiscoveryResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 214:
-            // Grammar: ID=214; read/write bits=1; START (Header)
+        case 208:
+            // Grammar: ID=208; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=215
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=209
                     // decode: element
                     error = decode_iso20_ac_MessageHeaderType(stream, &AC_ChargeParameterDiscoveryResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 215;
+                        grammar_id = 209;
                     }
                     break;
                 default:
@@ -12119,15 +11974,15 @@ static int decode_iso20_ac_AC_ChargeParameterDiscoveryResType(exi_bitstream_t* s
                 }
             }
             break;
-        case 215:
-            // Grammar: ID=215; read/write bits=1; START (ResponseCode)
+        case 209:
+            // Grammar: ID=209; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=216
+                    // Event: START (ResponseCode, responseCodeType (string)); next=210
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12157,7 +12012,7 @@ static int decode_iso20_ac_AC_ChargeParameterDiscoveryResType(exi_bitstream_t* s
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 216;
+                                grammar_id = 210;
                             }
                             else
                             {
@@ -12172,12 +12027,12 @@ static int decode_iso20_ac_AC_ChargeParameterDiscoveryResType(exi_bitstream_t* s
                 }
             }
             break;
-        case 216:
-            // Grammar: ID=216; read/write bits=2; START (AC_CPDResEnergyTransferMode), START (BPT_AC_CPDResEnergyTransferMode)
+        case 210:
+            // Grammar: ID=210; read/write bits=2; START (AC_CPDResEnergyTransferMode), START (BPT_AC_CPDResEnergyTransferMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (AC_CPDResEnergyTransferMode, AC_CPDResEnergyTransferModeType (AC_CPDResEnergyTransferModeType)); next=2
@@ -12210,7 +12065,7 @@ static int decode_iso20_ac_AC_ChargeParameterDiscoveryResType(exi_bitstream_t* s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12240,121 +12095,583 @@ static int decode_iso20_ac_AC_ChargeParameterDiscoveryResType(exi_bitstream_t* s
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVMaximumChargePower, RationalNumberType (0, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (0, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (0, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1); EVMaximumDischargePower, RationalNumberType (0, 1); EVMaximumDischargePower_L2, RationalNumberType (0, 1); EVMaximumDischargePower_L3, RationalNumberType (0, 1); EVMinimumDischargePower, RationalNumberType (0, 1); EVMinimumDischargePower_L2, RationalNumberType (0, 1); EVMinimumDischargePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_BPT_Scheduled_AC_CLReqControlModeType* BPT_Scheduled_AC_CLReqControlModeType) {
-    int grammar_id = 217;
+    int grammar_id = 211;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(BPT_Scheduled_AC_CLReqControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 217:
-            // Grammar: ID=217; read/write bits=4; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+        case 211:
+            // Grammar: ID=211; read/write bits=4; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=218
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=212
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest_isUsed = 1u;
-                        grammar_id = 218;
+                        grammar_id = 212;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=219
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=213
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
-                        grammar_id = 219;
+                        grammar_id = 213;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=220
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=214
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 220;
+                        grammar_id = 214;
                     }
                     break;
                 case 3:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=221
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=215
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 221;
+                        grammar_id = 215;
                     }
                     break;
                 case 4:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=222
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=216
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 222;
+                        grammar_id = 216;
                     }
                     break;
                 case 5:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=223
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=217
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 223;
+                        grammar_id = 217;
                     }
                     break;
                 case 6:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=224
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 224;
+                        grammar_id = 218;
                     }
                     break;
                 case 7:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=225
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=219
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 225;
+                        grammar_id = 219;
                     }
                     break;
                 case 8:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
+                        grammar_id = 220;
                     }
                     break;
                 case 9:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 227;
+                        grammar_id = 221;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 212:
+            // Grammar: ID=212; read/write bits=4; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=213
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
+                        grammar_id = 213;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=214
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
+                        grammar_id = 214;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=215
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 215;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=216
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 216;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=217
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 217;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=218
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 218;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=219
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 219;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 220;
+                    }
+                    break;
+                case 8:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 221;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 213:
+            // Grammar: ID=213; read/write bits=4; START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=214
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
+                        grammar_id = 214;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=215
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 215;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=216
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 216;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=217
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 217;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=218
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 218;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=219
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 219;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 220;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 221;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 214:
+            // Grammar: ID=214; read/write bits=3; START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=215
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 215;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=216
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 216;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=217
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 217;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=218
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 218;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=219
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 219;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 220;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 221;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 215:
+            // Grammar: ID=215; read/write bits=3; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=216
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 216;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=217
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 217;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=218
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 218;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=219
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 219;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 220;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 221;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 216:
+            // Grammar: ID=216; read/write bits=3; START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=217
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 217;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=218
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 218;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=219
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 219;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 220;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 221;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 217:
+            // Grammar: ID=217; read/write bits=3; START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=218
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 218;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=219
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 219;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 220;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 221;
                     }
                     break;
                 default:
@@ -12364,99 +12681,39 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
             }
             break;
         case 218:
-            // Grammar: ID=218; read/write bits=4; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            // Grammar: ID=218; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=219
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
-                        grammar_id = 219;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=220
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 220;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=221
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 221;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=222
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 222;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=223
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 223;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=224
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 224;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=225
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=219
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 225;
+                        grammar_id = 219;
                     }
                     break;
-                case 7:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
+                case 1:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
+                        grammar_id = 220;
                     }
                     break;
-                case 8:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
+                case 2:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 227;
+                        grammar_id = 221;
                     }
                     break;
                 default:
@@ -12466,89 +12723,29 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
             }
             break;
         case 219:
-            // Grammar: ID=219; read/write bits=4; START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            // Grammar: ID=219; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=220
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 220;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=221
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 221;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=222
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 222;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=223
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 223;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=224
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 224;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=225
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 225;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=220
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
+                        grammar_id = 220;
                     }
                     break;
-                case 7:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
+                case 1:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 227;
+                        grammar_id = 221;
                     }
                     break;
                 default:
@@ -12558,79 +12755,19 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
             }
             break;
         case 220:
-            // Grammar: ID=220; read/write bits=3; START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=220; read/write bits=1; START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=221
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 221;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=222
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 222;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=223
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 223;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=224
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 224;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=225
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 225;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=221
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 227;
+                        grammar_id = 221;
                     }
                     break;
                 default:
@@ -12640,392 +12777,110 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
             }
             break;
         case 221:
-            // Grammar: ID=221; read/write bits=3; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=222
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 222;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=223
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 223;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=224
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 224;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=225
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 225;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 227;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 222:
-            // Grammar: ID=222; read/write bits=3; START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=223
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 223;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=224
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 224;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=225
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 225;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 227;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 223:
-            // Grammar: ID=223; read/write bits=3; START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=224
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 224;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=225
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 225;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 227;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 224:
-            // Grammar: ID=224; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=225
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 225;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 227;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 225:
-            // Grammar: ID=225; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=226
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 226;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 227;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 226:
-            // Grammar: ID=226; read/write bits=1; START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=227
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 227;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 227:
-            // Grammar: ID=227; read/write bits=4; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+            // Grammar: ID=221; read/write bits=4; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=228
+                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=222
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 228;
+                        grammar_id = 222;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=229
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=223
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 229;
+                        grammar_id = 223;
                     }
                     break;
                 case 2:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=230
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=224
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
-                        grammar_id = 230;
+                        grammar_id = 224;
                     }
                     break;
                 case 3:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=231
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=225
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 231;
+                        grammar_id = 225;
                     }
                     break;
                 case 4:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=232
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=226
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 232;
+                        grammar_id = 226;
                     }
                     break;
                 case 5:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=233
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=227
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_isUsed = 1u;
-                        grammar_id = 233;
+                        grammar_id = 227;
                     }
                     break;
                 case 6:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=234
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=228
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 234;
+                        grammar_id = 228;
                     }
                     break;
                 case 7:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=235
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=229
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 235;
+                        grammar_id = 229;
                     }
                     break;
                 case 8:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 9:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 10:
@@ -13049,101 +12904,101 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 228:
-            // Grammar: ID=228; read/write bits=4; START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 222:
+            // Grammar: ID=222; read/write bits=4; START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=229
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=223
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 229;
+                        grammar_id = 223;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=230
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=224
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
-                        grammar_id = 230;
+                        grammar_id = 224;
                     }
                     break;
                 case 2:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=231
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=225
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 231;
+                        grammar_id = 225;
                     }
                     break;
                 case 3:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=232
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=226
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 232;
+                        grammar_id = 226;
                     }
                     break;
                 case 4:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=233
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=227
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_isUsed = 1u;
-                        grammar_id = 233;
+                        grammar_id = 227;
                     }
                     break;
                 case 5:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=234
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=228
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 234;
+                        grammar_id = 228;
                     }
                     break;
                 case 6:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=235
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=229
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 235;
+                        grammar_id = 229;
                     }
                     break;
                 case 7:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 8:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 9:
@@ -13167,91 +13022,91 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 229:
-            // Grammar: ID=229; read/write bits=4; START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 223:
+            // Grammar: ID=223; read/write bits=4; START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=230
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=224
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
-                        grammar_id = 230;
+                        grammar_id = 224;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=231
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=225
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 231;
+                        grammar_id = 225;
                     }
                     break;
                 case 2:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=232
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=226
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 232;
+                        grammar_id = 226;
                     }
                     break;
                 case 3:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=233
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=227
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_isUsed = 1u;
-                        grammar_id = 233;
+                        grammar_id = 227;
                     }
                     break;
                 case 4:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=234
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=228
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 234;
+                        grammar_id = 228;
                     }
                     break;
                 case 5:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=235
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=229
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 235;
+                        grammar_id = 229;
                     }
                     break;
                 case 6:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 7:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 8:
@@ -13275,81 +13130,81 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 230:
-            // Grammar: ID=230; read/write bits=4; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 224:
+            // Grammar: ID=224; read/write bits=4; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=231
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=225
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 231;
+                        grammar_id = 225;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=232
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=226
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 232;
+                        grammar_id = 226;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=233
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=227
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_isUsed = 1u;
-                        grammar_id = 233;
+                        grammar_id = 227;
                     }
                     break;
                 case 3:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=234
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=228
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 234;
+                        grammar_id = 228;
                     }
                     break;
                 case 4:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=235
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=229
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 235;
+                        grammar_id = 229;
                     }
                     break;
                 case 5:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 6:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 7:
@@ -13373,71 +13228,71 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 231:
-            // Grammar: ID=231; read/write bits=4; START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 225:
+            // Grammar: ID=225; read/write bits=4; START (EVPresentReactivePower_L3), START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=232
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=226
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 232;
+                        grammar_id = 226;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=233
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=227
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_isUsed = 1u;
-                        grammar_id = 233;
+                        grammar_id = 227;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=234
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=228
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 234;
+                        grammar_id = 228;
                     }
                     break;
                 case 3:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=235
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=229
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 235;
+                        grammar_id = 229;
                     }
                     break;
                 case 4:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 5:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 6:
@@ -13461,61 +13316,61 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 232:
-            // Grammar: ID=232; read/write bits=3; START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 226:
+            // Grammar: ID=226; read/write bits=3; START (EVMaximumDischargePower), START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=233
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=227
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_isUsed = 1u;
-                        grammar_id = 233;
+                        grammar_id = 227;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=234
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=228
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 234;
+                        grammar_id = 228;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=235
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=229
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 235;
+                        grammar_id = 229;
                     }
                     break;
                 case 3:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 4:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 5:
@@ -13539,51 +13394,51 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 233:
-            // Grammar: ID=233; read/write bits=3; START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 227:
+            // Grammar: ID=227; read/write bits=3; START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=234
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=228
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 234;
+                        grammar_id = 228;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=235
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=229
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 235;
+                        grammar_id = 229;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 3:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 4:
@@ -13607,41 +13462,41 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 234:
-            // Grammar: ID=234; read/write bits=3; START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 228:
+            // Grammar: ID=228; read/write bits=3; START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=235
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=229
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 235;
+                        grammar_id = 229;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 3:
@@ -13665,31 +13520,31 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 235:
-            // Grammar: ID=235; read/write bits=3; START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 229:
+            // Grammar: ID=229; read/write bits=3; START (EVMinimumDischargePower), START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=236
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=230
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_isUsed = 1u;
-                        grammar_id = 236;
+                        grammar_id = 230;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 2:
@@ -13713,21 +13568,21 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 236:
-            // Grammar: ID=236; read/write bits=2; START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
+        case 230:
+            // Grammar: ID=230; read/write bits=2; START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=237
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=231
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 237;
+                        grammar_id = 231;
                     }
                     break;
                 case 1:
@@ -13751,12 +13606,12 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 237:
-            // Grammar: ID=237; read/write bits=2; START (EVMinimumDischargePower_L3), END Element
+        case 231:
+            // Grammar: ID=231; read/write bits=2; START (EVMinimumDischargePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVMinimumDischargePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -13784,7 +13639,7 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -13814,102 +13669,102 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(exi_bitstream_t
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVSETargetActivePower, RationalNumberType (0, 1); EVSETargetActivePower_L2, RationalNumberType (0, 1); EVSETargetActivePower_L3, RationalNumberType (0, 1); EVSETargetReactivePower, RationalNumberType (0, 1); EVSETargetReactivePower_L2, RationalNumberType (0, 1); EVSETargetReactivePower_L3, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_BPT_Scheduled_AC_CLResControlModeType* BPT_Scheduled_AC_CLResControlModeType) {
-    int grammar_id = 238;
+    int grammar_id = 232;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(BPT_Scheduled_AC_CLResControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 238:
-            // Grammar: ID=238; read/write bits=4; START (EVSETargetActivePower), START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 232:
+            // Grammar: ID=232; read/write bits=4; START (EVSETargetActivePower), START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=239
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=233
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_isUsed = 1u;
-                        grammar_id = 239;
+                        grammar_id = 233;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=240
+                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=234
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
-                        grammar_id = 240;
+                        grammar_id = 234;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=241
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=235
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 241;
+                        grammar_id = 235;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=242
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=236
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 242;
+                        grammar_id = 236;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=243
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=237
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 243;
+                        grammar_id = 237;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=244
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=238
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 244;
+                        grammar_id = 238;
                     }
                     break;
                 case 6:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=245
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 245;
+                        grammar_id = 239;
                     }
                     break;
                 case 7:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=246
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 246;
+                        grammar_id = 240;
                     }
                     break;
                 case 8:
@@ -13933,81 +13788,81 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 239:
-            // Grammar: ID=239; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 233:
+            // Grammar: ID=233; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=240
+                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=234
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
-                        grammar_id = 240;
+                        grammar_id = 234;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=241
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=235
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 241;
+                        grammar_id = 235;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=242
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=236
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 242;
+                        grammar_id = 236;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=243
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=237
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 243;
+                        grammar_id = 237;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=244
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=238
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 244;
+                        grammar_id = 238;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=245
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 245;
+                        grammar_id = 239;
                     }
                     break;
                 case 6:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=246
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 246;
+                        grammar_id = 240;
                     }
                     break;
                 case 7:
@@ -14031,71 +13886,71 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 240:
-            // Grammar: ID=240; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 234:
+            // Grammar: ID=234; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=241
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=235
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 241;
+                        grammar_id = 235;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=242
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=236
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 242;
+                        grammar_id = 236;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=243
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=237
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 243;
+                        grammar_id = 237;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=244
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=238
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 244;
+                        grammar_id = 238;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=245
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 245;
+                        grammar_id = 239;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=246
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 246;
+                        grammar_id = 240;
                     }
                     break;
                 case 6:
@@ -14119,61 +13974,61 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 241:
-            // Grammar: ID=241; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 235:
+            // Grammar: ID=235; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=242
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=236
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 242;
+                        grammar_id = 236;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=243
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=237
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 243;
+                        grammar_id = 237;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=244
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=238
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 244;
+                        grammar_id = 238;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=245
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 245;
+                        grammar_id = 239;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=246
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 246;
+                        grammar_id = 240;
                     }
                     break;
                 case 5:
@@ -14197,51 +14052,51 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 242:
-            // Grammar: ID=242; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 236:
+            // Grammar: ID=236; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=243
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=237
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 243;
+                        grammar_id = 237;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=244
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=238
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 244;
+                        grammar_id = 238;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=245
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 245;
+                        grammar_id = 239;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=246
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 246;
+                        grammar_id = 240;
                     }
                     break;
                 case 4:
@@ -14265,41 +14120,41 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 243:
-            // Grammar: ID=243; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 237:
+            // Grammar: ID=237; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=244
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=238
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 244;
+                        grammar_id = 238;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=245
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 245;
+                        grammar_id = 239;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=246
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 246;
+                        grammar_id = 240;
                     }
                     break;
                 case 3:
@@ -14323,31 +14178,31 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 244:
-            // Grammar: ID=244; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 238:
+            // Grammar: ID=238; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=245
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 245;
+                        grammar_id = 239;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=246
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 246;
+                        grammar_id = 240;
                     }
                     break;
                 case 2:
@@ -14371,21 +14226,21 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 245:
-            // Grammar: ID=245; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 239:
+            // Grammar: ID=239; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=246
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 246;
+                        grammar_id = 240;
                     }
                     break;
                 case 1:
@@ -14409,12 +14264,12 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
                 }
             }
             break;
-        case 246:
-            // Grammar: ID=246; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
+        case 240:
+            // Grammar: ID=240; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -14442,7 +14297,7 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -14472,38 +14327,200 @@ static int decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(exi_bitstream_t
 //          abstract=False; final=False; derivation=extension;
 // Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (1, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1); EVMaximumDischargePower, RationalNumberType (1, 1); EVMaximumDischargePower_L2, RationalNumberType (0, 1); EVMaximumDischargePower_L3, RationalNumberType (0, 1); EVMinimumDischargePower, RationalNumberType (1, 1); EVMinimumDischargePower_L2, RationalNumberType (0, 1); EVMinimumDischargePower_L3, RationalNumberType (0, 1); EVMaximumV2XEnergyRequest, RationalNumberType (0, 1); EVMinimumV2XEnergyRequest, RationalNumberType (0, 1);
 static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_BPT_Dynamic_AC_CLReqControlModeType* BPT_Dynamic_AC_CLReqControlModeType) {
-    int grammar_id = 247;
+    int grammar_id = 241;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(BPT_Dynamic_AC_CLReqControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 247:
-            // Grammar: ID=247; read/write bits=2; START (DepartureTime), START (EVTargetEnergyRequest)
+        case 241:
+            // Grammar: ID=241; read/write bits=2; START (DepartureTime), START (EVTargetEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=248
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=242
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &BPT_Dynamic_AC_CLReqControlModeType->DepartureTime);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLReqControlModeType->DepartureTime_isUsed = 1u;
+                        grammar_id = 242;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=243
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
+                    if (error == 0)
+                    {
+                        grammar_id = 243;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 242:
+            // Grammar: ID=242; read/write bits=1; START (EVTargetEnergyRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=243
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
+                    if (error == 0)
+                    {
+                        grammar_id = 243;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 243:
+            // Grammar: ID=243; read/write bits=1; START (EVMaximumEnergyRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=244
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumEnergyRequest);
+                    if (error == 0)
+                    {
+                        grammar_id = 244;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 244:
+            // Grammar: ID=244; read/write bits=1; START (EVMinimumEnergyRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=245
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    if (error == 0)
+                    {
+                        grammar_id = 245;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 245:
+            // Grammar: ID=245; read/write bits=1; START (EVMaximumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=246
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 246;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 246:
+            // Grammar: ID=246; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=247
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 247;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=248
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 248;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=249
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 249;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 247:
+            // Grammar: ID=247; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=248
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
                         grammar_id = 248;
                     }
                     break;
                 case 1:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=249
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=249
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
                         grammar_id = 249;
@@ -14516,16 +14533,16 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 248:
-            // Grammar: ID=248; read/write bits=1; START (EVTargetEnergyRequest)
+            // Grammar: ID=248; read/write bits=1; START (EVMinimumChargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=249
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=249
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
                         grammar_id = 249;
@@ -14538,19 +14555,39 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 249:
-            // Grammar: ID=249; read/write bits=1; START (EVMaximumEnergyRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=249; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=250
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=250
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2);
                     if (error == 0)
                     {
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
                         grammar_id = 250;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=251
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 251;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=252
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 252;
                     }
                     break;
                 default:
@@ -14560,19 +14597,29 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 250:
-            // Grammar: ID=250; read/write bits=1; START (EVMinimumEnergyRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=250; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=251
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=251
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
                         grammar_id = 251;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=252
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 252;
                     }
                     break;
                 default:
@@ -14582,16 +14629,16 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 251:
-            // Grammar: ID=251; read/write bits=1; START (EVMaximumChargePower)
+            // Grammar: ID=251; read/write bits=1; START (EVPresentActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=252
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=252
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
                         grammar_id = 252;
@@ -14604,36 +14651,36 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 252:
-            // Grammar: ID=252; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            // Grammar: ID=252; read/write bits=2; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=253
+                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=253
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 253;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=254
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=254
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 254;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=255
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=255
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
                         grammar_id = 255;
@@ -14646,26 +14693,26 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 253:
-            // Grammar: ID=253; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            // Grammar: ID=253; read/write bits=2; START (EVPresentActivePower_L3), START (EVPresentReactivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=254
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=254
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 254;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=255
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=255
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
                         grammar_id = 255;
@@ -14678,16 +14725,16 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 254:
-            // Grammar: ID=254; read/write bits=1; START (EVMinimumChargePower)
+            // Grammar: ID=254; read/write bits=1; START (EVPresentReactivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=255
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=255
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
                         grammar_id = 255;
@@ -14700,36 +14747,36 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 255:
-            // Grammar: ID=255; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            // Grammar: ID=255; read/write bits=2; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=256
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=256
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
                         grammar_id = 256;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=257
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=257
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
                         grammar_id = 257;
                     }
                     break;
                 case 2:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=258
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=258
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 258;
@@ -14742,26 +14789,26 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 256:
-            // Grammar: ID=256; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            // Grammar: ID=256; read/write bits=2; START (EVPresentReactivePower_L3), START (EVMaximumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=257
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=257
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
                         grammar_id = 257;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=258
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=258
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 258;
@@ -14774,16 +14821,16 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 257:
-            // Grammar: ID=257; read/write bits=1; START (EVPresentActivePower)
+            // Grammar: ID=257; read/write bits=1; START (EVMaximumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=258
+                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=258
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 258;
@@ -14796,36 +14843,36 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 258:
-            // Grammar: ID=258; read/write bits=2; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower)
+            // Grammar: ID=258; read/write bits=2; START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=259
+                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=259
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
                         grammar_id = 259;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=260
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=260
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
                         grammar_id = 260;
                     }
                     break;
                 case 2:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=261
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=261
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 261;
@@ -14838,26 +14885,26 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 259:
-            // Grammar: ID=259; read/write bits=2; START (EVPresentActivePower_L3), START (EVPresentReactivePower)
+            // Grammar: ID=259; read/write bits=2; START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=260
+                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=260
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
                     if (error == 0)
                     {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
+                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
                         grammar_id = 260;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=261
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=261
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 261;
@@ -14870,16 +14917,16 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 260:
-            // Grammar: ID=260; read/write bits=1; START (EVPresentReactivePower)
+            // Grammar: ID=260; read/write bits=1; START (EVMinimumDischargePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=261
+                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=261
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower);
                     if (error == 0)
                     {
                         grammar_id = 261;
@@ -14892,232 +14939,40 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             }
             break;
         case 261:
-            // Grammar: ID=261; read/write bits=2; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), START (EVMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=262
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 262;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=263
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 263;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=264
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 264;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 262:
-            // Grammar: ID=262; read/write bits=2; START (EVPresentReactivePower_L3), START (EVMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=263
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 263;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=264
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 264;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 263:
-            // Grammar: ID=263; read/write bits=1; START (EVMaximumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumDischargePower, RationalNumberType (RationalNumberType)); next=264
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 264;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 264:
-            // Grammar: ID=264; read/write bits=2; START (EVMaximumDischargePower_L2), START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumDischargePower_L2, RationalNumberType (RationalNumberType)); next=265
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L2);
-                    if (error == 0)
-                    {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 265;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=266
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 266;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=267
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 267;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 265:
-            // Grammar: ID=265; read/write bits=2; START (EVMaximumDischargePower_L3), START (EVMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMaximumDischargePower_L3, RationalNumberType (RationalNumberType)); next=266
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L3);
-                    if (error == 0)
-                    {
-                        BPT_Dynamic_AC_CLReqControlModeType->EVMaximumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 266;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=267
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 267;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 266:
-            // Grammar: ID=266; read/write bits=1; START (EVMinimumDischargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVMinimumDischargePower, RationalNumberType (RationalNumberType)); next=267
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 267;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 267:
-            // Grammar: ID=267; read/write bits=3; START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
+            // Grammar: ID=261; read/write bits=3; START (EVMinimumDischargePower_L2), START (EVMinimumDischargePower_L3), START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=268
+                    // Event: START (EVMinimumDischargePower_L2, RationalNumberType (RationalNumberType)); next=262
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower_L2_isUsed = 1u;
-                        grammar_id = 268;
+                        grammar_id = 262;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumDischargePower_L3, RationalNumberType (RationalNumberType)); next=269
+                    // Event: START (EVMinimumDischargePower_L3, RationalNumberType (RationalNumberType)); next=263
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 269;
+                        grammar_id = 263;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=270
+                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=264
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumV2XEnergyRequest);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLReqControlModeType->EVMaximumV2XEnergyRequest_isUsed = 1u;
-                        grammar_id = 270;
+                        grammar_id = 264;
                     }
                     break;
                 case 3:
@@ -15141,31 +14996,31 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 268:
-            // Grammar: ID=268; read/write bits=3; START (EVMinimumDischargePower_L3), START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
+        case 262:
+            // Grammar: ID=262; read/write bits=3; START (EVMinimumDischargePower_L3), START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumDischargePower_L3, RationalNumberType (RationalNumberType)); next=269
+                    // Event: START (EVMinimumDischargePower_L3, RationalNumberType (RationalNumberType)); next=263
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLReqControlModeType->EVMinimumDischargePower_L3_isUsed = 1u;
-                        grammar_id = 269;
+                        grammar_id = 263;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=270
+                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=264
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumV2XEnergyRequest);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLReqControlModeType->EVMaximumV2XEnergyRequest_isUsed = 1u;
-                        grammar_id = 270;
+                        grammar_id = 264;
                     }
                     break;
                 case 2:
@@ -15189,21 +15044,21 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 269:
-            // Grammar: ID=269; read/write bits=2; START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
+        case 263:
+            // Grammar: ID=263; read/write bits=2; START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=270
+                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=264
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLReqControlModeType->EVMaximumV2XEnergyRequest);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLReqControlModeType->EVMaximumV2XEnergyRequest_isUsed = 1u;
-                        grammar_id = 270;
+                        grammar_id = 264;
                     }
                     break;
                 case 1:
@@ -15227,12 +15082,12 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 270:
-            // Grammar: ID=270; read/write bits=2; START (EVMinimumV2XEnergyRequest), END Element
+        case 264:
+            // Grammar: ID=264; read/write bits=2; START (EVMinimumV2XEnergyRequest), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVMinimumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=2
@@ -15260,7 +15115,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15290,31 +15145,31 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); DisplayParameters, DisplayParametersType (0, 1); MeterInfoRequested, boolean (1, 1); BPT_Dynamic_AC_CLReqControlMode, BPT_Dynamic_AC_CLReqControlModeType (0, 1); BPT_Scheduled_AC_CLReqControlMode, BPT_Scheduled_AC_CLReqControlModeType (0, 1); CLReqControlMode, CLReqControlModeType (0, 1); Dynamic_AC_CLReqControlMode, Dynamic_AC_CLReqControlModeType (0, 1); Scheduled_AC_CLReqControlMode, Scheduled_AC_CLReqControlModeType (0, 1);
 static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct iso20_ac_AC_ChargeLoopReqType* AC_ChargeLoopReqType) {
-    int grammar_id = 271;
+    int grammar_id = 265;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_AC_ChargeLoopReqType(AC_ChargeLoopReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 271:
-            // Grammar: ID=271; read/write bits=1; START (Header)
+        case 265:
+            // Grammar: ID=265; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=272
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=266
                     // decode: element
                     error = decode_iso20_ac_MessageHeaderType(stream, &AC_ChargeLoopReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 272;
+                        grammar_id = 266;
                     }
                     break;
                 default:
@@ -15323,25 +15178,25 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 272:
-            // Grammar: ID=272; read/write bits=2; START (DisplayParameters), START (MeterInfoRequested)
+        case 266:
+            // Grammar: ID=266; read/write bits=2; START (DisplayParameters), START (MeterInfoRequested)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DisplayParameters, DisplayParametersType (DisplayParametersType)); next=273
+                    // Event: START (DisplayParameters, DisplayParametersType (DisplayParametersType)); next=267
                     // decode: element
                     error = decode_iso20_ac_DisplayParametersType(stream, &AC_ChargeLoopReqType->DisplayParameters);
                     if (error == 0)
                     {
                         AC_ChargeLoopReqType->DisplayParameters_isUsed = 1u;
-                        grammar_id = 273;
+                        grammar_id = 267;
                     }
                     break;
                 case 1:
-                    // Event: START (MeterInfoRequested, boolean (boolean)); next=274
+                    // Event: START (MeterInfoRequested, boolean (boolean)); next=268
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15371,7 +15226,7 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 274;
+                                grammar_id = 268;
                             }
                             else
                             {
@@ -15386,15 +15241,15 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 273:
-            // Grammar: ID=273; read/write bits=1; START (MeterInfoRequested)
+        case 267:
+            // Grammar: ID=267; read/write bits=1; START (MeterInfoRequested)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterInfoRequested, boolean (boolean)); next=274
+                    // Event: START (MeterInfoRequested, boolean (boolean)); next=268
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15424,7 +15279,7 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 274;
+                                grammar_id = 268;
                             }
                             else
                             {
@@ -15439,12 +15294,12 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 274:
-            // Grammar: ID=274; read/write bits=3; START (BPT_Dynamic_AC_CLReqControlMode), START (BPT_Scheduled_AC_CLReqControlMode), START (CLReqControlMode), START (Dynamic_AC_CLReqControlMode), START (Scheduled_AC_CLReqControlMode)
+        case 268:
+            // Grammar: ID=268; read/write bits=3; START (BPT_Dynamic_AC_CLReqControlMode), START (BPT_Scheduled_AC_CLReqControlMode), START (CLReqControlMode), START (Dynamic_AC_CLReqControlMode), START (Scheduled_AC_CLReqControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (BPT_Dynamic_AC_CLReqControlMode, BPT_Dynamic_AC_CLReqControlModeType (Dynamic_AC_CLReqControlModeType)); next=2
@@ -15507,7 +15362,7 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15537,36 +15392,36 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AckMaxDelay, unsignedShort (0, 1); EVSETargetActivePower, RationalNumberType (1, 1); EVSETargetActivePower_L2, RationalNumberType (0, 1); EVSETargetActivePower_L3, RationalNumberType (0, 1); EVSETargetReactivePower, RationalNumberType (0, 1); EVSETargetReactivePower_L2, RationalNumberType (0, 1); EVSETargetReactivePower_L3, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
 static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_BPT_Dynamic_AC_CLResControlModeType* BPT_Dynamic_AC_CLResControlModeType) {
-    int grammar_id = 275;
+    int grammar_id = 269;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(BPT_Dynamic_AC_CLResControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 275:
-            // Grammar: ID=275; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+        case 269:
+            // Grammar: ID=269; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=276
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=270
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &BPT_Dynamic_AC_CLResControlModeType->DepartureTime);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->DepartureTime_isUsed = 1u;
-                        grammar_id = 276;
+                        grammar_id = 270;
                     }
                     break;
                 case 1:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=277
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=271
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15597,7 +15452,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 277;
+                                grammar_id = 271;
                             }
                             else
                             {
@@ -15607,7 +15462,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                     }
                     break;
                 case 2:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=278
+                    // Event: START (TargetSOC, percentValueType (byte)); next=272
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15638,7 +15493,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 278;
+                                grammar_id = 272;
                             }
                             else
                             {
@@ -15648,22 +15503,22 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                     }
                     break;
                 case 3:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=279
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=273
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &BPT_Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 279;
+                        grammar_id = 273;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=280
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=274
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 280;
+                        grammar_id = 274;
                     }
                     break;
                 default:
@@ -15672,15 +15527,15 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 276:
-            // Grammar: ID=276; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+        case 270:
+            // Grammar: ID=270; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=277
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=271
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15711,7 +15566,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 277;
+                                grammar_id = 271;
                             }
                             else
                             {
@@ -15721,7 +15576,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                     }
                     break;
                 case 1:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=278
+                    // Event: START (TargetSOC, percentValueType (byte)); next=272
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15752,7 +15607,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 278;
+                                grammar_id = 272;
                             }
                             else
                             {
@@ -15762,22 +15617,22 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                     }
                     break;
                 case 2:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=279
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=273
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &BPT_Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 279;
+                        grammar_id = 273;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=280
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=274
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 280;
+                        grammar_id = 274;
                     }
                     break;
                 default:
@@ -15786,15 +15641,15 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 277:
-            // Grammar: ID=277; read/write bits=2; START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+        case 271:
+            // Grammar: ID=271; read/write bits=2; START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=278
+                    // Event: START (TargetSOC, percentValueType (byte)); next=272
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15825,7 +15680,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 278;
+                                grammar_id = 272;
                             }
                             else
                             {
@@ -15835,22 +15690,22 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                     }
                     break;
                 case 1:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=279
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=273
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &BPT_Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 279;
+                        grammar_id = 273;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=280
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=274
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 280;
+                        grammar_id = 274;
                     }
                     break;
                 default:
@@ -15859,30 +15714,30 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 278:
-            // Grammar: ID=278; read/write bits=2; START (AckMaxDelay), START (EVSETargetActivePower)
+        case 272:
+            // Grammar: ID=272; read/write bits=2; START (AckMaxDelay), START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=279
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=273
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &BPT_Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 279;
+                        grammar_id = 273;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=280
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=274
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 280;
+                        grammar_id = 274;
                     }
                     break;
                 default:
@@ -15891,20 +15746,20 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 279:
-            // Grammar: ID=279; read/write bits=1; START (EVSETargetActivePower)
+        case 273:
+            // Grammar: ID=273; read/write bits=1; START (EVSETargetActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=280
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=274
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 280;
+                        grammar_id = 274;
                     }
                     break;
                 default:
@@ -15913,81 +15768,81 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 280:
-            // Grammar: ID=280; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 274:
+            // Grammar: ID=274; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=281
+                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=275
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
-                        grammar_id = 281;
+                        grammar_id = 275;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=282
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=276
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 282;
+                        grammar_id = 276;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=283
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=277
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 283;
+                        grammar_id = 277;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=284
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=278
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 284;
+                        grammar_id = 278;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=285
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=279
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 285;
+                        grammar_id = 279;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=286
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=280
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 286;
+                        grammar_id = 280;
                     }
                     break;
                 case 6:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=287
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=281
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 287;
+                        grammar_id = 281;
                     }
                     break;
                 case 7:
@@ -16011,71 +15866,71 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 281:
-            // Grammar: ID=281; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 275:
+            // Grammar: ID=275; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=282
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=276
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 282;
+                        grammar_id = 276;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=283
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=277
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 283;
+                        grammar_id = 277;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=284
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=278
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 284;
+                        grammar_id = 278;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=285
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=279
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 285;
+                        grammar_id = 279;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=286
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=280
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 286;
+                        grammar_id = 280;
                     }
                     break;
                 case 5:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=287
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=281
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 287;
+                        grammar_id = 281;
                     }
                     break;
                 case 6:
@@ -16099,61 +15954,61 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 282:
-            // Grammar: ID=282; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 276:
+            // Grammar: ID=276; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=283
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=277
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
-                        grammar_id = 283;
+                        grammar_id = 277;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=284
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=278
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 284;
+                        grammar_id = 278;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=285
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=279
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 285;
+                        grammar_id = 279;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=286
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=280
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 286;
+                        grammar_id = 280;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=287
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=281
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 287;
+                        grammar_id = 281;
                     }
                     break;
                 case 5:
@@ -16177,51 +16032,51 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 283:
-            // Grammar: ID=283; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 277:
+            // Grammar: ID=277; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=284
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=278
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
-                        grammar_id = 284;
+                        grammar_id = 278;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=285
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=279
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 285;
+                        grammar_id = 279;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=286
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=280
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 286;
+                        grammar_id = 280;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=287
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=281
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 287;
+                        grammar_id = 281;
                     }
                     break;
                 case 4:
@@ -16245,41 +16100,41 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 284:
-            // Grammar: ID=284; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 278:
+            // Grammar: ID=278; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=285
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=279
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 285;
+                        grammar_id = 279;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=286
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=280
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 286;
+                        grammar_id = 280;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=287
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=281
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 287;
+                        grammar_id = 281;
                     }
                     break;
                 case 3:
@@ -16303,31 +16158,31 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 285:
-            // Grammar: ID=285; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 279:
+            // Grammar: ID=279; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=286
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=280
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 286;
+                        grammar_id = 280;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=287
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=281
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 287;
+                        grammar_id = 281;
                     }
                     break;
                 case 2:
@@ -16351,21 +16206,21 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 286:
-            // Grammar: ID=286; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 280:
+            // Grammar: ID=280; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=287
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=281
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
                         BPT_Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 287;
+                        grammar_id = 281;
                     }
                     break;
                 case 1:
@@ -16389,12 +16244,12 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
                 }
             }
             break;
-        case 287:
-            // Grammar: ID=287; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
+        case 281:
+            // Grammar: ID=281; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
@@ -16422,7 +16277,7 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16452,31 +16307,31 @@ static int decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(exi_bitstream_t* 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEStatus, EVSEStatusType (0, 1); MeterInfo, MeterInfoType (0, 1); Receipt, ReceiptType (0, 1); EVSETargetFrequency, RationalNumberType (0, 1); BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (0, 1); BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (0, 1); CLResControlMode, CLResControlModeType (0, 1); Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType (0, 1); Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType (0, 1);
 static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct iso20_ac_AC_ChargeLoopResType* AC_ChargeLoopResType) {
-    int grammar_id = 288;
+    int grammar_id = 282;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_AC_ChargeLoopResType(AC_ChargeLoopResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 288:
-            // Grammar: ID=288; read/write bits=1; START (Header)
+        case 282:
+            // Grammar: ID=282; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=289
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=283
                     // decode: element
                     error = decode_iso20_ac_MessageHeaderType(stream, &AC_ChargeLoopResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 289;
+                        grammar_id = 283;
                     }
                     break;
                 default:
@@ -16485,15 +16340,15 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 289:
-            // Grammar: ID=289; read/write bits=1; START (ResponseCode)
+        case 283:
+            // Grammar: ID=283; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=290
+                    // Event: START (ResponseCode, responseCodeType (string)); next=284
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -16523,7 +16378,7 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 290;
+                                grammar_id = 284;
                             }
                             else
                             {
@@ -16538,51 +16393,51 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 290:
-            // Grammar: ID=290; read/write bits=4; START (EVSEStatus), START (MeterInfo), START (Receipt), START (EVSETargetFrequency), START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
+        case 284:
+            // Grammar: ID=284; read/write bits=4; START (EVSEStatus), START (MeterInfo), START (Receipt), START (EVSETargetFrequency), START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEStatus, EVSEStatusType (EVSEStatusType)); next=291
+                    // Event: START (EVSEStatus, EVSEStatusType (EVSEStatusType)); next=285
                     // decode: element
                     error = decode_iso20_ac_EVSEStatusType(stream, &AC_ChargeLoopResType->EVSEStatus);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->EVSEStatus_isUsed = 1u;
-                        grammar_id = 291;
+                        grammar_id = 285;
                     }
                     break;
                 case 1:
-                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=292
+                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=286
                     // decode: element
                     error = decode_iso20_ac_MeterInfoType(stream, &AC_ChargeLoopResType->MeterInfo);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->MeterInfo_isUsed = 1u;
-                        grammar_id = 292;
+                        grammar_id = 286;
                     }
                     break;
                 case 2:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=293
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=287
                     // decode: element
                     error = decode_iso20_ac_ReceiptType(stream, &AC_ChargeLoopResType->Receipt);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 293;
+                        grammar_id = 287;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetFrequency, RationalNumberType (RationalNumberType)); next=294
+                    // Event: START (EVSETargetFrequency, RationalNumberType (RationalNumberType)); next=288
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_ChargeLoopResType->EVSETargetFrequency);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->EVSETargetFrequency_isUsed = 1u;
-                        grammar_id = 294;
+                        grammar_id = 288;
                     }
                     break;
                 case 4:
@@ -16641,41 +16496,41 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 291:
-            // Grammar: ID=291; read/write bits=4; START (MeterInfo), START (Receipt), START (EVSETargetFrequency), START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
+        case 285:
+            // Grammar: ID=285; read/write bits=4; START (MeterInfo), START (Receipt), START (EVSETargetFrequency), START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=292
+                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=286
                     // decode: element
                     error = decode_iso20_ac_MeterInfoType(stream, &AC_ChargeLoopResType->MeterInfo);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->MeterInfo_isUsed = 1u;
-                        grammar_id = 292;
+                        grammar_id = 286;
                     }
                     break;
                 case 1:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=293
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=287
                     // decode: element
                     error = decode_iso20_ac_ReceiptType(stream, &AC_ChargeLoopResType->Receipt);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 293;
+                        grammar_id = 287;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetFrequency, RationalNumberType (RationalNumberType)); next=294
+                    // Event: START (EVSETargetFrequency, RationalNumberType (RationalNumberType)); next=288
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_ChargeLoopResType->EVSETargetFrequency);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->EVSETargetFrequency_isUsed = 1u;
-                        grammar_id = 294;
+                        grammar_id = 288;
                     }
                     break;
                 case 3:
@@ -16734,31 +16589,31 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 292:
-            // Grammar: ID=292; read/write bits=3; START (Receipt), START (EVSETargetFrequency), START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
+        case 286:
+            // Grammar: ID=286; read/write bits=3; START (Receipt), START (EVSETargetFrequency), START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=293
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=287
                     // decode: element
                     error = decode_iso20_ac_ReceiptType(stream, &AC_ChargeLoopResType->Receipt);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->Receipt_isUsed = 1u;
-                        grammar_id = 293;
+                        grammar_id = 287;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetFrequency, RationalNumberType (RationalNumberType)); next=294
+                    // Event: START (EVSETargetFrequency, RationalNumberType (RationalNumberType)); next=288
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_ChargeLoopResType->EVSETargetFrequency);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->EVSETargetFrequency_isUsed = 1u;
-                        grammar_id = 294;
+                        grammar_id = 288;
                     }
                     break;
                 case 2:
@@ -16817,21 +16672,21 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 293:
-            // Grammar: ID=293; read/write bits=3; START (EVSETargetFrequency), START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
+        case 287:
+            // Grammar: ID=287; read/write bits=3; START (EVSETargetFrequency), START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetFrequency, RationalNumberType (RationalNumberType)); next=294
+                    // Event: START (EVSETargetFrequency, RationalNumberType (RationalNumberType)); next=288
                     // decode: element
                     error = decode_iso20_ac_RationalNumberType(stream, &AC_ChargeLoopResType->EVSETargetFrequency);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->EVSETargetFrequency_isUsed = 1u;
-                        grammar_id = 294;
+                        grammar_id = 288;
                     }
                     break;
                 case 1:
@@ -16890,12 +16745,12 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 294:
-            // Grammar: ID=294; read/write bits=3; START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
+        case 288:
+            // Grammar: ID=288; read/write bits=3; START (BPT_Dynamic_AC_CLResControlMode), START (BPT_Scheduled_AC_CLResControlMode), START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=2
@@ -16958,7 +16813,7 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16986,28 +16841,28 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Manifest; type={http://www.w3.org/2000/09/xmldsig#}ManifestType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4);
+// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac_ManifestType* ManifestType) {
-    int grammar_id = 295;
+    int grammar_id = 289;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_ManifestType(ManifestType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 295:
-            // Grammar: ID=295; read/write bits=2; START (Id), START (Reference)
+        case 289:
+            // Grammar: ID=289; read/write bits=2; START (Id), START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=298
+                    // Event: START (Id, ID (NCName)); next=291
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ManifestType->Id.charactersLen);
                     if (error == 0)
@@ -17025,10 +16880,10 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
                         }
                     }
                     ManifestType->Id_isUsed = 1u;
-                    grammar_id = 298;
+                    grammar_id = 291;
                     break;
                 case 1:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=296
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=290
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_ac_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -17036,9 +16891,10 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 296;
+                    grammar_id = 290;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -17046,15 +16902,15 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
                 }
             }
             break;
-        case 296:
-            // Grammar: ID=296; read/write bits=2; LOOP (Reference), END Element
+        case 290:
+            // Grammar: ID=290; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=296
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=290
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_ac_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -17062,9 +16918,10 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 296;
+                    grammar_id = 290;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -17077,46 +16934,15 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
                 }
             }
             break;
-        case 297:
-            // Grammar: ID=297; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_ac_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 298:
-            // Grammar: ID=298; read/write bits=1; START (Reference)
+        case 291:
+            // Grammar: ID=291; read/write bits=1; START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=299
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=292
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_ac_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -17124,9 +16950,10 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 299;
+                    grammar_id = 292;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -17134,15 +16961,15 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
                 }
             }
             break;
-        case 299:
-            // Grammar: ID=299; read/write bits=2; LOOP (Reference), END Element
+        case 292:
+            // Grammar: ID=292; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=299
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=292
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_ac_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -17150,40 +16977,10 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ac_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 299;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 300:
-            // Grammar: ID=300; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_ac_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ac_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
+                    grammar_id = 292;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -17201,7 +16998,7 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -17229,28 +17026,28 @@ static int decode_iso20_ac_ManifestType(exi_bitstream_t* stream, struct iso20_ac
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperties; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertiesType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1);
+// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1) (original max unbounded);
 static int decode_iso20_ac_SignaturePropertiesType(exi_bitstream_t* stream, struct iso20_ac_SignaturePropertiesType* SignaturePropertiesType) {
-    int grammar_id = 301;
+    int grammar_id = 293;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ac_SignaturePropertiesType(SignaturePropertiesType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 301:
-            // Grammar: ID=301; read/write bits=2; START (Id), START (SignatureProperty)
+        case 293:
+            // Grammar: ID=293; read/write bits=2; START (Id), START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=303
+                    // Event: START (Id, ID (NCName)); next=295
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertiesType->Id.charactersLen);
                     if (error == 0)
@@ -17268,15 +17065,15 @@ static int decode_iso20_ac_SignaturePropertiesType(exi_bitstream_t* stream, stru
                         }
                     }
                     SignaturePropertiesType->Id_isUsed = 1u;
-                    grammar_id = 303;
+                    grammar_id = 295;
                     break;
                 case 1:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=302
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=294
                     // decode: element
                     error = decode_iso20_ac_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == 0)
                     {
-                        grammar_id = 302;
+                        grammar_id = 294;
                     }
                     break;
                 default:
@@ -17285,21 +17082,18 @@ static int decode_iso20_ac_SignaturePropertiesType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 302:
-            // Grammar: ID=302; read/write bits=2; START (SignatureProperty), END Element
+        case 294:
+            // Grammar: ID=294; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -17312,20 +17106,20 @@ static int decode_iso20_ac_SignaturePropertiesType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 303:
-            // Grammar: ID=303; read/write bits=1; START (SignatureProperty)
+        case 295:
+            // Grammar: ID=295; read/write bits=1; START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=304
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=296
                     // decode: element
                     error = decode_iso20_ac_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == 0)
                     {
-                        grammar_id = 304;
+                        grammar_id = 296;
                     }
                     break;
                 default:
@@ -17334,21 +17128,18 @@ static int decode_iso20_ac_SignaturePropertiesType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 304:
-            // Grammar: ID=304; read/write bits=2; START (SignatureProperty), END Element
+        case 296:
+            // Grammar: ID=296; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -17366,7 +17157,7 @@ static int decode_iso20_ac_SignaturePropertiesType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -17405,7 +17196,7 @@ int decode_iso20_ac_exiDocument(exi_bitstream_t* stream, struct iso20_ac_exiDocu
         error = exi_basetypes_decoder_nbit_uint(stream, 6, &eventCode);
         if (error == 0)
         {
-            switch(eventCode)
+            switch (eventCode)
             {
             case 0:
                 error = decode_iso20_ac_AC_CPDReqEnergyTransferModeType(stream, &exiDoc->AC_CPDReqEnergyTransferMode);
@@ -17595,7 +17386,7 @@ int decode_iso20_ac_exiFragment(exi_bitstream_t* stream, struct iso20_ac_exiFrag
         if (error == EXI_ERROR__NO_ERROR)
         {
             error = EXI_ERROR__NOT_IMPLEMENTED_YET;
-            switch(eventCode)
+            switch (eventCode)
             {
             case 0:
                 // AC_CPDReqEnergyTransferMode (urn:iso:std:iso:15118:-20:AC)
@@ -18099,7 +17890,7 @@ int decode_iso20_ac_xmldsigFragment(exi_bitstream_t* stream, struct iso20_ac_xml
         if (error == EXI_ERROR__NO_ERROR)
         {
             error = EXI_ERROR__NOT_IMPLEMENTED_YET;
-            switch(eventCode)
+            switch (eventCode)
             {
             case 0:
                 // CanonicalizationMethod (http://www.w3.org/2000/09/xmldsig#)

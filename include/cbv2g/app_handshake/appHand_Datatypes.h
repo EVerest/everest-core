@@ -72,7 +72,7 @@ struct appHand_AppProtocolType {
 
 // Element: definition=complex; name={urn:iso:15118:2:2010:AppProtocol}supportedAppProtocolReq; type=AnonymousType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: AppProtocol, AppProtocolType (1, 5);
+// Particle: AppProtocol, AppProtocolType (1, 5) (original max 20);
 struct appHand_supportedAppProtocolReq {
     // AppProtocol, AppProtocolType
     struct {

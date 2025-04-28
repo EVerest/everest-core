@@ -126,6 +126,10 @@ void init_din_SAScheduleTupleType(struct din_SAScheduleTupleType* SAScheduleTupl
     SAScheduleTupleType->SalesTariff_isUsed = 0u;
 }
 
+void init_din_AC_EVSEStatusType(struct din_AC_EVSEStatusType* AC_EVSEStatusType) {
+    (void) AC_EVSEStatusType;
+}
+
 void init_din_SignatureMethodType(struct din_SignatureMethodType* SignatureMethodType) {
     SignatureMethodType->HMACOutputLength_isUsed = 0u;
     SignatureMethodType->ANY_isUsed = 0u;
@@ -180,10 +184,6 @@ void init_din_SignedInfoType(struct din_SignedInfoType* SignedInfoType) {
     SignedInfoType->Id_isUsed = 0u;
 }
 
-void init_din_CertificateChainType(struct din_CertificateChainType* CertificateChainType) {
-    CertificateChainType->SubCertificates_isUsed = 0u;
-}
-
 void init_din_DC_EVStatusType(struct din_DC_EVStatusType* DC_EVStatusType) {
     DC_EVStatusType->EVCabinConditioning_isUsed = 0u;
     DC_EVStatusType->EVRESSConditioning_isUsed = 0u;
@@ -193,16 +193,20 @@ void init_din_SignatureValueType(struct din_SignatureValueType* SignatureValueTy
     SignatureValueType->Id_isUsed = 0u;
 }
 
+void init_din_CertificateChainType(struct din_CertificateChainType* CertificateChainType) {
+    CertificateChainType->SubCertificates_isUsed = 0u;
+}
+
 void init_din_DC_EVSEStatusType(struct din_DC_EVSEStatusType* DC_EVSEStatusType) {
     DC_EVSEStatusType->EVSEIsolationStatus_isUsed = 0u;
 }
 
-void init_din_AC_EVSEStatusType(struct din_AC_EVSEStatusType* AC_EVSEStatusType) {
-    (void) AC_EVSEStatusType;
+void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType) {
+    PhysicalValueType->Unit_isUsed = 0u;
 }
 
-void init_din_EVSEStatusType(struct din_EVSEStatusType* EVSEStatusType) {
-    (void) EVSEStatusType;
+void init_din_ListOfRootCertificateIDsType(struct din_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType) {
+    ListOfRootCertificateIDsType->RootCertificateID.arrayLen = 0u;
 }
 
 void init_din_PaymentOptionsType(struct din_PaymentOptionsType* PaymentOptionsType) {
@@ -233,6 +237,10 @@ void init_din_ChargingProfileType(struct din_ChargingProfileType* ChargingProfil
     ChargingProfileType->ProfileEntry.arrayLen = 0u;
 }
 
+void init_din_EVSEStatusType(struct din_EVSEStatusType* EVSEStatusType) {
+    (void) EVSEStatusType;
+}
+
 void init_din_KeyInfoType(struct din_KeyInfoType* KeyInfoType) {
     KeyInfoType->Id_isUsed = 0u;
     KeyInfoType->KeyName_isUsed = 0u;
@@ -243,10 +251,6 @@ void init_din_KeyInfoType(struct din_KeyInfoType* KeyInfoType) {
     KeyInfoType->SPKIData_isUsed = 0u;
     KeyInfoType->MgmtData_isUsed = 0u;
     KeyInfoType->ANY_isUsed = 0u;
-}
-
-void init_din_ListOfRootCertificateIDsType(struct din_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType) {
-    ListOfRootCertificateIDsType->RootCertificateID.arrayLen = 0u;
 }
 
 void init_din_ServiceChargeType(struct din_ServiceChargeType* ServiceChargeType) {
@@ -280,10 +284,6 @@ void init_din_ObjectType(struct din_ObjectType* ObjectType) {
     ObjectType->ANY_isUsed = 0u;
 }
 
-void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType) {
-    PhysicalValueType->Unit_isUsed = 0u;
-}
-
 void init_din_ServiceTagListType(struct din_ServiceTagListType* ServiceTagListType) {
     (void) ServiceTagListType;
 }
@@ -307,50 +307,6 @@ void init_din_MeterInfoType(struct din_MeterInfoType* MeterInfoType) {
     MeterInfoType->SigMeterReading_isUsed = 0u;
     MeterInfoType->MeterStatus_isUsed = 0u;
     MeterInfoType->TMeter_isUsed = 0u;
-}
-
-void init_din_PowerDeliveryResType(struct din_PowerDeliveryResType* PowerDeliveryResType) {
-    PowerDeliveryResType->AC_EVSEStatus_isUsed = 0u;
-    PowerDeliveryResType->DC_EVSEStatus_isUsed = 0u;
-    PowerDeliveryResType->EVSEStatus_isUsed = 0u;
-}
-
-void init_din_ChargingStatusReqType(struct din_ChargingStatusReqType* ChargingStatusReqType) {
-    (void) ChargingStatusReqType;
-}
-
-void init_din_ChargingStatusResType(struct din_ChargingStatusResType* ChargingStatusResType) {
-    ChargingStatusResType->EVSEMaxCurrent_isUsed = 0u;
-    ChargingStatusResType->MeterInfo_isUsed = 0u;
-}
-
-void init_din_MeteringReceiptReqType(struct din_MeteringReceiptReqType* MeteringReceiptReqType) {
-    MeteringReceiptReqType->Id_isUsed = 0u;
-    MeteringReceiptReqType->SAScheduleTupleID_isUsed = 0u;
-}
-
-void init_din_MeteringReceiptResType(struct din_MeteringReceiptResType* MeteringReceiptResType) {
-    (void) MeteringReceiptResType;
-}
-
-void init_din_SessionStopType(struct din_SessionStopType* SessionStopType) {
-    (void) SessionStopType;
-}
-
-void init_din_SessionStopResType(struct din_SessionStopResType* SessionStopResType) {
-    (void) SessionStopResType;
-}
-
-void init_din_CertificateUpdateReqType(struct din_CertificateUpdateReqType* CertificateUpdateReqType) {
-    CertificateUpdateReqType->Id_isUsed = 0u;
-}
-
-void init_din_CertificateUpdateResType(struct din_CertificateUpdateResType* CertificateUpdateResType) {
-    (void) CertificateUpdateResType;
-}
-
-void init_din_CertificateInstallationReqType(struct din_CertificateInstallationReqType* CertificateInstallationReqType) {
-    CertificateInstallationReqType->Id_isUsed = 0u;
 }
 
 void init_din_CertificateInstallationResType(struct din_CertificateInstallationResType* CertificateInstallationResType) {
@@ -398,6 +354,10 @@ void init_din_WeldingDetectionResType(struct din_WeldingDetectionResType* Weldin
 
 void init_din_SessionSetupReqType(struct din_SessionSetupReqType* SessionSetupReqType) {
     (void) SessionSetupReqType;
+}
+
+void init_din_CertificateInstallationReqType(struct din_CertificateInstallationReqType* CertificateInstallationReqType) {
+    CertificateInstallationReqType->Id_isUsed = 0u;
 }
 
 void init_din_SessionSetupResType(struct din_SessionSetupResType* SessionSetupResType) {
@@ -464,6 +424,46 @@ void init_din_PowerDeliveryReqType(struct din_PowerDeliveryReqType* PowerDeliver
     PowerDeliveryReqType->ChargingProfile_isUsed = 0u;
     PowerDeliveryReqType->DC_EVPowerDeliveryParameter_isUsed = 0u;
     PowerDeliveryReqType->EVPowerDeliveryParameter_isUsed = 0u;
+}
+
+void init_din_PowerDeliveryResType(struct din_PowerDeliveryResType* PowerDeliveryResType) {
+    PowerDeliveryResType->AC_EVSEStatus_isUsed = 0u;
+    PowerDeliveryResType->DC_EVSEStatus_isUsed = 0u;
+    PowerDeliveryResType->EVSEStatus_isUsed = 0u;
+}
+
+void init_din_ChargingStatusReqType(struct din_ChargingStatusReqType* ChargingStatusReqType) {
+    (void) ChargingStatusReqType;
+}
+
+void init_din_ChargingStatusResType(struct din_ChargingStatusResType* ChargingStatusResType) {
+    ChargingStatusResType->EVSEMaxCurrent_isUsed = 0u;
+    ChargingStatusResType->MeterInfo_isUsed = 0u;
+}
+
+void init_din_MeteringReceiptReqType(struct din_MeteringReceiptReqType* MeteringReceiptReqType) {
+    MeteringReceiptReqType->Id_isUsed = 0u;
+    MeteringReceiptReqType->SAScheduleTupleID_isUsed = 0u;
+}
+
+void init_din_MeteringReceiptResType(struct din_MeteringReceiptResType* MeteringReceiptResType) {
+    (void) MeteringReceiptResType;
+}
+
+void init_din_SessionStopType(struct din_SessionStopType* SessionStopType) {
+    (void) SessionStopType;
+}
+
+void init_din_SessionStopResType(struct din_SessionStopResType* SessionStopResType) {
+    (void) SessionStopResType;
+}
+
+void init_din_CertificateUpdateReqType(struct din_CertificateUpdateReqType* CertificateUpdateReqType) {
+    CertificateUpdateReqType->Id_isUsed = 0u;
+}
+
+void init_din_CertificateUpdateResType(struct din_CertificateUpdateResType* CertificateUpdateResType) {
+    (void) CertificateUpdateResType;
 }
 
 void init_din_BodyBaseType(struct din_BodyBaseType* BodyBaseType) {

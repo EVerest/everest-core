@@ -51,28 +51,28 @@ extern "C" {
 #define din_base64Binary_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
 #define din_X509SubjectName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define din_SignatureValueType_BYTES_SIZE (EXI_BYTE_ARRAY_MAX_LEN)
+#define din_Name_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define din_stringValue_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define din_rootCertificateIDType_5_ARRAY_SIZE (5)
+#define din_RootCertificateID_CHARACTER_SIZE (40 + ASCII_EXTRA_CHAR)
 #define din_paymentOptionType_2_ARRAY_SIZE (2)
 #define din_SelectedServiceType_16_ARRAY_SIZE (16)
 #define din_ProfileEntryType_24_ARRAY_SIZE (24)
 #define din_KeyName_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define din_MgmtData_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define din_rootCertificateIDType_5_ARRAY_SIZE (5)
-#define din_RootCertificateID_CHARACTER_SIZE (40 + ASCII_EXTRA_CHAR)
+#define din_ParameterSetType_5_ARRAY_SIZE (5)
 #define din_SAScheduleTupleType_5_ARRAY_SIZE (5)
 #define din_Encoding_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
 #define din_MimeType_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define din_Name_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define din_stringValue_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
-#define din_ParameterSetType_5_ARRAY_SIZE (5)
 #define din_MeterID_CHARACTER_SIZE (32 + ASCII_EXTRA_CHAR)
 #define din_sigMeterReadingType_BYTES_SIZE (32)
-#define din_evseIDType_BYTES_SIZE (32)
-#define din_sessionIDType_BYTES_SIZE (8)
-#define din_ContractID_CHARACTER_SIZE (24 + ASCII_EXTRA_CHAR)
-#define din_dHParamsType_BYTES_SIZE (256)
 #define din_privateKeyType_BYTES_SIZE (128)
+#define din_dHParamsType_BYTES_SIZE (256)
+#define din_ContractID_CHARACTER_SIZE (24 + ASCII_EXTRA_CHAR)
 #define din_evccIDType_BYTES_SIZE (8)
+#define din_evseIDType_BYTES_SIZE (32)
 #define din_GenChallenge_CHARACTER_SIZE (EXI_STRING_MAX_LEN + ASCII_EXTRA_CHAR)
+#define din_sessionIDType_BYTES_SIZE (8)
 #define din_FaultMsg_CHARACTER_SIZE (64 + ASCII_EXTRA_CHAR)
 
 
@@ -232,14 +232,6 @@ typedef enum {
     din_EVSESupportedEnergyTransferType_AC_core3p_DC_extended = 9
 } din_EVSESupportedEnergyTransferType;
 
-// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVSENotification; type={urn:din:70121:2012:MsgDataTypes}EVSENotificationType; base type=string; content type=simple;
-//          abstract=False; final=False; derivation=restriction;
-typedef enum {
-    din_EVSENotificationType_None = 0,
-    din_EVSENotificationType_StopCharging = 1,
-    din_EVSENotificationType_ReNegotiation = 2
-} din_EVSENotificationType;
-
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVErrorCode; type={urn:din:70121:2012:MsgDataTypes}DC_EVErrorCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
 typedef enum {
@@ -256,6 +248,14 @@ typedef enum {
     din_DC_EVErrorCodeType_FAILED_ChargingSystemIncompatibility = 10,
     din_DC_EVErrorCodeType_NoData = 11
 } din_DC_EVErrorCodeType;
+
+// Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}EVSENotification; type={urn:din:70121:2012:MsgDataTypes}EVSENotificationType; base type=string; content type=simple;
+//          abstract=False; final=False; derivation=restriction;
+typedef enum {
+    din_EVSENotificationType_None = 0,
+    din_EVSENotificationType_StopCharging = 1,
+    din_EVSENotificationType_ReNegotiation = 2
+} din_EVSENotificationType;
 
 // Element: definition=enum; name={urn:din:70121:2012:MsgDataTypes}FaultCode; type={urn:din:70121:2012:MsgDataTypes}faultCodeType; base type=string; content type=simple;
 //          abstract=False; final=False; derivation=restriction;
@@ -366,7 +366,7 @@ struct din_IntervalType {
 
 // Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}ConsumptionCost; type={urn:din:70121:2012:MsgDataTypes}ConsumptionCostType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: startValue, unsignedInt (1, 1); Cost, CostType (0, 1);
+// Particle: startValue, unsignedInt (1, 1); Cost, CostType (0, 1) (original max unbounded);
 struct din_ConsumptionCostType {
     // startValue, unsignedInt (base: unsignedLong)
     uint32_t startValue;
@@ -418,7 +418,7 @@ struct din_PMaxScheduleEntryType {
 
 // Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}SalesTariffEntry; type={urn:din:70121:2012:MsgDataTypes}SalesTariffEntryType; base type=EntryType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: RelativeTimeInterval, RelativeTimeIntervalType (0, 1); TimeInterval, IntervalType (0, 1); EPriceLevel, unsignedByte (1, 1); ConsumptionCost, ConsumptionCostType (0, 1);
+// Particle: RelativeTimeInterval, RelativeTimeIntervalType (0, 1); TimeInterval, IntervalType (0, 1); EPriceLevel, unsignedByte (1, 1); ConsumptionCost, ConsumptionCostType (0, 1) (original max unbounded);
 struct din_SalesTariffEntryType {
     // RelativeTimeInterval, RelativeTimeIntervalType (base: IntervalType)
     struct din_RelativeTimeIntervalType RelativeTimeInterval;
@@ -436,7 +436,7 @@ struct din_SalesTariffEntryType {
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Transform, TransformType (1, 1);
+// Particle: Transform, TransformType (1, 1) (original max unbounded);
 struct din_TransformsType {
     // Transform, TransformType
     struct din_TransformType Transform;
@@ -445,7 +445,7 @@ struct din_TransformsType {
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DSAKeyValue; type={http://www.w3.org/2000/09/xmldsig#}DSAKeyValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: P, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); Q, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']);
+// Particle: P, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); Q, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']);
 struct din_DSAKeyValueType {
     // P, CryptoBinary (base: base64Binary)
     struct {
@@ -552,7 +552,7 @@ struct din_RSAKeyValueType {
 
 // Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}PMaxSchedule; type={urn:din:70121:2012:MsgDataTypes}PMaxScheduleType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: PMaxScheduleID, SAIDType (1, 1); PMaxScheduleEntry, PMaxScheduleEntryType (1, 5);
+// Particle: PMaxScheduleID, SAIDType (1, 1); PMaxScheduleEntry, PMaxScheduleEntryType (1, 5) (original max unbounded);
 struct din_PMaxScheduleType {
     // PMaxScheduleID, SAIDType (base: short)
     int16_t PMaxScheduleID;
@@ -565,7 +565,7 @@ struct din_PMaxScheduleType {
 
 // Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}SalesTariff; type={urn:din:70121:2012:MsgDataTypes}SalesTariffType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, IDREF (1, 1); SalesTariffID, SAIDType (1, 1); SalesTariffDescription, tariffDescriptionType (0, 1); NumEPriceLevels, unsignedByte (1, 1); SalesTariffEntry, SalesTariffEntryType (1, 5);
+// Particle: Id, IDREF (1, 1); SalesTariffID, SAIDType (1, 1); SalesTariffDescription, tariffDescriptionType (0, 1); NumEPriceLevels, unsignedByte (1, 1); SalesTariffEntry, SalesTariffEntryType (1, 5) (original max unbounded);
 struct din_SalesTariffType {
     // Attribute: Id, IDREF (base: NCName)
     struct {
@@ -668,6 +668,21 @@ struct din_SAScheduleTupleType {
 
 };
 
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}AC_EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}AC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: PowerSwitchClosed, boolean (1, 1); RCD, boolean (1, 1); NotificationMaxDelay, unsignedInt (1, 1); EVSENotification, EVSENotificationType (1, 1);
+struct din_AC_EVSEStatusType {
+    // PowerSwitchClosed, boolean
+    int PowerSwitchClosed;
+    // RCD, boolean
+    int RCD;
+    // NotificationMaxDelay, unsignedInt (base: unsignedLong)
+    uint32_t NotificationMaxDelay;
+    // EVSENotification, EVSENotificationType (base: string)
+    din_EVSENotificationType EVSENotification;
+
+};
+
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureMethod; type={http://www.w3.org/2000/09/xmldsig#}SignatureMethodType; base type=; content type=mixed;
 //          abstract=False; final=False;
 // Particle: Algorithm, anyURI (1, 1); HMACOutputLength, HMACOutputLengthType (0, 1); ANY, anyType (0, 1);
@@ -712,7 +727,7 @@ struct din_KeyValueType {
 
 // Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}SubCertificates; type={urn:din:70121:2012:MsgDataTypes}SubCertificatesType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Certificate, certificateType (1, 1);
+// Particle: Certificate, certificateType (1, 1) (original max unbounded);
 struct din_SubCertificatesType {
     // Certificate, certificateType (base: base64Binary)
     struct {
@@ -912,7 +927,7 @@ struct din_SPKIDataType {
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 1);
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 1) (original max 4);
 struct din_SignedInfoType {
     // Attribute: Id, ID (base: NCName)
     struct {
@@ -926,22 +941,6 @@ struct din_SignedInfoType {
     struct din_SignatureMethodType SignatureMethod;
     // Reference, ReferenceType
     struct din_ReferenceType Reference;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ContractSignatureCertChain; type={urn:din:70121:2012:MsgDataTypes}CertificateChainType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
-struct din_CertificateChainType {
-    // Certificate, certificateType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_certificateType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } Certificate;
-
-    // SubCertificates, SubCertificatesType
-    struct din_SubCertificatesType SubCertificates;
-    unsigned int SubCertificates_isUsed:1;
 
 };
 
@@ -983,7 +982,23 @@ struct din_SignatureValueType {
 
 };
 
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ContractSignatureCertChain; type={urn:din:70121:2012:MsgDataTypes}CertificateChainType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
+struct din_CertificateChainType {
+    // Certificate, certificateType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_certificateType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } Certificate;
+
+    // SubCertificates, SubCertificatesType
+    struct din_SubCertificatesType SubCertificates;
+    unsigned int SubCertificates_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}DC_EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}DC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
 // Particle: EVSEIsolationStatus, isolationLevelType (0, 1); EVSEStatusCode, DC_EVSEStatusCodeType (1, 1); NotificationMaxDelay, unsignedInt (1, 1); EVSENotification, EVSENotificationType (1, 1);
 struct din_DC_EVSEStatusType {
@@ -999,216 +1014,7 @@ struct din_DC_EVSEStatusType {
 
 };
 
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}AC_EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}AC_EVSEStatusType; base type=EVSEStatusType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: PowerSwitchClosed, boolean (1, 1); RCD, boolean (1, 1); NotificationMaxDelay, unsignedInt (1, 1); EVSENotification, EVSENotificationType (1, 1);
-struct din_AC_EVSEStatusType {
-    // PowerSwitchClosed, boolean
-    int PowerSwitchClosed;
-    // RCD, boolean
-    int RCD;
-    // NotificationMaxDelay, unsignedInt (base: unsignedLong)
-    uint32_t NotificationMaxDelay;
-    // EVSENotification, EVSENotificationType (base: string)
-    din_EVSENotificationType EVSENotification;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}EVSEStatusType; base type=; content type=empty;
-//          abstract=False; final=False;
-// Particle: 
-struct din_EVSEStatusType {
-    int _unused;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}PaymentOptions; type={urn:din:70121:2012:MsgDataTypes}PaymentOptionsType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: PaymentOption, paymentOptionType (1, 2);
-struct din_PaymentOptionsType {
-    // PaymentOption, paymentOptionType (base: string)
-    struct {
-        din_paymentOptionType array[din_paymentOptionType_2_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } PaymentOption;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}SelectedServiceList; type={urn:din:70121:2012:MsgDataTypes}SelectedServiceListType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: SelectedService, SelectedServiceType (1, 16);
-struct din_SelectedServiceListType {
-    // SelectedService, SelectedServiceType
-    struct {
-        struct din_SelectedServiceType array[din_SelectedServiceType_16_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } SelectedService;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}EVChargeParameter; type={urn:din:70121:2012:MsgDataTypes}EVChargeParameterType; base type=; content type=empty;
-//          abstract=False; final=False;
-// Particle: 
-struct din_EVChargeParameterType {
-    int _unused;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ChargingProfile; type={urn:din:70121:2012:MsgDataTypes}ChargingProfileType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: SAScheduleTupleID, SAIDType (1, 1); ProfileEntry, ProfileEntryType (1, 24);
-struct din_ChargingProfileType {
-    // SAScheduleTupleID, SAIDType (base: short)
-    int16_t SAScheduleTupleID;
-    // ProfileEntry, ProfileEntryType
-    struct {
-        struct din_ProfileEntryType array[din_ProfileEntryType_24_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } ProfileEntry;
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}KeyInfo; type={http://www.w3.org/2000/09/xmldsig#}KeyInfoType; base type=; content type=mixed;
-//          abstract=False; final=False; choice=True;
-// Particle: Id, ID (0, 1); KeyName, string (0, 1); KeyValue, KeyValueType (0, 1); RetrievalMethod, RetrievalMethodType (0, 1); X509Data, X509DataType (0, 1); PGPData, PGPDataType (0, 1); SPKIData, SPKIDataType (0, 1); MgmtData, string (0, 1); ANY, anyType (0, 1);
-struct din_KeyInfoType {
-    // Attribute: Id, ID (base: NCName)
-    struct {
-        char characters[din_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // KeyName, string
-    struct {
-        char characters[din_KeyName_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } KeyName;
-    unsigned int KeyName_isUsed:1;
-    // KeyValue, KeyValueType
-    struct din_KeyValueType KeyValue;
-    unsigned int KeyValue_isUsed:1;
-    // RetrievalMethod, RetrievalMethodType
-    struct din_RetrievalMethodType RetrievalMethod;
-    unsigned int RetrievalMethod_isUsed:1;
-    // X509Data, X509DataType
-    struct din_X509DataType X509Data;
-    unsigned int X509Data_isUsed:1;
-    // PGPData, PGPDataType
-    struct din_PGPDataType PGPData;
-    unsigned int PGPData_isUsed:1;
-    // SPKIData, SPKIDataType
-    struct din_SPKIDataType SPKIData;
-    unsigned int SPKIData_isUsed:1;
-    // MgmtData, string
-    struct {
-        char characters[din_MgmtData_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } MgmtData;
-    unsigned int MgmtData_isUsed:1;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ListOfRootCertificateIDs; type={urn:din:70121:2012:MsgDataTypes}ListOfRootCertificateIDsType; base type=; content type=ELEMENT-ONLY;
-//          abstract=False; final=False;
-// Particle: RootCertificateID, rootCertificateIDType (1, 5);
-struct din_ListOfRootCertificateIDsType {
-    // RootCertificateID, rootCertificateIDType (base: string)
-    struct {
-        struct {
-            char characters[din_RootCertificateID_CHARACTER_SIZE];
-            uint16_t charactersLen;
-        } array[din_rootCertificateIDType_5_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } RootCertificateID;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ChargeService; type={urn:din:70121:2012:MsgDataTypes}ServiceChargeType; base type=ServiceType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: ServiceTag, ServiceTagType (1, 1); FreeService, boolean (1, 1); EnergyTransferType, EVSESupportedEnergyTransferType (1, 1);
-struct din_ServiceChargeType {
-    // ServiceTag, ServiceTagType
-    struct din_ServiceTagType ServiceTag;
-    // FreeService, boolean
-    int FreeService;
-    // EnergyTransferType, EVSESupportedEnergyTransferType (base: string)
-    din_EVSESupportedEnergyTransferType EnergyTransferType;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}SAScheduleList; type={urn:din:70121:2012:MsgDataTypes}SAScheduleListType; base type=SASchedulesType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: SAScheduleTuple, SAScheduleTupleType (1, 5);
-struct din_SAScheduleListType {
-    // SAScheduleTuple, SAScheduleTupleType
-    struct {
-        struct din_SAScheduleTupleType array[din_SAScheduleTupleType_5_ARRAY_SIZE];
-        uint16_t arrayLen;
-    } SAScheduleTuple;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}SASchedules; type={urn:din:70121:2012:MsgDataTypes}SASchedulesType; base type=; content type=empty;
-//          abstract=False; final=False;
-// Particle: 
-struct din_SASchedulesType {
-    int _unused;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVPowerDeliveryParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVPowerDeliveryParameterType; base type=EVPowerDeliveryParameterType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: DC_EVStatus, DC_EVStatusType (1, 1); BulkChargingComplete, boolean (0, 1); ChargingComplete, boolean (1, 1);
-struct din_DC_EVPowerDeliveryParameterType {
-    // DC_EVStatus, DC_EVStatusType (base: EVStatusType)
-    struct din_DC_EVStatusType DC_EVStatus;
-    // BulkChargingComplete, boolean
-    int BulkChargingComplete;
-    unsigned int BulkChargingComplete_isUsed:1;
-    // ChargingComplete, boolean
-    int ChargingComplete;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}EVPowerDeliveryParameter; type={urn:din:70121:2012:MsgDataTypes}EVPowerDeliveryParameterType; base type=; content type=empty;
-//          abstract=False; final=False;
-// Particle: 
-struct din_EVPowerDeliveryParameterType {
-    int _unused;
-};
-
-// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Object; type={http://www.w3.org/2000/09/xmldsig#}ObjectType; base type=; content type=mixed;
-//          abstract=False; final=False;
-// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1)(old 1, 1);
-struct din_ObjectType {
-    // Attribute: Encoding, anyURI
-    struct {
-        char characters[din_Encoding_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Encoding;
-    unsigned int Encoding_isUsed:1;
-    // Attribute: Id, ID (base: NCName)
-    struct {
-        char characters[din_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // Attribute: MimeType, string
-    struct {
-        char characters[din_MimeType_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } MimeType;
-    unsigned int MimeType_isUsed:1;
-    // ANY, anyType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_anyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ANY;
-    unsigned int ANY_isUsed:1;
-
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}EVSEMaxCurrent; type={urn:din:70121:2012:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}EVTargetVoltage; type={urn:din:70121:2012:MsgDataTypes}PhysicalValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
 // Particle: Multiplier, unitMultiplierType (1, 1); Unit, unitSymbolType (0, 1); Value, short (1, 1);
 struct din_PhysicalValueType {
@@ -1259,13 +1065,49 @@ struct din_ParameterType {
 
 // Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}ParameterSet; type={urn:din:70121:2012:MsgDataTypes}ParameterSetType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSetID, short (1, 1); Parameter, ParameterType (1, 1);
+// Particle: ParameterSetID, short (1, 1); Parameter, ParameterType (1, 1) (original max unbounded);
 struct din_ParameterSetType {
     // ParameterSetID, short (base: int)
     int16_t ParameterSetID;
     // Parameter, ParameterType
     struct din_ParameterType Parameter;
 
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ListOfRootCertificateIDs; type={urn:din:70121:2012:MsgDataTypes}ListOfRootCertificateIDsType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: RootCertificateID, rootCertificateIDType (1, 5) (original max unbounded);
+struct din_ListOfRootCertificateIDsType {
+    // RootCertificateID, rootCertificateIDType (base: string)
+    struct {
+        struct {
+            char characters[din_RootCertificateID_CHARACTER_SIZE];
+            uint16_t charactersLen;
+        } array[din_rootCertificateIDType_5_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } RootCertificateID;
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}PaymentOptions; type={urn:din:70121:2012:MsgDataTypes}PaymentOptionsType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: PaymentOption, paymentOptionType (1, 2) (original max unbounded);
+struct din_PaymentOptionsType {
+    // PaymentOption, paymentOptionType (base: string)
+    struct {
+        din_paymentOptionType array[din_paymentOptionType_2_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } PaymentOption;
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}SelectedServiceList; type={urn:din:70121:2012:MsgDataTypes}SelectedServiceListType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: SelectedService, SelectedServiceType (1, 16) (original max unbounded);
+struct din_SelectedServiceListType {
+    // SelectedService, SelectedServiceType
+    struct {
+        struct din_SelectedServiceType array[din_SelectedServiceType_16_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } SelectedService;
 };
 
 // Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}AC_EVChargeParameter; type={urn:din:70121:2012:MsgDataTypes}AC_EVChargeParameterType; base type=EVChargeParameterType; content type=ELEMENT-ONLY;
@@ -1313,9 +1155,96 @@ struct din_DC_EVChargeParameterType {
 
 };
 
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}EVChargeParameter; type={urn:din:70121:2012:MsgDataTypes}EVChargeParameterType; base type=; content type=empty;
+//          abstract=False; final=False;
+// Particle: 
+struct din_EVChargeParameterType {
+    int _unused;
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ChargingProfile; type={urn:din:70121:2012:MsgDataTypes}ChargingProfileType; base type=; content type=ELEMENT-ONLY;
+//          abstract=False; final=False;
+// Particle: SAScheduleTupleID, SAIDType (1, 1); ProfileEntry, ProfileEntryType (1, 24) (original max unbounded);
+struct din_ChargingProfileType {
+    // SAScheduleTupleID, SAIDType (base: short)
+    int16_t SAScheduleTupleID;
+    // ProfileEntry, ProfileEntryType
+    struct {
+        struct din_ProfileEntryType array[din_ProfileEntryType_24_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } ProfileEntry;
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}EVSEStatus; type={urn:din:70121:2012:MsgDataTypes}EVSEStatusType; base type=; content type=empty;
+//          abstract=False; final=False;
+// Particle: 
+struct din_EVSEStatusType {
+    int _unused;
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}KeyInfo; type={http://www.w3.org/2000/09/xmldsig#}KeyInfoType; base type=; content type=mixed;
+//          abstract=False; final=False; choice=True;
+// Particle: Id, ID (0, 1); KeyName, string (0, 1); KeyValue, KeyValueType (0, 1); RetrievalMethod, RetrievalMethodType (0, 1); X509Data, X509DataType (0, 1); PGPData, PGPDataType (0, 1); SPKIData, SPKIDataType (0, 1); MgmtData, string (0, 1); ANY, anyType (0, 1);
+struct din_KeyInfoType {
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[din_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // KeyName, string
+    struct {
+        char characters[din_KeyName_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } KeyName;
+    unsigned int KeyName_isUsed:1;
+    // KeyValue, KeyValueType
+    struct din_KeyValueType KeyValue;
+    unsigned int KeyValue_isUsed:1;
+    // RetrievalMethod, RetrievalMethodType
+    struct din_RetrievalMethodType RetrievalMethod;
+    unsigned int RetrievalMethod_isUsed:1;
+    // X509Data, X509DataType
+    struct din_X509DataType X509Data;
+    unsigned int X509Data_isUsed:1;
+    // PGPData, PGPDataType
+    struct din_PGPDataType PGPData;
+    unsigned int PGPData_isUsed:1;
+    // SPKIData, SPKIDataType
+    struct din_SPKIDataType SPKIData;
+    unsigned int SPKIData_isUsed:1;
+    // MgmtData, string
+    struct {
+        char characters[din_MgmtData_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } MgmtData;
+    unsigned int MgmtData_isUsed:1;
+    // ANY, anyType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
+
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ChargeService; type={urn:din:70121:2012:MsgDataTypes}ServiceChargeType; base type=ServiceType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: ServiceTag, ServiceTagType (1, 1); FreeService, boolean (1, 1); EnergyTransferType, EVSESupportedEnergyTransferType (1, 1);
+struct din_ServiceChargeType {
+    // ServiceTag, ServiceTagType
+    struct din_ServiceTagType ServiceTag;
+    // FreeService, boolean
+    int FreeService;
+    // EnergyTransferType, EVSESupportedEnergyTransferType (base: string)
+    din_EVSESupportedEnergyTransferType EnergyTransferType;
+
+};
+
 // Element: definition=complex; name={urn:din:70121:2012:MsgBody}ServiceParameterList; type={urn:din:70121:2012:MsgDataTypes}ServiceParameterListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSet, ParameterSetType (1, 5);
+// Particle: ParameterSet, ParameterSetType (1, 5) (original max unbounded);
 struct din_ServiceParameterListType {
     // ParameterSet, ParameterSetType
     struct {
@@ -1324,9 +1253,80 @@ struct din_ServiceParameterListType {
     } ParameterSet;
 };
 
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}SAScheduleList; type={urn:din:70121:2012:MsgDataTypes}SAScheduleListType; base type=SASchedulesType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: SAScheduleTuple, SAScheduleTupleType (1, 5) (original max unbounded);
+struct din_SAScheduleListType {
+    // SAScheduleTuple, SAScheduleTupleType
+    struct {
+        struct din_SAScheduleTupleType array[din_SAScheduleTupleType_5_ARRAY_SIZE];
+        uint16_t arrayLen;
+    } SAScheduleTuple;
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}SASchedules; type={urn:din:70121:2012:MsgDataTypes}SASchedulesType; base type=; content type=empty;
+//          abstract=False; final=False;
+// Particle: 
+struct din_SASchedulesType {
+    int _unused;
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}DC_EVPowerDeliveryParameter; type={urn:din:70121:2012:MsgDataTypes}DC_EVPowerDeliveryParameterType; base type=EVPowerDeliveryParameterType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: DC_EVStatus, DC_EVStatusType (1, 1); BulkChargingComplete, boolean (0, 1); ChargingComplete, boolean (1, 1);
+struct din_DC_EVPowerDeliveryParameterType {
+    // DC_EVStatus, DC_EVStatusType (base: EVStatusType)
+    struct din_DC_EVStatusType DC_EVStatus;
+    // BulkChargingComplete, boolean
+    int BulkChargingComplete;
+    unsigned int BulkChargingComplete_isUsed:1;
+    // ChargingComplete, boolean
+    int ChargingComplete;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgDataTypes}EVPowerDeliveryParameter; type={urn:din:70121:2012:MsgDataTypes}EVPowerDeliveryParameterType; base type=; content type=empty;
+//          abstract=False; final=False;
+// Particle: 
+struct din_EVPowerDeliveryParameterType {
+    int _unused;
+};
+
+// Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Object; type={http://www.w3.org/2000/09/xmldsig#}ObjectType; base type=; content type=mixed;
+//          abstract=False; final=False;
+// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1) (old 1, 1);
+struct din_ObjectType {
+    // Attribute: Encoding, anyURI
+    struct {
+        char characters[din_Encoding_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Encoding;
+    unsigned int Encoding_isUsed:1;
+    // Attribute: Id, ID (base: NCName)
+    struct {
+        char characters[din_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // Attribute: MimeType, string
+    struct {
+        char characters[din_MimeType_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } MimeType;
+    unsigned int MimeType_isUsed:1;
+    // ANY, anyType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_anyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ANY;
+    unsigned int ANY_isUsed:1;
+
+
+};
+
 // Element: definition=complex; name={urn:din:70121:2012:MsgBody}ServiceList; type={urn:din:70121:2012:MsgDataTypes}ServiceTagListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Service, ServiceType (1, 1);
+// Particle: Service, ServiceType (1, 1) (original max unbounded);
 struct din_ServiceTagListType {
     // Service, ServiceType
     struct din_ServiceType Service;
@@ -1408,199 +1408,6 @@ struct din_MeterInfoType {
     // TMeter, long (base: integer)
     int64_t TMeter;
     unsigned int TMeter_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}PowerDeliveryRes; type={urn:din:70121:2012:MsgBody}PowerDeliveryResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: ResponseCode, responseCodeType (1, 1); AC_EVSEStatus, AC_EVSEStatusType (0, 1); DC_EVSEStatus, DC_EVSEStatusType (0, 1); EVSEStatus, EVSEStatusType (0, 1);
-struct din_PowerDeliveryResType {
-    // ResponseCode, responseCodeType (base: string)
-    din_responseCodeType ResponseCode;
-    // AC_EVSEStatus, AC_EVSEStatusType (base: EVSEStatusType)
-    struct din_AC_EVSEStatusType AC_EVSEStatus;
-    unsigned int AC_EVSEStatus_isUsed:1;
-    // DC_EVSEStatus, DC_EVSEStatusType (base: EVSEStatusType)
-    struct din_DC_EVSEStatusType DC_EVSEStatus;
-    unsigned int DC_EVSEStatus_isUsed:1;
-    // EVSEStatus, EVSEStatusType
-    struct din_EVSEStatusType EVSEStatus;
-    unsigned int EVSEStatus_isUsed:1;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ChargingStatusReq; type={urn:din:70121:2012:MsgBody}ChargingStatusReqType; base type=BodyBaseType; content type=empty;
-//          abstract=False; final=False; derivation=extension;
-// Particle: 
-struct din_ChargingStatusReqType {
-    int _unused;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ChargingStatusRes; type={urn:din:70121:2012:MsgBody}ChargingStatusResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: ResponseCode, responseCodeType (1, 1); EVSEID, evseIDType (1, 1); SAScheduleTupleID, SAIDType (1, 1); EVSEMaxCurrent, PhysicalValueType (0, 1); MeterInfo, MeterInfoType (0, 1); ReceiptRequired, boolean (1, 1); AC_EVSEStatus, AC_EVSEStatusType (1, 1);
-struct din_ChargingStatusResType {
-    // ResponseCode, responseCodeType (base: string)
-    din_responseCodeType ResponseCode;
-    // EVSEID, evseIDType (base: hexBinary)
-    struct {
-        uint8_t bytes[din_evseIDType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } EVSEID;
-
-    // SAScheduleTupleID, SAIDType (base: short)
-    int16_t SAScheduleTupleID;
-    // EVSEMaxCurrent, PhysicalValueType
-    struct din_PhysicalValueType EVSEMaxCurrent;
-    unsigned int EVSEMaxCurrent_isUsed:1;
-    // MeterInfo, MeterInfoType
-    struct din_MeterInfoType MeterInfo;
-    unsigned int MeterInfo_isUsed:1;
-    // ReceiptRequired, boolean
-    int ReceiptRequired;
-    // AC_EVSEStatus, AC_EVSEStatusType (base: EVSEStatusType)
-    struct din_AC_EVSEStatusType AC_EVSEStatus;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}MeteringReceiptReq; type={urn:din:70121:2012:MsgBody}MeteringReceiptReqType; base type=BodyBaseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, IDREF (0, 1); SessionID, sessionIDType (1, 1); SAScheduleTupleID, SAIDType (0, 1); MeterInfo, MeterInfoType (1, 1);
-struct din_MeteringReceiptReqType {
-    // Attribute: Id, IDREF (base: NCName)
-    struct {
-        char characters[din_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // SessionID, sessionIDType (base: hexBinary)
-    struct {
-        uint8_t bytes[din_sessionIDType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } SessionID;
-
-    // SAScheduleTupleID, SAIDType (base: short)
-    int16_t SAScheduleTupleID;
-    unsigned int SAScheduleTupleID_isUsed:1;
-    // MeterInfo, MeterInfoType
-    struct din_MeterInfoType MeterInfo;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}MeteringReceiptRes; type={urn:din:70121:2012:MsgBody}MeteringReceiptResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: ResponseCode, responseCodeType (1, 1); AC_EVSEStatus, AC_EVSEStatusType (1, 1);
-struct din_MeteringReceiptResType {
-    // ResponseCode, responseCodeType (base: string)
-    din_responseCodeType ResponseCode;
-    // AC_EVSEStatus, AC_EVSEStatusType (base: EVSEStatusType)
-    struct din_AC_EVSEStatusType AC_EVSEStatus;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}SessionStopReq; type={urn:din:70121:2012:MsgBody}SessionStopType; base type=BodyBaseType; content type=empty;
-//          abstract=False; final=False; derivation=extension;
-// Particle: 
-struct din_SessionStopType {
-    int _unused;
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}SessionStopRes; type={urn:din:70121:2012:MsgBody}SessionStopResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: ResponseCode, responseCodeType (1, 1);
-struct din_SessionStopResType {
-    // ResponseCode, responseCodeType (base: string)
-    din_responseCodeType ResponseCode;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}CertificateUpdateReq; type={urn:din:70121:2012:MsgBody}CertificateUpdateReqType; base type=BodyBaseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, IDREF (0, 1); ContractSignatureCertChain, CertificateChainType (1, 1); ContractID, contractIDType (1, 1); ListOfRootCertificateIDs, ListOfRootCertificateIDsType (1, 1); DHParams, dHParamsType (1, 1);
-struct din_CertificateUpdateReqType {
-    // Attribute: Id, IDREF (base: NCName)
-    struct {
-        char characters[din_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // ContractSignatureCertChain, CertificateChainType
-    struct din_CertificateChainType ContractSignatureCertChain;
-    // ContractID, contractIDType (base: string)
-    struct {
-        char characters[din_ContractID_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } ContractID;
-    // ListOfRootCertificateIDs, ListOfRootCertificateIDsType
-    struct din_ListOfRootCertificateIDsType ListOfRootCertificateIDs;
-    // DHParams, dHParamsType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_dHParamsType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } DHParams;
-
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}CertificateUpdateRes; type={urn:din:70121:2012:MsgBody}CertificateUpdateResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, IDREF (1, 1); ResponseCode, responseCodeType (1, 1); ContractSignatureCertChain, CertificateChainType (1, 1); ContractSignatureEncryptedPrivateKey, privateKeyType (1, 1); DHParams, dHParamsType (1, 1); ContractID, contractIDType (1, 1); RetryCounter, short (1, 1);
-struct din_CertificateUpdateResType {
-    // Attribute: Id, IDREF (base: NCName)
-    struct {
-        char characters[din_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    // ResponseCode, responseCodeType (base: string)
-    din_responseCodeType ResponseCode;
-    // ContractSignatureCertChain, CertificateChainType
-    struct din_CertificateChainType ContractSignatureCertChain;
-    // ContractSignatureEncryptedPrivateKey, privateKeyType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_privateKeyType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } ContractSignatureEncryptedPrivateKey;
-
-    // DHParams, dHParamsType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_dHParamsType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } DHParams;
-
-    // ContractID, contractIDType (base: string)
-    struct {
-        char characters[din_ContractID_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } ContractID;
-    // RetryCounter, short (base: int)
-    int16_t RetryCounter;
-
-};
-
-// Element: definition=complex; name={urn:din:70121:2012:MsgBody}CertificateInstallationReq; type={urn:din:70121:2012:MsgBody}CertificateInstallationReqType; base type=BodyBaseType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: Id, IDREF (0, 1); OEMProvisioningCert, certificateType (1, 1); ListOfRootCertificateIDs, ListOfRootCertificateIDsType (1, 1); DHParams, dHParamsType (1, 1);
-struct din_CertificateInstallationReqType {
-    // Attribute: Id, IDREF (base: NCName)
-    struct {
-        char characters[din_Id_CHARACTER_SIZE];
-        uint16_t charactersLen;
-    } Id;
-    unsigned int Id_isUsed:1;
-    // OEMProvisioningCert, certificateType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_certificateType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } OEMProvisioningCert;
-
-    // ListOfRootCertificateIDs, ListOfRootCertificateIDsType
-    struct din_ListOfRootCertificateIDsType ListOfRootCertificateIDs;
-    // DHParams, dHParamsType (base: base64Binary)
-    struct {
-        uint8_t bytes[din_dHParamsType_BYTES_SIZE];
-        uint16_t bytesLen;
-    } DHParams;
-
 
 };
 
@@ -1779,6 +1586,33 @@ struct din_SessionSetupReqType {
         uint8_t bytes[din_evccIDType_BYTES_SIZE];
         uint16_t bytesLen;
     } EVCCID;
+
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}CertificateInstallationReq; type={urn:din:70121:2012:MsgBody}CertificateInstallationReqType; base type=BodyBaseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, IDREF (0, 1); OEMProvisioningCert, certificateType (1, 1); ListOfRootCertificateIDs, ListOfRootCertificateIDsType (1, 1); DHParams, dHParamsType (1, 1);
+struct din_CertificateInstallationReqType {
+    // Attribute: Id, IDREF (base: NCName)
+    struct {
+        char characters[din_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // OEMProvisioningCert, certificateType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_certificateType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } OEMProvisioningCert;
+
+    // ListOfRootCertificateIDs, ListOfRootCertificateIDsType
+    struct din_ListOfRootCertificateIDsType ListOfRootCertificateIDs;
+    // DHParams, dHParamsType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_dHParamsType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } DHParams;
 
 
 };
@@ -1998,6 +1832,172 @@ struct din_PowerDeliveryReqType {
 
 };
 
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}PowerDeliveryRes; type={urn:din:70121:2012:MsgBody}PowerDeliveryResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: ResponseCode, responseCodeType (1, 1); AC_EVSEStatus, AC_EVSEStatusType (0, 1); DC_EVSEStatus, DC_EVSEStatusType (0, 1); EVSEStatus, EVSEStatusType (0, 1);
+struct din_PowerDeliveryResType {
+    // ResponseCode, responseCodeType (base: string)
+    din_responseCodeType ResponseCode;
+    // AC_EVSEStatus, AC_EVSEStatusType (base: EVSEStatusType)
+    struct din_AC_EVSEStatusType AC_EVSEStatus;
+    unsigned int AC_EVSEStatus_isUsed:1;
+    // DC_EVSEStatus, DC_EVSEStatusType (base: EVSEStatusType)
+    struct din_DC_EVSEStatusType DC_EVSEStatus;
+    unsigned int DC_EVSEStatus_isUsed:1;
+    // EVSEStatus, EVSEStatusType
+    struct din_EVSEStatusType EVSEStatus;
+    unsigned int EVSEStatus_isUsed:1;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ChargingStatusReq; type={urn:din:70121:2012:MsgBody}ChargingStatusReqType; base type=BodyBaseType; content type=empty;
+//          abstract=False; final=False; derivation=extension;
+// Particle: 
+struct din_ChargingStatusReqType {
+    int _unused;
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}ChargingStatusRes; type={urn:din:70121:2012:MsgBody}ChargingStatusResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: ResponseCode, responseCodeType (1, 1); EVSEID, evseIDType (1, 1); SAScheduleTupleID, SAIDType (1, 1); EVSEMaxCurrent, PhysicalValueType (0, 1); MeterInfo, MeterInfoType (0, 1); ReceiptRequired, boolean (1, 1); AC_EVSEStatus, AC_EVSEStatusType (1, 1);
+struct din_ChargingStatusResType {
+    // ResponseCode, responseCodeType (base: string)
+    din_responseCodeType ResponseCode;
+    // EVSEID, evseIDType (base: hexBinary)
+    struct {
+        uint8_t bytes[din_evseIDType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } EVSEID;
+
+    // SAScheduleTupleID, SAIDType (base: short)
+    int16_t SAScheduleTupleID;
+    // EVSEMaxCurrent, PhysicalValueType
+    struct din_PhysicalValueType EVSEMaxCurrent;
+    unsigned int EVSEMaxCurrent_isUsed:1;
+    // MeterInfo, MeterInfoType
+    struct din_MeterInfoType MeterInfo;
+    unsigned int MeterInfo_isUsed:1;
+    // ReceiptRequired, boolean
+    int ReceiptRequired;
+    // AC_EVSEStatus, AC_EVSEStatusType (base: EVSEStatusType)
+    struct din_AC_EVSEStatusType AC_EVSEStatus;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}MeteringReceiptReq; type={urn:din:70121:2012:MsgBody}MeteringReceiptReqType; base type=BodyBaseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, IDREF (0, 1); SessionID, sessionIDType (1, 1); SAScheduleTupleID, SAIDType (0, 1); MeterInfo, MeterInfoType (1, 1);
+struct din_MeteringReceiptReqType {
+    // Attribute: Id, IDREF (base: NCName)
+    struct {
+        char characters[din_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // SessionID, sessionIDType (base: hexBinary)
+    struct {
+        uint8_t bytes[din_sessionIDType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } SessionID;
+
+    // SAScheduleTupleID, SAIDType (base: short)
+    int16_t SAScheduleTupleID;
+    unsigned int SAScheduleTupleID_isUsed:1;
+    // MeterInfo, MeterInfoType
+    struct din_MeterInfoType MeterInfo;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}MeteringReceiptRes; type={urn:din:70121:2012:MsgBody}MeteringReceiptResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: ResponseCode, responseCodeType (1, 1); AC_EVSEStatus, AC_EVSEStatusType (1, 1);
+struct din_MeteringReceiptResType {
+    // ResponseCode, responseCodeType (base: string)
+    din_responseCodeType ResponseCode;
+    // AC_EVSEStatus, AC_EVSEStatusType (base: EVSEStatusType)
+    struct din_AC_EVSEStatusType AC_EVSEStatus;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}SessionStopReq; type={urn:din:70121:2012:MsgBody}SessionStopType; base type=BodyBaseType; content type=empty;
+//          abstract=False; final=False; derivation=extension;
+// Particle: 
+struct din_SessionStopType {
+    int _unused;
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}SessionStopRes; type={urn:din:70121:2012:MsgBody}SessionStopResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: ResponseCode, responseCodeType (1, 1);
+struct din_SessionStopResType {
+    // ResponseCode, responseCodeType (base: string)
+    din_responseCodeType ResponseCode;
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}CertificateUpdateReq; type={urn:din:70121:2012:MsgBody}CertificateUpdateReqType; base type=BodyBaseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, IDREF (0, 1); ContractSignatureCertChain, CertificateChainType (1, 1); ContractID, contractIDType (1, 1); ListOfRootCertificateIDs, ListOfRootCertificateIDsType (1, 1); DHParams, dHParamsType (1, 1);
+struct din_CertificateUpdateReqType {
+    // Attribute: Id, IDREF (base: NCName)
+    struct {
+        char characters[din_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    unsigned int Id_isUsed:1;
+    // ContractSignatureCertChain, CertificateChainType
+    struct din_CertificateChainType ContractSignatureCertChain;
+    // ContractID, contractIDType (base: string)
+    struct {
+        char characters[din_ContractID_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } ContractID;
+    // ListOfRootCertificateIDs, ListOfRootCertificateIDsType
+    struct din_ListOfRootCertificateIDsType ListOfRootCertificateIDs;
+    // DHParams, dHParamsType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_dHParamsType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } DHParams;
+
+
+};
+
+// Element: definition=complex; name={urn:din:70121:2012:MsgBody}CertificateUpdateRes; type={urn:din:70121:2012:MsgBody}CertificateUpdateResType; base type=BodyBaseType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: Id, IDREF (1, 1); ResponseCode, responseCodeType (1, 1); ContractSignatureCertChain, CertificateChainType (1, 1); ContractSignatureEncryptedPrivateKey, privateKeyType (1, 1); DHParams, dHParamsType (1, 1); ContractID, contractIDType (1, 1); RetryCounter, short (1, 1);
+struct din_CertificateUpdateResType {
+    // Attribute: Id, IDREF (base: NCName)
+    struct {
+        char characters[din_Id_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } Id;
+    // ResponseCode, responseCodeType (base: string)
+    din_responseCodeType ResponseCode;
+    // ContractSignatureCertChain, CertificateChainType
+    struct din_CertificateChainType ContractSignatureCertChain;
+    // ContractSignatureEncryptedPrivateKey, privateKeyType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_privateKeyType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } ContractSignatureEncryptedPrivateKey;
+
+    // DHParams, dHParamsType (base: base64Binary)
+    struct {
+        uint8_t bytes[din_dHParamsType_BYTES_SIZE];
+        uint16_t bytesLen;
+    } DHParams;
+
+    // ContractID, contractIDType (base: string)
+    struct {
+        char characters[din_ContractID_CHARACTER_SIZE];
+        uint16_t charactersLen;
+    } ContractID;
+    // RetryCounter, short (base: int)
+    int16_t RetryCounter;
+
+};
+
 // Element: definition=complex; name={urn:din:70121:2012:MsgDef}BodyElement; type={urn:din:70121:2012:MsgDef}BodyBaseType; base type=; content type=empty;
 //          abstract=False; final=False;
 // Particle: 
@@ -2022,7 +2022,7 @@ struct din_NotificationType {
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Signature; type={http://www.w3.org/2000/09/xmldsig#}SignatureType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1);
+// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1) (original max unbounded);
 struct din_SignatureType {
     // Attribute: Id, ID (base: NCName)
     struct {
@@ -2182,6 +2182,7 @@ void init_din_ServiceType(struct din_ServiceType* ServiceType);
 void init_din_ParameterSetType(struct din_ParameterSetType* ParameterSetType);
 void init_din_SelectedServiceType(struct din_SelectedServiceType* SelectedServiceType);
 void init_din_SAScheduleTupleType(struct din_SAScheduleTupleType* SAScheduleTupleType);
+void init_din_AC_EVSEStatusType(struct din_AC_EVSEStatusType* AC_EVSEStatusType);
 void init_din_SignatureMethodType(struct din_SignatureMethodType* SignatureMethodType);
 void init_din_KeyValueType(struct din_KeyValueType* KeyValueType);
 void init_din_SubCertificatesType(struct din_SubCertificatesType* SubCertificatesType);
@@ -2192,20 +2193,20 @@ void init_din_X509DataType(struct din_X509DataType* X509DataType);
 void init_din_PGPDataType(struct din_PGPDataType* PGPDataType);
 void init_din_SPKIDataType(struct din_SPKIDataType* SPKIDataType);
 void init_din_SignedInfoType(struct din_SignedInfoType* SignedInfoType);
-void init_din_CertificateChainType(struct din_CertificateChainType* CertificateChainType);
 void init_din_DC_EVStatusType(struct din_DC_EVStatusType* DC_EVStatusType);
 void init_din_SignatureValueType(struct din_SignatureValueType* SignatureValueType);
+void init_din_CertificateChainType(struct din_CertificateChainType* CertificateChainType);
 void init_din_DC_EVSEStatusType(struct din_DC_EVSEStatusType* DC_EVSEStatusType);
-void init_din_AC_EVSEStatusType(struct din_AC_EVSEStatusType* AC_EVSEStatusType);
-void init_din_EVSEStatusType(struct din_EVSEStatusType* EVSEStatusType);
+void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType);
+void init_din_ListOfRootCertificateIDsType(struct din_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType);
 void init_din_PaymentOptionsType(struct din_PaymentOptionsType* PaymentOptionsType);
 void init_din_SelectedServiceListType(struct din_SelectedServiceListType* SelectedServiceListType);
 void init_din_AC_EVChargeParameterType(struct din_AC_EVChargeParameterType* AC_EVChargeParameterType);
 void init_din_DC_EVChargeParameterType(struct din_DC_EVChargeParameterType* DC_EVChargeParameterType);
 void init_din_EVChargeParameterType(struct din_EVChargeParameterType* EVChargeParameterType);
 void init_din_ChargingProfileType(struct din_ChargingProfileType* ChargingProfileType);
+void init_din_EVSEStatusType(struct din_EVSEStatusType* EVSEStatusType);
 void init_din_KeyInfoType(struct din_KeyInfoType* KeyInfoType);
-void init_din_ListOfRootCertificateIDsType(struct din_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType);
 void init_din_ServiceChargeType(struct din_ServiceChargeType* ServiceChargeType);
 void init_din_ServiceParameterListType(struct din_ServiceParameterListType* ServiceParameterListType);
 void init_din_SAScheduleListType(struct din_SAScheduleListType* SAScheduleListType);
@@ -2213,22 +2214,11 @@ void init_din_SASchedulesType(struct din_SASchedulesType* SASchedulesType);
 void init_din_DC_EVPowerDeliveryParameterType(struct din_DC_EVPowerDeliveryParameterType* DC_EVPowerDeliveryParameterType);
 void init_din_EVPowerDeliveryParameterType(struct din_EVPowerDeliveryParameterType* EVPowerDeliveryParameterType);
 void init_din_ObjectType(struct din_ObjectType* ObjectType);
-void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType);
 void init_din_ServiceTagListType(struct din_ServiceTagListType* ServiceTagListType);
 void init_din_DC_EVSEChargeParameterType(struct din_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType);
 void init_din_AC_EVSEChargeParameterType(struct din_AC_EVSEChargeParameterType* AC_EVSEChargeParameterType);
 void init_din_EVSEChargeParameterType(struct din_EVSEChargeParameterType* EVSEChargeParameterType);
 void init_din_MeterInfoType(struct din_MeterInfoType* MeterInfoType);
-void init_din_PowerDeliveryResType(struct din_PowerDeliveryResType* PowerDeliveryResType);
-void init_din_ChargingStatusReqType(struct din_ChargingStatusReqType* ChargingStatusReqType);
-void init_din_ChargingStatusResType(struct din_ChargingStatusResType* ChargingStatusResType);
-void init_din_MeteringReceiptReqType(struct din_MeteringReceiptReqType* MeteringReceiptReqType);
-void init_din_MeteringReceiptResType(struct din_MeteringReceiptResType* MeteringReceiptResType);
-void init_din_SessionStopType(struct din_SessionStopType* SessionStopType);
-void init_din_SessionStopResType(struct din_SessionStopResType* SessionStopResType);
-void init_din_CertificateUpdateReqType(struct din_CertificateUpdateReqType* CertificateUpdateReqType);
-void init_din_CertificateUpdateResType(struct din_CertificateUpdateResType* CertificateUpdateResType);
-void init_din_CertificateInstallationReqType(struct din_CertificateInstallationReqType* CertificateInstallationReqType);
 void init_din_CertificateInstallationResType(struct din_CertificateInstallationResType* CertificateInstallationResType);
 void init_din_CableCheckReqType(struct din_CableCheckReqType* CableCheckReqType);
 void init_din_CableCheckResType(struct din_CableCheckResType* CableCheckResType);
@@ -2239,6 +2229,7 @@ void init_din_CurrentDemandResType(struct din_CurrentDemandResType* CurrentDeman
 void init_din_WeldingDetectionReqType(struct din_WeldingDetectionReqType* WeldingDetectionReqType);
 void init_din_WeldingDetectionResType(struct din_WeldingDetectionResType* WeldingDetectionResType);
 void init_din_SessionSetupReqType(struct din_SessionSetupReqType* SessionSetupReqType);
+void init_din_CertificateInstallationReqType(struct din_CertificateInstallationReqType* CertificateInstallationReqType);
 void init_din_SessionSetupResType(struct din_SessionSetupResType* SessionSetupResType);
 void init_din_ServiceDiscoveryReqType(struct din_ServiceDiscoveryReqType* ServiceDiscoveryReqType);
 void init_din_ServiceDiscoveryResType(struct din_ServiceDiscoveryResType* ServiceDiscoveryResType);
@@ -2253,6 +2244,15 @@ void init_din_ContractAuthenticationResType(struct din_ContractAuthenticationRes
 void init_din_ChargeParameterDiscoveryReqType(struct din_ChargeParameterDiscoveryReqType* ChargeParameterDiscoveryReqType);
 void init_din_ChargeParameterDiscoveryResType(struct din_ChargeParameterDiscoveryResType* ChargeParameterDiscoveryResType);
 void init_din_PowerDeliveryReqType(struct din_PowerDeliveryReqType* PowerDeliveryReqType);
+void init_din_PowerDeliveryResType(struct din_PowerDeliveryResType* PowerDeliveryResType);
+void init_din_ChargingStatusReqType(struct din_ChargingStatusReqType* ChargingStatusReqType);
+void init_din_ChargingStatusResType(struct din_ChargingStatusResType* ChargingStatusResType);
+void init_din_MeteringReceiptReqType(struct din_MeteringReceiptReqType* MeteringReceiptReqType);
+void init_din_MeteringReceiptResType(struct din_MeteringReceiptResType* MeteringReceiptResType);
+void init_din_SessionStopType(struct din_SessionStopType* SessionStopType);
+void init_din_SessionStopResType(struct din_SessionStopResType* SessionStopResType);
+void init_din_CertificateUpdateReqType(struct din_CertificateUpdateReqType* CertificateUpdateReqType);
+void init_din_CertificateUpdateResType(struct din_CertificateUpdateResType* CertificateUpdateResType);
 void init_din_BodyBaseType(struct din_BodyBaseType* BodyBaseType);
 void init_din_NotificationType(struct din_NotificationType* NotificationType);
 void init_din_SignatureType(struct din_SignatureType* SignatureType);

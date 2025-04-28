@@ -156,16 +156,16 @@ static int decode_iso20_TransformType(exi_bitstream_t* stream, struct iso20_Tran
 
     init_iso20_TransformType(TransformType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 0:
             // Grammar: ID=0; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=1
@@ -198,7 +198,7 @@ static int decode_iso20_TransformType(exi_bitstream_t* stream, struct iso20_Tran
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (XPath, string (string)); next=2
@@ -281,7 +281,7 @@ static int decode_iso20_TransformType(exi_bitstream_t* stream, struct iso20_Tran
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -309,7 +309,7 @@ static int decode_iso20_TransformType(exi_bitstream_t* stream, struct iso20_Tran
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Transform, TransformType (1, 1);
+// Particle: Transform, TransformType (1, 1) (original max unbounded);
 static int decode_iso20_TransformsType(exi_bitstream_t* stream, struct iso20_TransformsType* TransformsType) {
     int grammar_id = 4;
     int done = 0;
@@ -318,16 +318,16 @@ static int decode_iso20_TransformsType(exi_bitstream_t* stream, struct iso20_Tra
 
     init_iso20_TransformsType(TransformsType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 4:
             // Grammar: ID=4; read/write bits=1; START (Transform)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transform, TransformType (TransformType)); next=5
@@ -349,16 +349,13 @@ static int decode_iso20_TransformsType(exi_bitstream_t* stream, struct iso20_Tra
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transform, TransformType (TransformType)); next=2
                     // decode: element
-                    error = decode_iso20_TransformType(stream, &TransformsType->Transform);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -376,7 +373,7 @@ static int decode_iso20_TransformsType(exi_bitstream_t* stream, struct iso20_Tra
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -404,7 +401,7 @@ static int decode_iso20_TransformsType(exi_bitstream_t* stream, struct iso20_Tra
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DSAKeyValue; type={http://www.w3.org/2000/09/xmldsig#}DSAKeyValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: P, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); Q, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']);
+// Particle: P, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); Q, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']);
 static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DSAKeyValueType* DSAKeyValueType) {
     int grammar_id = 6;
     int done = 0;
@@ -413,16 +410,16 @@ static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DS
 
     init_iso20_DSAKeyValueType(DSAKeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 6:
             // Grammar: ID=6; read/write bits=2; START (P), START (G), START (Y)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (P, CryptoBinary (base64Binary)); next=7
@@ -464,7 +461,7 @@ static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DS
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Q, CryptoBinary (base64Binary)); next=8
@@ -487,7 +484,7 @@ static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DS
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (G, CryptoBinary (base64Binary)); next=9
@@ -519,7 +516,7 @@ static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DS
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Y, CryptoBinary (base64Binary)); next=10
@@ -541,7 +538,7 @@ static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DS
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (J, CryptoBinary (base64Binary)); next=11
@@ -579,7 +576,7 @@ static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DS
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Seed, CryptoBinary (base64Binary)); next=12
@@ -607,7 +604,7 @@ static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DS
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PgenCounter, CryptoBinary (base64Binary)); next=2
@@ -635,7 +632,7 @@ static int decode_iso20_DSAKeyValueType(exi_bitstream_t* stream, struct iso20_DS
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -672,16 +669,16 @@ static int decode_iso20_X509IssuerSerialType(exi_bitstream_t* stream, struct iso
 
     init_iso20_X509IssuerSerialType(X509IssuerSerialType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 13:
             // Grammar: ID=13; read/write bits=1; START (X509IssuerName)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509IssuerName, string (string)); next=14
@@ -743,7 +740,7 @@ static int decode_iso20_X509IssuerSerialType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509SerialNumber, integer (decimal)); next=2
@@ -770,7 +767,7 @@ static int decode_iso20_X509IssuerSerialType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -807,16 +804,16 @@ static int decode_iso20_DigestMethodType(exi_bitstream_t* stream, struct iso20_D
 
     init_iso20_DigestMethodType(DigestMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 15:
             // Grammar: ID=15; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=16
@@ -849,7 +846,7 @@ static int decode_iso20_DigestMethodType(exi_bitstream_t* stream, struct iso20_D
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -882,7 +879,7 @@ static int decode_iso20_DigestMethodType(exi_bitstream_t* stream, struct iso20_D
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -919,16 +916,16 @@ static int decode_iso20_RSAKeyValueType(exi_bitstream_t* stream, struct iso20_RS
 
     init_iso20_RSAKeyValueType(RSAKeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 17:
             // Grammar: ID=17; read/write bits=1; START (Modulus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Modulus, CryptoBinary (base64Binary)); next=18
@@ -950,7 +947,7 @@ static int decode_iso20_RSAKeyValueType(exi_bitstream_t* stream, struct iso20_RS
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Exponent, CryptoBinary (base64Binary)); next=2
@@ -972,7 +969,7 @@ static int decode_iso20_RSAKeyValueType(exi_bitstream_t* stream, struct iso20_RS
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1009,16 +1006,16 @@ static int decode_iso20_CanonicalizationMethodType(exi_bitstream_t* stream, stru
 
     init_iso20_CanonicalizationMethodType(CanonicalizationMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 19:
             // Grammar: ID=19; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=20
@@ -1051,7 +1048,7 @@ static int decode_iso20_CanonicalizationMethodType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -1084,7 +1081,7 @@ static int decode_iso20_CanonicalizationMethodType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1121,16 +1118,16 @@ static int decode_iso20_PriceLevelScheduleEntryType(exi_bitstream_t* stream, str
 
     init_iso20_PriceLevelScheduleEntryType(PriceLevelScheduleEntryType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 21:
             // Grammar: ID=21; read/write bits=1; START (Duration)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Duration, unsignedInt (unsignedLong)); next=22
@@ -1152,7 +1149,7 @@ static int decode_iso20_PriceLevelScheduleEntryType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PriceLevel, unsignedByte (unsignedShort)); next=2
@@ -1205,7 +1202,7 @@ static int decode_iso20_PriceLevelScheduleEntryType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1242,16 +1239,16 @@ static int decode_iso20_SignatureMethodType(exi_bitstream_t* stream, struct iso2
 
     init_iso20_SignatureMethodType(SignatureMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 23:
             // Grammar: ID=23; read/write bits=1; START (Algorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Algorithm, anyURI (anyURI)); next=24
@@ -1284,7 +1281,7 @@ static int decode_iso20_SignatureMethodType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (HMACOutputLength, HMACOutputLengthType (integer)); next=25
@@ -1332,7 +1329,7 @@ static int decode_iso20_SignatureMethodType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -1365,7 +1362,7 @@ static int decode_iso20_SignatureMethodType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1402,16 +1399,16 @@ static int decode_iso20_KeyValueType(exi_bitstream_t* stream, struct iso20_KeyVa
 
     init_iso20_KeyValueType(KeyValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 26:
             // Grammar: ID=26; read/write bits=2; START (DSAKeyValue), START (RSAKeyValue), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DSAKeyValue, DSAKeyValueType (DSAKeyValueType)); next=2
@@ -1454,7 +1451,7 @@ static int decode_iso20_KeyValueType(exi_bitstream_t* stream, struct iso20_KeyVa
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1491,16 +1488,16 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
 
     init_iso20_ReferenceType(ReferenceType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 27:
             // Grammar: ID=27; read/write bits=3; START (Id), START (Type), START (URI), START (Transforms), START (DigestMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Id, ID (NCName)); next=28
@@ -1595,7 +1592,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Type, anyURI (anyURI)); next=29
@@ -1669,7 +1666,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (URI, anyURI (anyURI)); next=30
@@ -1722,7 +1719,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transforms, TransformsType (TransformsType)); next=31
@@ -1754,7 +1751,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DigestMethod, DigestMethodType (DigestMethodType)); next=32
@@ -1776,7 +1773,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DigestValue, DigestValueType (base64Binary)); next=2
@@ -1798,7 +1795,7 @@ static int decode_iso20_ReferenceType(exi_bitstream_t* stream, struct iso20_Refe
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -1835,16 +1832,16 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
 
     init_iso20_RetrievalMethodType(RetrievalMethodType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 33:
             // Grammar: ID=33; read/write bits=3; START (Type), START (URI), START (Transforms), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Type, anyURI (anyURI)); next=34
@@ -1914,7 +1911,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (URI, anyURI (anyURI)); next=35
@@ -1963,7 +1960,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Transforms, TransformsType (TransformsType)); next=2
@@ -1991,7 +1988,7 @@ static int decode_iso20_RetrievalMethodType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2028,16 +2025,16 @@ static int decode_iso20_X509DataType(exi_bitstream_t* stream, struct iso20_X509D
 
     init_iso20_X509DataType(X509DataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 36:
             // Grammar: ID=36; read/write bits=3; START (X509IssuerSerial), START (X509SKI), START (X509SubjectName), START (X509Certificate), START (X509CRL), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (X509IssuerSerial, X509IssuerSerialType (X509IssuerSerialType)); next=2
@@ -2150,7 +2147,7 @@ static int decode_iso20_X509DataType(exi_bitstream_t* stream, struct iso20_X509D
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2187,16 +2184,16 @@ static int decode_iso20_PGPDataType(exi_bitstream_t* stream, struct iso20_PGPDat
 
     init_iso20_PGPDataType(PGPDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 37:
             // Grammar: ID=37; read/write bits=2; START (PGPKeyID), START (PGPKeyPacket)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyID, base64Binary (base64Binary)); next=38
@@ -2228,7 +2225,7 @@ static int decode_iso20_PGPDataType(exi_bitstream_t* stream, struct iso20_PGPDat
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=39
@@ -2271,7 +2268,7 @@ static int decode_iso20_PGPDataType(exi_bitstream_t* stream, struct iso20_PGPDat
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=40
@@ -2309,7 +2306,7 @@ static int decode_iso20_PGPDataType(exi_bitstream_t* stream, struct iso20_PGPDat
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PGPKeyPacket, base64Binary (base64Binary)); next=41
@@ -2331,7 +2328,7 @@ static int decode_iso20_PGPDataType(exi_bitstream_t* stream, struct iso20_PGPDat
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=40
@@ -2364,7 +2361,7 @@ static int decode_iso20_PGPDataType(exi_bitstream_t* stream, struct iso20_PGPDat
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2401,16 +2398,16 @@ static int decode_iso20_RationalNumberType(exi_bitstream_t* stream, struct iso20
 
     init_iso20_RationalNumberType(RationalNumberType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 42:
             // Grammar: ID=42; read/write bits=1; START (Exponent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Exponent, byte (short)); next=43
@@ -2464,7 +2461,7 @@ static int decode_iso20_RationalNumberType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Value, short (int)); next=2
@@ -2486,7 +2483,7 @@ static int decode_iso20_RationalNumberType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2523,16 +2520,16 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
 
     init_iso20_PowerScheduleEntryType(PowerScheduleEntryType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 44:
             // Grammar: ID=44; read/write bits=1; START (Duration)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Duration, unsignedInt (unsignedLong)); next=45
@@ -2554,7 +2551,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Power, RationalNumberType (RationalNumberType)); next=46
@@ -2576,7 +2573,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Power_L2, RationalNumberType (RationalNumberType)); next=47
@@ -2614,7 +2611,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Power_L3, RationalNumberType (RationalNumberType)); next=2
@@ -2642,7 +2639,7 @@ static int decode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2679,16 +2676,16 @@ static int decode_iso20_EVPriceRuleType(exi_bitstream_t* stream, struct iso20_EV
 
     init_iso20_EVPriceRuleType(EVPriceRuleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 48:
             // Grammar: ID=48; read/write bits=1; START (EnergyFee)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EnergyFee, RationalNumberType (RationalNumberType)); next=49
@@ -2710,7 +2707,7 @@ static int decode_iso20_EVPriceRuleType(exi_bitstream_t* stream, struct iso20_EV
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PowerRangeStart, RationalNumberType (RationalNumberType)); next=2
@@ -2732,7 +2729,7 @@ static int decode_iso20_EVPriceRuleType(exi_bitstream_t* stream, struct iso20_EV
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2769,16 +2766,16 @@ static int decode_iso20_EVPowerScheduleEntryType(exi_bitstream_t* stream, struct
 
     init_iso20_EVPowerScheduleEntryType(EVPowerScheduleEntryType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 50:
             // Grammar: ID=50; read/write bits=1; START (Duration)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Duration, unsignedInt (unsignedLong)); next=51
@@ -2800,7 +2797,7 @@ static int decode_iso20_EVPowerScheduleEntryType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Power, RationalNumberType (RationalNumberType)); next=2
@@ -2822,7 +2819,7 @@ static int decode_iso20_EVPowerScheduleEntryType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -2859,16 +2856,16 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
 
     init_iso20_EVPriceRuleStackType(EVPriceRuleStackType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 52:
             // Grammar: ID=52; read/write bits=1; START (Duration)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Duration, unsignedInt (unsignedLong)); next=53
@@ -2890,7 +2887,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVPriceRule, EVPriceRuleType (EVPriceRuleType)); next=54
@@ -2901,6 +2898,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
                     }
                     else
                     {
+                        // static array not large enough, only iso20_EVPriceRuleType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     grammar_id = 54;
@@ -2916,7 +2914,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: LOOP (EVPriceRule, EVPriceRuleType (EVPriceRuleType)); next=54
@@ -2927,40 +2925,18 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
                     }
                     else
                     {
+                        // static array not large enough, only iso20_EVPriceRuleType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 54;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 55:
-            // Grammar: ID=55; read/write bits=2; LOOP (EVPriceRule), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (EVPriceRule, EVPriceRuleType (EVPriceRuleType)); next=2
-                    // decode: element array
-                    if (EVPriceRuleStackType->EVPriceRule.arrayLen < iso20_EVPriceRuleType_8_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (EVPriceRuleStackType->EVPriceRule.arrayLen < 8)
                     {
-                        error = decode_iso20_EVPriceRuleType(stream, &EVPriceRuleStackType->EVPriceRule.array[EVPriceRuleStackType->EVPriceRule.arrayLen++]);
+                        grammar_id = 54;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -2978,7 +2954,7 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3008,31 +2984,31 @@ static int decode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False;
 // Particle: EnergyFee, RationalNumberType (1, 1); ParkingFee, RationalNumberType (0, 1); ParkingFeePeriod, unsignedInt (0, 1); CarbonDioxideEmission, unsignedShort (0, 1); RenewableGenerationPercentage, unsignedByte (0, 1); PowerRangeStart, RationalNumberType (1, 1);
 static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_PriceRuleType* PriceRuleType) {
-    int grammar_id = 56;
+    int grammar_id = 55;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PriceRuleType(PriceRuleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 56:
-            // Grammar: ID=56; read/write bits=1; START (EnergyFee)
+        case 55:
+            // Grammar: ID=55; read/write bits=1; START (EnergyFee)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EnergyFee, RationalNumberType (RationalNumberType)); next=57
+                    // Event: START (EnergyFee, RationalNumberType (RationalNumberType)); next=56
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->EnergyFee);
                     if (error == 0)
                     {
-                        grammar_id = 57;
+                        grammar_id = 56;
                     }
                     break;
                 default:
@@ -3041,45 +3017,45 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                 }
             }
             break;
-        case 57:
-            // Grammar: ID=57; read/write bits=3; START (ParkingFee), START (ParkingFeePeriod), START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
+        case 56:
+            // Grammar: ID=56; read/write bits=3; START (ParkingFee), START (ParkingFeePeriod), START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ParkingFee, RationalNumberType (RationalNumberType)); next=58
+                    // Event: START (ParkingFee, RationalNumberType (RationalNumberType)); next=57
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PriceRuleType->ParkingFee);
                     if (error == 0)
                     {
                         PriceRuleType->ParkingFee_isUsed = 1u;
-                        grammar_id = 58;
+                        grammar_id = 57;
                     }
                     break;
                 case 1:
-                    // Event: START (ParkingFeePeriod, unsignedInt (unsignedLong)); next=59
+                    // Event: START (ParkingFeePeriod, unsignedInt (unsignedLong)); next=58
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceRuleType->ParkingFeePeriod);
                     if (error == 0)
                     {
                         PriceRuleType->ParkingFeePeriod_isUsed = 1u;
-                        grammar_id = 59;
+                        grammar_id = 58;
                     }
                     break;
                 case 2:
-                    // Event: START (CarbonDioxideEmission, unsignedShort (unsignedInt)); next=60
+                    // Event: START (CarbonDioxideEmission, unsignedShort (unsignedInt)); next=59
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &PriceRuleType->CarbonDioxideEmission);
                     if (error == 0)
                     {
                         PriceRuleType->CarbonDioxideEmission_isUsed = 1u;
-                        grammar_id = 60;
+                        grammar_id = 59;
                     }
                     break;
                 case 3:
-                    // Event: START (RenewableGenerationPercentage, unsignedByte (unsignedShort)); next=61
+                    // Event: START (RenewableGenerationPercentage, unsignedByte (unsignedShort)); next=60
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3110,7 +3086,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 61;
+                                grammar_id = 60;
                             }
                             else
                             {
@@ -3134,35 +3110,35 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                 }
             }
             break;
-        case 58:
-            // Grammar: ID=58; read/write bits=3; START (ParkingFeePeriod), START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
+        case 57:
+            // Grammar: ID=57; read/write bits=3; START (ParkingFeePeriod), START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ParkingFeePeriod, unsignedInt (unsignedLong)); next=59
+                    // Event: START (ParkingFeePeriod, unsignedInt (unsignedLong)); next=58
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceRuleType->ParkingFeePeriod);
                     if (error == 0)
                     {
                         PriceRuleType->ParkingFeePeriod_isUsed = 1u;
-                        grammar_id = 59;
+                        grammar_id = 58;
                     }
                     break;
                 case 1:
-                    // Event: START (CarbonDioxideEmission, unsignedShort (unsignedInt)); next=60
+                    // Event: START (CarbonDioxideEmission, unsignedShort (unsignedInt)); next=59
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &PriceRuleType->CarbonDioxideEmission);
                     if (error == 0)
                     {
                         PriceRuleType->CarbonDioxideEmission_isUsed = 1u;
-                        grammar_id = 60;
+                        grammar_id = 59;
                     }
                     break;
                 case 2:
-                    // Event: START (RenewableGenerationPercentage, unsignedByte (unsignedShort)); next=61
+                    // Event: START (RenewableGenerationPercentage, unsignedByte (unsignedShort)); next=60
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3193,7 +3169,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 61;
+                                grammar_id = 60;
                             }
                             else
                             {
@@ -3217,25 +3193,25 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                 }
             }
             break;
-        case 59:
-            // Grammar: ID=59; read/write bits=2; START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
+        case 58:
+            // Grammar: ID=58; read/write bits=2; START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (CarbonDioxideEmission, unsignedShort (unsignedInt)); next=60
+                    // Event: START (CarbonDioxideEmission, unsignedShort (unsignedInt)); next=59
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &PriceRuleType->CarbonDioxideEmission);
                     if (error == 0)
                     {
                         PriceRuleType->CarbonDioxideEmission_isUsed = 1u;
-                        grammar_id = 60;
+                        grammar_id = 59;
                     }
                     break;
                 case 1:
-                    // Event: START (RenewableGenerationPercentage, unsignedByte (unsignedShort)); next=61
+                    // Event: START (RenewableGenerationPercentage, unsignedByte (unsignedShort)); next=60
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3266,7 +3242,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 61;
+                                grammar_id = 60;
                             }
                             else
                             {
@@ -3290,15 +3266,15 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                 }
             }
             break;
-        case 60:
-            // Grammar: ID=60; read/write bits=2; START (RenewableGenerationPercentage), START (PowerRangeStart)
+        case 59:
+            // Grammar: ID=59; read/write bits=2; START (RenewableGenerationPercentage), START (PowerRangeStart)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RenewableGenerationPercentage, unsignedByte (unsignedShort)); next=61
+                    // Event: START (RenewableGenerationPercentage, unsignedByte (unsignedShort)); next=60
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3329,7 +3305,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 61;
+                                grammar_id = 60;
                             }
                             else
                             {
@@ -3353,12 +3329,12 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
                 }
             }
             break;
-        case 61:
-            // Grammar: ID=61; read/write bits=1; START (PowerRangeStart)
+        case 60:
+            // Grammar: ID=60; read/write bits=1; START (PowerRangeStart)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PowerRangeStart, RationalNumberType (RationalNumberType)); next=2
@@ -3380,7 +3356,7 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3410,26 +3386,26 @@ static int decode_iso20_PriceRuleType(exi_bitstream_t* stream, struct iso20_Pric
 //          abstract=False; final=False;
 // Particle: PowerScheduleEntry, PowerScheduleEntryType (1, 1024);
 static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, struct iso20_PowerScheduleEntryListType* PowerScheduleEntryListType) {
-    int grammar_id = 62;
+    int grammar_id = 61;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PowerScheduleEntryListType(PowerScheduleEntryListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 62:
-            // Grammar: ID=62; read/write bits=1; START (PowerScheduleEntry)
+        case 61:
+            // Grammar: ID=61; read/write bits=1; START (PowerScheduleEntry)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PowerScheduleEntry, PowerScheduleEntryType (PowerScheduleEntryType)); next=63
+                    // Event: START (PowerScheduleEntry, PowerScheduleEntryType (PowerScheduleEntryType)); next=62
                     // decode: element array
                     if (PowerScheduleEntryListType->PowerScheduleEntry.arrayLen < iso20_PowerScheduleEntryType_1024_ARRAY_SIZE)
                     {
@@ -3437,9 +3413,10 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PowerScheduleEntryType_1024_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 63;
+                    grammar_id = 62;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -3447,15 +3424,15 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 63:
-            // Grammar: ID=63; read/write bits=2; LOOP (PowerScheduleEntry), END Element
+        case 62:
+            // Grammar: ID=62; read/write bits=2; LOOP (PowerScheduleEntry), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (PowerScheduleEntry, PowerScheduleEntryType (PowerScheduleEntryType)); next=63
+                    // Event: LOOP (PowerScheduleEntry, PowerScheduleEntryType (PowerScheduleEntryType)); next=62
                     // decode: element array
                     if (PowerScheduleEntryListType->PowerScheduleEntry.arrayLen < iso20_PowerScheduleEntryType_1024_ARRAY_SIZE)
                     {
@@ -3463,9 +3440,18 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PowerScheduleEntryType_1024_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 63;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (PowerScheduleEntryListType->PowerScheduleEntry.arrayLen < 1024)
+                    {
+                        grammar_id = 62;
+                    }
+                    else
+                    {
+                        grammar_id = 2;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -3483,7 +3469,7 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3513,31 +3499,31 @@ static int decode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, stru
 //          abstract=False; final=False;
 // Particle: TaxRuleID, numericIDType (1, 1); TaxRuleName, nameType (0, 1); TaxRate, RationalNumberType (1, 1); TaxIncludedInPrice, boolean (0, 1); AppliesToEnergyFee, boolean (1, 1); AppliesToParkingFee, boolean (1, 1); AppliesToOverstayFee, boolean (1, 1); AppliesMinimumMaximumCost, boolean (1, 1);
 static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRuleType* TaxRuleType) {
-    int grammar_id = 64;
+    int grammar_id = 63;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_TaxRuleType(TaxRuleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 64:
-            // Grammar: ID=64; read/write bits=1; START (TaxRuleID)
+        case 63:
+            // Grammar: ID=63; read/write bits=1; START (TaxRuleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=65
+                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=64
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &TaxRuleType->TaxRuleID);
                     if (error == 0)
                     {
-                        grammar_id = 65;
+                        grammar_id = 64;
                     }
                     break;
                 default:
@@ -3546,15 +3532,15 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                 }
             }
             break;
-        case 65:
-            // Grammar: ID=65; read/write bits=2; START (TaxRuleName), START (TaxRate)
+        case 64:
+            // Grammar: ID=64; read/write bits=2; START (TaxRuleName), START (TaxRate)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxRuleName, nameType (string)); next=66
+                    // Event: START (TaxRuleName, nameType (string)); next=65
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3594,7 +3580,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             if (eventCode == 0)
                             {
                                 TaxRuleType->TaxRuleName_isUsed = 1u;
-                                grammar_id = 66;
+                                grammar_id = 65;
                             }
                             else
                             {
@@ -3604,12 +3590,34 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     break;
                 case 1:
-                    // Event: START (TaxRate, RationalNumberType (RationalNumberType)); next=67
+                    // Event: START (TaxRate, RationalNumberType (RationalNumberType)); next=66
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &TaxRuleType->TaxRate);
                     if (error == 0)
                     {
-                        grammar_id = 67;
+                        grammar_id = 66;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 65:
+            // Grammar: ID=65; read/write bits=1; START (TaxRate)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (TaxRate, RationalNumberType (RationalNumberType)); next=66
+                    // decode: element
+                    error = decode_iso20_RationalNumberType(stream, &TaxRuleType->TaxRate);
+                    if (error == 0)
+                    {
+                        grammar_id = 66;
                     }
                     break;
                 default:
@@ -3619,36 +3627,14 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
             }
             break;
         case 66:
-            // Grammar: ID=66; read/write bits=1; START (TaxRate)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (TaxRate, RationalNumberType (RationalNumberType)); next=67
-                    // decode: element
-                    error = decode_iso20_RationalNumberType(stream, &TaxRuleType->TaxRate);
-                    if (error == 0)
-                    {
-                        grammar_id = 67;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 67:
-            // Grammar: ID=67; read/write bits=2; START (TaxIncludedInPrice), START (AppliesToEnergyFee)
+            // Grammar: ID=66; read/write bits=2; START (TaxIncludedInPrice), START (AppliesToEnergyFee)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxIncludedInPrice, boolean (boolean)); next=68
+                    // Event: START (TaxIncludedInPrice, boolean (boolean)); next=67
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3679,7 +3665,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 68;
+                                grammar_id = 67;
                             }
                             else
                             {
@@ -3689,7 +3675,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                     }
                     break;
                 case 1:
-                    // Event: START (AppliesToEnergyFee, boolean (boolean)); next=69
+                    // Event: START (AppliesToEnergyFee, boolean (boolean)); next=68
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3719,7 +3705,60 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 69;
+                                grammar_id = 68;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 67:
+            // Grammar: ID=67; read/write bits=1; START (AppliesToEnergyFee)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (AppliesToEnergyFee, boolean (boolean)); next=68
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                TaxRuleType->AppliesToEnergyFee = value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 68;
                             }
                             else
                             {
@@ -3735,14 +3774,14 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
             }
             break;
         case 68:
-            // Grammar: ID=68; read/write bits=1; START (AppliesToEnergyFee)
+            // Grammar: ID=68; read/write bits=1; START (AppliesToParkingFee)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AppliesToEnergyFee, boolean (boolean)); next=69
+                    // Event: START (AppliesToParkingFee, boolean (boolean)); next=69
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3753,7 +3792,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
                             if (error == 0)
                             {
-                                TaxRuleType->AppliesToEnergyFee = value;
+                                TaxRuleType->AppliesToParkingFee = value;
                             }
                         }
                         else
@@ -3788,14 +3827,14 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
             }
             break;
         case 69:
-            // Grammar: ID=69; read/write bits=1; START (AppliesToParkingFee)
+            // Grammar: ID=69; read/write bits=1; START (AppliesToOverstayFee)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AppliesToParkingFee, boolean (boolean)); next=70
+                    // Event: START (AppliesToOverstayFee, boolean (boolean)); next=70
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3806,7 +3845,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
                             error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
                             if (error == 0)
                             {
-                                TaxRuleType->AppliesToParkingFee = value;
+                                TaxRuleType->AppliesToOverstayFee = value;
                             }
                         }
                         else
@@ -3841,64 +3880,11 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
             }
             break;
         case 70:
-            // Grammar: ID=70; read/write bits=1; START (AppliesToOverstayFee)
+            // Grammar: ID=70; read/write bits=1; START (AppliesMinimumMaximumCost)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (AppliesToOverstayFee, boolean (boolean)); next=71
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                TaxRuleType->AppliesToOverstayFee = value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 71;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 71:
-            // Grammar: ID=71; read/write bits=1; START (AppliesMinimumMaximumCost)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (AppliesMinimumMaximumCost, boolean (boolean)); next=2
@@ -3951,7 +3937,7 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -3981,32 +3967,59 @@ static int decode_iso20_TaxRuleType(exi_bitstream_t* stream, struct iso20_TaxRul
 //          abstract=False; final=False;
 // Particle: Duration, unsignedInt (1, 1); PriceRule, PriceRuleType (1, 8);
 static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20_PriceRuleStackType* PriceRuleStackType) {
-    int grammar_id = 72;
+    int grammar_id = 71;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PriceRuleStackType(PriceRuleStackType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 72:
-            // Grammar: ID=72; read/write bits=1; START (Duration)
+        case 71:
+            // Grammar: ID=71; read/write bits=1; START (Duration)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Duration, unsignedInt (unsignedLong)); next=73
+                    // Event: START (Duration, unsignedInt (unsignedLong)); next=72
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceRuleStackType->Duration);
                     if (error == 0)
                     {
-                        grammar_id = 73;
+                        grammar_id = 72;
                     }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 72:
+            // Grammar: ID=72; read/write bits=1; START (PriceRule)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (PriceRule, PriceRuleType (PriceRuleType)); next=73
+                    // decode: element array
+                    if (PriceRuleStackType->PriceRule.arrayLen < iso20_PriceRuleType_8_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_PriceRuleType(stream, &PriceRuleStackType->PriceRule.array[PriceRuleStackType->PriceRule.arrayLen++]);
+                    }
+                    else
+                    {
+                        // static array not large enough, only iso20_PriceRuleType_8_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 73;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4015,40 +4028,14 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
             }
             break;
         case 73:
-            // Grammar: ID=73; read/write bits=1; START (PriceRule)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (PriceRule, PriceRuleType (PriceRuleType)); next=74
-                    // decode: element array
-                    if (PriceRuleStackType->PriceRule.arrayLen < iso20_PriceRuleType_8_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_PriceRuleType(stream, &PriceRuleStackType->PriceRule.array[PriceRuleStackType->PriceRule.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 74;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 74:
-            // Grammar: ID=74; read/write bits=2; LOOP (PriceRule), END Element
+            // Grammar: ID=73; read/write bits=2; LOOP (PriceRule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (PriceRule, PriceRuleType (PriceRuleType)); next=74
+                    // Event: LOOP (PriceRule, PriceRuleType (PriceRuleType)); next=73
                     // decode: element array
                     if (PriceRuleStackType->PriceRule.arrayLen < iso20_PriceRuleType_8_ARRAY_SIZE)
                     {
@@ -4056,40 +4043,18 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PriceRuleType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 74;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 75:
-            // Grammar: ID=75; read/write bits=2; LOOP (PriceRule), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (PriceRule, PriceRuleType (PriceRuleType)); next=2
-                    // decode: element array
-                    if (PriceRuleStackType->PriceRule.arrayLen < iso20_PriceRuleType_8_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (PriceRuleStackType->PriceRule.arrayLen < 8)
                     {
-                        error = decode_iso20_PriceRuleType(stream, &PriceRuleStackType->PriceRule.array[PriceRuleStackType->PriceRule.arrayLen++]);
+                        grammar_id = 73;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -4107,7 +4072,7 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4137,26 +4102,26 @@ static int decode_iso20_PriceRuleStackType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False;
 // Particle: ServiceName, nameType (1, 1); ServiceFee, RationalNumberType (1, 1);
 static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct iso20_AdditionalServiceType* AdditionalServiceType) {
-    int grammar_id = 76;
+    int grammar_id = 74;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_AdditionalServiceType(AdditionalServiceType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 76:
-            // Grammar: ID=76; read/write bits=1; START (ServiceName)
+        case 74:
+            // Grammar: ID=74; read/write bits=1; START (ServiceName)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceName, nameType (string)); next=77
+                    // Event: START (ServiceName, nameType (string)); next=75
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4195,7 +4160,7 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 77;
+                                grammar_id = 75;
                             }
                             else
                             {
@@ -4210,12 +4175,12 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 77:
-            // Grammar: ID=77; read/write bits=1; START (ServiceFee)
+        case 75:
+            // Grammar: ID=75; read/write bits=1; START (ServiceFee)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ServiceFee, RationalNumberType (RationalNumberType)); next=2
@@ -4237,7 +4202,7 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4267,31 +4232,31 @@ static int decode_iso20_AdditionalServiceType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); AvailableEnergy, RationalNumberType (0, 1); PowerTolerance, RationalNumberType (0, 1); PowerScheduleEntries, PowerScheduleEntryListType (1, 1);
 static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_PowerScheduleType* PowerScheduleType) {
-    int grammar_id = 78;
+    int grammar_id = 76;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PowerScheduleType(PowerScheduleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 78:
-            // Grammar: ID=78; read/write bits=1; START (TimeAnchor)
+        case 76:
+            // Grammar: ID=76; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=79
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=77
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &PowerScheduleType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 79;
+                        grammar_id = 77;
                     }
                     break;
                 default:
@@ -4300,31 +4265,31 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 79:
-            // Grammar: ID=79; read/write bits=2; START (AvailableEnergy), START (PowerTolerance), START (PowerScheduleEntries)
+        case 77:
+            // Grammar: ID=77; read/write bits=2; START (AvailableEnergy), START (PowerTolerance), START (PowerScheduleEntries)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AvailableEnergy, RationalNumberType (RationalNumberType)); next=80
+                    // Event: START (AvailableEnergy, RationalNumberType (RationalNumberType)); next=78
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleType->AvailableEnergy);
                     if (error == 0)
                     {
                         PowerScheduleType->AvailableEnergy_isUsed = 1u;
-                        grammar_id = 80;
+                        grammar_id = 78;
                     }
                     break;
                 case 1:
-                    // Event: START (PowerTolerance, RationalNumberType (RationalNumberType)); next=81
+                    // Event: START (PowerTolerance, RationalNumberType (RationalNumberType)); next=79
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleType->PowerTolerance);
                     if (error == 0)
                     {
                         PowerScheduleType->PowerTolerance_isUsed = 1u;
-                        grammar_id = 81;
+                        grammar_id = 79;
                     }
                     break;
                 case 2:
@@ -4342,21 +4307,21 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 80:
-            // Grammar: ID=80; read/write bits=2; START (PowerTolerance), START (PowerScheduleEntries)
+        case 78:
+            // Grammar: ID=78; read/write bits=2; START (PowerTolerance), START (PowerScheduleEntries)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PowerTolerance, RationalNumberType (RationalNumberType)); next=81
+                    // Event: START (PowerTolerance, RationalNumberType (RationalNumberType)); next=79
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &PowerScheduleType->PowerTolerance);
                     if (error == 0)
                     {
                         PowerScheduleType->PowerTolerance_isUsed = 1u;
-                        grammar_id = 81;
+                        grammar_id = 79;
                     }
                     break;
                 case 1:
@@ -4374,12 +4339,12 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 81:
-            // Grammar: ID=81; read/write bits=1; START (PowerScheduleEntries)
+        case 79:
+            // Grammar: ID=79; read/write bits=1; START (PowerScheduleEntries)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PowerScheduleEntries, PowerScheduleEntryListType (PowerScheduleEntryListType)); next=2
@@ -4401,7 +4366,7 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4431,26 +4396,26 @@ static int decode_iso20_PowerScheduleType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False;
 // Particle: EVPowerScheduleEntry, EVPowerScheduleEntryType (1, 1024);
 static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, struct iso20_EVPowerScheduleEntryListType* EVPowerScheduleEntryListType) {
-    int grammar_id = 82;
+    int grammar_id = 80;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EVPowerScheduleEntryListType(EVPowerScheduleEntryListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 82:
-            // Grammar: ID=82; read/write bits=1; START (EVPowerScheduleEntry)
+        case 80:
+            // Grammar: ID=80; read/write bits=1; START (EVPowerScheduleEntry)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPowerScheduleEntry, EVPowerScheduleEntryType (EVPowerScheduleEntryType)); next=83
+                    // Event: START (EVPowerScheduleEntry, EVPowerScheduleEntryType (EVPowerScheduleEntryType)); next=81
                     // decode: element array
                     if (EVPowerScheduleEntryListType->EVPowerScheduleEntry.arrayLen < iso20_EVPowerScheduleEntryType_1024_ARRAY_SIZE)
                     {
@@ -4458,9 +4423,10 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
                     }
                     else
                     {
+                        // static array not large enough, only iso20_EVPowerScheduleEntryType_1024_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 83;
+                    grammar_id = 81;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4468,15 +4434,15 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 83:
-            // Grammar: ID=83; read/write bits=2; LOOP (EVPowerScheduleEntry), END Element
+        case 81:
+            // Grammar: ID=81; read/write bits=2; LOOP (EVPowerScheduleEntry), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (EVPowerScheduleEntry, EVPowerScheduleEntryType (EVPowerScheduleEntryType)); next=83
+                    // Event: LOOP (EVPowerScheduleEntry, EVPowerScheduleEntryType (EVPowerScheduleEntryType)); next=81
                     // decode: element array
                     if (EVPowerScheduleEntryListType->EVPowerScheduleEntry.arrayLen < iso20_EVPowerScheduleEntryType_1024_ARRAY_SIZE)
                     {
@@ -4484,9 +4450,18 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
                     }
                     else
                     {
+                        // static array not large enough, only iso20_EVPowerScheduleEntryType_1024_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 83;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (EVPowerScheduleEntryListType->EVPowerScheduleEntry.arrayLen < 1024)
+                    {
+                        grammar_id = 81;
+                    }
+                    else
+                    {
+                        grammar_id = 2;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -4504,7 +4479,7 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4534,26 +4509,26 @@ static int decode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, st
 //          abstract=False; final=False;
 // Particle: OverstayRuleDescription, descriptionType (0, 1); StartTime, unsignedInt (1, 1); OverstayFee, RationalNumberType (1, 1); OverstayFeePeriod, unsignedInt (1, 1);
 static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_OverstayRuleType* OverstayRuleType) {
-    int grammar_id = 84;
+    int grammar_id = 82;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_OverstayRuleType(OverstayRuleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 84:
-            // Grammar: ID=84; read/write bits=2; START (OverstayRuleDescription), START (StartTime)
+        case 82:
+            // Grammar: ID=82; read/write bits=2; START (OverstayRuleDescription), START (StartTime)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OverstayRuleDescription, descriptionType (string)); next=85
+                    // Event: START (OverstayRuleDescription, descriptionType (string)); next=83
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4593,7 +4568,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                             if (eventCode == 0)
                             {
                                 OverstayRuleType->OverstayRuleDescription_isUsed = 1u;
-                                grammar_id = 85;
+                                grammar_id = 83;
                             }
                             else
                             {
@@ -4603,12 +4578,56 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
                     }
                     break;
                 case 1:
-                    // Event: START (StartTime, unsignedInt (unsignedLong)); next=86
+                    // Event: START (StartTime, unsignedInt (unsignedLong)); next=84
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &OverstayRuleType->StartTime);
                     if (error == 0)
                     {
-                        grammar_id = 86;
+                        grammar_id = 84;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 83:
+            // Grammar: ID=83; read/write bits=1; START (StartTime)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (StartTime, unsignedInt (unsignedLong)); next=84
+                    // decode: unsigned int
+                    error = decode_exi_type_uint32(stream, &OverstayRuleType->StartTime);
+                    if (error == 0)
+                    {
+                        grammar_id = 84;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 84:
+            // Grammar: ID=84; read/write bits=1; START (OverstayFee)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (OverstayFee, RationalNumberType (RationalNumberType)); next=85
+                    // decode: element
+                    error = decode_iso20_RationalNumberType(stream, &OverstayRuleType->OverstayFee);
+                    if (error == 0)
+                    {
+                        grammar_id = 85;
                     }
                     break;
                 default:
@@ -4618,55 +4637,11 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
             }
             break;
         case 85:
-            // Grammar: ID=85; read/write bits=1; START (StartTime)
+            // Grammar: ID=85; read/write bits=1; START (OverstayFeePeriod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (StartTime, unsignedInt (unsignedLong)); next=86
-                    // decode: unsigned int
-                    error = decode_exi_type_uint32(stream, &OverstayRuleType->StartTime);
-                    if (error == 0)
-                    {
-                        grammar_id = 86;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 86:
-            // Grammar: ID=86; read/write bits=1; START (OverstayFee)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (OverstayFee, RationalNumberType (RationalNumberType)); next=87
-                    // decode: element
-                    error = decode_iso20_RationalNumberType(stream, &OverstayRuleType->OverstayFee);
-                    if (error == 0)
-                    {
-                        grammar_id = 87;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 87:
-            // Grammar: ID=87; read/write bits=1; START (OverstayFeePeriod)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (OverstayFeePeriod, unsignedInt (unsignedLong)); next=2
@@ -4688,7 +4663,7 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4718,26 +4693,26 @@ static int decode_iso20_OverstayRuleType(exi_bitstream_t* stream, struct iso20_O
 //          abstract=False; final=False;
 // Particle: EVPriceRuleStack, EVPriceRuleStackType (1, 1024);
 static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct iso20_EVPriceRuleStackListType* EVPriceRuleStackListType) {
-    int grammar_id = 88;
+    int grammar_id = 86;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EVPriceRuleStackListType(EVPriceRuleStackListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 88:
-            // Grammar: ID=88; read/write bits=1; START (EVPriceRuleStack)
+        case 86:
+            // Grammar: ID=86; read/write bits=1; START (EVPriceRuleStack)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPriceRuleStack, EVPriceRuleStackType (EVPriceRuleStackType)); next=89
+                    // Event: START (EVPriceRuleStack, EVPriceRuleStackType (EVPriceRuleStackType)); next=87
                     // decode: element array
                     if (EVPriceRuleStackListType->EVPriceRuleStack.arrayLen < iso20_EVPriceRuleStackType_1024_ARRAY_SIZE)
                     {
@@ -4745,9 +4720,10 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
                     }
                     else
                     {
+                        // static array not large enough, only iso20_EVPriceRuleStackType_1024_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 89;
+                    grammar_id = 87;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4755,15 +4731,15 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 89:
-            // Grammar: ID=89; read/write bits=2; LOOP (EVPriceRuleStack), END Element
+        case 87:
+            // Grammar: ID=87; read/write bits=2; LOOP (EVPriceRuleStack), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (EVPriceRuleStack, EVPriceRuleStackType (EVPriceRuleStackType)); next=89
+                    // Event: LOOP (EVPriceRuleStack, EVPriceRuleStackType (EVPriceRuleStackType)); next=87
                     // decode: element array
                     if (EVPriceRuleStackListType->EVPriceRuleStack.arrayLen < iso20_EVPriceRuleStackType_1024_ARRAY_SIZE)
                     {
@@ -4771,9 +4747,18 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
                     }
                     else
                     {
+                        // static array not large enough, only iso20_EVPriceRuleStackType_1024_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 89;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (EVPriceRuleStackListType->EVPriceRuleStack.arrayLen < 1024)
+                    {
+                        grammar_id = 87;
+                    }
+                    else
+                    {
+                        grammar_id = 2;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -4791,7 +4776,7 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4821,31 +4806,31 @@ static int decode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False;
 // Particle: SPKISexp, base64Binary (1, 1); ANY, anyType (0, 1);
 static int decode_iso20_SPKIDataType(exi_bitstream_t* stream, struct iso20_SPKIDataType* SPKIDataType) {
-    int grammar_id = 90;
+    int grammar_id = 88;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SPKIDataType(SPKIDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 90:
-            // Grammar: ID=90; read/write bits=1; START (SPKISexp)
+        case 88:
+            // Grammar: ID=88; read/write bits=1; START (SPKISexp)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SPKISexp, base64Binary (base64Binary)); next=91
+                    // Event: START (SPKISexp, base64Binary (base64Binary)); next=89
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SPKIDataType->SPKISexp.bytesLen, &SPKIDataType->SPKISexp.bytes[0], iso20_base64Binary_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 91;
+                        grammar_id = 89;
                     }
                     break;
                 default:
@@ -4854,12 +4839,12 @@ static int decode_iso20_SPKIDataType(exi_bitstream_t* stream, struct iso20_SPKID
                 }
             }
             break;
-        case 91:
-            // Grammar: ID=91; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 89:
+            // Grammar: ID=89; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -4892,7 +4877,7 @@ static int decode_iso20_SPKIDataType(exi_bitstream_t* stream, struct iso20_SPKID
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -4920,28 +4905,28 @@ static int decode_iso20_SPKIDataType(exi_bitstream_t* stream, struct iso20_SPKID
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4);
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_SignedInfoType* SignedInfoType) {
-    int grammar_id = 92;
+    int grammar_id = 90;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SignedInfoType(SignedInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 92:
-            // Grammar: ID=92; read/write bits=2; START (Id), START (CanonicalizationMethod)
+        case 90:
+            // Grammar: ID=90; read/write bits=2; START (Id), START (CanonicalizationMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=93
+                    // Event: START (Id, ID (NCName)); next=91
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignedInfoType->Id.charactersLen);
                     if (error == 0)
@@ -4959,15 +4944,59 @@ static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_Sig
                         }
                     }
                     SignedInfoType->Id_isUsed = 1u;
-                    grammar_id = 93;
+                    grammar_id = 91;
                     break;
                 case 1:
-                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=94
+                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=92
                     // decode: element
                     error = decode_iso20_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod);
                     if (error == 0)
                     {
-                        grammar_id = 94;
+                        grammar_id = 92;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 91:
+            // Grammar: ID=91; read/write bits=1; START (CanonicalizationMethod)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=92
+                    // decode: element
+                    error = decode_iso20_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod);
+                    if (error == 0)
+                    {
+                        grammar_id = 92;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 92:
+            // Grammar: ID=92; read/write bits=1; START (SignatureMethod)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (SignatureMethod, SignatureMethodType (SignatureMethodType)); next=93
+                    // decode: element
+                    error = decode_iso20_SignatureMethodType(stream, &SignedInfoType->SignatureMethod);
+                    if (error == 0)
+                    {
+                        grammar_id = 93;
                     }
                     break;
                 default:
@@ -4977,20 +5006,25 @@ static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_Sig
             }
             break;
         case 93:
-            // Grammar: ID=93; read/write bits=1; START (CanonicalizationMethod)
+            // Grammar: ID=93; read/write bits=1; START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType (CanonicalizationMethodType)); next=94
-                    // decode: element
-                    error = decode_iso20_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod);
-                    if (error == 0)
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=94
+                    // decode: element array
+                    if (SignedInfoType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
                     {
-                        grammar_id = 94;
+                        error = decode_iso20_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++]);
                     }
+                    else
+                    {
+                        // static array not large enough, only iso20_ReferenceType_4_ARRAY_SIZE elements
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 94;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4999,62 +5033,14 @@ static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_Sig
             }
             break;
         case 94:
-            // Grammar: ID=94; read/write bits=1; START (SignatureMethod)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (SignatureMethod, SignatureMethodType (SignatureMethodType)); next=95
-                    // decode: element
-                    error = decode_iso20_SignatureMethodType(stream, &SignedInfoType->SignatureMethod);
-                    if (error == 0)
-                    {
-                        grammar_id = 95;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 95:
-            // Grammar: ID=95; read/write bits=1; START (Reference)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=96
-                    // decode: element array
-                    if (SignedInfoType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 96;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 96:
-            // Grammar: ID=96; read/write bits=2; LOOP (Reference), END Element
+            // Grammar: ID=94; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=96
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=94
                     // decode: element array
                     if (SignedInfoType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -5062,40 +5048,10 @@ static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_Sig
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 96;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 97:
-            // Grammar: ID=97; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (SignedInfoType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
+                    grammar_id = 94;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -5113,7 +5069,7 @@ static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_Sig
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5143,31 +5099,31 @@ static int decode_iso20_SignedInfoType(exi_bitstream_t* stream, struct iso20_Sig
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); EVPowerScheduleEntries, EVPowerScheduleEntryListType (1, 1);
 static int decode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, struct iso20_EVPowerScheduleType* EVPowerScheduleType) {
-    int grammar_id = 98;
+    int grammar_id = 95;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EVPowerScheduleType(EVPowerScheduleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 98:
-            // Grammar: ID=98; read/write bits=1; START (TimeAnchor)
+        case 95:
+            // Grammar: ID=95; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=99
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=96
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &EVPowerScheduleType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 99;
+                        grammar_id = 96;
                     }
                     break;
                 default:
@@ -5176,12 +5132,12 @@ static int decode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 99:
-            // Grammar: ID=99; read/write bits=1; START (EVPowerScheduleEntries)
+        case 96:
+            // Grammar: ID=96; read/write bits=1; START (EVPowerScheduleEntries)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVPowerScheduleEntries, EVPowerScheduleEntryListType (EVPowerScheduleEntryListType)); next=2
@@ -5203,7 +5159,7 @@ static int decode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5233,26 +5189,26 @@ static int decode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, struct iso2
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
 static int decode_iso20_SignatureValueType(exi_bitstream_t* stream, struct iso20_SignatureValueType* SignatureValueType) {
-    int grammar_id = 100;
+    int grammar_id = 97;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SignatureValueType(SignatureValueType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 100:
-            // Grammar: ID=100; read/write bits=2; START (Id), START (CONTENT)
+        case 97:
+            // Grammar: ID=97; read/write bits=2; START (Id), START (CONTENT)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=101
+                    // Event: START (Id, ID (NCName)); next=98
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->Id.charactersLen);
                     if (error == 0)
@@ -5270,7 +5226,7 @@ static int decode_iso20_SignatureValueType(exi_bitstream_t* stream, struct iso20
                         }
                     }
                     SignatureValueType->Id_isUsed = 1u;
-                    grammar_id = 101;
+                    grammar_id = 98;
                     break;
                 case 1:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=2
@@ -5291,12 +5247,12 @@ static int decode_iso20_SignatureValueType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 101:
-            // Grammar: ID=101; read/write bits=1; START (CONTENT)
+        case 98:
+            // Grammar: ID=98; read/write bits=1; START (CONTENT)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=2
@@ -5322,7 +5278,7 @@ static int decode_iso20_SignatureValueType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5352,26 +5308,26 @@ static int decode_iso20_SignatureValueType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False;
 // Particle: Certificate, certificateType (1, 3);
 static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso20_SubCertificatesType* SubCertificatesType) {
-    int grammar_id = 102;
+    int grammar_id = 99;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SubCertificatesType(SubCertificatesType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 102:
-            // Grammar: ID=102; read/write bits=1; START (Certificate)
+        case 99:
+            // Grammar: ID=99; read/write bits=1; START (Certificate)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Certificate, certificateType (base64Binary)); next=103
+                    // Event: START (Certificate, certificateType (base64Binary)); next=100
                     // decode exi type: base64Binary (Array)
                     if (SubCertificatesType->Certificate.arrayLen < iso20_certificateType_3_ARRAY_SIZE)
                     {
@@ -5379,7 +5335,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                         if (error == 0)
                         {
                             SubCertificatesType->Certificate.arrayLen++;
-                            grammar_id = 103;
+                            grammar_id = 100;
                         }
                     }
                     else
@@ -5393,15 +5349,15 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 103:
-            // Grammar: ID=103; read/write bits=2; LOOP (Certificate), END Element
+        case 100:
+            // Grammar: ID=100; read/write bits=2; LOOP (Certificate), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Certificate, certificateType (base64Binary)); next=103
+                    // Event: LOOP (Certificate, certificateType (base64Binary)); next=100
                     // decode exi type: base64Binary (Array)
                     if (SubCertificatesType->Certificate.arrayLen < iso20_certificateType_3_ARRAY_SIZE)
                     {
@@ -5409,42 +5365,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
                         if (error == 0)
                         {
                             SubCertificatesType->Certificate.arrayLen++;
-                            grammar_id = 103;
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 104:
-            // Grammar: ID=104; read/write bits=2; LOOP (Certificate), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Certificate, certificateType (base64Binary)); next=2
-                    // decode exi type: base64Binary (Array)
-                    if (SubCertificatesType->Certificate.arrayLen < iso20_certificateType_3_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_hex_binary(stream, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytesLen, &SubCertificatesType->Certificate.array[SubCertificatesType->Certificate.arrayLen].bytes[0], iso20_certificateType_BYTES_SIZE);
-                        if (error == 0)
-                        {
-                            SubCertificatesType->Certificate.arrayLen++;
-                            grammar_id = 2;
+                            grammar_id = 100;
                         }
                     }
                     else
@@ -5468,7 +5389,7 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5498,26 +5419,26 @@ static int decode_iso20_SubCertificatesType(exi_bitstream_t* stream, struct iso2
 //          abstract=False; final=False; choice=True;
 // Particle: Name, nameType (1, 1); boolValue, boolean (0, 1); byteValue, byte (0, 1); shortValue, short (0, 1); intValue, int (0, 1); rationalNumber, RationalNumberType (0, 1); finiteString, nameType (0, 1);
 static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_ParameterType* ParameterType) {
-    int grammar_id = 105;
+    int grammar_id = 101;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ParameterType(ParameterType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 105:
-            // Grammar: ID=105; read/write bits=1; START (Name)
+        case 101:
+            // Grammar: ID=101; read/write bits=1; START (Name)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Name, nameType (string)); next=106
+                    // Event: START (Name, nameType (string)); next=102
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ParameterType->Name.charactersLen);
                     if (error == 0)
@@ -5534,7 +5455,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 106;
+                    grammar_id = 102;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -5542,12 +5463,12 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
                 }
             }
             break;
-        case 106:
-            // Grammar: ID=106; read/write bits=3; START (boolValue), START (byteValue), START (shortValue), START (intValue), START (rationalNumber), START (finiteString)
+        case 102:
+            // Grammar: ID=102; read/write bits=3; START (boolValue), START (byteValue), START (shortValue), START (intValue), START (rationalNumber), START (finiteString)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (boolValue, boolean (boolean)); next=2
@@ -5723,7 +5644,7 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5753,31 +5674,31 @@ static int decode_iso20_ParameterType(exi_bitstream_t* stream, struct iso20_Para
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); Currency, currencyType (1, 1); PriceAlgorithm, identifierType (1, 1); EVPriceRuleStacks, EVPriceRuleStackListType (1, 1);
 static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, struct iso20_EVAbsolutePriceScheduleType* EVAbsolutePriceScheduleType) {
-    int grammar_id = 107;
+    int grammar_id = 103;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EVAbsolutePriceScheduleType(EVAbsolutePriceScheduleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 107:
-            // Grammar: ID=107; read/write bits=1; START (TimeAnchor)
+        case 103:
+            // Grammar: ID=103; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=108
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=104
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &EVAbsolutePriceScheduleType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 108;
+                        grammar_id = 104;
                     }
                     break;
                 default:
@@ -5786,15 +5707,15 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 108:
-            // Grammar: ID=108; read/write bits=1; START (Currency)
+        case 104:
+            // Grammar: ID=104; read/write bits=1; START (Currency)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Currency, currencyType (string)); next=109
+                    // Event: START (Currency, currencyType (string)); next=105
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5833,7 +5754,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 109;
+                                grammar_id = 105;
                             }
                             else
                             {
@@ -5848,15 +5769,15 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 109:
-            // Grammar: ID=109; read/write bits=1; START (PriceAlgorithm)
+        case 105:
+            // Grammar: ID=105; read/write bits=1; START (PriceAlgorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceAlgorithm, identifierType (string)); next=110
+                    // Event: START (PriceAlgorithm, identifierType (string)); next=106
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5895,7 +5816,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 110;
+                                grammar_id = 106;
                             }
                             else
                             {
@@ -5910,12 +5831,12 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 110:
-            // Grammar: ID=110; read/write bits=1; START (EVPriceRuleStacks)
+        case 106:
+            // Grammar: ID=106; read/write bits=1; START (EVPriceRuleStacks)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVPriceRuleStacks, EVPriceRuleStackListType (EVPriceRuleStackListType)); next=2
@@ -5937,7 +5858,7 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -5967,31 +5888,31 @@ static int decode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, str
 //          abstract=False; final=False;
 // Particle: Amount, RationalNumberType (1, 1); CostPerUnit, RationalNumberType (1, 1);
 static int decode_iso20_DetailedCostType(exi_bitstream_t* stream, struct iso20_DetailedCostType* DetailedCostType) {
-    int grammar_id = 111;
+    int grammar_id = 107;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_DetailedCostType(DetailedCostType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 111:
-            // Grammar: ID=111; read/write bits=1; START (Amount)
+        case 107:
+            // Grammar: ID=107; read/write bits=1; START (Amount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Amount, RationalNumberType (RationalNumberType)); next=112
+                    // Event: START (Amount, RationalNumberType (RationalNumberType)); next=108
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &DetailedCostType->Amount);
                     if (error == 0)
                     {
-                        grammar_id = 112;
+                        grammar_id = 108;
                     }
                     break;
                 default:
@@ -6000,12 +5921,12 @@ static int decode_iso20_DetailedCostType(exi_bitstream_t* stream, struct iso20_D
                 }
             }
             break;
-        case 112:
-            // Grammar: ID=112; read/write bits=1; START (CostPerUnit)
+        case 108:
+            // Grammar: ID=108; read/write bits=1; START (CostPerUnit)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CostPerUnit, RationalNumberType (RationalNumberType)); next=2
@@ -6027,7 +5948,7 @@ static int decode_iso20_DetailedCostType(exi_bitstream_t* stream, struct iso20_D
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -6057,26 +5978,26 @@ static int decode_iso20_DetailedCostType(exi_bitstream_t* stream, struct iso20_D
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); KeyName, string (0, 1); KeyValue, KeyValueType (0, 1); RetrievalMethod, RetrievalMethodType (0, 1); X509Data, X509DataType (0, 1); PGPData, PGPDataType (0, 1); SPKIData, SPKIDataType (0, 1); MgmtData, string (0, 1); ANY, anyType (0, 1);
 static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInfoType* KeyInfoType) {
-    int grammar_id = 113;
+    int grammar_id = 109;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_KeyInfoType(KeyInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 113:
-            // Grammar: ID=113; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 109:
+            // Grammar: ID=109; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=114
+                    // Event: START (Id, ID (NCName)); next=110
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &KeyInfoType->Id.charactersLen);
                     if (error == 0)
@@ -6094,7 +6015,7 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
                         }
                     }
                     KeyInfoType->Id_isUsed = 1u;
-                    grammar_id = 114;
+                    grammar_id = 110;
                     break;
                 case 1:
                     // Event: START (KeyName, string (string)); next=2
@@ -6262,12 +6183,12 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
                 }
             }
             break;
-        case 114:
-            // Grammar: ID=114; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 110:
+            // Grammar: ID=110; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (KeyName, string (string)); next=2
@@ -6440,7 +6361,7 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -6468,28 +6389,28 @@ static int decode_iso20_KeyInfoType(exi_bitstream_t* stream, struct iso20_KeyInf
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Object; type={http://www.w3.org/2000/09/xmldsig#}ObjectType; base type=; content type=mixed;
 //          abstract=False; final=False;
-// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1)(old 1, 1);
+// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1) (old 1, 1);
 static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectType* ObjectType) {
-    int grammar_id = 115;
+    int grammar_id = 111;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ObjectType(ObjectType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 115:
-            // Grammar: ID=115; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 111:
+            // Grammar: ID=111; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Encoding, anyURI (anyURI)); next=116
+                    // Event: START (Encoding, anyURI (anyURI)); next=112
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Encoding.charactersLen);
                     if (error == 0)
@@ -6507,10 +6428,10 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                         }
                     }
                     ObjectType->Encoding_isUsed = 1u;
-                    grammar_id = 116;
+                    grammar_id = 112;
                     break;
                 case 1:
-                    // Event: START (Id, ID (NCName)); next=117
+                    // Event: START (Id, ID (NCName)); next=113
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -6528,10 +6449,10 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 117;
+                    grammar_id = 113;
                     break;
                 case 2:
-                    // Event: START (MimeType, string (string)); next=118
+                    // Event: START (MimeType, string (string)); next=114
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -6549,7 +6470,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 118;
+                    grammar_id = 114;
                     break;
                 case 3:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -6577,15 +6498,15 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 }
             }
             break;
-        case 116:
-            // Grammar: ID=116; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 112:
+            // Grammar: ID=112; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=117
+                    // Event: START (Id, ID (NCName)); next=113
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -6603,10 +6524,10 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 117;
+                    grammar_id = 113;
                     break;
                 case 1:
-                    // Event: START (MimeType, string (string)); next=118
+                    // Event: START (MimeType, string (string)); next=114
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -6624,7 +6545,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 118;
+                    grammar_id = 114;
                     break;
                 case 2:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -6652,15 +6573,15 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 }
             }
             break;
-        case 117:
-            // Grammar: ID=117; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
+        case 113:
+            // Grammar: ID=113; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MimeType, string (string)); next=118
+                    // Event: START (MimeType, string (string)); next=114
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -6678,7 +6599,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 118;
+                    grammar_id = 114;
                     break;
                 case 1:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -6706,12 +6627,12 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
                 }
             }
             break;
-        case 118:
-            // Grammar: ID=118; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 114:
+            // Grammar: ID=114; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -6744,7 +6665,7 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -6774,26 +6695,26 @@ static int decode_iso20_ObjectType(exi_bitstream_t* stream, struct iso20_ObjectT
 //          abstract=False; final=False;
 // Particle: PriceLevelScheduleEntry, PriceLevelScheduleEntryType (1, 1024);
 static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream, struct iso20_PriceLevelScheduleEntryListType* PriceLevelScheduleEntryListType) {
-    int grammar_id = 119;
+    int grammar_id = 115;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PriceLevelScheduleEntryListType(PriceLevelScheduleEntryListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 119:
-            // Grammar: ID=119; read/write bits=1; START (PriceLevelScheduleEntry)
+        case 115:
+            // Grammar: ID=115; read/write bits=1; START (PriceLevelScheduleEntry)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceLevelScheduleEntry, PriceLevelScheduleEntryType (PriceLevelScheduleEntryType)); next=120
+                    // Event: START (PriceLevelScheduleEntry, PriceLevelScheduleEntryType (PriceLevelScheduleEntryType)); next=116
                     // decode: element array
                     if (PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.arrayLen < iso20_PriceLevelScheduleEntryType_1024_ARRAY_SIZE)
                     {
@@ -6801,9 +6722,10 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PriceLevelScheduleEntryType_1024_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 120;
+                    grammar_id = 116;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -6811,15 +6733,15 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
                 }
             }
             break;
-        case 120:
-            // Grammar: ID=120; read/write bits=2; LOOP (PriceLevelScheduleEntry), END Element
+        case 116:
+            // Grammar: ID=116; read/write bits=2; LOOP (PriceLevelScheduleEntry), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (PriceLevelScheduleEntry, PriceLevelScheduleEntryType (PriceLevelScheduleEntryType)); next=120
+                    // Event: LOOP (PriceLevelScheduleEntry, PriceLevelScheduleEntryType (PriceLevelScheduleEntryType)); next=116
                     // decode: element array
                     if (PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.arrayLen < iso20_PriceLevelScheduleEntryType_1024_ARRAY_SIZE)
                     {
@@ -6827,9 +6749,18 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PriceLevelScheduleEntryType_1024_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 120;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.arrayLen < 1024)
+                    {
+                        grammar_id = 116;
+                    }
+                    else
+                    {
+                        grammar_id = 2;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -6847,7 +6778,7 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -6877,31 +6808,31 @@ static int decode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
 //          abstract=False; final=False;
 // Particle: TaxRuleID, numericIDType (1, 1); Amount, RationalNumberType (1, 1);
 static int decode_iso20_DetailedTaxType(exi_bitstream_t* stream, struct iso20_DetailedTaxType* DetailedTaxType) {
-    int grammar_id = 121;
+    int grammar_id = 117;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_DetailedTaxType(DetailedTaxType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 121:
-            // Grammar: ID=121; read/write bits=1; START (TaxRuleID)
+        case 117:
+            // Grammar: ID=117; read/write bits=1; START (TaxRuleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=122
+                    // Event: START (TaxRuleID, numericIDType (unsignedInt)); next=118
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &DetailedTaxType->TaxRuleID);
                     if (error == 0)
                     {
-                        grammar_id = 122;
+                        grammar_id = 118;
                     }
                     break;
                 default:
@@ -6910,12 +6841,12 @@ static int decode_iso20_DetailedTaxType(exi_bitstream_t* stream, struct iso20_De
                 }
             }
             break;
-        case 122:
-            // Grammar: ID=122; read/write bits=1; START (Amount)
+        case 118:
+            // Grammar: ID=118; read/write bits=1; START (Amount)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Amount, RationalNumberType (RationalNumberType)); next=2
@@ -6937,7 +6868,7 @@ static int decode_iso20_DetailedTaxType(exi_bitstream_t* stream, struct iso20_De
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -6967,26 +6898,26 @@ static int decode_iso20_DetailedTaxType(exi_bitstream_t* stream, struct iso20_De
 //          abstract=False; final=False;
 // Particle: TaxRule, TaxRuleType (1, 10);
 static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_TaxRuleListType* TaxRuleListType) {
-    int grammar_id = 123;
+    int grammar_id = 119;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_TaxRuleListType(TaxRuleListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 123:
-            // Grammar: ID=123; read/write bits=1; START (TaxRule)
+        case 119:
+            // Grammar: ID=119; read/write bits=1; START (TaxRule)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxRule, TaxRuleType (TaxRuleType)); next=124
+                    // Event: START (TaxRule, TaxRuleType (TaxRuleType)); next=120
                     // decode: element array
                     if (TaxRuleListType->TaxRule.arrayLen < iso20_TaxRuleType_10_ARRAY_SIZE)
                     {
@@ -6994,9 +6925,10 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
                     }
                     else
                     {
+                        // static array not large enough, only iso20_TaxRuleType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 124;
+                    grammar_id = 120;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7004,15 +6936,15 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
                 }
             }
             break;
-        case 124:
-            // Grammar: ID=124; read/write bits=2; LOOP (TaxRule), END Element
+        case 120:
+            // Grammar: ID=120; read/write bits=2; LOOP (TaxRule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxRule, TaxRuleType (TaxRuleType)); next=124
+                    // Event: LOOP (TaxRule, TaxRuleType (TaxRuleType)); next=120
                     // decode: element array
                     if (TaxRuleListType->TaxRule.arrayLen < iso20_TaxRuleType_10_ARRAY_SIZE)
                     {
@@ -7020,40 +6952,18 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
                     }
                     else
                     {
+                        // static array not large enough, only iso20_TaxRuleType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 124;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 125:
-            // Grammar: ID=125; read/write bits=2; LOOP (TaxRule), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxRule, TaxRuleType (TaxRuleType)); next=2
-                    // decode: element array
-                    if (TaxRuleListType->TaxRule.arrayLen < iso20_TaxRuleType_10_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (TaxRuleListType->TaxRule.arrayLen < 10)
                     {
-                        error = decode_iso20_TaxRuleType(stream, &TaxRuleListType->TaxRule.array[TaxRuleListType->TaxRule.arrayLen++]);
+                        grammar_id = 120;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -7071,7 +6981,7 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7099,28 +7009,28 @@ static int decode_iso20_TaxRuleListType(exi_bitstream_t* stream, struct iso20_Ta
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}PriceRuleStacks; type={urn:iso:std:iso:15118:-20:CommonMessages}PriceRuleStackListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: PriceRuleStack, PriceRuleStackType (1, 64);
+// Particle: PriceRuleStack, PriceRuleStackType (1, 64) (original max 1024);
 static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct iso20_PriceRuleStackListType* PriceRuleStackListType) {
-    int grammar_id = 126;
+    int grammar_id = 121;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PriceRuleStackListType(PriceRuleStackListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 126:
-            // Grammar: ID=126; read/write bits=1; START (PriceRuleStack)
+        case 121:
+            // Grammar: ID=121; read/write bits=1; START (PriceRuleStack)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceRuleStack, PriceRuleStackType (PriceRuleStackType)); next=127
+                    // Event: START (PriceRuleStack, PriceRuleStackType (PriceRuleStackType)); next=122
                     // decode: element array
                     if (PriceRuleStackListType->PriceRuleStack.arrayLen < iso20_PriceRuleStackType_64_ARRAY_SIZE)
                     {
@@ -7128,9 +7038,10 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PriceRuleStackType_64_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 127;
+                    grammar_id = 122;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7138,15 +7049,15 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 127:
-            // Grammar: ID=127; read/write bits=2; LOOP (PriceRuleStack), END Element
+        case 122:
+            // Grammar: ID=122; read/write bits=2; LOOP (PriceRuleStack), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (PriceRuleStack, PriceRuleStackType (PriceRuleStackType)); next=127
+                    // Event: LOOP (PriceRuleStack, PriceRuleStackType (PriceRuleStackType)); next=122
                     // decode: element array
                     if (PriceRuleStackListType->PriceRuleStack.arrayLen < iso20_PriceRuleStackType_64_ARRAY_SIZE)
                     {
@@ -7154,9 +7065,18 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PriceRuleStackType_64_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 127;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (PriceRuleStackListType->PriceRuleStack.arrayLen < 1024)
+                    {
+                        grammar_id = 122;
+                    }
+                    else
+                    {
+                        grammar_id = 2;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -7174,7 +7094,7 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7204,46 +7124,46 @@ static int decode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False;
 // Particle: OverstayTimeThreshold, unsignedInt (0, 1); OverstayPowerThreshold, RationalNumberType (0, 1); OverstayRule, OverstayRuleType (1, 5);
 static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso20_OverstayRuleListType* OverstayRuleListType) {
-    int grammar_id = 128;
+    int grammar_id = 123;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_OverstayRuleListType(OverstayRuleListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 128:
-            // Grammar: ID=128; read/write bits=2; START (OverstayTimeThreshold), START (OverstayPowerThreshold), START (OverstayRule)
+        case 123:
+            // Grammar: ID=123; read/write bits=2; START (OverstayTimeThreshold), START (OverstayPowerThreshold), START (OverstayRule)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OverstayTimeThreshold, unsignedInt (unsignedLong)); next=131
+                    // Event: START (OverstayTimeThreshold, unsignedInt (unsignedLong)); next=125
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &OverstayRuleListType->OverstayTimeThreshold);
                     if (error == 0)
                     {
                         OverstayRuleListType->OverstayTimeThreshold_isUsed = 1u;
-                        grammar_id = 131;
+                        grammar_id = 125;
                     }
                     break;
                 case 1:
-                    // Event: START (OverstayPowerThreshold, RationalNumberType (RationalNumberType)); next=134
+                    // Event: START (OverstayPowerThreshold, RationalNumberType (RationalNumberType)); next=127
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &OverstayRuleListType->OverstayPowerThreshold);
                     if (error == 0)
                     {
                         OverstayRuleListType->OverstayPowerThreshold_isUsed = 1u;
-                        grammar_id = 134;
+                        grammar_id = 127;
                     }
                     break;
                 case 2:
-                    // Event: START (OverstayRule, OverstayRuleType (OverstayRuleType)); next=129
+                    // Event: START (OverstayRule, OverstayRuleType (OverstayRuleType)); next=124
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
                     {
@@ -7251,9 +7171,10 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     else
                     {
+                        // static array not large enough, only iso20_OverstayRuleType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 129;
+                    grammar_id = 124;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7261,15 +7182,15 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 129:
-            // Grammar: ID=129; read/write bits=2; LOOP (OverstayRule), END Element
+        case 124:
+            // Grammar: ID=124; read/write bits=2; LOOP (OverstayRule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=129
+                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=124
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
                     {
@@ -7277,9 +7198,18 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     else
                     {
+                        // static array not large enough, only iso20_OverstayRuleType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 129;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (OverstayRuleListType->OverstayRule.arrayLen < 5)
+                    {
+                        grammar_id = 124;
+                    }
+                    else
+                    {
+                        grammar_id = 125;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -7292,56 +7222,25 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 130:
-            // Grammar: ID=130; read/write bits=2; LOOP (OverstayRule), END Element
+        case 125:
+            // Grammar: ID=125; read/write bits=2; START (OverstayPowerThreshold), START (OverstayRule)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=2
-                    // decode: element array
-                    if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRuleListType->OverstayRule.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 131:
-            // Grammar: ID=131; read/write bits=2; START (OverstayPowerThreshold), START (OverstayRule)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (OverstayPowerThreshold, RationalNumberType (RationalNumberType)); next=134
+                    // Event: START (OverstayPowerThreshold, RationalNumberType (RationalNumberType)); next=127
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &OverstayRuleListType->OverstayPowerThreshold);
                     if (error == 0)
                     {
                         OverstayRuleListType->OverstayPowerThreshold_isUsed = 1u;
-                        grammar_id = 134;
+                        grammar_id = 127;
                     }
                     break;
                 case 1:
-                    // Event: START (OverstayRule, OverstayRuleType (OverstayRuleType)); next=132
+                    // Event: START (OverstayRule, OverstayRuleType (OverstayRuleType)); next=126
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
                     {
@@ -7349,9 +7248,10 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     else
                     {
+                        // static array not large enough, only iso20_OverstayRuleType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 132;
+                    grammar_id = 126;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7359,15 +7259,15 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 132:
-            // Grammar: ID=132; read/write bits=2; LOOP (OverstayRule), END Element
+        case 126:
+            // Grammar: ID=126; read/write bits=2; LOOP (OverstayRule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=132
+                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=126
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
                     {
@@ -7375,9 +7275,18 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     else
                     {
+                        // static array not large enough, only iso20_OverstayRuleType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 132;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (OverstayRuleListType->OverstayRule.arrayLen < 5)
+                    {
+                        grammar_id = 126;
+                    }
+                    else
+                    {
+                        grammar_id = 127;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -7390,46 +7299,15 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 133:
-            // Grammar: ID=133; read/write bits=2; LOOP (OverstayRule), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=2
-                    // decode: element array
-                    if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRuleListType->OverstayRule.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 134:
-            // Grammar: ID=134; read/write bits=1; START (OverstayRule)
+        case 127:
+            // Grammar: ID=127; read/write bits=1; START (OverstayRule)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OverstayRule, OverstayRuleType (OverstayRuleType)); next=135
+                    // Event: START (OverstayRule, OverstayRuleType (OverstayRuleType)); next=128
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
                     {
@@ -7437,9 +7315,10 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     else
                     {
+                        // static array not large enough, only iso20_OverstayRuleType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 135;
+                    grammar_id = 128;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7447,15 +7326,15 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 135:
-            // Grammar: ID=135; read/write bits=2; LOOP (OverstayRule), END Element
+        case 128:
+            // Grammar: ID=128; read/write bits=2; LOOP (OverstayRule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=135
+                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=128
                     // decode: element array
                     if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
                     {
@@ -7463,40 +7342,18 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
                     }
                     else
                     {
+                        // static array not large enough, only iso20_OverstayRuleType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 135;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 136:
-            // Grammar: ID=136; read/write bits=2; LOOP (OverstayRule), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (OverstayRule, OverstayRuleType (OverstayRuleType)); next=2
-                    // decode: element array
-                    if (OverstayRuleListType->OverstayRule.arrayLen < iso20_OverstayRuleType_5_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (OverstayRuleListType->OverstayRule.arrayLen < 5)
                     {
-                        error = decode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRuleListType->OverstayRule.arrayLen++]);
+                        grammar_id = 128;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -7514,7 +7371,7 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7544,26 +7401,26 @@ static int decode_iso20_OverstayRuleListType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False;
 // Particle: AdditionalService, AdditionalServiceType (1, 5);
 static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struct iso20_AdditionalServiceListType* AdditionalServiceListType) {
-    int grammar_id = 137;
+    int grammar_id = 129;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_AdditionalServiceListType(AdditionalServiceListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 137:
-            // Grammar: ID=137; read/write bits=1; START (AdditionalService)
+        case 129:
+            // Grammar: ID=129; read/write bits=1; START (AdditionalService)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AdditionalService, AdditionalServiceType (AdditionalServiceType)); next=138
+                    // Event: START (AdditionalService, AdditionalServiceType (AdditionalServiceType)); next=130
                     // decode: element array
                     if (AdditionalServiceListType->AdditionalService.arrayLen < iso20_AdditionalServiceType_5_ARRAY_SIZE)
                     {
@@ -7571,9 +7428,10 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
                     }
                     else
                     {
+                        // static array not large enough, only iso20_AdditionalServiceType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 138;
+                    grammar_id = 130;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7581,15 +7439,15 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 138:
-            // Grammar: ID=138; read/write bits=2; LOOP (AdditionalService), END Element
+        case 130:
+            // Grammar: ID=130; read/write bits=2; LOOP (AdditionalService), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (AdditionalService, AdditionalServiceType (AdditionalServiceType)); next=138
+                    // Event: LOOP (AdditionalService, AdditionalServiceType (AdditionalServiceType)); next=130
                     // decode: element array
                     if (AdditionalServiceListType->AdditionalService.arrayLen < iso20_AdditionalServiceType_5_ARRAY_SIZE)
                     {
@@ -7597,40 +7455,18 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
                     }
                     else
                     {
+                        // static array not large enough, only iso20_AdditionalServiceType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 138;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 139:
-            // Grammar: ID=139; read/write bits=2; LOOP (AdditionalService), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (AdditionalService, AdditionalServiceType (AdditionalServiceType)); next=2
-                    // decode: element array
-                    if (AdditionalServiceListType->AdditionalService.arrayLen < iso20_AdditionalServiceType_5_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (AdditionalServiceListType->AdditionalService.arrayLen < 5)
                     {
-                        error = decode_iso20_AdditionalServiceType(stream, &AdditionalServiceListType->AdditionalService.array[AdditionalServiceListType->AdditionalService.arrayLen++]);
+                        grammar_id = 130;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -7648,7 +7484,7 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7678,31 +7514,31 @@ static int decode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: ServiceID, serviceIDType (1, 1); FreeService, boolean (1, 1);
 static int decode_iso20_ServiceType(exi_bitstream_t* stream, struct iso20_ServiceType* ServiceType) {
-    int grammar_id = 140;
+    int grammar_id = 131;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceType(ServiceType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 140:
-            // Grammar: ID=140; read/write bits=1; START (ServiceID)
+        case 131:
+            // Grammar: ID=131; read/write bits=1; START (ServiceID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=141
+                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=132
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ServiceType->ServiceID);
                     if (error == 0)
                     {
-                        grammar_id = 141;
+                        grammar_id = 132;
                     }
                     break;
                 default:
@@ -7711,12 +7547,12 @@ static int decode_iso20_ServiceType(exi_bitstream_t* stream, struct iso20_Servic
                 }
             }
             break;
-        case 141:
-            // Grammar: ID=141; read/write bits=1; START (FreeService)
+        case 132:
+            // Grammar: ID=132; read/write bits=1; START (FreeService)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (FreeService, boolean (boolean)); next=2
@@ -7769,7 +7605,7 @@ static int decode_iso20_ServiceType(exi_bitstream_t* stream, struct iso20_Servic
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7797,33 +7633,33 @@ static int decode_iso20_ServiceType(exi_bitstream_t* stream, struct iso20_Servic
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}ParameterSet; type={urn:iso:std:iso:15118:-20:CommonMessages}ParameterSetType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSetID, serviceIDType (1, 1); Parameter, ParameterType (1, 8);
+// Particle: ParameterSetID, serviceIDType (1, 1); Parameter, ParameterType (1, 8) (original max 32);
 static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_ParameterSetType* ParameterSetType) {
-    int grammar_id = 142;
+    int grammar_id = 133;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ParameterSetType(ParameterSetType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 142:
-            // Grammar: ID=142; read/write bits=1; START (ParameterSetID)
+        case 133:
+            // Grammar: ID=133; read/write bits=1; START (ParameterSetID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ParameterSetID, serviceIDType (unsignedShort)); next=143
+                    // Event: START (ParameterSetID, serviceIDType (unsignedShort)); next=134
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ParameterSetType->ParameterSetID);
                     if (error == 0)
                     {
-                        grammar_id = 143;
+                        grammar_id = 134;
                     }
                     break;
                 default:
@@ -7832,15 +7668,15 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                 }
             }
             break;
-        case 143:
-            // Grammar: ID=143; read/write bits=1; START (Parameter)
+        case 134:
+            // Grammar: ID=134; read/write bits=1; START (Parameter)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Parameter, ParameterType (ParameterType)); next=144
+                    // Event: START (Parameter, ParameterType (ParameterType)); next=135
                     // decode: element array
                     if (ParameterSetType->Parameter.arrayLen < iso20_ParameterType_8_ARRAY_SIZE)
                     {
@@ -7848,9 +7684,10 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ParameterType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 144;
+                    grammar_id = 135;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7858,15 +7695,15 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                 }
             }
             break;
-        case 144:
-            // Grammar: ID=144; read/write bits=2; LOOP (Parameter), END Element
+        case 135:
+            // Grammar: ID=135; read/write bits=2; LOOP (Parameter), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Parameter, ParameterType (ParameterType)); next=144
+                    // Event: LOOP (Parameter, ParameterType (ParameterType)); next=135
                     // decode: element array
                     if (ParameterSetType->Parameter.arrayLen < iso20_ParameterType_8_ARRAY_SIZE)
                     {
@@ -7874,40 +7711,18 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ParameterType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 144;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 145:
-            // Grammar: ID=145; read/write bits=2; LOOP (Parameter), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Parameter, ParameterType (ParameterType)); next=2
-                    // decode: element array
-                    if (ParameterSetType->Parameter.arrayLen < iso20_ParameterType_8_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ParameterSetType->Parameter.arrayLen < 32)
                     {
-                        error = decode_iso20_ParameterType(stream, &ParameterSetType->Parameter.array[ParameterSetType->Parameter.arrayLen++]);
+                        grammar_id = 135;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -7925,7 +7740,7 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -7955,26 +7770,26 @@ static int decode_iso20_ParameterSetType(exi_bitstream_t* stream, struct iso20_P
 //          abstract=False; final=False;
 // Particle: ProviderID, nameType (1, 128);
 static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, struct iso20_SupportedProvidersListType* SupportedProvidersListType) {
-    int grammar_id = 146;
+    int grammar_id = 136;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SupportedProvidersListType(SupportedProvidersListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 146:
-            // Grammar: ID=146; read/write bits=1; START (ProviderID)
+        case 136:
+            // Grammar: ID=136; read/write bits=1; START (ProviderID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ProviderID, nameType (string)); next=147
+                    // Event: START (ProviderID, nameType (string)); next=137
                     // decode: string (len, characters) (Array)
                     if (SupportedProvidersListType->ProviderID.arrayLen < iso20_nameType_128_ARRAY_SIZE)
                     {
@@ -8024,7 +7839,7 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 147;
+                                grammar_id = 137;
                             }
                             else
                             {
@@ -8039,15 +7854,15 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 147:
-            // Grammar: ID=147; read/write bits=2; LOOP (ProviderID), END Element
+        case 137:
+            // Grammar: ID=137; read/write bits=2; LOOP (ProviderID), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ProviderID, nameType (string)); next=147
+                    // Event: LOOP (ProviderID, nameType (string)); next=137
                     // decode: string (len, characters) (Array)
                     if (SupportedProvidersListType->ProviderID.arrayLen < iso20_nameType_128_ARRAY_SIZE)
                     {
@@ -8097,7 +7912,7 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 147;
+                                grammar_id = 137;
                             }
                             else
                             {
@@ -8122,7 +7937,7 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8152,31 +7967,31 @@ static int decode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, stru
 //          abstract=False; final=False;
 // Particle: Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (1, 1);
 static int decode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, struct iso20_ContractCertificateChainType* ContractCertificateChainType) {
-    int grammar_id = 148;
+    int grammar_id = 138;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ContractCertificateChainType(ContractCertificateChainType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 148:
-            // Grammar: ID=148; read/write bits=1; START (Certificate)
+        case 138:
+            // Grammar: ID=138; read/write bits=1; START (Certificate)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Certificate, certificateType (base64Binary)); next=149
+                    // Event: START (Certificate, certificateType (base64Binary)); next=139
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &ContractCertificateChainType->Certificate.bytesLen, &ContractCertificateChainType->Certificate.bytes[0], iso20_certificateType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 149;
+                        grammar_id = 139;
                     }
                     break;
                 default:
@@ -8185,12 +8000,12 @@ static int decode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 149:
-            // Grammar: ID=149; read/write bits=1; START (SubCertificates)
+        case 139:
+            // Grammar: ID=139; read/write bits=1; START (SubCertificates)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SubCertificates, SubCertificatesType (SubCertificatesType)); next=2
@@ -8212,7 +8027,7 @@ static int decode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, st
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8261,26 +8076,26 @@ static int decode_iso20_Dynamic_EVPPTControlModeType(exi_bitstream_t* stream, st
 //          abstract=False; final=False;
 // Particle: MeterID, meterIDType (1, 1); ChargedEnergyReadingWh, unsignedLong (1, 1); BPT_DischargedEnergyReadingWh, unsignedLong (0, 1); CapacitiveEnergyReadingVARh, unsignedLong (0, 1); BPT_InductiveEnergyReadingVARh, unsignedLong (0, 1); MeterSignature, meterSignatureType (0, 1); MeterStatus, short (0, 1); MeterTimestamp, unsignedLong (0, 1);
 static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_MeterInfoType* MeterInfoType) {
-    int grammar_id = 150;
+    int grammar_id = 140;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_MeterInfoType(MeterInfoType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 150:
-            // Grammar: ID=150; read/write bits=1; START (MeterID)
+        case 140:
+            // Grammar: ID=140; read/write bits=1; START (MeterID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterID, meterIDType (string)); next=151
+                    // Event: START (MeterID, meterIDType (string)); next=141
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -8319,7 +8134,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 151;
+                                grammar_id = 141;
                             }
                             else
                             {
@@ -8334,20 +8149,20 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                 }
             }
             break;
-        case 151:
-            // Grammar: ID=151; read/write bits=1; START (ChargedEnergyReadingWh)
+        case 141:
+            // Grammar: ID=141; read/write bits=1; START (ChargedEnergyReadingWh)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=152
+                    // Event: START (ChargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=142
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->ChargedEnergyReadingWh);
                     if (error == 0)
                     {
-                        grammar_id = 152;
+                        grammar_id = 142;
                     }
                     break;
                 default:
@@ -8356,61 +8171,61 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                 }
             }
             break;
-        case 152:
-            // Grammar: ID=152; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 142:
+            // Grammar: ID=142; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_DischargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=153
+                    // Event: START (BPT_DischargedEnergyReadingWh, unsignedLong (nonNegativeInteger)); next=143
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_DischargedEnergyReadingWh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_DischargedEnergyReadingWh_isUsed = 1u;
-                        grammar_id = 153;
+                        grammar_id = 143;
                     }
                     break;
                 case 1:
-                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=154
+                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=144
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->CapacitiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->CapacitiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 154;
+                        grammar_id = 144;
                     }
                     break;
                 case 2:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=155
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=145
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 155;
+                        grammar_id = 145;
                     }
                     break;
                 case 3:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=156
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=146
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 156;
+                        grammar_id = 146;
                     }
                     break;
                 case 4:
-                    // Event: START (MeterStatus, short (int)); next=157
+                    // Event: START (MeterStatus, short (int)); next=147
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 157;
+                        grammar_id = 147;
                     }
                     break;
                 case 5:
@@ -8434,51 +8249,51 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                 }
             }
             break;
-        case 153:
-            // Grammar: ID=153; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 143:
+            // Grammar: ID=143; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=154
+                    // Event: START (CapacitiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=144
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->CapacitiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->CapacitiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 154;
+                        grammar_id = 144;
                     }
                     break;
                 case 1:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=155
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=145
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 155;
+                        grammar_id = 145;
                     }
                     break;
                 case 2:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=156
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=146
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 156;
+                        grammar_id = 146;
                     }
                     break;
                 case 3:
-                    // Event: START (MeterStatus, short (int)); next=157
+                    // Event: START (MeterStatus, short (int)); next=147
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 157;
+                        grammar_id = 147;
                     }
                     break;
                 case 4:
@@ -8502,41 +8317,41 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                 }
             }
             break;
-        case 154:
-            // Grammar: ID=154; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 144:
+            // Grammar: ID=144; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=155
+                    // Event: START (BPT_InductiveEnergyReadingVARh, unsignedLong (nonNegativeInteger)); next=145
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MeterInfoType->BPT_InductiveEnergyReadingVARh);
                     if (error == 0)
                     {
                         MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed = 1u;
-                        grammar_id = 155;
+                        grammar_id = 145;
                     }
                     break;
                 case 1:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=156
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=146
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 156;
+                        grammar_id = 146;
                     }
                     break;
                 case 2:
-                    // Event: START (MeterStatus, short (int)); next=157
+                    // Event: START (MeterStatus, short (int)); next=147
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 157;
+                        grammar_id = 147;
                     }
                     break;
                 case 3:
@@ -8560,31 +8375,31 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                 }
             }
             break;
-        case 155:
-            // Grammar: ID=155; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 145:
+            // Grammar: ID=145; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=156
+                    // Event: START (MeterSignature, meterSignatureType (base64Binary)); next=146
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &MeterInfoType->MeterSignature.bytesLen, &MeterInfoType->MeterSignature.bytes[0], iso20_meterSignatureType_BYTES_SIZE);
                     if (error == 0)
                     {
                         MeterInfoType->MeterSignature_isUsed = 1u;
-                        grammar_id = 156;
+                        grammar_id = 146;
                     }
                     break;
                 case 1:
-                    // Event: START (MeterStatus, short (int)); next=157
+                    // Event: START (MeterStatus, short (int)); next=147
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 157;
+                        grammar_id = 147;
                     }
                     break;
                 case 2:
@@ -8608,21 +8423,21 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                 }
             }
             break;
-        case 156:
-            // Grammar: ID=156; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
+        case 146:
+            // Grammar: ID=146; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterStatus, short (int)); next=157
+                    // Event: START (MeterStatus, short (int)); next=147
                     // decode: short
                     error = decode_exi_type_integer16(stream, &MeterInfoType->MeterStatus);
                     if (error == 0)
                     {
                         MeterInfoType->MeterStatus_isUsed = 1u;
-                        grammar_id = 157;
+                        grammar_id = 147;
                     }
                     break;
                 case 1:
@@ -8646,12 +8461,12 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
                 }
             }
             break;
-        case 157:
-            // Grammar: ID=157; read/write bits=2; START (MeterTimestamp), END Element
+        case 147:
+            // Grammar: ID=147; read/write bits=2; START (MeterTimestamp), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (MeterTimestamp, unsignedLong (nonNegativeInteger)); next=2
@@ -8679,7 +8494,7 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8707,28 +8522,28 @@ static int decode_iso20_MeterInfoType(exi_bitstream_t* stream, struct iso20_Mete
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Signature; type={http://www.w3.org/2000/09/xmldsig#}SignatureType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1);
+// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1) (original max unbounded);
 static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_SignatureType* SignatureType) {
-    int grammar_id = 158;
+    int grammar_id = 148;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SignatureType(SignatureType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 158:
-            // Grammar: ID=158; read/write bits=2; START (Id), START (SignedInfo)
+        case 148:
+            // Grammar: ID=148; read/write bits=2; START (Id), START (SignedInfo)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=159
+                    // Event: START (Id, ID (NCName)); next=149
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureType->Id.charactersLen);
                     if (error == 0)
@@ -8746,15 +8561,15 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
                         }
                     }
                     SignatureType->Id_isUsed = 1u;
-                    grammar_id = 159;
+                    grammar_id = 149;
                     break;
                 case 1:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=160
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=150
                     // decode: element
                     error = decode_iso20_SignedInfoType(stream, &SignatureType->SignedInfo);
                     if (error == 0)
                     {
-                        grammar_id = 160;
+                        grammar_id = 150;
                     }
                     break;
                 default:
@@ -8763,20 +8578,20 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
                 }
             }
             break;
-        case 159:
-            // Grammar: ID=159; read/write bits=1; START (SignedInfo)
+        case 149:
+            // Grammar: ID=149; read/write bits=1; START (SignedInfo)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=160
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=150
                     // decode: element
                     error = decode_iso20_SignedInfoType(stream, &SignatureType->SignedInfo);
                     if (error == 0)
                     {
-                        grammar_id = 160;
+                        grammar_id = 150;
                     }
                     break;
                 default:
@@ -8785,20 +8600,20 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
                 }
             }
             break;
-        case 160:
-            // Grammar: ID=160; read/write bits=1; START (SignatureValue)
+        case 150:
+            // Grammar: ID=150; read/write bits=1; START (SignatureValue)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=161
+                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=151
                     // decode: element
                     error = decode_iso20_SignatureValueType(stream, &SignatureType->SignatureValue);
                     if (error == 0)
                     {
-                        grammar_id = 161;
+                        grammar_id = 151;
                     }
                     break;
                 default:
@@ -8807,31 +8622,31 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
                 }
             }
             break;
-        case 161:
-            // Grammar: ID=161; read/write bits=2; START (KeyInfo), START (Object), END Element
+        case 151:
+            // Grammar: ID=151; read/write bits=2; START (KeyInfo), START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=163
+                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=153
                     // decode: element
                     error = decode_iso20_KeyInfoType(stream, &SignatureType->KeyInfo);
                     if (error == 0)
                     {
                         SignatureType->KeyInfo_isUsed = 1u;
-                        grammar_id = 163;
+                        grammar_id = 153;
                     }
                     break;
                 case 1:
-                    // Event: START (Object, ObjectType (ObjectType)); next=162
+                    // Event: START (Object, ObjectType (ObjectType)); next=152
                     // decode: element
                     error = decode_iso20_ObjectType(stream, &SignatureType->Object);
                     if (error == 0)
                     {
                         SignatureType->Object_isUsed = 1u;
-                        grammar_id = 162;
+                        grammar_id = 152;
                     }
                     break;
                 case 2:
@@ -8845,21 +8660,45 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
                 }
             }
             break;
-        case 162:
-            // Grammar: ID=162; read/write bits=2; START (Object), END Element
+        case 152:
+            // Grammar: ID=152; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Object, ObjectType (ObjectType)); next=2
+                    // decode: element
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    break;
+                case 1:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 153:
+            // Grammar: ID=153; read/write bits=2; START (Object), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch (eventCode)
+                {
+                case 0:
+                    // Event: START (Object, ObjectType (ObjectType)); next=154
                     // decode: element
                     error = decode_iso20_ObjectType(stream, &SignatureType->Object);
                     if (error == 0)
                     {
                         SignatureType->Object_isUsed = 1u;
-                        grammar_id = 2;
+                        grammar_id = 154;
                     }
                     break;
                 case 1:
@@ -8873,50 +8712,18 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
                 }
             }
             break;
-        case 163:
-            // Grammar: ID=163; read/write bits=2; START (Object), END Element
+        case 154:
+            // Grammar: ID=154; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Object, ObjectType (ObjectType)); next=164
-                    // decode: element
-                    error = decode_iso20_ObjectType(stream, &SignatureType->Object);
-                    if (error == 0)
-                    {
-                        SignatureType->Object_isUsed = 1u;
-                        grammar_id = 164;
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 164:
-            // Grammar: ID=164; read/write bits=2; START (Object), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Object, ObjectType (ObjectType)); next=2
                     // decode: element
-                    error = decode_iso20_ObjectType(stream, &SignatureType->Object);
-                    if (error == 0)
-                    {
-                        SignatureType->Object_isUsed = 1u;
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -8934,7 +8741,7 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -8964,31 +8771,31 @@ static int decode_iso20_SignatureType(exi_bitstream_t* stream, struct iso20_Sign
 //          abstract=False; final=False;
 // Particle: SelectedScheduleTupleID, numericIDType (1, 1); PowerToleranceAcceptance, powerToleranceAcceptanceType (0, 1);
 static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, struct iso20_Scheduled_EVPPTControlModeType* Scheduled_EVPPTControlModeType) {
-    int grammar_id = 165;
+    int grammar_id = 155;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_Scheduled_EVPPTControlModeType(Scheduled_EVPPTControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 165:
-            // Grammar: ID=165; read/write bits=1; START (SelectedScheduleTupleID)
+        case 155:
+            // Grammar: ID=155; read/write bits=1; START (SelectedScheduleTupleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SelectedScheduleTupleID, numericIDType (unsignedInt)); next=166
+                    // Event: START (SelectedScheduleTupleID, numericIDType (unsignedInt)); next=156
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Scheduled_EVPPTControlModeType->SelectedScheduleTupleID);
                     if (error == 0)
                     {
-                        grammar_id = 166;
+                        grammar_id = 156;
                     }
                     break;
                 default:
@@ -8997,12 +8804,12 @@ static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 166:
-            // Grammar: ID=166; read/write bits=2; START (PowerToleranceAcceptance), END Element
+        case 156:
+            // Grammar: ID=156; read/write bits=2; START (PowerToleranceAcceptance), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PowerToleranceAcceptance, powerToleranceAcceptanceType (string)); next=2
@@ -9061,7 +8868,7 @@ static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -9091,31 +8898,31 @@ static int decode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); EnergyCosts, DetailedCostType (0, 1); OccupancyCosts, DetailedCostType (0, 1); AdditionalServicesCosts, DetailedCostType (0, 1); OverstayCosts, DetailedCostType (0, 1); TaxCosts, DetailedTaxType (0, 10);
 static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_ReceiptType* ReceiptType) {
-    int grammar_id = 167;
+    int grammar_id = 157;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ReceiptType(ReceiptType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 167:
-            // Grammar: ID=167; read/write bits=1; START (TimeAnchor)
+        case 157:
+            // Grammar: ID=157; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=168
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=158
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &ReceiptType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 168;
+                        grammar_id = 158;
                     }
                     break;
                 default:
@@ -9124,55 +8931,55 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 168:
-            // Grammar: ID=168; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 158:
+            // Grammar: ID=158; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EnergyCosts, DetailedCostType (DetailedCostType)); next=171
+                    // Event: START (EnergyCosts, DetailedCostType (DetailedCostType)); next=160
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->EnergyCosts);
                     if (error == 0)
                     {
                         ReceiptType->EnergyCosts_isUsed = 1u;
-                        grammar_id = 171;
+                        grammar_id = 160;
                     }
                     break;
                 case 1:
-                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=174
+                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=162
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
                     if (error == 0)
                     {
                         ReceiptType->OccupancyCosts_isUsed = 1u;
-                        grammar_id = 174;
+                        grammar_id = 162;
                     }
                     break;
                 case 2:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=177
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=164
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 177;
+                        grammar_id = 164;
                     }
                     break;
                 case 3:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=180
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=166
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 166;
                     }
                     break;
                 case 4:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=169
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=159
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9180,9 +8987,10 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 169;
+                    grammar_id = 159;
                     break;
                 case 5:
                     // Event: END Element; next=3
@@ -9195,15 +9003,15 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 169:
-            // Grammar: ID=169; read/write bits=2; LOOP (TaxCosts), END Element
+        case 159:
+            // Grammar: ID=159; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=169
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=159
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9211,9 +9019,18 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 169;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 159;
+                    }
+                    else
+                    {
+                        grammar_id = 160;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9226,76 +9043,45 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 170:
-            // Grammar: ID=170; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 171:
-            // Grammar: ID=171; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 160:
+            // Grammar: ID=160; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=174
+                    // Event: START (OccupancyCosts, DetailedCostType (DetailedCostType)); next=162
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
                     if (error == 0)
                     {
                         ReceiptType->OccupancyCosts_isUsed = 1u;
-                        grammar_id = 174;
+                        grammar_id = 162;
                     }
                     break;
                 case 1:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=177
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=164
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 177;
+                        grammar_id = 164;
                     }
                     break;
                 case 2:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=180
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=166
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 166;
                     }
                     break;
                 case 3:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=172
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=161
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9303,9 +9089,10 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 172;
+                    grammar_id = 161;
                     break;
                 case 4:
                     // Event: END Element; next=3
@@ -9318,15 +9105,15 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 172:
-            // Grammar: ID=172; read/write bits=2; LOOP (TaxCosts), END Element
+        case 161:
+            // Grammar: ID=161; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=172
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=161
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9334,9 +9121,18 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 172;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 161;
+                    }
+                    else
+                    {
+                        grammar_id = 162;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9349,66 +9145,35 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 173:
-            // Grammar: ID=173; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 174:
-            // Grammar: ID=174; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 162:
+            // Grammar: ID=162; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=177
+                    // Event: START (AdditionalServicesCosts, DetailedCostType (DetailedCostType)); next=164
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == 0)
                     {
                         ReceiptType->AdditionalServicesCosts_isUsed = 1u;
-                        grammar_id = 177;
+                        grammar_id = 164;
                     }
                     break;
                 case 1:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=180
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=166
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 166;
                     }
                     break;
                 case 2:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=175
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=163
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9416,9 +9181,10 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 175;
+                    grammar_id = 163;
                     break;
                 case 3:
                     // Event: END Element; next=3
@@ -9431,15 +9197,15 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 175:
-            // Grammar: ID=175; read/write bits=2; LOOP (TaxCosts), END Element
+        case 163:
+            // Grammar: ID=163; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=175
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=163
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9447,9 +9213,18 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 175;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 163;
+                    }
+                    else
+                    {
+                        grammar_id = 164;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9462,56 +9237,25 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 176:
-            // Grammar: ID=176; read/write bits=2; LOOP (TaxCosts), END Element
+        case 164:
+            // Grammar: ID=164; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 177:
-            // Grammar: ID=177; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=180
+                    // Event: START (OverstayCosts, DetailedCostType (DetailedCostType)); next=166
                     // decode: element
                     error = decode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == 0)
                     {
                         ReceiptType->OverstayCosts_isUsed = 1u;
-                        grammar_id = 180;
+                        grammar_id = 166;
                     }
                     break;
                 case 1:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=178
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=165
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9519,9 +9263,10 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 178;
+                    grammar_id = 165;
                     break;
                 case 2:
                     // Event: END Element; next=3
@@ -9534,15 +9279,15 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 178:
-            // Grammar: ID=178; read/write bits=2; LOOP (TaxCosts), END Element
+        case 165:
+            // Grammar: ID=165; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=178
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=165
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9550,9 +9295,18 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 178;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
+                    {
+                        grammar_id = 165;
+                    }
+                    else
+                    {
+                        grammar_id = 166;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9565,15 +9319,15 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 179:
-            // Grammar: ID=179; read/write bits=2; LOOP (TaxCosts), END Element
+        case 166:
+            // Grammar: ID=166; read/write bits=2; START (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
+                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=167
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9581,9 +9335,10 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 2;
+                    grammar_id = 167;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9596,15 +9351,15 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                 }
             }
             break;
-        case 180:
-            // Grammar: ID=180; read/write bits=2; START (TaxCosts), END Element
+        case 167:
+            // Grammar: ID=167; read/write bits=2; LOOP (TaxCosts), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxCosts, DetailedTaxType (DetailedTaxType)); next=181
+                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=167
                     // decode: element array
                     if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
                     {
@@ -9612,71 +9367,18 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
                     }
                     else
                     {
+                        // static array not large enough, only iso20_DetailedTaxType_10_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 181;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 181:
-            // Grammar: ID=181; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=181
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ReceiptType->TaxCosts.arrayLen < 10)
                     {
-                        error = decode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
+                        grammar_id = 167;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 181;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 182:
-            // Grammar: ID=182; read/write bits=2; LOOP (TaxCosts), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (TaxCosts, DetailedTaxType (DetailedTaxType)); next=2
-                    // decode: element array
-                    if (ReceiptType->TaxCosts.arrayLen < iso20_DetailedTaxType_10_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[ReceiptType->TaxCosts.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -9694,7 +9396,7 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -9724,26 +9426,26 @@ static int decode_iso20_ReceiptType(exi_bitstream_t* stream, struct iso20_Receip
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); TimeAnchor, unsignedLong (1, 1); PriceScheduleID, numericIDType (1, 1); PriceScheduleDescription, descriptionType (0, 1); Currency, currencyType (1, 1); Language, languageType (1, 1); PriceAlgorithm, identifierType (1, 1); MinimumCost, RationalNumberType (0, 1); MaximumCost, RationalNumberType (0, 1); TaxRules, TaxRuleListType (0, 1); PriceRuleStacks, PriceRuleStackListType (1, 1); OverstayRules, OverstayRuleListType (0, 1); AdditionalSelectedServices, AdditionalServiceListType (0, 1);
 static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struct iso20_AbsolutePriceScheduleType* AbsolutePriceScheduleType) {
-    int grammar_id = 183;
+    int grammar_id = 168;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_AbsolutePriceScheduleType(AbsolutePriceScheduleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 183:
-            // Grammar: ID=183; read/write bits=2; START (Id), START (TimeAnchor)
+        case 168:
+            // Grammar: ID=168; read/write bits=2; START (Id), START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=184
+                    // Event: START (Id, ID (NCName)); next=169
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &AbsolutePriceScheduleType->Id.charactersLen);
                     if (error == 0)
@@ -9761,15 +9463,15 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                         }
                     }
                     AbsolutePriceScheduleType->Id_isUsed = 1u;
-                    grammar_id = 184;
+                    grammar_id = 169;
                     break;
                 case 1:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=185
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=170
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &AbsolutePriceScheduleType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 185;
+                        grammar_id = 170;
                     }
                     break;
                 default:
@@ -9778,20 +9480,20 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 184:
-            // Grammar: ID=184; read/write bits=1; START (TimeAnchor)
+        case 169:
+            // Grammar: ID=169; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=185
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=170
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &AbsolutePriceScheduleType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 185;
+                        grammar_id = 170;
                     }
                     break;
                 default:
@@ -9800,20 +9502,20 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 185:
-            // Grammar: ID=185; read/write bits=1; START (PriceScheduleID)
+        case 170:
+            // Grammar: ID=170; read/write bits=1; START (PriceScheduleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceScheduleID, numericIDType (unsignedInt)); next=186
+                    // Event: START (PriceScheduleID, numericIDType (unsignedInt)); next=171
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &AbsolutePriceScheduleType->PriceScheduleID);
                     if (error == 0)
                     {
-                        grammar_id = 186;
+                        grammar_id = 171;
                     }
                     break;
                 default:
@@ -9822,15 +9524,15 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 186:
-            // Grammar: ID=186; read/write bits=2; START (PriceScheduleDescription), START (Currency)
+        case 171:
+            // Grammar: ID=171; read/write bits=2; START (PriceScheduleDescription), START (Currency)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceScheduleDescription, descriptionType (string)); next=187
+                    // Event: START (PriceScheduleDescription, descriptionType (string)); next=172
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9870,7 +9572,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                             if (eventCode == 0)
                             {
                                 AbsolutePriceScheduleType->PriceScheduleDescription_isUsed = 1u;
-                                grammar_id = 187;
+                                grammar_id = 172;
                             }
                             else
                             {
@@ -9880,7 +9582,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (Currency, currencyType (string)); next=188
+                    // Event: START (Currency, currencyType (string)); next=173
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9919,7 +9621,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 188;
+                                grammar_id = 173;
                             }
                             else
                             {
@@ -9934,15 +9636,15 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 187:
-            // Grammar: ID=187; read/write bits=1; START (Currency)
+        case 172:
+            // Grammar: ID=172; read/write bits=1; START (Currency)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Currency, currencyType (string)); next=188
+                    // Event: START (Currency, currencyType (string)); next=173
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -9981,7 +9683,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 188;
+                                grammar_id = 173;
                             }
                             else
                             {
@@ -9996,15 +9698,15 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 188:
-            // Grammar: ID=188; read/write bits=1; START (Language)
+        case 173:
+            // Grammar: ID=173; read/write bits=1; START (Language)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Language, languageType (string)); next=189
+                    // Event: START (Language, languageType (string)); next=174
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10043,7 +9745,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 189;
+                                grammar_id = 174;
                             }
                             else
                             {
@@ -10058,15 +9760,15 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 189:
-            // Grammar: ID=189; read/write bits=1; START (PriceAlgorithm)
+        case 174:
+            // Grammar: ID=174; read/write bits=1; START (PriceAlgorithm)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceAlgorithm, identifierType (string)); next=190
+                    // Event: START (PriceAlgorithm, identifierType (string)); next=175
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10105,7 +9807,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 190;
+                                grammar_id = 175;
                             }
                             else
                             {
@@ -10120,50 +9822,50 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 190:
-            // Grammar: ID=190; read/write bits=3; START (MinimumCost), START (MaximumCost), START (TaxRules), START (PriceRuleStacks)
+        case 175:
+            // Grammar: ID=175; read/write bits=3; START (MinimumCost), START (MaximumCost), START (TaxRules), START (PriceRuleStacks)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MinimumCost, RationalNumberType (RationalNumberType)); next=191
+                    // Event: START (MinimumCost, RationalNumberType (RationalNumberType)); next=176
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MinimumCost);
                     if (error == 0)
                     {
                         AbsolutePriceScheduleType->MinimumCost_isUsed = 1u;
-                        grammar_id = 191;
+                        grammar_id = 176;
                     }
                     break;
                 case 1:
-                    // Event: START (MaximumCost, RationalNumberType (RationalNumberType)); next=192
+                    // Event: START (MaximumCost, RationalNumberType (RationalNumberType)); next=177
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MaximumCost);
                     if (error == 0)
                     {
                         AbsolutePriceScheduleType->MaximumCost_isUsed = 1u;
-                        grammar_id = 192;
+                        grammar_id = 177;
                     }
                     break;
                 case 2:
-                    // Event: START (TaxRules, TaxRuleListType (TaxRuleListType)); next=193
+                    // Event: START (TaxRules, TaxRuleListType (TaxRuleListType)); next=178
                     // decode: element
                     error = decode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules);
                     if (error == 0)
                     {
                         AbsolutePriceScheduleType->TaxRules_isUsed = 1u;
-                        grammar_id = 193;
+                        grammar_id = 178;
                     }
                     break;
                 case 3:
-                    // Event: START (PriceRuleStacks, PriceRuleStackListType (PriceRuleStackListType)); next=194
+                    // Event: START (PriceRuleStacks, PriceRuleStackListType (PriceRuleStackListType)); next=179
                     // decode: element
                     error = decode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks);
                     if (error == 0)
                     {
-                        grammar_id = 194;
+                        grammar_id = 179;
                     }
                     break;
                 default:
@@ -10172,40 +9874,40 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 191:
-            // Grammar: ID=191; read/write bits=2; START (MaximumCost), START (TaxRules), START (PriceRuleStacks)
+        case 176:
+            // Grammar: ID=176; read/write bits=2; START (MaximumCost), START (TaxRules), START (PriceRuleStacks)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MaximumCost, RationalNumberType (RationalNumberType)); next=192
+                    // Event: START (MaximumCost, RationalNumberType (RationalNumberType)); next=177
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MaximumCost);
                     if (error == 0)
                     {
                         AbsolutePriceScheduleType->MaximumCost_isUsed = 1u;
-                        grammar_id = 192;
+                        grammar_id = 177;
                     }
                     break;
                 case 1:
-                    // Event: START (TaxRules, TaxRuleListType (TaxRuleListType)); next=193
+                    // Event: START (TaxRules, TaxRuleListType (TaxRuleListType)); next=178
                     // decode: element
                     error = decode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules);
                     if (error == 0)
                     {
                         AbsolutePriceScheduleType->TaxRules_isUsed = 1u;
-                        grammar_id = 193;
+                        grammar_id = 178;
                     }
                     break;
                 case 2:
-                    // Event: START (PriceRuleStacks, PriceRuleStackListType (PriceRuleStackListType)); next=194
+                    // Event: START (PriceRuleStacks, PriceRuleStackListType (PriceRuleStackListType)); next=179
                     // decode: element
                     error = decode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks);
                     if (error == 0)
                     {
-                        grammar_id = 194;
+                        grammar_id = 179;
                     }
                     break;
                 default:
@@ -10214,30 +9916,30 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 192:
-            // Grammar: ID=192; read/write bits=2; START (TaxRules), START (PriceRuleStacks)
+        case 177:
+            // Grammar: ID=177; read/write bits=2; START (TaxRules), START (PriceRuleStacks)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TaxRules, TaxRuleListType (TaxRuleListType)); next=193
+                    // Event: START (TaxRules, TaxRuleListType (TaxRuleListType)); next=178
                     // decode: element
                     error = decode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules);
                     if (error == 0)
                     {
                         AbsolutePriceScheduleType->TaxRules_isUsed = 1u;
-                        grammar_id = 193;
+                        grammar_id = 178;
                     }
                     break;
                 case 1:
-                    // Event: START (PriceRuleStacks, PriceRuleStackListType (PriceRuleStackListType)); next=194
+                    // Event: START (PriceRuleStacks, PriceRuleStackListType (PriceRuleStackListType)); next=179
                     // decode: element
                     error = decode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks);
                     if (error == 0)
                     {
-                        grammar_id = 194;
+                        grammar_id = 179;
                     }
                     break;
                 default:
@@ -10246,20 +9948,20 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 193:
-            // Grammar: ID=193; read/write bits=1; START (PriceRuleStacks)
+        case 178:
+            // Grammar: ID=178; read/write bits=1; START (PriceRuleStacks)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceRuleStacks, PriceRuleStackListType (PriceRuleStackListType)); next=194
+                    // Event: START (PriceRuleStacks, PriceRuleStackListType (PriceRuleStackListType)); next=179
                     // decode: element
                     error = decode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks);
                     if (error == 0)
                     {
-                        grammar_id = 194;
+                        grammar_id = 179;
                     }
                     break;
                 default:
@@ -10268,21 +9970,21 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 194:
-            // Grammar: ID=194; read/write bits=2; START (OverstayRules), START (AdditionalSelectedServices), END Element
+        case 179:
+            // Grammar: ID=179; read/write bits=2; START (OverstayRules), START (AdditionalSelectedServices), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OverstayRules, OverstayRuleListType (OverstayRuleListType)); next=195
+                    // Event: START (OverstayRules, OverstayRuleListType (OverstayRuleListType)); next=180
                     // decode: element
                     error = decode_iso20_OverstayRuleListType(stream, &AbsolutePriceScheduleType->OverstayRules);
                     if (error == 0)
                     {
                         AbsolutePriceScheduleType->OverstayRules_isUsed = 1u;
-                        grammar_id = 195;
+                        grammar_id = 180;
                     }
                     break;
                 case 1:
@@ -10306,12 +10008,12 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 195:
-            // Grammar: ID=195; read/write bits=2; START (AdditionalSelectedServices), END Element
+        case 180:
+            // Grammar: ID=180; read/write bits=2; START (AdditionalSelectedServices), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (AdditionalSelectedServices, AdditionalServiceListType (AdditionalServiceListType)); next=2
@@ -10339,7 +10041,7 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10369,26 +10071,26 @@ static int decode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: EVPowerProfileEntry, PowerScheduleEntryType (1, 2048);
 static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, struct iso20_EVPowerProfileEntryListType* EVPowerProfileEntryListType) {
-    int grammar_id = 196;
+    int grammar_id = 181;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EVPowerProfileEntryListType(EVPowerProfileEntryListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 196:
-            // Grammar: ID=196; read/write bits=1; START (EVPowerProfileEntry)
+        case 181:
+            // Grammar: ID=181; read/write bits=1; START (EVPowerProfileEntry)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPowerProfileEntry, PowerScheduleEntryType (PowerScheduleEntryType)); next=197
+                    // Event: START (EVPowerProfileEntry, PowerScheduleEntryType (PowerScheduleEntryType)); next=182
                     // decode: element array
                     if (EVPowerProfileEntryListType->EVPowerProfileEntry.arrayLen < iso20_PowerScheduleEntryType_2048_ARRAY_SIZE)
                     {
@@ -10396,9 +10098,10 @@ static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, str
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PowerScheduleEntryType_2048_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 197;
+                    grammar_id = 182;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -10406,15 +10109,15 @@ static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 197:
-            // Grammar: ID=197; read/write bits=2; LOOP (EVPowerProfileEntry), END Element
+        case 182:
+            // Grammar: ID=182; read/write bits=2; LOOP (EVPowerProfileEntry), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (EVPowerProfileEntry, PowerScheduleEntryType (PowerScheduleEntryType)); next=197
+                    // Event: LOOP (EVPowerProfileEntry, PowerScheduleEntryType (PowerScheduleEntryType)); next=182
                     // decode: element array
                     if (EVPowerProfileEntryListType->EVPowerProfileEntry.arrayLen < iso20_PowerScheduleEntryType_2048_ARRAY_SIZE)
                     {
@@ -10422,9 +10125,18 @@ static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, str
                     }
                     else
                     {
+                        // static array not large enough, only iso20_PowerScheduleEntryType_2048_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 197;
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (EVPowerProfileEntryListType->EVPowerProfileEntry.arrayLen < 2048)
+                    {
+                        grammar_id = 182;
+                    }
+                    else
+                    {
+                        grammar_id = 2;
+                    }
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -10442,7 +10154,7 @@ static int decode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10491,31 +10203,31 @@ static int decode_iso20_Dynamic_SMDTControlModeType(exi_bitstream_t* stream, str
 //          abstract=False; final=False;
 // Particle: EVPowerSchedule, EVPowerScheduleType (1, 1); EVAbsolutePriceSchedule, EVAbsolutePriceScheduleType (1, 1);
 static int decode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, struct iso20_EVEnergyOfferType* EVEnergyOfferType) {
-    int grammar_id = 198;
+    int grammar_id = 183;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EVEnergyOfferType(EVEnergyOfferType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 198:
-            // Grammar: ID=198; read/write bits=1; START (EVPowerSchedule)
+        case 183:
+            // Grammar: ID=183; read/write bits=1; START (EVPowerSchedule)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPowerSchedule, EVPowerScheduleType (EVPowerScheduleType)); next=199
+                    // Event: START (EVPowerSchedule, EVPowerScheduleType (EVPowerScheduleType)); next=184
                     // decode: element
                     error = decode_iso20_EVPowerScheduleType(stream, &EVEnergyOfferType->EVPowerSchedule);
                     if (error == 0)
                     {
-                        grammar_id = 199;
+                        grammar_id = 184;
                     }
                     break;
                 default:
@@ -10524,12 +10236,12 @@ static int decode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 199:
-            // Grammar: ID=199; read/write bits=1; START (EVAbsolutePriceSchedule)
+        case 184:
+            // Grammar: ID=184; read/write bits=1; START (EVAbsolutePriceSchedule)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVAbsolutePriceSchedule, EVAbsolutePriceScheduleType (EVAbsolutePriceScheduleType)); next=2
@@ -10551,7 +10263,7 @@ static int decode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10581,26 +10293,26 @@ static int decode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); TimeAnchor, unsignedLong (1, 1); PriceScheduleID, numericIDType (1, 1); PriceScheduleDescription, descriptionType (0, 1); NumberOfPriceLevels, unsignedByte (1, 1); PriceLevelScheduleEntries, PriceLevelScheduleEntryListType (1, 1);
 static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct iso20_PriceLevelScheduleType* PriceLevelScheduleType) {
-    int grammar_id = 200;
+    int grammar_id = 185;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PriceLevelScheduleType(PriceLevelScheduleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 200:
-            // Grammar: ID=200; read/write bits=2; START (Id), START (TimeAnchor)
+        case 185:
+            // Grammar: ID=185; read/write bits=2; START (Id), START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=201
+                    // Event: START (Id, ID (NCName)); next=186
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &PriceLevelScheduleType->Id.charactersLen);
                     if (error == 0)
@@ -10618,15 +10330,15 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                         }
                     }
                     PriceLevelScheduleType->Id_isUsed = 1u;
-                    grammar_id = 201;
+                    grammar_id = 186;
                     break;
                 case 1:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=202
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=187
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &PriceLevelScheduleType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 202;
+                        grammar_id = 187;
                     }
                     break;
                 default:
@@ -10635,20 +10347,20 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 201:
-            // Grammar: ID=201; read/write bits=1; START (TimeAnchor)
+        case 186:
+            // Grammar: ID=186; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=202
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=187
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &PriceLevelScheduleType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 202;
+                        grammar_id = 187;
                     }
                     break;
                 default:
@@ -10657,20 +10369,20 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 202:
-            // Grammar: ID=202; read/write bits=1; START (PriceScheduleID)
+        case 187:
+            // Grammar: ID=187; read/write bits=1; START (PriceScheduleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceScheduleID, numericIDType (unsignedInt)); next=203
+                    // Event: START (PriceScheduleID, numericIDType (unsignedInt)); next=188
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &PriceLevelScheduleType->PriceScheduleID);
                     if (error == 0)
                     {
-                        grammar_id = 203;
+                        grammar_id = 188;
                     }
                     break;
                 default:
@@ -10679,15 +10391,15 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 203:
-            // Grammar: ID=203; read/write bits=2; START (PriceScheduleDescription), START (NumberOfPriceLevels)
+        case 188:
+            // Grammar: ID=188; read/write bits=2; START (PriceScheduleDescription), START (NumberOfPriceLevels)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PriceScheduleDescription, descriptionType (string)); next=204
+                    // Event: START (PriceScheduleDescription, descriptionType (string)); next=189
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10727,7 +10439,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                             if (eventCode == 0)
                             {
                                 PriceLevelScheduleType->PriceScheduleDescription_isUsed = 1u;
-                                grammar_id = 204;
+                                grammar_id = 189;
                             }
                             else
                             {
@@ -10737,7 +10449,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                     }
                     break;
                 case 1:
-                    // Event: START (NumberOfPriceLevels, unsignedByte (unsignedShort)); next=205
+                    // Event: START (NumberOfPriceLevels, unsignedByte (unsignedShort)); next=190
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10767,7 +10479,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 205;
+                                grammar_id = 190;
                             }
                             else
                             {
@@ -10782,15 +10494,15 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 204:
-            // Grammar: ID=204; read/write bits=1; START (NumberOfPriceLevels)
+        case 189:
+            // Grammar: ID=189; read/write bits=1; START (NumberOfPriceLevels)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NumberOfPriceLevels, unsignedByte (unsignedShort)); next=205
+                    // Event: START (NumberOfPriceLevels, unsignedByte (unsignedShort)); next=190
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -10820,7 +10532,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 205;
+                                grammar_id = 190;
                             }
                             else
                             {
@@ -10835,12 +10547,12 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 205:
-            // Grammar: ID=205; read/write bits=1; START (PriceLevelScheduleEntries)
+        case 190:
+            // Grammar: ID=190; read/write bits=1; START (PriceLevelScheduleEntries)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PriceLevelScheduleEntries, PriceLevelScheduleEntryListType (PriceLevelScheduleEntryListType)); next=2
@@ -10862,7 +10574,7 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10892,31 +10604,31 @@ static int decode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False;
 // Particle: PowerSchedule, PowerScheduleType (1, 1); AbsolutePriceSchedule, AbsolutePriceScheduleType (0, 1); PriceLevelSchedule, PriceLevelScheduleType (0, 1);
 static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso20_ChargingScheduleType* ChargingScheduleType) {
-    int grammar_id = 206;
+    int grammar_id = 191;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ChargingScheduleType(ChargingScheduleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 206:
-            // Grammar: ID=206; read/write bits=1; START (PowerSchedule)
+        case 191:
+            // Grammar: ID=191; read/write bits=1; START (PowerSchedule)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (PowerSchedule, PowerScheduleType (PowerScheduleType)); next=207
+                    // Event: START (PowerSchedule, PowerScheduleType (PowerScheduleType)); next=192
                     // decode: element
                     error = decode_iso20_PowerScheduleType(stream, &ChargingScheduleType->PowerSchedule);
                     if (error == 0)
                     {
-                        grammar_id = 207;
+                        grammar_id = 192;
                     }
                     break;
                 default:
@@ -10925,12 +10637,12 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 207:
-            // Grammar: ID=207; read/write bits=2; START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 192:
+            // Grammar: ID=192; read/write bits=2; START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (AbsolutePriceSchedule, AbsolutePriceScheduleType (PriceScheduleType)); next=2
@@ -10968,7 +10680,7 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -10998,31 +10710,31 @@ static int decode_iso20_ChargingScheduleType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False;
 // Particle: ScheduleTupleID, numericIDType (1, 1); ChargingSchedule, ChargingScheduleType (1, 1); DischargingSchedule, ChargingScheduleType (0, 1);
 static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_ScheduleTupleType* ScheduleTupleType) {
-    int grammar_id = 208;
+    int grammar_id = 193;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ScheduleTupleType(ScheduleTupleType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 208:
-            // Grammar: ID=208; read/write bits=1; START (ScheduleTupleID)
+        case 193:
+            // Grammar: ID=193; read/write bits=1; START (ScheduleTupleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ScheduleTupleID, numericIDType (unsignedInt)); next=209
+                    // Event: START (ScheduleTupleID, numericIDType (unsignedInt)); next=194
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &ScheduleTupleType->ScheduleTupleID);
                     if (error == 0)
                     {
-                        grammar_id = 209;
+                        grammar_id = 194;
                     }
                     break;
                 default:
@@ -11031,20 +10743,20 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 209:
-            // Grammar: ID=209; read/write bits=1; START (ChargingSchedule)
+        case 194:
+            // Grammar: ID=194; read/write bits=1; START (ChargingSchedule)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargingSchedule, ChargingScheduleType (ChargingScheduleType)); next=210
+                    // Event: START (ChargingSchedule, ChargingScheduleType (ChargingScheduleType)); next=195
                     // decode: element
                     error = decode_iso20_ChargingScheduleType(stream, &ScheduleTupleType->ChargingSchedule);
                     if (error == 0)
                     {
-                        grammar_id = 210;
+                        grammar_id = 195;
                     }
                     break;
                 default:
@@ -11053,12 +10765,12 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 210:
-            // Grammar: ID=210; read/write bits=2; START (DischargingSchedule), END Element
+        case 195:
+            // Grammar: ID=195; read/write bits=2; START (DischargingSchedule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (DischargingSchedule, ChargingScheduleType (ChargingScheduleType)); next=2
@@ -11086,7 +10798,7 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11116,23 +10828,23 @@ static int decode_iso20_ScheduleTupleType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False;
 // Particle: SelectedScheduleTupleID, numericIDType (1, 1);
 static int decode_iso20_Scheduled_SMDTControlModeType(exi_bitstream_t* stream, struct iso20_Scheduled_SMDTControlModeType* Scheduled_SMDTControlModeType) {
-    int grammar_id = 211;
+    int grammar_id = 196;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_Scheduled_SMDTControlModeType(Scheduled_SMDTControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 211:
-            // Grammar: ID=211; read/write bits=1; START (SelectedScheduleTupleID)
+        case 196:
+            // Grammar: ID=196; read/write bits=1; START (SelectedScheduleTupleID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SelectedScheduleTupleID, numericIDType (unsignedInt)); next=2
@@ -11154,7 +10866,7 @@ static int decode_iso20_Scheduled_SMDTControlModeType(exi_bitstream_t* stream, s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11184,31 +10896,31 @@ static int decode_iso20_Scheduled_SMDTControlModeType(exi_bitstream_t* stream, s
 //          abstract=False; final=False;
 // Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
 static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_MessageHeaderType* MessageHeaderType) {
-    int grammar_id = 212;
+    int grammar_id = 197;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_MessageHeaderType(MessageHeaderType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 212:
-            // Grammar: ID=212; read/write bits=1; START (SessionID)
+        case 197:
+            // Grammar: ID=197; read/write bits=1; START (SessionID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SessionID, sessionIDType (hexBinary)); next=213
+                    // Event: START (SessionID, sessionIDType (hexBinary)); next=198
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &MessageHeaderType->SessionID.bytesLen, &MessageHeaderType->SessionID.bytes[0], iso20_sessionIDType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 213;
+                        grammar_id = 198;
                     }
                     break;
                 default:
@@ -11217,20 +10929,20 @@ static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 213:
-            // Grammar: ID=213; read/write bits=1; START (TimeStamp)
+        case 198:
+            // Grammar: ID=198; read/write bits=1; START (TimeStamp)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=214
+                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=199
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MessageHeaderType->TimeStamp);
                     if (error == 0)
                     {
-                        grammar_id = 214;
+                        grammar_id = 199;
                     }
                     break;
                 default:
@@ -11239,12 +10951,12 @@ static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 214:
-            // Grammar: ID=214; read/write bits=2; START (Signature), END Element
+        case 199:
+            // Grammar: ID=199; read/write bits=2; START (Signature), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Signature, SignatureType (SignatureType)); next=2
@@ -11272,7 +10984,7 @@ static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11302,26 +11014,26 @@ static int decode_iso20_MessageHeaderType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
 static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct iso20_SignaturePropertyType* SignaturePropertyType) {
-    int grammar_id = 215;
+    int grammar_id = 200;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SignaturePropertyType(SignaturePropertyType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 215:
-            // Grammar: ID=215; read/write bits=2; START (Id), START (Target)
+        case 200:
+            // Grammar: ID=200; read/write bits=2; START (Id), START (Target)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=216
+                    // Event: START (Id, ID (NCName)); next=201
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Id.charactersLen);
                     if (error == 0)
@@ -11339,10 +11051,10 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                         }
                     }
                     SignaturePropertyType->Id_isUsed = 1u;
-                    grammar_id = 216;
+                    grammar_id = 201;
                     break;
                 case 1:
-                    // Event: START (Target, anyURI (anyURI)); next=217
+                    // Event: START (Target, anyURI (anyURI)); next=202
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
                     if (error == 0)
@@ -11359,7 +11071,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 217;
+                    grammar_id = 202;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -11367,15 +11079,15 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 216:
-            // Grammar: ID=216; read/write bits=1; START (Target)
+        case 201:
+            // Grammar: ID=201; read/write bits=1; START (Target)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Target, anyURI (anyURI)); next=217
+                    // Event: START (Target, anyURI (anyURI)); next=202
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
                     if (error == 0)
@@ -11392,7 +11104,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 217;
+                    grammar_id = 202;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -11400,12 +11112,12 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 217:
-            // Grammar: ID=217; read/write bits=1; START (ANY)
+        case 202:
+            // Grammar: ID=202; read/write bits=1; START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -11428,7 +11140,7 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11458,26 +11170,26 @@ static int decode_iso20_SignaturePropertyType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False;
 // Particle: ServiceID, serviceIDType (1, 16);
 static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_ServiceIDListType* ServiceIDListType) {
-    int grammar_id = 218;
+    int grammar_id = 203;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceIDListType(ServiceIDListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 218:
-            // Grammar: ID=218; read/write bits=1; START (ServiceID)
+        case 203:
+            // Grammar: ID=203; read/write bits=1; START (ServiceID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=219
+                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=204
                     // decode: unsigned short array
                     if (ServiceIDListType->ServiceID.arrayLen < iso20_serviceIDType_16_ARRAY_SIZE)
                     {
@@ -11485,9 +11197,10 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_serviceIDType_16_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 219;
+                    grammar_id = 204;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -11495,15 +11208,15 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 219:
-            // Grammar: ID=219; read/write bits=2; LOOP (ServiceID), END Element
+        case 204:
+            // Grammar: ID=204; read/write bits=2; LOOP (ServiceID), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ServiceID, serviceIDType (unsignedShort)); next=219
+                    // Event: LOOP (ServiceID, serviceIDType (unsignedShort)); next=204
                     // decode: unsigned short array
                     if (ServiceIDListType->ServiceID.arrayLen < iso20_serviceIDType_16_ARRAY_SIZE)
                     {
@@ -11511,40 +11224,10 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
                     }
                     else
                     {
+                        // static array not large enough, only iso20_serviceIDType_16_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 219;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 220:
-            // Grammar: ID=220; read/write bits=2; LOOP (ServiceID), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ServiceID, serviceIDType (unsignedShort)); next=2
-                    // decode: unsigned short array
-                    if (ServiceIDListType->ServiceID.arrayLen < iso20_serviceIDType_16_ARRAY_SIZE)
-                    {
-                        error = decode_exi_type_uint16(stream, &ServiceIDListType->ServiceID.array[ServiceIDListType->ServiceID.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
+                    grammar_id = 204;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -11562,7 +11245,7 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11592,31 +11275,31 @@ static int decode_iso20_ServiceIDListType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False;
 // Particle: ServiceID, serviceIDType (1, 1); ParameterSetID, serviceIDType (1, 1);
 static int decode_iso20_SelectedServiceType(exi_bitstream_t* stream, struct iso20_SelectedServiceType* SelectedServiceType) {
-    int grammar_id = 221;
+    int grammar_id = 205;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SelectedServiceType(SelectedServiceType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 221:
-            // Grammar: ID=221; read/write bits=1; START (ServiceID)
+        case 205:
+            // Grammar: ID=205; read/write bits=1; START (ServiceID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=222
+                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=206
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &SelectedServiceType->ServiceID);
                     if (error == 0)
                     {
-                        grammar_id = 222;
+                        grammar_id = 206;
                     }
                     break;
                 default:
@@ -11625,12 +11308,12 @@ static int decode_iso20_SelectedServiceType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 222:
-            // Grammar: ID=222; read/write bits=1; START (ParameterSetID)
+        case 206:
+            // Grammar: ID=206; read/write bits=1; START (ParameterSetID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ParameterSetID, serviceIDType (unsignedShort)); next=2
@@ -11652,7 +11335,7 @@ static int decode_iso20_SelectedServiceType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11682,26 +11365,26 @@ static int decode_iso20_SelectedServiceType(exi_bitstream_t* stream, struct iso2
 //          abstract=False; final=False;
 // Particle: Id, ID (1, 1); SessionID, sessionIDType (1, 1); MeterInfo, MeterInfoType (1, 1); Receipt, ReceiptType (0, 1); Dynamic_SMDTControlMode, Dynamic_SMDTControlModeType (0, 1); Scheduled_SMDTControlMode, Scheduled_SMDTControlModeType (0, 1);
 static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct iso20_SignedMeteringDataType* SignedMeteringDataType) {
-    int grammar_id = 223;
+    int grammar_id = 207;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SignedMeteringDataType(SignedMeteringDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 223:
-            // Grammar: ID=223; read/write bits=1; START (Id)
+        case 207:
+            // Grammar: ID=207; read/write bits=1; START (Id)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=224
+                    // Event: START (Id, ID (NCName)); next=208
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignedMeteringDataType->Id.charactersLen);
                     if (error == 0)
@@ -11718,7 +11401,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 224;
+                    grammar_id = 208;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -11726,20 +11409,20 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 224:
-            // Grammar: ID=224; read/write bits=1; START (SessionID)
+        case 208:
+            // Grammar: ID=208; read/write bits=1; START (SessionID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SessionID, sessionIDType (hexBinary)); next=225
+                    // Event: START (SessionID, sessionIDType (hexBinary)); next=209
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &SignedMeteringDataType->SessionID.bytesLen, &SignedMeteringDataType->SessionID.bytes[0], iso20_sessionIDType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 225;
+                        grammar_id = 209;
                     }
                     break;
                 default:
@@ -11748,20 +11431,20 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 225:
-            // Grammar: ID=225; read/write bits=1; START (MeterInfo)
+        case 209:
+            // Grammar: ID=209; read/write bits=1; START (MeterInfo)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=226
+                    // Event: START (MeterInfo, MeterInfoType (MeterInfoType)); next=210
                     // decode: element
                     error = decode_iso20_MeterInfoType(stream, &SignedMeteringDataType->MeterInfo);
                     if (error == 0)
                     {
-                        grammar_id = 226;
+                        grammar_id = 210;
                     }
                     break;
                 default:
@@ -11770,21 +11453,21 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 226:
-            // Grammar: ID=226; read/write bits=2; START (Receipt), START (Dynamic_SMDTControlMode), START (Scheduled_SMDTControlMode)
+        case 210:
+            // Grammar: ID=210; read/write bits=2; START (Receipt), START (Dynamic_SMDTControlMode), START (Scheduled_SMDTControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=227
+                    // Event: START (Receipt, ReceiptType (ReceiptType)); next=211
                     // decode: element
                     error = decode_iso20_ReceiptType(stream, &SignedMeteringDataType->Receipt);
                     if (error == 0)
                     {
                         SignedMeteringDataType->Receipt_isUsed = 1u;
-                        grammar_id = 227;
+                        grammar_id = 211;
                     }
                     break;
                 case 1:
@@ -11813,12 +11496,12 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 227:
-            // Grammar: ID=227; read/write bits=2; START (Dynamic_SMDTControlMode), START (Scheduled_SMDTControlMode)
+        case 211:
+            // Grammar: ID=211; read/write bits=2; START (Dynamic_SMDTControlMode), START (Scheduled_SMDTControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Dynamic_SMDTControlMode, Dynamic_SMDTControlModeType (Dynamic_SMDTControlModeType)); next=2
@@ -11851,7 +11534,7 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -11881,26 +11564,26 @@ static int decode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False;
 // Particle: Id, ID (1, 1); Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
 static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, struct iso20_SignedCertificateChainType* SignedCertificateChainType) {
-    int grammar_id = 228;
+    int grammar_id = 212;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SignedCertificateChainType(SignedCertificateChainType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 228:
-            // Grammar: ID=228; read/write bits=1; START (Id)
+        case 212:
+            // Grammar: ID=212; read/write bits=1; START (Id)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=229
+                    // Event: START (Id, ID (NCName)); next=213
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignedCertificateChainType->Id.charactersLen);
                     if (error == 0)
@@ -11917,7 +11600,7 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 229;
+                    grammar_id = 213;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -11925,20 +11608,20 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 229:
-            // Grammar: ID=229; read/write bits=1; START (Certificate)
+        case 213:
+            // Grammar: ID=213; read/write bits=1; START (Certificate)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Certificate, certificateType (base64Binary)); next=230
+                    // Event: START (Certificate, certificateType (base64Binary)); next=214
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignedCertificateChainType->Certificate.bytesLen, &SignedCertificateChainType->Certificate.bytes[0], iso20_certificateType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 230;
+                        grammar_id = 214;
                     }
                     break;
                 default:
@@ -11947,12 +11630,12 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 230:
-            // Grammar: ID=230; read/write bits=2; START (SubCertificates), END Element
+        case 214:
+            // Grammar: ID=214; read/write bits=2; START (SubCertificates), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SubCertificates, SubCertificatesType (SubCertificatesType)); next=2
@@ -11980,7 +11663,7 @@ static int decode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12029,26 +11712,26 @@ static int decode_iso20_EIM_AReqAuthorizationModeType(exi_bitstream_t* stream, s
 //          abstract=False; final=False;
 // Particle: SelectedService, SelectedServiceType (1, 16);
 static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct iso20_SelectedServiceListType* SelectedServiceListType) {
-    int grammar_id = 231;
+    int grammar_id = 215;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SelectedServiceListType(SelectedServiceListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 231:
-            // Grammar: ID=231; read/write bits=1; START (SelectedService)
+        case 215:
+            // Grammar: ID=215; read/write bits=1; START (SelectedService)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SelectedService, SelectedServiceType (SelectedServiceType)); next=232
+                    // Event: START (SelectedService, SelectedServiceType (SelectedServiceType)); next=216
                     // decode: element array
                     if (SelectedServiceListType->SelectedService.arrayLen < iso20_SelectedServiceType_16_ARRAY_SIZE)
                     {
@@ -12056,9 +11739,10 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
                     }
                     else
                     {
+                        // static array not large enough, only iso20_SelectedServiceType_16_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 232;
+                    grammar_id = 216;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -12066,15 +11750,15 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 232:
-            // Grammar: ID=232; read/write bits=2; LOOP (SelectedService), END Element
+        case 216:
+            // Grammar: ID=216; read/write bits=2; LOOP (SelectedService), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (SelectedService, SelectedServiceType (SelectedServiceType)); next=232
+                    // Event: LOOP (SelectedService, SelectedServiceType (SelectedServiceType)); next=216
                     // decode: element array
                     if (SelectedServiceListType->SelectedService.arrayLen < iso20_SelectedServiceType_16_ARRAY_SIZE)
                     {
@@ -12082,40 +11766,18 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
                     }
                     else
                     {
+                        // static array not large enough, only iso20_SelectedServiceType_16_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 232;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 233:
-            // Grammar: ID=233; read/write bits=2; LOOP (SelectedService), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (SelectedService, SelectedServiceType (SelectedServiceType)); next=2
-                    // decode: element array
-                    if (SelectedServiceListType->SelectedService.arrayLen < iso20_SelectedServiceType_16_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (SelectedServiceListType->SelectedService.arrayLen < 16)
                     {
-                        error = decode_iso20_SelectedServiceType(stream, &SelectedServiceListType->SelectedService.array[SelectedServiceListType->SelectedService.arrayLen++]);
+                        grammar_id = 216;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -12133,7 +11795,7 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12163,31 +11825,31 @@ static int decode_iso20_SelectedServiceListType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False;
 // Particle: DepartureTime, unsignedInt (1, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumV2XEnergyRequest, RationalNumberType (0, 1); EVMinimumV2XEnergyRequest, RationalNumberType (0, 1);
 static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, struct iso20_Dynamic_SEReqControlModeType* Dynamic_SEReqControlModeType) {
-    int grammar_id = 234;
+    int grammar_id = 217;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_Dynamic_SEReqControlModeType(Dynamic_SEReqControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 234:
-            // Grammar: ID=234; read/write bits=1; START (DepartureTime)
+        case 217:
+            // Grammar: ID=217; read/write bits=1; START (DepartureTime)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=235
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=218
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Dynamic_SEReqControlModeType->DepartureTime);
                     if (error == 0)
                     {
-                        grammar_id = 235;
+                        grammar_id = 218;
                     }
                     break;
                 default:
@@ -12196,15 +11858,15 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 235:
-            // Grammar: ID=235; read/write bits=2; START (MinimumSOC), START (TargetSOC), START (EVTargetEnergyRequest)
+        case 218:
+            // Grammar: ID=218; read/write bits=2; START (MinimumSOC), START (TargetSOC), START (EVTargetEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=236
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=219
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12235,7 +11897,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 236;
+                                grammar_id = 219;
                             }
                             else
                             {
@@ -12245,7 +11907,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     break;
                 case 1:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=237
+                    // Event: START (TargetSOC, percentValueType (byte)); next=220
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12276,7 +11938,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 237;
+                                grammar_id = 220;
                             }
                             else
                             {
@@ -12286,12 +11948,12 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     break;
                 case 2:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=238
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=221
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 238;
+                        grammar_id = 221;
                     }
                     break;
                 default:
@@ -12300,15 +11962,15 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 236:
-            // Grammar: ID=236; read/write bits=2; START (TargetSOC), START (EVTargetEnergyRequest)
+        case 219:
+            // Grammar: ID=219; read/write bits=2; START (TargetSOC), START (EVTargetEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=237
+                    // Event: START (TargetSOC, percentValueType (byte)); next=220
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -12339,7 +12001,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 237;
+                                grammar_id = 220;
                             }
                             else
                             {
@@ -12349,12 +12011,12 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                     }
                     break;
                 case 1:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=238
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=221
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 238;
+                        grammar_id = 221;
                     }
                     break;
                 default:
@@ -12363,20 +12025,20 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 237:
-            // Grammar: ID=237; read/write bits=1; START (EVTargetEnergyRequest)
+        case 220:
+            // Grammar: ID=220; read/write bits=1; START (EVTargetEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=238
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=221
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 238;
+                        grammar_id = 221;
                     }
                     break;
                 default:
@@ -12385,20 +12047,20 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 238:
-            // Grammar: ID=238; read/write bits=1; START (EVMaximumEnergyRequest)
+        case 221:
+            // Grammar: ID=221; read/write bits=1; START (EVMaximumEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=239
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=222
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 239;
+                        grammar_id = 222;
                     }
                     break;
                 default:
@@ -12407,20 +12069,20 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 239:
-            // Grammar: ID=239; read/write bits=1; START (EVMinimumEnergyRequest)
+        case 222:
+            // Grammar: ID=222; read/write bits=1; START (EVMinimumEnergyRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=240
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=223
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 240;
+                        grammar_id = 223;
                     }
                     break;
                 default:
@@ -12429,21 +12091,21 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 240:
-            // Grammar: ID=240; read/write bits=2; START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
+        case 223:
+            // Grammar: ID=223; read/write bits=2; START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=241
+                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=224
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMaximumV2XEnergyRequest);
                     if (error == 0)
                     {
                         Dynamic_SEReqControlModeType->EVMaximumV2XEnergyRequest_isUsed = 1u;
-                        grammar_id = 241;
+                        grammar_id = 224;
                     }
                     break;
                 case 1:
@@ -12467,12 +12129,12 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 241:
-            // Grammar: ID=241; read/write bits=2; START (EVMinimumV2XEnergyRequest), END Element
+        case 224:
+            // Grammar: ID=224; read/write bits=2; START (EVMinimumV2XEnergyRequest), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVMinimumV2XEnergyRequest, RationalNumberType (RationalNumberType)); next=2
@@ -12500,7 +12162,7 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12530,31 +12192,31 @@ static int decode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, st
 //          abstract=False; final=False;
 // Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, evseNotificationType (1, 1);
 static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVSEStatusType* EVSEStatusType) {
-    int grammar_id = 242;
+    int grammar_id = 225;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EVSEStatusType(EVSEStatusType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 242:
-            // Grammar: ID=242; read/write bits=1; START (NotificationMaxDelay)
+        case 225:
+            // Grammar: ID=225; read/write bits=1; START (NotificationMaxDelay)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=243
+                    // Event: START (NotificationMaxDelay, unsignedShort (unsignedInt)); next=226
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &EVSEStatusType->NotificationMaxDelay);
                     if (error == 0)
                     {
-                        grammar_id = 243;
+                        grammar_id = 226;
                     }
                     break;
                 default:
@@ -12563,12 +12225,12 @@ static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVS
                 }
             }
             break;
-        case 243:
-            // Grammar: ID=243; read/write bits=1; START (EVSENotification)
+        case 226:
+            // Grammar: ID=226; read/write bits=1; START (EVSENotification)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSENotification, evseNotificationType (string)); next=2
@@ -12621,7 +12283,7 @@ static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVS
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12651,26 +12313,26 @@ static int decode_iso20_EVSEStatusType(exi_bitstream_t* stream, struct iso20_EVS
 //          abstract=False; final=False;
 // Particle: RootCertificateID, X509IssuerSerialType (1, 20);
 static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, struct iso20_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType) {
-    int grammar_id = 244;
+    int grammar_id = 227;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ListOfRootCertificateIDsType(ListOfRootCertificateIDsType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 244:
-            // Grammar: ID=244; read/write bits=1; START (RootCertificateID)
+        case 227:
+            // Grammar: ID=227; read/write bits=1; START (RootCertificateID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=245
+                    // Event: START (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=228
                     // decode: element array
                     if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < iso20_X509IssuerSerialType_20_ARRAY_SIZE)
                     {
@@ -12678,9 +12340,10 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
                     }
                     else
                     {
+                        // static array not large enough, only iso20_X509IssuerSerialType_20_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 245;
+                    grammar_id = 228;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -12688,15 +12351,15 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 245:
-            // Grammar: ID=245; read/write bits=2; LOOP (RootCertificateID), END Element
+        case 228:
+            // Grammar: ID=228; read/write bits=2; LOOP (RootCertificateID), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=245
+                    // Event: LOOP (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=228
                     // decode: element array
                     if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < iso20_X509IssuerSerialType_20_ARRAY_SIZE)
                     {
@@ -12704,40 +12367,18 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
                     }
                     else
                     {
+                        // static array not large enough, only iso20_X509IssuerSerialType_20_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 245;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 246:
-            // Grammar: ID=246; read/write bits=2; LOOP (RootCertificateID), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (RootCertificateID, X509IssuerSerialType (X509IssuerSerialType)); next=2
-                    // decode: element array
-                    if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < iso20_X509IssuerSerialType_20_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ListOfRootCertificateIDsType->RootCertificateID.arrayLen < 20)
                     {
-                        error = decode_iso20_X509IssuerSerialType(stream, &ListOfRootCertificateIDsType->RootCertificateID.array[ListOfRootCertificateIDsType->RootCertificateID.arrayLen++]);
+                        grammar_id = 228;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -12755,7 +12396,7 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12785,26 +12426,26 @@ static int decode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, st
 //          abstract=False; final=False;
 // Particle: Id, ID (1, 1); GenChallenge, genChallengeType (1, 1); ContractCertificateChain, ContractCertificateChainType (1, 1);
 static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, struct iso20_PnC_AReqAuthorizationModeType* PnC_AReqAuthorizationModeType) {
-    int grammar_id = 247;
+    int grammar_id = 229;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PnC_AReqAuthorizationModeType(PnC_AReqAuthorizationModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 247:
-            // Grammar: ID=247; read/write bits=1; START (Id)
+        case 229:
+            // Grammar: ID=229; read/write bits=1; START (Id)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=248
+                    // Event: START (Id, ID (NCName)); next=230
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &PnC_AReqAuthorizationModeType->Id.charactersLen);
                     if (error == 0)
@@ -12821,7 +12462,7 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 248;
+                    grammar_id = 230;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -12829,20 +12470,20 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 248:
-            // Grammar: ID=248; read/write bits=1; START (GenChallenge)
+        case 230:
+            // Grammar: ID=230; read/write bits=1; START (GenChallenge)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (GenChallenge, genChallengeType (base64Binary)); next=249
+                    // Event: START (GenChallenge, genChallengeType (base64Binary)); next=231
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PnC_AReqAuthorizationModeType->GenChallenge.bytesLen, &PnC_AReqAuthorizationModeType->GenChallenge.bytes[0], iso20_genChallengeType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 249;
+                        grammar_id = 231;
                     }
                     break;
                 default:
@@ -12851,12 +12492,12 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 249:
-            // Grammar: ID=249; read/write bits=1; START (ContractCertificateChain)
+        case 231:
+            // Grammar: ID=231; read/write bits=1; START (ContractCertificateChain)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ContractCertificateChain, ContractCertificateChainType (ContractCertificateChainType)); next=2
@@ -12878,7 +12519,7 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -12908,26 +12549,26 @@ static int decode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, s
 //          abstract=False; final=False;
 // Particle: Service, ServiceType (1, 8);
 static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_ServiceListType* ServiceListType) {
-    int grammar_id = 250;
+    int grammar_id = 232;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceListType(ServiceListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 250:
-            // Grammar: ID=250; read/write bits=1; START (Service)
+        case 232:
+            // Grammar: ID=232; read/write bits=1; START (Service)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Service, ServiceType (ServiceType)); next=251
+                    // Event: START (Service, ServiceType (ServiceType)); next=233
                     // decode: element array
                     if (ServiceListType->Service.arrayLen < iso20_ServiceType_8_ARRAY_SIZE)
                     {
@@ -12935,9 +12576,10 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ServiceType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 251;
+                    grammar_id = 233;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -12945,15 +12587,15 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
                 }
             }
             break;
-        case 251:
-            // Grammar: ID=251; read/write bits=2; LOOP (Service), END Element
+        case 233:
+            // Grammar: ID=233; read/write bits=2; LOOP (Service), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Service, ServiceType (ServiceType)); next=251
+                    // Event: LOOP (Service, ServiceType (ServiceType)); next=233
                     // decode: element array
                     if (ServiceListType->Service.arrayLen < iso20_ServiceType_8_ARRAY_SIZE)
                     {
@@ -12961,40 +12603,18 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ServiceType_8_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 251;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 252:
-            // Grammar: ID=252; read/write bits=2; LOOP (Service), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Service, ServiceType (ServiceType)); next=2
-                    // decode: element array
-                    if (ServiceListType->Service.arrayLen < iso20_ServiceType_8_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ServiceListType->Service.arrayLen < 8)
                     {
-                        error = decode_iso20_ServiceType(stream, &ServiceListType->Service.array[ServiceListType->Service.arrayLen++]);
+                        grammar_id = 233;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -13012,7 +12632,7 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -13040,28 +12660,28 @@ static int decode_iso20_ServiceListType(exi_bitstream_t* stream, struct iso20_Se
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}ServiceParameterList; type={urn:iso:std:iso:15118:-20:CommonMessages}ServiceParameterListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSet, ParameterSetType (1, 4);
+// Particle: ParameterSet, ParameterSetType (1, 4) (original max 32);
 static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct iso20_ServiceParameterListType* ServiceParameterListType) {
-    int grammar_id = 253;
+    int grammar_id = 234;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceParameterListType(ServiceParameterListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 253:
-            // Grammar: ID=253; read/write bits=1; START (ParameterSet)
+        case 234:
+            // Grammar: ID=234; read/write bits=1; START (ParameterSet)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ParameterSet, ParameterSetType (ParameterSetType)); next=254
+                    // Event: START (ParameterSet, ParameterSetType (ParameterSetType)); next=235
                     // decode: element array
                     if (ServiceParameterListType->ParameterSet.arrayLen < iso20_ParameterSetType_4_ARRAY_SIZE)
                     {
@@ -13069,9 +12689,10 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ParameterSetType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 254;
+                    grammar_id = 235;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -13079,15 +12700,15 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 254:
-            // Grammar: ID=254; read/write bits=2; LOOP (ParameterSet), END Element
+        case 235:
+            // Grammar: ID=235; read/write bits=2; LOOP (ParameterSet), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ParameterSet, ParameterSetType (ParameterSetType)); next=254
+                    // Event: LOOP (ParameterSet, ParameterSetType (ParameterSetType)); next=235
                     // decode: element array
                     if (ServiceParameterListType->ParameterSet.arrayLen < iso20_ParameterSetType_4_ARRAY_SIZE)
                     {
@@ -13095,40 +12716,18 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ParameterSetType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 254;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 255:
-            // Grammar: ID=255; read/write bits=2; LOOP (ParameterSet), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ParameterSet, ParameterSetType (ParameterSetType)); next=2
-                    // decode: element array
-                    if (ServiceParameterListType->ParameterSet.arrayLen < iso20_ParameterSetType_4_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (ServiceParameterListType->ParameterSet.arrayLen < 32)
                     {
-                        error = decode_iso20_ParameterSetType(stream, &ServiceParameterListType->ParameterSet.array[ServiceParameterListType->ParameterSet.arrayLen++]);
+                        grammar_id = 235;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -13146,7 +12745,7 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -13176,62 +12775,62 @@ static int decode_iso20_ServiceParameterListType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False;
 // Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVEnergyOffer, EVEnergyOfferType (0, 1);
 static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, struct iso20_Scheduled_SEReqControlModeType* Scheduled_SEReqControlModeType) {
-    int grammar_id = 256;
+    int grammar_id = 236;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_Scheduled_SEReqControlModeType(Scheduled_SEReqControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 256:
-            // Grammar: ID=256; read/write bits=3; START (DepartureTime), START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
+        case 236:
+            // Grammar: ID=236; read/write bits=3; START (DepartureTime), START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=257
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=237
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Scheduled_SEReqControlModeType->DepartureTime);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->DepartureTime_isUsed = 1u;
-                        grammar_id = 257;
+                        grammar_id = 237;
                     }
                     break;
                 case 1:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=258
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=238
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVTargetEnergyRequest_isUsed = 1u;
-                        grammar_id = 258;
+                        grammar_id = 238;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=259
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
-                        grammar_id = 259;
+                        grammar_id = 239;
                     }
                     break;
                 case 3:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=260
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 260;
+                        grammar_id = 240;
                     }
                     break;
                 case 4:
@@ -13255,41 +12854,41 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 257:
-            // Grammar: ID=257; read/write bits=3; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
+        case 237:
+            // Grammar: ID=237; read/write bits=3; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=258
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=238
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVTargetEnergyRequest_isUsed = 1u;
-                        grammar_id = 258;
+                        grammar_id = 238;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=259
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
-                        grammar_id = 259;
+                        grammar_id = 239;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=260
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 260;
+                        grammar_id = 240;
                     }
                     break;
                 case 3:
@@ -13313,31 +12912,31 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 258:
-            // Grammar: ID=258; read/write bits=3; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
+        case 238:
+            // Grammar: ID=238; read/write bits=3; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=259
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=239
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
-                        grammar_id = 259;
+                        grammar_id = 239;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=260
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 260;
+                        grammar_id = 240;
                     }
                     break;
                 case 2:
@@ -13361,21 +12960,21 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 259:
-            // Grammar: ID=259; read/write bits=2; START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
+        case 239:
+            // Grammar: ID=239; read/write bits=2; START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=260
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=240
                     // decode: element
                     error = decode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
                         Scheduled_SEReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 260;
+                        grammar_id = 240;
                     }
                     break;
                 case 1:
@@ -13399,12 +12998,12 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 260:
-            // Grammar: ID=260; read/write bits=2; START (EVEnergyOffer), END Element
+        case 240:
+            // Grammar: ID=240; read/write bits=2; START (EVEnergyOffer), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVEnergyOffer, EVEnergyOfferType (EVEnergyOfferType)); next=2
@@ -13432,7 +13031,7 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -13462,31 +13061,31 @@ static int decode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); Dynamic_EVPPTControlMode, Dynamic_EVPPTControlModeType (0, 1); Scheduled_EVPPTControlMode, Scheduled_EVPPTControlModeType (0, 1); EVPowerProfileEntries, EVPowerProfileEntryListType (1, 1);
 static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20_EVPowerProfileType* EVPowerProfileType) {
-    int grammar_id = 261;
+    int grammar_id = 241;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EVPowerProfileType(EVPowerProfileType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 261:
-            // Grammar: ID=261; read/write bits=1; START (TimeAnchor)
+        case 241:
+            // Grammar: ID=241; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=262
+                    // Event: START (TimeAnchor, unsignedLong (nonNegativeInteger)); next=242
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &EVPowerProfileType->TimeAnchor);
                     if (error == 0)
                     {
-                        grammar_id = 262;
+                        grammar_id = 242;
                     }
                     break;
                 default:
@@ -13495,31 +13094,31 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 262:
-            // Grammar: ID=262; read/write bits=2; START (Dynamic_EVPPTControlMode), START (Scheduled_EVPPTControlMode)
+        case 242:
+            // Grammar: ID=242; read/write bits=2; START (Dynamic_EVPPTControlMode), START (Scheduled_EVPPTControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Dynamic_EVPPTControlMode, Dynamic_EVPPTControlModeType (Dynamic_EVPPTControlModeType)); next=263
+                    // Event: START (Dynamic_EVPPTControlMode, Dynamic_EVPPTControlModeType (Dynamic_EVPPTControlModeType)); next=243
                     // decode: element
                     error = decode_iso20_Dynamic_EVPPTControlModeType(stream, &EVPowerProfileType->Dynamic_EVPPTControlMode);
                     if (error == 0)
                     {
                         EVPowerProfileType->Dynamic_EVPPTControlMode_isUsed = 1u;
-                        grammar_id = 263;
+                        grammar_id = 243;
                     }
                     break;
                 case 1:
-                    // Event: START (Scheduled_EVPPTControlMode, Scheduled_EVPPTControlModeType (Scheduled_EVPPTControlModeType)); next=263
+                    // Event: START (Scheduled_EVPPTControlMode, Scheduled_EVPPTControlModeType (Scheduled_EVPPTControlModeType)); next=243
                     // decode: element
                     error = decode_iso20_Scheduled_EVPPTControlModeType(stream, &EVPowerProfileType->Scheduled_EVPPTControlMode);
                     if (error == 0)
                     {
                         EVPowerProfileType->Scheduled_EVPPTControlMode_isUsed = 1u;
-                        grammar_id = 263;
+                        grammar_id = 243;
                     }
                     break;
                 default:
@@ -13528,12 +13127,12 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 263:
-            // Grammar: ID=263; read/write bits=1; START (EVPowerProfileEntries)
+        case 243:
+            // Grammar: ID=243; read/write bits=1; START (EVPowerProfileEntries)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVPowerProfileEntries, EVPowerProfileEntryListType (EVPowerProfileEntryListType)); next=2
@@ -13555,7 +13154,7 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -13585,31 +13184,31 @@ static int decode_iso20_EVPowerProfileType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False;
 // Particle: Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
 static int decode_iso20_CertificateChainType(exi_bitstream_t* stream, struct iso20_CertificateChainType* CertificateChainType) {
-    int grammar_id = 264;
+    int grammar_id = 244;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_CertificateChainType(CertificateChainType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 264:
-            // Grammar: ID=264; read/write bits=1; START (Certificate)
+        case 244:
+            // Grammar: ID=244; read/write bits=1; START (Certificate)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Certificate, certificateType (base64Binary)); next=265
+                    // Event: START (Certificate, certificateType (base64Binary)); next=245
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &CertificateChainType->Certificate.bytesLen, &CertificateChainType->Certificate.bytes[0], iso20_certificateType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 265;
+                        grammar_id = 245;
                     }
                     break;
                 default:
@@ -13618,12 +13217,12 @@ static int decode_iso20_CertificateChainType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 265:
-            // Grammar: ID=265; read/write bits=2; START (SubCertificates), END Element
+        case 245:
+            // Grammar: ID=245; read/write bits=2; START (SubCertificates), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SubCertificates, SubCertificatesType (SubCertificatesType)); next=2
@@ -13651,7 +13250,7 @@ static int decode_iso20_CertificateChainType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -13700,36 +13299,36 @@ static int decode_iso20_EIM_ASResAuthorizationModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AbsolutePriceSchedule, AbsolutePriceScheduleType (0, 1); PriceLevelSchedule, PriceLevelScheduleType (0, 1);
 static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, struct iso20_Dynamic_SEResControlModeType* Dynamic_SEResControlModeType) {
-    int grammar_id = 266;
+    int grammar_id = 246;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_Dynamic_SEResControlModeType(Dynamic_SEResControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 266:
-            // Grammar: ID=266; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 246:
+            // Grammar: ID=246; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=267
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=247
                     // decode: unsigned int
                     error = decode_exi_type_uint32(stream, &Dynamic_SEResControlModeType->DepartureTime);
                     if (error == 0)
                     {
                         Dynamic_SEResControlModeType->DepartureTime_isUsed = 1u;
-                        grammar_id = 267;
+                        grammar_id = 247;
                     }
                     break;
                 case 1:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=268
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=248
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13760,7 +13359,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 268;
+                                grammar_id = 248;
                             }
                             else
                             {
@@ -13770,7 +13369,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     break;
                 case 2:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=269
+                    // Event: START (TargetSOC, percentValueType (byte)); next=249
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13801,7 +13400,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 269;
+                                grammar_id = 249;
                             }
                             else
                             {
@@ -13841,15 +13440,15 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 267:
-            // Grammar: ID=267; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 247:
+            // Grammar: ID=247; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=268
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=248
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13880,7 +13479,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 268;
+                                grammar_id = 248;
                             }
                             else
                             {
@@ -13890,7 +13489,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                     }
                     break;
                 case 1:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=269
+                    // Event: START (TargetSOC, percentValueType (byte)); next=249
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -13921,7 +13520,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 269;
+                                grammar_id = 249;
                             }
                             else
                             {
@@ -13961,15 +13560,15 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 268:
-            // Grammar: ID=268; read/write bits=3; START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 248:
+            // Grammar: ID=248; read/write bits=3; START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=269
+                    // Event: START (TargetSOC, percentValueType (byte)); next=249
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -14000,7 +13599,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 269;
+                                grammar_id = 249;
                             }
                             else
                             {
@@ -14040,12 +13639,12 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 269:
-            // Grammar: ID=269; read/write bits=2; START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 249:
+            // Grammar: ID=249; read/write bits=2; START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (AbsolutePriceSchedule, AbsolutePriceScheduleType (PriceScheduleType)); next=2
@@ -14083,7 +13682,7 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -14113,26 +13712,26 @@ static int decode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, st
 //          abstract=False; final=False;
 // Particle: EMAID, identifierType (1, 8);
 static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAIDListType* EMAIDListType) {
-    int grammar_id = 270;
+    int grammar_id = 250;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_EMAIDListType(EMAIDListType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 270:
-            // Grammar: ID=270; read/write bits=1; START (EMAID)
+        case 250:
+            // Grammar: ID=250; read/write bits=1; START (EMAID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EMAID, identifierType (string)); next=271
+                    // Event: START (EMAID, identifierType (string)); next=251
                     // decode: string (len, characters) (Array)
                     if (EMAIDListType->EMAID.arrayLen < iso20_identifierType_8_ARRAY_SIZE)
                     {
@@ -14182,7 +13781,7 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 271;
+                                grammar_id = 251;
                             }
                             else
                             {
@@ -14197,15 +13796,15 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                 }
             }
             break;
-        case 271:
-            // Grammar: ID=271; read/write bits=2; LOOP (EMAID), END Element
+        case 251:
+            // Grammar: ID=251; read/write bits=2; LOOP (EMAID), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (EMAID, identifierType (string)); next=271
+                    // Event: LOOP (EMAID, identifierType (string)); next=251
                     // decode: string (len, characters) (Array)
                     if (EMAIDListType->EMAID.arrayLen < iso20_identifierType_8_ARRAY_SIZE)
                     {
@@ -14255,85 +13854,7 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 271;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 272:
-            // Grammar: ID=272; read/write bits=2; LOOP (EMAID), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (EMAID, identifierType (string)); next=2
-                    // decode: string (len, characters) (Array)
-                    if (EMAIDListType->EMAID.arrayLen < iso20_identifierType_8_ARRAY_SIZE)
-                    {
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                error = exi_basetypes_decoder_uint_16(stream, &EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen);
-                                if (error == 0)
-                                {
-                                    if (EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen >= 2)
-                                    {
-                                        // string tables and table partitions are not supported, so the length has to be decremented by 2
-                                        EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen -= 2;
-                                        error = exi_basetypes_decoder_characters(stream, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].charactersLen, EMAIDListType->EMAID.array[EMAIDListType->EMAID.arrayLen].characters, iso20_EMAID_CHARACTER_SIZE);
-                                        if (error == 0)
-                                        {
-                                            EMAIDListType->EMAID.arrayLen++;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // the string seems to be in the table, but this is not supported
-                                        error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                // second level event is not supported
-                                error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_characters is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 2;
+                                grammar_id = 251;
                             }
                             else
                             {
@@ -14358,7 +13879,7 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -14388,26 +13909,26 @@ static int decode_iso20_EMAIDListType(exi_bitstream_t* stream, struct iso20_EMAI
 //          abstract=False; final=False;
 // Particle: Id, ID (1, 1); ContractCertificateChain, ContractCertificateChainType (1, 1); ECDHCurve, ecdhCurveType (1, 1); DHPublicKey, dhPublicKeyType (1, 1); SECP521_EncryptedPrivateKey, secp521_EncryptedPrivateKeyType (0, 1); X448_EncryptedPrivateKey, x448_EncryptedPrivateKeyType (0, 1); TPM_EncryptedPrivateKey, tpm_EncryptedPrivateKeyType (0, 1);
 static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, struct iso20_SignedInstallationDataType* SignedInstallationDataType) {
-    int grammar_id = 273;
+    int grammar_id = 252;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SignedInstallationDataType(SignedInstallationDataType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 273:
-            // Grammar: ID=273; read/write bits=1; START (Id)
+        case 252:
+            // Grammar: ID=252; read/write bits=1; START (Id)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=274
+                    // Event: START (Id, ID (NCName)); next=253
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignedInstallationDataType->Id.charactersLen);
                     if (error == 0)
@@ -14424,7 +13945,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 274;
+                    grammar_id = 253;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -14432,20 +13953,20 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 274:
-            // Grammar: ID=274; read/write bits=1; START (ContractCertificateChain)
+        case 253:
+            // Grammar: ID=253; read/write bits=1; START (ContractCertificateChain)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ContractCertificateChain, ContractCertificateChainType (ContractCertificateChainType)); next=275
+                    // Event: START (ContractCertificateChain, ContractCertificateChainType (ContractCertificateChainType)); next=254
                     // decode: element
                     error = decode_iso20_ContractCertificateChainType(stream, &SignedInstallationDataType->ContractCertificateChain);
                     if (error == 0)
                     {
-                        grammar_id = 275;
+                        grammar_id = 254;
                     }
                     break;
                 default:
@@ -14454,15 +13975,15 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 275:
-            // Grammar: ID=275; read/write bits=1; START (ECDHCurve)
+        case 254:
+            // Grammar: ID=254; read/write bits=1; START (ECDHCurve)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ECDHCurve, ecdhCurveType (string)); next=276
+                    // Event: START (ECDHCurve, ecdhCurveType (string)); next=255
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -14492,7 +14013,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 276;
+                                grammar_id = 255;
                             }
                             else
                             {
@@ -14507,20 +14028,20 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 276:
-            // Grammar: ID=276; read/write bits=1; START (DHPublicKey)
+        case 255:
+            // Grammar: ID=255; read/write bits=1; START (DHPublicKey)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DHPublicKey, dhPublicKeyType (base64Binary)); next=277
+                    // Event: START (DHPublicKey, dhPublicKeyType (base64Binary)); next=256
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &SignedInstallationDataType->DHPublicKey.bytesLen, &SignedInstallationDataType->DHPublicKey.bytes[0], iso20_dhPublicKeyType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 277;
+                        grammar_id = 256;
                     }
                     break;
                 default:
@@ -14529,12 +14050,12 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 277:
-            // Grammar: ID=277; read/write bits=2; START (SECP521_EncryptedPrivateKey), START (X448_EncryptedPrivateKey), START (TPM_EncryptedPrivateKey)
+        case 256:
+            // Grammar: ID=256; read/write bits=2; START (SECP521_EncryptedPrivateKey), START (X448_EncryptedPrivateKey), START (TPM_EncryptedPrivateKey)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SECP521_EncryptedPrivateKey, secp521_EncryptedPrivateKeyType (base64Binary)); next=2
@@ -14577,7 +14098,7 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -14607,31 +14128,31 @@ static int decode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, stru
 //          abstract=False; final=False;
 // Particle: GenChallenge, genChallengeType (1, 1); SupportedProviders, SupportedProvidersListType (0, 1);
 static int decode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, struct iso20_PnC_ASResAuthorizationModeType* PnC_ASResAuthorizationModeType) {
-    int grammar_id = 278;
+    int grammar_id = 257;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PnC_ASResAuthorizationModeType(PnC_ASResAuthorizationModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 278:
-            // Grammar: ID=278; read/write bits=1; START (GenChallenge)
+        case 257:
+            // Grammar: ID=257; read/write bits=1; START (GenChallenge)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (GenChallenge, genChallengeType (base64Binary)); next=279
+                    // Event: START (GenChallenge, genChallengeType (base64Binary)); next=258
                     // decode exi type: base64Binary
                     error = decode_exi_type_hex_binary(stream, &PnC_ASResAuthorizationModeType->GenChallenge.bytesLen, &PnC_ASResAuthorizationModeType->GenChallenge.bytes[0], iso20_genChallengeType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 279;
+                        grammar_id = 258;
                     }
                     break;
                 default:
@@ -14640,12 +14161,12 @@ static int decode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 279:
-            // Grammar: ID=279; read/write bits=2; START (SupportedProviders), END Element
+        case 258:
+            // Grammar: ID=258; read/write bits=2; START (SupportedProviders), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SupportedProviders, SupportedProvidersListType (SupportedProvidersListType)); next=2
@@ -14673,7 +14194,7 @@ static int decode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -14703,26 +14224,26 @@ static int decode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: ScheduleTuple, ScheduleTupleType (1, 3);
 static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, struct iso20_Scheduled_SEResControlModeType* Scheduled_SEResControlModeType) {
-    int grammar_id = 280;
+    int grammar_id = 259;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_Scheduled_SEResControlModeType(Scheduled_SEResControlModeType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 280:
-            // Grammar: ID=280; read/write bits=1; START (ScheduleTuple)
+        case 259:
+            // Grammar: ID=259; read/write bits=1; START (ScheduleTuple)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ScheduleTuple, ScheduleTupleType (ScheduleTupleType)); next=281
+                    // Event: START (ScheduleTuple, ScheduleTupleType (ScheduleTupleType)); next=260
                     // decode: element array
                     if (Scheduled_SEResControlModeType->ScheduleTuple.arrayLen < iso20_ScheduleTupleType_3_ARRAY_SIZE)
                     {
@@ -14730,9 +14251,10 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ScheduleTupleType_3_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 281;
+                    grammar_id = 260;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -14740,15 +14262,15 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 281:
-            // Grammar: ID=281; read/write bits=2; LOOP (ScheduleTuple), END Element
+        case 260:
+            // Grammar: ID=260; read/write bits=2; LOOP (ScheduleTuple), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (ScheduleTuple, ScheduleTupleType (ScheduleTupleType)); next=281
+                    // Event: LOOP (ScheduleTuple, ScheduleTupleType (ScheduleTupleType)); next=260
                     // decode: element array
                     if (Scheduled_SEResControlModeType->ScheduleTuple.arrayLen < iso20_ScheduleTupleType_3_ARRAY_SIZE)
                     {
@@ -14756,40 +14278,18 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ScheduleTupleType_3_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 281;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 282:
-            // Grammar: ID=282; read/write bits=2; LOOP (ScheduleTuple), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (ScheduleTuple, ScheduleTupleType (ScheduleTupleType)); next=2
-                    // decode: element array
-                    if (Scheduled_SEResControlModeType->ScheduleTuple.arrayLen < iso20_ScheduleTupleType_3_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (Scheduled_SEResControlModeType->ScheduleTuple.arrayLen < 3)
                     {
-                        error = decode_iso20_ScheduleTupleType(stream, &Scheduled_SEResControlModeType->ScheduleTuple.array[Scheduled_SEResControlModeType->ScheduleTuple.arrayLen++]);
+                        grammar_id = 260;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 2;
                     }
-                    grammar_id = 2;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -14807,7 +14307,7 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -14837,31 +14337,31 @@ static int decode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVCCID, identifierType (1, 1);
 static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso20_SessionSetupReqType* SessionSetupReqType) {
-    int grammar_id = 283;
+    int grammar_id = 261;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SessionSetupReqType(SessionSetupReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 283:
-            // Grammar: ID=283; read/write bits=1; START (Header)
+        case 261:
+            // Grammar: ID=261; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=284
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=262
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &SessionSetupReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 284;
+                        grammar_id = 262;
                     }
                     break;
                 default:
@@ -14870,12 +14370,12 @@ static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 284:
-            // Grammar: ID=284; read/write bits=1; START (EVCCID)
+        case 262:
+            // Grammar: ID=262; read/write bits=1; START (EVCCID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVCCID, identifierType (string)); next=2
@@ -14937,7 +14437,7 @@ static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -14967,31 +14467,31 @@ static int decode_iso20_SessionSetupReqType(exi_bitstream_t* stream, struct iso2
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEID, identifierType (1, 1);
 static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso20_SessionSetupResType* SessionSetupResType) {
-    int grammar_id = 285;
+    int grammar_id = 263;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SessionSetupResType(SessionSetupResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 285:
-            // Grammar: ID=285; read/write bits=1; START (Header)
+        case 263:
+            // Grammar: ID=263; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=286
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=264
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &SessionSetupResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 286;
+                        grammar_id = 264;
                     }
                     break;
                 default:
@@ -15000,15 +14500,15 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 286:
-            // Grammar: ID=286; read/write bits=1; START (ResponseCode)
+        case 264:
+            // Grammar: ID=264; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=287
+                    // Event: START (ResponseCode, responseCodeType (string)); next=265
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15038,7 +14538,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 287;
+                                grammar_id = 265;
                             }
                             else
                             {
@@ -15053,12 +14553,12 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
                 }
             }
             break;
-        case 287:
-            // Grammar: ID=287; read/write bits=1; START (EVSEID)
+        case 265:
+            // Grammar: ID=265; read/write bits=1; START (EVSEID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEID, identifierType (string)); next=2
@@ -15120,7 +14620,7 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15150,23 +14650,23 @@ static int decode_iso20_SessionSetupResType(exi_bitstream_t* stream, struct iso2
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1);
 static int decode_iso20_AuthorizationSetupReqType(exi_bitstream_t* stream, struct iso20_AuthorizationSetupReqType* AuthorizationSetupReqType) {
-    int grammar_id = 288;
+    int grammar_id = 266;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_AuthorizationSetupReqType(AuthorizationSetupReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 288:
-            // Grammar: ID=288; read/write bits=1; START (Header)
+        case 266:
+            // Grammar: ID=266; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=2
@@ -15188,7 +14688,7 @@ static int decode_iso20_AuthorizationSetupReqType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15218,31 +14718,31 @@ static int decode_iso20_AuthorizationSetupReqType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); AuthorizationServices, authorizationType (1, 2); CertificateInstallationService, boolean (1, 1); EIM_ASResAuthorizationMode, EIM_ASResAuthorizationModeType (0, 1); PnC_ASResAuthorizationMode, PnC_ASResAuthorizationModeType (0, 1);
 static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struct iso20_AuthorizationSetupResType* AuthorizationSetupResType) {
-    int grammar_id = 289;
+    int grammar_id = 267;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_AuthorizationSetupResType(AuthorizationSetupResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 289:
-            // Grammar: ID=289; read/write bits=1; START (Header)
+        case 267:
+            // Grammar: ID=267; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=290
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=268
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &AuthorizationSetupResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 290;
+                        grammar_id = 268;
                     }
                     break;
                 default:
@@ -15251,15 +14751,15 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 290:
-            // Grammar: ID=290; read/write bits=1; START (ResponseCode)
+        case 268:
+            // Grammar: ID=268; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=291
+                    // Event: START (ResponseCode, responseCodeType (string)); next=269
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15289,7 +14789,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 291;
+                                grammar_id = 269;
                             }
                             else
                             {
@@ -15304,15 +14804,15 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 291:
-            // Grammar: ID=291; read/write bits=1; START (AuthorizationServices)
+        case 269:
+            // Grammar: ID=269; read/write bits=1; START (AuthorizationServices)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AuthorizationServices, authorizationType (string)); next=292
+                    // Event: START (AuthorizationServices, authorizationType (string)); next=270
                     // decode: enum array
                     if (AuthorizationSetupResType->AuthorizationServices.arrayLen < iso20_authorizationType_2_ARRAY_SIZE)
                     {
@@ -15349,7 +14849,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 292;
+                                grammar_id = 270;
                             }
                             else
                             {
@@ -15364,15 +14864,15 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 292:
-            // Grammar: ID=292; read/write bits=2; START (AuthorizationServices), START (CertificateInstallationService)
+        case 270:
+            // Grammar: ID=270; read/write bits=2; START (AuthorizationServices), START (CertificateInstallationService)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (AuthorizationServices, authorizationType (string)); next=293
+                    // Event: START (AuthorizationServices, authorizationType (string)); next=271
                     // decode: enum array
                     if (AuthorizationSetupResType->AuthorizationServices.arrayLen < iso20_authorizationType_2_ARRAY_SIZE)
                     {
@@ -15409,7 +14909,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 293;
+                                grammar_id = 271;
                             }
                             else
                             {
@@ -15419,7 +14919,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                     }
                     break;
                 case 1:
-                    // Event: START (CertificateInstallationService, boolean (boolean)); next=294
+                    // Event: START (CertificateInstallationService, boolean (boolean)); next=272
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15449,7 +14949,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 294;
+                                grammar_id = 272;
                             }
                             else
                             {
@@ -15464,15 +14964,15 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 293:
-            // Grammar: ID=293; read/write bits=1; START (CertificateInstallationService)
+        case 271:
+            // Grammar: ID=271; read/write bits=1; START (CertificateInstallationService)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (CertificateInstallationService, boolean (boolean)); next=294
+                    // Event: START (CertificateInstallationService, boolean (boolean)); next=272
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15502,7 +15002,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 294;
+                                grammar_id = 272;
                             }
                             else
                             {
@@ -15517,12 +15017,12 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 294:
-            // Grammar: ID=294; read/write bits=2; START (EIM_ASResAuthorizationMode), START (PnC_ASResAuthorizationMode)
+        case 272:
+            // Grammar: ID=272; read/write bits=2; START (EIM_ASResAuthorizationMode), START (PnC_ASResAuthorizationMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EIM_ASResAuthorizationMode, EIM_ASResAuthorizationModeType (EIM_ASResAuthorizationModeType)); next=2
@@ -15555,7 +15055,7 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15585,31 +15085,31 @@ static int decode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); SelectedAuthorizationService, authorizationType (1, 1); EIM_AReqAuthorizationMode, EIM_AReqAuthorizationModeType (0, 1); PnC_AReqAuthorizationMode, PnC_AReqAuthorizationModeType (0, 1);
 static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso20_AuthorizationReqType* AuthorizationReqType) {
-    int grammar_id = 295;
+    int grammar_id = 273;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_AuthorizationReqType(AuthorizationReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 295:
-            // Grammar: ID=295; read/write bits=1; START (Header)
+        case 273:
+            // Grammar: ID=273; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=296
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=274
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &AuthorizationReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 296;
+                        grammar_id = 274;
                     }
                     break;
                 default:
@@ -15618,15 +15118,15 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 296:
-            // Grammar: ID=296; read/write bits=1; START (SelectedAuthorizationService)
+        case 274:
+            // Grammar: ID=274; read/write bits=1; START (SelectedAuthorizationService)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SelectedAuthorizationService, authorizationType (string)); next=297
+                    // Event: START (SelectedAuthorizationService, authorizationType (string)); next=275
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15656,7 +15156,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 297;
+                                grammar_id = 275;
                             }
                             else
                             {
@@ -15671,12 +15171,12 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 297:
-            // Grammar: ID=297; read/write bits=2; START (EIM_AReqAuthorizationMode), START (PnC_AReqAuthorizationMode)
+        case 275:
+            // Grammar: ID=275; read/write bits=2; START (EIM_AReqAuthorizationMode), START (PnC_AReqAuthorizationMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EIM_AReqAuthorizationMode, EIM_AReqAuthorizationModeType (EIM_AReqAuthorizationModeType)); next=2
@@ -15709,7 +15209,7 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15739,31 +15239,31 @@ static int decode_iso20_AuthorizationReqType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1);
 static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso20_AuthorizationResType* AuthorizationResType) {
-    int grammar_id = 298;
+    int grammar_id = 276;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_AuthorizationResType(AuthorizationResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 298:
-            // Grammar: ID=298; read/write bits=1; START (Header)
+        case 276:
+            // Grammar: ID=276; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=299
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=277
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &AuthorizationResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 299;
+                        grammar_id = 277;
                     }
                     break;
                 default:
@@ -15772,15 +15272,15 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 299:
-            // Grammar: ID=299; read/write bits=1; START (ResponseCode)
+        case 277:
+            // Grammar: ID=277; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=300
+                    // Event: START (ResponseCode, responseCodeType (string)); next=278
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -15810,7 +15310,7 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 300;
+                                grammar_id = 278;
                             }
                             else
                             {
@@ -15825,12 +15325,12 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 300:
-            // Grammar: ID=300; read/write bits=1; START (EVSEProcessing)
+        case 278:
+            // Grammar: ID=278; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEProcessing, processingType (string)); next=2
@@ -15883,7 +15383,7 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -15913,31 +15413,31 @@ static int decode_iso20_AuthorizationResType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); SupportedServiceIDs, ServiceIDListType (0, 1);
 static int decode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct iso20_ServiceDiscoveryReqType* ServiceDiscoveryReqType) {
-    int grammar_id = 301;
+    int grammar_id = 279;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceDiscoveryReqType(ServiceDiscoveryReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 301:
-            // Grammar: ID=301; read/write bits=1; START (Header)
+        case 279:
+            // Grammar: ID=279; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=302
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=280
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceDiscoveryReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 302;
+                        grammar_id = 280;
                     }
                     break;
                 default:
@@ -15946,12 +15446,12 @@ static int decode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 302:
-            // Grammar: ID=302; read/write bits=2; START (SupportedServiceIDs), END Element
+        case 280:
+            // Grammar: ID=280; read/write bits=2; START (SupportedServiceIDs), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SupportedServiceIDs, ServiceIDListType (ServiceIDListType)); next=2
@@ -15979,7 +15479,7 @@ static int decode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16009,31 +15509,31 @@ static int decode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); ServiceRenegotiationSupported, boolean (1, 1); EnergyTransferServiceList, ServiceListType (1, 1); VASList, ServiceListType (0, 1);
 static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct iso20_ServiceDiscoveryResType* ServiceDiscoveryResType) {
-    int grammar_id = 303;
+    int grammar_id = 281;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceDiscoveryResType(ServiceDiscoveryResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 303:
-            // Grammar: ID=303; read/write bits=1; START (Header)
+        case 281:
+            // Grammar: ID=281; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=304
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=282
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceDiscoveryResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 304;
+                        grammar_id = 282;
                     }
                     break;
                 default:
@@ -16042,15 +15542,15 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 304:
-            // Grammar: ID=304; read/write bits=1; START (ResponseCode)
+        case 282:
+            // Grammar: ID=282; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=305
+                    // Event: START (ResponseCode, responseCodeType (string)); next=283
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -16080,7 +15580,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 305;
+                                grammar_id = 283;
                             }
                             else
                             {
@@ -16095,15 +15595,15 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 305:
-            // Grammar: ID=305; read/write bits=1; START (ServiceRenegotiationSupported)
+        case 283:
+            // Grammar: ID=283; read/write bits=1; START (ServiceRenegotiationSupported)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceRenegotiationSupported, boolean (boolean)); next=306
+                    // Event: START (ServiceRenegotiationSupported, boolean (boolean)); next=284
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -16133,7 +15633,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 306;
+                                grammar_id = 284;
                             }
                             else
                             {
@@ -16148,20 +15648,20 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 306:
-            // Grammar: ID=306; read/write bits=1; START (EnergyTransferServiceList)
+        case 284:
+            // Grammar: ID=284; read/write bits=1; START (EnergyTransferServiceList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EnergyTransferServiceList, ServiceListType (ServiceListType)); next=307
+                    // Event: START (EnergyTransferServiceList, ServiceListType (ServiceListType)); next=285
                     // decode: element
                     error = decode_iso20_ServiceListType(stream, &ServiceDiscoveryResType->EnergyTransferServiceList);
                     if (error == 0)
                     {
-                        grammar_id = 307;
+                        grammar_id = 285;
                     }
                     break;
                 default:
@@ -16170,12 +15670,12 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 307:
-            // Grammar: ID=307; read/write bits=2; START (VASList), END Element
+        case 285:
+            // Grammar: ID=285; read/write bits=2; START (VASList), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (VASList, ServiceListType (ServiceListType)); next=2
@@ -16203,7 +15703,7 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16233,31 +15733,31 @@ static int decode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ServiceID, serviceIDType (1, 1);
 static int decode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, struct iso20_ServiceDetailReqType* ServiceDetailReqType) {
-    int grammar_id = 308;
+    int grammar_id = 286;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceDetailReqType(ServiceDetailReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 308:
-            // Grammar: ID=308; read/write bits=1; START (Header)
+        case 286:
+            // Grammar: ID=286; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=309
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=287
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceDetailReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 309;
+                        grammar_id = 287;
                     }
                     break;
                 default:
@@ -16266,12 +15766,12 @@ static int decode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 309:
-            // Grammar: ID=309; read/write bits=1; START (ServiceID)
+        case 287:
+            // Grammar: ID=287; read/write bits=1; START (ServiceID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ServiceID, serviceIDType (unsignedShort)); next=2
@@ -16293,7 +15793,7 @@ static int decode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16323,31 +15823,31 @@ static int decode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); ServiceID, serviceIDType (1, 1); ServiceParameterList, ServiceParameterListType (1, 1);
 static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso20_ServiceDetailResType* ServiceDetailResType) {
-    int grammar_id = 310;
+    int grammar_id = 288;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceDetailResType(ServiceDetailResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 310:
-            // Grammar: ID=310; read/write bits=1; START (Header)
+        case 288:
+            // Grammar: ID=288; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=311
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=289
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceDetailResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 311;
+                        grammar_id = 289;
                     }
                     break;
                 default:
@@ -16356,15 +15856,15 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 311:
-            // Grammar: ID=311; read/write bits=1; START (ResponseCode)
+        case 289:
+            // Grammar: ID=289; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=312
+                    // Event: START (ResponseCode, responseCodeType (string)); next=290
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -16394,7 +15894,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 312;
+                                grammar_id = 290;
                             }
                             else
                             {
@@ -16409,20 +15909,20 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 312:
-            // Grammar: ID=312; read/write bits=1; START (ServiceID)
+        case 290:
+            // Grammar: ID=290; read/write bits=1; START (ServiceID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=313
+                    // Event: START (ServiceID, serviceIDType (unsignedShort)); next=291
                     // decode: unsigned short
                     error = decode_exi_type_uint16(stream, &ServiceDetailResType->ServiceID);
                     if (error == 0)
                     {
-                        grammar_id = 313;
+                        grammar_id = 291;
                     }
                     break;
                 default:
@@ -16431,12 +15931,12 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 313:
-            // Grammar: ID=313; read/write bits=1; START (ServiceParameterList)
+        case 291:
+            // Grammar: ID=291; read/write bits=1; START (ServiceParameterList)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ServiceParameterList, ServiceParameterListType (ServiceParameterListType)); next=2
@@ -16458,7 +15958,7 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16488,31 +15988,31 @@ static int decode_iso20_ServiceDetailResType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); SelectedEnergyTransferService, SelectedServiceType (1, 1); SelectedVASList, SelectedServiceListType (0, 1);
 static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct iso20_ServiceSelectionReqType* ServiceSelectionReqType) {
-    int grammar_id = 314;
+    int grammar_id = 292;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceSelectionReqType(ServiceSelectionReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 314:
-            // Grammar: ID=314; read/write bits=1; START (Header)
+        case 292:
+            // Grammar: ID=292; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=315
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=293
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceSelectionReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 315;
+                        grammar_id = 293;
                     }
                     break;
                 default:
@@ -16521,20 +16021,20 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 315:
-            // Grammar: ID=315; read/write bits=1; START (SelectedEnergyTransferService)
+        case 293:
+            // Grammar: ID=293; read/write bits=1; START (SelectedEnergyTransferService)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SelectedEnergyTransferService, SelectedServiceType (SelectedServiceType)); next=316
+                    // Event: START (SelectedEnergyTransferService, SelectedServiceType (SelectedServiceType)); next=294
                     // decode: element
                     error = decode_iso20_SelectedServiceType(stream, &ServiceSelectionReqType->SelectedEnergyTransferService);
                     if (error == 0)
                     {
-                        grammar_id = 316;
+                        grammar_id = 294;
                     }
                     break;
                 default:
@@ -16543,12 +16043,12 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 316:
-            // Grammar: ID=316; read/write bits=2; START (SelectedVASList), END Element
+        case 294:
+            // Grammar: ID=294; read/write bits=2; START (SelectedVASList), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SelectedVASList, SelectedServiceListType (SelectedServiceListType)); next=2
@@ -16576,7 +16076,7 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16606,31 +16106,31 @@ static int decode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1);
 static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct iso20_ServiceSelectionResType* ServiceSelectionResType) {
-    int grammar_id = 317;
+    int grammar_id = 295;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ServiceSelectionResType(ServiceSelectionResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 317:
-            // Grammar: ID=317; read/write bits=1; START (Header)
+        case 295:
+            // Grammar: ID=295; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=318
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=296
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ServiceSelectionResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 318;
+                        grammar_id = 296;
                     }
                     break;
                 default:
@@ -16639,12 +16139,12 @@ static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 318:
-            // Grammar: ID=318; read/write bits=1; START (ResponseCode)
+        case 296:
+            // Grammar: ID=296; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ResponseCode, responseCodeType (string)); next=2
@@ -16697,7 +16197,7 @@ static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16727,31 +16227,31 @@ static int decode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); MaximumSupportingPoints, maxSupportingPointsScheduleTupleType (1, 1); Dynamic_SEReqControlMode, Dynamic_SEReqControlModeType (0, 1); Scheduled_SEReqControlMode, Scheduled_SEReqControlModeType (0, 1);
 static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct iso20_ScheduleExchangeReqType* ScheduleExchangeReqType) {
-    int grammar_id = 319;
+    int grammar_id = 297;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ScheduleExchangeReqType(ScheduleExchangeReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 319:
-            // Grammar: ID=319; read/write bits=1; START (Header)
+        case 297:
+            // Grammar: ID=297; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=320
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=298
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ScheduleExchangeReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 320;
+                        grammar_id = 298;
                     }
                     break;
                 default:
@@ -16760,15 +16260,15 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 320:
-            // Grammar: ID=320; read/write bits=1; START (MaximumSupportingPoints)
+        case 298:
+            // Grammar: ID=298; read/write bits=1; START (MaximumSupportingPoints)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MaximumSupportingPoints, maxSupportingPointsScheduleTupleType (unsignedShort)); next=321
+                    // Event: START (MaximumSupportingPoints, maxSupportingPointsScheduleTupleType (unsignedShort)); next=299
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -16799,7 +16299,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 321;
+                                grammar_id = 299;
                             }
                             else
                             {
@@ -16814,12 +16314,12 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 321:
-            // Grammar: ID=321; read/write bits=2; START (Dynamic_SEReqControlMode), START (Scheduled_SEReqControlMode)
+        case 299:
+            // Grammar: ID=299; read/write bits=2; START (Dynamic_SEReqControlMode), START (Scheduled_SEReqControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Dynamic_SEReqControlMode, Dynamic_SEReqControlModeType (Dynamic_SEReqControlModeType)); next=2
@@ -16852,7 +16352,7 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -16882,31 +16382,31 @@ static int decode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); GoToPause, boolean (0, 1); Dynamic_SEResControlMode, Dynamic_SEResControlModeType (0, 1); Scheduled_SEResControlMode, Scheduled_SEResControlModeType (0, 1);
 static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct iso20_ScheduleExchangeResType* ScheduleExchangeResType) {
-    int grammar_id = 322;
+    int grammar_id = 300;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ScheduleExchangeResType(ScheduleExchangeResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 322:
-            // Grammar: ID=322; read/write bits=1; START (Header)
+        case 300:
+            // Grammar: ID=300; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=323
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=301
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &ScheduleExchangeResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 323;
+                        grammar_id = 301;
                     }
                     break;
                 default:
@@ -16915,15 +16415,15 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 323:
-            // Grammar: ID=323; read/write bits=1; START (ResponseCode)
+        case 301:
+            // Grammar: ID=301; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=324
+                    // Event: START (ResponseCode, responseCodeType (string)); next=302
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -16953,7 +16453,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 324;
+                                grammar_id = 302;
                             }
                             else
                             {
@@ -16968,15 +16468,15 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 324:
-            // Grammar: ID=324; read/write bits=1; START (EVSEProcessing)
+        case 302:
+            // Grammar: ID=302; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=325
+                    // Event: START (EVSEProcessing, processingType (string)); next=303
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17006,7 +16506,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 325;
+                                grammar_id = 303;
                             }
                             else
                             {
@@ -17021,15 +16521,15 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 325:
-            // Grammar: ID=325; read/write bits=2; START (GoToPause), START (Dynamic_SEResControlMode), START (Scheduled_SEResControlMode)
+        case 303:
+            // Grammar: ID=303; read/write bits=2; START (GoToPause), START (Dynamic_SEResControlMode), START (Scheduled_SEResControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (GoToPause, boolean (boolean)); next=326
+                    // Event: START (GoToPause, boolean (boolean)); next=304
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17060,7 +16560,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 326;
+                                grammar_id = 304;
                             }
                             else
                             {
@@ -17095,12 +16595,12 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 326:
-            // Grammar: ID=326; read/write bits=2; START (Dynamic_SEResControlMode), START (Scheduled_SEResControlMode)
+        case 304:
+            // Grammar: ID=304; read/write bits=2; START (Dynamic_SEResControlMode), START (Scheduled_SEResControlMode)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Dynamic_SEResControlMode, Dynamic_SEResControlModeType (Dynamic_SEResControlModeType)); next=2
@@ -17133,7 +16633,7 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -17163,31 +16663,31 @@ static int decode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); ChargeProgress, chargeProgressType (1, 1); EVPowerProfile, EVPowerProfileType (0, 1); BPT_ChannelSelection, channelSelectionType (0, 1);
 static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso20_PowerDeliveryReqType* PowerDeliveryReqType) {
-    int grammar_id = 327;
+    int grammar_id = 305;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PowerDeliveryReqType(PowerDeliveryReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 327:
-            // Grammar: ID=327; read/write bits=1; START (Header)
+        case 305:
+            // Grammar: ID=305; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=328
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=306
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &PowerDeliveryReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 328;
+                        grammar_id = 306;
                     }
                     break;
                 default:
@@ -17196,15 +16696,15 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 328:
-            // Grammar: ID=328; read/write bits=1; START (EVProcessing)
+        case 306:
+            // Grammar: ID=306; read/write bits=1; START (EVProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVProcessing, processingType (string)); next=329
+                    // Event: START (EVProcessing, processingType (string)); next=307
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17234,7 +16734,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 329;
+                                grammar_id = 307;
                             }
                             else
                             {
@@ -17249,15 +16749,15 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 329:
-            // Grammar: ID=329; read/write bits=1; START (ChargeProgress)
+        case 307:
+            // Grammar: ID=307; read/write bits=1; START (ChargeProgress)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargeProgress, chargeProgressType (string)); next=330
+                    // Event: START (ChargeProgress, chargeProgressType (string)); next=308
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17287,7 +16787,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 330;
+                                grammar_id = 308;
                             }
                             else
                             {
@@ -17302,21 +16802,21 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 330:
-            // Grammar: ID=330; read/write bits=2; START (EVPowerProfile), START (BPT_ChannelSelection), END Element
+        case 308:
+            // Grammar: ID=308; read/write bits=2; START (EVPowerProfile), START (BPT_ChannelSelection), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVPowerProfile, EVPowerProfileType (EVPowerProfileType)); next=331
+                    // Event: START (EVPowerProfile, EVPowerProfileType (EVPowerProfileType)); next=309
                     // decode: element
                     error = decode_iso20_EVPowerProfileType(stream, &PowerDeliveryReqType->EVPowerProfile);
                     if (error == 0)
                     {
                         PowerDeliveryReqType->EVPowerProfile_isUsed = 1u;
-                        grammar_id = 331;
+                        grammar_id = 309;
                     }
                     break;
                 case 1:
@@ -17371,12 +16871,12 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 331:
-            // Grammar: ID=331; read/write bits=2; START (BPT_ChannelSelection), END Element
+        case 309:
+            // Grammar: ID=309; read/write bits=2; START (BPT_ChannelSelection), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (BPT_ChannelSelection, channelSelectionType (string)); next=2
@@ -17435,7 +16935,7 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -17465,31 +16965,31 @@ static int decode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEStatus, EVSEStatusType (0, 1);
 static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso20_PowerDeliveryResType* PowerDeliveryResType) {
-    int grammar_id = 332;
+    int grammar_id = 310;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_PowerDeliveryResType(PowerDeliveryResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 332:
-            // Grammar: ID=332; read/write bits=1; START (Header)
+        case 310:
+            // Grammar: ID=310; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=333
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=311
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &PowerDeliveryResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 333;
+                        grammar_id = 311;
                     }
                     break;
                 default:
@@ -17498,15 +16998,15 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 333:
-            // Grammar: ID=333; read/write bits=1; START (ResponseCode)
+        case 311:
+            // Grammar: ID=311; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=334
+                    // Event: START (ResponseCode, responseCodeType (string)); next=312
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17536,7 +17036,7 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 334;
+                                grammar_id = 312;
                             }
                             else
                             {
@@ -17551,12 +17051,12 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
                 }
             }
             break;
-        case 334:
-            // Grammar: ID=334; read/write bits=2; START (EVSEStatus), END Element
+        case 312:
+            // Grammar: ID=312; read/write bits=2; START (EVSEStatus), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSEStatus, EVSEStatusType (EVSEStatusType)); next=2
@@ -17584,7 +17084,7 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -17614,31 +17114,31 @@ static int decode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, struct iso
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); SignedMeteringData, SignedMeteringDataType (1, 1);
 static int decode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, struct iso20_MeteringConfirmationReqType* MeteringConfirmationReqType) {
-    int grammar_id = 335;
+    int grammar_id = 313;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_MeteringConfirmationReqType(MeteringConfirmationReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 335:
-            // Grammar: ID=335; read/write bits=1; START (Header)
+        case 313:
+            // Grammar: ID=313; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=336
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=314
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &MeteringConfirmationReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 336;
+                        grammar_id = 314;
                     }
                     break;
                 default:
@@ -17647,12 +17147,12 @@ static int decode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 336:
-            // Grammar: ID=336; read/write bits=1; START (SignedMeteringData)
+        case 314:
+            // Grammar: ID=314; read/write bits=1; START (SignedMeteringData)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignedMeteringData, SignedMeteringDataType (SignedMeteringDataType)); next=2
@@ -17674,7 +17174,7 @@ static int decode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -17704,31 +17204,31 @@ static int decode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1);
 static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, struct iso20_MeteringConfirmationResType* MeteringConfirmationResType) {
-    int grammar_id = 337;
+    int grammar_id = 315;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_MeteringConfirmationResType(MeteringConfirmationResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 337:
-            // Grammar: ID=337; read/write bits=1; START (Header)
+        case 315:
+            // Grammar: ID=315; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=338
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=316
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &MeteringConfirmationResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 338;
+                        grammar_id = 316;
                     }
                     break;
                 default:
@@ -17737,12 +17237,12 @@ static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, str
                 }
             }
             break;
-        case 338:
-            // Grammar: ID=338; read/write bits=1; START (ResponseCode)
+        case 316:
+            // Grammar: ID=316; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ResponseCode, responseCodeType (string)); next=2
@@ -17795,7 +17295,7 @@ static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, str
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -17825,31 +17325,31 @@ static int decode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ChargingSession, chargingSessionType (1, 1); EVTerminationCode, nameType (0, 1); EVTerminationExplanation, descriptionType (0, 1);
 static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20_SessionStopReqType* SessionStopReqType) {
-    int grammar_id = 339;
+    int grammar_id = 317;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SessionStopReqType(SessionStopReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 339:
-            // Grammar: ID=339; read/write bits=1; START (Header)
+        case 317:
+            // Grammar: ID=317; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=340
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=318
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &SessionStopReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 340;
+                        grammar_id = 318;
                     }
                     break;
                 default:
@@ -17858,15 +17358,15 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 340:
-            // Grammar: ID=340; read/write bits=1; START (ChargingSession)
+        case 318:
+            // Grammar: ID=318; read/write bits=1; START (ChargingSession)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ChargingSession, chargingSessionType (string)); next=341
+                    // Event: START (ChargingSession, chargingSessionType (string)); next=319
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17896,7 +17396,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 341;
+                                grammar_id = 319;
                             }
                             else
                             {
@@ -17911,15 +17411,15 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 341:
-            // Grammar: ID=341; read/write bits=2; START (EVTerminationCode), START (EVTerminationExplanation), END Element
+        case 319:
+            // Grammar: ID=319; read/write bits=2; START (EVTerminationCode), START (EVTerminationExplanation), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVTerminationCode, nameType (string)); next=342
+                    // Event: START (EVTerminationCode, nameType (string)); next=320
                     // decode: string (len, characters)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -17959,7 +17459,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                             if (eventCode == 0)
                             {
                                 SessionStopReqType->EVTerminationCode_isUsed = 1u;
-                                grammar_id = 342;
+                                grammar_id = 320;
                             }
                             else
                             {
@@ -18029,12 +17529,12 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 342:
-            // Grammar: ID=342; read/write bits=2; START (EVTerminationExplanation), END Element
+        case 320:
+            // Grammar: ID=320; read/write bits=2; START (EVTerminationExplanation), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVTerminationExplanation, descriptionType (string)); next=2
@@ -18102,7 +17602,7 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -18132,31 +17632,31 @@ static int decode_iso20_SessionStopReqType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1);
 static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20_SessionStopResType* SessionStopResType) {
-    int grammar_id = 343;
+    int grammar_id = 321;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SessionStopResType(SessionStopResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 343:
-            // Grammar: ID=343; read/write bits=1; START (Header)
+        case 321:
+            // Grammar: ID=321; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=344
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=322
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &SessionStopResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 344;
+                        grammar_id = 322;
                     }
                     break;
                 default:
@@ -18165,12 +17665,12 @@ static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 344:
-            // Grammar: ID=344; read/write bits=1; START (ResponseCode)
+        case 322:
+            // Grammar: ID=322; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ResponseCode, responseCodeType (string)); next=2
@@ -18223,7 +17723,7 @@ static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -18253,31 +17753,31 @@ static int decode_iso20_SessionStopResType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); OEMProvisioningCertificateChain, SignedCertificateChainType (1, 1); ListOfRootCertificateIDs, ListOfRootCertificateIDsType (1, 1); MaximumContractCertificateChains, unsignedByte (1, 1); PrioritizedEMAIDs, EMAIDListType (0, 1);
 static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, struct iso20_CertificateInstallationReqType* CertificateInstallationReqType) {
-    int grammar_id = 345;
+    int grammar_id = 323;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_CertificateInstallationReqType(CertificateInstallationReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 345:
-            // Grammar: ID=345; read/write bits=1; START (Header)
+        case 323:
+            // Grammar: ID=323; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=346
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=324
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &CertificateInstallationReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 346;
+                        grammar_id = 324;
                     }
                     break;
                 default:
@@ -18286,20 +17786,20 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 346:
-            // Grammar: ID=346; read/write bits=1; START (OEMProvisioningCertificateChain)
+        case 324:
+            // Grammar: ID=324; read/write bits=1; START (OEMProvisioningCertificateChain)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (OEMProvisioningCertificateChain, SignedCertificateChainType (SignedCertificateChainType)); next=347
+                    // Event: START (OEMProvisioningCertificateChain, SignedCertificateChainType (SignedCertificateChainType)); next=325
                     // decode: element
                     error = decode_iso20_SignedCertificateChainType(stream, &CertificateInstallationReqType->OEMProvisioningCertificateChain);
                     if (error == 0)
                     {
-                        grammar_id = 347;
+                        grammar_id = 325;
                     }
                     break;
                 default:
@@ -18308,20 +17808,20 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 347:
-            // Grammar: ID=347; read/write bits=1; START (ListOfRootCertificateIDs)
+        case 325:
+            // Grammar: ID=325; read/write bits=1; START (ListOfRootCertificateIDs)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ListOfRootCertificateIDs, ListOfRootCertificateIDsType (ListOfRootCertificateIDsType)); next=348
+                    // Event: START (ListOfRootCertificateIDs, ListOfRootCertificateIDsType (ListOfRootCertificateIDsType)); next=326
                     // decode: element
                     error = decode_iso20_ListOfRootCertificateIDsType(stream, &CertificateInstallationReqType->ListOfRootCertificateIDs);
                     if (error == 0)
                     {
-                        grammar_id = 348;
+                        grammar_id = 326;
                     }
                     break;
                 default:
@@ -18330,15 +17830,15 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 348:
-            // Grammar: ID=348; read/write bits=1; START (MaximumContractCertificateChains)
+        case 326:
+            // Grammar: ID=326; read/write bits=1; START (MaximumContractCertificateChains)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (MaximumContractCertificateChains, unsignedByte (unsignedShort)); next=349
+                    // Event: START (MaximumContractCertificateChains, unsignedByte (unsignedShort)); next=327
                     // decode: unsigned byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18368,7 +17868,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 349;
+                                grammar_id = 327;
                             }
                             else
                             {
@@ -18383,12 +17883,12 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 349:
-            // Grammar: ID=349; read/write bits=2; START (PrioritizedEMAIDs), END Element
+        case 327:
+            // Grammar: ID=327; read/write bits=2; START (PrioritizedEMAIDs), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (PrioritizedEMAIDs, EMAIDListType (EMAIDListType)); next=2
@@ -18416,7 +17916,7 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -18446,31 +17946,31 @@ static int decode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); CPSCertificateChain, CertificateChainType (1, 1); SignedInstallationData, SignedInstallationDataType (1, 1); RemainingContractCertificateChains, unsignedByte (1, 1);
 static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, struct iso20_CertificateInstallationResType* CertificateInstallationResType) {
-    int grammar_id = 350;
+    int grammar_id = 328;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_CertificateInstallationResType(CertificateInstallationResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 350:
-            // Grammar: ID=350; read/write bits=1; START (Header)
+        case 328:
+            // Grammar: ID=328; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=351
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=329
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &CertificateInstallationResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 351;
+                        grammar_id = 329;
                     }
                     break;
                 default:
@@ -18479,15 +17979,15 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 351:
-            // Grammar: ID=351; read/write bits=1; START (ResponseCode)
+        case 329:
+            // Grammar: ID=329; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=352
+                    // Event: START (ResponseCode, responseCodeType (string)); next=330
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18517,7 +18017,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 352;
+                                grammar_id = 330;
                             }
                             else
                             {
@@ -18532,15 +18032,15 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 352:
-            // Grammar: ID=352; read/write bits=1; START (EVSEProcessing)
+        case 330:
+            // Grammar: ID=330; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=353
+                    // Event: START (EVSEProcessing, processingType (string)); next=331
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18570,7 +18070,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 353;
+                                grammar_id = 331;
                             }
                             else
                             {
@@ -18585,20 +18085,20 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 353:
-            // Grammar: ID=353; read/write bits=1; START (CPSCertificateChain)
+        case 331:
+            // Grammar: ID=331; read/write bits=1; START (CPSCertificateChain)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (CPSCertificateChain, CertificateChainType (CertificateChainType)); next=354
+                    // Event: START (CPSCertificateChain, CertificateChainType (CertificateChainType)); next=332
                     // decode: element
                     error = decode_iso20_CertificateChainType(stream, &CertificateInstallationResType->CPSCertificateChain);
                     if (error == 0)
                     {
-                        grammar_id = 354;
+                        grammar_id = 332;
                     }
                     break;
                 default:
@@ -18607,20 +18107,20 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 354:
-            // Grammar: ID=354; read/write bits=1; START (SignedInstallationData)
+        case 332:
+            // Grammar: ID=332; read/write bits=1; START (SignedInstallationData)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignedInstallationData, SignedInstallationDataType (SignedInstallationDataType)); next=355
+                    // Event: START (SignedInstallationData, SignedInstallationDataType (SignedInstallationDataType)); next=333
                     // decode: element
                     error = decode_iso20_SignedInstallationDataType(stream, &CertificateInstallationResType->SignedInstallationData);
                     if (error == 0)
                     {
-                        grammar_id = 355;
+                        grammar_id = 333;
                     }
                     break;
                 default:
@@ -18629,12 +18129,12 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 355:
-            // Grammar: ID=355; read/write bits=1; START (RemainingContractCertificateChains)
+        case 333:
+            // Grammar: ID=333; read/write bits=1; START (RemainingContractCertificateChains)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (RemainingContractCertificateChains, unsignedByte (unsignedShort)); next=2
@@ -18687,7 +18187,7 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -18717,31 +18217,31 @@ static int decode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVCheckInStatus, evCheckInStatusType (1, 1); ParkingMethod, parkingMethodType (1, 1); VehicleFrame, short (0, 1); DeviceOffset, short (0, 1); VehicleTravel, short (0, 1);
 static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct iso20_VehicleCheckInReqType* VehicleCheckInReqType) {
-    int grammar_id = 356;
+    int grammar_id = 334;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_VehicleCheckInReqType(VehicleCheckInReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 356:
-            // Grammar: ID=356; read/write bits=1; START (Header)
+        case 334:
+            // Grammar: ID=334; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=357
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=335
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &VehicleCheckInReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 357;
+                        grammar_id = 335;
                     }
                     break;
                 default:
@@ -18750,15 +18250,15 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 357:
-            // Grammar: ID=357; read/write bits=1; START (EVCheckInStatus)
+        case 335:
+            // Grammar: ID=335; read/write bits=1; START (EVCheckInStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVCheckInStatus, evCheckInStatusType (string)); next=358
+                    // Event: START (EVCheckInStatus, evCheckInStatusType (string)); next=336
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18788,7 +18288,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 358;
+                                grammar_id = 336;
                             }
                             else
                             {
@@ -18803,15 +18303,15 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 358:
-            // Grammar: ID=358; read/write bits=1; START (ParkingMethod)
+        case 336:
+            // Grammar: ID=336; read/write bits=1; START (ParkingMethod)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ParkingMethod, parkingMethodType (string)); next=359
+                    // Event: START (ParkingMethod, parkingMethodType (string)); next=337
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -18841,7 +18341,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 359;
+                                grammar_id = 337;
                             }
                             else
                             {
@@ -18856,31 +18356,31 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 359:
-            // Grammar: ID=359; read/write bits=3; START (VehicleFrame), START (DeviceOffset), START (VehicleTravel), END Element
+        case 337:
+            // Grammar: ID=337; read/write bits=3; START (VehicleFrame), START (DeviceOffset), START (VehicleTravel), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (VehicleFrame, short (int)); next=360
+                    // Event: START (VehicleFrame, short (int)); next=338
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->VehicleFrame);
                     if (error == 0)
                     {
                         VehicleCheckInReqType->VehicleFrame_isUsed = 1u;
-                        grammar_id = 360;
+                        grammar_id = 338;
                     }
                     break;
                 case 1:
-                    // Event: START (DeviceOffset, short (int)); next=361
+                    // Event: START (DeviceOffset, short (int)); next=339
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->DeviceOffset);
                     if (error == 0)
                     {
                         VehicleCheckInReqType->DeviceOffset_isUsed = 1u;
-                        grammar_id = 361;
+                        grammar_id = 339;
                     }
                     break;
                 case 2:
@@ -18904,21 +18404,21 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 360:
-            // Grammar: ID=360; read/write bits=2; START (DeviceOffset), START (VehicleTravel), END Element
+        case 338:
+            // Grammar: ID=338; read/write bits=2; START (DeviceOffset), START (VehicleTravel), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DeviceOffset, short (int)); next=361
+                    // Event: START (DeviceOffset, short (int)); next=339
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInReqType->DeviceOffset);
                     if (error == 0)
                     {
                         VehicleCheckInReqType->DeviceOffset_isUsed = 1u;
-                        grammar_id = 361;
+                        grammar_id = 339;
                     }
                     break;
                 case 1:
@@ -18942,12 +18442,12 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 361:
-            // Grammar: ID=361; read/write bits=2; START (VehicleTravel), END Element
+        case 339:
+            // Grammar: ID=339; read/write bits=2; START (VehicleTravel), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (VehicleTravel, short (int)); next=2
@@ -18975,7 +18475,7 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -19005,31 +18505,31 @@ static int decode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); ParkingSpace, short (0, 1); DeviceLocation, short (0, 1); TargetDistance, short (0, 1);
 static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct iso20_VehicleCheckInResType* VehicleCheckInResType) {
-    int grammar_id = 362;
+    int grammar_id = 340;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_VehicleCheckInResType(VehicleCheckInResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 362:
-            // Grammar: ID=362; read/write bits=1; START (Header)
+        case 340:
+            // Grammar: ID=340; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=363
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=341
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &VehicleCheckInResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 363;
+                        grammar_id = 341;
                     }
                     break;
                 default:
@@ -19038,15 +18538,15 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 363:
-            // Grammar: ID=363; read/write bits=1; START (ResponseCode)
+        case 341:
+            // Grammar: ID=341; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=364
+                    // Event: START (ResponseCode, responseCodeType (string)); next=342
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -19076,7 +18576,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 364;
+                                grammar_id = 342;
                             }
                             else
                             {
@@ -19091,31 +18591,31 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 364:
-            // Grammar: ID=364; read/write bits=3; START (ParkingSpace), START (DeviceLocation), START (TargetDistance), END Element
+        case 342:
+            // Grammar: ID=342; read/write bits=3; START (ParkingSpace), START (DeviceLocation), START (TargetDistance), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ParkingSpace, short (int)); next=365
+                    // Event: START (ParkingSpace, short (int)); next=343
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->ParkingSpace);
                     if (error == 0)
                     {
                         VehicleCheckInResType->ParkingSpace_isUsed = 1u;
-                        grammar_id = 365;
+                        grammar_id = 343;
                     }
                     break;
                 case 1:
-                    // Event: START (DeviceLocation, short (int)); next=366
+                    // Event: START (DeviceLocation, short (int)); next=344
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->DeviceLocation);
                     if (error == 0)
                     {
                         VehicleCheckInResType->DeviceLocation_isUsed = 1u;
-                        grammar_id = 366;
+                        grammar_id = 344;
                     }
                     break;
                 case 2:
@@ -19139,21 +18639,21 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 365:
-            // Grammar: ID=365; read/write bits=2; START (DeviceLocation), START (TargetDistance), END Element
+        case 343:
+            // Grammar: ID=343; read/write bits=2; START (DeviceLocation), START (TargetDistance), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (DeviceLocation, short (int)); next=366
+                    // Event: START (DeviceLocation, short (int)); next=344
                     // decode: short
                     error = decode_exi_type_integer16(stream, &VehicleCheckInResType->DeviceLocation);
                     if (error == 0)
                     {
                         VehicleCheckInResType->DeviceLocation_isUsed = 1u;
-                        grammar_id = 366;
+                        grammar_id = 344;
                     }
                     break;
                 case 1:
@@ -19177,12 +18677,12 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
                 }
             }
             break;
-        case 366:
-            // Grammar: ID=366; read/write bits=2; START (TargetDistance), END Element
+        case 344:
+            // Grammar: ID=344; read/write bits=2; START (TargetDistance), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (TargetDistance, short (int)); next=2
@@ -19210,7 +18710,7 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -19240,31 +18740,31 @@ static int decode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, struct is
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVCheckOutStatus, evCheckOutStatusType (1, 1); CheckOutTime, unsignedLong (1, 1);
 static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct iso20_VehicleCheckOutReqType* VehicleCheckOutReqType) {
-    int grammar_id = 367;
+    int grammar_id = 345;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_VehicleCheckOutReqType(VehicleCheckOutReqType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 367:
-            // Grammar: ID=367; read/write bits=1; START (Header)
+        case 345:
+            // Grammar: ID=345; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=368
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=346
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &VehicleCheckOutReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 368;
+                        grammar_id = 346;
                     }
                     break;
                 default:
@@ -19273,15 +18773,15 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 368:
-            // Grammar: ID=368; read/write bits=1; START (EVCheckOutStatus)
+        case 346:
+            // Grammar: ID=346; read/write bits=1; START (EVCheckOutStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (EVCheckOutStatus, evCheckOutStatusType (string)); next=369
+                    // Event: START (EVCheckOutStatus, evCheckOutStatusType (string)); next=347
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -19311,7 +18811,7 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 369;
+                                grammar_id = 347;
                             }
                             else
                             {
@@ -19326,12 +18826,12 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 369:
-            // Grammar: ID=369; read/write bits=1; START (CheckOutTime)
+        case 347:
+            // Grammar: ID=347; read/write bits=1; START (CheckOutTime)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (CheckOutTime, unsignedLong (nonNegativeInteger)); next=2
@@ -19353,7 +18853,7 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -19383,31 +18883,31 @@ static int decode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSECheckOutStatus, evseCheckOutStatusType (1, 1);
 static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct iso20_VehicleCheckOutResType* VehicleCheckOutResType) {
-    int grammar_id = 370;
+    int grammar_id = 348;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_VehicleCheckOutResType(VehicleCheckOutResType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 370:
-            // Grammar: ID=370; read/write bits=1; START (Header)
+        case 348:
+            // Grammar: ID=348; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=371
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=349
                     // decode: element
                     error = decode_iso20_MessageHeaderType(stream, &VehicleCheckOutResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 371;
+                        grammar_id = 349;
                     }
                     break;
                 default:
@@ -19416,15 +18916,15 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 371:
-            // Grammar: ID=371; read/write bits=1; START (ResponseCode)
+        case 349:
+            // Grammar: ID=349; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=372
+                    // Event: START (ResponseCode, responseCodeType (string)); next=350
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -19454,7 +18954,7 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 372;
+                                grammar_id = 350;
                             }
                             else
                             {
@@ -19469,12 +18969,12 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 372:
-            // Grammar: ID=372; read/write bits=1; START (EVSECheckOutStatus)
+        case 350:
+            // Grammar: ID=350; read/write bits=1; START (EVSECheckOutStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (EVSECheckOutStatus, evseCheckOutStatusType (string)); next=2
@@ -19527,7 +19027,7 @@ static int decode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, struct i
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -19593,28 +19093,28 @@ static int decode_iso20_CLResControlModeType(exi_bitstream_t* stream, struct iso
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Manifest; type={http://www.w3.org/2000/09/xmldsig#}ManifestType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4);
+// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_ManifestType* ManifestType) {
-    int grammar_id = 373;
+    int grammar_id = 351;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_ManifestType(ManifestType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 373:
-            // Grammar: ID=373; read/write bits=2; START (Id), START (Reference)
+        case 351:
+            // Grammar: ID=351; read/write bits=2; START (Id), START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=376
+                    // Event: START (Id, ID (NCName)); next=353
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ManifestType->Id.charactersLen);
                     if (error == 0)
@@ -19632,10 +19132,10 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                         }
                     }
                     ManifestType->Id_isUsed = 1u;
-                    grammar_id = 376;
+                    grammar_id = 353;
                     break;
                 case 1:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=374
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=352
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -19643,9 +19143,10 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 374;
+                    grammar_id = 352;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -19653,15 +19154,15 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                 }
             }
             break;
-        case 374:
-            // Grammar: ID=374; read/write bits=2; LOOP (Reference), END Element
+        case 352:
+            // Grammar: ID=352; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=374
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=352
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -19669,9 +19170,10 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 374;
+                    grammar_id = 352;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -19684,46 +19186,15 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                 }
             }
             break;
-        case 375:
-            // Grammar: ID=375; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 376:
-            // Grammar: ID=376; read/write bits=1; START (Reference)
+        case 353:
+            // Grammar: ID=353; read/write bits=1; START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=377
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=354
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -19731,9 +19202,10 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 377;
+                    grammar_id = 354;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -19741,15 +19213,15 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                 }
             }
             break;
-        case 377:
-            // Grammar: ID=377; read/write bits=2; LOOP (Reference), END Element
+        case 354:
+            // Grammar: ID=354; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=377
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=354
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -19757,40 +19229,10 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
                     }
                     else
                     {
+                        // static array not large enough, only iso20_ReferenceType_4_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 377;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 378:
-            // Grammar: ID=378; read/write bits=2; LOOP (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 2;
+                    grammar_id = 354;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -19808,7 +19250,7 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -19836,28 +19278,28 @@ static int decode_iso20_ManifestType(exi_bitstream_t* stream, struct iso20_Manif
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperties; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertiesType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1);
+// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1) (original max unbounded);
 static int decode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, struct iso20_SignaturePropertiesType* SignaturePropertiesType) {
-    int grammar_id = 379;
+    int grammar_id = 355;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_iso20_SignaturePropertiesType(SignaturePropertiesType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 379:
-            // Grammar: ID=379; read/write bits=2; START (Id), START (SignatureProperty)
+        case 355:
+            // Grammar: ID=355; read/write bits=2; START (Id), START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=381
+                    // Event: START (Id, ID (NCName)); next=357
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertiesType->Id.charactersLen);
                     if (error == 0)
@@ -19875,15 +19317,15 @@ static int decode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, struct 
                         }
                     }
                     SignaturePropertiesType->Id_isUsed = 1u;
-                    grammar_id = 381;
+                    grammar_id = 357;
                     break;
                 case 1:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=380
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=356
                     // decode: element
                     error = decode_iso20_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == 0)
                     {
-                        grammar_id = 380;
+                        grammar_id = 356;
                     }
                     break;
                 default:
@@ -19892,21 +19334,18 @@ static int decode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 380:
-            // Grammar: ID=380; read/write bits=2; START (SignatureProperty), END Element
+        case 356:
+            // Grammar: ID=356; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=2
                     // decode: element
-                    error = decode_iso20_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -19919,20 +19358,20 @@ static int decode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 381:
-            // Grammar: ID=381; read/write bits=1; START (SignatureProperty)
+        case 357:
+            // Grammar: ID=357; read/write bits=1; START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=382
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=358
                     // decode: element
                     error = decode_iso20_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == 0)
                     {
-                        grammar_id = 382;
+                        grammar_id = 358;
                     }
                     break;
                 default:
@@ -19941,21 +19380,18 @@ static int decode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 382:
-            // Grammar: ID=382; read/write bits=2; START (SignatureProperty), END Element
+        case 358:
+            // Grammar: ID=358; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=2
                     // decode: element
-                    error = decode_iso20_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
-                    if (error == 0)
-                    {
-                        grammar_id = 2;
-                    }
+                    // This element should not occur a further time, its representation was reduced to a single element
+                    error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -19973,7 +19409,7 @@ static int decode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, struct 
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=3
@@ -20012,7 +19448,7 @@ int decode_iso20_exiDocument(exi_bitstream_t* stream, struct iso20_exiDocument* 
         error = exi_basetypes_decoder_nbit_uint(stream, 6, &eventCode);
         if (error == 0)
         {
-            switch(eventCode)
+            switch (eventCode)
             {
             case 0:
                 error = decode_iso20_AuthorizationReqType(stream, &exiDoc->AuthorizationReq);
@@ -20250,7 +19686,7 @@ int decode_iso20_exiFragment(exi_bitstream_t* stream, struct iso20_exiFragment* 
         if (error == EXI_ERROR__NO_ERROR)
         {
             error = EXI_ERROR__NOT_IMPLEMENTED_YET;
-            switch(eventCode)
+            switch (eventCode)
             {
             case 0:
                 // AbsolutePriceSchedule (urn:iso:std:iso:15118:-20:CommonMessages)
@@ -21143,7 +20579,7 @@ int decode_iso20_xmldsigFragment(exi_bitstream_t* stream, struct iso20_xmldsigFr
         if (error == EXI_ERROR__NO_ERROR)
         {
             error = EXI_ERROR__NOT_IMPLEMENTED_YET;
-            switch(eventCode)
+            switch (eventCode)
             {
             case 0:
                 // CanonicalizationMethod (http://www.w3.org/2000/09/xmldsig#)

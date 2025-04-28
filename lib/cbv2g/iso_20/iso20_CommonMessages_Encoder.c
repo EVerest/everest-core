@@ -152,9 +152,9 @@ static int encode_iso20_TransformType(exi_bitstream_t* stream, const struct iso2
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 0:
             // Grammar: ID=0; read/write bits=1; START (Algorithm)
@@ -272,15 +272,15 @@ static int encode_iso20_TransformType(exi_bitstream_t* stream, const struct iso2
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Transforms; type={http://www.w3.org/2000/09/xmldsig#}TransformsType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Transform, TransformType (1, 1);
+// Particle: Transform, TransformType (1, 1) (original max unbounded);
 static int encode_iso20_TransformsType(exi_bitstream_t* stream, const struct iso20_TransformsType* TransformsType) {
     int grammar_id = 4;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 4:
             // Grammar: ID=4; read/write bits=1; START (Transform)
@@ -346,15 +346,15 @@ static int encode_iso20_TransformsType(exi_bitstream_t* stream, const struct iso
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}DSAKeyValue; type={http://www.w3.org/2000/09/xmldsig#}DSAKeyValueType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: P, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); Q, CryptoBinary (0, 1)(was 1, 1)(seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1)(was 1, 1)(seq. ['Seed', 'PgenCounter']);
+// Particle: P, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); Q, CryptoBinary (0, 1) (was 1, 1) (seq. ['P', 'Q']); G, CryptoBinary (0, 1); Y, CryptoBinary (1, 1); J, CryptoBinary (0, 1); Seed, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']); PgenCounter, CryptoBinary (0, 1) (was 1, 1) (seq. ['Seed', 'PgenCounter']);
 static int encode_iso20_DSAKeyValueType(exi_bitstream_t* stream, const struct iso20_DSAKeyValueType* DSAKeyValueType) {
     int grammar_id = 6;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 6:
             // Grammar: ID=6; read/write bits=2; START (P), START (G), START (Y)
@@ -718,9 +718,9 @@ static int encode_iso20_X509IssuerSerialType(exi_bitstream_t* stream, const stru
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 13:
             // Grammar: ID=13; read/write bits=1; START (X509IssuerName)
@@ -803,9 +803,9 @@ static int encode_iso20_DigestMethodType(exi_bitstream_t* stream, const struct i
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 15:
             // Grammar: ID=15; read/write bits=1; START (Algorithm)
@@ -901,9 +901,9 @@ static int encode_iso20_RSAKeyValueType(exi_bitstream_t* stream, const struct is
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 17:
             // Grammar: ID=17; read/write bits=1; START (Modulus)
@@ -988,9 +988,9 @@ static int encode_iso20_CanonicalizationMethodType(exi_bitstream_t* stream, cons
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 19:
             // Grammar: ID=19; read/write bits=1; START (Algorithm)
@@ -1086,9 +1086,9 @@ static int encode_iso20_PriceLevelScheduleEntryType(exi_bitstream_t* stream, con
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 21:
             // Grammar: ID=21; read/write bits=1; START (Duration)
@@ -1165,9 +1165,9 @@ static int encode_iso20_SignatureMethodType(exi_bitstream_t* stream, const struc
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 23:
             // Grammar: ID=23; read/write bits=1; START (Algorithm)
@@ -1329,9 +1329,9 @@ static int encode_iso20_KeyValueType(exi_bitstream_t* stream, const struct iso20
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 26:
             // Grammar: ID=26; read/write bits=2; START (DSAKeyValue), START (RSAKeyValue), START (ANY)
@@ -1419,9 +1419,9 @@ static int encode_iso20_ReferenceType(exi_bitstream_t* stream, const struct iso2
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 27:
             // Grammar: ID=27; read/write bits=3; START (Id), START (Type), START (URI), START (Transforms), START (DigestMethod)
@@ -1723,9 +1723,9 @@ static int encode_iso20_RetrievalMethodType(exi_bitstream_t* stream, const struc
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 33:
             // Grammar: ID=33; read/write bits=3; START (Type), START (URI), START (Transforms), END Element
@@ -1893,9 +1893,9 @@ static int encode_iso20_X509DataType(exi_bitstream_t* stream, const struct iso20
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 36:
             // Grammar: ID=36; read/write bits=3; START (X509IssuerSerial), START (X509SKI), START (X509SubjectName), START (X509Certificate), START (X509CRL), START (ANY)
@@ -2076,9 +2076,9 @@ static int encode_iso20_PGPDataType(exi_bitstream_t* stream, const struct iso20_
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 37:
             // Grammar: ID=37; read/write bits=2; START (PGPKeyID), START (PGPKeyPacket)
@@ -2350,9 +2350,9 @@ static int encode_iso20_RationalNumberType(exi_bitstream_t* stream, const struct
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 42:
             // Grammar: ID=42; read/write bits=1; START (Exponent)
@@ -2430,9 +2430,9 @@ static int encode_iso20_PowerScheduleEntryType(exi_bitstream_t* stream, const st
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 44:
             // Grammar: ID=44; read/write bits=1; START (Duration)
@@ -2565,9 +2565,9 @@ static int encode_iso20_EVPriceRuleType(exi_bitstream_t* stream, const struct is
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 48:
             // Grammar: ID=48; read/write bits=1; START (EnergyFee)
@@ -2626,9 +2626,9 @@ static int encode_iso20_EVPowerScheduleEntryType(exi_bitstream_t* stream, const 
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 50:
             // Grammar: ID=50; read/write bits=1; START (Duration)
@@ -2697,9 +2697,9 @@ static int encode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, const stru
     int error = 0;
     uint16_t EVPriceRule_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 52:
             // Grammar: ID=52; read/write bits=1; START (Duration)
@@ -2769,32 +2769,6 @@ static int encode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, const stru
                 }
             }
             break;
-        case 55:
-            // Grammar: ID=55; read/write bits=2; LOOP (EVPriceRule), END Element
-            if (EVPriceRule_currentIndex < EVPriceRuleStackType->EVPriceRule.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (EVPriceRuleType); next=2
-                    error = encode_iso20_EVPriceRuleType(stream, &EVPriceRuleStackType->EVPriceRule.array[EVPriceRule_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
         case 2:
             // Grammar: ID=2; read/write bits=1; END Element
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
@@ -2822,39 +2796,39 @@ static int encode_iso20_EVPriceRuleStackType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False;
 // Particle: EnergyFee, RationalNumberType (1, 1); ParkingFee, RationalNumberType (0, 1); ParkingFeePeriod, unsignedInt (0, 1); CarbonDioxideEmission, unsignedShort (0, 1); RenewableGenerationPercentage, unsignedByte (0, 1); PowerRangeStart, RationalNumberType (1, 1);
 static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso20_PriceRuleType* PriceRuleType) {
-    int grammar_id = 56;
+    int grammar_id = 55;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 56:
-            // Grammar: ID=56; read/write bits=1; START (EnergyFee)
+        case 55:
+            // Grammar: ID=55; read/write bits=1; START (EnergyFee)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=57
+                // Event: START (RationalNumberType); next=56
                 error = encode_iso20_RationalNumberType(stream, &PriceRuleType->EnergyFee);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 57;
+                    grammar_id = 56;
                 }
             }
             break;
-        case 57:
-            // Grammar: ID=57; read/write bits=3; START (ParkingFee), START (ParkingFeePeriod), START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
+        case 56:
+            // Grammar: ID=56; read/write bits=3; START (ParkingFee), START (ParkingFeePeriod), START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
             if (PriceRuleType->ParkingFee_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ParkingFee, RationalNumberType); next=58
+                    // Event: START (ParkingFee, RationalNumberType); next=57
                     error = encode_iso20_RationalNumberType(stream, &PriceRuleType->ParkingFee);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 58;
+                        grammar_id = 57;
                     }
                 }
             }
@@ -2863,11 +2837,33 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ParkingFeePeriod, unsignedLong); next=59
+                    // Event: START (ParkingFeePeriod, unsignedLong); next=58
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         error = exi_basetypes_encoder_uint_32(stream, PriceRuleType->ParkingFeePeriod);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 58;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (PriceRuleType->CarbonDioxideEmission_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (CarbonDioxideEmission, unsignedInt); next=59
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_uint_16(stream, PriceRuleType->CarbonDioxideEmission);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
                             // encode END Element
@@ -2880,34 +2876,12 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                     }
                 }
             }
-            else if (PriceRuleType->CarbonDioxideEmission_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (CarbonDioxideEmission, unsignedInt); next=60
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_uint_16(stream, PriceRuleType->CarbonDioxideEmission);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 60;
-                            }
-                        }
-                    }
-                }
-            }
             else if (PriceRuleType->RenewableGenerationPercentage_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (RenewableGenerationPercentage, unsignedShort); next=61
+                    // Event: START (RenewableGenerationPercentage, unsignedShort); next=60
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -2918,7 +2892,7 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 61;
+                                grammar_id = 60;
                             }
                         }
                     }
@@ -2938,18 +2912,40 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 58:
-            // Grammar: ID=58; read/write bits=3; START (ParkingFeePeriod), START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
+        case 57:
+            // Grammar: ID=57; read/write bits=3; START (ParkingFeePeriod), START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
             if (PriceRuleType->ParkingFeePeriod_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ParkingFeePeriod, unsignedLong); next=59
+                    // Event: START (ParkingFeePeriod, unsignedLong); next=58
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         error = exi_basetypes_encoder_uint_32(stream, PriceRuleType->ParkingFeePeriod);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 58;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (PriceRuleType->CarbonDioxideEmission_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (CarbonDioxideEmission, unsignedInt); next=59
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_uint_16(stream, PriceRuleType->CarbonDioxideEmission);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
                             // encode END Element
@@ -2962,34 +2958,12 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                     }
                 }
             }
-            else if (PriceRuleType->CarbonDioxideEmission_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (CarbonDioxideEmission, unsignedInt); next=60
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_uint_16(stream, PriceRuleType->CarbonDioxideEmission);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 60;
-                            }
-                        }
-                    }
-                }
-            }
             else if (PriceRuleType->RenewableGenerationPercentage_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (RenewableGenerationPercentage, unsignedShort); next=61
+                    // Event: START (RenewableGenerationPercentage, unsignedShort); next=60
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -3000,7 +2974,7 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 61;
+                                grammar_id = 60;
                             }
                         }
                     }
@@ -3020,14 +2994,14 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 59:
-            // Grammar: ID=59; read/write bits=2; START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
+        case 58:
+            // Grammar: ID=58; read/write bits=2; START (CarbonDioxideEmission), START (RenewableGenerationPercentage), START (PowerRangeStart)
             if (PriceRuleType->CarbonDioxideEmission_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (CarbonDioxideEmission, unsignedInt); next=60
+                    // Event: START (CarbonDioxideEmission, unsignedInt); next=59
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -3038,7 +3012,7 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 60;
+                                grammar_id = 59;
                             }
                         }
                     }
@@ -3049,7 +3023,7 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (RenewableGenerationPercentage, unsignedShort); next=61
+                    // Event: START (RenewableGenerationPercentage, unsignedShort); next=60
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -3060,7 +3034,7 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 61;
+                                grammar_id = 60;
                             }
                         }
                     }
@@ -3080,14 +3054,14 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 60:
-            // Grammar: ID=60; read/write bits=2; START (RenewableGenerationPercentage), START (PowerRangeStart)
+        case 59:
+            // Grammar: ID=59; read/write bits=2; START (RenewableGenerationPercentage), START (PowerRangeStart)
             if (PriceRuleType->RenewableGenerationPercentage_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (RenewableGenerationPercentage, unsignedShort); next=61
+                    // Event: START (RenewableGenerationPercentage, unsignedShort); next=60
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -3098,7 +3072,7 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 61;
+                                grammar_id = 60;
                             }
                         }
                     }
@@ -3118,8 +3092,8 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 61:
-            // Grammar: ID=61; read/write bits=1; START (PowerRangeStart)
+        case 60:
+            // Grammar: ID=60; read/write bits=1; START (PowerRangeStart)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -3158,27 +3132,27 @@ static int encode_iso20_PriceRuleType(exi_bitstream_t* stream, const struct iso2
 //          abstract=False; final=False;
 // Particle: PowerScheduleEntry, PowerScheduleEntryType (1, 1024);
 static int encode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, const struct iso20_PowerScheduleEntryListType* PowerScheduleEntryListType) {
-    int grammar_id = 62;
+    int grammar_id = 61;
     int done = 0;
     int error = 0;
     uint16_t PowerScheduleEntry_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 62:
-            // Grammar: ID=62; read/write bits=1; START (PowerScheduleEntry)
+        case 61:
+            // Grammar: ID=61; read/write bits=1; START (PowerScheduleEntry)
             if (PowerScheduleEntry_currentIndex < PowerScheduleEntryListType->PowerScheduleEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PowerScheduleEntryType); next=63
+                    // Event: START (PowerScheduleEntryType); next=62
                     error = encode_iso20_PowerScheduleEntryType(stream, &PowerScheduleEntryListType->PowerScheduleEntry.array[PowerScheduleEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 63;
+                        grammar_id = 62;
                     }
                 }
             }
@@ -3187,18 +3161,18 @@ static int encode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, cons
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 63:
-            // Grammar: ID=63; read/write bits=2; LOOP (PowerScheduleEntry), END Element
+        case 62:
+            // Grammar: ID=62; read/write bits=2; LOOP (PowerScheduleEntry), END Element
             if (PowerScheduleEntry_currentIndex < PowerScheduleEntryListType->PowerScheduleEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (PowerScheduleEntryType); next=63
+                    // Event: LOOP (PowerScheduleEntryType); next=62
                     error = encode_iso20_PowerScheduleEntryType(stream, &PowerScheduleEntryListType->PowerScheduleEntry.array[PowerScheduleEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 63;
+                        grammar_id = 62;
                     }
                 }
             }
@@ -3240,20 +3214,20 @@ static int encode_iso20_PowerScheduleEntryListType(exi_bitstream_t* stream, cons
 //          abstract=False; final=False;
 // Particle: TaxRuleID, numericIDType (1, 1); TaxRuleName, nameType (0, 1); TaxRate, RationalNumberType (1, 1); TaxIncludedInPrice, boolean (0, 1); AppliesToEnergyFee, boolean (1, 1); AppliesToParkingFee, boolean (1, 1); AppliesToOverstayFee, boolean (1, 1); AppliesMinimumMaximumCost, boolean (1, 1);
 static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_TaxRuleType* TaxRuleType) {
-    int grammar_id = 64;
+    int grammar_id = 63;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 64:
-            // Grammar: ID=64; read/write bits=1; START (TaxRuleID)
+        case 63:
+            // Grammar: ID=63; read/write bits=1; START (TaxRuleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedInt); next=65
+                // Event: START (unsignedInt); next=64
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3264,20 +3238,20 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 65;
+                            grammar_id = 64;
                         }
                     }
                 }
             }
             break;
-        case 65:
-            // Grammar: ID=65; read/write bits=2; START (TaxRuleName), START (TaxRate)
+        case 64:
+            // Grammar: ID=64; read/write bits=2; START (TaxRuleName), START (TaxRate)
             if (TaxRuleType->TaxRuleName_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxRuleName, string); next=66
+                    // Event: START (TaxRuleName, string); next=65
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -3293,7 +3267,7 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 66;
+                                    grammar_id = 65;
                                 }
                             }
                         }
@@ -3305,40 +3279,62 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxRate, RationalNumberType); next=67
+                    // Event: START (TaxRate, RationalNumberType); next=66
                     error = encode_iso20_RationalNumberType(stream, &TaxRuleType->TaxRate);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 67;
+                        grammar_id = 66;
                     }
                 }
             }
             break;
-        case 66:
-            // Grammar: ID=66; read/write bits=1; START (TaxRate)
+        case 65:
+            // Grammar: ID=65; read/write bits=1; START (TaxRate)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=67
+                // Event: START (RationalNumberType); next=66
                 error = encode_iso20_RationalNumberType(stream, &TaxRuleType->TaxRate);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 67;
+                    grammar_id = 66;
                 }
             }
             break;
-        case 67:
-            // Grammar: ID=67; read/write bits=2; START (TaxIncludedInPrice), START (AppliesToEnergyFee)
+        case 66:
+            // Grammar: ID=66; read/write bits=2; START (TaxIncludedInPrice), START (AppliesToEnergyFee)
             if (TaxRuleType->TaxIncludedInPrice_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxIncludedInPrice, boolean); next=68
+                    // Event: START (TaxIncludedInPrice, boolean); next=67
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         error = exi_basetypes_encoder_bool(stream, TaxRuleType->TaxIncludedInPrice);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 67;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (AppliesToEnergyFee, boolean); next=68
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_bool(stream, TaxRuleType->AppliesToEnergyFee);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
                             // encode END Element
@@ -3351,31 +3347,31 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
                     }
                 }
             }
-            else
+            break;
+        case 67:
+            // Grammar: ID=67; read/write bits=1; START (AppliesToEnergyFee)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
             {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                // Event: START (boolean); next=68
+                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (AppliesToEnergyFee, boolean); next=69
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    error = exi_basetypes_encoder_bool(stream, TaxRuleType->AppliesToEnergyFee);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        error = exi_basetypes_encoder_bool(stream, TaxRuleType->AppliesToEnergyFee);
+                        // encode END Element
+                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 69;
-                            }
+                            grammar_id = 68;
                         }
                     }
                 }
             }
             break;
         case 68:
-            // Grammar: ID=68; read/write bits=1; START (AppliesToEnergyFee)
+            // Grammar: ID=68; read/write bits=1; START (AppliesToParkingFee)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -3383,7 +3379,7 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_bool(stream, TaxRuleType->AppliesToEnergyFee);
+                    error = exi_basetypes_encoder_bool(stream, TaxRuleType->AppliesToParkingFee);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
@@ -3397,7 +3393,7 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
             }
             break;
         case 69:
-            // Grammar: ID=69; read/write bits=1; START (AppliesToParkingFee)
+            // Grammar: ID=69; read/write bits=1; START (AppliesToOverstayFee)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -3405,7 +3401,7 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_bool(stream, TaxRuleType->AppliesToParkingFee);
+                    error = exi_basetypes_encoder_bool(stream, TaxRuleType->AppliesToOverstayFee);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
@@ -3419,29 +3415,7 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
             }
             break;
         case 70:
-            // Grammar: ID=70; read/write bits=1; START (AppliesToOverstayFee)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (boolean); next=71
-                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    error = exi_basetypes_encoder_bool(stream, TaxRuleType->AppliesToOverstayFee);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        // encode END Element
-                        error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            grammar_id = 71;
-                        }
-                    }
-                }
-            }
-            break;
-        case 71:
-            // Grammar: ID=71; read/write bits=1; START (AppliesMinimumMaximumCost)
+            // Grammar: ID=70; read/write bits=1; START (AppliesMinimumMaximumCost)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -3489,21 +3463,21 @@ static int encode_iso20_TaxRuleType(exi_bitstream_t* stream, const struct iso20_
 //          abstract=False; final=False;
 // Particle: Duration, unsignedInt (1, 1); PriceRule, PriceRuleType (1, 8);
 static int encode_iso20_PriceRuleStackType(exi_bitstream_t* stream, const struct iso20_PriceRuleStackType* PriceRuleStackType) {
-    int grammar_id = 72;
+    int grammar_id = 71;
     int done = 0;
     int error = 0;
     uint16_t PriceRule_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 72:
-            // Grammar: ID=72; read/write bits=1; START (Duration)
+        case 71:
+            // Grammar: ID=71; read/write bits=1; START (Duration)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedLong); next=73
+                // Event: START (unsignedLong); next=72
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3514,24 +3488,24 @@ static int encode_iso20_PriceRuleStackType(exi_bitstream_t* stream, const struct
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 73;
+                            grammar_id = 72;
                         }
                     }
                 }
             }
             break;
-        case 73:
-            // Grammar: ID=73; read/write bits=1; START (PriceRule)
+        case 72:
+            // Grammar: ID=72; read/write bits=1; START (PriceRule)
             if (PriceRule_currentIndex < PriceRuleStackType->PriceRule.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PriceRuleType); next=74
+                    // Event: START (PriceRuleType); next=73
                     error = encode_iso20_PriceRuleType(stream, &PriceRuleStackType->PriceRule.array[PriceRule_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 74;
+                        grammar_id = 73;
                     }
                 }
             }
@@ -3540,44 +3514,18 @@ static int encode_iso20_PriceRuleStackType(exi_bitstream_t* stream, const struct
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 74:
-            // Grammar: ID=74; read/write bits=2; LOOP (PriceRule), END Element
+        case 73:
+            // Grammar: ID=73; read/write bits=2; LOOP (PriceRule), END Element
             if (PriceRule_currentIndex < PriceRuleStackType->PriceRule.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (PriceRuleType); next=74
+                    // Event: LOOP (PriceRuleType); next=73
                     error = encode_iso20_PriceRuleType(stream, &PriceRuleStackType->PriceRule.array[PriceRule_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 74;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 75:
-            // Grammar: ID=75; read/write bits=2; LOOP (PriceRule), END Element
-            if (PriceRule_currentIndex < PriceRuleStackType->PriceRule.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (PriceRuleType); next=2
-                    error = encode_iso20_PriceRuleType(stream, &PriceRuleStackType->PriceRule.array[PriceRule_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 73;
                     }
                 }
             }
@@ -3619,20 +3567,20 @@ static int encode_iso20_PriceRuleStackType(exi_bitstream_t* stream, const struct
 //          abstract=False; final=False;
 // Particle: ServiceName, nameType (1, 1); ServiceFee, RationalNumberType (1, 1);
 static int encode_iso20_AdditionalServiceType(exi_bitstream_t* stream, const struct iso20_AdditionalServiceType* AdditionalServiceType) {
-    int grammar_id = 76;
+    int grammar_id = 74;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 76:
-            // Grammar: ID=76; read/write bits=1; START (ServiceName)
+        case 74:
+            // Grammar: ID=74; read/write bits=1; START (ServiceName)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=77
+                // Event: START (string); next=75
 
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
@@ -3648,15 +3596,15 @@ static int encode_iso20_AdditionalServiceType(exi_bitstream_t* stream, const str
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 77;
+                                grammar_id = 75;
                             }
                         }
                     }
                 }
             }
             break;
-        case 77:
-            // Grammar: ID=77; read/write bits=1; START (ServiceFee)
+        case 75:
+            // Grammar: ID=75; read/write bits=1; START (ServiceFee)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -3695,20 +3643,20 @@ static int encode_iso20_AdditionalServiceType(exi_bitstream_t* stream, const str
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); AvailableEnergy, RationalNumberType (0, 1); PowerTolerance, RationalNumberType (0, 1); PowerScheduleEntries, PowerScheduleEntryListType (1, 1);
 static int encode_iso20_PowerScheduleType(exi_bitstream_t* stream, const struct iso20_PowerScheduleType* PowerScheduleType) {
-    int grammar_id = 78;
+    int grammar_id = 76;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 78:
-            // Grammar: ID=78; read/write bits=1; START (TimeAnchor)
+        case 76:
+            // Grammar: ID=76; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=79
+                // Event: START (nonNegativeInteger); next=77
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3719,24 +3667,24 @@ static int encode_iso20_PowerScheduleType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 79;
+                            grammar_id = 77;
                         }
                     }
                 }
             }
             break;
-        case 79:
-            // Grammar: ID=79; read/write bits=2; START (AvailableEnergy), START (PowerTolerance), START (PowerScheduleEntries)
+        case 77:
+            // Grammar: ID=77; read/write bits=2; START (AvailableEnergy), START (PowerTolerance), START (PowerScheduleEntries)
             if (PowerScheduleType->AvailableEnergy_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (AvailableEnergy, RationalNumberType); next=80
+                    // Event: START (AvailableEnergy, RationalNumberType); next=78
                     error = encode_iso20_RationalNumberType(stream, &PowerScheduleType->AvailableEnergy);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 80;
+                        grammar_id = 78;
                     }
                 }
             }
@@ -3745,11 +3693,11 @@ static int encode_iso20_PowerScheduleType(exi_bitstream_t* stream, const struct 
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PowerTolerance, RationalNumberType); next=81
+                    // Event: START (PowerTolerance, RationalNumberType); next=79
                     error = encode_iso20_RationalNumberType(stream, &PowerScheduleType->PowerTolerance);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 81;
+                        grammar_id = 79;
                     }
                 }
             }
@@ -3767,18 +3715,18 @@ static int encode_iso20_PowerScheduleType(exi_bitstream_t* stream, const struct 
                 }
             }
             break;
-        case 80:
-            // Grammar: ID=80; read/write bits=2; START (PowerTolerance), START (PowerScheduleEntries)
+        case 78:
+            // Grammar: ID=78; read/write bits=2; START (PowerTolerance), START (PowerScheduleEntries)
             if (PowerScheduleType->PowerTolerance_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PowerTolerance, RationalNumberType); next=81
+                    // Event: START (PowerTolerance, RationalNumberType); next=79
                     error = encode_iso20_RationalNumberType(stream, &PowerScheduleType->PowerTolerance);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 81;
+                        grammar_id = 79;
                     }
                 }
             }
@@ -3796,8 +3744,8 @@ static int encode_iso20_PowerScheduleType(exi_bitstream_t* stream, const struct 
                 }
             }
             break;
-        case 81:
-            // Grammar: ID=81; read/write bits=1; START (PowerScheduleEntries)
+        case 79:
+            // Grammar: ID=79; read/write bits=1; START (PowerScheduleEntries)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -3836,27 +3784,27 @@ static int encode_iso20_PowerScheduleType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: EVPowerScheduleEntry, EVPowerScheduleEntryType (1, 1024);
 static int encode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, const struct iso20_EVPowerScheduleEntryListType* EVPowerScheduleEntryListType) {
-    int grammar_id = 82;
+    int grammar_id = 80;
     int done = 0;
     int error = 0;
     uint16_t EVPowerScheduleEntry_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 82:
-            // Grammar: ID=82; read/write bits=1; START (EVPowerScheduleEntry)
+        case 80:
+            // Grammar: ID=80; read/write bits=1; START (EVPowerScheduleEntry)
             if (EVPowerScheduleEntry_currentIndex < EVPowerScheduleEntryListType->EVPowerScheduleEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVPowerScheduleEntryType); next=83
+                    // Event: START (EVPowerScheduleEntryType); next=81
                     error = encode_iso20_EVPowerScheduleEntryType(stream, &EVPowerScheduleEntryListType->EVPowerScheduleEntry.array[EVPowerScheduleEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 83;
+                        grammar_id = 81;
                     }
                 }
             }
@@ -3865,18 +3813,18 @@ static int encode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, co
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 83:
-            // Grammar: ID=83; read/write bits=2; LOOP (EVPowerScheduleEntry), END Element
+        case 81:
+            // Grammar: ID=81; read/write bits=2; LOOP (EVPowerScheduleEntry), END Element
             if (EVPowerScheduleEntry_currentIndex < EVPowerScheduleEntryListType->EVPowerScheduleEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (EVPowerScheduleEntryType); next=83
+                    // Event: LOOP (EVPowerScheduleEntryType); next=81
                     error = encode_iso20_EVPowerScheduleEntryType(stream, &EVPowerScheduleEntryListType->EVPowerScheduleEntry.array[EVPowerScheduleEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 83;
+                        grammar_id = 81;
                     }
                 }
             }
@@ -3918,22 +3866,22 @@ static int encode_iso20_EVPowerScheduleEntryListType(exi_bitstream_t* stream, co
 //          abstract=False; final=False;
 // Particle: OverstayRuleDescription, descriptionType (0, 1); StartTime, unsignedInt (1, 1); OverstayFee, RationalNumberType (1, 1); OverstayFeePeriod, unsignedInt (1, 1);
 static int encode_iso20_OverstayRuleType(exi_bitstream_t* stream, const struct iso20_OverstayRuleType* OverstayRuleType) {
-    int grammar_id = 84;
+    int grammar_id = 82;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 84:
-            // Grammar: ID=84; read/write bits=2; START (OverstayRuleDescription), START (StartTime)
+        case 82:
+            // Grammar: ID=82; read/write bits=2; START (OverstayRuleDescription), START (StartTime)
             if (OverstayRuleType->OverstayRuleDescription_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayRuleDescription, string); next=85
+                    // Event: START (OverstayRuleDescription, string); next=83
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -3949,7 +3897,7 @@ static int encode_iso20_OverstayRuleType(exi_bitstream_t* stream, const struct i
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 85;
+                                    grammar_id = 83;
                                 }
                             }
                         }
@@ -3961,7 +3909,7 @@ static int encode_iso20_OverstayRuleType(exi_bitstream_t* stream, const struct i
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (StartTime, unsignedLong); next=86
+                    // Event: START (StartTime, unsignedLong); next=84
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -3972,19 +3920,19 @@ static int encode_iso20_OverstayRuleType(exi_bitstream_t* stream, const struct i
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 86;
+                                grammar_id = 84;
                             }
                         }
                     }
                 }
             }
             break;
-        case 85:
-            // Grammar: ID=85; read/write bits=1; START (StartTime)
+        case 83:
+            // Grammar: ID=83; read/write bits=1; START (StartTime)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedLong); next=86
+                // Event: START (unsignedLong); next=84
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -3995,27 +3943,27 @@ static int encode_iso20_OverstayRuleType(exi_bitstream_t* stream, const struct i
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 86;
+                            grammar_id = 84;
                         }
                     }
                 }
             }
             break;
-        case 86:
-            // Grammar: ID=86; read/write bits=1; START (OverstayFee)
+        case 84:
+            // Grammar: ID=84; read/write bits=1; START (OverstayFee)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=87
+                // Event: START (RationalNumberType); next=85
                 error = encode_iso20_RationalNumberType(stream, &OverstayRuleType->OverstayFee);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 87;
+                    grammar_id = 85;
                 }
             }
             break;
-        case 87:
-            // Grammar: ID=87; read/write bits=1; START (OverstayFeePeriod)
+        case 85:
+            // Grammar: ID=85; read/write bits=1; START (OverstayFeePeriod)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4063,27 +4011,27 @@ static int encode_iso20_OverstayRuleType(exi_bitstream_t* stream, const struct i
 //          abstract=False; final=False;
 // Particle: EVPriceRuleStack, EVPriceRuleStackType (1, 1024);
 static int encode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, const struct iso20_EVPriceRuleStackListType* EVPriceRuleStackListType) {
-    int grammar_id = 88;
+    int grammar_id = 86;
     int done = 0;
     int error = 0;
     uint16_t EVPriceRuleStack_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 88:
-            // Grammar: ID=88; read/write bits=1; START (EVPriceRuleStack)
+        case 86:
+            // Grammar: ID=86; read/write bits=1; START (EVPriceRuleStack)
             if (EVPriceRuleStack_currentIndex < EVPriceRuleStackListType->EVPriceRuleStack.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVPriceRuleStackType); next=89
+                    // Event: START (EVPriceRuleStackType); next=87
                     error = encode_iso20_EVPriceRuleStackType(stream, &EVPriceRuleStackListType->EVPriceRuleStack.array[EVPriceRuleStack_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 89;
+                        grammar_id = 87;
                     }
                 }
             }
@@ -4092,18 +4040,18 @@ static int encode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, const 
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 89:
-            // Grammar: ID=89; read/write bits=2; LOOP (EVPriceRuleStack), END Element
+        case 87:
+            // Grammar: ID=87; read/write bits=2; LOOP (EVPriceRuleStack), END Element
             if (EVPriceRuleStack_currentIndex < EVPriceRuleStackListType->EVPriceRuleStack.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (EVPriceRuleStackType); next=89
+                    // Event: LOOP (EVPriceRuleStackType); next=87
                     error = encode_iso20_EVPriceRuleStackType(stream, &EVPriceRuleStackListType->EVPriceRuleStack.array[EVPriceRuleStack_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 89;
+                        grammar_id = 87;
                     }
                 }
             }
@@ -4145,20 +4093,20 @@ static int encode_iso20_EVPriceRuleStackListType(exi_bitstream_t* stream, const 
 //          abstract=False; final=False;
 // Particle: SPKISexp, base64Binary (1, 1); ANY, anyType (0, 1);
 static int encode_iso20_SPKIDataType(exi_bitstream_t* stream, const struct iso20_SPKIDataType* SPKIDataType) {
-    int grammar_id = 90;
+    int grammar_id = 88;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 90:
-            // Grammar: ID=90; read/write bits=1; START (SPKISexp)
+        case 88:
+            // Grammar: ID=88; read/write bits=1; START (SPKISexp)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=91
+                // Event: START (base64Binary); next=89
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -4172,15 +4120,15 @@ static int encode_iso20_SPKIDataType(exi_bitstream_t* stream, const struct iso20
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 91;
+                                grammar_id = 89;
                             }
                         }
                     }
                 }
             }
             break;
-        case 91:
-            // Grammar: ID=91; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 89:
+            // Grammar: ID=89; read/write bits=2; START (ANY), END Element, START (ANY)
             // ***** //
             //{
                 // No code for unsupported generic event: ANY (index=0)
@@ -4248,25 +4196,25 @@ static int encode_iso20_SPKIDataType(exi_bitstream_t* stream, const struct iso20
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignedInfo; type={http://www.w3.org/2000/09/xmldsig#}SignedInfoType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4);
+// Particle: Id, ID (0, 1); CanonicalizationMethod, CanonicalizationMethodType (1, 1); SignatureMethod, SignatureMethodType (1, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int encode_iso20_SignedInfoType(exi_bitstream_t* stream, const struct iso20_SignedInfoType* SignedInfoType) {
-    int grammar_id = 92;
+    int grammar_id = 90;
     int done = 0;
     int error = 0;
     uint16_t Reference_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 92:
-            // Grammar: ID=92; read/write bits=2; START (Id), START (CanonicalizationMethod)
+        case 90:
+            // Grammar: ID=90; read/write bits=2; START (Id), START (CanonicalizationMethod)
             if (SignedInfoType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=93
+                    // Event: START (Id, NCName); next=91
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignedInfoType->Id.charactersLen + 2));
@@ -4275,7 +4223,7 @@ static int encode_iso20_SignedInfoType(exi_bitstream_t* stream, const struct iso
                         error = exi_basetypes_encoder_characters(stream, SignedInfoType->Id.charactersLen, SignedInfoType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 93;
+                            grammar_id = 91;
                         }
                     }
                 }
@@ -4285,53 +4233,53 @@ static int encode_iso20_SignedInfoType(exi_bitstream_t* stream, const struct iso
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType); next=94
+                    // Event: START (CanonicalizationMethod, CanonicalizationMethodType); next=92
                     error = encode_iso20_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 94;
+                        grammar_id = 92;
                     }
                 }
             }
             break;
-        case 93:
-            // Grammar: ID=93; read/write bits=1; START (CanonicalizationMethod)
+        case 91:
+            // Grammar: ID=91; read/write bits=1; START (CanonicalizationMethod)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (CanonicalizationMethodType); next=94
+                // Event: START (CanonicalizationMethodType); next=92
                 error = encode_iso20_CanonicalizationMethodType(stream, &SignedInfoType->CanonicalizationMethod);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 94;
+                    grammar_id = 92;
                 }
             }
             break;
-        case 94:
-            // Grammar: ID=94; read/write bits=1; START (SignatureMethod)
+        case 92:
+            // Grammar: ID=92; read/write bits=1; START (SignatureMethod)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (SignatureMethodType); next=95
+                // Event: START (SignatureMethodType); next=93
                 error = encode_iso20_SignatureMethodType(stream, &SignedInfoType->SignatureMethod);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 95;
+                    grammar_id = 93;
                 }
             }
             break;
-        case 95:
-            // Grammar: ID=95; read/write bits=1; START (Reference)
+        case 93:
+            // Grammar: ID=93; read/write bits=1; START (Reference)
             if (Reference_currentIndex < SignedInfoType->Reference.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ReferenceType); next=96
+                    // Event: START (ReferenceType); next=94
                     error = encode_iso20_ReferenceType(stream, &SignedInfoType->Reference.array[Reference_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 96;
+                        grammar_id = 94;
                     }
                 }
             }
@@ -4340,44 +4288,18 @@ static int encode_iso20_SignedInfoType(exi_bitstream_t* stream, const struct iso
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 96:
-            // Grammar: ID=96; read/write bits=2; LOOP (Reference), END Element
+        case 94:
+            // Grammar: ID=94; read/write bits=2; LOOP (Reference), END Element
             if (Reference_currentIndex < SignedInfoType->Reference.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (ReferenceType); next=96
+                    // Event: LOOP (ReferenceType); next=94
                     error = encode_iso20_ReferenceType(stream, &SignedInfoType->Reference.array[Reference_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 96;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 97:
-            // Grammar: ID=97; read/write bits=2; LOOP (Reference), END Element
-            if (Reference_currentIndex < SignedInfoType->Reference.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (ReferenceType); next=2
-                    error = encode_iso20_ReferenceType(stream, &SignedInfoType->Reference.array[Reference_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 94;
                     }
                 }
             }
@@ -4419,20 +4341,20 @@ static int encode_iso20_SignedInfoType(exi_bitstream_t* stream, const struct iso
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); EVPowerScheduleEntries, EVPowerScheduleEntryListType (1, 1);
 static int encode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, const struct iso20_EVPowerScheduleType* EVPowerScheduleType) {
-    int grammar_id = 98;
+    int grammar_id = 95;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 98:
-            // Grammar: ID=98; read/write bits=1; START (TimeAnchor)
+        case 95:
+            // Grammar: ID=95; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=99
+                // Event: START (nonNegativeInteger); next=96
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -4443,14 +4365,14 @@ static int encode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, const struc
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 99;
+                            grammar_id = 96;
                         }
                     }
                 }
             }
             break;
-        case 99:
-            // Grammar: ID=99; read/write bits=1; START (EVPowerScheduleEntries)
+        case 96:
+            // Grammar: ID=96; read/write bits=1; START (EVPowerScheduleEntries)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4489,22 +4411,22 @@ static int encode_iso20_EVPowerScheduleType(exi_bitstream_t* stream, const struc
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
 static int encode_iso20_SignatureValueType(exi_bitstream_t* stream, const struct iso20_SignatureValueType* SignatureValueType) {
-    int grammar_id = 100;
+    int grammar_id = 97;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 100:
-            // Grammar: ID=100; read/write bits=2; START (Id), START (CONTENT)
+        case 97:
+            // Grammar: ID=97; read/write bits=2; START (Id), START (CONTENT)
             if (SignatureValueType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=101
+                    // Event: START (Id, NCName); next=98
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignatureValueType->Id.charactersLen + 2));
@@ -4513,7 +4435,7 @@ static int encode_iso20_SignatureValueType(exi_bitstream_t* stream, const struct
                         error = exi_basetypes_encoder_characters(stream, SignatureValueType->Id.charactersLen, SignatureValueType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 101;
+                            grammar_id = 98;
                         }
                     }
                 }
@@ -4536,8 +4458,8 @@ static int encode_iso20_SignatureValueType(exi_bitstream_t* stream, const struct
                 }
             }
             break;
-        case 101:
-            // Grammar: ID=101; read/write bits=1; START (CONTENT)
+        case 98:
+            // Grammar: ID=98; read/write bits=1; START (CONTENT)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -4580,23 +4502,23 @@ static int encode_iso20_SignatureValueType(exi_bitstream_t* stream, const struct
 //          abstract=False; final=False;
 // Particle: Certificate, certificateType (1, 3);
 static int encode_iso20_SubCertificatesType(exi_bitstream_t* stream, const struct iso20_SubCertificatesType* SubCertificatesType) {
-    int grammar_id = 102;
+    int grammar_id = 99;
     int done = 0;
     int error = 0;
     uint16_t Certificate_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 102:
-            // Grammar: ID=102; read/write bits=1; START (Certificate)
+        case 99:
+            // Grammar: ID=99; read/write bits=1; START (Certificate)
             if (Certificate_currentIndex < SubCertificatesType->Certificate.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (base64Binary); next=103
+                    // Event: START (base64Binary); next=100
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -4611,7 +4533,7 @@ static int encode_iso20_SubCertificatesType(exi_bitstream_t* stream, const struc
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 103;
+                                    grammar_id = 100;
                                 }
                             }
                         }
@@ -4623,14 +4545,14 @@ static int encode_iso20_SubCertificatesType(exi_bitstream_t* stream, const struc
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 103:
-            // Grammar: ID=103; read/write bits=2; LOOP (Certificate), END Element
+        case 100:
+            // Grammar: ID=100; read/write bits=2; LOOP (Certificate), END Element
             if (Certificate_currentIndex < SubCertificatesType->Certificate.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (base64Binary); next=103
+                    // Event: LOOP (base64Binary); next=100
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -4645,47 +4567,7 @@ static int encode_iso20_SubCertificatesType(exi_bitstream_t* stream, const struc
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 103;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 104:
-            // Grammar: ID=104; read/write bits=2; LOOP (Certificate), END Element
-            if (Certificate_currentIndex < SubCertificatesType->Certificate.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (base64Binary); next=2
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_uint_16(stream, (uint16_t)SubCertificatesType->Certificate.array[Certificate_currentIndex].bytesLen);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            error = exi_basetypes_encoder_bytes(stream, SubCertificatesType->Certificate.array[Certificate_currentIndex].bytesLen, SubCertificatesType->Certificate.array[Certificate_currentIndex].bytes, iso20_certificateType_BYTES_SIZE);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                Certificate_currentIndex++;
-                                // encode END Element
-                                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                                if (error == EXI_ERROR__NO_ERROR)
-                                {
-                                    grammar_id = 2;
+                                    grammar_id = 100;
                                 }
                             }
                         }
@@ -4730,20 +4612,20 @@ static int encode_iso20_SubCertificatesType(exi_bitstream_t* stream, const struc
 //          abstract=False; final=False; choice=True;
 // Particle: Name, nameType (1, 1); boolValue, boolean (0, 1); byteValue, byte (0, 1); shortValue, short (0, 1); intValue, int (0, 1); rationalNumber, RationalNumberType (0, 1); finiteString, nameType (0, 1);
 static int encode_iso20_ParameterType(exi_bitstream_t* stream, const struct iso20_ParameterType* ParameterType) {
-    int grammar_id = 105;
+    int grammar_id = 101;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 105:
-            // Grammar: ID=105; read/write bits=1; START (Name)
+        case 101:
+            // Grammar: ID=101; read/write bits=1; START (Name)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=106
+                // Event: START (string); next=102
 
                 // string should not be found in table, so add 2
                 error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ParameterType->Name.charactersLen + 2));
@@ -4752,13 +4634,13 @@ static int encode_iso20_ParameterType(exi_bitstream_t* stream, const struct iso2
                     error = exi_basetypes_encoder_characters(stream, ParameterType->Name.charactersLen, ParameterType->Name.characters, iso20_Name_CHARACTER_SIZE);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 106;
+                        grammar_id = 102;
                     }
                 }
             }
             break;
-        case 106:
-            // Grammar: ID=106; read/write bits=3; START (boolValue), START (byteValue), START (shortValue), START (intValue), START (rationalNumber), START (finiteString)
+        case 102:
+            // Grammar: ID=102; read/write bits=3; START (boolValue), START (byteValue), START (shortValue), START (intValue), START (rationalNumber), START (finiteString)
             if (ParameterType->boolValue_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
@@ -4917,20 +4799,20 @@ static int encode_iso20_ParameterType(exi_bitstream_t* stream, const struct iso2
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); Currency, currencyType (1, 1); PriceAlgorithm, identifierType (1, 1); EVPriceRuleStacks, EVPriceRuleStackListType (1, 1);
 static int encode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, const struct iso20_EVAbsolutePriceScheduleType* EVAbsolutePriceScheduleType) {
-    int grammar_id = 107;
+    int grammar_id = 103;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 107:
-            // Grammar: ID=107; read/write bits=1; START (TimeAnchor)
+        case 103:
+            // Grammar: ID=103; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=108
+                // Event: START (nonNegativeInteger); next=104
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -4941,18 +4823,18 @@ static int encode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, con
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 108;
+                            grammar_id = 104;
                         }
                     }
                 }
             }
             break;
-        case 108:
-            // Grammar: ID=108; read/write bits=1; START (Currency)
+        case 104:
+            // Grammar: ID=104; read/write bits=1; START (Currency)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=109
+                // Event: START (string); next=105
 
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
@@ -4968,19 +4850,19 @@ static int encode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, con
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 109;
+                                grammar_id = 105;
                             }
                         }
                     }
                 }
             }
             break;
-        case 109:
-            // Grammar: ID=109; read/write bits=1; START (PriceAlgorithm)
+        case 105:
+            // Grammar: ID=105; read/write bits=1; START (PriceAlgorithm)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=110
+                // Event: START (string); next=106
 
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
@@ -4996,15 +4878,15 @@ static int encode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, con
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 110;
+                                grammar_id = 106;
                             }
                         }
                     }
                 }
             }
             break;
-        case 110:
-            // Grammar: ID=110; read/write bits=1; START (EVPriceRuleStacks)
+        case 106:
+            // Grammar: ID=106; read/write bits=1; START (EVPriceRuleStacks)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -5043,29 +4925,29 @@ static int encode_iso20_EVAbsolutePriceScheduleType(exi_bitstream_t* stream, con
 //          abstract=False; final=False;
 // Particle: Amount, RationalNumberType (1, 1); CostPerUnit, RationalNumberType (1, 1);
 static int encode_iso20_DetailedCostType(exi_bitstream_t* stream, const struct iso20_DetailedCostType* DetailedCostType) {
-    int grammar_id = 111;
+    int grammar_id = 107;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 111:
-            // Grammar: ID=111; read/write bits=1; START (Amount)
+        case 107:
+            // Grammar: ID=107; read/write bits=1; START (Amount)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=112
+                // Event: START (RationalNumberType); next=108
                 error = encode_iso20_RationalNumberType(stream, &DetailedCostType->Amount);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 112;
+                    grammar_id = 108;
                 }
             }
             break;
-        case 112:
-            // Grammar: ID=112; read/write bits=1; START (CostPerUnit)
+        case 108:
+            // Grammar: ID=108; read/write bits=1; START (CostPerUnit)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -5104,22 +4986,22 @@ static int encode_iso20_DetailedCostType(exi_bitstream_t* stream, const struct i
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); KeyName, string (0, 1); KeyValue, KeyValueType (0, 1); RetrievalMethod, RetrievalMethodType (0, 1); X509Data, X509DataType (0, 1); PGPData, PGPDataType (0, 1); SPKIData, SPKIDataType (0, 1); MgmtData, string (0, 1); ANY, anyType (0, 1);
 static int encode_iso20_KeyInfoType(exi_bitstream_t* stream, const struct iso20_KeyInfoType* KeyInfoType) {
-    int grammar_id = 113;
+    int grammar_id = 109;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 113:
-            // Grammar: ID=113; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 109:
+            // Grammar: ID=109; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             if (KeyInfoType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 4, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=114
+                    // Event: START (Id, NCName); next=110
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(KeyInfoType->Id.charactersLen + 2));
@@ -5128,7 +5010,7 @@ static int encode_iso20_KeyInfoType(exi_bitstream_t* stream, const struct iso20_
                         error = exi_basetypes_encoder_characters(stream, KeyInfoType->Id.charactersLen, KeyInfoType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 114;
+                            grammar_id = 110;
                         }
                     }
                 }
@@ -5281,8 +5163,8 @@ static int encode_iso20_KeyInfoType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 114:
-            // Grammar: ID=114; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 110:
+            // Grammar: ID=110; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             if (KeyInfoType->KeyName_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 4, 0);
@@ -5456,24 +5338,24 @@ static int encode_iso20_KeyInfoType(exi_bitstream_t* stream, const struct iso20_
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Object; type={http://www.w3.org/2000/09/xmldsig#}ObjectType; base type=; content type=mixed;
 //          abstract=False; final=False;
-// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1)(old 1, 1);
+// Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1) (old 1, 1);
 static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_ObjectType* ObjectType) {
-    int grammar_id = 115;
+    int grammar_id = 111;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 115:
-            // Grammar: ID=115; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 111:
+            // Grammar: ID=111; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             if (ObjectType->Encoding_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Encoding, anyURI); next=116
+                    // Event: START (Encoding, anyURI); next=112
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ObjectType->Encoding.charactersLen + 2));
@@ -5482,7 +5364,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                         error = exi_basetypes_encoder_characters(stream, ObjectType->Encoding.charactersLen, ObjectType->Encoding.characters, iso20_Encoding_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 116;
+                            grammar_id = 112;
                         }
                     }
                 }
@@ -5492,7 +5374,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=117
+                    // Event: START (Id, NCName); next=113
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ObjectType->Id.charactersLen + 2));
@@ -5501,7 +5383,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                         error = exi_basetypes_encoder_characters(stream, ObjectType->Id.charactersLen, ObjectType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 117;
+                            grammar_id = 113;
                         }
                     }
                 }
@@ -5511,7 +5393,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MimeType, string); next=118
+                    // Event: START (MimeType, string); next=114
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ObjectType->MimeType.charactersLen + 2));
@@ -5520,7 +5402,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                         error = exi_basetypes_encoder_characters(stream, ObjectType->MimeType.charactersLen, ObjectType->MimeType.characters, iso20_MimeType_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 118;
+                            grammar_id = 114;
                         }
                     }
                 }
@@ -5567,14 +5449,14 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                 }
             }
             break;
-        case 116:
-            // Grammar: ID=116; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 112:
+            // Grammar: ID=112; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             if (ObjectType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=117
+                    // Event: START (Id, NCName); next=113
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ObjectType->Id.charactersLen + 2));
@@ -5583,7 +5465,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                         error = exi_basetypes_encoder_characters(stream, ObjectType->Id.charactersLen, ObjectType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 117;
+                            grammar_id = 113;
                         }
                     }
                 }
@@ -5593,7 +5475,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MimeType, string); next=118
+                    // Event: START (MimeType, string); next=114
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ObjectType->MimeType.charactersLen + 2));
@@ -5602,7 +5484,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                         error = exi_basetypes_encoder_characters(stream, ObjectType->MimeType.charactersLen, ObjectType->MimeType.characters, iso20_MimeType_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 118;
+                            grammar_id = 114;
                         }
                     }
                 }
@@ -5649,14 +5531,14 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                 }
             }
             break;
-        case 117:
-            // Grammar: ID=117; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
+        case 113:
+            // Grammar: ID=113; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
             if (ObjectType->MimeType_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MimeType, string); next=118
+                    // Event: START (MimeType, string); next=114
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ObjectType->MimeType.charactersLen + 2));
@@ -5665,7 +5547,7 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                         error = exi_basetypes_encoder_characters(stream, ObjectType->MimeType.charactersLen, ObjectType->MimeType.characters, iso20_MimeType_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 118;
+                            grammar_id = 114;
                         }
                     }
                 }
@@ -5712,8 +5594,8 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
                 }
             }
             break;
-        case 118:
-            // Grammar: ID=118; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 114:
+            // Grammar: ID=114; read/write bits=2; START (ANY), END Element, START (ANY)
             // ***** //
             //{
                 // No code for unsupported generic event: ANY (index=0)
@@ -5783,27 +5665,27 @@ static int encode_iso20_ObjectType(exi_bitstream_t* stream, const struct iso20_O
 //          abstract=False; final=False;
 // Particle: PriceLevelScheduleEntry, PriceLevelScheduleEntryType (1, 1024);
 static int encode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream, const struct iso20_PriceLevelScheduleEntryListType* PriceLevelScheduleEntryListType) {
-    int grammar_id = 119;
+    int grammar_id = 115;
     int done = 0;
     int error = 0;
     uint16_t PriceLevelScheduleEntry_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 119:
-            // Grammar: ID=119; read/write bits=1; START (PriceLevelScheduleEntry)
+        case 115:
+            // Grammar: ID=115; read/write bits=1; START (PriceLevelScheduleEntry)
             if (PriceLevelScheduleEntry_currentIndex < PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PriceLevelScheduleEntryType); next=120
+                    // Event: START (PriceLevelScheduleEntryType); next=116
                     error = encode_iso20_PriceLevelScheduleEntryType(stream, &PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.array[PriceLevelScheduleEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 120;
+                        grammar_id = 116;
                     }
                 }
             }
@@ -5812,18 +5694,18 @@ static int encode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 120:
-            // Grammar: ID=120; read/write bits=2; LOOP (PriceLevelScheduleEntry), END Element
+        case 116:
+            // Grammar: ID=116; read/write bits=2; LOOP (PriceLevelScheduleEntry), END Element
             if (PriceLevelScheduleEntry_currentIndex < PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (PriceLevelScheduleEntryType); next=120
+                    // Event: LOOP (PriceLevelScheduleEntryType); next=116
                     error = encode_iso20_PriceLevelScheduleEntryType(stream, &PriceLevelScheduleEntryListType->PriceLevelScheduleEntry.array[PriceLevelScheduleEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 120;
+                        grammar_id = 116;
                     }
                 }
             }
@@ -5865,20 +5747,20 @@ static int encode_iso20_PriceLevelScheduleEntryListType(exi_bitstream_t* stream,
 //          abstract=False; final=False;
 // Particle: TaxRuleID, numericIDType (1, 1); Amount, RationalNumberType (1, 1);
 static int encode_iso20_DetailedTaxType(exi_bitstream_t* stream, const struct iso20_DetailedTaxType* DetailedTaxType) {
-    int grammar_id = 121;
+    int grammar_id = 117;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 121:
-            // Grammar: ID=121; read/write bits=1; START (TaxRuleID)
+        case 117:
+            // Grammar: ID=117; read/write bits=1; START (TaxRuleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedInt); next=122
+                // Event: START (unsignedInt); next=118
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -5889,14 +5771,14 @@ static int encode_iso20_DetailedTaxType(exi_bitstream_t* stream, const struct is
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 122;
+                            grammar_id = 118;
                         }
                     }
                 }
             }
             break;
-        case 122:
-            // Grammar: ID=122; read/write bits=1; START (Amount)
+        case 118:
+            // Grammar: ID=118; read/write bits=1; START (Amount)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -5935,27 +5817,27 @@ static int encode_iso20_DetailedTaxType(exi_bitstream_t* stream, const struct is
 //          abstract=False; final=False;
 // Particle: TaxRule, TaxRuleType (1, 10);
 static int encode_iso20_TaxRuleListType(exi_bitstream_t* stream, const struct iso20_TaxRuleListType* TaxRuleListType) {
-    int grammar_id = 123;
+    int grammar_id = 119;
     int done = 0;
     int error = 0;
     uint16_t TaxRule_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 123:
-            // Grammar: ID=123; read/write bits=1; START (TaxRule)
+        case 119:
+            // Grammar: ID=119; read/write bits=1; START (TaxRule)
             if (TaxRule_currentIndex < TaxRuleListType->TaxRule.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxRuleType); next=124
+                    // Event: START (TaxRuleType); next=120
                     error = encode_iso20_TaxRuleType(stream, &TaxRuleListType->TaxRule.array[TaxRule_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 124;
+                        grammar_id = 120;
                     }
                 }
             }
@@ -5964,44 +5846,18 @@ static int encode_iso20_TaxRuleListType(exi_bitstream_t* stream, const struct is
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 124:
-            // Grammar: ID=124; read/write bits=2; LOOP (TaxRule), END Element
+        case 120:
+            // Grammar: ID=120; read/write bits=2; LOOP (TaxRule), END Element
             if (TaxRule_currentIndex < TaxRuleListType->TaxRule.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (TaxRuleType); next=124
+                    // Event: LOOP (TaxRuleType); next=120
                     error = encode_iso20_TaxRuleType(stream, &TaxRuleListType->TaxRule.array[TaxRule_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 124;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 125:
-            // Grammar: ID=125; read/write bits=2; LOOP (TaxRule), END Element
-            if (TaxRule_currentIndex < TaxRuleListType->TaxRule.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (TaxRuleType); next=2
-                    error = encode_iso20_TaxRuleType(stream, &TaxRuleListType->TaxRule.array[TaxRule_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 120;
                     }
                 }
             }
@@ -6041,29 +5897,29 @@ static int encode_iso20_TaxRuleListType(exi_bitstream_t* stream, const struct is
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}PriceRuleStacks; type={urn:iso:std:iso:15118:-20:CommonMessages}PriceRuleStackListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: PriceRuleStack, PriceRuleStackType (1, 64);
+// Particle: PriceRuleStack, PriceRuleStackType (1, 64) (original max 1024);
 static int encode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, const struct iso20_PriceRuleStackListType* PriceRuleStackListType) {
-    int grammar_id = 126;
+    int grammar_id = 121;
     int done = 0;
     int error = 0;
     uint16_t PriceRuleStack_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 126:
-            // Grammar: ID=126; read/write bits=1; START (PriceRuleStack)
+        case 121:
+            // Grammar: ID=121; read/write bits=1; START (PriceRuleStack)
             if (PriceRuleStack_currentIndex < PriceRuleStackListType->PriceRuleStack.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PriceRuleStackType); next=127
+                    // Event: START (PriceRuleStackType); next=122
                     error = encode_iso20_PriceRuleStackType(stream, &PriceRuleStackListType->PriceRuleStack.array[PriceRuleStack_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 127;
+                        grammar_id = 122;
                     }
                 }
             }
@@ -6072,18 +5928,18 @@ static int encode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, const st
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 127:
-            // Grammar: ID=127; read/write bits=2; LOOP (PriceRuleStack), END Element
+        case 122:
+            // Grammar: ID=122; read/write bits=2; LOOP (PriceRuleStack), END Element
             if (PriceRuleStack_currentIndex < PriceRuleStackListType->PriceRuleStack.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (PriceRuleStackType); next=127
+                    // Event: LOOP (PriceRuleStackType); next=122
                     error = encode_iso20_PriceRuleStackType(stream, &PriceRuleStackListType->PriceRuleStack.array[PriceRuleStack_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 127;
+                        grammar_id = 122;
                     }
                 }
             }
@@ -6125,23 +5981,23 @@ static int encode_iso20_PriceRuleStackListType(exi_bitstream_t* stream, const st
 //          abstract=False; final=False;
 // Particle: OverstayTimeThreshold, unsignedInt (0, 1); OverstayPowerThreshold, RationalNumberType (0, 1); OverstayRule, OverstayRuleType (1, 5);
 static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const struct iso20_OverstayRuleListType* OverstayRuleListType) {
-    int grammar_id = 128;
+    int grammar_id = 123;
     int done = 0;
     int error = 0;
     uint16_t OverstayRule_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 128:
-            // Grammar: ID=128; read/write bits=2; START (OverstayTimeThreshold), START (OverstayPowerThreshold), START (OverstayRule)
+        case 123:
+            // Grammar: ID=123; read/write bits=2; START (OverstayTimeThreshold), START (OverstayPowerThreshold), START (OverstayRule)
             if (OverstayRuleListType->OverstayTimeThreshold_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayTimeThreshold, unsignedLong); next=131
+                    // Event: START (OverstayTimeThreshold, unsignedLong); next=125
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -6152,7 +6008,7 @@ static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const stru
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 131;
+                                grammar_id = 125;
                             }
                         }
                     }
@@ -6163,11 +6019,11 @@ static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const stru
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayPowerThreshold, RationalNumberType); next=134
+                    // Event: START (OverstayPowerThreshold, RationalNumberType); next=127
                     error = encode_iso20_RationalNumberType(stream, &OverstayRuleListType->OverstayPowerThreshold);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 134;
+                        grammar_id = 127;
                     }
                 }
             }
@@ -6178,28 +6034,28 @@ static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const stru
                     error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        // Event: START (OverstayRuleType); next=129
+                        // Event: START (OverstayRuleType); next=124
                         error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 129;
+                            grammar_id = 124;
                         }
                     }
                 }
             }
             break;
-        case 129:
-            // Grammar: ID=129; read/write bits=2; LOOP (OverstayRule), END Element
+        case 124:
+            // Grammar: ID=124; read/write bits=2; LOOP (OverstayRule), END Element
             if (OverstayRule_currentIndex < OverstayRuleListType->OverstayRule.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (OverstayRuleType); next=129
+                    // Event: LOOP (OverstayRuleType); next=124
                     error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 129;
+                        grammar_id = 124;
                     }
                 }
             }
@@ -6214,44 +6070,18 @@ static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const stru
                 }
             }
             break;
-        case 130:
-            // Grammar: ID=130; read/write bits=2; LOOP (OverstayRule), END Element
-            if (OverstayRule_currentIndex < OverstayRuleListType->OverstayRule.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (OverstayRuleType); next=2
-                    error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 131:
-            // Grammar: ID=131; read/write bits=2; START (OverstayPowerThreshold), START (OverstayRule)
+        case 125:
+            // Grammar: ID=125; read/write bits=2; START (OverstayPowerThreshold), START (OverstayRule)
             if (OverstayRuleListType->OverstayPowerThreshold_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayPowerThreshold, RationalNumberType); next=134
+                    // Event: START (OverstayPowerThreshold, RationalNumberType); next=127
                     error = encode_iso20_RationalNumberType(stream, &OverstayRuleListType->OverstayPowerThreshold);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 134;
+                        grammar_id = 127;
                     }
                 }
             }
@@ -6262,28 +6092,28 @@ static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const stru
                     error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        // Event: START (OverstayRuleType); next=132
+                        // Event: START (OverstayRuleType); next=126
                         error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 132;
+                            grammar_id = 126;
                         }
                     }
                 }
             }
             break;
-        case 132:
-            // Grammar: ID=132; read/write bits=2; LOOP (OverstayRule), END Element
+        case 126:
+            // Grammar: ID=126; read/write bits=2; LOOP (OverstayRule), END Element
             if (OverstayRule_currentIndex < OverstayRuleListType->OverstayRule.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (OverstayRuleType); next=132
+                    // Event: LOOP (OverstayRuleType); next=126
                     error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 132;
+                        grammar_id = 126;
                     }
                 }
             }
@@ -6298,44 +6128,18 @@ static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const stru
                 }
             }
             break;
-        case 133:
-            // Grammar: ID=133; read/write bits=2; LOOP (OverstayRule), END Element
-            if (OverstayRule_currentIndex < OverstayRuleListType->OverstayRule.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (OverstayRuleType); next=2
-                    error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 134:
-            // Grammar: ID=134; read/write bits=1; START (OverstayRule)
+        case 127:
+            // Grammar: ID=127; read/write bits=1; START (OverstayRule)
             if (OverstayRule_currentIndex < OverstayRuleListType->OverstayRule.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayRuleType); next=135
+                    // Event: START (OverstayRuleType); next=128
                     error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 135;
+                        grammar_id = 128;
                     }
                 }
             }
@@ -6344,44 +6148,18 @@ static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const stru
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 135:
-            // Grammar: ID=135; read/write bits=2; LOOP (OverstayRule), END Element
+        case 128:
+            // Grammar: ID=128; read/write bits=2; LOOP (OverstayRule), END Element
             if (OverstayRule_currentIndex < OverstayRuleListType->OverstayRule.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (OverstayRuleType); next=135
+                    // Event: LOOP (OverstayRuleType); next=128
                     error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 135;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 136:
-            // Grammar: ID=136; read/write bits=2; LOOP (OverstayRule), END Element
-            if (OverstayRule_currentIndex < OverstayRuleListType->OverstayRule.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (OverstayRuleType); next=2
-                    error = encode_iso20_OverstayRuleType(stream, &OverstayRuleListType->OverstayRule.array[OverstayRule_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 128;
                     }
                 }
             }
@@ -6423,27 +6201,27 @@ static int encode_iso20_OverstayRuleListType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False;
 // Particle: AdditionalService, AdditionalServiceType (1, 5);
 static int encode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, const struct iso20_AdditionalServiceListType* AdditionalServiceListType) {
-    int grammar_id = 137;
+    int grammar_id = 129;
     int done = 0;
     int error = 0;
     uint16_t AdditionalService_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 137:
-            // Grammar: ID=137; read/write bits=1; START (AdditionalService)
+        case 129:
+            // Grammar: ID=129; read/write bits=1; START (AdditionalService)
             if (AdditionalService_currentIndex < AdditionalServiceListType->AdditionalService.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (AdditionalServiceType); next=138
+                    // Event: START (AdditionalServiceType); next=130
                     error = encode_iso20_AdditionalServiceType(stream, &AdditionalServiceListType->AdditionalService.array[AdditionalService_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 138;
+                        grammar_id = 130;
                     }
                 }
             }
@@ -6452,44 +6230,18 @@ static int encode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, const
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 138:
-            // Grammar: ID=138; read/write bits=2; LOOP (AdditionalService), END Element
+        case 130:
+            // Grammar: ID=130; read/write bits=2; LOOP (AdditionalService), END Element
             if (AdditionalService_currentIndex < AdditionalServiceListType->AdditionalService.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (AdditionalServiceType); next=138
+                    // Event: LOOP (AdditionalServiceType); next=130
                     error = encode_iso20_AdditionalServiceType(stream, &AdditionalServiceListType->AdditionalService.array[AdditionalService_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 138;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 139:
-            // Grammar: ID=139; read/write bits=2; LOOP (AdditionalService), END Element
-            if (AdditionalService_currentIndex < AdditionalServiceListType->AdditionalService.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (AdditionalServiceType); next=2
-                    error = encode_iso20_AdditionalServiceType(stream, &AdditionalServiceListType->AdditionalService.array[AdditionalService_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 130;
                     }
                 }
             }
@@ -6531,20 +6283,20 @@ static int encode_iso20_AdditionalServiceListType(exi_bitstream_t* stream, const
 //          abstract=False; final=False;
 // Particle: ServiceID, serviceIDType (1, 1); FreeService, boolean (1, 1);
 static int encode_iso20_ServiceType(exi_bitstream_t* stream, const struct iso20_ServiceType* ServiceType) {
-    int grammar_id = 140;
+    int grammar_id = 131;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 140:
-            // Grammar: ID=140; read/write bits=1; START (ServiceID)
+        case 131:
+            // Grammar: ID=131; read/write bits=1; START (ServiceID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=141
+                // Event: START (unsignedShort); next=132
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -6555,14 +6307,14 @@ static int encode_iso20_ServiceType(exi_bitstream_t* stream, const struct iso20_
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 141;
+                            grammar_id = 132;
                         }
                     }
                 }
             }
             break;
-        case 141:
-            // Grammar: ID=141; read/write bits=1; START (FreeService)
+        case 132:
+            // Grammar: ID=132; read/write bits=1; START (FreeService)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -6608,23 +6360,23 @@ static int encode_iso20_ServiceType(exi_bitstream_t* stream, const struct iso20_
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}ParameterSet; type={urn:iso:std:iso:15118:-20:CommonMessages}ParameterSetType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSetID, serviceIDType (1, 1); Parameter, ParameterType (1, 8);
+// Particle: ParameterSetID, serviceIDType (1, 1); Parameter, ParameterType (1, 8) (original max 32);
 static int encode_iso20_ParameterSetType(exi_bitstream_t* stream, const struct iso20_ParameterSetType* ParameterSetType) {
-    int grammar_id = 142;
+    int grammar_id = 133;
     int done = 0;
     int error = 0;
     uint16_t Parameter_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 142:
-            // Grammar: ID=142; read/write bits=1; START (ParameterSetID)
+        case 133:
+            // Grammar: ID=133; read/write bits=1; START (ParameterSetID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=143
+                // Event: START (unsignedShort); next=134
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -6635,24 +6387,24 @@ static int encode_iso20_ParameterSetType(exi_bitstream_t* stream, const struct i
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 143;
+                            grammar_id = 134;
                         }
                     }
                 }
             }
             break;
-        case 143:
-            // Grammar: ID=143; read/write bits=1; START (Parameter)
+        case 134:
+            // Grammar: ID=134; read/write bits=1; START (Parameter)
             if (Parameter_currentIndex < ParameterSetType->Parameter.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ParameterType); next=144
+                    // Event: START (ParameterType); next=135
                     error = encode_iso20_ParameterType(stream, &ParameterSetType->Parameter.array[Parameter_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 144;
+                        grammar_id = 135;
                     }
                 }
             }
@@ -6661,44 +6413,18 @@ static int encode_iso20_ParameterSetType(exi_bitstream_t* stream, const struct i
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 144:
-            // Grammar: ID=144; read/write bits=2; LOOP (Parameter), END Element
+        case 135:
+            // Grammar: ID=135; read/write bits=2; LOOP (Parameter), END Element
             if (Parameter_currentIndex < ParameterSetType->Parameter.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (ParameterType); next=144
+                    // Event: LOOP (ParameterType); next=135
                     error = encode_iso20_ParameterType(stream, &ParameterSetType->Parameter.array[Parameter_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 144;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 145:
-            // Grammar: ID=145; read/write bits=2; LOOP (Parameter), END Element
-            if (Parameter_currentIndex < ParameterSetType->Parameter.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (ParameterType); next=2
-                    error = encode_iso20_ParameterType(stream, &ParameterSetType->Parameter.array[Parameter_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 135;
                     }
                 }
             }
@@ -6740,23 +6466,23 @@ static int encode_iso20_ParameterSetType(exi_bitstream_t* stream, const struct i
 //          abstract=False; final=False;
 // Particle: ProviderID, nameType (1, 128);
 static int encode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, const struct iso20_SupportedProvidersListType* SupportedProvidersListType) {
-    int grammar_id = 146;
+    int grammar_id = 136;
     int done = 0;
     int error = 0;
     uint16_t ProviderID_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 146:
-            // Grammar: ID=146; read/write bits=1; START (ProviderID)
+        case 136:
+            // Grammar: ID=136; read/write bits=1; START (ProviderID)
             if (ProviderID_currentIndex < SupportedProvidersListType->ProviderID.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (string); next=147
+                    // Event: START (string); next=137
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -6773,7 +6499,7 @@ static int encode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, cons
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 147;
+                                    grammar_id = 137;
                                 }
                             }
                         }
@@ -6785,14 +6511,14 @@ static int encode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, cons
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 147:
-            // Grammar: ID=147; read/write bits=2; LOOP (ProviderID), END Element
+        case 137:
+            // Grammar: ID=137; read/write bits=2; LOOP (ProviderID), END Element
             if (ProviderID_currentIndex < SupportedProvidersListType->ProviderID.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (string); next=147
+                    // Event: LOOP (string); next=137
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -6809,7 +6535,7 @@ static int encode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, cons
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 147;
+                                    grammar_id = 137;
                                 }
                             }
                         }
@@ -6854,20 +6580,20 @@ static int encode_iso20_SupportedProvidersListType(exi_bitstream_t* stream, cons
 //          abstract=False; final=False;
 // Particle: Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (1, 1);
 static int encode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, const struct iso20_ContractCertificateChainType* ContractCertificateChainType) {
-    int grammar_id = 148;
+    int grammar_id = 138;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 148:
-            // Grammar: ID=148; read/write bits=1; START (Certificate)
+        case 138:
+            // Grammar: ID=138; read/write bits=1; START (Certificate)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=149
+                // Event: START (base64Binary); next=139
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -6881,15 +6607,15 @@ static int encode_iso20_ContractCertificateChainType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 149;
+                                grammar_id = 139;
                             }
                         }
                     }
                 }
             }
             break;
-        case 149:
-            // Grammar: ID=149; read/write bits=1; START (SubCertificates)
+        case 139:
+            // Grammar: ID=139; read/write bits=1; START (SubCertificates)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -6939,20 +6665,20 @@ static int encode_iso20_Dynamic_EVPPTControlModeType(exi_bitstream_t* stream, co
 //          abstract=False; final=False;
 // Particle: MeterID, meterIDType (1, 1); ChargedEnergyReadingWh, unsignedLong (1, 1); BPT_DischargedEnergyReadingWh, unsignedLong (0, 1); CapacitiveEnergyReadingVARh, unsignedLong (0, 1); BPT_InductiveEnergyReadingVARh, unsignedLong (0, 1); MeterSignature, meterSignatureType (0, 1); MeterStatus, short (0, 1); MeterTimestamp, unsignedLong (0, 1);
 static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso20_MeterInfoType* MeterInfoType) {
-    int grammar_id = 150;
+    int grammar_id = 140;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 150:
-            // Grammar: ID=150; read/write bits=1; START (MeterID)
+        case 140:
+            // Grammar: ID=140; read/write bits=1; START (MeterID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=151
+                // Event: START (string); next=141
 
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
@@ -6968,19 +6694,19 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 151;
+                                grammar_id = 141;
                             }
                         }
                     }
                 }
             }
             break;
-        case 151:
-            // Grammar: ID=151; read/write bits=1; START (ChargedEnergyReadingWh)
+        case 141:
+            // Grammar: ID=141; read/write bits=1; START (ChargedEnergyReadingWh)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=152
+                // Event: START (nonNegativeInteger); next=142
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -6991,20 +6717,20 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 152;
+                            grammar_id = 142;
                         }
                     }
                 }
             }
             break;
-        case 152:
-            // Grammar: ID=152; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 142:
+            // Grammar: ID=142; read/write bits=3; START (BPT_DischargedEnergyReadingWh), START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             if (MeterInfoType->BPT_DischargedEnergyReadingWh_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_DischargedEnergyReadingWh, nonNegativeInteger); next=153
+                    // Event: START (BPT_DischargedEnergyReadingWh, nonNegativeInteger); next=143
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7015,7 +6741,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 153;
+                                grammar_id = 143;
                             }
                         }
                     }
@@ -7026,7 +6752,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (CapacitiveEnergyReadingVARh, nonNegativeInteger); next=154
+                    // Event: START (CapacitiveEnergyReadingVARh, nonNegativeInteger); next=144
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7037,7 +6763,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 154;
+                                grammar_id = 144;
                             }
                         }
                     }
@@ -7048,7 +6774,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_InductiveEnergyReadingVARh, nonNegativeInteger); next=155
+                    // Event: START (BPT_InductiveEnergyReadingVARh, nonNegativeInteger); next=145
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7059,7 +6785,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 155;
+                                grammar_id = 145;
                             }
                         }
                     }
@@ -7070,7 +6796,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterSignature, base64Binary); next=156
+                    // Event: START (MeterSignature, base64Binary); next=146
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7084,7 +6810,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 156;
+                                    grammar_id = 146;
                                 }
                             }
                         }
@@ -7096,7 +6822,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 4);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterStatus, int); next=157
+                    // Event: START (MeterStatus, int); next=147
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7107,7 +6833,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 157;
+                                grammar_id = 147;
                             }
                         }
                     }
@@ -7146,14 +6872,14 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 153:
-            // Grammar: ID=153; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 143:
+            // Grammar: ID=143; read/write bits=3; START (CapacitiveEnergyReadingVARh), START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             if (MeterInfoType->CapacitiveEnergyReadingVARh_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (CapacitiveEnergyReadingVARh, nonNegativeInteger); next=154
+                    // Event: START (CapacitiveEnergyReadingVARh, nonNegativeInteger); next=144
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7164,7 +6890,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 154;
+                                grammar_id = 144;
                             }
                         }
                     }
@@ -7175,7 +6901,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_InductiveEnergyReadingVARh, nonNegativeInteger); next=155
+                    // Event: START (BPT_InductiveEnergyReadingVARh, nonNegativeInteger); next=145
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7186,7 +6912,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 155;
+                                grammar_id = 145;
                             }
                         }
                     }
@@ -7197,7 +6923,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterSignature, base64Binary); next=156
+                    // Event: START (MeterSignature, base64Binary); next=146
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7211,7 +6937,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 156;
+                                    grammar_id = 146;
                                 }
                             }
                         }
@@ -7223,7 +6949,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterStatus, int); next=157
+                    // Event: START (MeterStatus, int); next=147
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7234,7 +6960,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 157;
+                                grammar_id = 147;
                             }
                         }
                     }
@@ -7273,14 +6999,14 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 154:
-            // Grammar: ID=154; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 144:
+            // Grammar: ID=144; read/write bits=3; START (BPT_InductiveEnergyReadingVARh), START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             if (MeterInfoType->BPT_InductiveEnergyReadingVARh_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_InductiveEnergyReadingVARh, nonNegativeInteger); next=155
+                    // Event: START (BPT_InductiveEnergyReadingVARh, nonNegativeInteger); next=145
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7291,7 +7017,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 155;
+                                grammar_id = 145;
                             }
                         }
                     }
@@ -7302,7 +7028,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterSignature, base64Binary); next=156
+                    // Event: START (MeterSignature, base64Binary); next=146
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7316,7 +7042,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 156;
+                                    grammar_id = 146;
                                 }
                             }
                         }
@@ -7328,7 +7054,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterStatus, int); next=157
+                    // Event: START (MeterStatus, int); next=147
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7339,7 +7065,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 157;
+                                grammar_id = 147;
                             }
                         }
                     }
@@ -7378,14 +7104,14 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 155:
-            // Grammar: ID=155; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
+        case 145:
+            // Grammar: ID=145; read/write bits=3; START (MeterSignature), START (MeterStatus), START (MeterTimestamp), END Element
             if (MeterInfoType->MeterSignature_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterSignature, base64Binary); next=156
+                    // Event: START (MeterSignature, base64Binary); next=146
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7399,7 +7125,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 156;
+                                    grammar_id = 146;
                                 }
                             }
                         }
@@ -7411,7 +7137,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterStatus, int); next=157
+                    // Event: START (MeterStatus, int); next=147
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7422,7 +7148,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 157;
+                                grammar_id = 147;
                             }
                         }
                     }
@@ -7461,14 +7187,14 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 156:
-            // Grammar: ID=156; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
+        case 146:
+            // Grammar: ID=146; read/write bits=2; START (MeterStatus), START (MeterTimestamp), END Element
             if (MeterInfoType->MeterStatus_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MeterStatus, int); next=157
+                    // Event: START (MeterStatus, int); next=147
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -7479,7 +7205,7 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 157;
+                                grammar_id = 147;
                             }
                         }
                     }
@@ -7518,8 +7244,8 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 157:
-            // Grammar: ID=157; read/write bits=2; START (MeterTimestamp), END Element
+        case 147:
+            // Grammar: ID=147; read/write bits=2; START (MeterTimestamp), END Element
             if (MeterInfoType->MeterTimestamp_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -7578,24 +7304,24 @@ static int encode_iso20_MeterInfoType(exi_bitstream_t* stream, const struct iso2
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Signature; type={http://www.w3.org/2000/09/xmldsig#}SignatureType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1);
+// Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1) (original max unbounded);
 static int encode_iso20_SignatureType(exi_bitstream_t* stream, const struct iso20_SignatureType* SignatureType) {
-    int grammar_id = 158;
+    int grammar_id = 148;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 158:
-            // Grammar: ID=158; read/write bits=2; START (Id), START (SignedInfo)
+        case 148:
+            // Grammar: ID=148; read/write bits=2; START (Id), START (SignedInfo)
             if (SignatureType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=159
+                    // Event: START (Id, NCName); next=149
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignatureType->Id.charactersLen + 2));
@@ -7604,7 +7330,7 @@ static int encode_iso20_SignatureType(exi_bitstream_t* stream, const struct iso2
                         error = exi_basetypes_encoder_characters(stream, SignatureType->Id.charactersLen, SignatureType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 159;
+                            grammar_id = 149;
                         }
                     }
                 }
@@ -7614,53 +7340,53 @@ static int encode_iso20_SignatureType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (SignedInfo, SignedInfoType); next=160
+                    // Event: START (SignedInfo, SignedInfoType); next=150
                     error = encode_iso20_SignedInfoType(stream, &SignatureType->SignedInfo);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 160;
+                        grammar_id = 150;
                     }
                 }
             }
             break;
-        case 159:
-            // Grammar: ID=159; read/write bits=1; START (SignedInfo)
+        case 149:
+            // Grammar: ID=149; read/write bits=1; START (SignedInfo)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (SignedInfoType); next=160
+                // Event: START (SignedInfoType); next=150
                 error = encode_iso20_SignedInfoType(stream, &SignatureType->SignedInfo);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 160;
+                    grammar_id = 150;
                 }
             }
             break;
-        case 160:
-            // Grammar: ID=160; read/write bits=1; START (SignatureValue)
+        case 150:
+            // Grammar: ID=150; read/write bits=1; START (SignatureValue)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=161
+                // Event: START (base64Binary); next=151
                 error = encode_iso20_SignatureValueType(stream, &SignatureType->SignatureValue);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 161;
+                    grammar_id = 151;
                 }
             }
             break;
-        case 161:
-            // Grammar: ID=161; read/write bits=2; START (KeyInfo), START (Object), END Element
+        case 151:
+            // Grammar: ID=151; read/write bits=2; START (KeyInfo), START (Object), END Element
             if (SignatureType->KeyInfo_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (KeyInfo, KeyInfoType); next=163
+                    // Event: START (KeyInfo, KeyInfoType); next=153
                     error = encode_iso20_KeyInfoType(stream, &SignatureType->KeyInfo);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 163;
+                        grammar_id = 153;
                     }
                 }
             }
@@ -7669,11 +7395,11 @@ static int encode_iso20_SignatureType(exi_bitstream_t* stream, const struct iso2
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Object, ObjectType); next=162
+                    // Event: START (Object, ObjectType); next=152
                     error = encode_iso20_ObjectType(stream, &SignatureType->Object);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 162;
+                        grammar_id = 152;
                     }
                 }
             }
@@ -7688,8 +7414,8 @@ static int encode_iso20_SignatureType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 162:
-            // Grammar: ID=162; read/write bits=2; START (Object), END Element
+        case 152:
+            // Grammar: ID=152; read/write bits=2; START (Object), END Element
             if (1 == 0)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -7714,18 +7440,18 @@ static int encode_iso20_SignatureType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 163:
-            // Grammar: ID=163; read/write bits=2; START (Object), END Element
+        case 153:
+            // Grammar: ID=153; read/write bits=2; START (Object), END Element
             if (SignatureType->Object_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Object, ObjectType); next=164
+                    // Event: START (Object, ObjectType); next=154
                     error = encode_iso20_ObjectType(stream, &SignatureType->Object);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 164;
+                        grammar_id = 154;
                     }
                 }
             }
@@ -7740,8 +7466,8 @@ static int encode_iso20_SignatureType(exi_bitstream_t* stream, const struct iso2
                 }
             }
             break;
-        case 164:
-            // Grammar: ID=164; read/write bits=2; START (Object), END Element
+        case 154:
+            // Grammar: ID=154; read/write bits=2; START (Object), END Element
             if (1 == 0)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -7793,20 +7519,20 @@ static int encode_iso20_SignatureType(exi_bitstream_t* stream, const struct iso2
 //          abstract=False; final=False;
 // Particle: SelectedScheduleTupleID, numericIDType (1, 1); PowerToleranceAcceptance, powerToleranceAcceptanceType (0, 1);
 static int encode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, const struct iso20_Scheduled_EVPPTControlModeType* Scheduled_EVPPTControlModeType) {
-    int grammar_id = 165;
+    int grammar_id = 155;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 165:
-            // Grammar: ID=165; read/write bits=1; START (SelectedScheduleTupleID)
+        case 155:
+            // Grammar: ID=155; read/write bits=1; START (SelectedScheduleTupleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedInt); next=166
+                // Event: START (unsignedInt); next=156
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -7817,14 +7543,14 @@ static int encode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 166;
+                            grammar_id = 156;
                         }
                     }
                 }
             }
             break;
-        case 166:
-            // Grammar: ID=166; read/write bits=2; START (PowerToleranceAcceptance), END Element
+        case 156:
+            // Grammar: ID=156; read/write bits=2; START (PowerToleranceAcceptance), END Element
             if (Scheduled_EVPPTControlModeType->PowerToleranceAcceptance_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -7885,21 +7611,21 @@ static int encode_iso20_Scheduled_EVPPTControlModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); EnergyCosts, DetailedCostType (0, 1); OccupancyCosts, DetailedCostType (0, 1); AdditionalServicesCosts, DetailedCostType (0, 1); OverstayCosts, DetailedCostType (0, 1); TaxCosts, DetailedTaxType (0, 10);
 static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_ReceiptType* ReceiptType) {
-    int grammar_id = 167;
+    int grammar_id = 157;
     int done = 0;
     int error = 0;
     uint16_t TaxCosts_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 167:
-            // Grammar: ID=167; read/write bits=1; START (TimeAnchor)
+        case 157:
+            // Grammar: ID=157; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=168
+                // Event: START (nonNegativeInteger); next=158
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -7910,24 +7636,24 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 168;
+                            grammar_id = 158;
                         }
                     }
                 }
             }
             break;
-        case 168:
-            // Grammar: ID=168; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 158:
+            // Grammar: ID=158; read/write bits=3; START (EnergyCosts), START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             if (ReceiptType->EnergyCosts_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EnergyCosts, DetailedCostType); next=171
+                    // Event: START (EnergyCosts, DetailedCostType); next=160
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->EnergyCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 171;
+                        grammar_id = 160;
                     }
                 }
             }
@@ -7936,11 +7662,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OccupancyCosts, DetailedCostType); next=174
+                    // Event: START (OccupancyCosts, DetailedCostType); next=162
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 174;
+                        grammar_id = 162;
                     }
                 }
             }
@@ -7949,11 +7675,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (AdditionalServicesCosts, DetailedCostType); next=177
+                    // Event: START (AdditionalServicesCosts, DetailedCostType); next=164
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 177;
+                        grammar_id = 164;
                     }
                 }
             }
@@ -7962,11 +7688,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayCosts, DetailedCostType); next=180
+                    // Event: START (OverstayCosts, DetailedCostType); next=166
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 180;
+                        grammar_id = 166;
                     }
                 }
             }
@@ -7975,11 +7701,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 4);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxCosts, DetailedTaxType); next=169 (optional array)
+                    // Event: START (TaxCosts, DetailedTaxType); next=159 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 169;
+                        grammar_id = 159;
                     }
                 }
             }
@@ -7994,18 +7720,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 169:
-            // Grammar: ID=169; read/write bits=2; LOOP (TaxCosts), END Element
+        case 159:
+            // Grammar: ID=159; read/write bits=2; LOOP (TaxCosts), END Element
             if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=169 (optional array)
+                    // Event: LOOP (TaxCosts, DetailedTaxType); next=159 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 169;
+                        grammar_id = 159;
                     }
                 }
             }
@@ -8020,44 +7746,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 170:
-            // Grammar: ID=170; read/write bits=2; LOOP (TaxCosts), END Element
-            if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=2 (optional array)
-                    error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 171:
-            // Grammar: ID=171; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 160:
+            // Grammar: ID=160; read/write bits=3; START (OccupancyCosts), START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             if (ReceiptType->OccupancyCosts_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OccupancyCosts, DetailedCostType); next=174
+                    // Event: START (OccupancyCosts, DetailedCostType); next=162
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->OccupancyCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 174;
+                        grammar_id = 162;
                     }
                 }
             }
@@ -8066,11 +7766,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (AdditionalServicesCosts, DetailedCostType); next=177
+                    // Event: START (AdditionalServicesCosts, DetailedCostType); next=164
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 177;
+                        grammar_id = 164;
                     }
                 }
             }
@@ -8079,11 +7779,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayCosts, DetailedCostType); next=180
+                    // Event: START (OverstayCosts, DetailedCostType); next=166
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 180;
+                        grammar_id = 166;
                     }
                 }
             }
@@ -8092,11 +7792,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxCosts, DetailedTaxType); next=172 (optional array)
+                    // Event: START (TaxCosts, DetailedTaxType); next=161 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 172;
+                        grammar_id = 161;
                     }
                 }
             }
@@ -8111,18 +7811,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 172:
-            // Grammar: ID=172; read/write bits=2; LOOP (TaxCosts), END Element
+        case 161:
+            // Grammar: ID=161; read/write bits=2; LOOP (TaxCosts), END Element
             if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=172 (optional array)
+                    // Event: LOOP (TaxCosts, DetailedTaxType); next=161 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 172;
+                        grammar_id = 161;
                     }
                 }
             }
@@ -8137,44 +7837,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 173:
-            // Grammar: ID=173; read/write bits=2; LOOP (TaxCosts), END Element
-            if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=2 (optional array)
-                    error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 174:
-            // Grammar: ID=174; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
+        case 162:
+            // Grammar: ID=162; read/write bits=3; START (AdditionalServicesCosts), START (OverstayCosts), START (TaxCosts), END Element
             if (ReceiptType->AdditionalServicesCosts_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (AdditionalServicesCosts, DetailedCostType); next=177
+                    // Event: START (AdditionalServicesCosts, DetailedCostType); next=164
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->AdditionalServicesCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 177;
+                        grammar_id = 164;
                     }
                 }
             }
@@ -8183,11 +7857,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayCosts, DetailedCostType); next=180
+                    // Event: START (OverstayCosts, DetailedCostType); next=166
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 180;
+                        grammar_id = 166;
                     }
                 }
             }
@@ -8196,11 +7870,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxCosts, DetailedTaxType); next=175 (optional array)
+                    // Event: START (TaxCosts, DetailedTaxType); next=163 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 175;
+                        grammar_id = 163;
                     }
                 }
             }
@@ -8215,18 +7889,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 175:
-            // Grammar: ID=175; read/write bits=2; LOOP (TaxCosts), END Element
+        case 163:
+            // Grammar: ID=163; read/write bits=2; LOOP (TaxCosts), END Element
             if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=175 (optional array)
+                    // Event: LOOP (TaxCosts, DetailedTaxType); next=163 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 175;
+                        grammar_id = 163;
                     }
                 }
             }
@@ -8241,44 +7915,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 176:
-            // Grammar: ID=176; read/write bits=2; LOOP (TaxCosts), END Element
-            if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=2 (optional array)
-                    error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 177:
-            // Grammar: ID=177; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
+        case 164:
+            // Grammar: ID=164; read/write bits=2; START (OverstayCosts), START (TaxCosts), END Element
             if (ReceiptType->OverstayCosts_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayCosts, DetailedCostType); next=180
+                    // Event: START (OverstayCosts, DetailedCostType); next=166
                     error = encode_iso20_DetailedCostType(stream, &ReceiptType->OverstayCosts);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 180;
+                        grammar_id = 166;
                     }
                 }
             }
@@ -8287,11 +7935,11 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxCosts, DetailedTaxType); next=178 (optional array)
+                    // Event: START (TaxCosts, DetailedTaxType); next=165 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 178;
+                        grammar_id = 165;
                     }
                 }
             }
@@ -8306,18 +7954,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 178:
-            // Grammar: ID=178; read/write bits=2; LOOP (TaxCosts), END Element
+        case 165:
+            // Grammar: ID=165; read/write bits=2; LOOP (TaxCosts), END Element
             if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=178 (optional array)
+                    // Event: LOOP (TaxCosts, DetailedTaxType); next=165 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 178;
+                        grammar_id = 165;
                     }
                 }
             }
@@ -8332,18 +7980,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 179:
-            // Grammar: ID=179; read/write bits=2; LOOP (TaxCosts), END Element
+        case 166:
+            // Grammar: ID=166; read/write bits=2; START (TaxCosts), END Element
             if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=2 (optional array)
+                    // Event: START (TaxCosts, DetailedTaxType); next=167 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 2;
+                        grammar_id = 167;
                     }
                 }
             }
@@ -8358,70 +8006,18 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
                 }
             }
             break;
-        case 180:
-            // Grammar: ID=180; read/write bits=2; START (TaxCosts), END Element
+        case 167:
+            // Grammar: ID=167; read/write bits=2; LOOP (TaxCosts), END Element
             if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxCosts, DetailedTaxType); next=181 (optional array)
+                    // Event: LOOP (TaxCosts, DetailedTaxType); next=167 (optional array)
                     error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 181;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 181:
-            // Grammar: ID=181; read/write bits=2; LOOP (TaxCosts), END Element
-            if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=181 (optional array)
-                    error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 181;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 182:
-            // Grammar: ID=182; read/write bits=2; LOOP (TaxCosts), END Element
-            if (TaxCosts_currentIndex < ReceiptType->TaxCosts.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (TaxCosts, DetailedTaxType); next=2 (optional array)
-                    error = encode_iso20_DetailedTaxType(stream, &ReceiptType->TaxCosts.array[TaxCosts_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 167;
                     }
                 }
             }
@@ -8463,22 +8059,22 @@ static int encode_iso20_ReceiptType(exi_bitstream_t* stream, const struct iso20_
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); TimeAnchor, unsignedLong (1, 1); PriceScheduleID, numericIDType (1, 1); PriceScheduleDescription, descriptionType (0, 1); Currency, currencyType (1, 1); Language, languageType (1, 1); PriceAlgorithm, identifierType (1, 1); MinimumCost, RationalNumberType (0, 1); MaximumCost, RationalNumberType (0, 1); TaxRules, TaxRuleListType (0, 1); PriceRuleStacks, PriceRuleStackListType (1, 1); OverstayRules, OverstayRuleListType (0, 1); AdditionalSelectedServices, AdditionalServiceListType (0, 1);
 static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const struct iso20_AbsolutePriceScheduleType* AbsolutePriceScheduleType) {
-    int grammar_id = 183;
+    int grammar_id = 168;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 183:
-            // Grammar: ID=183; read/write bits=2; START (Id), START (TimeAnchor)
+        case 168:
+            // Grammar: ID=168; read/write bits=2; START (Id), START (TimeAnchor)
             if (AbsolutePriceScheduleType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=184
+                    // Event: START (Id, NCName); next=169
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(AbsolutePriceScheduleType->Id.charactersLen + 2));
@@ -8487,7 +8083,7 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                         error = exi_basetypes_encoder_characters(stream, AbsolutePriceScheduleType->Id.charactersLen, AbsolutePriceScheduleType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 184;
+                            grammar_id = 169;
                         }
                     }
                 }
@@ -8497,7 +8093,7 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TimeAnchor, nonNegativeInteger); next=185
+                    // Event: START (TimeAnchor, nonNegativeInteger); next=170
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -8508,19 +8104,19 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 185;
+                                grammar_id = 170;
                             }
                         }
                     }
                 }
             }
             break;
-        case 184:
-            // Grammar: ID=184; read/write bits=1; START (TimeAnchor)
+        case 169:
+            // Grammar: ID=169; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=185
+                // Event: START (nonNegativeInteger); next=170
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -8531,18 +8127,18 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 185;
+                            grammar_id = 170;
                         }
                     }
                 }
             }
             break;
-        case 185:
-            // Grammar: ID=185; read/write bits=1; START (PriceScheduleID)
+        case 170:
+            // Grammar: ID=170; read/write bits=1; START (PriceScheduleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedInt); next=186
+                // Event: START (unsignedInt); next=171
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -8553,20 +8149,20 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 186;
+                            grammar_id = 171;
                         }
                     }
                 }
             }
             break;
-        case 186:
-            // Grammar: ID=186; read/write bits=2; START (PriceScheduleDescription), START (Currency)
+        case 171:
+            // Grammar: ID=171; read/write bits=2; START (PriceScheduleDescription), START (Currency)
             if (AbsolutePriceScheduleType->PriceScheduleDescription_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PriceScheduleDescription, string); next=187
+                    // Event: START (PriceScheduleDescription, string); next=172
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -8582,7 +8178,7 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 187;
+                                    grammar_id = 172;
                                 }
                             }
                         }
@@ -8594,7 +8190,7 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Currency, string); next=188
+                    // Event: START (Currency, string); next=173
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -8610,7 +8206,7 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 188;
+                                    grammar_id = 173;
                                 }
                             }
                         }
@@ -8618,12 +8214,12 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 }
             }
             break;
-        case 187:
-            // Grammar: ID=187; read/write bits=1; START (Currency)
+        case 172:
+            // Grammar: ID=172; read/write bits=1; START (Currency)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=188
+                // Event: START (string); next=173
 
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
@@ -8639,19 +8235,19 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 188;
+                                grammar_id = 173;
                             }
                         }
                     }
                 }
             }
             break;
-        case 188:
-            // Grammar: ID=188; read/write bits=1; START (Language)
+        case 173:
+            // Grammar: ID=173; read/write bits=1; START (Language)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=189
+                // Event: START (string); next=174
 
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
@@ -8667,19 +8263,19 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 189;
+                                grammar_id = 174;
                             }
                         }
                     }
                 }
             }
             break;
-        case 189:
-            // Grammar: ID=189; read/write bits=1; START (PriceAlgorithm)
+        case 174:
+            // Grammar: ID=174; read/write bits=1; START (PriceAlgorithm)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=190
+                // Event: START (string); next=175
 
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
@@ -8695,25 +8291,25 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 190;
+                                grammar_id = 175;
                             }
                         }
                     }
                 }
             }
             break;
-        case 190:
-            // Grammar: ID=190; read/write bits=3; START (MinimumCost), START (MaximumCost), START (TaxRules), START (PriceRuleStacks)
+        case 175:
+            // Grammar: ID=175; read/write bits=3; START (MinimumCost), START (MaximumCost), START (TaxRules), START (PriceRuleStacks)
             if (AbsolutePriceScheduleType->MinimumCost_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MinimumCost, RationalNumberType); next=191
+                    // Event: START (MinimumCost, RationalNumberType); next=176
                     error = encode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MinimumCost);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 191;
+                        grammar_id = 176;
                     }
                 }
             }
@@ -8722,11 +8318,11 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MaximumCost, RationalNumberType); next=192
+                    // Event: START (MaximumCost, RationalNumberType); next=177
                     error = encode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MaximumCost);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 192;
+                        grammar_id = 177;
                     }
                 }
             }
@@ -8735,11 +8331,11 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxRules, TaxRuleListType); next=193
+                    // Event: START (TaxRules, TaxRuleListType); next=178
                     error = encode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 193;
+                        grammar_id = 178;
                     }
                 }
             }
@@ -8748,27 +8344,27 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PriceRuleStacks, PriceRuleStackListType); next=194
+                    // Event: START (PriceRuleStacks, PriceRuleStackListType); next=179
                     error = encode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 194;
+                        grammar_id = 179;
                     }
                 }
             }
             break;
-        case 191:
-            // Grammar: ID=191; read/write bits=2; START (MaximumCost), START (TaxRules), START (PriceRuleStacks)
+        case 176:
+            // Grammar: ID=176; read/write bits=2; START (MaximumCost), START (TaxRules), START (PriceRuleStacks)
             if (AbsolutePriceScheduleType->MaximumCost_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MaximumCost, RationalNumberType); next=192
+                    // Event: START (MaximumCost, RationalNumberType); next=177
                     error = encode_iso20_RationalNumberType(stream, &AbsolutePriceScheduleType->MaximumCost);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 192;
+                        grammar_id = 177;
                     }
                 }
             }
@@ -8777,11 +8373,11 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxRules, TaxRuleListType); next=193
+                    // Event: START (TaxRules, TaxRuleListType); next=178
                     error = encode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 193;
+                        grammar_id = 178;
                     }
                 }
             }
@@ -8790,27 +8386,27 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PriceRuleStacks, PriceRuleStackListType); next=194
+                    // Event: START (PriceRuleStacks, PriceRuleStackListType); next=179
                     error = encode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 194;
+                        grammar_id = 179;
                     }
                 }
             }
             break;
-        case 192:
-            // Grammar: ID=192; read/write bits=2; START (TaxRules), START (PriceRuleStacks)
+        case 177:
+            // Grammar: ID=177; read/write bits=2; START (TaxRules), START (PriceRuleStacks)
             if (AbsolutePriceScheduleType->TaxRules_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TaxRules, TaxRuleListType); next=193
+                    // Event: START (TaxRules, TaxRuleListType); next=178
                     error = encode_iso20_TaxRuleListType(stream, &AbsolutePriceScheduleType->TaxRules);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 193;
+                        grammar_id = 178;
                     }
                 }
             }
@@ -8819,40 +8415,40 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PriceRuleStacks, PriceRuleStackListType); next=194
+                    // Event: START (PriceRuleStacks, PriceRuleStackListType); next=179
                     error = encode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 194;
+                        grammar_id = 179;
                     }
                 }
             }
             break;
-        case 193:
-            // Grammar: ID=193; read/write bits=1; START (PriceRuleStacks)
+        case 178:
+            // Grammar: ID=178; read/write bits=1; START (PriceRuleStacks)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (PriceRuleStackListType); next=194
+                // Event: START (PriceRuleStackListType); next=179
                 error = encode_iso20_PriceRuleStackListType(stream, &AbsolutePriceScheduleType->PriceRuleStacks);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 194;
+                    grammar_id = 179;
                 }
             }
             break;
-        case 194:
-            // Grammar: ID=194; read/write bits=2; START (OverstayRules), START (AdditionalSelectedServices), END Element
+        case 179:
+            // Grammar: ID=179; read/write bits=2; START (OverstayRules), START (AdditionalSelectedServices), END Element
             if (AbsolutePriceScheduleType->OverstayRules_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (OverstayRules, OverstayRuleListType); next=195
+                    // Event: START (OverstayRules, OverstayRuleListType); next=180
                     error = encode_iso20_OverstayRuleListType(stream, &AbsolutePriceScheduleType->OverstayRules);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 195;
+                        grammar_id = 180;
                     }
                 }
             }
@@ -8880,8 +8476,8 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
                 }
             }
             break;
-        case 195:
-            // Grammar: ID=195; read/write bits=2; START (AdditionalSelectedServices), END Element
+        case 180:
+            // Grammar: ID=180; read/write bits=2; START (AdditionalSelectedServices), END Element
             if (AbsolutePriceScheduleType->AdditionalSelectedServices_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -8933,27 +8529,27 @@ static int encode_iso20_AbsolutePriceScheduleType(exi_bitstream_t* stream, const
 //          abstract=False; final=False;
 // Particle: EVPowerProfileEntry, PowerScheduleEntryType (1, 2048);
 static int encode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, const struct iso20_EVPowerProfileEntryListType* EVPowerProfileEntryListType) {
-    int grammar_id = 196;
+    int grammar_id = 181;
     int done = 0;
     int error = 0;
     uint16_t EVPowerProfileEntry_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 196:
-            // Grammar: ID=196; read/write bits=1; START (EVPowerProfileEntry)
+        case 181:
+            // Grammar: ID=181; read/write bits=1; START (EVPowerProfileEntry)
             if (EVPowerProfileEntry_currentIndex < EVPowerProfileEntryListType->EVPowerProfileEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PowerScheduleEntryType); next=197
+                    // Event: START (PowerScheduleEntryType); next=182
                     error = encode_iso20_PowerScheduleEntryType(stream, &EVPowerProfileEntryListType->EVPowerProfileEntry.array[EVPowerProfileEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 197;
+                        grammar_id = 182;
                     }
                 }
             }
@@ -8962,18 +8558,18 @@ static int encode_iso20_EVPowerProfileEntryListType(exi_bitstream_t* stream, con
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 197:
-            // Grammar: ID=197; read/write bits=2; LOOP (EVPowerProfileEntry), END Element
+        case 182:
+            // Grammar: ID=182; read/write bits=2; LOOP (EVPowerProfileEntry), END Element
             if (EVPowerProfileEntry_currentIndex < EVPowerProfileEntryListType->EVPowerProfileEntry.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (PowerScheduleEntryType); next=197
+                    // Event: LOOP (PowerScheduleEntryType); next=182
                     error = encode_iso20_PowerScheduleEntryType(stream, &EVPowerProfileEntryListType->EVPowerProfileEntry.array[EVPowerProfileEntry_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 197;
+                        grammar_id = 182;
                     }
                 }
             }
@@ -9026,29 +8622,29 @@ static int encode_iso20_Dynamic_SMDTControlModeType(exi_bitstream_t* stream, con
 //          abstract=False; final=False;
 // Particle: EVPowerSchedule, EVPowerScheduleType (1, 1); EVAbsolutePriceSchedule, EVAbsolutePriceScheduleType (1, 1);
 static int encode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, const struct iso20_EVEnergyOfferType* EVEnergyOfferType) {
-    int grammar_id = 198;
+    int grammar_id = 183;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 198:
-            // Grammar: ID=198; read/write bits=1; START (EVPowerSchedule)
+        case 183:
+            // Grammar: ID=183; read/write bits=1; START (EVPowerSchedule)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (EVPowerScheduleType); next=199
+                // Event: START (EVPowerScheduleType); next=184
                 error = encode_iso20_EVPowerScheduleType(stream, &EVEnergyOfferType->EVPowerSchedule);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 199;
+                    grammar_id = 184;
                 }
             }
             break;
-        case 199:
-            // Grammar: ID=199; read/write bits=1; START (EVAbsolutePriceSchedule)
+        case 184:
+            // Grammar: ID=184; read/write bits=1; START (EVAbsolutePriceSchedule)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -9087,22 +8683,22 @@ static int encode_iso20_EVEnergyOfferType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); TimeAnchor, unsignedLong (1, 1); PriceScheduleID, numericIDType (1, 1); PriceScheduleDescription, descriptionType (0, 1); NumberOfPriceLevels, unsignedByte (1, 1); PriceLevelScheduleEntries, PriceLevelScheduleEntryListType (1, 1);
 static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const struct iso20_PriceLevelScheduleType* PriceLevelScheduleType) {
-    int grammar_id = 200;
+    int grammar_id = 185;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 200:
-            // Grammar: ID=200; read/write bits=2; START (Id), START (TimeAnchor)
+        case 185:
+            // Grammar: ID=185; read/write bits=2; START (Id), START (TimeAnchor)
             if (PriceLevelScheduleType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=201
+                    // Event: START (Id, NCName); next=186
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(PriceLevelScheduleType->Id.charactersLen + 2));
@@ -9111,7 +8707,7 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                         error = exi_basetypes_encoder_characters(stream, PriceLevelScheduleType->Id.charactersLen, PriceLevelScheduleType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 201;
+                            grammar_id = 186;
                         }
                     }
                 }
@@ -9121,7 +8717,7 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TimeAnchor, nonNegativeInteger); next=202
+                    // Event: START (TimeAnchor, nonNegativeInteger); next=187
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -9132,19 +8728,19 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 202;
+                                grammar_id = 187;
                             }
                         }
                     }
                 }
             }
             break;
-        case 201:
-            // Grammar: ID=201; read/write bits=1; START (TimeAnchor)
+        case 186:
+            // Grammar: ID=186; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=202
+                // Event: START (nonNegativeInteger); next=187
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -9155,18 +8751,18 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 202;
+                            grammar_id = 187;
                         }
                     }
                 }
             }
             break;
-        case 202:
-            // Grammar: ID=202; read/write bits=1; START (PriceScheduleID)
+        case 187:
+            // Grammar: ID=187; read/write bits=1; START (PriceScheduleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedInt); next=203
+                // Event: START (unsignedInt); next=188
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -9177,20 +8773,20 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 203;
+                            grammar_id = 188;
                         }
                     }
                 }
             }
             break;
-        case 203:
-            // Grammar: ID=203; read/write bits=2; START (PriceScheduleDescription), START (NumberOfPriceLevels)
+        case 188:
+            // Grammar: ID=188; read/write bits=2; START (PriceScheduleDescription), START (NumberOfPriceLevels)
             if (PriceLevelScheduleType->PriceScheduleDescription_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (PriceScheduleDescription, string); next=204
+                    // Event: START (PriceScheduleDescription, string); next=189
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -9206,7 +8802,7 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 204;
+                                    grammar_id = 189;
                                 }
                             }
                         }
@@ -9218,7 +8814,7 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (NumberOfPriceLevels, unsignedShort); next=205
+                    // Event: START (NumberOfPriceLevels, unsignedShort); next=190
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -9229,19 +8825,19 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 205;
+                                grammar_id = 190;
                             }
                         }
                     }
                 }
             }
             break;
-        case 204:
-            // Grammar: ID=204; read/write bits=1; START (NumberOfPriceLevels)
+        case 189:
+            // Grammar: ID=189; read/write bits=1; START (NumberOfPriceLevels)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=205
+                // Event: START (unsignedShort); next=190
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -9252,14 +8848,14 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 205;
+                            grammar_id = 190;
                         }
                     }
                 }
             }
             break;
-        case 205:
-            // Grammar: ID=205; read/write bits=1; START (PriceLevelScheduleEntries)
+        case 190:
+            // Grammar: ID=190; read/write bits=1; START (PriceLevelScheduleEntries)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -9298,29 +8894,29 @@ static int encode_iso20_PriceLevelScheduleType(exi_bitstream_t* stream, const st
 //          abstract=False; final=False;
 // Particle: PowerSchedule, PowerScheduleType (1, 1); AbsolutePriceSchedule, AbsolutePriceScheduleType (0, 1); PriceLevelSchedule, PriceLevelScheduleType (0, 1);
 static int encode_iso20_ChargingScheduleType(exi_bitstream_t* stream, const struct iso20_ChargingScheduleType* ChargingScheduleType) {
-    int grammar_id = 206;
+    int grammar_id = 191;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 206:
-            // Grammar: ID=206; read/write bits=1; START (PowerSchedule)
+        case 191:
+            // Grammar: ID=191; read/write bits=1; START (PowerSchedule)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (PowerScheduleType); next=207
+                // Event: START (PowerScheduleType); next=192
                 error = encode_iso20_PowerScheduleType(stream, &ChargingScheduleType->PowerSchedule);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 207;
+                    grammar_id = 192;
                 }
             }
             break;
-        case 207:
-            // Grammar: ID=207; read/write bits=2; START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 192:
+            // Grammar: ID=192; read/write bits=2; START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             if (ChargingScheduleType->AbsolutePriceSchedule_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -9385,20 +8981,20 @@ static int encode_iso20_ChargingScheduleType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False;
 // Particle: ScheduleTupleID, numericIDType (1, 1); ChargingSchedule, ChargingScheduleType (1, 1); DischargingSchedule, ChargingScheduleType (0, 1);
 static int encode_iso20_ScheduleTupleType(exi_bitstream_t* stream, const struct iso20_ScheduleTupleType* ScheduleTupleType) {
-    int grammar_id = 208;
+    int grammar_id = 193;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 208:
-            // Grammar: ID=208; read/write bits=1; START (ScheduleTupleID)
+        case 193:
+            // Grammar: ID=193; read/write bits=1; START (ScheduleTupleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedInt); next=209
+                // Event: START (unsignedInt); next=194
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -9409,27 +9005,27 @@ static int encode_iso20_ScheduleTupleType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 209;
+                            grammar_id = 194;
                         }
                     }
                 }
             }
             break;
-        case 209:
-            // Grammar: ID=209; read/write bits=1; START (ChargingSchedule)
+        case 194:
+            // Grammar: ID=194; read/write bits=1; START (ChargingSchedule)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (ChargingScheduleType); next=210
+                // Event: START (ChargingScheduleType); next=195
                 error = encode_iso20_ChargingScheduleType(stream, &ScheduleTupleType->ChargingSchedule);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 210;
+                    grammar_id = 195;
                 }
             }
             break;
-        case 210:
-            // Grammar: ID=210; read/write bits=2; START (DischargingSchedule), END Element
+        case 195:
+            // Grammar: ID=195; read/write bits=2; START (DischargingSchedule), END Element
             if (ScheduleTupleType->DischargingSchedule_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -9481,16 +9077,16 @@ static int encode_iso20_ScheduleTupleType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: SelectedScheduleTupleID, numericIDType (1, 1);
 static int encode_iso20_Scheduled_SMDTControlModeType(exi_bitstream_t* stream, const struct iso20_Scheduled_SMDTControlModeType* Scheduled_SMDTControlModeType) {
-    int grammar_id = 211;
+    int grammar_id = 196;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 211:
-            // Grammar: ID=211; read/write bits=1; START (SelectedScheduleTupleID)
+        case 196:
+            // Grammar: ID=196; read/write bits=1; START (SelectedScheduleTupleID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -9538,20 +9134,20 @@ static int encode_iso20_Scheduled_SMDTControlModeType(exi_bitstream_t* stream, c
 //          abstract=False; final=False;
 // Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
 static int encode_iso20_MessageHeaderType(exi_bitstream_t* stream, const struct iso20_MessageHeaderType* MessageHeaderType) {
-    int grammar_id = 212;
+    int grammar_id = 197;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 212:
-            // Grammar: ID=212; read/write bits=1; START (SessionID)
+        case 197:
+            // Grammar: ID=197; read/write bits=1; START (SessionID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (hexBinary); next=213
+                // Event: START (hexBinary); next=198
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -9565,19 +9161,19 @@ static int encode_iso20_MessageHeaderType(exi_bitstream_t* stream, const struct 
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 213;
+                                grammar_id = 198;
                             }
                         }
                     }
                 }
             }
             break;
-        case 213:
-            // Grammar: ID=213; read/write bits=1; START (TimeStamp)
+        case 198:
+            // Grammar: ID=198; read/write bits=1; START (TimeStamp)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=214
+                // Event: START (nonNegativeInteger); next=199
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -9588,14 +9184,14 @@ static int encode_iso20_MessageHeaderType(exi_bitstream_t* stream, const struct 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 214;
+                            grammar_id = 199;
                         }
                     }
                 }
             }
             break;
-        case 214:
-            // Grammar: ID=214; read/write bits=2; START (Signature), END Element
+        case 199:
+            // Grammar: ID=199; read/write bits=2; START (Signature), END Element
             if (MessageHeaderType->Signature_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -9647,22 +9243,22 @@ static int encode_iso20_MessageHeaderType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
 static int encode_iso20_SignaturePropertyType(exi_bitstream_t* stream, const struct iso20_SignaturePropertyType* SignaturePropertyType) {
-    int grammar_id = 215;
+    int grammar_id = 200;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 215:
-            // Grammar: ID=215; read/write bits=2; START (Id), START (Target)
+        case 200:
+            // Grammar: ID=200; read/write bits=2; START (Id), START (Target)
             if (SignaturePropertyType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=216
+                    // Event: START (Id, NCName); next=201
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignaturePropertyType->Id.charactersLen + 2));
@@ -9671,7 +9267,7 @@ static int encode_iso20_SignaturePropertyType(exi_bitstream_t* stream, const str
                         error = exi_basetypes_encoder_characters(stream, SignaturePropertyType->Id.charactersLen, SignaturePropertyType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 216;
+                            grammar_id = 201;
                         }
                     }
                 }
@@ -9681,7 +9277,7 @@ static int encode_iso20_SignaturePropertyType(exi_bitstream_t* stream, const str
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Target, anyURI); next=217
+                    // Event: START (Target, anyURI); next=202
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignaturePropertyType->Target.charactersLen + 2));
@@ -9690,18 +9286,18 @@ static int encode_iso20_SignaturePropertyType(exi_bitstream_t* stream, const str
                         error = exi_basetypes_encoder_characters(stream, SignaturePropertyType->Target.charactersLen, SignaturePropertyType->Target.characters, iso20_Target_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 217;
+                            grammar_id = 202;
                         }
                     }
                 }
             }
             break;
-        case 216:
-            // Grammar: ID=216; read/write bits=1; START (Target)
+        case 201:
+            // Grammar: ID=201; read/write bits=1; START (Target)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (anyURI); next=217
+                // Event: START (anyURI); next=202
 
                 // string should not be found in table, so add 2
                 error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignaturePropertyType->Target.charactersLen + 2));
@@ -9710,13 +9306,13 @@ static int encode_iso20_SignaturePropertyType(exi_bitstream_t* stream, const str
                     error = exi_basetypes_encoder_characters(stream, SignaturePropertyType->Target.charactersLen, SignaturePropertyType->Target.characters, iso20_Target_CHARACTER_SIZE);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 217;
+                        grammar_id = 202;
                     }
                 }
             }
             break;
-        case 217:
-            // Grammar: ID=217; read/write bits=1; START (ANY)
+        case 202:
+            // Grammar: ID=202; read/write bits=1; START (ANY)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -9768,23 +9364,23 @@ static int encode_iso20_SignaturePropertyType(exi_bitstream_t* stream, const str
 //          abstract=False; final=False;
 // Particle: ServiceID, serviceIDType (1, 16);
 static int encode_iso20_ServiceIDListType(exi_bitstream_t* stream, const struct iso20_ServiceIDListType* ServiceIDListType) {
-    int grammar_id = 218;
+    int grammar_id = 203;
     int done = 0;
     int error = 0;
     uint16_t ServiceID_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 218:
-            // Grammar: ID=218; read/write bits=1; START (ServiceID)
+        case 203:
+            // Grammar: ID=203; read/write bits=1; START (ServiceID)
             if (ServiceID_currentIndex < ServiceIDListType->ServiceID.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (unsignedShort); next=219
+                    // Event: START (unsignedShort); next=204
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -9795,7 +9391,7 @@ static int encode_iso20_ServiceIDListType(exi_bitstream_t* stream, const struct 
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 219;
+                                grammar_id = 204;
                             }
                         }
                     }
@@ -9806,14 +9402,14 @@ static int encode_iso20_ServiceIDListType(exi_bitstream_t* stream, const struct 
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 219:
-            // Grammar: ID=219; read/write bits=2; LOOP (ServiceID), END Element
+        case 204:
+            // Grammar: ID=204; read/write bits=2; LOOP (ServiceID), END Element
             if (ServiceID_currentIndex < ServiceIDListType->ServiceID.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (unsignedShort); next=219
+                    // Event: LOOP (unsignedShort); next=204
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -9824,42 +9420,7 @@ static int encode_iso20_ServiceIDListType(exi_bitstream_t* stream, const struct 
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 219;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 220:
-            // Grammar: ID=220; read/write bits=2; LOOP (ServiceID), END Element
-            if (ServiceID_currentIndex < ServiceIDListType->ServiceID.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (unsignedShort); next=2
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_uint_16(stream, ServiceIDListType->ServiceID.array[ServiceID_currentIndex++]);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 2;
+                                grammar_id = 204;
                             }
                         }
                     }
@@ -9903,20 +9464,20 @@ static int encode_iso20_ServiceIDListType(exi_bitstream_t* stream, const struct 
 //          abstract=False; final=False;
 // Particle: ServiceID, serviceIDType (1, 1); ParameterSetID, serviceIDType (1, 1);
 static int encode_iso20_SelectedServiceType(exi_bitstream_t* stream, const struct iso20_SelectedServiceType* SelectedServiceType) {
-    int grammar_id = 221;
+    int grammar_id = 205;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 221:
-            // Grammar: ID=221; read/write bits=1; START (ServiceID)
+        case 205:
+            // Grammar: ID=205; read/write bits=1; START (ServiceID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=222
+                // Event: START (unsignedShort); next=206
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -9927,14 +9488,14 @@ static int encode_iso20_SelectedServiceType(exi_bitstream_t* stream, const struc
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 222;
+                            grammar_id = 206;
                         }
                     }
                 }
             }
             break;
-        case 222:
-            // Grammar: ID=222; read/write bits=1; START (ParameterSetID)
+        case 206:
+            // Grammar: ID=206; read/write bits=1; START (ParameterSetID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -9982,20 +9543,20 @@ static int encode_iso20_SelectedServiceType(exi_bitstream_t* stream, const struc
 //          abstract=False; final=False;
 // Particle: Id, ID (1, 1); SessionID, sessionIDType (1, 1); MeterInfo, MeterInfoType (1, 1); Receipt, ReceiptType (0, 1); Dynamic_SMDTControlMode, Dynamic_SMDTControlModeType (0, 1); Scheduled_SMDTControlMode, Scheduled_SMDTControlModeType (0, 1);
 static int encode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, const struct iso20_SignedMeteringDataType* SignedMeteringDataType) {
-    int grammar_id = 223;
+    int grammar_id = 207;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 223:
-            // Grammar: ID=223; read/write bits=1; START (Id)
+        case 207:
+            // Grammar: ID=207; read/write bits=1; START (Id)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (NCName); next=224
+                // Event: START (NCName); next=208
 
                 // string should not be found in table, so add 2
                 error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignedMeteringDataType->Id.charactersLen + 2));
@@ -10004,17 +9565,17 @@ static int encode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, const st
                     error = exi_basetypes_encoder_characters(stream, SignedMeteringDataType->Id.charactersLen, SignedMeteringDataType->Id.characters, iso20_Id_CHARACTER_SIZE);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 224;
+                        grammar_id = 208;
                     }
                 }
             }
             break;
-        case 224:
-            // Grammar: ID=224; read/write bits=1; START (SessionID)
+        case 208:
+            // Grammar: ID=208; read/write bits=1; START (SessionID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (hexBinary); next=225
+                // Event: START (hexBinary); next=209
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -10028,38 +9589,38 @@ static int encode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, const st
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 225;
+                                grammar_id = 209;
                             }
                         }
                     }
                 }
             }
             break;
-        case 225:
-            // Grammar: ID=225; read/write bits=1; START (MeterInfo)
+        case 209:
+            // Grammar: ID=209; read/write bits=1; START (MeterInfo)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MeterInfoType); next=226
+                // Event: START (MeterInfoType); next=210
                 error = encode_iso20_MeterInfoType(stream, &SignedMeteringDataType->MeterInfo);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 226;
+                    grammar_id = 210;
                 }
             }
             break;
-        case 226:
-            // Grammar: ID=226; read/write bits=2; START (Receipt), START (Dynamic_SMDTControlMode), START (Scheduled_SMDTControlMode)
+        case 210:
+            // Grammar: ID=210; read/write bits=2; START (Receipt), START (Dynamic_SMDTControlMode), START (Scheduled_SMDTControlMode)
             if (SignedMeteringDataType->Receipt_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Receipt, ReceiptType); next=227
+                    // Event: START (Receipt, ReceiptType); next=211
                     error = encode_iso20_ReceiptType(stream, &SignedMeteringDataType->Receipt);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 227;
+                        grammar_id = 211;
                     }
                 }
             }
@@ -10090,8 +9651,8 @@ static int encode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, const st
                 }
             }
             break;
-        case 227:
-            // Grammar: ID=227; read/write bits=2; START (Dynamic_SMDTControlMode), START (Scheduled_SMDTControlMode)
+        case 211:
+            // Grammar: ID=211; read/write bits=2; START (Dynamic_SMDTControlMode), START (Scheduled_SMDTControlMode)
             if (SignedMeteringDataType->Dynamic_SMDTControlMode_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -10146,20 +9707,20 @@ static int encode_iso20_SignedMeteringDataType(exi_bitstream_t* stream, const st
 //          abstract=False; final=False;
 // Particle: Id, ID (1, 1); Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
 static int encode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, const struct iso20_SignedCertificateChainType* SignedCertificateChainType) {
-    int grammar_id = 228;
+    int grammar_id = 212;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 228:
-            // Grammar: ID=228; read/write bits=1; START (Id)
+        case 212:
+            // Grammar: ID=212; read/write bits=1; START (Id)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (NCName); next=229
+                // Event: START (NCName); next=213
 
                 // string should not be found in table, so add 2
                 error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignedCertificateChainType->Id.charactersLen + 2));
@@ -10168,17 +9729,17 @@ static int encode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, cons
                     error = exi_basetypes_encoder_characters(stream, SignedCertificateChainType->Id.charactersLen, SignedCertificateChainType->Id.characters, iso20_Id_CHARACTER_SIZE);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 229;
+                        grammar_id = 213;
                     }
                 }
             }
             break;
-        case 229:
-            // Grammar: ID=229; read/write bits=1; START (Certificate)
+        case 213:
+            // Grammar: ID=213; read/write bits=1; START (Certificate)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=230
+                // Event: START (base64Binary); next=214
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -10192,15 +9753,15 @@ static int encode_iso20_SignedCertificateChainType(exi_bitstream_t* stream, cons
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 230;
+                                grammar_id = 214;
                             }
                         }
                     }
                 }
             }
             break;
-        case 230:
-            // Grammar: ID=230; read/write bits=2; START (SubCertificates), END Element
+        case 214:
+            // Grammar: ID=214; read/write bits=2; START (SubCertificates), END Element
             if (SignedCertificateChainType->SubCertificates_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -10263,27 +9824,27 @@ static int encode_iso20_EIM_AReqAuthorizationModeType(exi_bitstream_t* stream, c
 //          abstract=False; final=False;
 // Particle: SelectedService, SelectedServiceType (1, 16);
 static int encode_iso20_SelectedServiceListType(exi_bitstream_t* stream, const struct iso20_SelectedServiceListType* SelectedServiceListType) {
-    int grammar_id = 231;
+    int grammar_id = 215;
     int done = 0;
     int error = 0;
     uint16_t SelectedService_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 231:
-            // Grammar: ID=231; read/write bits=1; START (SelectedService)
+        case 215:
+            // Grammar: ID=215; read/write bits=1; START (SelectedService)
             if (SelectedService_currentIndex < SelectedServiceListType->SelectedService.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (SelectedServiceType); next=232
+                    // Event: START (SelectedServiceType); next=216
                     error = encode_iso20_SelectedServiceType(stream, &SelectedServiceListType->SelectedService.array[SelectedService_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 232;
+                        grammar_id = 216;
                     }
                 }
             }
@@ -10292,44 +9853,18 @@ static int encode_iso20_SelectedServiceListType(exi_bitstream_t* stream, const s
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 232:
-            // Grammar: ID=232; read/write bits=2; LOOP (SelectedService), END Element
+        case 216:
+            // Grammar: ID=216; read/write bits=2; LOOP (SelectedService), END Element
             if (SelectedService_currentIndex < SelectedServiceListType->SelectedService.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (SelectedServiceType); next=232
+                    // Event: LOOP (SelectedServiceType); next=216
                     error = encode_iso20_SelectedServiceType(stream, &SelectedServiceListType->SelectedService.array[SelectedService_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 232;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 233:
-            // Grammar: ID=233; read/write bits=2; LOOP (SelectedService), END Element
-            if (SelectedService_currentIndex < SelectedServiceListType->SelectedService.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (SelectedServiceType); next=2
-                    error = encode_iso20_SelectedServiceType(stream, &SelectedServiceListType->SelectedService.array[SelectedService_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 216;
                     }
                 }
             }
@@ -10371,20 +9906,20 @@ static int encode_iso20_SelectedServiceListType(exi_bitstream_t* stream, const s
 //          abstract=False; final=False;
 // Particle: DepartureTime, unsignedInt (1, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumV2XEnergyRequest, RationalNumberType (0, 1); EVMinimumV2XEnergyRequest, RationalNumberType (0, 1);
 static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, const struct iso20_Dynamic_SEReqControlModeType* Dynamic_SEReqControlModeType) {
-    int grammar_id = 234;
+    int grammar_id = 217;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 234:
-            // Grammar: ID=234; read/write bits=1; START (DepartureTime)
+        case 217:
+            // Grammar: ID=217; read/write bits=1; START (DepartureTime)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedLong); next=235
+                // Event: START (unsignedLong); next=218
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -10395,20 +9930,20 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 235;
+                            grammar_id = 218;
                         }
                     }
                 }
             }
             break;
-        case 235:
-            // Grammar: ID=235; read/write bits=2; START (MinimumSOC), START (TargetSOC), START (EVTargetEnergyRequest)
+        case 218:
+            // Grammar: ID=218; read/write bits=2; START (MinimumSOC), START (TargetSOC), START (EVTargetEnergyRequest)
             if (Dynamic_SEReqControlModeType->MinimumSOC_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MinimumSOC, byte); next=236
+                    // Event: START (MinimumSOC, byte); next=219
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -10419,7 +9954,7 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 236;
+                                grammar_id = 219;
                             }
                         }
                     }
@@ -10430,7 +9965,7 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TargetSOC, byte); next=237
+                    // Event: START (TargetSOC, byte); next=220
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -10441,7 +9976,7 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 237;
+                                grammar_id = 220;
                             }
                         }
                     }
@@ -10452,23 +9987,23 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=238
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=221
                     error = encode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 238;
+                        grammar_id = 221;
                     }
                 }
             }
             break;
-        case 236:
-            // Grammar: ID=236; read/write bits=2; START (TargetSOC), START (EVTargetEnergyRequest)
+        case 219:
+            // Grammar: ID=219; read/write bits=2; START (TargetSOC), START (EVTargetEnergyRequest)
             if (Dynamic_SEReqControlModeType->TargetSOC_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TargetSOC, byte); next=237
+                    // Event: START (TargetSOC, byte); next=220
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -10479,7 +10014,7 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 237;
+                                grammar_id = 220;
                             }
                         }
                     }
@@ -10490,66 +10025,66 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=238
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=221
                     error = encode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 238;
+                        grammar_id = 221;
                     }
                 }
             }
             break;
-        case 237:
-            // Grammar: ID=237; read/write bits=1; START (EVTargetEnergyRequest)
+        case 220:
+            // Grammar: ID=220; read/write bits=1; START (EVTargetEnergyRequest)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=238
+                // Event: START (RationalNumberType); next=221
                 error = encode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVTargetEnergyRequest);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 238;
+                    grammar_id = 221;
                 }
             }
             break;
-        case 238:
-            // Grammar: ID=238; read/write bits=1; START (EVMaximumEnergyRequest)
+        case 221:
+            // Grammar: ID=221; read/write bits=1; START (EVMaximumEnergyRequest)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=239
+                // Event: START (RationalNumberType); next=222
                 error = encode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMaximumEnergyRequest);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 239;
+                    grammar_id = 222;
                 }
             }
             break;
-        case 239:
-            // Grammar: ID=239; read/write bits=1; START (EVMinimumEnergyRequest)
+        case 222:
+            // Grammar: ID=222; read/write bits=1; START (EVMinimumEnergyRequest)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=240
+                // Event: START (RationalNumberType); next=223
                 error = encode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMinimumEnergyRequest);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 240;
+                    grammar_id = 223;
                 }
             }
             break;
-        case 240:
-            // Grammar: ID=240; read/write bits=2; START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
+        case 223:
+            // Grammar: ID=223; read/write bits=2; START (EVMaximumV2XEnergyRequest), START (EVMinimumV2XEnergyRequest), END Element
             if (Dynamic_SEReqControlModeType->EVMaximumV2XEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType); next=241
+                    // Event: START (EVMaximumV2XEnergyRequest, RationalNumberType); next=224
                     error = encode_iso20_RationalNumberType(stream, &Dynamic_SEReqControlModeType->EVMaximumV2XEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 241;
+                        grammar_id = 224;
                     }
                 }
             }
@@ -10577,8 +10112,8 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
                 }
             }
             break;
-        case 241:
-            // Grammar: ID=241; read/write bits=2; START (EVMinimumV2XEnergyRequest), END Element
+        case 224:
+            // Grammar: ID=224; read/write bits=2; START (EVMinimumV2XEnergyRequest), END Element
             if (Dynamic_SEReqControlModeType->EVMinimumV2XEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -10630,20 +10165,20 @@ static int encode_iso20_Dynamic_SEReqControlModeType(exi_bitstream_t* stream, co
 //          abstract=False; final=False;
 // Particle: NotificationMaxDelay, unsignedShort (1, 1); EVSENotification, evseNotificationType (1, 1);
 static int encode_iso20_EVSEStatusType(exi_bitstream_t* stream, const struct iso20_EVSEStatusType* EVSEStatusType) {
-    int grammar_id = 242;
+    int grammar_id = 225;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 242:
-            // Grammar: ID=242; read/write bits=1; START (NotificationMaxDelay)
+        case 225:
+            // Grammar: ID=225; read/write bits=1; START (NotificationMaxDelay)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedInt); next=243
+                // Event: START (unsignedInt); next=226
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -10654,14 +10189,14 @@ static int encode_iso20_EVSEStatusType(exi_bitstream_t* stream, const struct iso
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 243;
+                            grammar_id = 226;
                         }
                     }
                 }
             }
             break;
-        case 243:
-            // Grammar: ID=243; read/write bits=1; START (EVSENotification)
+        case 226:
+            // Grammar: ID=226; read/write bits=1; START (EVSENotification)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -10709,27 +10244,27 @@ static int encode_iso20_EVSEStatusType(exi_bitstream_t* stream, const struct iso
 //          abstract=False; final=False;
 // Particle: RootCertificateID, X509IssuerSerialType (1, 20);
 static int encode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, const struct iso20_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType) {
-    int grammar_id = 244;
+    int grammar_id = 227;
     int done = 0;
     int error = 0;
     uint16_t RootCertificateID_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 244:
-            // Grammar: ID=244; read/write bits=1; START (RootCertificateID)
+        case 227:
+            // Grammar: ID=227; read/write bits=1; START (RootCertificateID)
             if (RootCertificateID_currentIndex < ListOfRootCertificateIDsType->RootCertificateID.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (X509IssuerSerialType); next=245
+                    // Event: START (X509IssuerSerialType); next=228
                     error = encode_iso20_X509IssuerSerialType(stream, &ListOfRootCertificateIDsType->RootCertificateID.array[RootCertificateID_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 245;
+                        grammar_id = 228;
                     }
                 }
             }
@@ -10738,44 +10273,18 @@ static int encode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, co
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 245:
-            // Grammar: ID=245; read/write bits=2; LOOP (RootCertificateID), END Element
+        case 228:
+            // Grammar: ID=228; read/write bits=2; LOOP (RootCertificateID), END Element
             if (RootCertificateID_currentIndex < ListOfRootCertificateIDsType->RootCertificateID.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (X509IssuerSerialType); next=245
+                    // Event: LOOP (X509IssuerSerialType); next=228
                     error = encode_iso20_X509IssuerSerialType(stream, &ListOfRootCertificateIDsType->RootCertificateID.array[RootCertificateID_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 245;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 246:
-            // Grammar: ID=246; read/write bits=2; LOOP (RootCertificateID), END Element
-            if (RootCertificateID_currentIndex < ListOfRootCertificateIDsType->RootCertificateID.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (X509IssuerSerialType); next=2
-                    error = encode_iso20_X509IssuerSerialType(stream, &ListOfRootCertificateIDsType->RootCertificateID.array[RootCertificateID_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 228;
                     }
                 }
             }
@@ -10817,20 +10326,20 @@ static int encode_iso20_ListOfRootCertificateIDsType(exi_bitstream_t* stream, co
 //          abstract=False; final=False;
 // Particle: Id, ID (1, 1); GenChallenge, genChallengeType (1, 1); ContractCertificateChain, ContractCertificateChainType (1, 1);
 static int encode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, const struct iso20_PnC_AReqAuthorizationModeType* PnC_AReqAuthorizationModeType) {
-    int grammar_id = 247;
+    int grammar_id = 229;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 247:
-            // Grammar: ID=247; read/write bits=1; START (Id)
+        case 229:
+            // Grammar: ID=229; read/write bits=1; START (Id)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (NCName); next=248
+                // Event: START (NCName); next=230
 
                 // string should not be found in table, so add 2
                 error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(PnC_AReqAuthorizationModeType->Id.charactersLen + 2));
@@ -10839,17 +10348,17 @@ static int encode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, c
                     error = exi_basetypes_encoder_characters(stream, PnC_AReqAuthorizationModeType->Id.charactersLen, PnC_AReqAuthorizationModeType->Id.characters, iso20_Id_CHARACTER_SIZE);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 248;
+                        grammar_id = 230;
                     }
                 }
             }
             break;
-        case 248:
-            // Grammar: ID=248; read/write bits=1; START (GenChallenge)
+        case 230:
+            // Grammar: ID=230; read/write bits=1; START (GenChallenge)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=249
+                // Event: START (base64Binary); next=231
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -10863,15 +10372,15 @@ static int encode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, c
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 249;
+                                grammar_id = 231;
                             }
                         }
                     }
                 }
             }
             break;
-        case 249:
-            // Grammar: ID=249; read/write bits=1; START (ContractCertificateChain)
+        case 231:
+            // Grammar: ID=231; read/write bits=1; START (ContractCertificateChain)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -10910,27 +10419,27 @@ static int encode_iso20_PnC_AReqAuthorizationModeType(exi_bitstream_t* stream, c
 //          abstract=False; final=False;
 // Particle: Service, ServiceType (1, 8);
 static int encode_iso20_ServiceListType(exi_bitstream_t* stream, const struct iso20_ServiceListType* ServiceListType) {
-    int grammar_id = 250;
+    int grammar_id = 232;
     int done = 0;
     int error = 0;
     uint16_t Service_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 250:
-            // Grammar: ID=250; read/write bits=1; START (Service)
+        case 232:
+            // Grammar: ID=232; read/write bits=1; START (Service)
             if (Service_currentIndex < ServiceListType->Service.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ServiceType); next=251
+                    // Event: START (ServiceType); next=233
                     error = encode_iso20_ServiceType(stream, &ServiceListType->Service.array[Service_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 251;
+                        grammar_id = 233;
                     }
                 }
             }
@@ -10939,44 +10448,18 @@ static int encode_iso20_ServiceListType(exi_bitstream_t* stream, const struct is
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 251:
-            // Grammar: ID=251; read/write bits=2; LOOP (Service), END Element
+        case 233:
+            // Grammar: ID=233; read/write bits=2; LOOP (Service), END Element
             if (Service_currentIndex < ServiceListType->Service.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (ServiceType); next=251
+                    // Event: LOOP (ServiceType); next=233
                     error = encode_iso20_ServiceType(stream, &ServiceListType->Service.array[Service_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 251;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 252:
-            // Grammar: ID=252; read/write bits=2; LOOP (Service), END Element
-            if (Service_currentIndex < ServiceListType->Service.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (ServiceType); next=2
-                    error = encode_iso20_ServiceType(stream, &ServiceListType->Service.array[Service_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 233;
                     }
                 }
             }
@@ -11016,29 +10499,29 @@ static int encode_iso20_ServiceListType(exi_bitstream_t* stream, const struct is
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}ServiceParameterList; type={urn:iso:std:iso:15118:-20:CommonMessages}ServiceParameterListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSet, ParameterSetType (1, 4);
+// Particle: ParameterSet, ParameterSetType (1, 4) (original max 32);
 static int encode_iso20_ServiceParameterListType(exi_bitstream_t* stream, const struct iso20_ServiceParameterListType* ServiceParameterListType) {
-    int grammar_id = 253;
+    int grammar_id = 234;
     int done = 0;
     int error = 0;
     uint16_t ParameterSet_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 253:
-            // Grammar: ID=253; read/write bits=1; START (ParameterSet)
+        case 234:
+            // Grammar: ID=234; read/write bits=1; START (ParameterSet)
             if (ParameterSet_currentIndex < ServiceParameterListType->ParameterSet.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ParameterSetType); next=254
+                    // Event: START (ParameterSetType); next=235
                     error = encode_iso20_ParameterSetType(stream, &ServiceParameterListType->ParameterSet.array[ParameterSet_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 254;
+                        grammar_id = 235;
                     }
                 }
             }
@@ -11047,44 +10530,18 @@ static int encode_iso20_ServiceParameterListType(exi_bitstream_t* stream, const 
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 254:
-            // Grammar: ID=254; read/write bits=2; LOOP (ParameterSet), END Element
+        case 235:
+            // Grammar: ID=235; read/write bits=2; LOOP (ParameterSet), END Element
             if (ParameterSet_currentIndex < ServiceParameterListType->ParameterSet.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (ParameterSetType); next=254
+                    // Event: LOOP (ParameterSetType); next=235
                     error = encode_iso20_ParameterSetType(stream, &ServiceParameterListType->ParameterSet.array[ParameterSet_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 254;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 255:
-            // Grammar: ID=255; read/write bits=2; LOOP (ParameterSet), END Element
-            if (ParameterSet_currentIndex < ServiceParameterListType->ParameterSet.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (ParameterSetType); next=2
-                    error = encode_iso20_ParameterSetType(stream, &ServiceParameterListType->ParameterSet.array[ParameterSet_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 235;
                     }
                 }
             }
@@ -11126,22 +10583,22 @@ static int encode_iso20_ServiceParameterListType(exi_bitstream_t* stream, const 
 //          abstract=False; final=False;
 // Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVEnergyOffer, EVEnergyOfferType (0, 1);
 static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, const struct iso20_Scheduled_SEReqControlModeType* Scheduled_SEReqControlModeType) {
-    int grammar_id = 256;
+    int grammar_id = 236;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 256:
-            // Grammar: ID=256; read/write bits=3; START (DepartureTime), START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
+        case 236:
+            // Grammar: ID=236; read/write bits=3; START (DepartureTime), START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
             if (Scheduled_SEReqControlModeType->DepartureTime_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DepartureTime, unsignedLong); next=257
+                    // Event: START (DepartureTime, unsignedLong); next=237
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -11152,7 +10609,7 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 257;
+                                grammar_id = 237;
                             }
                         }
                     }
@@ -11163,11 +10620,11 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=258
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=238
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 258;
+                        grammar_id = 238;
                     }
                 }
             }
@@ -11176,11 +10633,11 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=259
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=239
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 259;
+                        grammar_id = 239;
                     }
                 }
             }
@@ -11189,11 +10646,11 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=260
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=240
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 260;
+                        grammar_id = 240;
                     }
                 }
             }
@@ -11221,18 +10678,18 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 257:
-            // Grammar: ID=257; read/write bits=3; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
+        case 237:
+            // Grammar: ID=237; read/write bits=3; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
             if (Scheduled_SEReqControlModeType->EVTargetEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=258
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=238
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVTargetEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 258;
+                        grammar_id = 238;
                     }
                 }
             }
@@ -11241,11 +10698,11 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=259
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=239
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 259;
+                        grammar_id = 239;
                     }
                 }
             }
@@ -11254,11 +10711,11 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=260
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=240
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 260;
+                        grammar_id = 240;
                     }
                 }
             }
@@ -11286,18 +10743,18 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 258:
-            // Grammar: ID=258; read/write bits=3; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
+        case 238:
+            // Grammar: ID=238; read/write bits=3; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
             if (Scheduled_SEReqControlModeType->EVMaximumEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=259
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=239
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMaximumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 259;
+                        grammar_id = 239;
                     }
                 }
             }
@@ -11306,11 +10763,11 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=260
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=240
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 260;
+                        grammar_id = 240;
                     }
                 }
             }
@@ -11338,18 +10795,18 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 259:
-            // Grammar: ID=259; read/write bits=2; START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
+        case 239:
+            // Grammar: ID=239; read/write bits=2; START (EVMinimumEnergyRequest), START (EVEnergyOffer), END Element
             if (Scheduled_SEReqControlModeType->EVMinimumEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=260
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=240
                     error = encode_iso20_RationalNumberType(stream, &Scheduled_SEReqControlModeType->EVMinimumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 260;
+                        grammar_id = 240;
                     }
                 }
             }
@@ -11377,8 +10834,8 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
                 }
             }
             break;
-        case 260:
-            // Grammar: ID=260; read/write bits=2; START (EVEnergyOffer), END Element
+        case 240:
+            // Grammar: ID=240; read/write bits=2; START (EVEnergyOffer), END Element
             if (Scheduled_SEReqControlModeType->EVEnergyOffer_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -11430,20 +10887,20 @@ static int encode_iso20_Scheduled_SEReqControlModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: TimeAnchor, unsignedLong (1, 1); Dynamic_EVPPTControlMode, Dynamic_EVPPTControlModeType (0, 1); Scheduled_EVPPTControlMode, Scheduled_EVPPTControlModeType (0, 1); EVPowerProfileEntries, EVPowerProfileEntryListType (1, 1);
 static int encode_iso20_EVPowerProfileType(exi_bitstream_t* stream, const struct iso20_EVPowerProfileType* EVPowerProfileType) {
-    int grammar_id = 261;
+    int grammar_id = 241;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 261:
-            // Grammar: ID=261; read/write bits=1; START (TimeAnchor)
+        case 241:
+            // Grammar: ID=241; read/write bits=1; START (TimeAnchor)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (nonNegativeInteger); next=262
+                // Event: START (nonNegativeInteger); next=242
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -11454,24 +10911,24 @@ static int encode_iso20_EVPowerProfileType(exi_bitstream_t* stream, const struct
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 262;
+                            grammar_id = 242;
                         }
                     }
                 }
             }
             break;
-        case 262:
-            // Grammar: ID=262; read/write bits=2; START (Dynamic_EVPPTControlMode), START (Scheduled_EVPPTControlMode)
+        case 242:
+            // Grammar: ID=242; read/write bits=2; START (Dynamic_EVPPTControlMode), START (Scheduled_EVPPTControlMode)
             if (EVPowerProfileType->Dynamic_EVPPTControlMode_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Dynamic_EVPPTControlMode, Dynamic_EVPPTControlModeType); next=263
+                    // Event: START (Dynamic_EVPPTControlMode, Dynamic_EVPPTControlModeType); next=243
                     error = encode_iso20_Dynamic_EVPPTControlModeType(stream, &EVPowerProfileType->Dynamic_EVPPTControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 263;
+                        grammar_id = 243;
                     }
                 }
             }
@@ -11480,17 +10937,17 @@ static int encode_iso20_EVPowerProfileType(exi_bitstream_t* stream, const struct
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Scheduled_EVPPTControlMode, Scheduled_EVPPTControlModeType); next=263
+                    // Event: START (Scheduled_EVPPTControlMode, Scheduled_EVPPTControlModeType); next=243
                     error = encode_iso20_Scheduled_EVPPTControlModeType(stream, &EVPowerProfileType->Scheduled_EVPPTControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 263;
+                        grammar_id = 243;
                     }
                 }
             }
             break;
-        case 263:
-            // Grammar: ID=263; read/write bits=1; START (EVPowerProfileEntries)
+        case 243:
+            // Grammar: ID=243; read/write bits=1; START (EVPowerProfileEntries)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -11529,20 +10986,20 @@ static int encode_iso20_EVPowerProfileType(exi_bitstream_t* stream, const struct
 //          abstract=False; final=False;
 // Particle: Certificate, certificateType (1, 1); SubCertificates, SubCertificatesType (0, 1);
 static int encode_iso20_CertificateChainType(exi_bitstream_t* stream, const struct iso20_CertificateChainType* CertificateChainType) {
-    int grammar_id = 264;
+    int grammar_id = 244;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 264:
-            // Grammar: ID=264; read/write bits=1; START (Certificate)
+        case 244:
+            // Grammar: ID=244; read/write bits=1; START (Certificate)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=265
+                // Event: START (base64Binary); next=245
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -11556,15 +11013,15 @@ static int encode_iso20_CertificateChainType(exi_bitstream_t* stream, const stru
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 265;
+                                grammar_id = 245;
                             }
                         }
                     }
                 }
             }
             break;
-        case 265:
-            // Grammar: ID=265; read/write bits=2; START (SubCertificates), END Element
+        case 245:
+            // Grammar: ID=245; read/write bits=2; START (SubCertificates), END Element
             if (CertificateChainType->SubCertificates_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -11627,22 +11084,22 @@ static int encode_iso20_EIM_ASResAuthorizationModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AbsolutePriceSchedule, AbsolutePriceScheduleType (0, 1); PriceLevelSchedule, PriceLevelScheduleType (0, 1);
 static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, const struct iso20_Dynamic_SEResControlModeType* Dynamic_SEResControlModeType) {
-    int grammar_id = 266;
+    int grammar_id = 246;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 266:
-            // Grammar: ID=266; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 246:
+            // Grammar: ID=246; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             if (Dynamic_SEResControlModeType->DepartureTime_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DepartureTime, unsignedLong); next=267
+                    // Event: START (DepartureTime, unsignedLong); next=247
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -11653,7 +11110,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 267;
+                                grammar_id = 247;
                             }
                         }
                     }
@@ -11664,7 +11121,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MinimumSOC, byte); next=268
+                    // Event: START (MinimumSOC, byte); next=248
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -11675,7 +11132,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 268;
+                                grammar_id = 248;
                             }
                         }
                     }
@@ -11686,7 +11143,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TargetSOC, byte); next=269
+                    // Event: START (TargetSOC, byte); next=249
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -11697,7 +11154,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 269;
+                                grammar_id = 249;
                             }
                         }
                     }
@@ -11740,14 +11197,14 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                 }
             }
             break;
-        case 267:
-            // Grammar: ID=267; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 247:
+            // Grammar: ID=247; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             if (Dynamic_SEResControlModeType->MinimumSOC_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (MinimumSOC, byte); next=268
+                    // Event: START (MinimumSOC, byte); next=248
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -11758,7 +11215,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 268;
+                                grammar_id = 248;
                             }
                         }
                     }
@@ -11769,7 +11226,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TargetSOC, byte); next=269
+                    // Event: START (TargetSOC, byte); next=249
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -11780,7 +11237,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 269;
+                                grammar_id = 249;
                             }
                         }
                     }
@@ -11823,14 +11280,14 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                 }
             }
             break;
-        case 268:
-            // Grammar: ID=268; read/write bits=3; START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 248:
+            // Grammar: ID=248; read/write bits=3; START (TargetSOC), START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             if (Dynamic_SEResControlModeType->TargetSOC_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (TargetSOC, byte); next=269
+                    // Event: START (TargetSOC, byte); next=249
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -11841,7 +11298,7 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 269;
+                                grammar_id = 249;
                             }
                         }
                     }
@@ -11884,8 +11341,8 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
                 }
             }
             break;
-        case 269:
-            // Grammar: ID=269; read/write bits=2; START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
+        case 249:
+            // Grammar: ID=249; read/write bits=2; START (AbsolutePriceSchedule), START (PriceLevelSchedule), END Element
             if (Dynamic_SEResControlModeType->AbsolutePriceSchedule_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -11950,23 +11407,23 @@ static int encode_iso20_Dynamic_SEResControlModeType(exi_bitstream_t* stream, co
 //          abstract=False; final=False;
 // Particle: EMAID, identifierType (1, 8);
 static int encode_iso20_EMAIDListType(exi_bitstream_t* stream, const struct iso20_EMAIDListType* EMAIDListType) {
-    int grammar_id = 270;
+    int grammar_id = 250;
     int done = 0;
     int error = 0;
     uint16_t EMAID_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 270:
-            // Grammar: ID=270; read/write bits=1; START (EMAID)
+        case 250:
+            // Grammar: ID=250; read/write bits=1; START (EMAID)
             if (EMAID_currentIndex < EMAIDListType->EMAID.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (string); next=271
+                    // Event: START (string); next=251
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -11983,7 +11440,7 @@ static int encode_iso20_EMAIDListType(exi_bitstream_t* stream, const struct iso2
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 271;
+                                    grammar_id = 251;
                                 }
                             }
                         }
@@ -11995,14 +11452,14 @@ static int encode_iso20_EMAIDListType(exi_bitstream_t* stream, const struct iso2
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 271:
-            // Grammar: ID=271; read/write bits=2; LOOP (EMAID), END Element
+        case 251:
+            // Grammar: ID=251; read/write bits=2; LOOP (EMAID), END Element
             if (EMAID_currentIndex < EMAIDListType->EMAID.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (string); next=271
+                    // Event: LOOP (string); next=251
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -12019,49 +11476,7 @@ static int encode_iso20_EMAIDListType(exi_bitstream_t* stream, const struct iso2
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 271;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 272:
-            // Grammar: ID=272; read/write bits=2; LOOP (EMAID), END Element
-            if (EMAID_currentIndex < EMAIDListType->EMAID.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (string); next=2
-
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        // string should not be found in table, so add 2
-                        error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(EMAIDListType->EMAID.array[EMAID_currentIndex].charactersLen + 2));
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            error = exi_basetypes_encoder_characters(stream, EMAIDListType->EMAID.array[EMAID_currentIndex].charactersLen, EMAIDListType->EMAID.array[EMAID_currentIndex].characters, iso20_EMAID_CHARACTER_SIZE);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                EMAID_currentIndex++;
-                                // encode END Element
-                                error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                                if (error == EXI_ERROR__NO_ERROR)
-                                {
-                                    grammar_id = 2;
+                                    grammar_id = 251;
                                 }
                             }
                         }
@@ -12106,20 +11521,20 @@ static int encode_iso20_EMAIDListType(exi_bitstream_t* stream, const struct iso2
 //          abstract=False; final=False;
 // Particle: Id, ID (1, 1); ContractCertificateChain, ContractCertificateChainType (1, 1); ECDHCurve, ecdhCurveType (1, 1); DHPublicKey, dhPublicKeyType (1, 1); SECP521_EncryptedPrivateKey, secp521_EncryptedPrivateKeyType (0, 1); X448_EncryptedPrivateKey, x448_EncryptedPrivateKeyType (0, 1); TPM_EncryptedPrivateKey, tpm_EncryptedPrivateKeyType (0, 1);
 static int encode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, const struct iso20_SignedInstallationDataType* SignedInstallationDataType) {
-    int grammar_id = 273;
+    int grammar_id = 252;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 273:
-            // Grammar: ID=273; read/write bits=1; START (Id)
+        case 252:
+            // Grammar: ID=252; read/write bits=1; START (Id)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (NCName); next=274
+                // Event: START (NCName); next=253
 
                 // string should not be found in table, so add 2
                 error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignedInstallationDataType->Id.charactersLen + 2));
@@ -12128,30 +11543,30 @@ static int encode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, cons
                     error = exi_basetypes_encoder_characters(stream, SignedInstallationDataType->Id.charactersLen, SignedInstallationDataType->Id.characters, iso20_Id_CHARACTER_SIZE);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 274;
+                        grammar_id = 253;
                     }
                 }
             }
             break;
-        case 274:
-            // Grammar: ID=274; read/write bits=1; START (ContractCertificateChain)
+        case 253:
+            // Grammar: ID=253; read/write bits=1; START (ContractCertificateChain)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (ContractCertificateChainType); next=275
+                // Event: START (ContractCertificateChainType); next=254
                 error = encode_iso20_ContractCertificateChainType(stream, &SignedInstallationDataType->ContractCertificateChain);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 275;
+                    grammar_id = 254;
                 }
             }
             break;
-        case 275:
-            // Grammar: ID=275; read/write bits=1; START (ECDHCurve)
+        case 254:
+            // Grammar: ID=254; read/write bits=1; START (ECDHCurve)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=276
+                // Event: START (string); next=255
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -12162,18 +11577,18 @@ static int encode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, cons
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 276;
+                            grammar_id = 255;
                         }
                     }
                 }
             }
             break;
-        case 276:
-            // Grammar: ID=276; read/write bits=1; START (DHPublicKey)
+        case 255:
+            // Grammar: ID=255; read/write bits=1; START (DHPublicKey)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=277
+                // Event: START (base64Binary); next=256
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -12187,15 +11602,15 @@ static int encode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, cons
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 277;
+                                grammar_id = 256;
                             }
                         }
                     }
                 }
             }
             break;
-        case 277:
-            // Grammar: ID=277; read/write bits=2; START (SECP521_EncryptedPrivateKey), START (X448_EncryptedPrivateKey), START (TPM_EncryptedPrivateKey)
+        case 256:
+            // Grammar: ID=256; read/write bits=2; START (SECP521_EncryptedPrivateKey), START (X448_EncryptedPrivateKey), START (TPM_EncryptedPrivateKey)
             if (SignedInstallationDataType->SECP521_EncryptedPrivateKey_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -12302,20 +11717,20 @@ static int encode_iso20_SignedInstallationDataType(exi_bitstream_t* stream, cons
 //          abstract=False; final=False;
 // Particle: GenChallenge, genChallengeType (1, 1); SupportedProviders, SupportedProvidersListType (0, 1);
 static int encode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, const struct iso20_PnC_ASResAuthorizationModeType* PnC_ASResAuthorizationModeType) {
-    int grammar_id = 278;
+    int grammar_id = 257;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 278:
-            // Grammar: ID=278; read/write bits=1; START (GenChallenge)
+        case 257:
+            // Grammar: ID=257; read/write bits=1; START (GenChallenge)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (base64Binary); next=279
+                // Event: START (base64Binary); next=258
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -12329,15 +11744,15 @@ static int encode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 279;
+                                grammar_id = 258;
                             }
                         }
                     }
                 }
             }
             break;
-        case 279:
-            // Grammar: ID=279; read/write bits=2; START (SupportedProviders), END Element
+        case 258:
+            // Grammar: ID=258; read/write bits=2; START (SupportedProviders), END Element
             if (PnC_ASResAuthorizationModeType->SupportedProviders_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -12389,27 +11804,27 @@ static int encode_iso20_PnC_ASResAuthorizationModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False;
 // Particle: ScheduleTuple, ScheduleTupleType (1, 3);
 static int encode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, const struct iso20_Scheduled_SEResControlModeType* Scheduled_SEResControlModeType) {
-    int grammar_id = 280;
+    int grammar_id = 259;
     int done = 0;
     int error = 0;
     uint16_t ScheduleTuple_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 280:
-            // Grammar: ID=280; read/write bits=1; START (ScheduleTuple)
+        case 259:
+            // Grammar: ID=259; read/write bits=1; START (ScheduleTuple)
             if (ScheduleTuple_currentIndex < Scheduled_SEResControlModeType->ScheduleTuple.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ScheduleTupleType); next=281
+                    // Event: START (ScheduleTupleType); next=260
                     error = encode_iso20_ScheduleTupleType(stream, &Scheduled_SEResControlModeType->ScheduleTuple.array[ScheduleTuple_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 281;
+                        grammar_id = 260;
                     }
                 }
             }
@@ -12418,44 +11833,18 @@ static int encode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 281:
-            // Grammar: ID=281; read/write bits=2; LOOP (ScheduleTuple), END Element
+        case 260:
+            // Grammar: ID=260; read/write bits=2; LOOP (ScheduleTuple), END Element
             if (ScheduleTuple_currentIndex < Scheduled_SEResControlModeType->ScheduleTuple.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (ScheduleTupleType); next=281
+                    // Event: LOOP (ScheduleTupleType); next=260
                     error = encode_iso20_ScheduleTupleType(stream, &Scheduled_SEResControlModeType->ScheduleTuple.array[ScheduleTuple_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 281;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 282:
-            // Grammar: ID=282; read/write bits=2; LOOP (ScheduleTuple), END Element
-            if (ScheduleTuple_currentIndex < Scheduled_SEResControlModeType->ScheduleTuple.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (ScheduleTupleType); next=2
-                    error = encode_iso20_ScheduleTupleType(stream, &Scheduled_SEResControlModeType->ScheduleTuple.array[ScheduleTuple_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 260;
                     }
                 }
             }
@@ -12497,29 +11886,29 @@ static int encode_iso20_Scheduled_SEResControlModeType(exi_bitstream_t* stream, 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVCCID, identifierType (1, 1);
 static int encode_iso20_SessionSetupReqType(exi_bitstream_t* stream, const struct iso20_SessionSetupReqType* SessionSetupReqType) {
-    int grammar_id = 283;
+    int grammar_id = 261;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 283:
-            // Grammar: ID=283; read/write bits=1; START (Header)
+        case 261:
+            // Grammar: ID=261; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=284
+                // Event: START (MessageHeaderType); next=262
                 error = encode_iso20_MessageHeaderType(stream, &SessionSetupReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 284;
+                    grammar_id = 262;
                 }
             }
             break;
-        case 284:
-            // Grammar: ID=284; read/write bits=1; START (EVCCID)
+        case 262:
+            // Grammar: ID=262; read/write bits=1; START (EVCCID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -12573,33 +11962,33 @@ static int encode_iso20_SessionSetupReqType(exi_bitstream_t* stream, const struc
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEID, identifierType (1, 1);
 static int encode_iso20_SessionSetupResType(exi_bitstream_t* stream, const struct iso20_SessionSetupResType* SessionSetupResType) {
-    int grammar_id = 285;
+    int grammar_id = 263;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 285:
-            // Grammar: ID=285; read/write bits=1; START (Header)
+        case 263:
+            // Grammar: ID=263; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=286
+                // Event: START (MessageHeaderType); next=264
                 error = encode_iso20_MessageHeaderType(stream, &SessionSetupResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 286;
+                    grammar_id = 264;
                 }
             }
             break;
-        case 286:
-            // Grammar: ID=286; read/write bits=1; START (ResponseCode)
+        case 264:
+            // Grammar: ID=264; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=287
+                // Event: START (string); next=265
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -12610,14 +11999,14 @@ static int encode_iso20_SessionSetupResType(exi_bitstream_t* stream, const struc
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 287;
+                            grammar_id = 265;
                         }
                     }
                 }
             }
             break;
-        case 287:
-            // Grammar: ID=287; read/write bits=1; START (EVSEID)
+        case 265:
+            // Grammar: ID=265; read/write bits=1; START (EVSEID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -12671,16 +12060,16 @@ static int encode_iso20_SessionSetupResType(exi_bitstream_t* stream, const struc
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1);
 static int encode_iso20_AuthorizationSetupReqType(exi_bitstream_t* stream, const struct iso20_AuthorizationSetupReqType* AuthorizationSetupReqType) {
-    int grammar_id = 288;
+    int grammar_id = 266;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 288:
-            // Grammar: ID=288; read/write bits=1; START (Header)
+        case 266:
+            // Grammar: ID=266; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -12719,34 +12108,34 @@ static int encode_iso20_AuthorizationSetupReqType(exi_bitstream_t* stream, const
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); AuthorizationServices, authorizationType (1, 2); CertificateInstallationService, boolean (1, 1); EIM_ASResAuthorizationMode, EIM_ASResAuthorizationModeType (0, 1); PnC_ASResAuthorizationMode, PnC_ASResAuthorizationModeType (0, 1);
 static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const struct iso20_AuthorizationSetupResType* AuthorizationSetupResType) {
-    int grammar_id = 289;
+    int grammar_id = 267;
     int done = 0;
     int error = 0;
     uint16_t AuthorizationServices_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 289:
-            // Grammar: ID=289; read/write bits=1; START (Header)
+        case 267:
+            // Grammar: ID=267; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=290
+                // Event: START (MessageHeaderType); next=268
                 error = encode_iso20_MessageHeaderType(stream, &AuthorizationSetupResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 290;
+                    grammar_id = 268;
                 }
             }
             break;
-        case 290:
-            // Grammar: ID=290; read/write bits=1; START (ResponseCode)
+        case 268:
+            // Grammar: ID=268; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=291
+                // Event: START (string); next=269
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -12757,20 +12146,20 @@ static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 291;
+                            grammar_id = 269;
                         }
                     }
                 }
             }
             break;
-        case 291:
-            // Grammar: ID=291; read/write bits=1; START (AuthorizationServices)
+        case 269:
+            // Grammar: ID=269; read/write bits=1; START (AuthorizationServices)
             if (AuthorizationServices_currentIndex < AuthorizationSetupResType->AuthorizationServices.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (string); next=292
+                    // Event: START (string); next=270
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -12781,7 +12170,7 @@ static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 292;
+                                grammar_id = 270;
                             }
                         }
                     }
@@ -12792,14 +12181,14 @@ static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 292:
-            // Grammar: ID=292; read/write bits=2; START (AuthorizationServices), START (CertificateInstallationService)
+        case 270:
+            // Grammar: ID=270; read/write bits=2; START (AuthorizationServices), START (CertificateInstallationService)
             if (AuthorizationServices_currentIndex < AuthorizationSetupResType->AuthorizationServices.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (string); next=293
+                    // Event: START (string); next=271
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -12810,7 +12199,7 @@ static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 293;
+                                grammar_id = 271;
                             }
                         }
                     }
@@ -12821,7 +12210,7 @@ static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (CertificateInstallationService, boolean); next=294
+                    // Event: START (CertificateInstallationService, boolean); next=272
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -12832,19 +12221,19 @@ static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 294;
+                                grammar_id = 272;
                             }
                         }
                     }
                 }
             }
             break;
-        case 293:
-            // Grammar: ID=293; read/write bits=1; START (CertificateInstallationService)
+        case 271:
+            // Grammar: ID=271; read/write bits=1; START (CertificateInstallationService)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (boolean); next=294
+                // Event: START (boolean); next=272
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -12855,14 +12244,14 @@ static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 294;
+                            grammar_id = 272;
                         }
                     }
                 }
             }
             break;
-        case 294:
-            // Grammar: ID=294; read/write bits=2; START (EIM_ASResAuthorizationMode), START (PnC_ASResAuthorizationMode)
+        case 272:
+            // Grammar: ID=272; read/write bits=2; START (EIM_ASResAuthorizationMode), START (PnC_ASResAuthorizationMode)
             if (AuthorizationSetupResType->EIM_ASResAuthorizationMode_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -12917,33 +12306,33 @@ static int encode_iso20_AuthorizationSetupResType(exi_bitstream_t* stream, const
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); SelectedAuthorizationService, authorizationType (1, 1); EIM_AReqAuthorizationMode, EIM_AReqAuthorizationModeType (0, 1); PnC_AReqAuthorizationMode, PnC_AReqAuthorizationModeType (0, 1);
 static int encode_iso20_AuthorizationReqType(exi_bitstream_t* stream, const struct iso20_AuthorizationReqType* AuthorizationReqType) {
-    int grammar_id = 295;
+    int grammar_id = 273;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 295:
-            // Grammar: ID=295; read/write bits=1; START (Header)
+        case 273:
+            // Grammar: ID=273; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=296
+                // Event: START (MessageHeaderType); next=274
                 error = encode_iso20_MessageHeaderType(stream, &AuthorizationReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 296;
+                    grammar_id = 274;
                 }
             }
             break;
-        case 296:
-            // Grammar: ID=296; read/write bits=1; START (SelectedAuthorizationService)
+        case 274:
+            // Grammar: ID=274; read/write bits=1; START (SelectedAuthorizationService)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=297
+                // Event: START (string); next=275
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -12954,14 +12343,14 @@ static int encode_iso20_AuthorizationReqType(exi_bitstream_t* stream, const stru
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 297;
+                            grammar_id = 275;
                         }
                     }
                 }
             }
             break;
-        case 297:
-            // Grammar: ID=297; read/write bits=2; START (EIM_AReqAuthorizationMode), START (PnC_AReqAuthorizationMode)
+        case 275:
+            // Grammar: ID=275; read/write bits=2; START (EIM_AReqAuthorizationMode), START (PnC_AReqAuthorizationMode)
             if (AuthorizationReqType->EIM_AReqAuthorizationMode_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -13016,33 +12405,33 @@ static int encode_iso20_AuthorizationReqType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1);
 static int encode_iso20_AuthorizationResType(exi_bitstream_t* stream, const struct iso20_AuthorizationResType* AuthorizationResType) {
-    int grammar_id = 298;
+    int grammar_id = 276;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 298:
-            // Grammar: ID=298; read/write bits=1; START (Header)
+        case 276:
+            // Grammar: ID=276; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=299
+                // Event: START (MessageHeaderType); next=277
                 error = encode_iso20_MessageHeaderType(stream, &AuthorizationResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 299;
+                    grammar_id = 277;
                 }
             }
             break;
-        case 299:
-            // Grammar: ID=299; read/write bits=1; START (ResponseCode)
+        case 277:
+            // Grammar: ID=277; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=300
+                // Event: START (string); next=278
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13053,14 +12442,14 @@ static int encode_iso20_AuthorizationResType(exi_bitstream_t* stream, const stru
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 300;
+                            grammar_id = 278;
                         }
                     }
                 }
             }
             break;
-        case 300:
-            // Grammar: ID=300; read/write bits=1; START (EVSEProcessing)
+        case 278:
+            // Grammar: ID=278; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -13108,29 +12497,29 @@ static int encode_iso20_AuthorizationResType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); SupportedServiceIDs, ServiceIDListType (0, 1);
 static int encode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, const struct iso20_ServiceDiscoveryReqType* ServiceDiscoveryReqType) {
-    int grammar_id = 301;
+    int grammar_id = 279;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 301:
-            // Grammar: ID=301; read/write bits=1; START (Header)
+        case 279:
+            // Grammar: ID=279; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=302
+                // Event: START (MessageHeaderType); next=280
                 error = encode_iso20_MessageHeaderType(stream, &ServiceDiscoveryReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 302;
+                    grammar_id = 280;
                 }
             }
             break;
-        case 302:
-            // Grammar: ID=302; read/write bits=2; START (SupportedServiceIDs), END Element
+        case 280:
+            // Grammar: ID=280; read/write bits=2; START (SupportedServiceIDs), END Element
             if (ServiceDiscoveryReqType->SupportedServiceIDs_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -13182,33 +12571,33 @@ static int encode_iso20_ServiceDiscoveryReqType(exi_bitstream_t* stream, const s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); ServiceRenegotiationSupported, boolean (1, 1); EnergyTransferServiceList, ServiceListType (1, 1); VASList, ServiceListType (0, 1);
 static int encode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, const struct iso20_ServiceDiscoveryResType* ServiceDiscoveryResType) {
-    int grammar_id = 303;
+    int grammar_id = 281;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 303:
-            // Grammar: ID=303; read/write bits=1; START (Header)
+        case 281:
+            // Grammar: ID=281; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=304
+                // Event: START (MessageHeaderType); next=282
                 error = encode_iso20_MessageHeaderType(stream, &ServiceDiscoveryResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 304;
+                    grammar_id = 282;
                 }
             }
             break;
-        case 304:
-            // Grammar: ID=304; read/write bits=1; START (ResponseCode)
+        case 282:
+            // Grammar: ID=282; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=305
+                // Event: START (string); next=283
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13219,18 +12608,18 @@ static int encode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, const s
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 305;
+                            grammar_id = 283;
                         }
                     }
                 }
             }
             break;
-        case 305:
-            // Grammar: ID=305; read/write bits=1; START (ServiceRenegotiationSupported)
+        case 283:
+            // Grammar: ID=283; read/write bits=1; START (ServiceRenegotiationSupported)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (boolean); next=306
+                // Event: START (boolean); next=284
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13241,27 +12630,27 @@ static int encode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, const s
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 306;
+                            grammar_id = 284;
                         }
                     }
                 }
             }
             break;
-        case 306:
-            // Grammar: ID=306; read/write bits=1; START (EnergyTransferServiceList)
+        case 284:
+            // Grammar: ID=284; read/write bits=1; START (EnergyTransferServiceList)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (ServiceListType); next=307
+                // Event: START (ServiceListType); next=285
                 error = encode_iso20_ServiceListType(stream, &ServiceDiscoveryResType->EnergyTransferServiceList);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 307;
+                    grammar_id = 285;
                 }
             }
             break;
-        case 307:
-            // Grammar: ID=307; read/write bits=2; START (VASList), END Element
+        case 285:
+            // Grammar: ID=285; read/write bits=2; START (VASList), END Element
             if (ServiceDiscoveryResType->VASList_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -13313,29 +12702,29 @@ static int encode_iso20_ServiceDiscoveryResType(exi_bitstream_t* stream, const s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ServiceID, serviceIDType (1, 1);
 static int encode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, const struct iso20_ServiceDetailReqType* ServiceDetailReqType) {
-    int grammar_id = 308;
+    int grammar_id = 286;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 308:
-            // Grammar: ID=308; read/write bits=1; START (Header)
+        case 286:
+            // Grammar: ID=286; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=309
+                // Event: START (MessageHeaderType); next=287
                 error = encode_iso20_MessageHeaderType(stream, &ServiceDetailReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 309;
+                    grammar_id = 287;
                 }
             }
             break;
-        case 309:
-            // Grammar: ID=309; read/write bits=1; START (ServiceID)
+        case 287:
+            // Grammar: ID=287; read/write bits=1; START (ServiceID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -13383,33 +12772,33 @@ static int encode_iso20_ServiceDetailReqType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); ServiceID, serviceIDType (1, 1); ServiceParameterList, ServiceParameterListType (1, 1);
 static int encode_iso20_ServiceDetailResType(exi_bitstream_t* stream, const struct iso20_ServiceDetailResType* ServiceDetailResType) {
-    int grammar_id = 310;
+    int grammar_id = 288;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 310:
-            // Grammar: ID=310; read/write bits=1; START (Header)
+        case 288:
+            // Grammar: ID=288; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=311
+                // Event: START (MessageHeaderType); next=289
                 error = encode_iso20_MessageHeaderType(stream, &ServiceDetailResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 311;
+                    grammar_id = 289;
                 }
             }
             break;
-        case 311:
-            // Grammar: ID=311; read/write bits=1; START (ResponseCode)
+        case 289:
+            // Grammar: ID=289; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=312
+                // Event: START (string); next=290
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13420,18 +12809,18 @@ static int encode_iso20_ServiceDetailResType(exi_bitstream_t* stream, const stru
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 312;
+                            grammar_id = 290;
                         }
                     }
                 }
             }
             break;
-        case 312:
-            // Grammar: ID=312; read/write bits=1; START (ServiceID)
+        case 290:
+            // Grammar: ID=290; read/write bits=1; START (ServiceID)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=313
+                // Event: START (unsignedShort); next=291
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13442,14 +12831,14 @@ static int encode_iso20_ServiceDetailResType(exi_bitstream_t* stream, const stru
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 313;
+                            grammar_id = 291;
                         }
                     }
                 }
             }
             break;
-        case 313:
-            // Grammar: ID=313; read/write bits=1; START (ServiceParameterList)
+        case 291:
+            // Grammar: ID=291; read/write bits=1; START (ServiceParameterList)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -13488,42 +12877,42 @@ static int encode_iso20_ServiceDetailResType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); SelectedEnergyTransferService, SelectedServiceType (1, 1); SelectedVASList, SelectedServiceListType (0, 1);
 static int encode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, const struct iso20_ServiceSelectionReqType* ServiceSelectionReqType) {
-    int grammar_id = 314;
+    int grammar_id = 292;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 314:
-            // Grammar: ID=314; read/write bits=1; START (Header)
+        case 292:
+            // Grammar: ID=292; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=315
+                // Event: START (MessageHeaderType); next=293
                 error = encode_iso20_MessageHeaderType(stream, &ServiceSelectionReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 315;
+                    grammar_id = 293;
                 }
             }
             break;
-        case 315:
-            // Grammar: ID=315; read/write bits=1; START (SelectedEnergyTransferService)
+        case 293:
+            // Grammar: ID=293; read/write bits=1; START (SelectedEnergyTransferService)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (SelectedServiceType); next=316
+                // Event: START (SelectedServiceType); next=294
                 error = encode_iso20_SelectedServiceType(stream, &ServiceSelectionReqType->SelectedEnergyTransferService);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 316;
+                    grammar_id = 294;
                 }
             }
             break;
-        case 316:
-            // Grammar: ID=316; read/write bits=2; START (SelectedVASList), END Element
+        case 294:
+            // Grammar: ID=294; read/write bits=2; START (SelectedVASList), END Element
             if (ServiceSelectionReqType->SelectedVASList_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -13575,29 +12964,29 @@ static int encode_iso20_ServiceSelectionReqType(exi_bitstream_t* stream, const s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1);
 static int encode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, const struct iso20_ServiceSelectionResType* ServiceSelectionResType) {
-    int grammar_id = 317;
+    int grammar_id = 295;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 317:
-            // Grammar: ID=317; read/write bits=1; START (Header)
+        case 295:
+            // Grammar: ID=295; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=318
+                // Event: START (MessageHeaderType); next=296
                 error = encode_iso20_MessageHeaderType(stream, &ServiceSelectionResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 318;
+                    grammar_id = 296;
                 }
             }
             break;
-        case 318:
-            // Grammar: ID=318; read/write bits=1; START (ResponseCode)
+        case 296:
+            // Grammar: ID=296; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -13645,33 +13034,33 @@ static int encode_iso20_ServiceSelectionResType(exi_bitstream_t* stream, const s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); MaximumSupportingPoints, maxSupportingPointsScheduleTupleType (1, 1); Dynamic_SEReqControlMode, Dynamic_SEReqControlModeType (0, 1); Scheduled_SEReqControlMode, Scheduled_SEReqControlModeType (0, 1);
 static int encode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, const struct iso20_ScheduleExchangeReqType* ScheduleExchangeReqType) {
-    int grammar_id = 319;
+    int grammar_id = 297;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 319:
-            // Grammar: ID=319; read/write bits=1; START (Header)
+        case 297:
+            // Grammar: ID=297; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=320
+                // Event: START (MessageHeaderType); next=298
                 error = encode_iso20_MessageHeaderType(stream, &ScheduleExchangeReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 320;
+                    grammar_id = 298;
                 }
             }
             break;
-        case 320:
-            // Grammar: ID=320; read/write bits=1; START (MaximumSupportingPoints)
+        case 298:
+            // Grammar: ID=298; read/write bits=1; START (MaximumSupportingPoints)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=321
+                // Event: START (unsignedShort); next=299
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13682,14 +13071,14 @@ static int encode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, const s
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 321;
+                            grammar_id = 299;
                         }
                     }
                 }
             }
             break;
-        case 321:
-            // Grammar: ID=321; read/write bits=2; START (Dynamic_SEReqControlMode), START (Scheduled_SEReqControlMode)
+        case 299:
+            // Grammar: ID=299; read/write bits=2; START (Dynamic_SEReqControlMode), START (Scheduled_SEReqControlMode)
             if (ScheduleExchangeReqType->Dynamic_SEReqControlMode_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -13744,33 +13133,33 @@ static int encode_iso20_ScheduleExchangeReqType(exi_bitstream_t* stream, const s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); GoToPause, boolean (0, 1); Dynamic_SEResControlMode, Dynamic_SEResControlModeType (0, 1); Scheduled_SEResControlMode, Scheduled_SEResControlModeType (0, 1);
 static int encode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, const struct iso20_ScheduleExchangeResType* ScheduleExchangeResType) {
-    int grammar_id = 322;
+    int grammar_id = 300;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 322:
-            // Grammar: ID=322; read/write bits=1; START (Header)
+        case 300:
+            // Grammar: ID=300; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=323
+                // Event: START (MessageHeaderType); next=301
                 error = encode_iso20_MessageHeaderType(stream, &ScheduleExchangeResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 323;
+                    grammar_id = 301;
                 }
             }
             break;
-        case 323:
-            // Grammar: ID=323; read/write bits=1; START (ResponseCode)
+        case 301:
+            // Grammar: ID=301; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=324
+                // Event: START (string); next=302
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13781,18 +13170,18 @@ static int encode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, const s
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 324;
+                            grammar_id = 302;
                         }
                     }
                 }
             }
             break;
-        case 324:
-            // Grammar: ID=324; read/write bits=1; START (EVSEProcessing)
+        case 302:
+            // Grammar: ID=302; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=325
+                // Event: START (string); next=303
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13803,20 +13192,20 @@ static int encode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, const s
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 325;
+                            grammar_id = 303;
                         }
                     }
                 }
             }
             break;
-        case 325:
-            // Grammar: ID=325; read/write bits=2; START (GoToPause), START (Dynamic_SEResControlMode), START (Scheduled_SEResControlMode)
+        case 303:
+            // Grammar: ID=303; read/write bits=2; START (GoToPause), START (Dynamic_SEResControlMode), START (Scheduled_SEResControlMode)
             if (ScheduleExchangeResType->GoToPause_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (GoToPause, boolean); next=326
+                    // Event: START (GoToPause, boolean); next=304
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -13827,7 +13216,7 @@ static int encode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, const s
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 326;
+                                grammar_id = 304;
                             }
                         }
                     }
@@ -13860,8 +13249,8 @@ static int encode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, const s
                 }
             }
             break;
-        case 326:
-            // Grammar: ID=326; read/write bits=2; START (Dynamic_SEResControlMode), START (Scheduled_SEResControlMode)
+        case 304:
+            // Grammar: ID=304; read/write bits=2; START (Dynamic_SEResControlMode), START (Scheduled_SEResControlMode)
             if (ScheduleExchangeResType->Dynamic_SEResControlMode_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -13916,33 +13305,33 @@ static int encode_iso20_ScheduleExchangeResType(exi_bitstream_t* stream, const s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVProcessing, processingType (1, 1); ChargeProgress, chargeProgressType (1, 1); EVPowerProfile, EVPowerProfileType (0, 1); BPT_ChannelSelection, channelSelectionType (0, 1);
 static int encode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, const struct iso20_PowerDeliveryReqType* PowerDeliveryReqType) {
-    int grammar_id = 327;
+    int grammar_id = 305;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 327:
-            // Grammar: ID=327; read/write bits=1; START (Header)
+        case 305:
+            // Grammar: ID=305; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=328
+                // Event: START (MessageHeaderType); next=306
                 error = encode_iso20_MessageHeaderType(stream, &PowerDeliveryReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 328;
+                    grammar_id = 306;
                 }
             }
             break;
-        case 328:
-            // Grammar: ID=328; read/write bits=1; START (EVProcessing)
+        case 306:
+            // Grammar: ID=306; read/write bits=1; START (EVProcessing)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=329
+                // Event: START (string); next=307
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13953,18 +13342,18 @@ static int encode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, const stru
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 329;
+                            grammar_id = 307;
                         }
                     }
                 }
             }
             break;
-        case 329:
-            // Grammar: ID=329; read/write bits=1; START (ChargeProgress)
+        case 307:
+            // Grammar: ID=307; read/write bits=1; START (ChargeProgress)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=330
+                // Event: START (string); next=308
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -13975,24 +13364,24 @@ static int encode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, const stru
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 330;
+                            grammar_id = 308;
                         }
                     }
                 }
             }
             break;
-        case 330:
-            // Grammar: ID=330; read/write bits=2; START (EVPowerProfile), START (BPT_ChannelSelection), END Element
+        case 308:
+            // Grammar: ID=308; read/write bits=2; START (EVPowerProfile), START (BPT_ChannelSelection), END Element
             if (PowerDeliveryReqType->EVPowerProfile_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVPowerProfile, EVPowerProfileType); next=331
+                    // Event: START (EVPowerProfile, EVPowerProfileType); next=309
                     error = encode_iso20_EVPowerProfileType(stream, &PowerDeliveryReqType->EVPowerProfile);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 331;
+                        grammar_id = 309;
                     }
                 }
             }
@@ -14029,8 +13418,8 @@ static int encode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, const stru
                 }
             }
             break;
-        case 331:
-            // Grammar: ID=331; read/write bits=2; START (BPT_ChannelSelection), END Element
+        case 309:
+            // Grammar: ID=309; read/write bits=2; START (BPT_ChannelSelection), END Element
             if (PowerDeliveryReqType->BPT_ChannelSelection_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -14091,33 +13480,33 @@ static int encode_iso20_PowerDeliveryReqType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEStatus, EVSEStatusType (0, 1);
 static int encode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, const struct iso20_PowerDeliveryResType* PowerDeliveryResType) {
-    int grammar_id = 332;
+    int grammar_id = 310;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 332:
-            // Grammar: ID=332; read/write bits=1; START (Header)
+        case 310:
+            // Grammar: ID=310; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=333
+                // Event: START (MessageHeaderType); next=311
                 error = encode_iso20_MessageHeaderType(stream, &PowerDeliveryResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 333;
+                    grammar_id = 311;
                 }
             }
             break;
-        case 333:
-            // Grammar: ID=333; read/write bits=1; START (ResponseCode)
+        case 311:
+            // Grammar: ID=311; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=334
+                // Event: START (string); next=312
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -14128,14 +13517,14 @@ static int encode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, const stru
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 334;
+                            grammar_id = 312;
                         }
                     }
                 }
             }
             break;
-        case 334:
-            // Grammar: ID=334; read/write bits=2; START (EVSEStatus), END Element
+        case 312:
+            // Grammar: ID=312; read/write bits=2; START (EVSEStatus), END Element
             if (PowerDeliveryResType->EVSEStatus_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -14187,29 +13576,29 @@ static int encode_iso20_PowerDeliveryResType(exi_bitstream_t* stream, const stru
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); SignedMeteringData, SignedMeteringDataType (1, 1);
 static int encode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, const struct iso20_MeteringConfirmationReqType* MeteringConfirmationReqType) {
-    int grammar_id = 335;
+    int grammar_id = 313;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 335:
-            // Grammar: ID=335; read/write bits=1; START (Header)
+        case 313:
+            // Grammar: ID=313; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=336
+                // Event: START (MessageHeaderType); next=314
                 error = encode_iso20_MessageHeaderType(stream, &MeteringConfirmationReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 336;
+                    grammar_id = 314;
                 }
             }
             break;
-        case 336:
-            // Grammar: ID=336; read/write bits=1; START (SignedMeteringData)
+        case 314:
+            // Grammar: ID=314; read/write bits=1; START (SignedMeteringData)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -14248,29 +13637,29 @@ static int encode_iso20_MeteringConfirmationReqType(exi_bitstream_t* stream, con
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1);
 static int encode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, const struct iso20_MeteringConfirmationResType* MeteringConfirmationResType) {
-    int grammar_id = 337;
+    int grammar_id = 315;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 337:
-            // Grammar: ID=337; read/write bits=1; START (Header)
+        case 315:
+            // Grammar: ID=315; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=338
+                // Event: START (MessageHeaderType); next=316
                 error = encode_iso20_MessageHeaderType(stream, &MeteringConfirmationResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 338;
+                    grammar_id = 316;
                 }
             }
             break;
-        case 338:
-            // Grammar: ID=338; read/write bits=1; START (ResponseCode)
+        case 316:
+            // Grammar: ID=316; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -14318,33 +13707,33 @@ static int encode_iso20_MeteringConfirmationResType(exi_bitstream_t* stream, con
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ChargingSession, chargingSessionType (1, 1); EVTerminationCode, nameType (0, 1); EVTerminationExplanation, descriptionType (0, 1);
 static int encode_iso20_SessionStopReqType(exi_bitstream_t* stream, const struct iso20_SessionStopReqType* SessionStopReqType) {
-    int grammar_id = 339;
+    int grammar_id = 317;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 339:
-            // Grammar: ID=339; read/write bits=1; START (Header)
+        case 317:
+            // Grammar: ID=317; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=340
+                // Event: START (MessageHeaderType); next=318
                 error = encode_iso20_MessageHeaderType(stream, &SessionStopReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 340;
+                    grammar_id = 318;
                 }
             }
             break;
-        case 340:
-            // Grammar: ID=340; read/write bits=1; START (ChargingSession)
+        case 318:
+            // Grammar: ID=318; read/write bits=1; START (ChargingSession)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=341
+                // Event: START (string); next=319
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -14355,20 +13744,20 @@ static int encode_iso20_SessionStopReqType(exi_bitstream_t* stream, const struct
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 341;
+                            grammar_id = 319;
                         }
                     }
                 }
             }
             break;
-        case 341:
-            // Grammar: ID=341; read/write bits=2; START (EVTerminationCode), START (EVTerminationExplanation), END Element
+        case 319:
+            // Grammar: ID=319; read/write bits=2; START (EVTerminationCode), START (EVTerminationExplanation), END Element
             if (SessionStopReqType->EVTerminationCode_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTerminationCode, string); next=342
+                    // Event: START (EVTerminationCode, string); next=320
 
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
@@ -14384,7 +13773,7 @@ static int encode_iso20_SessionStopReqType(exi_bitstream_t* stream, const struct
                                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                                 if (error == EXI_ERROR__NO_ERROR)
                                 {
-                                    grammar_id = 342;
+                                    grammar_id = 320;
                                 }
                             }
                         }
@@ -14430,8 +13819,8 @@ static int encode_iso20_SessionStopReqType(exi_bitstream_t* stream, const struct
                 }
             }
             break;
-        case 342:
-            // Grammar: ID=342; read/write bits=2; START (EVTerminationExplanation), END Element
+        case 320:
+            // Grammar: ID=320; read/write bits=2; START (EVTerminationExplanation), END Element
             if (SessionStopReqType->EVTerminationExplanation_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -14498,29 +13887,29 @@ static int encode_iso20_SessionStopReqType(exi_bitstream_t* stream, const struct
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1);
 static int encode_iso20_SessionStopResType(exi_bitstream_t* stream, const struct iso20_SessionStopResType* SessionStopResType) {
-    int grammar_id = 343;
+    int grammar_id = 321;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 343:
-            // Grammar: ID=343; read/write bits=1; START (Header)
+        case 321:
+            // Grammar: ID=321; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=344
+                // Event: START (MessageHeaderType); next=322
                 error = encode_iso20_MessageHeaderType(stream, &SessionStopResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 344;
+                    grammar_id = 322;
                 }
             }
             break;
-        case 344:
-            // Grammar: ID=344; read/write bits=1; START (ResponseCode)
+        case 322:
+            // Grammar: ID=322; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -14568,59 +13957,59 @@ static int encode_iso20_SessionStopResType(exi_bitstream_t* stream, const struct
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); OEMProvisioningCertificateChain, SignedCertificateChainType (1, 1); ListOfRootCertificateIDs, ListOfRootCertificateIDsType (1, 1); MaximumContractCertificateChains, unsignedByte (1, 1); PrioritizedEMAIDs, EMAIDListType (0, 1);
 static int encode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, const struct iso20_CertificateInstallationReqType* CertificateInstallationReqType) {
-    int grammar_id = 345;
+    int grammar_id = 323;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 345:
-            // Grammar: ID=345; read/write bits=1; START (Header)
+        case 323:
+            // Grammar: ID=323; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=346
+                // Event: START (MessageHeaderType); next=324
                 error = encode_iso20_MessageHeaderType(stream, &CertificateInstallationReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 346;
+                    grammar_id = 324;
                 }
             }
             break;
-        case 346:
-            // Grammar: ID=346; read/write bits=1; START (OEMProvisioningCertificateChain)
+        case 324:
+            // Grammar: ID=324; read/write bits=1; START (OEMProvisioningCertificateChain)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (SignedCertificateChainType); next=347
+                // Event: START (SignedCertificateChainType); next=325
                 error = encode_iso20_SignedCertificateChainType(stream, &CertificateInstallationReqType->OEMProvisioningCertificateChain);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 347;
+                    grammar_id = 325;
                 }
             }
             break;
-        case 347:
-            // Grammar: ID=347; read/write bits=1; START (ListOfRootCertificateIDs)
+        case 325:
+            // Grammar: ID=325; read/write bits=1; START (ListOfRootCertificateIDs)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (ListOfRootCertificateIDsType); next=348
+                // Event: START (ListOfRootCertificateIDsType); next=326
                 error = encode_iso20_ListOfRootCertificateIDsType(stream, &CertificateInstallationReqType->ListOfRootCertificateIDs);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 348;
+                    grammar_id = 326;
                 }
             }
             break;
-        case 348:
-            // Grammar: ID=348; read/write bits=1; START (MaximumContractCertificateChains)
+        case 326:
+            // Grammar: ID=326; read/write bits=1; START (MaximumContractCertificateChains)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (unsignedShort); next=349
+                // Event: START (unsignedShort); next=327
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -14631,14 +14020,14 @@ static int encode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 349;
+                            grammar_id = 327;
                         }
                     }
                 }
             }
             break;
-        case 349:
-            // Grammar: ID=349; read/write bits=2; START (PrioritizedEMAIDs), END Element
+        case 327:
+            // Grammar: ID=327; read/write bits=2; START (PrioritizedEMAIDs), END Element
             if (CertificateInstallationReqType->PrioritizedEMAIDs_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -14690,33 +14079,33 @@ static int encode_iso20_CertificateInstallationReqType(exi_bitstream_t* stream, 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); CPSCertificateChain, CertificateChainType (1, 1); SignedInstallationData, SignedInstallationDataType (1, 1); RemainingContractCertificateChains, unsignedByte (1, 1);
 static int encode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, const struct iso20_CertificateInstallationResType* CertificateInstallationResType) {
-    int grammar_id = 350;
+    int grammar_id = 328;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 350:
-            // Grammar: ID=350; read/write bits=1; START (Header)
+        case 328:
+            // Grammar: ID=328; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=351
+                // Event: START (MessageHeaderType); next=329
                 error = encode_iso20_MessageHeaderType(stream, &CertificateInstallationResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 351;
+                    grammar_id = 329;
                 }
             }
             break;
-        case 351:
-            // Grammar: ID=351; read/write bits=1; START (ResponseCode)
+        case 329:
+            // Grammar: ID=329; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=352
+                // Event: START (string); next=330
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -14727,18 +14116,18 @@ static int encode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 352;
+                            grammar_id = 330;
                         }
                     }
                 }
             }
             break;
-        case 352:
-            // Grammar: ID=352; read/write bits=1; START (EVSEProcessing)
+        case 330:
+            // Grammar: ID=330; read/write bits=1; START (EVSEProcessing)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=353
+                // Event: START (string); next=331
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -14749,40 +14138,40 @@ static int encode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 353;
+                            grammar_id = 331;
                         }
                     }
                 }
             }
             break;
-        case 353:
-            // Grammar: ID=353; read/write bits=1; START (CPSCertificateChain)
+        case 331:
+            // Grammar: ID=331; read/write bits=1; START (CPSCertificateChain)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (CertificateChainType); next=354
+                // Event: START (CertificateChainType); next=332
                 error = encode_iso20_CertificateChainType(stream, &CertificateInstallationResType->CPSCertificateChain);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 354;
+                    grammar_id = 332;
                 }
             }
             break;
-        case 354:
-            // Grammar: ID=354; read/write bits=1; START (SignedInstallationData)
+        case 332:
+            // Grammar: ID=332; read/write bits=1; START (SignedInstallationData)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (SignedInstallationDataType); next=355
+                // Event: START (SignedInstallationDataType); next=333
                 error = encode_iso20_SignedInstallationDataType(stream, &CertificateInstallationResType->SignedInstallationData);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 355;
+                    grammar_id = 333;
                 }
             }
             break;
-        case 355:
-            // Grammar: ID=355; read/write bits=1; START (RemainingContractCertificateChains)
+        case 333:
+            // Grammar: ID=333; read/write bits=1; START (RemainingContractCertificateChains)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -14830,33 +14219,33 @@ static int encode_iso20_CertificateInstallationResType(exi_bitstream_t* stream, 
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVCheckInStatus, evCheckInStatusType (1, 1); ParkingMethod, parkingMethodType (1, 1); VehicleFrame, short (0, 1); DeviceOffset, short (0, 1); VehicleTravel, short (0, 1);
 static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const struct iso20_VehicleCheckInReqType* VehicleCheckInReqType) {
-    int grammar_id = 356;
+    int grammar_id = 334;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 356:
-            // Grammar: ID=356; read/write bits=1; START (Header)
+        case 334:
+            // Grammar: ID=334; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=357
+                // Event: START (MessageHeaderType); next=335
                 error = encode_iso20_MessageHeaderType(stream, &VehicleCheckInReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 357;
+                    grammar_id = 335;
                 }
             }
             break;
-        case 357:
-            // Grammar: ID=357; read/write bits=1; START (EVCheckInStatus)
+        case 335:
+            // Grammar: ID=335; read/write bits=1; START (EVCheckInStatus)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=358
+                // Event: START (string); next=336
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -14867,18 +14256,18 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 358;
+                            grammar_id = 336;
                         }
                     }
                 }
             }
             break;
-        case 358:
-            // Grammar: ID=358; read/write bits=1; START (ParkingMethod)
+        case 336:
+            // Grammar: ID=336; read/write bits=1; START (ParkingMethod)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=359
+                // Event: START (string); next=337
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -14889,20 +14278,20 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 359;
+                            grammar_id = 337;
                         }
                     }
                 }
             }
             break;
-        case 359:
-            // Grammar: ID=359; read/write bits=3; START (VehicleFrame), START (DeviceOffset), START (VehicleTravel), END Element
+        case 337:
+            // Grammar: ID=337; read/write bits=3; START (VehicleFrame), START (DeviceOffset), START (VehicleTravel), END Element
             if (VehicleCheckInReqType->VehicleFrame_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (VehicleFrame, int); next=360
+                    // Event: START (VehicleFrame, int); next=338
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -14913,7 +14302,7 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 360;
+                                grammar_id = 338;
                             }
                         }
                     }
@@ -14924,7 +14313,7 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DeviceOffset, int); next=361
+                    // Event: START (DeviceOffset, int); next=339
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -14935,7 +14324,7 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 361;
+                                grammar_id = 339;
                             }
                         }
                     }
@@ -14974,14 +14363,14 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
                 }
             }
             break;
-        case 360:
-            // Grammar: ID=360; read/write bits=2; START (DeviceOffset), START (VehicleTravel), END Element
+        case 338:
+            // Grammar: ID=338; read/write bits=2; START (DeviceOffset), START (VehicleTravel), END Element
             if (VehicleCheckInReqType->DeviceOffset_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DeviceOffset, int); next=361
+                    // Event: START (DeviceOffset, int); next=339
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -14992,7 +14381,7 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 361;
+                                grammar_id = 339;
                             }
                         }
                     }
@@ -15031,8 +14420,8 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
                 }
             }
             break;
-        case 361:
-            // Grammar: ID=361; read/write bits=2; START (VehicleTravel), END Element
+        case 339:
+            // Grammar: ID=339; read/write bits=2; START (VehicleTravel), END Element
             if (VehicleCheckInReqType->VehicleTravel_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -15093,33 +14482,33 @@ static int encode_iso20_VehicleCheckInReqType(exi_bitstream_t* stream, const str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); ParkingSpace, short (0, 1); DeviceLocation, short (0, 1); TargetDistance, short (0, 1);
 static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const struct iso20_VehicleCheckInResType* VehicleCheckInResType) {
-    int grammar_id = 362;
+    int grammar_id = 340;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 362:
-            // Grammar: ID=362; read/write bits=1; START (Header)
+        case 340:
+            // Grammar: ID=340; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=363
+                // Event: START (MessageHeaderType); next=341
                 error = encode_iso20_MessageHeaderType(stream, &VehicleCheckInResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 363;
+                    grammar_id = 341;
                 }
             }
             break;
-        case 363:
-            // Grammar: ID=363; read/write bits=1; START (ResponseCode)
+        case 341:
+            // Grammar: ID=341; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=364
+                // Event: START (string); next=342
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -15130,20 +14519,20 @@ static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const str
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 364;
+                            grammar_id = 342;
                         }
                     }
                 }
             }
             break;
-        case 364:
-            // Grammar: ID=364; read/write bits=3; START (ParkingSpace), START (DeviceLocation), START (TargetDistance), END Element
+        case 342:
+            // Grammar: ID=342; read/write bits=3; START (ParkingSpace), START (DeviceLocation), START (TargetDistance), END Element
             if (VehicleCheckInResType->ParkingSpace_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ParkingSpace, int); next=365
+                    // Event: START (ParkingSpace, int); next=343
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -15154,7 +14543,7 @@ static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const str
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 365;
+                                grammar_id = 343;
                             }
                         }
                     }
@@ -15165,7 +14554,7 @@ static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const str
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DeviceLocation, int); next=366
+                    // Event: START (DeviceLocation, int); next=344
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -15176,7 +14565,7 @@ static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const str
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 366;
+                                grammar_id = 344;
                             }
                         }
                     }
@@ -15215,14 +14604,14 @@ static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const str
                 }
             }
             break;
-        case 365:
-            // Grammar: ID=365; read/write bits=2; START (DeviceLocation), START (TargetDistance), END Element
+        case 343:
+            // Grammar: ID=343; read/write bits=2; START (DeviceLocation), START (TargetDistance), END Element
             if (VehicleCheckInResType->DeviceLocation_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (DeviceLocation, int); next=366
+                    // Event: START (DeviceLocation, int); next=344
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
@@ -15233,7 +14622,7 @@ static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const str
                             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                             if (error == EXI_ERROR__NO_ERROR)
                             {
-                                grammar_id = 366;
+                                grammar_id = 344;
                             }
                         }
                     }
@@ -15272,8 +14661,8 @@ static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const str
                 }
             }
             break;
-        case 366:
-            // Grammar: ID=366; read/write bits=2; START (TargetDistance), END Element
+        case 344:
+            // Grammar: ID=344; read/write bits=2; START (TargetDistance), END Element
             if (VehicleCheckInResType->TargetDistance_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -15334,33 +14723,33 @@ static int encode_iso20_VehicleCheckInResType(exi_bitstream_t* stream, const str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVCheckOutStatus, evCheckOutStatusType (1, 1); CheckOutTime, unsignedLong (1, 1);
 static int encode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, const struct iso20_VehicleCheckOutReqType* VehicleCheckOutReqType) {
-    int grammar_id = 367;
+    int grammar_id = 345;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 367:
-            // Grammar: ID=367; read/write bits=1; START (Header)
+        case 345:
+            // Grammar: ID=345; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=368
+                // Event: START (MessageHeaderType); next=346
                 error = encode_iso20_MessageHeaderType(stream, &VehicleCheckOutReqType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 368;
+                    grammar_id = 346;
                 }
             }
             break;
-        case 368:
-            // Grammar: ID=368; read/write bits=1; START (EVCheckOutStatus)
+        case 346:
+            // Grammar: ID=346; read/write bits=1; START (EVCheckOutStatus)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=369
+                // Event: START (string); next=347
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -15371,14 +14760,14 @@ static int encode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, const st
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 369;
+                            grammar_id = 347;
                         }
                     }
                 }
             }
             break;
-        case 369:
-            // Grammar: ID=369; read/write bits=1; START (CheckOutTime)
+        case 347:
+            // Grammar: ID=347; read/write bits=1; START (CheckOutTime)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -15426,33 +14815,33 @@ static int encode_iso20_VehicleCheckOutReqType(exi_bitstream_t* stream, const st
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSECheckOutStatus, evseCheckOutStatusType (1, 1);
 static int encode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, const struct iso20_VehicleCheckOutResType* VehicleCheckOutResType) {
-    int grammar_id = 370;
+    int grammar_id = 348;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 370:
-            // Grammar: ID=370; read/write bits=1; START (Header)
+        case 348:
+            // Grammar: ID=348; read/write bits=1; START (Header)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (MessageHeaderType); next=371
+                // Event: START (MessageHeaderType); next=349
                 error = encode_iso20_MessageHeaderType(stream, &VehicleCheckOutResType->Header);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 371;
+                    grammar_id = 349;
                 }
             }
             break;
-        case 371:
-            // Grammar: ID=371; read/write bits=1; START (ResponseCode)
+        case 349:
+            // Grammar: ID=349; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (string); next=372
+                // Event: START (string); next=350
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
@@ -15463,14 +14852,14 @@ static int encode_iso20_VehicleCheckOutResType(exi_bitstream_t* stream, const st
                         error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 372;
+                            grammar_id = 350;
                         }
                     }
                 }
             }
             break;
-        case 372:
-            // Grammar: ID=372; read/write bits=1; START (EVSECheckOutStatus)
+        case 350:
+            // Grammar: ID=350; read/write bits=1; START (EVSECheckOutStatus)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
@@ -15538,25 +14927,25 @@ static int encode_iso20_CLResControlModeType(exi_bitstream_t* stream, const stru
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}Manifest; type={http://www.w3.org/2000/09/xmldsig#}ManifestType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4);
+// Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4) (original max unbounded);
 static int encode_iso20_ManifestType(exi_bitstream_t* stream, const struct iso20_ManifestType* ManifestType) {
-    int grammar_id = 373;
+    int grammar_id = 351;
     int done = 0;
     int error = 0;
     uint16_t Reference_currentIndex = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 373:
-            // Grammar: ID=373; read/write bits=2; START (Id), START (Reference)
+        case 351:
+            // Grammar: ID=351; read/write bits=2; START (Id), START (Reference)
             if (ManifestType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=376
+                    // Event: START (Id, NCName); next=353
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(ManifestType->Id.charactersLen + 2));
@@ -15565,7 +14954,7 @@ static int encode_iso20_ManifestType(exi_bitstream_t* stream, const struct iso20
                         error = exi_basetypes_encoder_characters(stream, ManifestType->Id.charactersLen, ManifestType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 376;
+                            grammar_id = 353;
                         }
                     }
                 }
@@ -15577,28 +14966,28 @@ static int encode_iso20_ManifestType(exi_bitstream_t* stream, const struct iso20
                     error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        // Event: START (ReferenceType); next=374
+                        // Event: START (ReferenceType); next=352
                         error = encode_iso20_ReferenceType(stream, &ManifestType->Reference.array[Reference_currentIndex++]);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 374;
+                            grammar_id = 352;
                         }
                     }
                 }
             }
             break;
-        case 374:
-            // Grammar: ID=374; read/write bits=2; LOOP (Reference), END Element
+        case 352:
+            // Grammar: ID=352; read/write bits=2; LOOP (Reference), END Element
             if (Reference_currentIndex < ManifestType->Reference.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (ReferenceType); next=374
+                    // Event: LOOP (ReferenceType); next=352
                     error = encode_iso20_ReferenceType(stream, &ManifestType->Reference.array[Reference_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 374;
+                        grammar_id = 352;
                     }
                 }
             }
@@ -15613,44 +15002,18 @@ static int encode_iso20_ManifestType(exi_bitstream_t* stream, const struct iso20
                 }
             }
             break;
-        case 375:
-            // Grammar: ID=375; read/write bits=2; LOOP (Reference), END Element
-            if (Reference_currentIndex < ManifestType->Reference.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (ReferenceType); next=2
-                    error = encode_iso20_ReferenceType(stream, &ManifestType->Reference.array[Reference_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 376:
-            // Grammar: ID=376; read/write bits=1; START (Reference)
+        case 353:
+            // Grammar: ID=353; read/write bits=1; START (Reference)
             if (Reference_currentIndex < ManifestType->Reference.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (ReferenceType); next=377
+                    // Event: START (ReferenceType); next=354
                     error = encode_iso20_ReferenceType(stream, &ManifestType->Reference.array[Reference_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 377;
+                        grammar_id = 354;
                     }
                 }
             }
@@ -15659,44 +15022,18 @@ static int encode_iso20_ManifestType(exi_bitstream_t* stream, const struct iso20
                 error = EXI_ERROR__UNKNOWN_EVENT_CODE;
             }
             break;
-        case 377:
-            // Grammar: ID=377; read/write bits=2; LOOP (Reference), END Element
+        case 354:
+            // Grammar: ID=354; read/write bits=2; LOOP (Reference), END Element
             if (Reference_currentIndex < ManifestType->Reference.arrayLen)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: LOOP (ReferenceType); next=377
+                    // Event: LOOP (ReferenceType); next=354
                     error = encode_iso20_ReferenceType(stream, &ManifestType->Reference.array[Reference_currentIndex++]);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 377;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                }
-            }
-            break;
-        case 378:
-            // Grammar: ID=378; read/write bits=2; LOOP (Reference), END Element
-            if (Reference_currentIndex < ManifestType->Reference.arrayLen)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: LOOP (ReferenceType); next=2
-                    error = encode_iso20_ReferenceType(stream, &ManifestType->Reference.array[Reference_currentIndex++]);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
+                        grammar_id = 354;
                     }
                 }
             }
@@ -15736,24 +15073,24 @@ static int encode_iso20_ManifestType(exi_bitstream_t* stream, const struct iso20
 
 // Element: definition=complex; name={http://www.w3.org/2000/09/xmldsig#}SignatureProperties; type={http://www.w3.org/2000/09/xmldsig#}SignaturePropertiesType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1);
+// Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1) (original max unbounded);
 static int encode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, const struct iso20_SignaturePropertiesType* SignaturePropertiesType) {
-    int grammar_id = 379;
+    int grammar_id = 355;
     int done = 0;
     int error = 0;
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 379:
-            // Grammar: ID=379; read/write bits=2; START (Id), START (SignatureProperty)
+        case 355:
+            // Grammar: ID=355; read/write bits=2; START (Id), START (SignatureProperty)
             if (SignaturePropertiesType->Id_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (Id, NCName); next=381
+                    // Event: START (Id, NCName); next=357
 
                     // string should not be found in table, so add 2
                     error = exi_basetypes_encoder_uint_16(stream, (uint16_t)(SignaturePropertiesType->Id.charactersLen + 2));
@@ -15762,7 +15099,7 @@ static int encode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, const s
                         error = exi_basetypes_encoder_characters(stream, SignaturePropertiesType->Id.charactersLen, SignaturePropertiesType->Id.characters, iso20_Id_CHARACTER_SIZE);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
-                            grammar_id = 381;
+                            grammar_id = 357;
                         }
                     }
                 }
@@ -15772,17 +15109,17 @@ static int encode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (SignatureProperty, SignaturePropertyType); next=380
+                    // Event: START (SignatureProperty, SignaturePropertyType); next=356
                     error = encode_iso20_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 380;
+                        grammar_id = 356;
                     }
                 }
             }
             break;
-        case 380:
-            // Grammar: ID=380; read/write bits=2; START (SignatureProperty), END Element
+        case 356:
+            // Grammar: ID=356; read/write bits=2; START (SignatureProperty), END Element
             if (1 == 0)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -15807,21 +15144,21 @@ static int encode_iso20_SignaturePropertiesType(exi_bitstream_t* stream, const s
                 }
             }
             break;
-        case 381:
-            // Grammar: ID=381; read/write bits=1; START (SignatureProperty)
+        case 357:
+            // Grammar: ID=357; read/write bits=1; START (SignatureProperty)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (SignaturePropertyType); next=382
+                // Event: START (SignaturePropertyType); next=358
                 error = encode_iso20_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 382;
+                    grammar_id = 358;
                 }
             }
             break;
-        case 382:
-            // Grammar: ID=382; read/write bits=2; START (SignatureProperty), END Element
+        case 358:
+            // Grammar: ID=358; read/write bits=2; START (SignatureProperty), END Element
             if (1 == 0)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);

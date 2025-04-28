@@ -45,16 +45,16 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
 
     init_appHand_AppProtocolType(AppProtocolType);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 0:
             // Grammar: ID=0; read/write bits=1; START (ProtocolNamespace)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (ProtocolNamespace, protocolNamespaceType (anyURI)); next=1
@@ -116,7 +116,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (VersionNumberMajor, unsignedInt (unsignedLong)); next=2
@@ -138,7 +138,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (VersionNumberMinor, unsignedInt (unsignedLong)); next=3
@@ -160,7 +160,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SchemaID, idType (unsignedByte)); next=4
@@ -213,7 +213,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (Priority, priorityType (unsignedByte)); next=5
@@ -267,7 +267,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=6
@@ -295,7 +295,7 @@ static int decode_appHand_AppProtocolType(exi_bitstream_t* stream, struct appHan
 
 // Element: definition=complex; name={urn:iso:15118:2:2010:AppProtocol}supportedAppProtocolReq; type=AnonymousType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: AppProtocol, AppProtocolType (1, 5);
+// Particle: AppProtocol, AppProtocolType (1, 5) (original max 20);
 static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struct appHand_supportedAppProtocolReq* supportedAppProtocolReq) {
     int grammar_id = 7;
     int done = 0;
@@ -304,16 +304,16 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
 
     init_appHand_supportedAppProtocolReq(supportedAppProtocolReq);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
         case 7:
             // Grammar: ID=7; read/write bits=1; START (AppProtocol)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (AppProtocol, AppProtocolType (AppProtocolType)); next=8
@@ -324,6 +324,7 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
                     }
                     else
                     {
+                        // static array not large enough, only appHand_AppProtocolType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
                     grammar_id = 8;
@@ -339,7 +340,7 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: LOOP (AppProtocol, AppProtocolType (AppProtocolType)); next=8
@@ -350,40 +351,18 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
                     }
                     else
                     {
+                        // static array not large enough, only appHand_AppProtocolType_5_ARRAY_SIZE elements
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 8;
-                    break;
-                case 1:
-                    // Event: END Element; next=6
-                    done = 1;
-                    grammar_id = 6;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 9:
-            // Grammar: ID=9; read/write bits=2; LOOP (AppProtocol), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: LOOP (AppProtocol, AppProtocolType (AppProtocolType)); next=5
-                    // decode: element array
-                    if (supportedAppProtocolReq->AppProtocol.arrayLen < appHand_AppProtocolType_5_ARRAY_SIZE)
+                    // LOOP breakout code for schema given maximum, regardless of ARRAY_SIZE definition
+                    if (supportedAppProtocolReq->AppProtocol.arrayLen < 20)
                     {
-                        error = decode_appHand_AppProtocolType(stream, &supportedAppProtocolReq->AppProtocol.array[supportedAppProtocolReq->AppProtocol.arrayLen++]);
+                        grammar_id = 8;
                     }
                     else
                     {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                        grammar_id = 5;
                     }
-                    grammar_id = 5;
                     break;
                 case 1:
                     // Event: END Element; next=6
@@ -401,7 +380,7 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=6
@@ -431,26 +410,26 @@ static int decode_appHand_supportedAppProtocolReq(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: ResponseCode, responseCodeType (1, 1); SchemaID, idType (0, 1);
 static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struct appHand_supportedAppProtocolRes* supportedAppProtocolRes) {
-    int grammar_id = 10;
+    int grammar_id = 9;
     int done = 0;
     uint32_t eventCode;
     int error;
 
     init_appHand_supportedAppProtocolRes(supportedAppProtocolRes);
 
-    while(!done)
+    while (!done)
     {
-        switch(grammar_id)
+        switch (grammar_id)
         {
-        case 10:
-            // Grammar: ID=10; read/write bits=1; START (ResponseCode)
+        case 9:
+            // Grammar: ID=9; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=11
+                    // Event: START (ResponseCode, responseCodeType (string)); next=10
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -480,7 +459,7 @@ static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struc
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 11;
+                                grammar_id = 10;
                             }
                             else
                             {
@@ -495,12 +474,12 @@ static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struc
                 }
             }
             break;
-        case 11:
-            // Grammar: ID=11; read/write bits=2; START (SchemaID), END Element
+        case 10:
+            // Grammar: ID=10; read/write bits=2; START (SchemaID), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: START (SchemaID, idType (unsignedByte)); next=5
@@ -559,7 +538,7 @@ static int decode_appHand_supportedAppProtocolRes(exi_bitstream_t* stream, struc
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
-                switch(eventCode)
+                switch (eventCode)
                 {
                 case 0:
                     // Event: END Element; next=6
@@ -598,7 +577,7 @@ int decode_appHand_exiDocument(exi_bitstream_t* stream, struct appHand_exiDocume
         error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
         if (error == 0)
         {
-            switch(eventCode)
+            switch (eventCode)
             {
             case 0:
                 error = decode_appHand_supportedAppProtocolReq(stream, &exiDoc->supportedAppProtocolReq);
