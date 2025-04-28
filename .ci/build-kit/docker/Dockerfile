@@ -39,7 +39,7 @@ ENV PYTHON_VERSION=3.13.3
 ENV PYTHON_SOURCE_URL=https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
 RUN tmpdir=$(mktemp -d) \
     && cd $tmpdir \
-    && python3 -m pip freeze > ${tmpdir}/requirements.txt \
+    && python3 -m pip freeze | sed 's/==.*//' > ${tmpdir}/requirements.txt \
     && wget ${PYTHON_SOURCE_URL} \
     && tar -xzvf Python-${PYTHON_VERSION}.tgz \
     && cd Python-${PYTHON_VERSION} \
