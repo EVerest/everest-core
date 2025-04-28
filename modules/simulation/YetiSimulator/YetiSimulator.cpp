@@ -682,6 +682,17 @@ void YetiSimulator::pwm_f() {
     module_state->pwm_error_f = true;
 }
 
+void YetiSimulator::ce_on() {
+    module_state->pwm_duty_cycle = 25.0;
+    module_state->pwm_running = true;
+    module_state->pwm_error_f = false;
+}
+void YetiSimulator::ce_off() {
+    module_state->pwm_duty_cycle = 1.0;
+    module_state->pwm_running = false;
+    module_state->pwm_error_f = false;
+}
+
 void YetiSimulator::reset_powermeter() const {
     module_state->watt_hr.L1 = 0;
     module_state->watt_hr.L2 = 0;
