@@ -863,6 +863,26 @@ void ChargePoint::message_callback(const std::string& message) {
                                                         CiString<255>(message, StringTooLarge::Truncate), true,
                                                         utils::is_critical(security_event));
         return;
+    } catch (const MalformedRpcMessage& e) {
+        EVLOG_error << "MalformedRpcMessage exception during handling of message: " << e.what();
+        auto call_error = CallError(MessageId("-1"), "RpcFrameworkError", e.what(), json({}));
+        this->message_dispatcher->dispatch_call_error(call_error);
+        const auto& security_event = ocpp::security_events::INVALIDMESSAGES;
+        this->security->security_event_notification_req(CiString<50>(security_event, StringTooLarge::Truncate),
+                                                        CiString<255>(message, StringTooLarge::Truncate), true,
+                                                        utils::is_critical(security_event));
+        return;
+    }
+
+    if (enhanced_message.messageTypeId == MessageTypeId::UNKNOWN) {
+        EVLOG_error << "Cannot handle message with an unknown message type";
+        auto call_error = CallError(MessageId("-1"), "MessageTypeNotSupported", "", json({}));
+        this->message_dispatcher->dispatch_call_error(call_error);
+        const auto& security_event = ocpp::security_events::INVALIDMESSAGES;
+        this->security->security_event_notification_req(CiString<50>(security_event, StringTooLarge::Truncate),
+                                                        CiString<255>(message, StringTooLarge::Truncate), true,
+                                                        utils::is_critical(security_event));
+        return;
     }
 
     enhanced_message.message_size = message.size();
@@ -945,6 +965,13 @@ void ChargePoint::message_callback(const std::string& message) {
             return; // CALLERROR shall only follow on a CALL message
         }
         auto call_error = CallError(enhanced_message.uniqueId, "OccurrenceConstraintViolation", e.what(), json({}));
+        this->message_dispatcher->dispatch_call_error(call_error);
+    } catch (const StringConversionException& e) {
+        EVLOG_error << "StringConversionException during handling of message: " << e.what();
+        if (enhanced_message.messageTypeId != MessageTypeId::CALL) {
+            return; // CALLERROR shall only follow on a CALL message
+        }
+        auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
         this->message_dispatcher->dispatch_call_error(call_error);
     } catch (const EnumConversionException& e) {
         EVLOG_error << "EnumConversionException during handling of message: " << e.what();

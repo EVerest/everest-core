@@ -90,6 +90,10 @@ enum class MessageTransmissionPriority {
     Discard                              // message shall be discarded and not be sent
 };
 
+class MalformedRpcMessage : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
 /// \brief Helper function to handle messages that shall be send
 inline MessageTransmissionPriority get_message_transmission_priority(bool is_boot_notification_message, bool triggered,
                                                                      bool registration_already_accepted,
@@ -208,6 +212,9 @@ private:
         start_transaction_message_retry_callback;
 
     MessageId getMessageId(const json::array_t& json_message) {
+        if (json_message.size() < 2) {
+            throw MalformedRpcMessage("Message has too few elements, could not get message id.");
+        }
         return MessageId(json_message.at(MESSAGE_ID).get<std::string>());
     }
     MessageTypeId getMessageTypeId(const json::array_t& json_message) {
