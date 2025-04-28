@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cd tests
-pytest \
+python3 -m pytest \
   -rA \
   --junitxml="$EXT_MOUNT/result.xml" \
   --html="$EXT_MOUNT/report.html" \
