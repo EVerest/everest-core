@@ -39,7 +39,6 @@ ENV PYTHON_VERSION=3.13.3
 ENV PYTHON_SOURCE_URL=https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
 RUN tmpdir=$(mktemp -d) \
     && cd $tmpdir \
-    && python3 -m pip freeze | sed 's/==.*//' > ${tmpdir}/requirements.txt \
     && wget ${PYTHON_SOURCE_URL} \
     && tar -xzvf Python-${PYTHON_VERSION}.tgz \
     && cd Python-${PYTHON_VERSION} \
@@ -48,12 +47,25 @@ RUN tmpdir=$(mktemp -d) \
     && make install \
     && short_version=$(echo ${PYTHON_VERSION} | cut -d. -f1-2) \
     && rm /usr/local/bin/python3 \
-    && ln -s /usr/local/bin/python${short_version} /usr/local/bin/python3 \
-    && python3 -m pip install --break-system-packages -r ${tmpdir}/requirements.txt
+    && ln -s /usr/local/bin/python${short_version} /usr/local/bin/python3
 
-RUN python3 -m pip install --break-system-packages \
+RUN python3.13 -m pip install --break-system-packages \
     grpcio \
-    grpcio-tools
+    grpcio-tools \
+    pydantic \
+    cryptography \
+    netifaces \
+    psutil \
+    environs \
+    py4j \
+    aiofile \
+    build \
+    sphinx \
+    gcovr \
+    sphinxcontrib-contentui \
+    sphinxcontrib-svg2pdfconverter \
+    git+https://github.com/EVerest/everest-dev-environment@v0.7.1#subdirectory=dependency_manager
+
 
 # Can be used to use an other version of everest-cmake
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
