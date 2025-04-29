@@ -87,6 +87,8 @@ public:
     void set_ce_off();
     void set_ce_on();
 
+    void set_ce_internal(bool state);
+
     void set_three_phases(bool t) {
         three_phases = t;
     }
@@ -113,6 +115,7 @@ private:
 
     bool pwm_running{false};
     bool last_pwm_running{false};
+
     bool ce_is_set{false};
     bool last_ce_is_set{false};
     bool id_is_set{false};

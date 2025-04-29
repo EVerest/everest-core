@@ -202,8 +202,7 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
                 if (config_context.mcs_enabled) {
-                    if (ce_active)
-                        ce_off();
+                    ce_off();
                 } else { 
                     pwm_F();
                 }
@@ -232,8 +231,7 @@ void Charger::run_state_machine() {
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
                 shared_context.legacy_wakeup_done = false;
                 if (config_context.mcs_enabled) {
-                   if (ce_active)
-                        ce_off();
+                   ce_off();
                 } else {
                     pwm_off();
                 }
@@ -288,10 +286,6 @@ void Charger::run_state_machine() {
                     update_pwm_now(PWM_5_PERCENT);
                     stopwatch.mark("HLC_PWM_5%_ON");
                 }
-            }
-
-            if (config_context.mcs_enabled and not ce_active) {
-                ce_on();
             }
 
             // Read PP value in case of AC socket
@@ -350,6 +344,8 @@ void Charger::run_state_machine() {
                 }
 
                 const EvseState target_state(EvseState::PrepareCharging);
+
+                if (config_context.mcs_enabled) {ce_on();}
 
                 // EIM done and matching process not started -> we need to go through t_step_EF and fall back to nominal
                 // PWM. This is a complete waste of 4 precious seconds.
@@ -434,6 +430,8 @@ void Charger::run_state_machine() {
                 }
 
                 const EvseState target_state(EvseState::PrepareCharging);
+
+                if (config_context.mcs_enabled) {ce_on();}
 
                 // We got authorization by Plug and Charge
                 session_log.evse(false, "PnC Authorization received");
@@ -707,11 +705,14 @@ void Charger::run_state_machine() {
                     if (shared_context.pwm_running) {
                         pwm_off();
                     }
+                    if (config_context.mcs_enabled) {ce_off(); }
+
                 } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
                     // EV wants an actual pause
                     if (shared_context.pwm_running) {
                         pwm_off();
                     }
+                    if (config_context.mcs_enabled) {ce_off(); }
                 }
 
             } else {
@@ -743,7 +744,11 @@ void Charger::run_state_machine() {
                     shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::Local;
                     // tell HLC stack to stop the session
                     signal_hlc_stop_charging();
-                    pwm_off();
+                    if (config_context.mcs_enabled) {
+                        ce_off();
+                    } else {
+                        pwm_off();
+                    }
                 } else {
                     pwm_off();
                 }
@@ -771,6 +776,7 @@ void Charger::run_state_machine() {
                         // DC supply off - actually this is after relais switched off
                         // this is a backup switch off, normally it should be switched off earlier by ISO protocol.
                         signal_dc_supply_off();
+                        if (config_context.mcs_enabled) {ce_off();}
                     }
                     // Car is maybe not unplugged yet, so for HLC(AC/DC) wait in this state. We will go to Finished
                     // once car is unplugged.
@@ -799,11 +805,16 @@ void Charger::run_state_machine() {
 
         case EvseState::Finished:
 
-            if (initialize_state) {
+        if (initialize_state) {
                 // Transaction may already be stopped when it was cancelled earlier.
                 // In that case, do not sent a second transactionFinished event.
                 if (shared_context.transaction_active) {
                     stop_transaction();
+                }
+
+                // Switch off CE before stopping session
+                if (config_context.mcs_enabled) {
+                    ce_off();
                 }
 
                 // We may come here from an error state, so a session was maybe not active.
@@ -1037,12 +1048,11 @@ void Charger::pwm_F() {
 
 void Charger::ce_off() {
     session_log.evse(false, "Set CE Off");
-    ce_active = false;
     bsp->set_ce_off();
 }
+
 void Charger::ce_on() {
     session_log.evse(false, "Set CE On");
-    ce_active = true;
     bsp->set_ce_on();
 }
 
@@ -2032,6 +2042,9 @@ void Charger::graceful_stop_charging() {
 
     if (config_context.mcs_enabled) {
         ce_off();
+        if (shared_context.hlc_charging_active) {
+            signal_hlc_stop_charging();
+        }
     }
 
     // Shutdown DC power supplies

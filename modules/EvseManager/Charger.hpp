@@ -353,8 +353,6 @@ private:
     // HLC enabled in current AC session. This can change during the session if e.g. HLC fails.
     std::atomic_bool ac_hlc_enabled_current_session;
     
-    std::atomic_bool ce_active{false};
-
     // This struct is only used from main loop thread
     struct InternalContext {
         bool hlc_bcb_sequence_started{false};

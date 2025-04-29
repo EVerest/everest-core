@@ -84,7 +84,7 @@ void EvseManager::init() {
     }
 
     hlc_enabled = not r_hlc.empty();
-    if (not slac_enabled and not config.mcs_enable)
+    if (not (slac_enabled or config.mcs_enable))
         hlc_enabled = false;
 
     if (config.charge_mode == "DC" and not config.mcs_enable and
@@ -115,10 +115,22 @@ void EvseManager::init() {
     powersupply_capabilities = get_sane_default_power_supply_capabilities();
 
     if (get_hlc_enabled()) {
-        if (config.charge_mode == "DC") {
+        if (config.charge_mode == "DC" and not r_powersupply_DC.empty()) {
             // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
-            r_powersupply_DC[0]->subscribe_capabilities(
-                [this](const auto& caps) { update_powersupply_capabilities(caps); });
+            r_powersupply_DC[0]->subscribe_capabilities([this](const auto& caps) { 
+                update_powersupply_capabilities(caps);
+                std::vector<types::iso15118::SupportedEnergyMode> transfer_modes;
+                transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, false});
+                
+                if (caps.bidirectional)
+                    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, true});
+
+                r_hlc[0]->call_setup({config.evse_id, config.evse_id_din},
+                    transfer_modes,
+                    types::iso15118::string_to_sae_j2847bidi_mode(config.sae_j2847_2_bpt_mode),
+                    config.session_logging,
+                    config.mcs_enable);
+            });
         }
     }
 
@@ -617,7 +629,9 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, config.mcs_enable);
+        if (r_powersupply_DC.empty() or config.charge_mode == "AC") {
+            r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, config.mcs_enable);
+        }
 
         // reset error flags
         r_hlc[0]->call_reset_error();
