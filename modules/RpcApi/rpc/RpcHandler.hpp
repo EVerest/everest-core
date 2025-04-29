@@ -4,20 +4,20 @@
 #ifndef RPCHANDLER_H
 #define RPCHANDLER_H
 
-#include <string>
-#include <vector>
-#include <functional>
+#include <atomic>
+#include <boost/uuid/uuid.hpp>
+#include <condition_variable>
 #include <cstdint>
+#include <deque>
+#include <functional>
+#include <jsonrpccxx/server.hpp>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
-#include <memory>
-#include <boost/uuid/uuid.hpp>
+#include <string>
 #include <unordered_map>
-#include <mutex>
-#include <condition_variable>
-#include <jsonrpccxx/server.hpp>
-#include <deque>
-#include <atomic>
+#include <vector>
 
 #include "../server/TransportInterface.hpp"
 #include "methods/Api.hpp"
@@ -32,19 +32,17 @@ namespace rpc {
 static const std::chrono::seconds CLIENT_HELLO_TIMEOUT(5);
 
 // struct to store json data, plus the tansport interface
-struct ClientReq
-{
+struct ClientReq {
     std::shared_ptr<server::TransportInterface> transport_interface;
     std::deque<nlohmann::json> data; // Queue of requests
 };
 
-class RpcHandler
-{
+class RpcHandler {
 public:
     // Consturctor and Destructor
     RpcHandler() = delete;
     // RpcHandler just needs just a tranport interface array
-    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transportInterfaces, DataStoreCharger &dataobj);
+    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transportInterfaces, DataStoreCharger& dataobj);
     ~RpcHandler() = default;
     // Methods
     void start_server();
@@ -53,13 +51,13 @@ public:
 private:
     void init_rpc_api();
     void init_transport_interfaces();
-    void client_connected(const std::shared_ptr<server::TransportInterface> &transport_interfaces, const TransportInterface::ClientId &client_id, const TransportInterface::Address &address);
-    void client_disconnected(const std::shared_ptr<server::TransportInterface> &transport_interfaces, const server::TransportInterface::ClientId &client_id);
-    void data_available(const std::shared_ptr<server::TransportInterface> &transport_interfaces,
-                        const TransportInterface::ClientId &client_id,
-                        const TransportInterface::Data &data);
-    inline bool is_api_hello_req(const TransportInterface::ClientId &client_id,
-                                    const nlohmann::json &request) {
+    void client_connected(const std::shared_ptr<server::TransportInterface>& transport_interfaces,
+                          const TransportInterface::ClientId& client_id, const TransportInterface::Address& address);
+    void client_disconnected(const std::shared_ptr<server::TransportInterface>& transport_interfaces,
+                             const server::TransportInterface::ClientId& client_id);
+    void data_available(const std::shared_ptr<server::TransportInterface>& transport_interfaces,
+                        const TransportInterface::ClientId& client_id, const TransportInterface::Data& data);
+    inline bool is_api_hello_req(const TransportInterface::ClientId& client_id, const nlohmann::json& request) {
         // Check if the request is a hello request
         if (request.contains("method") && request["method"] == methods::METHOD_API_HELLO) {
             // If it's a API.Hello request, we set the api_hello_received flag to true

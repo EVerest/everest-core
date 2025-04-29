@@ -4,8 +4,8 @@
 #ifndef CHARGEPOINT_HPP
 #define CHARGEPOINT_HPP
 
-#include <vector>
 #include <optional>
+#include <vector>
 
 #include "../../data/DataStore.hpp"
 
@@ -20,11 +20,10 @@ static const std::string METHOD_CHARGEPOINT_GET_EVSE_INFOS = "ChargePoint.GetEVS
 /// This class includes all methods of the ChargePoint namespace.
 /// It contains the data object and the methods to access it.
 class ChargePoint {
-    public:
+public:
     // Constructor and Destructor
     ChargePoint() = delete;
-    ChargePoint(DataStoreCharger &dataobj) : m_dataobj(dataobj) {
-    };
+    ChargePoint(DataStoreCharger& dataobj) : m_dataobj(dataobj){};
 
     ~ChargePoint() = default;
 
@@ -44,12 +43,12 @@ class ChargePoint {
         } else {
             res.error = RPCDataTypes::ResponseErrorEnum::NoError;
         }
-        
+
         return res;
     };
 
 private:
-    DataStoreCharger &m_dataobj;
+    DataStoreCharger& m_dataobj;
 };
 
 } // namespace methods

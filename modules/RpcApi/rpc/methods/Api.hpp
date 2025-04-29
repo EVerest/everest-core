@@ -19,11 +19,10 @@ static const std::string METHOD_API_HELLO = "API.Hello";
 /// This class includes all methods of the API namespace.
 /// It contains the data object and the methods to access it.
 class Api {
-    public:
+public:
     // Constructor and Destructor
     Api() = delete;
-    Api(DataStoreCharger &dataobj) : m_dataobj(dataobj) {
-    };
+    Api(DataStoreCharger& dataobj) : m_dataobj(dataobj){};
 
     ~Api() = default;
 
@@ -41,7 +40,7 @@ class Api {
         if (m_authenticated.has_value()) {
             res.authenticated = m_authenticated.value();
         }
-        
+
         return res;
     };
 
@@ -52,7 +51,7 @@ class Api {
     bool is_authentication_required() const {
         return m_authentication_required;
     };
-    void set_api_version(const std::string &version) {
+    void set_api_version(const std::string& version) {
         m_api_version = version;
     };
 
@@ -72,13 +71,13 @@ class Api {
     };
 
 private:
-    DataStoreCharger &m_dataobj;
+    DataStoreCharger& m_dataobj;
     bool m_authentication_required;
     // optional
     std::optional<bool> m_authenticated;
     std::string m_api_version;
 };
 
-} // namespace rpc_methods
+} // namespace methods
 
 #endif // API_HPP

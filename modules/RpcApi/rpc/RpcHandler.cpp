@@ -4,22 +4,28 @@
 #include "RpcHandler.hpp"
 
 #include <jsonrpccxx/client.hpp>
+#include <jsonrpccxx/common.hpp>
 #include <jsonrpccxx/server.hpp>
 #include <jsonrpccxx/typemapper.hpp>
-#include <jsonrpccxx/common.hpp>
 
-#include <thread>
-#include <everest/logging.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <everest/logging.hpp>
+#include <thread>
 
 namespace rpc {
 
-static const std::chrono::milliseconds REQ_COLLECTION_TIMEOUT(10); // Timeout for collecting client requests. After this timeout, the requests will be processed.
-static const std::chrono::milliseconds REQ_PROCESSING_TIMEOUT(50); // Timeout for processing requests. After this timeout, the request will be processed.
+static const std::chrono::milliseconds REQ_COLLECTION_TIMEOUT(
+    10); // Timeout for collecting client requests. After this timeout, the requests will be processed.
+static const std::chrono::milliseconds
+    REQ_PROCESSING_TIMEOUT(50); // Timeout for processing requests. After this timeout, the request will be processed.
 
 // RpcHandler just needs just a tranport interface array
-RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces, DataStoreCharger &dataobj)
-    : m_transport_interfaces(std::move(transport_interfaces)), m_methods_api(dataobj), m_methods_chargepoint(dataobj), m_methods_evse(dataobj) {
+RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
+                       DataStoreCharger& dataobj) :
+    m_transport_interfaces(std::move(transport_interfaces)),
+    m_methods_api(dataobj),
+    m_methods_chargepoint(dataobj),
+    m_methods_evse(dataobj) {
     init_rpc_api();
     init_transport_interfaces();
 }
@@ -30,10 +36,7 @@ struct HelloResponse {
 };
 
 void to_json(nlohmann::json& j, const HelloResponse& r) {
-    j = nlohmann::json{
-        {"success", r.success},
-        {"authenticated", r.authenticated}
-    };
+    j = nlohmann::json{{"success", r.success}, {"authenticated", r.authenticated}};
 }
 
 void from_json(const nlohmann::json& j, HelloResponse& r) {
@@ -47,8 +50,10 @@ void RpcHandler::init_rpc_api() {
     m_methods_api.set_api_version(API_VERSION);
     m_rpc_server = std::make_unique<JsonRpc2Server>();
     m_rpc_server->Add(methods::METHOD_API_HELLO, GetHandle(&methods::Api::hello, m_methods_api), {});
-    m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS, GetHandle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_EVSE_INFO, GetHandle(&methods::Evse::getEVSEInfos, m_methods_evse), {"evse_id"});
+    m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
+                      GetHandle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_EVSE_INFO, GetHandle(&methods::Evse::getEVSEInfos, m_methods_evse),
+                      {"evse_id"});
 }
 
 void RpcHandler::init_transport_interfaces() {
@@ -58,37 +63,39 @@ void RpcHandler::init_transport_interfaces() {
         }
         m_last_req_notification = std::chrono::steady_clock::now();
 
-        transport_interface->on_client_connected = [this, transport_interface](
-            const server::TransportInterface::ClientId &client_id,
-            const server::TransportInterface::Address &address) {
-            this->client_connected(transport_interface, client_id, address);
-        };
+        transport_interface->on_client_connected =
+            [this, transport_interface](const server::TransportInterface::ClientId& client_id,
+                                        const server::TransportInterface::Address& address) {
+                this->client_connected(transport_interface, client_id, address);
+            };
 
-        transport_interface->on_client_disconnected = [this, transport_interface](
-            const server::TransportInterface::ClientId &client_id) {
-            this->client_disconnected(transport_interface, client_id);
-        };
+        transport_interface->on_client_disconnected =
+            [this, transport_interface](const server::TransportInterface::ClientId& client_id) {
+                this->client_disconnected(transport_interface, client_id);
+            };
 
-        transport_interface->on_data_available = [this, transport_interface](
-            const server::TransportInterface::ClientId &client_id,
-            const server::TransportInterface::Data data) {
-            this->data_available(transport_interface, client_id, data);
-        };
+        transport_interface->on_data_available =
+            [this, transport_interface](const server::TransportInterface::ClientId& client_id,
+                                        const server::TransportInterface::Data data) {
+                this->data_available(transport_interface, client_id, data);
+            };
     }
 }
 
-void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterface> &transport_interface, const server::TransportInterface::ClientId &client_id,
-                                  const server::TransportInterface::Address &address) {
+void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterface>& transport_interface,
+                                  const server::TransportInterface::ClientId& client_id,
+                                  const server::TransportInterface::Address& address) {
     // In case of a new client, we expect that the client will send an API.Hello request within 5 seconds.
-    // The API.Hello request is a handshake message sent by the client to establish a connection and verify compatibility.
-    // If the API.Hello request is not received within the timeout period, the connection will be terminated.
+    // The API.Hello request is a handshake message sent by the client to establish a connection and verify
+    // compatibility. If the API.Hello request is not received within the timeout period, the connection will be
+    // terminated.
 
     // Launch a detached thread to wait for the client hello message
     std::thread([this, client_id, transport_interface]() {
         std::unique_lock<std::mutex> lock(m_mtx);
         if (m_cv_api_hello.wait_for(lock, CLIENT_HELLO_TIMEOUT, [this, client_id] {
-            return m_api_hello_received.find(client_id) != m_api_hello_received.end();
-        }) == false) {
+                return m_api_hello_received.find(client_id) != m_api_hello_received.end();
+            }) == false) {
             // Client did not send hello, close connection
             if (transport_interface) {
                 transport_interface->kill_client_connection(client_id, "Disconnected due to timeout");
@@ -101,7 +108,8 @@ void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterfa
     }).detach();
 }
 
-void RpcHandler::client_disconnected(const std::shared_ptr<server::TransportInterface> &transport_interface, const server::TransportInterface::ClientId &client_id) {
+void RpcHandler::client_disconnected(const std::shared_ptr<server::TransportInterface>& transport_interface,
+                                     const server::TransportInterface::ClientId& client_id) {
     if (transport_interface) {
         std::lock_guard<std::mutex> lock(m_mtx);
         m_api_hello_received.erase(client_id);
@@ -118,9 +126,9 @@ void RpcHandler::client_disconnected(const std::shared_ptr<server::TransportInte
     }
 }
 
-void RpcHandler::data_available(const std::shared_ptr<server::TransportInterface> &transport_interface,
-                                const server::TransportInterface::ClientId &client_id,
-                                const server::TransportInterface::Data &data) {
+void RpcHandler::data_available(const std::shared_ptr<server::TransportInterface>& transport_interface,
+                                const server::TransportInterface::ClientId& client_id,
+                                const server::TransportInterface::Data& data) {
     // Handle request
     using namespace std::chrono;
 
@@ -140,7 +148,7 @@ void RpcHandler::data_available(const std::shared_ptr<server::TransportInterface
 
         auto elapsed = duration_cast<milliseconds>(now - m_last_req_notification);
         if (elapsed >= REQ_COLLECTION_TIMEOUT) {
-            m_last_req_notification = now;  // Timer neu starten
+            m_last_req_notification = now; // Timer neu starten
             m_cv_data_available.notify_all();
         }
     } catch (const nlohmann::json::parse_error& e) {
@@ -168,21 +176,21 @@ void RpcHandler::process_client_requests() {
         bool all_requests_processed; // Flag to check if all requests are processed
         do {
             all_requests_processed = true;
-            for(auto& [client_id, client_req] : messages) {
+            for (auto& [client_id, client_req] : messages) {
                 if (client_req.data.empty()) {
-                    continue;  // Skip if no data available
+                    continue; // Skip if no data available
                 }
                 // Process the data for this client
                 auto transport_interface = client_req.transport_interface;
 
                 if (!transport_interface) {
                     EVLOG_error << "Skip data. Transport interface is null for client " << client_id;
-                    continue;  // Skip if transport interface is null
+                    continue; // Skip if transport interface is null
                 }
 
                 // Get the first request from the client
                 nlohmann::json request = client_req.data.front();
-                client_req.data.pop_front();  // Remove the processed request
+                client_req.data.pop_front(); // Remove the processed request
 
                 // Check if next request is available
                 if (client_req.data.empty()) {
@@ -194,16 +202,15 @@ void RpcHandler::process_client_requests() {
                     // Notify condition variable to unblock the waiting thread
                     m_cv_api_hello.notify_all();
                     EVLOG_info << "API.Hello request received from client " << client_id;
-                }
-                else {
-                    // If it is not an API.Hello request, we need to check if the client has already sent an API.Hello request,
-                    // if not, close the connection
+                } else {
+                    // If it is not an API.Hello request, we need to check if the client has already sent an API.Hello
+                    // request, if not, close the connection
                     if (m_api_hello_received.find(client_id) == m_api_hello_received.end()) {
                         EVLOG_debug << "Client " << client_id << " did not send API.Hello request. Closing connection.";
-                        transport_interface->kill_client_connection(client_id, "Disconnected due to missing API.Hello request");
-                        continue;  // Skip processing this request
+                        transport_interface->kill_client_connection(client_id,
+                                                                    "Disconnected due to missing API.Hello request");
+                        continue; // Skip processing this request
                     }
-
                 }
 
                 // Call the RPC server with the request
@@ -226,9 +233,7 @@ void RpcHandler::start_server() {
     }
 
     // Start RPC receiver thread
-    std::thread([this]() {
-        this->process_client_requests();
-    }).detach();
+    std::thread([this]() { this->process_client_requests(); }).detach();
 }
 
 void RpcHandler::stop_server() {
