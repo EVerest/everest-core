@@ -35,7 +35,7 @@ struct DataStoreEvse {
     EVSEInfoStore evseinfo;
     EVSEStatusStore evsestatus;
     MeterDataStore meterdata;
-    std::vector<DataStoreConnector> connectors;
+    std::vector<std::unique_ptr<DataStoreConnector>> connectors;
 };
 
 // This is the main data store for the charger. A charger can have multiple EVSEs, each with multiple connectors.
@@ -43,7 +43,7 @@ struct DataStoreEvse {
 struct DataStoreCharger {
     ChargerInfoStore chargerinfo;
     std::string everest_version;
-    std::vector<DataStoreEvse> evses;
+    std::vector<std::unique_ptr<DataStoreEvse>> evses;
 };
 
 } // namespace data

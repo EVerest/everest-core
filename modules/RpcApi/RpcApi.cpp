@@ -12,15 +12,14 @@ void RpcApi::init() {
 
     for (const auto& evse_manager : r_evse_manager) {
         // create one DataStore object per EVSE
-        // and create one connector per EVSE
-        // TODO: expand this when EVerest supports more connectors
-        this->data.evses.emplace_back().connectors.emplace_back();
-        // initialize id, counting from 0
-        this->data.evses.emplace_back().connectors[0].connectorinfo.set_id(0);
-        data::DataStoreEvse& evse_data = this->data.evses.back();
+        auto& evse_data = this->data.evses.emplace_back();
+        // create one connector per EVSE
+        auto& connector = evse_data->connectors.emplace_back();
+        // initialize connector id, counting from 0
+        connector->connectorinfo.set_id(0);
 
-        // subscribe to interface variables
-        this->subscribe_evse_manager(evse_manager, evse_data);
+        // subscribe to evse_manager interface variables
+        this->subscribe_evse_manager(evse_manager, *evse_data);
     }
 
     m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port);
@@ -45,7 +44,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_hw_capabilities(
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
             // there is only one connector supported currently
-            this->hwcaps_interface_to_datastore(hwcaps, evse_data.connectors[0].hardwarecapabilities);
+            this->hwcaps_interface_to_datastore(hwcaps, evse_data.connectors[0]->hardwarecapabilities);
         });
 }
 
