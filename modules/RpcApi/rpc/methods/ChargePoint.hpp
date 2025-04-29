@@ -32,9 +32,9 @@ class ChargePoint {
     RPCDataTypes::ChargePointGetEVSEInfosResObj getEVSEInfos() {
         RPCDataTypes::ChargePointGetEVSEInfosResObj res;
         // Iterate over all EVSEs and add the EVSEInfo objects to the response
-        for (const auto &evse : m_dataobj.evses) {
-            if (evse.evseinfo.get_data().has_value()) {
-                res.infos.push_back(evse.evseinfo.get_data().value());
+        for (const auto& evse : m_dataobj.evses) {
+            if (evse->evseinfo.get_data().has_value()) {
+                res.infos.push_back(evse->evseinfo.get_data().value());
             }
         }
 
