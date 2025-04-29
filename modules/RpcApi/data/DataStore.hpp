@@ -9,10 +9,10 @@ namespace data {
 
 class ChargerInfoStore : public GenericInfoStore<RPCDataTypes::ChargerInfoObj> {};
 class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoObj> {
-    // example, in case override is required
+    // EXAMPLE, in case override is required
     // void init_data() override {
     //     memset(&dataobj, 0, sizeof(dataobj));
-    //     dataobj.id = -1;
+    //     this->dataobj.id = -1;
     // }
 public:
     void set_id(int id) {
