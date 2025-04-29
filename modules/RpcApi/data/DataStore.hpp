@@ -16,6 +16,7 @@ class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoOb
     // }
 public:
     void set_id(int id) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
         this->dataobj.id = id;
     }
 };
