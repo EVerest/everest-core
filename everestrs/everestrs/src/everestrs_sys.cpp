@@ -141,20 +141,26 @@ void Module::provide_command(const Runtime& rt, rust::String implementation_id, 
 void Module::subscribe_variable(const Runtime& rt, rust::String implementation_id, std::size_t index,
                                 rust::String name) const {
     const auto req = Requirement{std::string(implementation_id), index};
-    handle_->subscribe_var(req, std::string(name), [&rt, implementation_id, index, name](json args) {
+    // The handle_ptr is guaranteed to be alive in the callback.
+    const auto handle_ptr = handle_.get();
+    handle_->subscribe_var(req, std::string(name), [&rt, implementation_id, index, name, handle_ptr](json args) {
+        handle_ptr->ensure_ready();
         rt.handle_variable(implementation_id, index, name, json2blob(args));
     });
 }
 
 void Module::subscribe_all_errors(const Runtime& rt) const {
     for (const Requirement& req : config_->get_requirements(module_id_)) {
+        const auto handle_ptr = handle_.get();
         handle_->get_error_manager_req(req)->subscribe_all_errors(
-            [&rt, req](Everest::error::Error error) {
+            [&rt, req, handle_ptr](Everest::error::Error error) {
+                handle_ptr->ensure_ready();
                 const ErrorType rust_error{rust::String(error.type), rust::String(error.description),
                                            rust::String(error.message), static_cast<ErrorSeverity>(error.severity)};
                 rt.handle_on_error(rust::Str(req.id), req.index, rust_error, true);
             },
-            [&rt, req](Everest::error::Error error) {
+            [&rt, req, handle_ptr](Everest::error::Error error) {
+                handle_ptr->ensure_ready();
                 const ErrorType rust_error{rust::String(error.type), rust::String(error.description),
                                            rust::String(error.message), static_cast<ErrorSeverity>(error.severity)};
                 rt.handle_on_error(rust::Str(req.id), req.index, rust_error, false);
