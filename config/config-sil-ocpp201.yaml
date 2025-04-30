@@ -278,11 +278,6 @@ active_modules:
         database_path: /tmp/error_history.db
   system:
     module: System
-    connections: {}
-    config_module:
-      DefaultRetries: 1
-      DefaultRetryInterval: 1
-      ResetDelay: 0
 x-module-layout:
   iso15118_charger:
     position:
