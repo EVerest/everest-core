@@ -81,6 +81,20 @@ public:
     /// @}  // End constructors 1.6 group
     /// @}  // End chargepoint constructors topic
 
+    /// \brief Initializes the ChargePoint and all of it's connectors, the state machine and message queue. This method
+    /// should be called if a more granular start of the process is necessary. Notably if it is necessary for the state
+    /// machine and the connectors (and their statuses) need to be updated prior to initiating connection with the CSMS.
+    /// \param connector_status_map initial state of connectors including connector 0 with reduced set of states
+    /// (Available, Unavailable, Faulted)
+    /// \param resuming_session_ids can optionally contain active session ids from previous executions. If empty and
+    /// libocpp has transactions in its internal database that have not been stopped yet, calling this function will
+    /// initiate a StopTransaction.req for those transactions. If this vector contains session_ids this function will
+    /// not stop transactions with this session_id even in case it has an internal database entry for this session and
+    /// it hasnt been stopped yet. Its ignored if this vector contains session_ids that are unknown to libocpp.
+    ///  \return
+    bool init(const std::map<int, ChargePointStatus>& connector_status_map = {},
+              const std::set<std::string>& resuming_session_ids = {});
+
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint and initializes a
     /// BootNotification.req
     /// \param connector_status_map initial state of connectors including connector 0 with reduced set of states
