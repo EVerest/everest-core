@@ -48,6 +48,7 @@ dependencies = [
  "mockall 0.12.1",
  "mockall_double",
  "tokio",
+ "zvt",
  "zvt_feig_terminal",
 ]
 
