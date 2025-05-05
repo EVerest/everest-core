@@ -41,6 +41,7 @@ install(
 list(APPEND CONFIGS
      config.json
      config-docker.json
+     config-full.json
      config-docker-tls.json
      ../logging.ini
 )

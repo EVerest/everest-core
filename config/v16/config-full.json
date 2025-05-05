@@ -106,7 +106,7 @@
     },
     "SmartCharging": {
         "ChargeProfileMaxStackLevel": 1000,
-        "ChargingScheduleAllowedChargingRateUnit": "W,A",
+        "ChargingScheduleAllowedChargingRateUnit": "Current,Power",
         "ChargingScheduleMaxPeriods": 1000,
         "ConnectorSwitch3to1PhaseSupported": true,
         "MaxChargingProfilesInstalled": 1000
