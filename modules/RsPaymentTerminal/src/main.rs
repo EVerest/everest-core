@@ -33,7 +33,7 @@ use anyhow::Result;
 use generated::types::{
     authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
     money::MoneyAmount,
-    payment_terminal::{BankSessionToken, BankTransactionSummary, CardType},
+    payment_terminal::{BankSessionToken, BankTransactionSummary, CardType, RejectionReason},
     session_cost::{SessionCost, SessionStatus, TariffMessage},
 };
 use generated::{
@@ -45,6 +45,7 @@ use std::collections::HashMap;
 use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
 use std::time::Duration;
 use std::{net::Ipv4Addr, str::FromStr};
+use zvt::constants::ErrorMessages;
 use zvt_feig_terminal::config::{Config, FeigConfig};
 use zvt_feig_terminal::feig::{CardInfo, Error};
 
@@ -164,6 +165,28 @@ pub struct PaymentTerminalModule {
     connector_to_card_type: Mutex<HashMap<i64, Vec<CardType>>>,
 }
 
+impl From<u8> for RejectionReason {
+    fn from(code: u8) -> Self {
+        match code {
+            0x41 | // pin_required
+            0x13 | // contactless transaction count exceeded
+            0xEC | // PIN-processing not possible
+            0xFC   // necessary device not present or defective
+               => RejectionReason::PinRequired,
+            0x71 => RejectionReason::InsufficientFunds,
+            0xC5 => RejectionReason::CardNotSupported,
+            0x6C => RejectionReason::Aborted,
+            0x05 | // declined
+            0xA0 | // receiver not ready
+            0xFF | // unknown system error
+            0x61 | // unknown
+            0x9B   // error from dial-up/communication fault
+              => RejectionReason::Timeout,
+            _ => RejectionReason::Unknown,
+        }
+    }
+}
+
 impl PaymentTerminalModule {
     /// Waits for a card and begins a transaction (sends an auth token).
     ///
@@ -203,7 +226,19 @@ impl PaymentTerminalModule {
                             log::debug!("No card presented");
                             continue;
                         }
-                        _ => return Err(anyhow::anyhow!("Failed to read card: {e:?}")),
+                        _ => {
+                            match e.downcast_ref::<ErrorMessages>() {
+                                Some(rejection_reason) => {
+                                    log::info!("Recieved rejection reason {}", rejection_reason);
+
+                                    publishers
+                                        .payment_terminal
+                                        .rejection_reason((*rejection_reason as u8).into())?;
+                                }
+                                None => log::debug!("No error code provided"),
+                            };
+                            return Err(anyhow::anyhow!("Failed to read card: {e:?}"));
+                        }
                     },
                 };
             }
