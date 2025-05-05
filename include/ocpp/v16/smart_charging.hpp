@@ -52,8 +52,9 @@ private:
                         std::optional<int> connector_id_opt, const int connector_id, std::optional<int> stack_level_opt,
                         std::optional<ChargingProfilePurposeType> charging_profile_purpose_opt, bool check_id_only);
 
-    void clear_expired_profiles();
+protected:
     int get_number_installed_profiles();
+    void clear_expired_profiles(const date::utc_clock::time_point& now);
 
 public:
     SmartChargingHandler(std::map<int32_t, std::shared_ptr<Connector>>& connectors,

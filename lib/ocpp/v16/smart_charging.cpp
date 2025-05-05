@@ -4,12 +4,61 @@
 #include "ocpp/common/constants.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v16/ocpp_enums.hpp"
+#include <chrono>
 #include <ocpp/v16/profile.hpp>
 #include <ocpp/v16/smart_charging.hpp>
 
 using namespace std::chrono;
 
 using QueryExecutionException = everest::db::QueryExecutionException;
+
+namespace {
+/**
+ * \brief remove expired profiles from the memory map structure and database
+ * \param[in] now - profiles with a validTo time earlier that this are removed
+ * \param[in] db - a reference to the database handler
+ * \param[in,out] map - the map containing charging profiles
+ */
+template <class PROFILES>
+void clear_expired_profiles(const date::utc_clock::time_point& now, ocpp::v16::DatabaseHandler& db, PROFILES& map) {
+    using ocpp::v16::ChargingProfileKindType;
+
+    // check all profiles in the map
+    for (auto it = map.cbegin(); it != map.cend();) {
+        bool remove = false;
+        const auto& profile = it->second;
+        const auto& schedule = it->second.chargingSchedule;
+
+        // check if the profile has expired based on validTo
+        if (profile.validTo) {
+            const auto validTo = profile.validTo.value().to_time_point();
+            if (validTo < now) {
+                remove = true;
+            }
+        }
+
+        // check if the absolute profile has expired based on
+        // startTime + duration
+        if ((profile.chargingProfileKind == ChargingProfileKindType::Absolute) && schedule.startSchedule &&
+            schedule.duration) {
+            const auto duration = std::chrono::seconds(schedule.duration.value());
+            const auto validTo = schedule.startSchedule.value().to_time_point() + duration;
+            if (validTo < now) {
+                remove = true;
+            }
+        }
+
+        if (remove) {
+            // remove expired profile from the database and map
+            // the order of these matters!
+            db.delete_charging_profile(it->second.chargingProfileId);
+            it = map.erase(it);
+        } else {
+            it++;
+        }
+    }
+}
+} // namespace
 
 namespace ocpp {
 namespace v16 {
@@ -49,23 +98,23 @@ SmartChargingHandler::SmartChargingHandler(std::map<int32_t, std::shared_ptr<Con
                                            ChargePointConfiguration& configuration) :
     connectors(connectors), database_handler(database_handler), configuration(configuration) {
     this->clear_profiles_timer = std::make_unique<Everest::SteadyTimer>();
-    this->clear_profiles_timer->interval([this]() { this->clear_expired_profiles(); }, hours(HOURS_PER_DAY));
+    this->clear_profiles_timer->interval([this]() { this->clear_expired_profiles(date::utc_clock::now()); },
+                                         hours(HOURS_PER_DAY));
 }
 
-void SmartChargingHandler::clear_expired_profiles() {
+void SmartChargingHandler::clear_expired_profiles(const date::utc_clock::time_point& now) {
     EVLOG_debug << "Scanning all installed profiles and clearing expired profiles";
 
-    const auto now = date::utc_clock::now();
-    std::lock_guard<std::mutex> lk(this->charge_point_max_profiles_map_mutex);
-    for (auto it = this->stack_level_charge_point_max_profiles_map.cbegin();
-         it != this->stack_level_charge_point_max_profiles_map.cend();) {
-        const auto& validTo = it->second.validTo;
-        if (validTo.has_value() and validTo.value().to_time_point() < now) {
-            this->stack_level_charge_point_max_profiles_map.erase(it++);
-            this->database_handler->delete_charging_profile(it->second.chargingProfileId);
-        } else {
-            ++it;
-        }
+    // obtain locks - note the order needs to be consistent with other uses
+    std::lock_guard<std::mutex> lk_cp(charge_point_max_profiles_map_mutex);
+    std::lock_guard<std::mutex> lk_txd(tx_default_profiles_map_mutex);
+    std::lock_guard<std::mutex> lk_tx(tx_profiles_map_mutex);
+
+    // check all profile types for expired entries
+    ::clear_expired_profiles(now, *database_handler, stack_level_charge_point_max_profiles_map);
+    for (auto& [connector_id, connector] : connectors) {
+        ::clear_expired_profiles(now, *database_handler, connector->stack_level_tx_default_profiles_map);
+        ::clear_expired_profiles(now, *database_handler, connector->stack_level_tx_profiles_map);
     }
 }
 

@@ -10,6 +10,16 @@ namespace fs = std::filesystem;
 #include <ocpp/v16/smart_charging.hpp>
 #include <optional>
 
+namespace {
+struct SmartChargingHandlerUTest : public ocpp::v16::SmartChargingHandler {
+    using SmartChargingHandler::clear_expired_profiles;
+    using SmartChargingHandler::get_number_installed_profiles;
+    using SmartChargingHandler::SmartChargingHandler;
+    SmartChargingHandlerUTest() = delete;
+};
+
+} // namespace
+
 namespace ocpp {
 namespace v16 {
 
@@ -37,7 +47,8 @@ namespace v16 {
  * - NB07 Invalid ChargingSchedule
  * - NB08 profile.chargingProfileKind == Recurring && !profile.recurrencyKind
  * - NB09 profile.chargingProfileKind == Recurring && !startSchedule
- * - NB10 profile.chargingProfileKind == Recurring && !startSchedule && !allow_charging_profile_without_start_schedule
+ * - NB10 profile.chargingProfileKind == Recurring && !startSchedule &&
+ * !allow_charging_profile_without_start_schedule
  * - NB11 Absolute ChargePointMaxProfile Profile with connector id not 0
  * - NB12 Absolute TxProfile connector_id == 0
  * - NB13 Absolute TxProfile && connector transaction == nullptr && ignore_no_transaction == true
@@ -793,10 +804,10 @@ TEST_F(ChargepointTestFixture, ClearAllProfilesWithFilter__NoProfiles_ProfileId_
 
 /**
  * There is an issue open https://github.com/EVerest/libocpp/issues/432 for the below clear_all_profiles_with_filter
- * The current method call will allow for all parameters to be passed in at a single time and then act on all of them.
- * The issue is that a call should either have a profile id and delete that specific profile or any combination of the
- * other three to delete n number of profiles (to a single one if given all three).
- * The logic is exclusionary but the method does not guard against it which can put the system in an odd state.
+ * The current method call will allow for all parameters to be passed in at a single time and then act on all of
+ * them. The issue is that a call should either have a profile id and delete that specific profile or any
+ * combination of the other three to delete n number of profiles (to a single one if given all three). The logic is
+ * exclusionary but the method does not guard against it which can put the system in an odd state.
  */
 
 // 0, 1 and many connectors
@@ -1281,7 +1292,8 @@ TEST_F(ChargepointTestFixture, AddTxDefaultProfile_ConnectorId_eq_0) {
     const int connector_id = 0;
     handler->add_tx_default_profile(profile, connector_id);
     // While the connector id is 0 when it is added, it is retrieved with a connector id of 1
-    // See AddTxDefaultProfile_ConnectorId_eq_0_Retrieved_at_0__NoProfilesReturned for a demonstration of this behavior
+    // See AddTxDefaultProfile_ConnectorId_eq_0_Retrieved_at_0__NoProfilesReturned for a demonstration of this
+    // behavior
     const int retrieved_connector_id = 1;
     auto valid_profiles = handler->get_valid_profiles(date_start_range, date_end_range, retrieved_connector_id);
     auto retrieved = valid_profiles[0];
@@ -1330,6 +1342,202 @@ TEST_F(ChargepointTestFixture, AddTxDefaultProfile__ConnectorId_gt_0) {
     auto tx_default_profile = valid_profiles[1];
     ASSERT_EQ(ChargingProfilePurposeType::TxDefaultProfile, tx_default_profile.chargingProfilePurpose);
     ASSERT_EQ(ChargingProfileKindType::Absolute, tx_default_profile.chargingProfileKind);
+}
+
+/**
+ * SmartChargingHandler test clearing of expired profiles:
+ * chargepoint max, tx default and tx based on validTo field
+ */
+TEST_F(ChargepointTestFixture, ClearingExpiredProfiles) {
+    // double check that date and time comparisons work
+    ASSERT_GT(date_end_range, date_start_range);
+    ASSERT_LT(date_start_range.to_time_point(), date_end_range.to_time_point());
+
+    // create and configure a real database
+    auto database_connection = std::make_unique<everest::db::sqlite::Connection>("file::memory:?cache=shared");
+    database_connection->open_connection(); // Open connection so memory stays shared
+    database_handler = std::make_unique<DatabaseHandler>(std::move(database_connection),
+                                                         std::filesystem::path(MIGRATION_FILES_LOCATION_V16), 2);
+    database_handler->open_connection();
+    addConnector(0);
+    addConnector(1);
+
+    // use the handler with access to protected methods
+    auto handler = SmartChargingHandlerUTest(connectors, database_handler, *configuration);
+
+    // create some profiles
+    auto profile_cpm = createMaxChargingProfile(createChargeSchedule(ChargingRateUnit::A));
+    auto profile_txd = createChargingProfile(createChargeSchedule(ChargingRateUnit::A));
+    auto profile_tx = createTxChargingProfile(createChargeSchedule(ChargingRateUnit::A));
+
+    // ensure they have different IDs
+    profile_cpm.chargingProfileId = 1;
+    profile_txd.chargingProfileId = 2;
+    profile_tx.chargingProfileId = 3;
+
+    // add the profiles
+    handler.add_charge_point_max_profile(profile_cpm);
+    handler.add_tx_default_profile(profile_txd, 0);
+    handler.add_tx_profile(profile_tx, 1);
+
+    // check that there are three profiles
+    auto valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    auto db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 3);
+    EXPECT_EQ(db_profiles.size(), 3);
+    EXPECT_EQ(valid_profiles.size(), 3);
+
+    // test clearing at date_start_range (all profiles start after that)
+    // no profiles should be deleted
+    handler.clear_expired_profiles(date_start_range.to_time_point());
+    valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 3);
+    EXPECT_EQ(db_profiles.size(), 3);
+    EXPECT_EQ(valid_profiles.size(), 3);
+
+    // test clearing at before date_end_range
+    // no profiles should be deleted
+    handler.clear_expired_profiles(ocpp::DateTime("2024-02-19T00:00:00").to_time_point());
+    valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 3);
+    EXPECT_EQ(db_profiles.size(), 3);
+    EXPECT_EQ(valid_profiles.size(), 3);
+
+    // test clearing at date_end_range
+    // no profiles should be deleted
+    handler.clear_expired_profiles(date_end_range.to_time_point());
+    valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 3);
+    EXPECT_EQ(db_profiles.size(), 3);
+    EXPECT_EQ(valid_profiles.size(), 3);
+
+    // test clearing after date_end_range
+    // all profiles should be deleted
+    handler.clear_expired_profiles(ocpp::DateTime("2024-03-19T00:00:01").to_time_point());
+    valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 0);
+    EXPECT_EQ(db_profiles.size(), 0);
+    EXPECT_EQ(valid_profiles.size(), 0);
+}
+
+/**
+ * SmartChargingHandler test clearing of expired profiles:
+ * chargepoint max, tx default and tx absolute profiles with a startTime
+ * and duration that have expired
+ */
+TEST_F(ChargepointTestFixture, ClearingExpiredProfilesStartTime) {
+    // create and configure a real database
+    auto database_connection = std::make_unique<everest::db::sqlite::Connection>("file::memory:?cache=shared");
+    database_connection->open_connection(); // Open connection so memory stays shared
+    database_handler = std::make_unique<DatabaseHandler>(std::move(database_connection),
+                                                         std::filesystem::path(MIGRATION_FILES_LOCATION_V16), 2);
+    database_handler->open_connection();
+    addConnector(0);
+    addConnector(1);
+
+    // use the handler with access to protected methods
+    auto handler = SmartChargingHandlerUTest(connectors, database_handler, *configuration);
+
+    // create some profiles
+    ChargingSchedule schedule = {
+        ChargingRateUnit::A, // chargingRateUnit
+        {{
+            0,                                 // startPeriod
+            32.0,                              // limit
+            std::nullopt                       // numberPhases
+        }},                                    // chargingSchedulePeriod
+        3600,                                  // duration
+        ocpp::DateTime("2024-01-01T00:00:00"), // startSchedule
+        std::nullopt,                          // minChargingRate
+    };
+
+    ChargingProfile profile_cpm = {
+        1,                                                 // chargingProfileId
+        31,                                                // stackLevel
+        ChargingProfilePurposeType::ChargePointMaxProfile, // chargingProfilePurpose
+        ChargingProfileKindType::Absolute,                 // chargingProfileKind
+        schedule,                                          // chargingSchedule
+        std::nullopt,                                      // transactionId
+        std::nullopt,                                      // recurrencyKind
+        std::nullopt,                                      // validFrom
+        std::nullopt,                                      // validTo
+    };
+
+    ChargingProfile profile_txd = {
+        2,                                            // chargingProfileId
+        32,                                           // stackLevel
+        ChargingProfilePurposeType::TxDefaultProfile, // chargingProfilePurpose
+        ChargingProfileKindType::Absolute,            // chargingProfileKind
+        schedule,                                     // chargingSchedule
+        std::nullopt,                                 // transactionId
+        std::nullopt,                                 // recurrencyKind
+        std::nullopt,                                 // validFrom
+        std::nullopt,                                 // validTo
+    };
+
+    ChargingProfile profile_tx = {
+        3,                                     // chargingProfileId
+        33,                                    // stackLevel
+        ChargingProfilePurposeType::TxProfile, // chargingProfilePurpose
+        ChargingProfileKindType::Absolute,     // chargingProfileKind
+        schedule,                              // chargingSchedule
+        std::nullopt,                          // transactionId
+        std::nullopt,                          // recurrencyKind
+        std::nullopt,                          // validFrom
+        std::nullopt,                          // validTo
+    };
+
+    // add the profiles
+    handler.add_charge_point_max_profile(profile_cpm);
+    handler.add_tx_default_profile(profile_txd, 0);
+    handler.add_tx_profile(profile_tx, 1);
+
+    // check that there are three profiles
+    auto valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    auto db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 3);
+    EXPECT_EQ(db_profiles.size(), 3);
+    EXPECT_EQ(valid_profiles.size(), 3);
+
+    // test clearing at date_start_range (all profiles start after that)
+    // no profiles should be deleted
+    handler.clear_expired_profiles(date_start_range.to_time_point());
+    valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 3);
+    EXPECT_EQ(db_profiles.size(), 3);
+    EXPECT_EQ(valid_profiles.size(), 3);
+
+    // test clearing at before date_end_range
+    // no profiles should be deleted
+    handler.clear_expired_profiles(ocpp::DateTime("2024-01-01T00:30:00").to_time_point());
+    valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 3);
+    EXPECT_EQ(db_profiles.size(), 3);
+    EXPECT_EQ(valid_profiles.size(), 3);
+
+    // test clearing at date_end_range
+    // no profiles should be deleted
+    handler.clear_expired_profiles(ocpp::DateTime("2024-01-01T01:00:00").to_time_point());
+    valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 3);
+    EXPECT_EQ(db_profiles.size(), 3);
+    EXPECT_EQ(valid_profiles.size(), 3);
+
+    // test clearing after date_end_range
+    // all profiles should be deleted
+    handler.clear_expired_profiles(ocpp::DateTime("2024-01-01T01:00:01").to_time_point());
+    valid_profiles = handler.get_valid_profiles(date_start_range, date_end_range, 1);
+    db_profiles = database_handler->get_charging_profiles();
+    EXPECT_EQ(handler.get_number_installed_profiles(), 0);
+    EXPECT_EQ(db_profiles.size(), 0);
+    EXPECT_EQ(valid_profiles.size(), 0);
 }
 
 } // namespace v16
