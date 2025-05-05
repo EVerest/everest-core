@@ -404,6 +404,7 @@ async def test_too_long_payload_field(
         test_utility, charge_point_v16, "FormationViolation"
     )
 
+
 @pytest.mark.everest_core_config(
     get_everest_config_path_str("everest-config-sil-ocpp.yaml")
 )
