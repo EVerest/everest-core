@@ -168,11 +168,20 @@ pub struct PaymentTerminalModule {
 impl From<u8> for RejectionReason {
     fn from(code: u8) -> Self {
         match code {
-            0x41 | 0x13 | 0xEC | 0xFC => RejectionReason::PinRequired,
+            0x41 | // pin_required
+            0x13 | // contactless transaction count exceeded
+            0xEC | // PIN-processing not possible
+            0xFC   // necessary device not present or defective
+               => RejectionReason::PinRequired,
             0x71 => RejectionReason::InsufficientFunds,
             0xC5 => RejectionReason::CardNotSupported,
             0x6C => RejectionReason::Aborted,
-            0x05 | 0xA0 | 0xFF | 0x61 | 0x9B => RejectionReason::Timeout,
+            0x05 | // declined
+            0xA0 | // receiver not ready
+            0xFF | // unknown system error
+            0x61 | // unknown
+            0x9B   // error from dial-up/communication fault
+              => RejectionReason::Timeout,
             _ => RejectionReason::Unknown,
         }
     }
