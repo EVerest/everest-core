@@ -160,11 +160,12 @@ TEST_F(AuthTest, test_simple_authorization) {
 
     std::vector<int32_t> connectors{1};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+    ProvidedIdToken expected = provided_token;
+    expected.parent_id_token = {PARENT_ID_TOKEN, types::authorization::IdTokenType::ISO14443};
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
-    EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::Accepted));
 
     const auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
