@@ -36,3 +36,13 @@ types:
     enum:
         - BankCard
         - RfidCard
+  RejectionReason:
+    description: Indicates the reason why the card was rejected
+    type: string
+    enum:
+        - PinRequired
+        - InsufficientFunds
+        - CardNotSupported
+        - Aborted
+        - Timeout
+        - Unknown
