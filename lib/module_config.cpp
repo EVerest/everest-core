@@ -80,17 +80,16 @@ json get_module_config(std::shared_ptr<MQTTAbstraction> mqtt, const std::string&
 
     result["types"] = type_definitions;
 
-    const auto module_provides_topic = fmt::format("{}module_provides", everest_prefix);
-    const auto module_provides = mqtt->get(module_provides_topic, QOS::QOS2);
-    result["module_provides"] = module_provides;
-
     const auto settings_topic = fmt::format("{}settings", everest_prefix);
     const auto settings = mqtt->get(settings_topic, QOS::QOS2);
     result["settings"] = settings;
 
-    const auto schemas_topic = fmt::format("{}schemas", everest_prefix);
-    const auto schemas = mqtt->get(schemas_topic, QOS::QOS2);
-    result["schemas"] = schemas;
+    bool validate_schema = settings.value("validate_schema", json(false)).get<bool>();
+    if (validate_schema) {
+        const auto schemas_topic = fmt::format("{}schemas", everest_prefix);
+        const auto schemas = mqtt->get(schemas_topic, QOS::QOS2);
+        result["schemas"] = schemas;
+    }
 
     const auto module_names_topic = fmt::format("{}module_names", everest_prefix);
     const auto module_names = mqtt->get(module_names_topic, QOS::QOS2);
@@ -105,14 +104,6 @@ json get_module_config(std::shared_ptr<MQTTAbstraction> mqtt, const std::string&
     }
 
     result["manifests"] = manifests;
-
-    const auto error_types_map_topic = fmt::format("{}error_types_map", everest_prefix);
-    const auto error_types_map = mqtt->get(error_types_map_topic, QOS::QOS2);
-    result["error_map"] = error_types_map;
-
-    const auto module_config_cache_topic = fmt::format("{}module_config_cache", everest_prefix);
-    const auto module_config_cache = mqtt->get(module_config_cache_topic, QOS::QOS2);
-    result["module_config_cache"] = module_config_cache;
 
     return result;
 }

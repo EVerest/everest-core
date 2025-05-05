@@ -307,16 +307,13 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
             type_definition.value(), QOS::QOS2, true);
     }
 
-    const auto module_provides = config.get_interfaces();
-    mqtt_abstraction.publish(fmt::format("{}module_provides", ms.mqtt_settings.everest_prefix), module_provides,
-                             QOS::QOS2, true);
-
     const auto settings = config.get_settings();
     mqtt_abstraction.publish(fmt::format("{}settings", ms.mqtt_settings.everest_prefix), settings, QOS::QOS2, true);
 
-    const auto schemas = config.get_schemas();
-    mqtt_abstraction.publish(fmt::format("{}schemas", ms.mqtt_settings.everest_prefix), schemas, QOS::QOS2, true);
-
+    if (ms.runtime_settings->validate_schema) {
+        const auto schemas = config.get_schemas();
+        mqtt_abstraction.publish(fmt::format("{}schemas", ms.mqtt_settings.everest_prefix), schemas, QOS::QOS2, true);
+    }
     const auto manifests = config.get_manifests();
 
     for (const auto& manifest : manifests.items()) {
@@ -325,14 +322,6 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
         mqtt_abstraction.publish(fmt::format("{}manifests/{}", ms.mqtt_settings.everest_prefix, manifest.key()),
                                  manifest_copy, QOS::QOS2, true);
     }
-
-    const auto error_types_map = config.get_error_types();
-    mqtt_abstraction.publish(fmt::format("{}error_types_map", ms.mqtt_settings.everest_prefix), error_types_map,
-                             QOS::QOS2, true);
-
-    const auto module_config_cache = config.get_module_config_cache();
-    mqtt_abstraction.publish(fmt::format("{}module_config_cache", ms.mqtt_settings.everest_prefix), module_config_cache,
-                             QOS::QOS2, true);
 
     mqtt_abstraction.publish(fmt::format("{}module_names", ms.mqtt_settings.everest_prefix), module_names, QOS::QOS2,
                              true);
@@ -343,6 +332,9 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
         json serialized_mod_config = json::object();
         serialized_mod_config["module_config"] = json::object();
         serialized_mod_config["module_config"][module_name] = main_config.at(module_name);
+        // remove redundant config_implementation and config_module
+        serialized_mod_config["module_config"][module_name].erase("config_implementation");
+        serialized_mod_config["module_config"][module_name].erase("config_module");
         // add mappings of fulfillments
         const auto fulfillments = config.get_fulfillments(module_name);
         serialized_mod_config["mappings"] = json::object();

@@ -111,7 +111,6 @@ protected:
     std::unordered_map<std::string, ModuleTierMappings> tier_mappings;
     // experimental caches
     std::unordered_map<std::string, std::string> module_names;
-    std::unordered_map<std::string, ConfigCache> module_config_cache;
 
     error::ErrorTypeMap error_map;
 
@@ -183,10 +182,6 @@ public:
     ///
     /// \returns a json object that contains the types
     const nlohmann::json& get_types() const;
-
-    ///
-    /// \returns the module config cache
-    std::unordered_map<std::string, ConfigCache> get_module_config_cache();
 
     ///
     /// \return the cached mapping of module ids to module names
@@ -318,6 +313,11 @@ public:
 class Config : public ConfigBase {
 private:
     std::optional<TelemetryConfig> telemetry_config;
+    std::unordered_map<std::string, ConfigCache> module_config_cache;
+
+    void populate_module_config_cache();
+
+    void populate_error_map();
 
 public:
     ///
