@@ -1,4 +1,18 @@
 active_modules:
+  open_leader:
+    module: RsOpenLEADR
+    config_module:
+      openadr_vtn_url: "http://localhost:3000"
+      openadr_vtn_client_id: "ven-1"
+      openadr_vtn_client_secret: "ven-1"
+      openadr_vtn_program_id: "program-1"
+      openadr_vtn_event_target_type: "GROUP"
+      openadr_vtn_event_target_values: "group-1"
+      openadr_vtn_retrieve_schedule: "*/10 * * * * *"
+    connections:
+      limits_iface:
+        - module_id: grid_connection_point
+          implementation_id: external_limits
   iso15118_charger:
     module: EvseV2G
     config_module:
