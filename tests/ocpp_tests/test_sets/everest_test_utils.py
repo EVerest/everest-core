@@ -63,6 +63,7 @@ from everest.testing.ocpp_utils.charge_point_utils import (
 )
 
 from ocpp.charge_point import snake_to_camel_case, asdict, remove_nones
+from ocpp.messages import _DecimalEncoder
 from ocpp.v16 import call, call_result
 from ocpp.v201 import call as call201
 from ocpp.v16.enums import Action, DataTransferStatus
@@ -457,6 +458,24 @@ async def call_test_function_and_wait(test_function: FunctionType, timeout=20) -
     result = q.get()
 
     return result
+
+
+async def send_message_without_validation(charge_point, call_msg):
+    json_data = json.dumps(
+        [
+            call_msg.message_type_id,
+            call_msg.unique_id,
+            call_msg.action,
+            call_msg.payload,
+        ],
+        # By default json.dumps() adds a white space after every separator.
+        # By setting the separator manually that can be avoided.
+        separators=(",", ":"),
+        cls=_DecimalEncoder,
+    )
+
+    async with charge_point._call_lock:
+        await charge_point._send(json_data)
 
 
 class CertificateHashDataGenerator:
