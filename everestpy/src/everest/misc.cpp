@@ -63,7 +63,7 @@ RuntimeSession::RuntimeSession(const std::string& prefix, const std::string& con
     // We extract the settings from the config file so everest-testing doesn't break
     const auto ms = Everest::ManagerSettings(prefix, config_file);
 
-    Everest::Logging::init(ms.runtime_settings->logging_config_file.string());
+    Everest::Logging::init(ms.runtime_settings.logging_config_file.string());
 
     this->mqtt_settings = ms.mqtt_settings;
 }

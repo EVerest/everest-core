@@ -23,13 +23,14 @@
 #include "js_exec_ctx.hpp"
 #include "utils.hpp"
 
+#include <utils/config/mqtt_settings.hpp>
+#include <utils/config/settings.hpp>
 #include <utils/error/error_factory.hpp>
 #include <utils/error/error_manager_impl.hpp>
 #include <utils/error/error_manager_req.hpp>
 #include <utils/error/error_state_monitor.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/module_config.hpp>
-#include <utils/mqtt_settings.hpp>
 
 namespace EverestJs {
 
@@ -609,7 +610,8 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
 
         const auto result = Everest::get_module_config(mqtt, module_id);
 
-        auto rs = std::make_unique<Everest::RuntimeSettings>(result.at("settings"));
+        Everest::RuntimeSettings result_settings = result.at("settings");
+        auto rs = std::make_unique<Everest::RuntimeSettings>(std::move(result_settings));
 
         auto config = std::make_unique<Everest::Config>(mqtt_settings, result);
 

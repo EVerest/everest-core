@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#include <utils/mqtt_settings.hpp>
+#include <utils/config/mqtt_settings.hpp>
 
 namespace Everest {
 

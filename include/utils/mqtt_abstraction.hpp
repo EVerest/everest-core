@@ -7,7 +7,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include <utils/mqtt_settings.hpp>
+#include <utils/config/mqtt_settings.hpp>
 #include <utils/types.hpp>
 
 namespace Everest {

@@ -42,11 +42,11 @@ template <typename T, typename... VARIANT_T> struct VariantMemberImpl : public s
 template <typename T, typename... VARIANT_T>
 struct VariantMemberImpl<T, std::variant<VARIANT_T...>> : public std::disjunction<std::is_same<T, VARIANT_T>...> {};
 
-/// @brief Static checker if the type T can be converted to `ConfigEntry`.
+/// @brief Static checker if the type T can be converted to `everest::config::ConfigEntry`.
 ///
 /// We use this to detect `get_config_field` overloads which receive arguments
-/// which aren't part of our `ConfigEntry` variant.
-template <typename T> struct ConfigEntryMember : public VariantMemberImpl<T, ConfigEntry> {};
+/// which aren't part of our `everest::config::ConfigEntry` variant.
+template <typename T> struct ConfigEntryMember : public VariantMemberImpl<T, everest::config::ConfigEntry> {};
 
 inline ConfigField get_config_field(const std::string& _name, bool _value) {
     static_assert(ConfigEntryMember<decltype(_value)>::value);

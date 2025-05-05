@@ -229,7 +229,7 @@ static std::map<pid_t, std::string> spawn_modules(const std::vector<ModuleStartI
                                                   const ManagerSettings& ms) {
     std::map<pid_t, std::string> started_modules;
 
-    const auto& rs = ms.get_runtime_settings();
+    const auto& rs = ms.runtime_settings;
 
     for (const auto& module : modules) {
 
@@ -310,7 +310,7 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
     const auto settings = config.get_settings();
     mqtt_abstraction.publish(fmt::format("{}settings", ms.mqtt_settings.everest_prefix), settings, QOS::QOS2, true);
 
-    if (ms.runtime_settings->validate_schema) {
+    if (ms.runtime_settings.validate_schema) {
         const auto schemas = config.get_schemas();
         mqtt_abstraction.publish(fmt::format("{}schemas", ms.mqtt_settings.everest_prefix), schemas, QOS::QOS2, true);
     }
@@ -447,7 +447,7 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
         const std::string binary_filename = fmt::format("{}", module_type);
         const std::string javascript_library_filename = "index.js";
         const std::string python_filename = "module.py";
-        const auto module_path = ms.runtime_settings->modules_dir / module_type;
+        const auto module_path = ms.runtime_settings.modules_dir / module_type;
         const auto printable_module_name = config.printable_identifier(module_name);
         const auto binary_path = module_path / binary_filename;
         const auto javascript_library_path = module_path / javascript_library_filename;
@@ -558,11 +558,11 @@ static ControllerHandle start_controller(const ManagerSettings& ms) {
                                      {"method", "boot"},
                                      {"params",
                                       {
-                                          {"module_dir", ms.runtime_settings->modules_dir.string()},
+                                          {"module_dir", ms.runtime_settings.modules_dir.string()},
                                           {"interface_dir", ms.interfaces_dir.string()},
                                           {"www_dir", ms.www_dir.string()},
                                           {"configs_dir", ms.configs_dir.string()},
-                                          {"logging_config_file", ms.runtime_settings->logging_config_file.string()},
+                                          {"logging_config_file", ms.runtime_settings.logging_config_file.string()},
                                           {"controller_port", ms.controller_port},
                                           {"controller_rpc_timeout_ms", ms.controller_rpc_timeout_ms},
                                       }},
@@ -580,7 +580,7 @@ int boot(const po::variables_map& vm) {
 
     const auto ms = ManagerSettings(prefix_opt, config_opt);
 
-    Logging::init(ms.runtime_settings->logging_config_file.string());
+    Logging::init(ms.runtime_settings.logging_config_file.string());
 
     EVLOG_info << "  \033[0;1;35;95m_\033[0;1;31;91m__\033[0;1;33;93m__\033[0;1;32;92m__\033[0;1;36;96m_\033[0m      "
                   "\033[0;1;31;91m_\033[0;1;33;93m_\033[0m                \033[0;1;36;96m_\033[0m   ";
@@ -617,7 +617,7 @@ int boot(const po::variables_map& vm) {
     } else {
         EVLOG_info << "Using MQTT broker unix domain sockets:" << ms.mqtt_settings.broker_socket_path;
     }
-    if (ms.runtime_settings->telemetry_enabled) {
+    if (ms.runtime_settings.telemetry_enabled) {
         EVLOG_info << "Telemetry enabled";
     }
     if (not ms.run_as_user.empty()) {
@@ -628,14 +628,14 @@ int boot(const po::variables_map& vm) {
     auto controller_handle = start_controller(ms);
 #endif
 
-    EVLOG_verbose << fmt::format("EVerest prefix was set to {}", ms.runtime_settings->prefix.string());
+    EVLOG_verbose << fmt::format("EVerest prefix was set to {}", ms.runtime_settings.prefix.string());
 
     // dump all manifests if requested and terminate afterwards
     if (vm.count("dumpmanifests")) {
         const auto dumpmanifests_path = fs::path(vm["dumpmanifests"].as<std::string>());
         EVLOG_debug << fmt::format("Dumping all known validated manifests into '{}'", dumpmanifests_path.string());
 
-        auto manifests = Config::load_all_manifests(ms.runtime_settings->modules_dir.string(), ms.schemas_dir.string());
+        auto manifests = Config::load_all_manifests(ms.runtime_settings.modules_dir.string(), ms.schemas_dir.string());
 
         for (const auto& module : manifests.items()) {
             const std::string filename = module.key() + ".yaml";

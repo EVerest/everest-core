@@ -6,7 +6,7 @@
 #include <string>
 
 #include <framework/runtime.hpp>
-#include <utils/mqtt_settings.hpp>
+#include <utils/config/mqtt_settings.hpp>
 #include <utils/types.hpp>
 
 const std::string get_variable_from_env(const std::string& variable);

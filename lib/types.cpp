@@ -18,16 +18,6 @@ TypedHandler::TypedHandler(HandlerType type_, std::shared_ptr<Handler> handler_)
     TypedHandler("", "", type_, std::move(handler_)) {
 }
 
-bool operator<(const Requirement& lhs, const Requirement& rhs) {
-    if (lhs.id < rhs.id) {
-        return true;
-    } else if (lhs.id == rhs.id) {
-        return (lhs.index < rhs.index);
-    } else {
-        return false;
-    }
-}
-
 ImplementationIdentifier::ImplementationIdentifier(const std::string& module_id_, const std::string& implementation_id_,
                                                    std::optional<Mapping> mapping_) :
     module_id(module_id_), implementation_id(implementation_id_), mapping(mapping_) {
@@ -97,5 +87,33 @@ ModuleTierMappings adl_serializer<ModuleTierMappings>::from_json(const json& j) 
         }
     }
     return m;
+}
+
+void adl_serializer<Requirement>::to_json(json& j, const Requirement& r) {
+    j = {{"id", r.id}};
+    if (r.index != 0) {
+        j["index"] = r.index;
+    }
+}
+
+Requirement adl_serializer<Requirement>::from_json(const json& j) {
+    Requirement r;
+    r.id = j.at("id").get<std::string>();
+    if (j.contains("index")) {
+        r.index = j.at("index").get<size_t>();
+    }
+    return r;
+}
+
+void adl_serializer<Fulfillment>::to_json(json& j, const Fulfillment& f) {
+    j = {{"module_id", f.module_id}, {"implementation_id", f.implementation_id}, {"requirement", f.requirement}};
+}
+
+Fulfillment adl_serializer<Fulfillment>::from_json(const json& j) {
+    Fulfillment f;
+    f.module_id = j.at("module_id").get<std::string>();
+    f.implementation_id = j.at("implementation_id").get<std::string>();
+    f.requirement = j.at("requirement").get<Requirement>();
+    return f;
 }
 NLOHMANN_JSON_NAMESPACE_END

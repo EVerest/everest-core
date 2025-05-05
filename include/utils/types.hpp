@@ -14,6 +14,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include <utils/config/types.hpp>
+
 using json = nlohmann::json;
 using Value = json;
 using Parameters = json;
@@ -25,8 +27,7 @@ using Arguments = std::map<std::string, ArgumentType>;
 using ReturnType = std::vector<std::string>;
 using JsonCallback = std::function<void(json)>;
 using ValueCallback = std::function<void(Value)>;
-using ConfigEntry = std::variant<std::string, bool, int, double>;
-using ConfigMap = std::map<std::string, ConfigEntry>;
+using ConfigMap = std::map<std::string, everest::config::ConfigEntry>;
 using ModuleConfigs = std::map<std::string, ConfigMap>;
 using Array = json::array_t;
 using Object = json::object_t;
@@ -67,50 +68,6 @@ enum class QOS {
     QOS2  ///< Exactly once delivery
 };
 
-/// \brief A Mapping that can be used to map a module or implementation to a specific EVSE or optionally to a Connector
-struct Mapping {
-    int evse;                     ///< The EVSE id
-    std::optional<int> connector; ///< An optional Connector id
-
-    Mapping(int evse) : evse(evse) {
-    }
-
-    Mapping(int evse, int connector) : evse(evse), connector(connector) {
-    }
-};
-
-/// \brief Writes the string representation of the given Mapping \p mapping to the given output stream \p os
-/// \returns an output stream with the Mapping written to
-inline std::ostream& operator<<(std::ostream& os, const Mapping& mapping) {
-    os << "Mapping(evse: " << mapping.evse;
-    if (mapping.connector.has_value()) {
-        os << ", connector: " << mapping.connector.value();
-    }
-    os << ")";
-
-    return os;
-}
-
-/// \brief Writes the string representation of the given Mapping \p mapping to the given output stream \p os
-/// \returns an output stream with the Mapping written to
-inline std::ostream& operator<<(std::ostream& os, const std::optional<Mapping>& mapping) {
-    if (mapping.has_value()) {
-        os << mapping.value();
-    } else {
-        os << "Mapping(charging station)";
-    }
-
-    return os;
-}
-
-/// \brief A 3 tier mapping for a module and its individual implementations
-struct ModuleTierMappings {
-    std::optional<Mapping> module; ///< Mapping of the whole module to an EVSE id and optional Connector id. If this is
-                                   ///< absent the module is assumed to be mapped to the whole charging station
-    std::unordered_map<std::string, std::optional<Mapping>>
-        implementations; ///< Mappings for the individual implementations of the module
-};
-
 struct ModuleInfo {
     struct Paths {
         std::filesystem::path etc;
@@ -126,27 +83,6 @@ struct ModuleInfo {
     bool telemetry_enabled;
     bool global_errors_enabled;
     std::optional<Mapping> mapping;
-};
-
-struct TelemetryConfig {
-    int id;
-    explicit TelemetryConfig(int id) : id(id) {
-    }
-};
-
-struct Requirement {
-    std::string id;
-    size_t index = 0;
-};
-
-bool operator<(const Requirement& lhs, const Requirement& rhs);
-
-/// \brief A Fulfillment relates a Requirement to its connected implementation, identified via its module and
-/// implementation id.
-struct Fulfillment {
-    std::string module_id;
-    std::string implementation_id;
-    Requirement requirement;
 };
 
 /// \brief Contains everything that's needed to initialize a requirement in user code
@@ -181,6 +117,15 @@ template <> struct adl_serializer<TelemetryConfig> {
 template <> struct adl_serializer<ModuleTierMappings> {
     static void to_json(json& j, const ModuleTierMappings& m);
     static ModuleTierMappings from_json(const json& j);
+};
+template <> struct adl_serializer<Requirement> {
+    static void to_json(json& j, const Requirement& r);
+    static Requirement from_json(const json& j);
+};
+
+template <> struct adl_serializer<Fulfillment> {
+    static void to_json(json& j, const Fulfillment& f);
+    static Fulfillment from_json(const json& j);
 };
 NLOHMANN_JSON_NAMESPACE_END
 

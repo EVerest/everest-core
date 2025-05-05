@@ -34,29 +34,6 @@ void populate_module_info_path_from_runtime_settings(ModuleInfo& mi, const Runti
     mi.paths.share = rs.data_dir / defaults::MODULES_DIR / mi.name;
 }
 
-RuntimeSettings::RuntimeSettings(const fs::path& prefix, const fs::path& etc_dir, const fs::path& data_dir,
-                                 const fs::path& modules_dir, const fs::path& logging_config_file,
-                                 const std::string& telemetry_prefix, bool telemetry_enabled, bool validate_schema) :
-    prefix(prefix),
-    etc_dir(etc_dir),
-    data_dir(data_dir),
-    modules_dir(modules_dir),
-    logging_config_file(logging_config_file),
-    telemetry_prefix(telemetry_prefix),
-    telemetry_enabled(telemetry_enabled),
-    validate_schema(validate_schema) {
-}
-
-RuntimeSettings::RuntimeSettings(const nlohmann::json& json) {
-    this->prefix = json.at("prefix").get<std::string>();
-    this->etc_dir = json.at("etc_dir").get<std::string>();
-    this->data_dir = json.at("data_dir").get<std::string>();
-    this->modules_dir = json.at("modules_dir").get<std::string>();
-    this->telemetry_prefix = json.at("telemetry_prefix").get<std::string>();
-    this->telemetry_enabled = json.at("telemetry_enabled").get<bool>();
-    this->validate_schema = json.at("validate_schema").get<bool>();
-}
-
 ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_) {
     // if prefix or config is empty, we assume they have not been set!
     // if they have been set, check their validity, otherwise bail out!
@@ -380,12 +357,8 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
         validate_schema = defaults::VALIDATE_SCHEMA;
     }
 
-    runtime_settings = std::make_unique<RuntimeSettings>(prefix, etc_dir, data_dir, modules_dir, logging_config_file,
-                                                         telemetry_prefix, telemetry_enabled, validate_schema);
-}
-
-const RuntimeSettings& ManagerSettings::get_runtime_settings() const {
-    return *runtime_settings.get();
+    populate_runtime_settings(this->runtime_settings, prefix, etc_dir, data_dir, modules_dir, logging_config_file,
+                              telemetry_prefix, telemetry_enabled, validate_schema);
 }
 
 ModuleCallbacks::ModuleCallbacks(
@@ -425,7 +398,8 @@ int ModuleLoader::initialize() {
     EVLOG_debug << "Module " << fmt::format(TERMINAL_STYLE_OK, "{}", module_id) << " get_config() ["
                 << std::chrono::duration_cast<std::chrono::milliseconds>(get_config_time - start_time).count() << "ms]";
 
-    this->runtime_settings = std::make_unique<RuntimeSettings>(result.at("settings"));
+    RuntimeSettings result_settings = result.at("settings");
+    this->runtime_settings = std::make_unique<RuntimeSettings>(std::move(result_settings));
 
     if (!this->runtime_settings) {
         return 0;
@@ -737,25 +711,3 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
 }
 
 } // namespace Everest
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-void adl_serializer<Everest::RuntimeSettings>::to_json(nlohmann::json& j, const Everest::RuntimeSettings& r) {
-    j = {{"prefix", r.prefix},
-         {"etc_dir", r.etc_dir},
-         {"data_dir", r.data_dir},
-         {"modules_dir", r.modules_dir},
-         {"telemetry_prefix", r.telemetry_prefix},
-         {"telemetry_enabled", r.telemetry_enabled},
-         {"validate_schema", r.validate_schema}};
-}
-
-void adl_serializer<Everest::RuntimeSettings>::from_json(const nlohmann::json& j, Everest::RuntimeSettings& r) {
-    r.prefix = j.at("prefix").get<std::string>();
-    r.etc_dir = j.at("etc_dir").get<std::string>();
-    r.data_dir = j.at("data_dir").get<std::string>();
-    r.modules_dir = j.at("modules_dir").get<std::string>();
-    r.telemetry_prefix = j.at("telemetry_prefix").get<std::string>();
-    r.telemetry_enabled = j.at("telemetry_enabled").get<bool>();
-    r.validate_schema = j.at("validate_schema").get<bool>();
-}
-NLOHMANN_JSON_NAMESPACE_END

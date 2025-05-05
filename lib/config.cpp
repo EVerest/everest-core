@@ -555,7 +555,7 @@ void ManagerConfig::load_and_validate_manifest(const std::string& module_id, con
     EVLOG_debug << fmt::format("Found module {}, loading and verifying manifest...", printable_identifier(module_id));
 
     // load and validate module manifest.json
-    const fs::path manifest_path = this->ms.runtime_settings->modules_dir / module_name / "manifest.yaml";
+    const fs::path manifest_path = this->ms.runtime_settings.modules_dir / module_name / "manifest.yaml";
     try {
 
         if (module_name != "ProbeModule") {
@@ -963,7 +963,7 @@ void ManagerConfig::resolve_all_requirements() {
 void ManagerConfig::parse(json config) {
     this->main = std::move(config);
     // load type files
-    if (this->ms.runtime_settings->validate_schema) {
+    if (this->ms.runtime_settings.validate_schema) {
         int64_t total_time_validation_ms = 0, total_time_parsing_ms = 0;
         for (auto const& types_entry : fs::recursive_directory_iterator(this->ms.types_dir)) {
             const auto start_time = std::chrono::system_clock::now();
@@ -997,7 +997,7 @@ void ManagerConfig::parse(json config) {
     }
 
     // load error files
-    if (this->ms.runtime_settings->validate_schema) {
+    if (this->ms.runtime_settings.validate_schema) {
         int64_t total_time_validation_ms = 0, total_time_parsing_ms = 0;
         for (auto const& errors_entry : fs::recursive_directory_iterator(this->ms.errors_dir)) {
             const auto start_time = std::chrono::system_clock::now();
@@ -1155,7 +1155,7 @@ ManagerConfig::ManagerConfig(const ManagerSettings& ms) : ConfigBase(ms.mqtt_set
             complete_config = complete_config.patch(patch);
         }
 
-        this->settings = this->ms.get_runtime_settings();
+        this->settings = this->ms.runtime_settings;
         this->parse(complete_config.at("active_modules"));
     } catch (const std::exception& e) {
         EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse config file: {}", e.what())));
@@ -1239,7 +1239,7 @@ ModuleConfigs Config::get_module_configs(const std::string& module_id) const {
             for (const auto& entry : conf_map.value().items()) {
                 const auto& entry_value = entry.value();
                 const json entry_type = entry_value.at("type");
-                ConfigEntry value;
+                everest::config::ConfigEntry value;
                 const json& data = entry_value.at("value");
 
                 if (data.is_string()) {
