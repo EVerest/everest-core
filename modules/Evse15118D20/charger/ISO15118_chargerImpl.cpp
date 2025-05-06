@@ -94,25 +94,21 @@ iso15118::message_20::datatypes::Parameter convert_parameter(const types::iso151
     iso15118::message_20::datatypes::Parameter out;
     out.name = parameter.name;
 
-    switch (parameter.type) {
-    case types::iso15118_vas::ParameterType::Int32:
-        out.value = static_cast<int32_t>(parameter.value.value_integer.value());
-        break;
-    case types::iso15118_vas::ParameterType::Int16:
-        out.value = static_cast<int16_t>(parameter.value.value_integer.value());
-        break;
-    case types::iso15118_vas::ParameterType::Int8:
-        out.value = static_cast<int8_t>(parameter.value.value_integer.value());
-        break;
-    case types::iso15118_vas::ParameterType::String:
-        out.value = parameter.value.value_string.value();
-        break;
-    case types::iso15118_vas::ParameterType::RationalNumber:
-        out.value = iso15118::message_20::datatypes::from_float(parameter.value.value_rational.value());
-        break;
-    case types::iso15118_vas::ParameterType::Boolean:
-        out.value = parameter.value.value_bool.value();
-        break;
+    if (parameter.value.byte_value.has_value()) {
+        out.value = (int8_t)parameter.value.byte_value.value();
+    } else if (parameter.value.short_value.has_value()) {
+        out.value = (int16_t)parameter.value.short_value.value();
+    } else if (parameter.value.int_value.has_value()) {
+        out.value = (int32_t)parameter.value.int_value.value();
+    } else if (parameter.value.finite_string.has_value()) {
+        out.value = parameter.value.finite_string.value();
+    } else if (parameter.value.rational_number.has_value()) {
+        out.value = iso15118::message_20::datatypes::from_float(parameter.value.rational_number.value());
+    } else if (parameter.value.bool_value.has_value()) {
+        out.value = parameter.value.bool_value.value();
+    } else {
+        EVLOG_error << "Invalid value type for parameter: " << parameter.name;
+        return {};
     }
 
     return out;

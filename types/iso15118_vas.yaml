@@ -1,33 +1,29 @@
-description: Custom VAS types for ISO 15118-20
-types:
-  ParameterType:
-    description: Type of a parameter
-    type: string
-    enum:
-      - Boolean
-      - Int8
-      - Int16
-      - Int32
-      - String
-      - RationalNumber
+description: Custom VAS types for ISO 15118
 
-  ParameterValueVariant:
+types:
+  ParameterValue:
     description: Value variant of a parameter -> only one of the values should be set
     type: object
     additionalProperties: false
     properties:
-      value_string:
+      finite_string:
         description: String value of the parameter
         type: string
         minLength: 0
         maxLength: 80
-      value_rational:
+      rational_number:
         description: Rational value of the parameter
         type: number
-      value_integer:
+      byte_value:
+        description: Byte value of the parameter
+        type: integer
+      short_value:
+        description: Short value of the parameter
+        type: integer
+      int_value:
         description: Integer value of the parameter
         type: integer
-      value_bool:
+      bool_value:
         description: Boolean value of the parameter
         type: boolean
 
@@ -37,7 +33,6 @@ types:
     additionalProperties: false
     required:
       - name
-      - type
       - value
     properties:
       name:
@@ -45,14 +40,10 @@ types:
         type: string
         minLength: 1
         maxLength: 80
-      type:
-        description: Type of the parameter
-        type: string
-        $ref: /iso15118_vas#/ParameterType
       value:
         description: Value of the parameter
         type: object
-        $ref: /iso15118_vas#/ParameterValueVariant
+        $ref: /iso15118_vas#/ParameterValue
 
   ParameterSet:
     description: Parameter Set
