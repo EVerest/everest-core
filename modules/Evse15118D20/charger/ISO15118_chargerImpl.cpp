@@ -95,11 +95,11 @@ iso15118::message_20::datatypes::Parameter convert_parameter(const types::iso151
     out.name = parameter.name;
 
     if (parameter.value.byte_value.has_value()) {
-        out.value = (int8_t)parameter.value.byte_value.value();
+        out.value = static_cast<int8_t>(parameter.value.byte_value.value());
     } else if (parameter.value.short_value.has_value()) {
-        out.value = (int16_t)parameter.value.short_value.value();
+        out.value = static_cast<int16_t>(parameter.value.short_value.value());
     } else if (parameter.value.int_value.has_value()) {
-        out.value = (int32_t)parameter.value.int_value.value();
+        out.value = static_cast<int32_t>(parameter.value.int_value.value());
     } else if (parameter.value.finite_string.has_value()) {
         out.value = parameter.value.finite_string.value();
     } else if (parameter.value.rational_number.has_value()) {
