@@ -82,6 +82,14 @@ void car_simulatorImpl::handle_modify_charging_session(std::string& value) {
     }
 }
 
+void car_simulatorImpl::handle_update_iso_departure_time(std::string& dt, std::string& eamount) {
+    const CmdArguments arguments = {dt, eamount};
+    EVLOG_debug << "DepartureTime: " << dt << " eamount: " << eamount;
+    this->car_simulation->iso_set_departure_time(arguments)
+
+    //trigger renegotiation here
+}
+
 void car_simulatorImpl::run() {
     while (true) {
         if (enabled == true && execution_active == true) {
@@ -307,6 +315,18 @@ void car_simulatorImpl::subscribe_to_external_mqtt() {
                    [this](auto data) {
                        auto data_copy = data;
                        handle_modify_charging_session(data_copy);
+                   });
+    //subscribe to EAmount
+    mqtt.subscribe("everest_external/nodered/evcc/confirm_eamount",
+                    [this](auto eamount) {
+                       std::string& dt = "";
+                       handle_update_iso_departure_time(dt, eamount);
+                   });
+    //subscribe to the DepartureTime
+    mqtt.subscribe("everest_external/nodered/evcc/confirm_departure_time",
+                    [this](auto dt) {
+                        std::string eamount = ""; // Remove the 'const' qualifier
+                        handle_update_iso_departure_time(dt, eamount);
                    });
 }
 
