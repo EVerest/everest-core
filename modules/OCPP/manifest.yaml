@@ -59,6 +59,12 @@ config:
       This is only used to prevent issues from passing by availlable before preparing on a restart.
     type: integer
     default: 0
+  ResetStopDelay:
+    description: >-
+      Time (seconds) to delay the stopping of the charge point so that the CSMS has enough time to respond
+      to the charge point's last messages before resetting.
+    type: integer
+    default: 0
 provides:
   main:
     description: This is a OCPP 1.6 charge point
