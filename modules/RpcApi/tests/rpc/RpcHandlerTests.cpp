@@ -41,7 +41,7 @@ protected:
         charger_info.vendor = "Test Vendor";
         data_store.chargerinfo.set_data(charger_info);
         data_store.everest_version = "2025.1.0";
-        data_store.evses.emplace_back().connectors.emplace_back();
+        data_store.evses.emplace_back()->connectors.emplace_back();
     }
 
     std::unique_ptr<server::WebSocketServer> m_websocket_server;
@@ -55,7 +55,7 @@ protected:
     data::DataStoreCharger data_store;
 };
 
-// Test: Connect to WebSocket server and check if API.hello timeout occurs
+// Test: Connect to WebSocket server and check if API.Hello timeout occurs
 TEST_F(RpcHandlerTest, ApiHelloTimeout) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
@@ -122,11 +122,11 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
     evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
     evse_info.description = "Test EVSE 1";
-    data_store.evses[0].evseinfo.set_data(evse_info);
+    data_store.evses[0]->evseinfo.set_data(evse_info);
     result.infos.push_back(evse_info);
     evse_info.id = "DEA12E000002"; ///< Unique identifier
     evse_info.description = "Test EVSE 2";
-    data_store.evses[1].evseinfo.set_data(evse_info);
+    data_store.evses[1]->evseinfo.set_data(evse_info);
     
     result.infos.push_back(evse_info);
     result.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
@@ -166,7 +166,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
     evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
     evse_info.description = "Test EVSE 1";
-    data_store.evses[0].evseinfo.set_data(evse_info);
+    data_store.evses[0]->evseinfo.set_data(evse_info);
 
     // Expected response 1
     RPCDataTypes::EVSEGetInfoResObj result_1;
@@ -177,7 +177,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cType2;
     evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::sType2;
     data_store.evses.emplace_back();
-    data_store.evses[1].evseinfo.set_data(evse_info);
+    data_store.evses[1]->evseinfo.set_data(evse_info);
 
     nlohmann::json expected_response_1 = create_json_rpc_response(result_1, 1);
 
@@ -231,7 +231,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReqInvalidID) {
     evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
     evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
     evse_info.description = "Test EVSE 1";
-    data_store.evses[0].evseinfo.set_data(evse_info);
+    data_store.evses[0]->evseinfo.set_data(evse_info);
 
     // Expected response
     RPCDataTypes::EVSEGetInfoResObj result;
