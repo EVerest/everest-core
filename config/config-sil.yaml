@@ -126,7 +126,6 @@ active_modules:
       device: auto
       tls_security: allow
       supported_DIN70121: false
-    connections: {}
     module: EvseV2G
     connections:
       security:
