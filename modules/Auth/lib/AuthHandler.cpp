@@ -125,6 +125,30 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     return result;
 }
 
+void AuthHandler::handle_token_validation_result_update(const ValidationResultUpdate& validation_result_update) {
+    std::unique_lock<std::mutex> lk(this->event_mutex);
+    auto connector_id = validation_result_update.connector_id;
+    if (this->evses.find(connector_id) != this->evses.end() and this->evses.at(connector_id)->identifier.has_value()) {
+        EVLOG_info << "Updating validation result on connector: " << connector_id;
+        // Currently we only support updating the parent id token
+        this->evses.at(connector_id)->identifier->authorization_status =
+            validation_result_update.validation_result.authorization_status;
+        this->evses.at(connector_id)->identifier->parent_id_token =
+            validation_result_update.validation_result.parent_id_token;
+        types::authorization::ProvidedIdToken provided_token;
+        provided_token.id_token = this->evses.at(connector_id)->identifier->id_token;
+        provided_token.authorization_type = this->evses.at(connector_id)->identifier->type;
+        provided_token.parent_id_token = validation_result_update.validation_result.parent_id_token;
+        std::vector<int32_t> connectors_allowed{connector_id};
+        provided_token.connectors = connectors_allowed;
+        this->publish_token_validation_status_callback(provided_token,
+                                                       types::authorization::TokenValidationStatus::Accepted);
+    } else {
+        EVLOG_error << "Unknown connector " << connector_id
+                    << " or unknown authorization identifier on the connector for validation result update.";
+    }
+}
+
 TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk) {
     std::vector<int> referenced_evses = this->get_referenced_evses(provided_token);
 

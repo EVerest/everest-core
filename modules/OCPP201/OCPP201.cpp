@@ -623,6 +623,13 @@ void OCPP201::ready() {
                 conversions::to_everest_transaction_event_response(transaction_event_response);
             ocpp_transaction_event_response.original_transaction_event = ocpp_transaction_event;
             this->p_ocpp_generic->publish_ocpp_transaction_event_response(ocpp_transaction_event_response);
+            if (transaction_event_response.idTokenInfo.has_value() and transaction_event.evse.has_value()) {
+                types::authorization::ValidationResultUpdate result_update;
+                result_update.validation_result =
+                    conversions::to_everest_validation_result(transaction_event_response.idTokenInfo.value());
+                result_update.connector_id = transaction_event.evse->id;
+                p_auth_validator->publish_validate_result_update(result_update);
+            }
         };
 
     callbacks.boot_notification_callback =
