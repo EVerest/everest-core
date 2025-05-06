@@ -996,46 +996,50 @@ types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v2::Da
     return everest_response;
 }
 
-types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::AuthorizeResponse& response) {
+types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::IdTokenInfo& idTokenInfo) {
     types::authorization::ValidationResult validation_result;
 
-    validation_result.authorization_status = to_everest_authorization_status(response.idTokenInfo.status);
-    if (response.idTokenInfo.cacheExpiryDateTime.has_value()) {
-        validation_result.expiry_time.emplace(response.idTokenInfo.cacheExpiryDateTime.value().to_rfc3339());
+    validation_result.authorization_status = to_everest_authorization_status(idTokenInfo.status);
+    if (idTokenInfo.cacheExpiryDateTime.has_value()) {
+        validation_result.expiry_time.emplace(idTokenInfo.cacheExpiryDateTime.value().to_rfc3339());
     }
-    if (response.idTokenInfo.groupIdToken.has_value()) {
-        validation_result.parent_id_token = to_everest_id_token(response.idTokenInfo.groupIdToken.value());
+    if (idTokenInfo.groupIdToken.has_value()) {
+        validation_result.parent_id_token = to_everest_id_token(idTokenInfo.groupIdToken.value());
     }
 
-    if (response.idTokenInfo.personalMessage.has_value()) {
+    if (idTokenInfo.personalMessage.has_value()) {
         validation_result.reason = types::authorization::TokenValidationStatusMessage();
         validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
         const types::text_message::MessageContent content =
-            to_everest_message_content(response.idTokenInfo.personalMessage.value());
+            to_everest_message_content(idTokenInfo.personalMessage.value());
         validation_result.reason->messages->push_back(content);
     }
 
-    if (response.idTokenInfo.customData.has_value() && response.idTokenInfo.customData.value().contains("vendorId") &&
-        response.idTokenInfo.customData.value().at("vendorId").get<std::string>() ==
-            "org.openchargealliance.multilanguage" &&
-        response.idTokenInfo.customData.value().contains("personalMessageExtra")) {
+    if (idTokenInfo.customData.has_value() && idTokenInfo.customData.value().contains("vendorId") &&
+        idTokenInfo.customData.value().at("vendorId").get<std::string>() == "org.openchargealliance.multilanguage" &&
+        idTokenInfo.customData.value().contains("personalMessageExtra")) {
         if (!validation_result.reason->messages.has_value()) {
             validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
         }
 
-        const json& multi_language_personal_messages =
-            response.idTokenInfo.customData.value().at("personalMessageExtra");
+        const json& multi_language_personal_messages = idTokenInfo.customData.value().at("personalMessageExtra");
         for (const auto& messages : multi_language_personal_messages.items()) {
             const types::text_message::MessageContent content = messages.value();
             validation_result.reason->messages->push_back(content);
         }
     }
 
+    if (idTokenInfo.evseId.has_value()) {
+        validation_result.evse_ids = idTokenInfo.evseId.value();
+    }
+    return validation_result;
+}
+
+types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::AuthorizeResponse& response) {
+    types::authorization::ValidationResult validation_result = to_everest_validation_result(response.idTokenInfo);
+
     if (response.certificateStatus.has_value()) {
         validation_result.certificate_status.emplace(to_everest_certificate_status(response.certificateStatus.value()));
-    }
-    if (response.idTokenInfo.evseId.has_value()) {
-        validation_result.evse_ids = response.idTokenInfo.evseId.value();
     }
     return validation_result;
 }
