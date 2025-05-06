@@ -13,5 +13,12 @@ cmds:
         Result object containing validation result
       type: object
       $ref: /authorization#/ValidationResult
+vars:
+  validate_result_update:
+    description: >-
+      Updated validation result for a given token due to some changes. These
+      can be triggered by TransactionEvent messages or StartTransaction.
+    type: object
+    $ref: /authorization#/ValidationResultUpdate
 errors:
   - reference: /errors/generic
