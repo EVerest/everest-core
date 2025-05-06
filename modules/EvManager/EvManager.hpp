@@ -44,6 +44,8 @@ struct Conf {
     int dc_discharge_v2g_minimal_soc;
     double max_current;
     bool three_phases;
+    int departure_time;
+    int e_amount;
 };
 
 class EvManager : public Everest::ModuleBase {
