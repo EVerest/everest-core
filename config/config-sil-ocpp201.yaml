@@ -29,6 +29,7 @@ active_modules:
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
       request_zero_power_in_idle: true
+      external_ready_to_start_charging: true
     connections:
       bsp:
         - module_id: yeti_driver_1
@@ -58,6 +59,7 @@ active_modules:
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
       request_zero_power_in_idle: true
+      external_ready_to_start_charging: true
     connections:
       bsp:
         - module_id: yeti_driver_2

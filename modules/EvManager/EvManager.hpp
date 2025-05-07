@@ -14,6 +14,7 @@
 #include <generated/interfaces/car_simulator/Implementation.hpp>
 
 // headers for required interface implementations
+#include "generated/interfaces/kvs/Interface.hpp"
 #include <generated/interfaces/ISO15118_ev/Interface.hpp>
 #include <generated/interfaces/ev_board_support/Interface.hpp>
 #include <generated/interfaces/ev_slac/Interface.hpp>
@@ -26,24 +27,25 @@
 namespace module {
 
 struct Conf {
-    int connector_id;
-    bool auto_enable;
-    bool auto_exec;
-    bool auto_exec_infinite;
     std::string auto_exec_commands;
+    double max_current;
+    int dc_discharge_max_current_limit;
+    int dc_discharge_max_power_limit;
+    int dc_discharge_target_current;
+    int dc_discharge_v2g_minimal_soc;
+    int connector_id;
     int dc_max_current_limit;
     int dc_max_power_limit;
     int dc_max_voltage_limit;
     int dc_energy_capacity;
     int dc_target_current;
     int dc_target_voltage;
+    bool auto_enable;
+    bool auto_exec;
+    bool auto_exec_infinite;
     bool support_sae_j2847;
-    int dc_discharge_max_current_limit;
-    int dc_discharge_max_power_limit;
-    int dc_discharge_target_current;
-    int dc_discharge_v2g_minimal_soc;
-    double max_current;
     bool three_phases;
+    bool keep_cross_boot_plugin_state;
 };
 
 class EvManager : public Everest::ModuleBase {
@@ -52,7 +54,8 @@ public:
     EvManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
               std::unique_ptr<car_simulatorImplBase> p_main, std::unique_ptr<ev_board_supportIntf> r_ev_board_support,
               std::vector<std::unique_ptr<ISO15118_evIntf>> r_ev, std::vector<std::unique_ptr<ev_slacIntf>> r_slac,
-              std::vector<std::unique_ptr<powermeterIntf>> r_powermeter, Conf& config) :
+              std::vector<std::unique_ptr<powermeterIntf>> r_powermeter, std::vector<std::unique_ptr<kvsIntf>> r_kvs,
+              Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -60,6 +63,7 @@ public:
         r_ev(std::move(r_ev)),
         r_slac(std::move(r_slac)),
         r_powermeter(std::move(r_powermeter)),
+        r_kvs(std::move(r_kvs)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -68,6 +72,7 @@ public:
     const std::vector<std::unique_ptr<ISO15118_evIntf>> r_ev;
     const std::vector<std::unique_ptr<ev_slacIntf>> r_slac;
     const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter;
+    const std::vector<std::unique_ptr<kvsIntf>> r_kvs;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

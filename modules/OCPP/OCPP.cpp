@@ -578,25 +578,22 @@ void OCPP::ready() {
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_pause_charging();
-        } else {
-            return false;
         }
+        return false;
     });
     this->charge_point->register_resume_charging_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_resume_charging();
-        } else {
-            return false;
         }
+        return false;
     });
     this->charge_point->register_stop_transaction_callback([this](int32_t connector, ocpp::v16::Reason reason) {
         if (this->connector_evse_index_map.count(connector)) {
             types::evse_manager::StopTransactionRequest req;
             req.reason = conversions::to_everest_stop_transaction_reason(reason);
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_stop_transaction(req);
-        } else {
-            return false;
         }
+        return false;
     });
 
     this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
@@ -606,9 +603,8 @@ void OCPP::ready() {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_force_unlock(1)
                        ? ocpp::v16::UnlockStatus::Unlocked
                        : ocpp::v16::UnlockStatus::NotSupported;
-        } else {
-            return ocpp::v16::UnlockStatus::NotSupported;
         }
+        return ocpp::v16::UnlockStatus::NotSupported;
     });
 
     // int32_t reservation_id, CiString<20> auth_token, DateTime expiry_time,
@@ -980,6 +976,8 @@ void OCPP::ready() {
         });
     }
 
+    // We must wait for EVSEs to be marked as ready before initializing ocpp since we will potentially update the
+    // operative status of the connectors
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {
         this->evse_ready_cv.wait(lk);
@@ -990,12 +988,27 @@ void OCPP::ready() {
 
     this->init_module_configuration();
 
-    const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
-    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
+    // we can now call init(), which initializes the charge points state machine. It reads the connector availability
+    // from the internal database and potentially triggers enable/disable callbacks at the evse.
+    if (this->charge_point->init({}, this->resuming_session_ids)) {
         // signal that we're started
         this->started = true;
         EVLOG_info << "OCPP initialized";
+    }
 
+    // this signals to the evses they can now start their internal state machines
+    // signal to the EVSEs that OCPP is initialized
+    for (const auto& evse : this->r_evse_manager) {
+        evse->call_external_ready_to_start_charging();
+    }
+
+    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
+    // plugged in at startup)
+    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
+    const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
+    // we can now start the OCPP connection
+    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
+        EVLOG_info << "OCPP started";
         // process session event queue
         std::scoped_lock lock(this->session_event_mutex);
         for (auto& [evse_id, evse_event_queue] : this->event_queue) {
@@ -1021,11 +1034,6 @@ void OCPP::ready() {
                 evse_event_queue.pop();
             }
         }
-    }
-
-    // signal to the EVSEs that OCPP is initialized
-    for (const auto& evse : this->r_evse_manager) {
-        evse->call_external_ready_to_start_charging();
     }
 }
 

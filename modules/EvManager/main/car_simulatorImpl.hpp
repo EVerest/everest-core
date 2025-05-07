@@ -71,9 +71,14 @@ private:
 
     bool enabled{false};
     std::atomic<bool> execution_active{false};
+    std::atomic<bool> plugged_in{false};
     size_t loop_interval_ms{};
 
     std::queue<SimulationCommand> command_queue;
+
+    std::string simulated_already_plugged_in_key;
+    std::string simulated_plugged_in_command_key;
+    std::string last_commands;
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
