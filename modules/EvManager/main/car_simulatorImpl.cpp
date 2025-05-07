@@ -175,6 +175,9 @@ void car_simulatorImpl::register_all_commands() {
         command_registry->register_command("iso_start_bcb_toggle", 1, [this](const CmdArguments& arguments) {
             return this->car_simulation->iso_start_bcb_toggle(arguments);
         });
+	command_registry->register_command("iso_set_departure_time", 2, [this](const CmdArguments& arguments) {
+            return this->car_simulation->iso_set_departure_time(arguments);
+        });
     }
 }
 
@@ -262,6 +265,7 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
 
 void car_simulatorImpl::setup_ev_parameters() {
     if (!mod->r_ev.empty()) {
+        mod->r_ev[0]->iso_set_departure_time({mod->config.departure_time, mod->config.e_amount})
         mod->r_ev[0]->call_set_dc_params({mod->config.dc_max_current_limit, mod->config.dc_max_power_limit,
                                           mod->config.dc_max_voltage_limit, mod->config.dc_energy_capacity,
                                           mod->config.dc_target_current, mod->config.dc_target_voltage});
