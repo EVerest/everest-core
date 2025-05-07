@@ -12,9 +12,9 @@ void RpcApi::init() {
 
     for (const auto& evse_manager : r_evse_manager) {
         // create one DataStore object per EVSE
-        auto& evse_data = this->data.evses.emplace_back();
+        auto& evse_data = this->data.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
         // create one connector per EVSE
-        auto& connector = evse_data->connectors.emplace_back();
+        auto& connector = evse_data->connectors.emplace_back(std::make_unique<data::DataStoreConnector>());
         // initialize connector id, counting from 0
         connector->connectorinfo.set_id(0);
 
