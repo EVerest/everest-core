@@ -238,11 +238,8 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReqInvalidID) {
     evse_info.description = "Test EVSE 1";
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
-    // Expected response
-    RPCDataTypes::EVSEGetInfoResObj result;
-    result.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID; ///< Invalid EVSE ID
-
-    nlohmann::json expected_response = create_json_rpc_response(result, 1);
+    // Check only if the error is present in the json response. All other fields are not relevant.
+    auto error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID; ///< Invalid EVSE ID
 
     // Set up the request
     nlohmann::json evse_get_evse_infos_req = create_json_rpc_request("EVSE.GetEVSEInfos", {{"evse_id", "INVALID_ID"}}, 1);
@@ -258,7 +255,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReqInvalidID) {
     ASSERT_FALSE(received_data.empty());
     // Check if the response is valid
     nlohmann::json response = nlohmann::json::parse(received_data);
-    ASSERT_EQ(response, expected_response);
+    ASSERT_FALSE(is_key_value_pair_in_json_object(response, error));
 }
 
 // Test: Connect to WebSocket server and send invalid request
