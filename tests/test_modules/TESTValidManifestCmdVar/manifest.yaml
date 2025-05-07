@@ -9,7 +9,7 @@ config:
     default: 42
 provides:
   main:
-    description: "Provides an an interface with a cmd and a var"
+    description: "Provides an interface with a cmd and a var"
     interface: "test_interface_cmd_var"
     config:
       valid_config_entry:

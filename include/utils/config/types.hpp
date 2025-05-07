@@ -6,12 +6,27 @@
 #include <cstdint>
 #include <filesystem>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <variant>
 #include <vector>
 
 #include <utils/config/settings.hpp>
+
+class ConfigParseException : public std::exception {
+public:
+    enum ParseErrorType {
+        MISSING_ENTRY,
+        SCHEMA
+    };
+    ConfigParseException(ParseErrorType err_t, const std::string& entry, const std::string& what = "") :
+        err_t(err_t), entry(entry), what(what){};
+
+    const ParseErrorType err_t;
+    const std::string entry;
+    const std::string what;
+};
 
 /// \brief A Mapping that can be used to map a module or implementation to a specific EVSE or optionally to a Connector
 struct Mapping {
@@ -107,6 +122,30 @@ enum class Datatype {
     Path
 };
 
+struct Settings {
+    std::optional<fs::path> prefix;
+    std::optional<fs::path> config_file;
+    std::optional<fs::path> configs_dir;
+    std::optional<fs::path> schemas_dir;
+    std::optional<fs::path> modules_dir;
+    std::optional<fs::path> interfaces_dir;
+    std::optional<fs::path> types_dir;
+    std::optional<fs::path> errors_dir;
+    std::optional<fs::path> www_dir;
+    std::optional<fs::path> logging_config_file;
+    std::optional<int> controller_port;
+    std::optional<int> controller_rpc_timeout_ms;
+    std::optional<std::string> mqtt_broker_socket_path;
+    std::optional<std::string> mqtt_broker_host;
+    std::optional<int> mqtt_broker_port;
+    std::optional<std::string> mqtt_everest_prefix;
+    std::optional<std::string> mqtt_external_prefix;
+    std::optional<std::string> telemetry_prefix;
+    std::optional<bool> telemetry_enabled;
+    std::optional<bool> validate_schema;
+    std::optional<std::string> run_as_user;
+};
+
 /// \brief Struct that contains the characteristics of a configuration parameter including its datatype, mutability and
 /// unit
 struct ConfigurationParameterCharacteristics {
@@ -120,8 +159,13 @@ struct ConfigurationParameter {
     std::string name;
     ConfigEntry value;
     ConfigurationParameterCharacteristics characteristics;
+};
 
-    bool validate_type() const;
+/// \brief Struct that contains the settings for the EVerest framework and all module configurations. It can represent a
+/// full YAML configuration file.
+struct EverestConfig {
+    Settings settings;
+    std::map<ModuleId, ModuleConfig> module_configs;
 };
 
 /// \brief Struct that contains the configuration of an EVerest module
@@ -137,6 +181,9 @@ struct ModuleConfig {
     ModuleConnections connections;
     ModuleTierMappings mapping;
 };
+
+EverestConfig parse_everest_config(const nlohmann::json& config);
+Settings parse_settings(const nlohmann::json& settings_json);
 
 Datatype string_to_datatype(const std::string& str);
 std::string datatype_to_string(const Datatype datatype);

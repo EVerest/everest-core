@@ -62,6 +62,16 @@ setup_test_directory(missing_config_entry TESTValidManifest test_interface)
 setup_test_directory(invalid_config_entry_type TESTValidManifest test_interface)
 setup_test_directory(missing_impl_config_entry TESTValidManifest test_interface)
 
+setup_test_directory(valid_complete_config TESTValidManifest test_interface
+    CONFIG valid_complete_config.json
+    TYPE_FILES test_type.yaml
+)
+setup_test_directory(valid_complete_config TESTValidManifestCmdVar test_interface_cmd_var
+    CONFIG valid_complete_config.json
+)
+setup_test_directory(valid_complete_config TESTValidManifestRequires test_interface_cmd_var
+    CONFIG valid_complete_config.json
+)
 
 evc_include(CodeCoverage)
 

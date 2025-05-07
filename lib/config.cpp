@@ -22,20 +22,6 @@ using json = nlohmann::json;
 using json_uri = nlohmann::json_uri;
 using json_validator = nlohmann::json_schema::json_validator;
 
-class ConfigParseException : public std::exception {
-public:
-    enum ParseErrorType {
-        MISSING_ENTRY,
-        SCHEMA
-    };
-    ConfigParseException(ParseErrorType err_t, const std::string& entry, const std::string& what = "") :
-        err_t(err_t), entry(entry), what(what){};
-
-    const ParseErrorType err_t;
-    const std::string entry;
-    const std::string what;
-};
-
 static json draft07 = R"(
 {
     "$ref": "http://json-schema.org/draft-07/schema#"

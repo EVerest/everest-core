@@ -19,30 +19,214 @@ bool operator<(const Requirement& lhs, const Requirement& rhs) {
 
 namespace everest::config {
 
-bool ConfigurationParameter::validate_type() const {
-    return std::visit(
-        [&](auto&& arg) -> bool {
-            using T = std::decay_t<decltype(arg)>;
+Settings parse_settings(const json& config) {
+    Settings settings;
 
-            switch (characteristics.datatype) {
-            case Datatype::String:
-                return std::is_same_v<T, std::string>;
+    if (!config.contains("settings")) {
+        return settings;
+    }
 
-            case Datatype::Boolean:
-                return std::is_same_v<T, bool>;
+    const auto settings_json = config.at("settings");
 
-            case Datatype::Integer:
-                return std::is_same_v<T, int>;
+    if (auto it = settings_json.find("prefix"); it != settings_json.end()) {
+        settings.prefix = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("config_file"); it != settings_json.end()) {
+        settings.config_file = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("configs_dir"); it != settings_json.end()) {
+        settings.configs_dir = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("schemas_dir"); it != settings_json.end()) {
+        settings.schemas_dir = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("modules_dir"); it != settings_json.end()) {
+        settings.modules_dir = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("interfaces_dir"); it != settings_json.end()) {
+        settings.interfaces_dir = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("types_dir"); it != settings_json.end()) {
+        settings.types_dir = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("errors_dir"); it != settings_json.end()) {
+        settings.errors_dir = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("www_dir"); it != settings_json.end()) {
+        settings.www_dir = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("logging_config_file"); it != settings_json.end()) {
+        settings.logging_config_file = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("controller_port"); it != settings_json.end()) {
+        settings.controller_port = it->get<int>();
+    }
+    if (auto it = settings_json.find("controller_rpc_timeout_ms"); it != settings_json.end()) {
+        settings.controller_rpc_timeout_ms = it->get<int>();
+    }
+    if (auto it = settings_json.find("mqtt_broker_socket_path"); it != settings_json.end()) {
+        settings.mqtt_broker_socket_path = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("mqtt_broker_host"); it != settings_json.end()) {
+        settings.mqtt_broker_host = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("mqtt_broker_port"); it != settings_json.end()) {
+        settings.mqtt_broker_port = it->get<int>();
+    }
+    if (auto it = settings_json.find("mqtt_everest_prefix"); it != settings_json.end()) {
+        settings.mqtt_everest_prefix = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("mqtt_external_prefix"); it != settings_json.end()) {
+        settings.mqtt_external_prefix = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("telemetry_prefix"); it != settings_json.end()) {
+        settings.telemetry_prefix = it->get<std::string>();
+    }
+    if (auto it = settings_json.find("telemetry_enabled"); it != settings_json.end()) {
+        settings.telemetry_enabled = it->get<bool>();
+    }
+    if (auto it = settings_json.find("validate_schema"); it != settings_json.end()) {
+        settings.validate_schema = it->get<bool>();
+    }
+    if (auto it = settings_json.find("run_as_user"); it != settings_json.end()) {
+        settings.run_as_user = it->get<std::string>();
+    }
+    return settings;
+}
 
-            case Datatype::Decimal:
-                return std::is_same_v<T, double> || std::is_same_v<T, int>;
-                // allow integers where decimal is expected
+ModuleConfigurationParameters parse_config_parameters(const json& config_json) {
+    ModuleConfigurationParameters config_maps;
 
-            default:
-                return false;
+    auto parse_entry = [](const std::string& name, const json& jval) -> ConfigurationParameter {
+        ConfigurationParameter param;
+        param.name = name;
+
+        // TODO: we cant parse to fs::path here
+        if (jval.is_string()) {
+            param.value = jval.get<std::string>();
+        } else if (jval.is_boolean()) {
+            param.value = jval.get<bool>();
+        } else if (jval.is_number_integer()) {
+            param.value = jval.get<int>();
+        } else if (jval.is_number_float()) {
+            param.value = jval.get<double>();
+        } else {
+            throw std::runtime_error("Unsupported JSON type for config parameter: " + name);
+        }
+
+        return param;
+    };
+
+    if (config_json.contains("config_module")) {
+        const auto& config_module = config_json.at("config_module");
+        for (auto config_entry = config_module.begin(); config_entry != config_module.end(); ++config_entry) {
+            config_maps["!module"].push_back(parse_entry(config_entry.key(), config_entry.value()));
+        }
+    }
+
+    if (config_json.contains("config_implementation")) {
+        const auto& config_implementations = config_json.at("config_implementation");
+        for (auto impl = config_implementations.begin(); impl != config_implementations.end(); ++impl) {
+            for (auto config_entry = impl.value().begin(); config_entry != impl.value().end(); ++config_entry) {
+                config_maps[impl.key()].push_back(parse_entry(config_entry.key(), config_entry.value()));
             }
-        },
-        value);
+        }
+    }
+
+    return config_maps;
+}
+
+ModuleTierMappings parse_mapping(const json& mapping_json) {
+    ModuleTierMappings mapping_config;
+
+    if (mapping_json.contains("module") && mapping_json["module"].contains("evse")) {
+        Mapping module_mapping(mapping_json["module"]["evse"].get<int32_t>());
+        if (mapping_json["module"].contains("connector")) {
+            module_mapping.connector = mapping_json["module"]["connector"].get<int32_t>();
+        }
+        mapping_config.module = module_mapping;
+    }
+
+    if (mapping_json.contains("implementations")) {
+        for (auto impl = mapping_json["implementations"].begin(); impl != mapping_json["implementations"].end();
+             ++impl) {
+            Mapping impl_mapping(impl.value().at("evse").get<int32_t>());
+            if (impl.value().contains("connector")) {
+                impl_mapping.connector = impl.value().at("connector").get<int32_t>();
+            }
+            mapping_config.implementations[impl.key()] = impl_mapping;
+        }
+    }
+
+    return mapping_config;
+}
+
+ModuleConnections parse_connections(const json& connections_json) {
+    ModuleConnections connections;
+
+    for (auto requirement = connections_json.begin(); requirement != connections_json.end(); ++requirement) {
+        for (const auto& connection : requirement.value()) {
+            if (!connection.contains("module_id")) {
+                throw ConfigParseException(ConfigParseException::MISSING_ENTRY, "module_id",
+                                           "Missing 'module_id' in connection");
+            }
+            if (!connection.contains("implementation_id")) {
+                throw ConfigParseException(ConfigParseException::MISSING_ENTRY, "implementation_id",
+                                           "Missing 'implementation_id' in connection");
+            }
+            Fulfillment fulfillment;
+            fulfillment.module_id = connection.at("module_id");
+            fulfillment.implementation_id = connection.at("implementation_id");
+            fulfillment.requirement = {requirement.key()};
+            connections[requirement.key()].push_back(fulfillment);
+        }
+    }
+
+    return connections;
+}
+
+ModuleConfig parse_module_config(const std::string& module_id, const json& module_json) {
+
+    if (!module_json.contains("module")) {
+        throw ConfigParseException(ConfigParseException::MISSING_ENTRY, "module", "Missing 'module' in config");
+    }
+
+    ModuleConfig module_config;
+    module_config.module_id = module_id;
+    module_config.module_name = module_json.at("module").get<std::string>();
+    module_config.standalone = module_json.value("standalone", false);
+
+    if (module_json.contains("capabilities")) {
+        module_config.capabilities = module_json["capabilities"].get<std::string>();
+    }
+
+    if (module_json.contains("connections")) {
+        module_config.connections = parse_connections(module_json.at("connections"));
+    }
+
+    if (module_json.contains("mapping")) {
+        module_config.mapping = parse_mapping(module_json.at("mapping"));
+    }
+
+    if (module_json.contains("telemetry")) {
+        module_config.telemetry_config = module_json.at("telemetry").get<TelemetryConfig>();
+    }
+
+    module_config.configuration_parameters = parse_config_parameters(module_json);
+
+    return module_config;
+}
+
+EverestConfig parse_everest_config(const json& config) {
+    EverestConfig everest_config;
+
+    json modules = config.value("active_modules", json::object());
+    for (auto module = modules.begin(); module != modules.end(); ++module) {
+        everest_config.module_configs.insert({module.key(), parse_module_config(module.key(), module.value())});
+    }
+
+    everest_config.settings = parse_settings(config.value("settings", json::object()));
+    return everest_config;
 }
 
 Datatype string_to_datatype(const std::string& str) {
