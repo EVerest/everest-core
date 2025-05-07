@@ -392,9 +392,9 @@ void YetiSimulator::read_from_car() {
 }
 
 void YetiSimulator::simulation_statemachine() {
-
-    if (module_state->last_state not_eq module_state->current_state) {
+    if (module_state->republish_state or module_state->last_state not_eq module_state->current_state) {
         publish_event(module_state->current_state);
+        module_state->republish_state = false;
     }
 
     switch (module_state->current_state) {
