@@ -83,7 +83,7 @@
         "MeterValuesSampledData": "Energy.Active.Import.Register",
         "MeterValuesSampledDataMaxLength": 1024,
         "MeterValueSampleInterval": 300,
-        "MinimumStatusDuration": 2,
+        "MinimumStatusDuration": 1,
         "NumberOfConnectors": 2,
         "ResetRetries": 1,
         "StopTransactionOnEVSideDisconnect": true,

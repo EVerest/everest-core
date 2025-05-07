@@ -197,7 +197,7 @@ Some general notes: the "connector" parameter of some of the callbacks refers to
 
 - register_reset_callback
 
-  used to perform a reset of the requested type
+  used to perform a reset of the requested type, it is up to the user to properly stop the charge point when this callback is used
 
 - register_connection_state_changed_callback
 

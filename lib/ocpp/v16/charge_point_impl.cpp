@@ -2229,14 +2229,15 @@ void ChargePointImpl::handleResetRequest(ocpp::Call<ResetRequest> call) {
                 lk, std::chrono::seconds(this->configuration->getWaitForStopTransactionsOnResetTimeout()), [this] {
                     for (int32_t connector = 1; connector <= this->configuration->getNumberOfConnectors();
                          connector++) {
-                        if (this->transaction_handler->transaction_active(connector)) {
+                        if (this->transaction_handler->transaction_active(connector) or
+                            this->status->get_state(connector) == ChargePointStatus::Charging) {
                             return false;
                         }
                     }
                     return true;
                 });
             // this is executed after all transactions have been stopped
-            this->stop();
+            // it is expected that the user properly shuts down the software, including calling stop()
             this->reset_callback(reset_type);
         });
         if (call.msg.type == ResetType::Soft) {
