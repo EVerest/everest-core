@@ -252,8 +252,7 @@ module implementing this interface.
 
 This module makes use of the following commands of this interface:
 
-* **set_display_message** to set a message on the charging station's display. This is executed when the CSMS sends a **SetDisplayMessage.req** or **TransactionEvent.conf**
-  (including cost and tariff data) message to the charging station.
+* **set_display_message** to set a message on the charging station's display. This is executed when the CSMS sends a **SetDisplayMessage.req** message to the charging station.
 * **get_display_messages** to forward a **GetDisplayMessage.req** from the CSMS
 * **clear_display_message** to forward a **ClearDisplayMessage.req** from the CSMS
 

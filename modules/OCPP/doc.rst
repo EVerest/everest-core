@@ -253,13 +253,11 @@ Requires: display_message
 **Interface**: `display_message <../../interfaces/display_message.yaml>`_
 
 This module optionally requires a connection to a module implementing the **display_message** interface. This connection is used to allow  
-the CSMS to display pricing or other information on the display of a charging station. In order to fulfill the requirements of the  
-California Pricing whitepaper, it is required to connect a module implementing this interface.
+the CSMS to display pricing or other information on the display of a charging station.
 
 This module makes use of the following commands of this interface:
 
 * **set_display_message** to set a message on the charging station's display. This is executed when the CSMS sends a  
-  **DataTransfer.req(SetUserPrice)** message to the charging station.
 
 Requires: extensions_15118
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
