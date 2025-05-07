@@ -15,6 +15,7 @@
 #include <generated/interfaces/ev_manager/Implementation.hpp>
 
 // headers for required interface implementations
+#include "generated/interfaces/kvs/Interface.hpp"
 #include <generated/interfaces/ISO15118_ev/Interface.hpp>
 #include <generated/interfaces/ev_board_support/Interface.hpp>
 #include <generated/interfaces/ev_slac/Interface.hpp>
@@ -28,10 +29,6 @@
 namespace module {
 
 struct Conf {
-    int connector_id;
-    bool auto_enable;
-    bool auto_exec;
-    bool auto_exec_infinite;
     std::string auto_exec_commands;
     double ac_nominal_voltage;
     int dc_max_current_limit;
@@ -40,12 +37,10 @@ struct Conf {
     int dc_energy_capacity;
     int dc_target_current;
     int dc_target_voltage;
+    bool auto_enable;
+    bool auto_exec;
+    bool auto_exec_infinite;
     bool support_sae_j2847;
-    int dc_discharge_max_current_limit;
-    int dc_discharge_max_power_limit;
-    int dc_discharge_target_current;
-    int dc_discharge_v2g_minimal_soc;
-    double max_current;
     bool three_phases;
     int soc;
     bool keep_cross_boot_plugin_state;
@@ -69,7 +64,7 @@ public:
         r_slac(std::move(r_slac)),
         r_powermeter(std::move(r_powermeter)),
         r_kvs(std::move(r_kvs)),
-        config(config){};
+        config(config) {};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<car_simulatorImplBase> p_main;
