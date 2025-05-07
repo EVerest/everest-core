@@ -209,7 +209,6 @@ bool WebSocketServer::stop_server() {
         m_context = nullptr;
     }
 
-    m_clients.clear();  // Clear the clients map
     EVLOG_info << "WebSocket Server stopped";
 
     return true;
