@@ -44,7 +44,7 @@ public:
         } else {
             return std::nullopt;
         }
-    };
+    }
     // set the data object. This method must be overridden if the data object is not a simple type
     //   e.g. pointers
     // Note: all setters, also in derived classes, must use the data mutex
@@ -62,7 +62,7 @@ public:
                 this->notification_callback();
             }
         }
-    };
+    }
 
     // TBD: Do we need to be able to return an error if we cannot set the data?
     // virtual void set_data(const nlohmann::json& in) = 0;
