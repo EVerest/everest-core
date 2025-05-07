@@ -15,7 +15,7 @@ option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as depe
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(FRAMEWORK_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
-option(EVEREST_ENABLE_JS_SUPPORT "Enable everestjs for JavaScript modules" ON)
+option(EVEREST_ENABLE_JS_SUPPORT "Enable everestjs for JavaScript modules" OFF)
 option(EVEREST_ENABLE_PY_SUPPORT "Enable everestpy for Python modules" ON)
 option(EVEREST_ENABLE_RS_SUPPORT "Enable everestrs for Rust modules" OFF)
 option(EVEREST_ENABLE_ADMIN_PANEL_BACKEND "Enable everest admin panel backend" ON)
