@@ -188,6 +188,16 @@ bool WebSocketServer::stop_server() {
     if (!m_running) {
         return true;
     }
+
+    if (!m_clients.empty()) {
+        for (auto& client : m_clients) {
+            lws_set_timeout(client.second, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
+        }
+        m_clients.clear();
+    }
+
+    m_clients.clear();  // Clear the clients map
+
     m_running = false;
     lws_cancel_service(m_context); // To stop the server thread loop
 
