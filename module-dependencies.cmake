@@ -32,7 +32,7 @@ ev_define_dependency(
 
 ev_define_dependency(
     DEPENDENCY_NAME Josev
-    DEPENDENT_MODULES_LIST PyJosev PyEvJosev)
+    DEPENDENT_MODULES_LIST PyEvJosev)
 
 ev_define_dependency(
     DEPENDENCY_NAME libcbv2g
