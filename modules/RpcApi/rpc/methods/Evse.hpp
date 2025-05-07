@@ -44,7 +44,7 @@ public:
                 return res;
             }
 
-            const auto& data = evse->evseinfo.get_data().value();
+            auto data = evse->evseinfo.get_data().value();
             if (data.id == evse_id) {
                 res.info = data;
                 res.error = RPCDataTypes::ResponseErrorEnum::NoError;
