@@ -9,8 +9,6 @@
 
 #include "../../data/DataStore.hpp"
 
-using namespace data;
-
 namespace RPCDataTypes = types::json_rpc_api;
 
 namespace methods {
@@ -22,8 +20,9 @@ static const std::string METHOD_EVSE_GET_EVSE_INFO = "EVSE.GetEVSEInfos";
 class Evse {
 public:
     // Constructor and Destructor
+    // Deleting the default constructor to ensure the class is always initialized with a DataStoreCharger object
     Evse() = delete;
-    Evse(DataStoreCharger& dataobj) : m_dataobj(dataobj){};
+    Evse(data::DataStoreCharger& dataobj) : m_dataobj(dataobj){};
 
     ~Evse() = default;
 
@@ -57,7 +56,8 @@ public:
     };
 
 private:
-    DataStoreCharger& m_dataobj;
+    // Reference to the DataStoreCharger object that holds EVSE data
+    data::DataStoreCharger& m_dataobj;
 };
 
 } // namespace methods
