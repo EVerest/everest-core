@@ -17,7 +17,7 @@ if (NOT everest-cmake_FOUND)
     FetchContent_Declare(
         everest-cmake
         GIT_REPOSITORY https://github.com/EVerest/everest-cmake.git
-        GIT_TAG        main
+        GIT_TAG        tmp/eebus
     )
     FetchContent_MakeAvailable(everest-cmake)
     set(everest-cmake_DIR "${everest-cmake_SOURCE_DIR}")

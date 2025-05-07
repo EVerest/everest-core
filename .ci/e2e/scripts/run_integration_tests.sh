@@ -1,13 +1,14 @@
 #!/bin/sh
 
 cd tests
-pytest \
+python3 -m pytest \
   -rA \
   --junitxml="$EXT_MOUNT/result.xml" \
   --html="$EXT_MOUNT/report.html" \
   --self-contained-html \
   core_tests/*.py \
   framework_tests/*.py \
+  eebus_tests/*.py \
   --everest-prefix "$EXT_MOUNT/dist"
 retVal=$?
 

@@ -8,7 +8,7 @@ if [ $retVal -ne 0 ]; then
     exit $retVal
 fi
 
-pip install --break-system-packages \
+python3 -m pip install --break-system-packages \
     "$EXT_MOUNT"/wheels/everestpy-*.whl \
     "$EXT_MOUNT"/wheels/everest_testing-*.whl \
     "$EXT_MOUNT"/wheels/iso15118-*.whl \
@@ -20,6 +20,6 @@ if [ $retVal -ne 0 ]; then
     exit $retVal
 fi
 
-pip install --break-system-packages -r tests/ocpp_tests/requirements.txt
+python3 -m pip install --break-system-packages -r tests/ocpp_tests/requirements.txt
 
 $(cd ./tests/ocpp_tests/test_sets/everest-aux/ && ./install_certs.sh "$EXT_MOUNT/dist" && ./install_configs.sh "$EXT_MOUNT/dist")
