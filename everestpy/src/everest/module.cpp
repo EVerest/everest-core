@@ -39,7 +39,7 @@ Module::Module(const std::string& module_id_, const RuntimeSession& session_) :
     this->handle = create_everest_instance(module_id, config, *this->rs, this->mqtt_abstraction);
 
     // determine the fulfillments for our requirements
-    const std::string& module_name = config.get_main_config().at(module_id).at("module");
+    const auto& module_name = config.get_module_name(this->module_id);
     const auto module_manifest = config.get_manifests().at(module_name);
 
     // setup module info

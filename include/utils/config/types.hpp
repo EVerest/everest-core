@@ -159,6 +159,8 @@ struct ConfigurationParameter {
     std::string name;
     ConfigEntry value;
     ConfigurationParameterCharacteristics characteristics;
+
+    bool validate_type() const;
 };
 
 /// \brief Struct that contains the settings for the EVerest framework and all module configurations. It can represent a

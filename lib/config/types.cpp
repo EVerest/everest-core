@@ -19,14 +19,29 @@ bool operator<(const Requirement& lhs, const Requirement& rhs) {
 
 namespace everest::config {
 
-Settings parse_settings(const json& config) {
+bool ConfigurationParameter::validate_type() const {
+    return std::visit(
+        [&](auto&& arg) -> bool {
+            using T = std::decay_t<decltype(arg)>;
+            switch (characteristics.datatype) {
+            case Datatype::String:
+                return std::is_same_v<T, std::string>;
+            case Datatype::Boolean:
+                return std::is_same_v<T, bool>;
+            case Datatype::Integer:
+                return std::is_same_v<T, int>;
+            case Datatype::Decimal:
+                return std::is_same_v<T, double> || std::is_same_v<T, int>;
+                // allow integers where decimal is expected
+            default:
+                return false;
+            }
+        },
+        value);
+}
+
+Settings parse_settings(const json& settings_json) {
     Settings settings;
-
-    if (!config.contains("settings")) {
-        return settings;
-    }
-
-    const auto settings_json = config.at("settings");
 
     if (auto it = settings_json.find("prefix"); it != settings_json.end()) {
         settings.prefix = it->get<std::string>();
@@ -101,7 +116,7 @@ ModuleConfigurationParameters parse_config_parameters(const json& config_json) {
         ConfigurationParameter param;
         param.name = name;
 
-        // TODO: we cant parse to fs::path here
+        // we cant parse to fs::path
         if (jval.is_string()) {
             param.value = jval.get<std::string>();
         } else if (jval.is_boolean()) {

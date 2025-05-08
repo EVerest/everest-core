@@ -56,13 +56,7 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
 
     EVLOG_debug << "Initializing EVerest framework...";
 
-    const auto& main_config = this->config.get_main_config();
-    const auto module_config_it = main_config.find(this->module_id);
-    if (module_config_it == main_config.end()) {
-        EVLOG_AND_THROW(EverestBaseRuntimeError("Module id '" + module_id + "' not found in config"));
-    }
-
-    this->module_name = module_config_it->at("module");
+    this->module_name = this->config.get_module_config().module_name;
     this->module_manifest = this->config.get_manifests()[this->module_name];
     this->module_classes = this->config.get_interfaces()[this->module_name];
     this->telemetry_config = this->config.get_telemetry_config();
@@ -262,8 +256,7 @@ std::optional<ModuleTierMappings> Everest::get_3_tier_model_mapping() {
 void Everest::check_code() {
     BOOST_LOG_FUNCTION();
 
-    const json module_manifest =
-        this->config.get_manifests()[this->config.get_main_config()[this->module_id]["module"].get<std::string>()];
+    const json module_manifest = this->config.get_manifests().at(this->config.get_module_name(this->module_id));
     for (const auto& element : module_manifest.at("provides").items()) {
         const auto& impl_id = element.key();
         const auto& impl_manifest = element.value();
@@ -303,15 +296,11 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     BOOST_LOG_FUNCTION();
 
     // resolve requirement
-    json connections = this->config.resolve_requirement(this->module_id, req.id);
-    auto& connection = connections; // this is for a min/max == 1 requirement
-    if (connections.is_array()) {   // this is for every other requirement
-        connection = connections[req.index];
-    }
+    const auto& connections = this->config.resolve_requirement(this->module_id, req.id);
+    const auto& connection = connections.at(req.index);
 
     // extract manifest definition of this command
-    const json cmd_definition =
-        get_cmd_definition(connection.at("module_id"), connection.at("implementation_id"), cmd_name, true);
+    const json cmd_definition = get_cmd_definition(connection.module_id, connection.implementation_id, cmd_name, true);
 
     const json return_type = cmd_definition.at("result").at("type");
 
@@ -320,10 +309,10 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     // check args against manifest
     if (this->validate_data_with_schema) {
         if (cmd_definition.at("arguments").size() != json_args.size()) {
-            EVLOG_AND_THROW(EverestApiError(fmt::format(
-                "Call to {}->{}({}): Argument count does not match manifest!",
-                this->config.printable_identifier(connection.at("module_id"), connection.at("implementation_id")),
-                cmd_name, fmt::join(arg_names, ", "))));
+            EVLOG_AND_THROW(EverestApiError(
+                fmt::format("Call to {}->{}({}): Argument count does not match manifest!",
+                            this->config.printable_identifier(connection.module_id, connection.implementation_id),
+                            cmd_name, fmt::join(arg_names, ", "))));
         }
 
         std::set<std::string> unknown_arguments;
@@ -338,8 +327,8 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
         if (!unknown_arguments.empty()) {
             EVLOG_AND_THROW(EverestApiError(fmt::format(
                 "Call to {}->{}({}): Argument names do not match manifest: {} != {}!",
-                this->config.printable_identifier(connection.at("module_id"), connection.at("implementation_id")),
-                cmd_name, fmt::join(arg_names, ","), fmt::join(arg_names, ","), fmt::join(cmd_arguments, ","))));
+                this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name,
+                fmt::join(arg_names, ","), fmt::join(arg_names, ","), fmt::join(cmd_arguments, ","))));
         }
     }
 
@@ -354,8 +343,8 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             } catch (const std::exception& e) {
                 EVLOG_AND_THROW(EverestApiError(fmt::format(
                     "Call to {}->{}({}): Argument '{}' with value '{}' could not be validated with schema: {}",
-                    this->config.printable_identifier(connection.at("module_id"), connection.at("implementation_id")),
-                    cmd_name, fmt::join(arg_names, ","), arg_name, json_args.at(arg_name).dump(2), e.what())));
+                    this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name,
+                    fmt::join(arg_names, ","), arg_name, json_args.at(arg_name).dump(2), e.what())));
             }
         }
     }
@@ -375,13 +364,13 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 
         EVLOG_verbose << fmt::format(
             "Incoming res {} for {}->{}()", data_id,
-            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
+            this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name);
 
         res_promise.set_value(std::move(data["retval"]));
     };
 
     const auto cmd_topic =
-        fmt::format("{}/cmd", this->config.mqtt_prefix(connection["module_id"], connection["implementation_id"]));
+        fmt::format("{}/cmd", this->config.mqtt_prefix(connection.module_id, connection.implementation_id));
 
     const std::shared_ptr<TypedHandler> res_token =
         std::make_shared<TypedHandler>(cmd_name, call_id, HandlerType::Result, std::make_shared<Handler>(res_handler));
@@ -406,7 +395,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     if (res_future_status == std::future_status::timeout) {
         EVLOG_AND_THROW(EverestTimeoutError(fmt::format(
             "Timeout while waiting for result of {}->{}()",
-            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name)));
+            this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name)));
     }
     if (res_future_status == std::future_status::ready) {
         result = res_future.get();
@@ -462,15 +451,12 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
     EVLOG_debug << fmt::format("subscribing to var: {}:{}", req.id, var_name);
 
     // resolve requirement
-    json connections = this->config.resolve_requirement(this->module_id, req.id);
-    auto& connection = connections; // this is for a min/max == 1 requirement
-    if (connections.is_array()) {   // this is for every other requirement
-        connection = connections[req.index];
-    }
+    const auto& connections = this->config.resolve_requirement(this->module_id, req.id);
+    const auto& connection = connections.at(req.index);
 
-    const auto requirement_module_id = connection.at("module_id").get<std::string>();
+    const auto requirement_module_id = connection.module_id;
     const auto module_name = this->config.get_module_name(requirement_module_id);
-    const auto requirement_impl_id = connection.at("implementation_id").get<std::string>();
+    const auto requirement_impl_id = connection.implementation_id;
     const auto requirement_impl_manifest = this->config.get_interface_definitions().at(
         this->config.get_interfaces().at(module_name).at(requirement_impl_id));
 
@@ -520,15 +506,12 @@ void Everest::subscribe_error(const Requirement& req, const error::ErrorType& er
     EVLOG_debug << fmt::format("subscribing to error: {}:{}", req.id, error_type);
 
     // resolve requirement
-    json connections = this->config.resolve_requirement(this->module_id, req.id);
-    json& connection = connections; // this is for a min/max == 1 requirement
-    if (connections.is_array()) {   // this is for every other requirement
-        connection = connections[req.index];
-    }
+    const auto& connections = this->config.resolve_requirement(this->module_id, req.id);
+    const auto& connection = connections.at(req.index);
 
-    const std::string requirement_module_id = connection.at("module_id");
+    const std::string requirement_module_id = connection.module_id;
     const std::string module_name = this->config.get_module_name(requirement_module_id);
-    const std::string requirement_impl_id = connection.at("implementation_id");
+    const std::string requirement_impl_id = connection.implementation_id;
     const json requirement_impl_if = this->config.get_interface_definitions().at(
         this->config.get_interfaces().at(module_name).at(requirement_impl_id));
 

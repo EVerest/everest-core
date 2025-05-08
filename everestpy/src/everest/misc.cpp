@@ -87,35 +87,18 @@ ModuleSetup create_setup_from_config(const std::string& module_id, Everest::Conf
 
     // setup connections
     for (const auto& requirement : module_manifest.at("requires").items()) {
-
         const auto& requirement_id = requirement.key();
-
-        json req_route_list = config.resolve_requirement(module_id, requirement_id);
-        // if this was a requirement with min_connections == 1 and max_connections == 1,
-        // this will be simply a single connection, but an array of connections otherwise
-        // (this array can have only one entry, if only one connection was provided, though)
-        const bool is_list = req_route_list.is_array();
-        if (!is_list) {
-            req_route_list = json::array({req_route_list});
-        }
-
-        auto fulfillment_list_it = setup.connections.insert({requirement_id, {}}).first;
-        auto& fulfillment_list = fulfillment_list_it->second;
-        fulfillment_list.reserve(req_route_list.size());
-
-        for (std::size_t i = 0; i < req_route_list.size(); i++) {
-            const auto& req_route = req_route_list[i];
-            const auto fulfillment =
-                Fulfillment{req_route["module_id"], req_route["implementation_id"], {requirement_id, i}};
-            fulfillment_list.emplace_back(fulfillment);
-        }
+        const auto fulfillments = config.resolve_requirement(module_id, requirement_id);
+        setup.connections[requirement_id] = fulfillments;
     }
 
-    const auto& config_maps = config.get_module_json_config(module_id);
+    const auto& module_config = config.get_module_config();
 
-    for (const auto& config_map : config_maps.items()) {
-        const auto& json_config_map = Everest::typed_json_map_to_config_map(config_map.value());
-        const auto& impl_id = config_map.key();
+    for (const auto& [impl_id, configuration_parameters] : module_config.configuration_parameters) {
+        json json_config_map;
+        for (const auto& config_param : configuration_parameters) {
+            json_config_map[config_param.name] = config_param.value; // implicit conversion to json
+        }
         if (impl_id == "!module") {
             setup.configs.module = json_config_map;
             continue;

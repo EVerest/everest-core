@@ -12,6 +12,8 @@ function (setup_test_directory)
     )
     set(multi_value_args
         TYPE_FILES
+        MODULES
+        INTERFACE_FILES
     )
 
     cmake_parse_arguments(arg "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
@@ -118,6 +120,16 @@ function (setup_test_directory)
     if (arg_TYPE_FILES)
         foreach(TYPE_FILE ${arg_TYPE_FILES})
             file(COPY test_types/${TYPE_FILE} DESTINATION ${TYPES_DIR}/)
+        endforeach()
+    endif()
+    if (arg_MODULES)
+        foreach(MODULE ${arg_MODULES})
+            file(COPY test_modules/${MODULE} DESTINATION ${MODULES_DIR})
+        endforeach()
+    endif()
+    if (arg_INTERFACE_FILES)
+        foreach(INTERFACE_FILE ${arg_INTERFACE_FILES})
+            file(COPY test_interfaces/${INTERFACE_FILE}.yaml DESTINATION ${INTERFACES_DIR}/)
         endforeach()
     endif()
 

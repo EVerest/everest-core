@@ -122,7 +122,7 @@ JsonBlob Module::get_interface(rust::Str interface_name) const {
 }
 
 JsonBlob Module::get_manifest() const {
-    const std::string& module_name = config_->get_main_config().at(module_id_).at("module");
+    const std::string& module_name = config_->get_module_name(std::string(module_id_));
     return json2blob(config_->get_manifests().at(module_name));
 }
 
@@ -206,13 +206,13 @@ void Module::clear_error(rust::Str implementation_id, rust::Str error_type, bool
 }
 
 rust::Vec<RsModuleConnections> Module::get_module_connections() const {
-    const auto connections = config_->get_main_config().at(std::string(module_id_))["connections"];
+    const auto connections = config_->get_module_config().connections;
 
     // Iterate over the connections block.
     rust::Vec<RsModuleConnections> out;
     out.reserve(connections.size());
-    for (const auto& connection : connections.items()) {
-        out.emplace_back(RsModuleConnections{rust::String{connection.key()}, connection.value().size()});
+    for (const auto& [req_id, fulfillment] : connections) {
+        out.emplace_back(RsModuleConnections{rust::String{req_id}, fulfillment.size()});
     };
     return out;
 }

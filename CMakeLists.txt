@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(everest-framework
-    VERSION 0.20.3
+    VERSION 0.20.4
     DESCRIPTION "The open operating system for e-mobility charging stations"
     LANGUAGES CXX C
 )

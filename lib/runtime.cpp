@@ -96,14 +96,11 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     } else if (!config.is_object()) {
         throw BootException(fmt::format("Config file '{}' is not an object", config_file.string()));
     }
-
-    const auto settings = config.value("settings", json::object());
-
+    const auto settings = everest::config::parse_settings(config.value("settings", json::object()));
     if (prefix.empty()) {
-        const auto settings_prefix_it = settings.find("prefix");
-        if (settings_prefix_it != settings.end()) {
-            const auto settings_prefix = settings_prefix_it->get<std::string>();
-            if (!fs::path(settings_prefix).is_absolute()) {
+        if (settings.prefix.has_value()) {
+            const auto settings_prefix = settings.prefix.value();
+            if (!settings_prefix.is_absolute()) {
                 throw BootException("Setting a non-absolute directory for the prefix is not allowed");
             }
 
@@ -132,26 +129,24 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
             assert_dir((prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE).string(), "Default share directory");
     }
 
-    const auto settings_configs_dir_it = settings.find("configs_dir");
-    if (settings_configs_dir_it != settings.end()) {
-        auto settings_configs_dir = get_prefixed_path_from_json(*settings_configs_dir_it, prefix);
+    if (settings.configs_dir.has_value()) {
+        auto settings_configs_dir = get_prefixed_path_from_json(settings.configs_dir.value().string(), prefix);
         configs_dir = assert_dir(settings_configs_dir, "Config provided configs directory");
     } else {
         configs_dir = assert_dir(etc_dir.string(), "Default configs directory");
     }
 
-    const auto settings_schemas_dir_it = settings.find("schemas_dir");
-    if (settings_schemas_dir_it != settings.end()) {
-        const auto settings_schemas_dir = get_prefixed_path_from_json(*settings_schemas_dir_it, prefix);
+    if (settings.schemas_dir.has_value()) {
+        const auto settings_schemas_dir = get_prefixed_path_from_json(settings.schemas_dir.value().string(), prefix);
         schemas_dir = assert_dir(settings_schemas_dir, "Config provided schema directory");
     } else {
         const auto default_schemas_dir = data_dir / defaults::SCHEMAS_DIR;
         schemas_dir = assert_dir(default_schemas_dir.string(), "Default schema directory");
     }
 
-    const auto settings_interfaces_dir_it = settings.find("interfaces_dir");
-    if (settings_interfaces_dir_it != settings.end()) {
-        const auto settings_interfaces_dir = get_prefixed_path_from_json(*settings_interfaces_dir_it, prefix);
+    if (settings.interfaces_dir.has_value()) {
+        const auto settings_interfaces_dir =
+            get_prefixed_path_from_json(settings.interfaces_dir.value().string(), prefix);
         interfaces_dir = assert_dir(settings_interfaces_dir, "Config provided interface directory");
     } else {
         const auto default_interfaces_dir = data_dir / defaults::INTERFACES_DIR;
@@ -159,36 +154,32 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     }
 
     fs::path modules_dir;
-    const auto settings_modules_dir_it = settings.find("modules_dir");
-    if (settings_modules_dir_it != settings.end()) {
-        const auto settings_modules_dir = get_prefixed_path_from_json(*settings_modules_dir_it, prefix);
+    if (settings.modules_dir.has_value()) {
+        const auto settings_modules_dir = get_prefixed_path_from_json(settings.modules_dir.value().string(), prefix);
         modules_dir = assert_dir(settings_modules_dir, "Config provided module directory");
     } else {
         const auto default_modules_dir = prefix / defaults::LIBEXEC_DIR / defaults::NAMESPACE / defaults::MODULES_DIR;
         modules_dir = assert_dir(default_modules_dir, "Default module directory");
     }
 
-    const auto settings_types_dir_it = settings.find("types_dir");
-    if (settings_types_dir_it != settings.end()) {
-        const auto settings_types_dir = get_prefixed_path_from_json(*settings_types_dir_it, prefix);
+    if (settings.types_dir.has_value()) {
+        const auto settings_types_dir = get_prefixed_path_from_json(settings.types_dir.value().string(), prefix);
         types_dir = assert_dir(settings_types_dir, "Config provided type directory");
     } else {
         const auto default_types_dir = data_dir / defaults::TYPES_DIR;
         types_dir = assert_dir(default_types_dir, "Default type directory");
     }
 
-    const auto settings_errors_dir_it = settings.find("errors_dir");
-    if (settings_errors_dir_it != settings.end()) {
-        const auto settings_errors_dir = get_prefixed_path_from_json(*settings_errors_dir_it, prefix);
+    if (settings.errors_dir.has_value()) {
+        const auto settings_errors_dir = get_prefixed_path_from_json(settings.errors_dir.value().string(), prefix);
         errors_dir = assert_dir(settings_errors_dir, "Config provided error directory");
     } else {
         const auto default_errors_dir = data_dir / defaults::ERRORS_DIR;
         errors_dir = assert_dir(default_errors_dir, "Default error directory");
     }
 
-    const auto settings_www_dir_it = settings.find("www_dir");
-    if (settings_www_dir_it != settings.end()) {
-        const auto settings_www_dir = get_prefixed_path_from_json(*settings_www_dir_it, prefix);
+    if (settings.www_dir.has_value()) {
+        const auto settings_www_dir = get_prefixed_path_from_json(settings.www_dir.value().string(), prefix);
         www_dir = assert_dir(settings_www_dir, "Config provided www directory");
     } else {
         const auto default_www_dir = data_dir / defaults::WWW_DIR;
@@ -196,9 +187,9 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     }
 
     fs::path logging_config_file;
-    const auto settings_logging_config_file_it = settings.find("logging_config_file");
-    if (settings_logging_config_file_it != settings.end()) {
-        const auto settings_logging_config_file = get_prefixed_path_from_json(*settings_logging_config_file_it, prefix);
+    if (settings.logging_config_file.has_value()) {
+        const auto settings_logging_config_file =
+            get_prefixed_path_from_json(settings.logging_config_file.value().string(), prefix);
         logging_config_file = assert_file(settings_logging_config_file, "Config provided logging config");
     } else {
         auto default_logging_config_file =
@@ -212,16 +203,14 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
         logging_config_file = assert_file(default_logging_config_file, "Default logging config");
     }
 
-    const auto settings_controller_port_it = settings.find("controller_port");
-    if (settings_controller_port_it != settings.end()) {
-        controller_port = settings_controller_port_it->get<int>();
+    if (settings.controller_port.has_value()) {
+        controller_port = settings.controller_port.value();
     } else {
         controller_port = defaults::CONTROLLER_PORT;
     }
 
-    const auto settings_controller_rpc_timeout_ms_it = settings.find("controller_rpc_timeout_ms");
-    if (settings_controller_rpc_timeout_ms_it != settings.end()) {
-        controller_rpc_timeout_ms = settings_controller_rpc_timeout_ms_it->get<int>();
+    if (settings.controller_rpc_timeout_ms.has_value()) {
+        controller_rpc_timeout_ms = settings.controller_rpc_timeout_ms.value();
     } else {
         controller_rpc_timeout_ms = defaults::CONTROLLER_RPC_TIMEOUT_MS;
     }
@@ -236,14 +225,12 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     // doesn't have a default value if not provided thus it takes precedence
     // over default values - this is to have backward compatiblity in term of configuration
     // in case both UDS (Unix Domain Sockets) and IDS (Internet Domain Sockets) are set in config, raise exception
-    const auto settings_mqtt_broker_socket_path = settings.find("mqtt_broker_socket_path");
-    if (settings_mqtt_broker_socket_path != settings.end()) {
-        mqtt_broker_socket_path = settings_mqtt_broker_socket_path->get<std::string>();
+    if (settings.mqtt_broker_socket_path.has_value()) {
+        mqtt_broker_socket_path = settings.mqtt_broker_socket_path.value();
     }
 
-    const auto settings_mqtt_broker_host_it = settings.find("mqtt_broker_host");
-    if (settings_mqtt_broker_host_it != settings.end()) {
-        mqtt_broker_host = settings_mqtt_broker_host_it->get<std::string>();
+    if (settings.mqtt_broker_host.has_value()) {
+        mqtt_broker_host = settings.mqtt_broker_host.value();
         if (!mqtt_broker_socket_path.empty()) {
             // invalid configuration, can't have both UDS and IDS
             throw BootException(
@@ -268,9 +255,8 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
         }
     }
 
-    const auto settings_mqtt_broker_port_it = settings.find("mqtt_broker_port");
-    if (settings_mqtt_broker_port_it != settings.end()) {
-        mqtt_broker_port = settings_mqtt_broker_port_it->get<int>();
+    if (settings.mqtt_broker_port.has_value()) {
+        mqtt_broker_port = settings.mqtt_broker_port.value();
     } else {
         mqtt_broker_port = defaults::MQTT_BROKER_PORT;
     }
@@ -287,9 +273,8 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
         }
     }
 
-    const auto settings_mqtt_everest_prefix_it = settings.find("mqtt_everest_prefix");
-    if (settings_mqtt_everest_prefix_it != settings.end()) {
-        mqtt_everest_prefix = settings_mqtt_everest_prefix_it->get<std::string>();
+    if (settings.mqtt_everest_prefix.has_value()) {
+        mqtt_everest_prefix = settings.mqtt_everest_prefix.value();
     } else {
         mqtt_everest_prefix = defaults::MQTT_EVEREST_PREFIX;
     }
@@ -299,9 +284,8 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
         mqtt_everest_prefix = mqtt_everest_prefix += "/";
     }
 
-    const auto settings_mqtt_external_prefix_it = settings.find("mqtt_external_prefix");
-    if (settings_mqtt_external_prefix_it != settings.end()) {
-        mqtt_external_prefix = settings_mqtt_external_prefix_it->get<std::string>();
+    if (settings.mqtt_external_prefix.has_value()) {
+        mqtt_external_prefix = settings.mqtt_external_prefix.value();
     } else {
         mqtt_external_prefix = defaults::MQTT_EXTERNAL_PREFIX;
     }
@@ -318,7 +302,7 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
                                mqtt_external_prefix);
     }
 
-    run_as_user = settings.value("run_as_user", "");
+    run_as_user = settings.run_as_user.value_or("");
 
     auto version_information_path = data_dir / VERSION_INFORMATION_FILE;
     if (fs::exists(version_information_path)) {
@@ -329,9 +313,8 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     }
 
     std::string telemetry_prefix;
-    const auto settings_telemetry_prefix_it = settings.find("telemetry_prefix");
-    if (settings_telemetry_prefix_it != settings.end()) {
-        telemetry_prefix = settings_telemetry_prefix_it->get<std::string>();
+    if (settings.telemetry_prefix.has_value()) {
+        telemetry_prefix = settings.telemetry_prefix.value();
     } else {
         telemetry_prefix = defaults::TELEMETRY_PREFIX;
     }
@@ -342,17 +325,15 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     }
 
     bool telemetry_enabled = defaults::TELEMETRY_ENABLED;
-    const auto settings_telemetry_enabled_it = settings.find("telemetry_enabled");
-    if (settings_telemetry_enabled_it != settings.end()) {
-        telemetry_enabled = settings_telemetry_enabled_it->get<bool>();
+    if (settings.telemetry_enabled.has_value()) {
+        telemetry_enabled = settings.telemetry_enabled.value();
     } else {
         telemetry_enabled = defaults::TELEMETRY_ENABLED;
     }
 
     bool validate_schema = defaults::VALIDATE_SCHEMA;
-    const auto settings_validate_schema_it = settings.find("validate_schema");
-    if (settings_validate_schema_it != settings.end()) {
-        validate_schema = settings_validate_schema_it->get<bool>();
+    if (settings.validate_schema.has_value()) {
+        validate_schema = settings.validate_schema.value();
     } else {
         validate_schema = defaults::VALIDATE_SCHEMA;
     }

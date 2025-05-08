@@ -744,23 +744,16 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         for (const auto& requirement : module_manifest.at("requires").items()) {
             auto req_prop = Napi::Object::New(env);
             const auto& requirement_id = requirement.key();
-            json req_route_list = config->resolve_requirement(module_id, requirement_id);
-            // if this was a requirement with min_connections == 1 and max_connections == 1,
-            // this will be simply a single connection, but an array of connections otherwise
-            // (this array can have only one entry, if only one connection was provided, though)
-            const bool is_list = req_route_list.is_array();
-            if (!is_list) {
-                req_route_list = json::array({req_route_list});
-            }
+            const auto fulfillments = config->resolve_requirement(module_id, requirement_id);
             auto req_array_prop = Napi::Array::New(env);
             auto req_mod_cmds_array = Napi::Array::New(env);
-            for (std::size_t i = 0; i < req_route_list.size(); i++) {
-                const auto& req_route = req_route_list[i];
-                const std::string& requirement_module_id = req_route["module_id"];
-                const std::string& requirement_impl_id = req_route["implementation_id"];
+            for (std::size_t i = 0; i < fulfillments.size(); i++) {
+                const auto& fulfillment = fulfillments.at(i);
+                const std::string& requirement_module_id = fulfillment.module_id;
+                const std::string& requirement_impl_id = fulfillment.implementation_id;
                 // FIXME (aw): why is const auto& not possible for the following line?
                 // we only want cmds/vars from the required interface to be usable, not from it's child interfaces
-                const std::string& interface_name = req_route["required_interface"].get<std::string>();
+                const std::string& interface_name = requirement.value().at("interface");
                 const auto& requirement_impl_intf = config->get_interface_definition(interface_name);
                 auto requirement_vars = Everest::Config::keys(requirement_impl_intf["vars"]);
                 auto requirement_cmds = Everest::Config::keys(requirement_impl_intf["cmds"]);
@@ -797,12 +790,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                 req_mod_cmds_prop.DefineProperty(Napi::PropertyDescriptor::Value("call", cmd_prop, napi_enumerable));
 
                 if (requirement_cmds.size()) {
-                    if (is_list) {
-                        req_mod_cmds_array.Set(i, req_mod_cmds_prop);
-                    } else {
-                        uses_cmds_prop.DefineProperty(
-                            Napi::PropertyDescriptor::Value(requirement_id, req_mod_cmds_prop, napi_enumerable));
-                    }
+                    req_mod_cmds_array.Set(i, req_mod_cmds_prop);
                 }
 
                 req_prop.DefineProperty(Napi::PropertyDescriptor::Value(
@@ -837,12 +825,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                 req_prop.DefineProperty(
                     Napi::PropertyDescriptor::Value("error_state_monitor", error_state_monitor_prop, napi_enumerable));
 
-                if (is_list) {
-                    req_array_prop.Set(i, req_prop);
-                } else {
-                    uses_reqs_prop.DefineProperty(
-                        Napi::PropertyDescriptor::Value(requirement_id, req_prop, napi_enumerable));
-                }
+                req_array_prop.Set(i, req_prop);
             }
             uses_list_reqs_prop.DefineProperty(
                 Napi::PropertyDescriptor::Value(requirement_id, req_array_prop, napi_enumerable));
@@ -885,7 +868,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         }
 
         // config property
-        json module_config = config->get_module_json_config(module_id);
+        const auto module_config = config->get_module_config();
 
         auto module_info = config->get_module_info(module_id);
         populate_module_info_path_from_runtime_settings(module_info, *rs);
@@ -893,15 +876,19 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         auto module_config_prop = Napi::Object::New(env);
         auto module_config_impl_prop = Napi::Object::New(env);
 
-        for (const auto& config_map : module_config.items()) {
-            const auto& json_config_map = Everest::typed_json_map_to_config_map(config_map.value());
-            if (config_map.key() == "!module") {
-                module_config_prop.DefineProperty(Napi::PropertyDescriptor::Value(
-                    "module", convertToNapiValue(env, json_config_map), napi_enumerable));
+        for (const auto& [impl_id, parameters] : module_config.configuration_parameters) {
+            json config_map;
+            for (const auto& param : parameters) {
+                config_map[param.name] = param.value;
+            }
+
+            if (impl_id == "!module") {
+                module_config_prop.DefineProperty(
+                    Napi::PropertyDescriptor::Value("module", convertToNapiValue(env, config_map), napi_enumerable));
                 continue;
             }
-            module_config_impl_prop.DefineProperty(Napi::PropertyDescriptor::Value(
-                config_map.key(), convertToNapiValue(env, json_config_map), napi_enumerable));
+            module_config_impl_prop.DefineProperty(
+                Napi::PropertyDescriptor::Value(impl_id, convertToNapiValue(env, config_map), napi_enumerable));
         }
         module_config_prop.DefineProperty(
             Napi::PropertyDescriptor::Value("impl", module_config_impl_prop, napi_enumerable));
