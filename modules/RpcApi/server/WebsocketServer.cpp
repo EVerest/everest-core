@@ -190,10 +190,11 @@ bool WebSocketServer::stop_server() {
     }
     m_running = false;
 
+    lws_cancel_service(m_context); // To stop the server thread loop
+
     if (m_server_thread.joinable()) {
         m_server_thread.join();  // Wait for server thread to finish
     }
-    lws_cancel_service(m_context); // To stop the server thread loop
 
     if (m_context) {
         lws_context_destroy(m_context);
