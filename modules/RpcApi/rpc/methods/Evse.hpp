@@ -67,13 +67,18 @@ public:
 
         // Iterate over all EVSEs and add the EVSEStatus objects to the response
         for (const auto& evse : m_dataobj.evses) {
-            if (not evse->evseinfo.get_data().has_value() or not evse->evsestatus.get_data().has_value()) {
+
+            if (not evse->evseinfo.get_data().has_value()) {
                 res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
                 return res;
             }
 
             const auto data = evse->evseinfo.get_data().value();
             if (data.id == evse_id) {
+                if (not evse->evsestatus.get_data().has_value()) {
+                    res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
+                    return res;
+                }
                 res.status = evse->evsestatus.get_data().value();
                 res.error = RPCDataTypes::ResponseErrorEnum::NoError;
                 return res;
