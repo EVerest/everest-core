@@ -266,8 +266,8 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
 
     // Set up the data store with test data
     RPCDataTypes::EVSEStatusObj evse_status;
-    evse_status.charged_energy_wh = 123,45; ///< charged_energy_wh
-    evse_status.discharged_energy_wh = 123,45; ///< discharged_energy_wh
+    evse_status.charged_energy_wh = 123.45; ///< charged_energy_wh
+    evse_status.discharged_energy_wh = 123.45; ///< discharged_energy_wh
     evse_status.charging_duration_s = 500; ///< charging_duration_s
     evse_status.charging_allowed = true; ///< charging_allowed
     evse_status.available = true; ///< available
