@@ -15,7 +15,6 @@ WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
     };
 
     struct lws_context_creation_info info = {};
-    info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
     info.port = CONTEXT_PORT_NO_LISTEN; /* client */
     info.protocols = protocols;
     info.gid = -1;
