@@ -30,14 +30,17 @@ WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
     m_client_thread = std::thread([this]() {
         m_running = true;
         while (m_running) {
-            lws_service(m_context, 100);
+            if (m_start_lws_service) {
+                lws_service(m_context, 100); // 100 is ignored
+            } else {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
         }
     });
 
     while (!m_running) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Wait for client to start
     }
-
     m_ccinfo.context = m_context;
     m_ccinfo.address = m_address.c_str();
     m_ccinfo.port = m_port;
@@ -45,6 +48,8 @@ WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
     m_ccinfo.host = m_ccinfo.address;
     m_ccinfo.origin = m_ccinfo.address;
     m_ccinfo.protocol = "EVerestRpcApi";
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // wait to hepl connect not crash
 }
 
 WebSocketTestClient::~WebSocketTestClient() {
@@ -75,6 +80,7 @@ int WebSocketTestClient::callback(struct lws* wsi, enum lws_callback_reasons rea
         }
         case LWS_CALLBACK_CLIENT_CLOSED:
         case LWS_CALLBACK_CLOSED_CLIENT_HTTP: {
+            client->m_start_lws_service = false;
             client->m_connected = false;
             EVLOG_info << "Client closed connection: " << (in ? (char*)in : "(null)") << " reason: " << reason;
             break;
@@ -100,8 +106,9 @@ bool WebSocketTestClient::connect() {
         EVLOG_error << "Error while connecting to WebSocket server";
     } else {
         EVLOG_info << "Connected to WebSocket server";
+        m_start_lws_service = true;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Wait for client, otherwise an assertion error will occur if the client is directly closed
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for client, otherwise an assertion error will occur if the client is directly closed
 
     return m_wsi != nullptr;
 }
