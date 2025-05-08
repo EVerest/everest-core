@@ -65,7 +65,6 @@ int WebSocketTestClient::callback(struct lws* wsi, enum lws_callback_reasons rea
         }
         case LWS_CALLBACK_CLIENT_CLOSED:
         case LWS_CALLBACK_CLOSED_CLIENT_HTTP: {
-            client->m_start_lws_service = false;
             client->m_connected = false;
             EVLOG_info << "Client closed connection: " << (in ? (char*)in : "(null)") << " reason: " << reason;
             break;
@@ -103,7 +102,6 @@ void WebSocketTestClient::start_lws_service_thread() {
     if (m_lws_service_running) {
         return;
     }
-    m_start_lws_service = true;
     m_lws_service_thread = std::thread([this]() {
         m_lws_service_running = true;
         while (m_lws_service_running) {
