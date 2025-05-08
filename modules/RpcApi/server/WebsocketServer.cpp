@@ -59,9 +59,9 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
             for (auto it = server->m_clients.begin(); it != server->m_clients.end(); ++it) {
                 if (it->second == wsi) {
                     lock.unlock();  // Unlock before calling the callback
+                    EVLOG_info << "Client " << it->first << " disconnected";
                     server->on_client_disconnected(it->first);  // Call the on_client_disconnected callback
                     lock.lock();  // Lock again after the callback
-                    EVLOG_info << "Client " << it->first << " disconnected";
                     server->m_clients.erase(it);
                     break;
                 }
@@ -144,8 +144,8 @@ void WebSocketServer::kill_client_connection(const ClientId &client_id, const st
             reinterpret_cast<unsigned char*>(const_cast<char*>(close_reason.data())), close_reason.size());
         lws_set_timeout(wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC); // Set timeout to close the connection
         lws_callback_on_writable(wsi); // Notify the event loop to close the connection
-        m_clients.erase(it);  // Remove client from map
         EVLOG_info << "Client " << client_id << " connection closed (reason: " << kill_reason << ")";
+        m_clients.erase(it);  // Remove client from map
     } else {
         EVLOG_error << "Client ID " << client_id << " not found!";
     }
