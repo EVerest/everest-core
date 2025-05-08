@@ -232,16 +232,14 @@ ModuleConfig parse_module_config(const std::string& module_id, const json& modul
     return module_config;
 }
 
-EverestConfig parse_everest_config(const json& config) {
-    EverestConfig everest_config;
+ModuleConfigurations parse_module_configs(const json& active_modules_json) {
+    ModuleConfigurations module_configs;
 
-    json modules = config.value("active_modules", json::object());
-    for (auto module = modules.begin(); module != modules.end(); ++module) {
-        everest_config.module_configs.insert({module.key(), parse_module_config(module.key(), module.value())});
+    for (auto module = active_modules_json.begin(); module != active_modules_json.end(); ++module) {
+        module_configs.insert({module.key(), parse_module_config(module.key(), module.value())});
     }
 
-    everest_config.settings = parse_settings(config.value("settings", json::object()));
-    return everest_config;
+    return module_configs;
 }
 
 Datatype string_to_datatype(const std::string& str) {

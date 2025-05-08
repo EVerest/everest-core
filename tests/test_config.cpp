@@ -212,43 +212,44 @@ SCENARIO("Check everest config parsing", "[!throws]") {
     GIVEN("A complete and valid config") {
         auto config = Everest::load_yaml(valid_complete_config_json);
         THEN("It should not throw") {
-            CHECK_NOTHROW(everest::config::parse_everest_config(config));
+            CHECK_NOTHROW(everest::config::parse_module_configs(config.value("active_modules", json::object())));
         }
     }
     GIVEN("A valid config that misses module connections") {
         auto config = Everest::load_yaml(valid_complete_config_json);
         config["active_modules"]["valid_module_requires"].erase("connections");
         THEN("It should not throw") {
-            CHECK_NOTHROW(everest::config::parse_everest_config(config));
+            CHECK_NOTHROW(everest::config::parse_module_configs(config.value("active_modules", json::object())));
         }
     }
     GIVEN("A valid config that misses a mapping") {
         auto config = Everest::load_yaml(valid_complete_config_json);
         config["active_modules"]["valid_module"].erase("mapping");
         THEN("It should not throw") {
-            CHECK_NOTHROW(everest::config::parse_everest_config(config));
+            CHECK_NOTHROW(everest::config::parse_module_configs(config.value("active_modules", json::object())));
         }
     }
     GIVEN("A config where a module is missing the 'module' field") {
         auto config = Everest::load_yaml(valid_complete_config_json);
         config["active_modules"]["valid_module"].erase("module");
         THEN("It should throw ConfigParseException for missing 'module'") {
-            CHECK_THROWS_AS(everest::config::parse_everest_config(config), ConfigParseException);
+            CHECK_THROWS_AS(everest::config::parse_module_configs(config.value("active_modules", json::object())),
+                            ConfigParseException);
         }
     }
     GIVEN("A config with only 'active_modules' and no 'settings'") {
         json config;
         config["active_modules"] = {{"valid_module", {{"module", "TESTValidManifest"}}}};
         THEN("It should not throw and parse default settings") {
-            CHECK_NOTHROW(everest::config::parse_everest_config(config));
+            CHECK_NOTHROW(everest::config::parse_module_configs(config.value("active_modules", json::object())));
         }
     }
     GIVEN("A config with empty 'active_modules'") {
         json config;
         config["active_modules"] = json::object(); // empty object
         THEN("It should not throw and result in no modules") {
-            auto result = everest::config::parse_everest_config(config);
-            CHECK(result.module_configs.empty());
+            auto result = everest::config::parse_module_configs(config.value("active_modules", json::object()));
+            CHECK(result.empty());
         }
     }
 
@@ -257,7 +258,7 @@ SCENARIO("Check everest config parsing", "[!throws]") {
         config["active_modules"] = {
             {"test_module", {{"module", "test"}, {"config_module", {{"param1", json::array({1, 2, 3})}}}}}};
         THEN("It should throw due to unsupported config parameter type") {
-            CHECK_THROWS(everest::config::parse_everest_config(config));
+            CHECK_THROWS(everest::config::parse_module_configs(config.value("active_modules", json::object())));
         }
     }
 }

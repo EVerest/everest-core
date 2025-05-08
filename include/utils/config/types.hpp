@@ -162,14 +162,6 @@ struct ConfigurationParameter {
 
     bool validate_type() const;
 };
-
-/// \brief Struct that contains the settings for the EVerest framework and all module configurations. It can represent a
-/// full YAML configuration file.
-struct EverestConfig {
-    Settings settings;
-    std::map<ModuleId, ModuleConfig> module_configs;
-};
-
 /// \brief Struct that contains the configuration of an EVerest module
 struct ModuleConfig {
     bool standalone;
@@ -184,7 +176,7 @@ struct ModuleConfig {
     ModuleTierMappings mapping;
 };
 
-EverestConfig parse_everest_config(const nlohmann::json& config);
+ModuleConfigurations parse_module_configs(const nlohmann::json& config);
 Settings parse_settings(const nlohmann::json& settings_json);
 
 Datatype string_to_datatype(const std::string& str);

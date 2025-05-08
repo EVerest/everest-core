@@ -1143,8 +1143,8 @@ ManagerConfig::ManagerConfig(const ManagerSettings& ms) : ConfigBase(ms.mqtt_set
 
         this->settings = this->ms.runtime_settings;
         // this config is parsed from the file, it doesnt contain any defaults or patches!
-        auto everest_config = parse_everest_config(complete_config);
-        this->parse(everest_config.module_configs);
+        auto module_configs = parse_module_configs(complete_config.value("active_modules", json::object()));
+        this->parse(module_configs);
         // now the config is parsed, validated and patched!
     } catch (const std::exception& e) {
         EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse config file: {}", e.what())));
