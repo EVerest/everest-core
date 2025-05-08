@@ -58,7 +58,6 @@ private:
     struct lws* m_wsi;
     std::atomic<bool> m_connected {false};
     std::atomic<bool> m_lws_service_running {false};
-    std::atomic<bool> m_start_lws_service {false};
     std::thread m_lws_service_thread;
     std::string m_received_data;
 
