@@ -33,8 +33,6 @@ WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
     m_ccinfo.host = m_ccinfo.address;
     m_ccinfo.origin = m_ccinfo.address;
     m_ccinfo.protocol = "EVerestRpcApi";
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // wait to hepl connect not crash
 }
 
 WebSocketTestClient::~WebSocketTestClient() {
@@ -93,7 +91,6 @@ bool WebSocketTestClient::connect() {
         EVLOG_info << "Connecting to WebSocket server..";
         start_lws_service_thread();
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for client, otherwise an assertion error will occur if the client is directly closed
 
     return m_wsi != nullptr;
 }
@@ -119,8 +116,8 @@ void WebSocketTestClient::stop_lws_service_thread() {
     if (!m_lws_service_running) {
         return;
     }
-    lws_cancel_service(m_context);
     m_lws_service_running = false;
+    lws_cancel_service(m_context);
     if (m_lws_service_thread.joinable()) {
         m_lws_service_thread.join();
     }
