@@ -44,6 +44,9 @@ public:
         std::unique_lock<std::mutex> lock(m_cv_mutex);
         return m_cv.wait_for(lock, timeout, [this] { return !m_received_data.empty(); });
     }
+
+    void start_lws_service_thread();
+    void stop_lws_service_thread();
     
 private:
     static int callback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
@@ -54,9 +57,9 @@ private:
     struct lws_client_connect_info m_ccinfo {};
     struct lws* m_wsi;
     std::atomic<bool> m_connected {false};
-    std::atomic<bool> m_running {false};
+    std::atomic<bool> m_lws_service_running {false};
     std::atomic<bool> m_start_lws_service {false};
-    std::thread m_client_thread;
+    std::thread m_lws_service_thread;
     std::string m_received_data;
 
 public:

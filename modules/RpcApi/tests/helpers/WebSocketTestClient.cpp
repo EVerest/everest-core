@@ -26,20 +26,6 @@ WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
         throw std::runtime_error("Failed to create WebSocket m_context");
     }
 
-    m_client_thread = std::thread([this]() {
-        m_running = true;
-        while (m_running) {
-            if (m_start_lws_service) {
-                lws_service(m_context, 100); // 100 is ignored
-            } else {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-        }
-    });
-
-    while (!m_running) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Wait for client to start
-    }
     m_ccinfo.context = m_context;
     m_ccinfo.address = m_address.c_str();
     m_ccinfo.port = m_port;
@@ -98,18 +84,48 @@ bool WebSocketTestClient::connect() {
         EVLOG_error << "Error: WebSocket m_context not found!";
         return false;
     }
+    stop_lws_service_thread(); // Stop any existing service thread, otherwise the connect will fail
 
     m_wsi = lws_client_connect_via_info(&m_ccinfo);
 
     if (m_wsi == nullptr) {
         EVLOG_error << "Error while connecting to WebSocket server";
     } else {
-        EVLOG_info << "Connected to WebSocket server";
-        m_start_lws_service = true;
+        EVLOG_info << "Connecting to WebSocket server..";
+        start_lws_service_thread();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for client, otherwise an assertion error will occur if the client is directly closed
 
     return m_wsi != nullptr;
+}
+
+void WebSocketTestClient::start_lws_service_thread() {
+    if (m_lws_service_running) {
+        return;
+    }
+    m_start_lws_service = true;
+    m_lws_service_thread = std::thread([this]() {
+        m_lws_service_running = true;
+        while (m_lws_service_running) {
+            lws_service(m_context, 0);
+        }
+    });
+
+    // Wait for the service thread to start
+    while (!m_lws_service_running) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Wait for service thread to start
+    }
+}
+
+void WebSocketTestClient::stop_lws_service_thread() {
+    if (!m_lws_service_running) {
+        return;
+    }
+    lws_cancel_service(m_context);
+    m_lws_service_running = false;
+    if (m_lws_service_thread.joinable()) {
+        m_lws_service_thread.join();
+    }
 }
 
 bool WebSocketTestClient::is_connected() {
@@ -134,8 +150,6 @@ std::string WebSocketTestClient::receive() {
 
 void WebSocketTestClient::close() {
     if (m_wsi) {
-        m_running = false;
-
         if (m_connected == true) {
             lws_close_reason(m_wsi, LWS_CLOSE_STATUS_NORMAL, nullptr, 0);
         }
@@ -144,11 +158,12 @@ void WebSocketTestClient::close() {
             EVLOG_error << "Error: WebSocket m_context not found!";
             return;
         }
-        lws_cancel_service(m_context);
+
+        stop_lws_service_thread();
         m_wsi = nullptr;
 
-        if (m_client_thread.joinable()) {
-            m_client_thread.join();  // Wait for client thread to finish
+        if (m_lws_service_thread.joinable()) {
+            m_lws_service_thread.join();  // Wait for client thread to finish
         }
     }
     if (m_context) {
