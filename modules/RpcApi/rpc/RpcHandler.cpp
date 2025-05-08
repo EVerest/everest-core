@@ -10,7 +10,6 @@
 
 #include <boost/uuid/uuid_io.hpp>
 #include <everest/logging.hpp>
-#include <thread>
 
 namespace rpc {
 
@@ -235,7 +234,9 @@ void RpcHandler::start_server() {
     }
 
     // Start RPC receiver thread
-    std::thread([this]() { this->process_client_requests(); }).detach();
+    m_rpc_recv_thread = std::thread([this]() {
+        this->process_client_requests(); 
+    });
 }
 
 void RpcHandler::stop_server() {
@@ -243,6 +244,11 @@ void RpcHandler::stop_server() {
     // Notify all threads to stop
     m_cv_data_available.notify_all();
     m_cv_api_hello.notify_all();
+
+    // Wait for the RPC receiver thread to finish
+    if (m_rpc_recv_thread.joinable()) {
+        m_rpc_recv_thread.join();
+    }
 
     for (const auto& transport_interface : m_transport_interfaces) {
         if (!transport_interface->stop_server()) {
