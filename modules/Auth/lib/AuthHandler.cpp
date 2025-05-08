@@ -78,6 +78,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 
     TokenHandlingResult result;
     ProvidedIdToken provided_token_copy = provided_token;
+    std::optional<std::vector<types::text_message::MessageContent>> messages;
 
     // check if token is already currently processed
     EVLOG_info << "Received new token: " << everest::staging::helpers::redact(provided_token);
@@ -86,8 +87,8 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     if (!this->is_token_already_in_process(provided_token, referenced_evses)) {
         // process token if not already in process
         this->tokens_in_process.insert(provided_token);
-        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing);
-        result = this->handle_token(provided_token_copy, lk);
+        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing, std::nullopt);
+        result = this->handle_token(provided_token_copy, lk, messages);
     } else {
         // do nothing if token is currently processed
         EVLOG_info << "Received token " << everest::staging::helpers::redact(provided_token.id_token.value)
@@ -99,19 +100,20 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     case TokenHandlingResult::ALREADY_IN_PROCESS:
         break;
     case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::TimedOut);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::TimedOut,
+                                                       std::nullopt);
         break;
     case TokenHandlingResult::ACCEPTED: // Handled in handle_token internally
         break;
     case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
     case TokenHandlingResult::REJECTED:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Rejected);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Rejected, messages);
         break;
     case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Accepted);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Accepted, messages);
         break;
     case TokenHandlingResult::WITHDRAWN:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Withdrawn);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Withdrawn, messages);
         break;
     }
 
@@ -142,14 +144,17 @@ void AuthHandler::handle_token_validation_result_update(const ValidationResultUp
         std::vector<int32_t> connectors_allowed{connector_id};
         provided_token.connectors = connectors_allowed;
         this->publish_token_validation_status_callback(provided_token,
-                                                       types::authorization::TokenValidationStatus::Accepted);
+                                                       types::authorization::TokenValidationStatus::Accepted,
+                                                       validation_result_update.validation_result.reason->messages);
     } else {
         EVLOG_error << "Unknown connector " << connector_id
                     << " or unknown authorization identifier on the connector for validation result update.";
     }
 }
 
-TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk) {
+TokenHandlingResult
+AuthHandler::handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk,
+                          std::optional<std::vector<types::text_message::MessageContent>>& messages) {
     std::vector<int> referenced_evses = this->get_referenced_evses(provided_token);
 
     // Only provided token with type RFID can be used to stop a transaction
@@ -265,12 +270,14 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                     // TOOD: Add handling in case there is a display which can be used which transaction should stop
                     // (see C16 of OCPP2.0.1 spec)
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
+                    messages = validation_result.reason->messages;
                     return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                 }
 
                 const auto evse_used_for_transaction =
                     this->used_for_transaction(referenced_evses, validation_result.parent_id_token.value().value);
                 if (evse_used_for_transaction != -1) {
+                    messages = validation_result.reason->messages;
                     if (!this->evses[evse_used_for_transaction]->transaction_active) {
                         return TokenHandlingResult::ALREADY_IN_PROCESS;
                     } else {
@@ -311,14 +318,16 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                 if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
                     EVLOG_info << "parent_id_token of validation result is equal to master_pass_group_id. Not allowed "
                                   "to authorize this token for starting transactions!";
+                    messages = validation_result.reason->messages;
                     return TokenHandlingResult::REJECTED;
                 }
 
                 if (validation_result.parent_id_token.has_value()) {
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
                 }
-                this->publish_token_validation_status_callback(provided_token,
-                                                               types::authorization::TokenValidationStatus::Accepted);
+                messages = validation_result.reason->messages;
+                this->publish_token_validation_status_callback(
+                    provided_token, types::authorization::TokenValidationStatus::Accepted, messages);
                 /* although validator accepts the authorization request, the Auth module still needs to
                     - select the evse for the authorization request
                     - process it against placed reservations
@@ -605,13 +614,14 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
 
         this->evses.at(evse_id)->timeout_timer.stop();
         this->evses.at(evse_id)->timeout_timer.timeout(
-            [this, evse_index, &evse = this->evses.at(evse_id), provided_token]() {
+            [this, evse_index, &evse = this->evses.at(evse_id), provided_token, validation_result]() {
                 evse->timeout_in_progress = true;
                 std::lock_guard<std::mutex> lk(this->event_mutex);
                 EVLOG_debug << "Authorization timeout for evse#" << evse_index;
                 evse->identifier.reset();
                 this->withdraw_authorization_callback(evse_index);
-                this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
+                this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut,
+                                                               validation_result.reason->messages);
                 evse->timeout_in_progress = false;
                 this->cv.notify_all();
             },
@@ -921,7 +931,8 @@ void AuthHandler::register_reservation_cancelled_callback(
 }
 
 void AuthHandler::register_publish_token_validation_status_callback(
-    const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback) {
+    const std::function<void(const ProvidedIdToken&, TokenValidationStatus,
+                             std::optional<std::vector<types::text_message::MessageContent>>)>& callback) {
     this->publish_token_validation_status_callback = callback;
 }
 
