@@ -631,6 +631,118 @@ async def test_stop_transaction_parent_id_tag(
 
 
 @pytest.mark.asyncio
+async def test_stop_transaction_parent_id_tag_in_start_transaction(
+    test_config: OcppTestConfiguration,
+    charge_point_v16: ChargePoint16,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
+
+    logging.info(
+        "######### test_stop_transaction_parent_id_tag_in_start_transaction #########")
+
+    # StartTransaction.conf with parent id
+    @on(Action.StartTransaction)
+    def on_start_transaction(**kwargs):
+        id_tag_info = IdTagInfo(
+            status=AuthorizationStatus.accepted,
+            parent_id_tag=test_config.authorization_info.parent_id_tag,
+        )
+        return call_result.StartTransactionPayload(
+            transaction_id=1, id_tag_info=id_tag_info
+        )
+
+    setattr(charge_point_v16, "on_start_transaction", on_start_transaction)
+    charge_point_v16.route_map = create_route_map(charge_point_v16)
+
+    # start charging session
+    test_controller.plug_in()
+
+    # expect StatusNotification with status preparing
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.preparing
+        ),
+    )
+
+    # swipe id tag to authorize
+    test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
+
+    # expect authorize.req
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "Authorize",
+        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1),
+    )
+
+    # expect StartTransaction.req
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StartTransaction",
+        call.StartTransactionPayload(
+            1, test_config.authorization_info.valid_id_tag_1, 0, ""
+        ),
+        validate_standard_start_transaction,
+    )
+
+    # expect StatusNotification with status charging
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.charging
+        ),
+    )
+    # authorize.conf with parent id tag
+
+    @on(Action.Authorize)
+    def on_authorize(**kwargs):
+        id_tag_info = IdTagInfo(
+            status=AuthorizationStatus.accepted,
+            parent_id_tag=test_config.authorization_info.parent_id_tag,
+        )
+        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+    setattr(charge_point_v16, "on_authorize", on_authorize)
+    charge_point_v16.route_map = create_route_map(charge_point_v16)
+
+    # swipe other id tag to authorize (same parent id)
+    test_controller.swipe(test_config.authorization_info.valid_id_tag_2)
+
+    # expect authorize.req
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "Authorize",
+        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_2),
+    )
+
+    # expect StatusNotification with status finishing
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
+        ),
+    )
+
+    # expect StopTransaction.req
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StopTransaction",
+        call.StopTransactionPayload(0, "", 1, Reason.local),
+        validate_standard_stop_transaction,
+    )
+
+
+@pytest.mark.asyncio
 async def test_005_1_ev_side_disconnect(
     test_config: OcppTestConfiguration,
     charge_point_v16: ChargePoint16,

@@ -174,7 +174,7 @@ types:
         $ref: /authorization#/IdToken
       evse_ids:
         description: >-
-          Only used when the id token is valid for one or more specific evses, 
+          Only used when the id token is valid for one or more specific evses,
           not for the whole charging station. Indicates for which evse ids the
           provided token is valid
         type: array
@@ -200,7 +200,7 @@ types:
       - FindFirst
   AuthorizationType:
     description: >-
-      Type of authorization of the provided token. The value 
+      Type of authorization of the provided token. The value
       of AuthorizationType can influence the authorization process
     type: string
     enum:
@@ -222,3 +222,23 @@ types:
       - KeyCode
       - Local
       - NoAuthorization
+  ValidationResultUpdate:
+    description: >-
+      Result object containing an updated validation result for a given token.
+      This is needed since certain information can be updated at a later time.
+    type: object
+    additionalProperties: false
+    required:
+      - validation_result
+      - connector_id
+    properties:
+      validation_result:
+        description: >-
+          Result object containing authorization status enum value and an optional
+          parentIdTag
+        type: object
+        $ref: /authorization#/ValidationResult
+      connector_id:
+        description: >-
+          Id of the connector on which the id token information has been updated.
+        type: integer

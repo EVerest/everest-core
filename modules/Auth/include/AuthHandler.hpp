@@ -75,6 +75,13 @@ public:
     TokenHandlingResult on_token(const ProvidedIdToken& provided_token);
 
     /**
+     * @brief Handler for an update to a token validation result. This is mainly used to update if we have a parent id.
+     *
+     * @param validation_result_update
+     */
+    void handle_token_validation_result_update(const ValidationResultUpdate& validation_result_update);
+
+    /**
      * @brief Handler for new incoming \p reservation for the given \p connector . Places the reservation if possible.
      *
      * @param reservation
