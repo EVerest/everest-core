@@ -74,6 +74,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     std::unique_lock<std::mutex> lk(this->event_mutex);
 
     TokenHandlingResult result;
+    ProvidedIdToken provided_token_copy = provided_token;
 
     // check if token is already currently processed
     EVLOG_info << "Received new token: " << provided_token;
@@ -83,7 +84,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         // process token if not already in process
         this->tokens_in_process.insert(provided_token.id_token.value);
         this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing);
-        result = this->handle_token(provided_token, lk);
+        result = this->handle_token(provided_token_copy, lk);
     } else {
         // do nothing if token is currently processed
         EVLOG_info << "Received token " << provided_token.id_token.value << " repeatedly while still processing it";
@@ -94,16 +95,16 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     case TokenHandlingResult::ALREADY_IN_PROCESS:
         break;
     case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
-        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::TimedOut);
         break;
     case TokenHandlingResult::ACCEPTED: // Handled in handle_token internally
         break;
     case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
     case TokenHandlingResult::REJECTED:
-        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Rejected);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Rejected);
         break;
     case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
-        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Accepted);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Accepted);
         break;
     }
 
@@ -140,7 +141,7 @@ void AuthHandler::handle_token_validation_result_update(const ValidationResultUp
     }
 }
 
-TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk) {
+TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk) {
     std::vector<int> referenced_evses = this->get_referenced_evses(provided_token);
 
     // Only provided token with type RFID can be used to stop a transaction
@@ -154,6 +155,10 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
             req.id_tag.emplace(provided_token);
             this->stop_transaction_callback(this->evses.at(evse_used_for_transaction)->evse_index, req);
             EVLOG_info << "Transaction was stopped because id_token was used for transaction";
+            if (this->evses.at(evse_used_for_transaction)->identifier->parent_id_token.has_value()) {
+                provided_token.parent_id_token =
+                    this->evses.at(evse_used_for_transaction)->identifier->parent_id_token.value();
+            }
             return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
         }
     }
@@ -247,6 +252,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     }
                     // TOOD: Add handling in case there is a display which can be used which transaction should stop
                     // (see C16 of OCPP2.0.1 spec)
+                    provided_token.parent_id_token = validation_result.parent_id_token.value();
                     return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                 }
 
@@ -261,6 +267,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                         req.id_tag.emplace(provided_token);
                         this->stop_transaction_callback(this->evses.at(evse_used_for_transaction)->evse_index, req);
                         EVLOG_info << "Transaction was stopped because parent_id_token was used for transaction";
+                        provided_token.parent_id_token = validation_result.parent_id_token.value();
                         return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                     }
                 }
@@ -295,6 +302,9 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     return TokenHandlingResult::REJECTED;
                 }
 
+                if (validation_result.parent_id_token.has_value()) {
+                    provided_token.parent_id_token = validation_result.parent_id_token.value();
+                }
                 this->publish_token_validation_status_callback(provided_token,
                                                                types::authorization::TokenValidationStatus::Accepted);
                 /* although validator accepts the authorization request, the Auth module still needs to

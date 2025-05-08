@@ -260,7 +260,7 @@ private:
     bool any_parent_id_present(const std::vector<int>& evse_ids);
     bool equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token);
 
-    TokenHandlingResult handle_token(const ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk);
+    TokenHandlingResult handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk);
 
     /**
      * @brief Method selects an evse based on the configured selection algorithm. It might block until an event
