@@ -16,6 +16,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -78,6 +79,7 @@ private:
     std::unique_ptr<JsonRpc2Server> m_rpc_server;
     std::unordered_map<TransportInterface::ClientId, ClientReq> messages;
     std::chrono::steady_clock::time_point m_last_req_notification; // Last tick time
+    std::thread m_rpc_recv_thread;
     std::atomic<bool> m_is_running{false};
 
     methods::Api m_methods_api;
