@@ -1451,9 +1451,6 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
     /* Check EV charging profile values [V2G2-478] */
     check_iso2_charging_profile_values(req, res, conn, sa_schedule_tuple_idx);
 
-    /* Check the current response code and check if no external error has occurred */
-    next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
-
     /* Set next expected req msg */
     if ((req->ChargeProgress == iso2_chargeProgressType_Renegotiate) &&
         ((conn->ctx->last_v2g_msg == V2G_CURRENT_DEMAND_MSG) || (conn->ctx->last_v2g_msg == V2G_CHARGING_STATUS_MSG))) {
@@ -1490,8 +1487,10 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
                                : (int)iso_ac_state_id::WAIT_FOR_SESSIONSTOP; // [V2G-601], [V2G2-568]
     }
 
-    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
-        next_event = V2G_EVENT_SEND_AND_TERMINATE; // [V2G2-539], [V2G2-034] Send response and terminate tcp-connection
+    /* Check the current response code and check if no external error has occurred */
+    next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
+
+    if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
         res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
     }
 
