@@ -6,6 +6,7 @@ cc_library(
     visibility = ["//visibility:public"],
     includes = ["include"],
     deps = [
+        "@//third-party/bazel:boost_uuid",
         "@com_github_fmtlib_fmt//:fmt",
         "@com_github_nlohmann_json//:json",
         "//types:types_lib",
