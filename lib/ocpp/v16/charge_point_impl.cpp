@@ -4471,6 +4471,22 @@ void ChargePointImpl::on_firmware_update_status_notification(int32_t request_id,
     if (firmware_update_status == FirmwareStatusNotification::Installed) {
         this->securityEventNotification(ocpp::security_events::FIRMWARE_UPDATED,
                                         std::optional<CiString<255>>("Firmware update was installed"), true);
+    } else if (firmware_update_status == FirmwareStatusNotification::InstallationFailed or
+               firmware_update_status == FirmwareStatusNotification::Installed or
+               firmware_update_status == FirmwareStatusNotification::InstallVerificationFailed) {
+        // Restore connector status, since we did not save to db the status, we can just get the old status back using
+        // it
+        auto connector_availability = this->database_handler->get_connector_availability();
+        for (const auto& [connector, availability] : connector_availability) {
+            if (availability == AvailabilityType::Operative) {
+                if (connector == 0) {
+                    this->status->submit_event(0, FSMEvent::BecomeAvailable, ocpp::DateTime());
+                }
+                if (this->enable_evse_callback != nullptr) {
+                    this->enable_evse_callback(connector);
+                }
+            }
+        }
     }
 }
 
