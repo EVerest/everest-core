@@ -239,13 +239,13 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReqInvalidID) {
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
     // Set up the request
-    nlohmann::json evse_get_evse_infos_req = create_json_rpc_request("EVSE.GetInfo", {{"evse_id", "INVALID_ID"}}, 1);
+    nlohmann::json evse_get_infos_req = create_json_rpc_request("EVSE.GetInfo", {{"evse_id", "INVALID_ID"}}, 1);
 
     // Send Api.Hello request
     client.sendApiHelloReq();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.GetEVSEInfos request
-    client.send(evse_get_evse_infos_req.dump());
+    client.send(evse_get_infos_req.dump());
     // Wait for the response
     std::string received_data = client.wait_for_data(std::chrono::seconds(1));
     // Check if the response is not empty
