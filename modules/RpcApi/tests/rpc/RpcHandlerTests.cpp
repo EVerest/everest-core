@@ -265,6 +265,10 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up the data store with test data
+    RPCDataTypes::EVSEInfoObj evse_info;
+    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    data_store.evses[0]->evseinfo.set_data(evse_info);
+
     RPCDataTypes::EVSEStatusObj evse_status;
     evse_status.charged_energy_wh = 123.45; ///< charged_energy_wh
     evse_status.discharged_energy_wh = 123.45; ///< discharged_energy_wh
