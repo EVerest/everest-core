@@ -4,16 +4,14 @@
 #ifndef _EVSEMANAGER_UTILS_H_
 #define _EVSEMANAGER_UTILS_H_
 
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <everest/staging/helpers/helpers.hpp>
 #include <generated/types/powermeter.hpp>
 
 namespace module {
 namespace utils {
 
 inline std::string generate_session_uuid() {
-    return boost::uuids::to_string(boost::uuids::random_generator()());
+    return everest::staging::helpers::get_uuid();
 }
 
 inline types::powermeter::OCMFIdentificationType
