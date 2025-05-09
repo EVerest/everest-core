@@ -29,7 +29,7 @@ public:
 
     // Methods
     RPCDataTypes::EVSEGetInfoResObj getEVSEInfo(const std::string& evse_id) {
-        RPCDataTypes::EVSEGetInfoResObj res;
+        RPCDataTypes::EVSEGetInfoResObj res {};
 
         // Check if evse info is available
         if (m_dataobj.evses.empty()) {
@@ -57,7 +57,7 @@ public:
     };
 
     RPCDataTypes::EVSEGetStatusResObj getStatus(const std::string& evse_id) {
-        RPCDataTypes::EVSEGetStatusResObj res;
+        RPCDataTypes::EVSEGetStatusResObj res {};
 
         // Check if evse status is available
         if (m_dataobj.evses.empty()) {
