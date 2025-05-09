@@ -32,12 +32,16 @@ inline nlohmann::json create_json_rpc_error_response(int code, const std::string
 }
 
 // To check if single key-value pair is part of a JSON object. Key-value pair must be stored in a JSON object.
-inline bool is_key_value_pair_in_json_object(const nlohmann::json& json_obj, const nlohmann::json& json_key_value) {
-    if (json_key_value.is_object()) {
-        for (const auto& [key, value] : json_key_value.items()) {
-            if (json_obj.contains(key) && json_obj[key] == value) {
-                return true;
-            }
+inline bool is_key_value_in_json_rpc_result(const nlohmann::json& json_obj, const nlohmann::json& json_key_value) {
+    if (not json_key_value.is_object()) {
+        throw std::invalid_argument("json_key_value must be a JSON object");
+    }
+
+    // Check if the JSON object contains the key-value pair in the result object of the JSON-RPC response
+    if (json_obj.contains("result") && json_obj["result"].is_object()) {
+        const auto& result_obj = json_obj["result"];
+        if (result_obj.contains(json_key_value.begin().key()) && result_obj[json_key_value.begin().key()] == json_key_value.begin().value()) {
+            return true;
         }
     }
     return false;
