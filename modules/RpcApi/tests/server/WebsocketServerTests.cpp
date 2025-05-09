@@ -81,8 +81,7 @@ TEST_F(WebSocketServerTest, WebSocketServerStarts) {
 TEST_F(WebSocketServerTest, ClientCanConnect) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 }
 
 // Test: Connect several WebSocket clients to server
@@ -108,8 +107,7 @@ TEST_F(WebSocketServerTest, MultipleClientsCanConnect) {
 TEST_F(WebSocketServerTest, ClientCanSendAndReceiveData) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     client.send("Hello World!");
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -126,8 +124,7 @@ TEST_F(WebSocketServerTest, ClientCanSendAndReceiveData) {
 TEST_F(WebSocketServerTest, ServerCanSendDataToClient) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     std::string message = "Hello from server!";
     ws_server->send_data(get_connected_clients()[0], std::vector<uint8_t>(message.begin(), message.end()));
@@ -142,8 +139,7 @@ TEST_F(WebSocketServerTest, ServerCanSendDataToClient) {
 TEST_F(WebSocketServerTest, ServerCanKillClientConnection) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     client.send("Hello World!");
     std::this_thread::sleep_for(std::chrono::milliseconds(10));

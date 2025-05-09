@@ -50,6 +50,7 @@ int WebSocketTestClient::callback(struct lws* wsi, enum lws_callback_reasons rea
     switch (reason) {
         case LWS_CALLBACK_CLIENT_ESTABLISHED:
             client->m_connected = true;
+            client->m_cv.notify_all();
             break;
         case LWS_CALLBACK_CLIENT_RECEIVE: {
             std::lock_guard<std::mutex> lock(client->m_cv_mutex);

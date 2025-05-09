@@ -45,6 +45,11 @@ public:
         return m_cv.wait_for(lock, timeout, [this] { return !m_received_data.empty(); });
     }
 
+    bool wait_until_connected(std::chrono::milliseconds timeout) {
+        std::unique_lock<std::mutex> lock(m_cv_mutex);
+        return m_cv.wait_for(lock, timeout, [this] { return m_connected.load(); });
+    }
+
     void start_lws_service_thread();
     void stop_lws_service_thread();
     
