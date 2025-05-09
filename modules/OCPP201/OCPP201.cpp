@@ -505,7 +505,11 @@ void OCPP201::ready() {
     };
 
     callbacks.get_log_request_callback = [this](const ocpp::v2::GetLogRequest& request) {
-        const auto response = this->r_system->call_upload_logs(conversions::to_everest_upload_logs_request(request));
+        auto req = conversions::to_everest_upload_logs_request(request);
+        if (req.retries.has_value()) {
+            req.retries = req.retries.value() + 1;
+        }
+        const auto response = this->r_system->call_upload_logs(req);
         return conversions::to_ocpp_get_log_response(response);
     };
 
@@ -529,8 +533,11 @@ void OCPP201::ready() {
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v2::UpdateFirmwareRequest& request) {
-        const auto response =
-            this->r_system->call_update_firmware(conversions::to_everest_firmware_update_request(request));
+        auto req = conversions::to_everest_firmware_update_request(request);
+        if (req.retries.has_value()) {
+            req.retries = req.retries.value() + 1;
+        }
+        const auto response = this->r_system->call_update_firmware(req);
         return conversions::to_ocpp_update_firmware_response(response);
     };
 

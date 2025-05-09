@@ -13,6 +13,9 @@
 // headers for provided interface implementations
 #include <generated/interfaces/system/Implementation.hpp>
 
+// headers for required interface implementations
+#include <generated/interfaces/kvs/Interface.hpp>
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -28,10 +31,12 @@ struct Conf {
 class System : public Everest::ModuleBase {
 public:
     System() = delete;
-    System(const ModuleInfo& info, std::unique_ptr<systemImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    System(const ModuleInfo& info, std::unique_ptr<systemImplBase> p_main,
+           std::vector<std::unique_ptr<kvsIntf>> r_store, Conf& config) :
+        ModuleBase(info), p_main(std::move(p_main)), r_store(std::move(r_store)), config(config){};
 
     const std::unique_ptr<systemImplBase> p_main;
+    const std::vector<std::unique_ptr<kvsIntf>> r_store;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
