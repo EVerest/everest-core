@@ -124,7 +124,7 @@
         "CertificateStoreMaxLength": 1000,
         "CpoName": "Pionix",
         "SecurityProfile": 1,
-        "DisableSecurityEventNotifications": true
+        "DisableSecurityEventNotifications": false
     },
     "PnC": {
         "ISO15118PnCEnabled": true,
