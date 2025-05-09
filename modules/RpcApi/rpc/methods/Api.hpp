@@ -28,7 +28,7 @@ public:
 
     // Methods
     RPCDataTypes::HelloResObj hello() {
-        RPCDataTypes::HelloResObj res;
+        RPCDataTypes::HelloResObj res {};
         // check if data is valid
         if (!m_dataobj.chargerinfo.get_data().has_value()) {
             throw std::runtime_error("Data is not valid");

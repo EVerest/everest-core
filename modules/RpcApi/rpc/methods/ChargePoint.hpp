@@ -29,7 +29,7 @@ public:
 
     // Methods
     RPCDataTypes::ChargePointGetEVSEInfosResObj getEVSEInfos() {
-        RPCDataTypes::ChargePointGetEVSEInfosResObj res;
+        RPCDataTypes::ChargePointGetEVSEInfosResObj res {};
         // Iterate over all EVSEs and add the EVSEInfo objects to the response
         for (const auto& evse : m_dataobj.evses) {
             if (evse->evseinfo.get_data().has_value()) {
