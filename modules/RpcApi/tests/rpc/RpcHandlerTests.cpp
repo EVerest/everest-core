@@ -60,7 +60,7 @@ protected:
 TEST_F(RpcHandlerTest, ApiHelloTimeout) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Wait for the client hello timeout
     EVLOG_info << "Waiting for client hello timeout...";
@@ -74,7 +74,7 @@ TEST_F(RpcHandlerTest, ApiHelloTimeout) {
 TEST_F(RpcHandlerTest, ApiHelloReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up the expected response
     RPCDataTypes::HelloResObj result;
@@ -101,14 +101,14 @@ TEST_F(RpcHandlerTest, ApiHelloReq) {
     // Wait for API.Hello timeout
     std::this_thread::sleep_for(std::chrono::seconds(CLIENT_HELLO_TIMEOUT) + std::chrono::milliseconds(100));
     // Check if the client is still connected
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 }
 
 // Test: Connect to WebSocket server and send EVSEInfo request
 TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up the data store with test data
     //RPCDataTypes::chargerinfo charger_info;
@@ -157,7 +157,7 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
 TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -223,7 +223,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
 TEST_F(RpcHandlerTest, EvseGetEVSEInfosReqInvalidID) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -262,7 +262,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReqInvalidID) {
 TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up the data store with test data
     RPCDataTypes::EVSEStatusObj evse_status;
@@ -307,7 +307,7 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
 TEST_F(RpcHandlerTest, InvalidRequest) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
-    ASSERT_TRUE(client.is_connected());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Send Api.Hello request
     client.sendApiHelloReq();
