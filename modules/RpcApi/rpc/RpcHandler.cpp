@@ -51,7 +51,7 @@ void RpcHandler::init_rpc_api() {
     m_rpc_server->Add(methods::METHOD_API_HELLO, GetHandle(&methods::Api::hello, m_methods_api), {});
     m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
                       GetHandle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, GetHandle(&methods::Evse::getEVSEInfo, m_methods_evse),
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, GetHandle(&methods::Evse::getInfo, m_methods_evse),
                       {"evse_id"});
     m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS, GetHandle(&methods::Evse::getStatus, m_methods_evse),
                       {"evse_id"});

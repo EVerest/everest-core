@@ -28,7 +28,7 @@ public:
     ~Evse() = default;
 
     // Methods
-    RPCDataTypes::EVSEGetInfoResObj getEVSEInfo(const std::string& evse_id) {
+    RPCDataTypes::EVSEGetInfoResObj getInfo(const std::string& evse_id) {
         RPCDataTypes::EVSEGetInfoResObj res {};
 
         // Check if evse info is available
