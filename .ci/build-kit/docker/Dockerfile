@@ -2,27 +2,6 @@
 ARG BASE_IMAGE_TAG=latest
 FROM ghcr.io/everest/everest-ci/build-kit-base:${BASE_IMAGE_TAG}
 
-ARG GO_VERSION=1.24.2
-ADD https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz /tmp/go.tar.gz
-RUN if [ -d /usr/local/go ]; then \
-        echo "Go is already installed"; \
-    else \
-        tar -C /usr/local -xzf /tmp/go.tar.gz; \
-    fi
-ENV PATH="/usr/local/go/bin:${PATH}"
-RUN go version
-
-ENV GRPC_VERSION=v1.71.0
-ENV GRPC_EXTENDED_CPP_PLUGIN_VERSION=main
-RUN tmpdir=$(mktemp -d) \
-    && cd $tmpdir \
-    && git clone --depth 1 --recurse-submodules --shallow-submodules --branch ${GRPC_VERSION} https://github.com/grpc/grpc.git \
-    && git clone --branch ${GRPC_EXTENDED_CPP_PLUGIN_VERSION} https://github.com/EVerest/grpc-extended-cpp-plugin.git \
-    && cmake -B build -S grpc-extended-cpp-plugin -G Ninja -D gRPC_INSTALL=ON \
-    && cmake --build build \
-    && cmake --install build \
-    && rm -rf $tmpdir
-
 # Can be used to use an other version of everest-cmake
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 ENV EVEREST_CMAKE_PATH=/usr/lib/cmake/everest-cmake
