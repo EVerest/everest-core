@@ -43,26 +43,10 @@ add_go_target(
         ${EEBUS_GRPC_API_SOURCE_FILES}
 )
 
-add_go_target(
-    NAME
-        eebus_grpc_api_dummy_cem
-    OUTPUT
-        ${EEBUS_GRPC_API_BINARY_DIR}/dummy_cem
-    GO_PACKAGE_SOURCE_PATH
-        ${EEBUS_GRPC_API_SOURCE_DIR}/cmd/dummy_cem
-    OUTPUT_DIRECTORY
-        ${EEBUS_GRPC_API_BINARY_DIR}
-    WORKING_DIRECTORY
-        ${EEBUS_GRPC_API_SOURCE_DIR}
-    DEPENDS
-        ${EEBUS_GRPC_API_SOURCE_FILES}
-)
-
 add_custom_target(eebus_grpc_api_all
     DEPENDS
         eebus_grpc_api_cmd
         eebus_grpc_api_create_cert
-        eebus_grpc_api_dummy_cem
 )
 
 install(
