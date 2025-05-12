@@ -1320,11 +1320,11 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                                : (int)iso_ac_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY;
     }
 
-    if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
-        res->DC_EVSEChargeParameter.EVSECurrentRegulationTolerance_isUsed = false;
-        res->DC_EVSEChargeParameter.EVSEEnergyToBeDelivered_isUsed = false;
-        res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
-        res->SAScheduleList_isUsed = false;
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEChargeParameter.EVSECurrentRegulationTolerance_isUsed = 0;
+        res->DC_EVSEChargeParameter.EVSEEnergyToBeDelivered_isUsed = 0;
+        res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+        res->SAScheduleList_isUsed = 0;
     }
 
     return next_event;
@@ -1496,8 +1496,8 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
                                : (int)iso_ac_state_id::WAIT_FOR_SESSIONSTOP; // [V2G-601], [V2G2-568]
     }
 
-    if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
-        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
     }
 
     return next_event;
@@ -1742,7 +1742,7 @@ static enum v2g_event handle_iso_cable_check(struct v2g_connection* conn) {
                            ? (int)iso_dc_state_id::WAIT_FOR_PRECHARGE
                            : (int)iso_dc_state_id::WAIT_FOR_CABLECHECK; // [V2G-584], [V2G-621]
 
-    if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
         res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
     }
 
@@ -1780,8 +1780,8 @@ static enum v2g_event handle_iso_pre_charge(struct v2g_connection* conn) {
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_PRECHARGE_POWERDELIVERY; // [V2G-587]
 
-    if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
-        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
     }
 
     return next_event;
@@ -1921,13 +1921,13 @@ static enum v2g_event handle_iso_current_demand(struct v2g_connection* conn) {
                            ? (int)iso_dc_state_id::WAIT_FOR_METERINGRECEIPT
                            : (int)iso_dc_state_id::WAIT_FOR_CURRENTDEMAND_POWERDELIVERY; // [V2G-795], [V2G-593]
 
-    if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
-        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
-        res->MeterInfo_isUsed = false;
-        res->MeterInfo.MeterReading_isUsed = false;
-        res->EVSEMaximumVoltageLimit_isUsed = false;
-        res->EVSEMaximumCurrentLimit_isUsed = false;
-        res->EVSEMaximumPowerLimit_isUsed = false;
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+        res->MeterInfo_isUsed = 0;
+        res->MeterInfo.MeterReading_isUsed = 0;
+        res->EVSEMaximumVoltageLimit_isUsed = 0;
+        res->EVSEMaximumCurrentLimit_isUsed = 0;
+        res->EVSEMaximumPowerLimit_isUsed = 0;
     }
 
     return next_event;
@@ -1966,8 +1966,8 @@ static enum v2g_event handle_iso_welding_detection(struct v2g_connection* conn) 
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_WELDINGDETECTION_SESSIONSTOP; // [V2G-597]
 
-    if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
-        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
     }
 
     return next_event;
