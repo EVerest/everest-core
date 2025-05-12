@@ -17,6 +17,8 @@
 // module internal
 #include <helper.hpp>
 
+#define MODULE_EEBUS_RETRY_INTERVAL_MS 100 // ms
+
 namespace module {
 
 void start_eebus_grpc_api(std::filesystem::path binary_path, int port, std::filesystem::path cert_file,
@@ -34,7 +36,7 @@ void start_eebus_grpc_api(std::filesystem::path binary_path, int port, std::file
 }
 
 bool wait_for_channel_ready(std::shared_ptr<grpc::Channel> channel, std::chrono::milliseconds timeout) {
-    const std::chrono::milliseconds retry_interval = std::chrono::milliseconds(100);
+    const std::chrono::milliseconds retry_interval = std::chrono::milliseconds(MODULE_EEBUS_RETRY_INTERVAL_MS);
 
     const std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
     grpc_connectivity_state channel_state = channel->GetState(true);
