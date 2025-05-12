@@ -15,6 +15,7 @@ namespace methods {
 
 static const std::string METHOD_EVSE_GET_INFO = "EVSE.GetInfo";
 static const std::string METHOD_EVSE_GET_STATUS = "EVSE.GetStatus";
+static const std::string METHOD_EVSE_GET_HARDWARE_CAPABILITIES = "EVSE.GetHardwareCapabilities";
 
 /// This class includes all methods of the EVSE namespace.
 /// It contains the data object and the methods to access it.
@@ -81,6 +82,37 @@ public:
                 }
                 res.status = evse->evsestatus.get_data().value();
                 res.error = RPCDataTypes::ResponseErrorEnum::NoError;
+                return res;
+            }
+        }
+        // No EVSE found with the given ID, return an error
+        res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+        return res;
+    };
+
+    RPCDataTypes::EVSEGetHardwareCapabilitiesResObj getHardwareCapabilities(const std::string& evse_id) {
+        RPCDataTypes::EVSEGetHardwareCapabilitiesResObj res {};
+
+        // Check if evse status is available
+        if (m_dataobj.evses.empty()) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
+            return res;
+        }
+
+        // Iterate over all EVSEs and add the HardwareCapabilities objects to the response
+        for (const auto& evse : m_dataobj.evses) {
+            if (not evse->evseinfo.get_data().has_value()) {
+                res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
+                return res;
+            }
+
+            const auto data = evse->evseinfo.get_data().value();
+            if (data.id == evse_id) {
+                if (not evse->connectors[0]->hardwarecapabilities.get_data().has_value()) {
+                    res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
+                    return res;
+                }
+                res.hardware_capabilities = evse->connectors[0]->hardwarecapabilities.get_data().value();
                 return res;
             }
         }
