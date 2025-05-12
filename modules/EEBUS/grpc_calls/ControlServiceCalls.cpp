@@ -17,6 +17,7 @@ ControlServiceCalls::ControlServiceCalls(const std::shared_ptr<control_service::
 
 void ControlServiceCalls::call_set_config() {
     control_service::SetConfigRequest request;
+    // TODO: Make this configurable
     request = control_service::CreateSetConfigRequest(
         4715, "Demo", "Demo", "EVSE", "2345678901",
         std::vector<control_service::DeviceCategory_Enum>{
