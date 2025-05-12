@@ -14,6 +14,19 @@ on:
   schedule:
     - cron: '37 13,1 * * *'
 jobs:
+  lint-versions:
+    name: Ensure versions are consistent
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    defaults:
+      run:
+        working-directory: ./source
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+      - name: Run version consistency check
+        run: ./.ci/build-kit/scripts/check_version_consistency.py --input .
   ci:
     name: Build, Lint and Test
     uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.5.2
