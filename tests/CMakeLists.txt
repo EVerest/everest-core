@@ -1,7 +1,4 @@
-option(EVEREST_CORE_ENABLE_COVERAGE "Enable coverage for everest-core" OFF)
-
-if(EVEREST_CORE_ENABLE_COVERAGE)
-    # enabling coverage related things
+# enabling coverage related things
 
     evc_include(CodeCoverage)
 
@@ -24,7 +21,6 @@ if(EVEREST_CORE_ENABLE_COVERAGE)
         NAME ${PROJECT_NAME}_create_coverage
         EXCLUDE "${GENERATED_OUTPUT_DIR}/*" ".*tests/"
     )
-endif()
 
 add_subdirectory(eebus_tests)
 add_subdirectory(everest-core_tests)
