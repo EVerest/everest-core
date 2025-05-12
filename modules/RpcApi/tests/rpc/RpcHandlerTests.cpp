@@ -266,6 +266,57 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     send_req_and_validate_res(client, evse_get_status_req_invalid_id, res_obj_invalid_id, is_key_value_in_json_rpc_result);
 }
 
+// Test: Connect to WebSocket server and send EVSE.GetHardwareCapabilities request with valid and invalid evse_id
+TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
+
+    // Set up requests
+    nlohmann::json evse_get_hardware_capabilities_req_valid_id = create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_id", "DEA12E000001"}}, 1);
+    nlohmann::json evse_get_hardware_capabilities_req_invalid_id = create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_id", "INVALID_ID"}}, 1);
+
+    // Set up the data store with test data
+    RPCDataTypes::EVSEInfoObj evse_info;
+    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    data_store.evses[0]->evseinfo.set_data(evse_info);
+
+    RPCDataTypes::EVSEGetHardwareCapabilitiesResObj result;
+    result.error = RPCDataTypes::ResponseErrorEnum::NoError;
+    result.hardware_capabilities.max_current_A_export = 32.0;
+    result.hardware_capabilities.max_current_A_import = 16.0;
+    result.hardware_capabilities.max_phase_count_export = 3;
+    result.hardware_capabilities.max_phase_count_import = 3;
+    result.hardware_capabilities.min_current_A_export = 6.0;
+    result.hardware_capabilities.min_current_A_import = 6.0;
+    result.hardware_capabilities.min_phase_count_export = 1;
+    result.hardware_capabilities.min_phase_count_import = 1;
+    result.hardware_capabilities.phase_switch_during_charging = true;
+    data_store.evses[0]->connectors[0]->hardwarecapabilities.set_data(result.hardware_capabilities);
+
+    // Set up the expected responses
+    nlohmann::json expected_response = create_json_rpc_response(result, 1);
+    nlohmann::json expected_error =  {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+
+    // Send Api.Hello request
+    client.sendApiHelloReq();
+    client.wait_for_data(std::chrono::seconds(1));
+    // Send EVSE.GetHardwareCapabilities request
+    client.send(evse_get_hardware_capabilities_req_valid_id.dump());
+    // Wait for the response
+    std::string received_data = client.wait_for_data(std::chrono::seconds(1));
+    // Check if the response is not empty
+    ASSERT_FALSE(received_data.empty());
+    // Check if the response is valid
+    nlohmann::json response = nlohmann::json::parse(received_data);
+    ASSERT_EQ(response, expected_response);
+
+    // Send EVSE.GetHardwareCapabilities request with valid ID
+    send_req_and_validate_res(client, evse_get_hardware_capabilities_req_valid_id, expected_response);
+    // Send EVSE.GetHardwareCapabilities request with invalid ID
+    send_req_and_validate_res(client, evse_get_hardware_capabilities_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+}
+
 // Test: Connect to WebSocket server and send invalid request
 TEST_F(RpcHandlerTest, InvalidRequest) {
     WebSocketTestClient client("localhost", test_port);
