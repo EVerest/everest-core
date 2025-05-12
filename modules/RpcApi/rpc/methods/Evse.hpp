@@ -29,95 +29,77 @@ public:
     ~Evse() = default;
 
     // Methods
-    RPCDataTypes::EVSEGetInfoResObj getInfo(const std::string& evse_id) {
-        RPCDataTypes::EVSEGetInfoResObj res {};
-
-        // Check if evse info is available
+    data::DataStoreEvse* getEVSEStore(const std::string& evse_id) {
         if (m_dataobj.evses.empty()) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
-            return res;
+            return nullptr;
         }
 
-        // Iterate over all EVSEs and add the EVSEInfo objects to the response
         for (const auto& evse : m_dataobj.evses) {
             if (not evse->evseinfo.get_data().has_value()) {
-                res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
-                return res;
+                continue;
             }
 
             const auto data = evse->evseinfo.get_data().value();
             if (data.id == evse_id) {
-                res.info = data;
-                res.error = RPCDataTypes::ResponseErrorEnum::NoError;
-                return res;
+                return evse.get();
             }
         }
-        // No EVSE found with the given ID, return an error
-        res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+        return nullptr;
+    };
+
+    RPCDataTypes::EVSEGetInfoResObj getInfo(const std::string& evse_id) {
+        RPCDataTypes::EVSEGetInfoResObj res {};
+
+        auto evse = getEVSEStore(evse_id);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+
+        if (!evse->evseinfo.get_data().has_value()) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
+            return res;
+        }
+
+        res.info = evse->evseinfo.get_data().value();
+        res.error = RPCDataTypes::ResponseErrorEnum::NoError;
         return res;
     };
 
     RPCDataTypes::EVSEGetStatusResObj getStatus(const std::string& evse_id) {
         RPCDataTypes::EVSEGetStatusResObj res {};
 
-        // Check if evse status is available
-        if (m_dataobj.evses.empty()) {
+        auto evse = getEVSEStore(evse_id);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+
+        if (!evse->evsestatus.get_data().has_value()) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
             return res;
         }
 
-        // Iterate over all EVSEs and add the EVSEStatus objects to the response
-        for (const auto& evse : m_dataobj.evses) {
-
-            if (not evse->evseinfo.get_data().has_value()) {
-                res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
-                return res;
-            }
-
-            const auto data = evse->evseinfo.get_data().value();
-            if (data.id == evse_id) {
-                if (not evse->evsestatus.get_data().has_value()) {
-                    res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
-                    return res;
-                }
-                res.status = evse->evsestatus.get_data().value();
-                res.error = RPCDataTypes::ResponseErrorEnum::NoError;
-                return res;
-            }
-        }
-        // No EVSE found with the given ID, return an error
-        res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+        res.status = evse->evsestatus.get_data().value();
+        res.error = RPCDataTypes::ResponseErrorEnum::NoError;
         return res;
     };
 
     RPCDataTypes::EVSEGetHardwareCapabilitiesResObj getHardwareCapabilities(const std::string& evse_id) {
         RPCDataTypes::EVSEGetHardwareCapabilitiesResObj res {};
 
-        // Check if evse status is available
-        if (m_dataobj.evses.empty()) {
+        auto evse = getEVSEStore(evse_id);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+
+        if (evse->connectors.empty() || !evse->connectors[0]->hardwarecapabilities.get_data().has_value()) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
             return res;
         }
 
-        // Iterate over all EVSEs and add the HardwareCapabilities objects to the response
-        for (const auto& evse : m_dataobj.evses) {
-            if (not evse->evseinfo.get_data().has_value()) {
-                res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
-                return res;
-            }
-
-            const auto data = evse->evseinfo.get_data().value();
-            if (data.id == evse_id) {
-                if (not evse->connectors[0]->hardwarecapabilities.get_data().has_value()) {
-                    res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
-                    return res;
-                }
-                res.hardware_capabilities = evse->connectors[0]->hardwarecapabilities.get_data().value();
-                return res;
-            }
-        }
-        // No EVSE found with the given ID, return an error
-        res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+        res.hardware_capabilities = evse->connectors[0]->hardwarecapabilities.get_data().value();
         return res;
     };
 
