@@ -4,7 +4,7 @@ set(GTEST_LIBRARIES GTest::gmock_main GTest::gtest_main)
 add_executable(${TEST_TARGET_NAME} liblog_test.cpp)
 
 target_include_directories(${TEST_TARGET_NAME} PUBLIC ${GTEST_INCLUDE_DIRS})
-target_include_directories(log
+target_include_directories(everest_log
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -19,7 +19,7 @@ add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
 if (EVEREST_LIBLOG_BUILD_TESTING)
     evc_include(CodeCoverage)
-    append_coverage_compiler_flags_to_target(log)
+    append_coverage_compiler_flags_to_target(everest_log)
 
     setup_target_for_coverage_gcovr_html(
         NAME ${PROJECT_NAME}_gcovr_coverage

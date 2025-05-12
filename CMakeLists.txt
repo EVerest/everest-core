@@ -67,8 +67,10 @@ install(
 )
 
 if (LOG_INSTALL)
+    set_target_properties(everest_log PROPERTIES EXPORT_NAME log)
+
     install(
-        TARGETS log
+        TARGETS everest_log
         EXPORT log-targets
     )
 
