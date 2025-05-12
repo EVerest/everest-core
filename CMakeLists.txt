@@ -1,12 +1,12 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.16)
 
 project(everest-log
-    VERSION 0.2.3
+    VERSION 0.2.4
     DESCRIPTION "EVerest logging library"
     LANGUAGES CXX C
 )
 
-find_package(everest-cmake 0.1 REQUIRED
+find_package(everest-cmake 0.5 REQUIRED
     PATHS ../everest-cmake
 )
 
@@ -18,6 +18,30 @@ option(BUILD_EXAMPLES "Build liblog example binaries." OFF)
 option(LOG_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(LIBLOG_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)
+
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+    set(EVEREST_LIBLOG_BUILD_TESTING ON)
+    # this policy allows us to link gcov to targets defined in other directories
+    if(POLICY CMP0079)
+        set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
+    endif()
+endif()
+
+if (NOT DISABLE_EDM)
+    evc_setup_edm()
+
+    # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
+    set(EVEREST_SQLITE_INSTALL OFF)
+else()
+    if (EVEREST_LIBLOG_BUILD_TESTING)
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            URL https://github.com/google/googletest/archive/release-1.12.1.zip
+        )
+        FetchContent_MakeAvailable(googletest)
+    endif()
+endif()
 
 # library dependencies
 
@@ -68,29 +92,10 @@ endif()
 
 
 # testing
-if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+if(EVEREST_LIBLOG_BUILD_TESTING)
     include(CTest)
     add_subdirectory(tests)
-    
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-
-    evc_include(CodeCoverage)
-
-    append_coverage_compiler_flags()
-
-    setup_target_for_coverage_gcovr_html(
-        NAME gcovr_coverage_liblog
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-
-    setup_target_for_coverage_lcov(
-        NAME lcov_coverage_liblog
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-else()
-    message("Not running unit tests")
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 if(BUILD_EXAMPLES)
