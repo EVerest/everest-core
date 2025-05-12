@@ -57,6 +57,8 @@ void RpcHandler::init_rpc_api() {
                       {"evse_id"});
     m_rpc_server->Add(methods::METHOD_EVSE_GET_HARDWARE_CAPABILITIES,
                       GetHandle(&methods::Evse::getHardwareCapabilities, m_methods_evse), {"evse_id"});
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_CHARGING_ALLOWED,
+                      GetHandle(&methods::Evse::setChargingAllowed, m_methods_evse), {"evse_id", "charging_allowed"});
 }
 
 void RpcHandler::init_transport_interfaces() {

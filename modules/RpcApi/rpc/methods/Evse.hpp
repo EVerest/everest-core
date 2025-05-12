@@ -16,6 +16,7 @@ namespace methods {
 static const std::string METHOD_EVSE_GET_INFO = "EVSE.GetInfo";
 static const std::string METHOD_EVSE_GET_STATUS = "EVSE.GetStatus";
 static const std::string METHOD_EVSE_GET_HARDWARE_CAPABILITIES = "EVSE.GetHardwareCapabilities";
+static const std::string METHOD_EVSE_SET_CHARGING_ALLOWED = "EVSE.SetChargingAllowed";
 
 /// This class includes all methods of the EVSE namespace.
 /// It contains the data object and the methods to access it.
@@ -101,6 +102,18 @@ public:
 
         res.hardware_capabilities = evse->connectors[0]->hardwarecapabilities.get_data().value();
         return res;
+    };
+
+    RPCDataTypes::ResponseErrorEnum setChargingAllowed(const std::string& evse_id, bool charging_allowed) {
+        auto evse = getEVSEStore(evse_id);
+        if (!evse) {
+            return RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+        }
+        auto status = evse->evsestatus.get_data();
+        status.value().charging_allowed = charging_allowed;
+        evse->evsestatus.set_data(status.value());
+
+        return RPCDataTypes::ResponseErrorEnum::NoError;
     };
 
 private:
