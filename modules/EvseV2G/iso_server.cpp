@@ -1743,7 +1743,7 @@ static enum v2g_event handle_iso_cable_check(struct v2g_connection* conn) {
                            : (int)iso_dc_state_id::WAIT_FOR_CABLECHECK; // [V2G-584], [V2G-621]
 
     if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
-        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
     }
 
     return next_event;
