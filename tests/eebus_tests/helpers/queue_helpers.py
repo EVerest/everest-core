@@ -4,16 +4,6 @@
 import queue
 import time
 
-def shutdown_queue_with_timeout(queue: queue.Queue, timeout: int):
-    """
-    Shutdown the queue with a timeout.
-
-    It shuts down the queue and waits for it to be empty.
-    If the queue is not empty after the timeout, it raises a TimeoutError.
-    """    
-    queue.shutdown()
-    wait_for_queue_empty(queue, timeout)
-
 def wait_for_queue_empty(queue: queue.Queue, timeout: int):
     """
     Wait for the queue to be empty.

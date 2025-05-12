@@ -59,7 +59,6 @@ class PreparedEEBUSModuleTest:
 
         def __del__(self):
             try:
-                self.external_limits_queue.shutdown()
                 queue_helpers.wait_for_queue_empty(self.external_limits_queue, 30)
             except TimeoutError:
                 raise TimeoutError("ProbeModule queues are not empty after 30 seconds")

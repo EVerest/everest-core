@@ -58,8 +58,6 @@ class ControlServiceServicer(control_service_pb2_grpc.ControlServiceServicer):
     def __del__(self):
         try:
             for command in self._commands:
-                self.command_queues[command].request_queue.shutdown()
-                self.command_queues[command].response_queue.shutdown()
                 queue_helpers.wait_for_queue_empty(self.command_queues[command].request_queue, 30)
                 queue_helpers.wait_for_queue_empty(self.command_queues[command].response_queue, 30)
 
