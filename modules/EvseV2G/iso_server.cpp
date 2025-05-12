@@ -1451,6 +1451,19 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
     /* Check EV charging profile values [V2G2-478] */
     check_iso2_charging_profile_values(req, res, conn, sa_schedule_tuple_idx);
 
+    const auto last_v2g_msg = conn->ctx->last_v2g_msg;
+
+    /* abort charging session if EV is ready to charge after current demand phase */
+    if ((req->ChargeProgress == iso2_chargeProgressType_Start and
+         (last_v2g_msg == V2G_CURRENT_DEMAND_MSG or last_v2g_msg == V2G_CHARGING_STATUS_MSG)) or
+        (req->ChargeProgress == iso2_chargeProgressType_Renegotiate and
+         (last_v2g_msg != V2G_CURRENT_DEMAND_MSG and last_v2g_msg != V2G_CHARGING_STATUS_MSG))) {
+        res->ResponseCode = iso2_responseCodeType_FAILED; // (/*[V2G2-812]*/
+    }
+
+    /* Check the current response code and check if no external error has occurred */
+    next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
+
     /* Set next expected req msg */
     if ((req->ChargeProgress == iso2_chargeProgressType_Renegotiate) &&
         ((conn->ctx->last_v2g_msg == V2G_CURRENT_DEMAND_MSG) || (conn->ctx->last_v2g_msg == V2G_CHARGING_STATUS_MSG))) {
@@ -1478,17 +1491,10 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
                                ? (int)iso_dc_state_id::WAIT_FOR_CURRENTDEMAND
                                : (int)iso_ac_state_id::WAIT_FOR_CHARGINGSTATUS; // [V2G-590], [V2G2-576]
     } else {
-        /* abort charging session if EV is ready to charge after current demand phase */
-        if (req->ChargeProgress != iso2_chargeProgressType_Stop) {
-            res->ResponseCode = iso2_responseCodeType_FAILED; // (/*[V2G2-812]*/
-        }
         conn->ctx->state = (conn->ctx->is_dc_charger == true)
                                ? (int)iso_dc_state_id::WAIT_FOR_WELDINGDETECTION_SESSIONSTOP
                                : (int)iso_ac_state_id::WAIT_FOR_SESSIONSTOP; // [V2G-601], [V2G2-568]
     }
-
-    /* Check the current response code and check if no external error has occurred */
-    next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
 
     if (next_event == V2G_EVENT_SEND_AND_TERMINATE) {
         res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = false;
