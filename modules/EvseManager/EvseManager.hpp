@@ -292,6 +292,8 @@ private:
 
     std::atomic_bool contactor_open{true};
 
+    Everest::timed_mutex_traceable charger_ready_mutex;
+    bool charger_ready{false};
     std::atomic_bool hlc_enabled;
 
     std::atomic_bool hlc_waiting_for_auth_eim;

@@ -1045,6 +1045,13 @@ void EvseManager::ready() {
 }
 
 void EvseManager::ready_to_start_charging() {
+    Everest::scoped_lock_timeout lock(charger_ready_mutex, Everest::MutexDescription::EVSE_charger_ready);
+    if (charger_ready) {
+        EVLOG_warning << "Already ready to start charging!";
+        return;
+    }
+    charger_ready = true;
+
     timepoint_ready_for_charging = std::chrono::steady_clock::now();
     charger->run();
 
