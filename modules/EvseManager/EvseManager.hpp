@@ -108,6 +108,7 @@ struct Conf {
     int sleep_before_enabling_pwm_hlc_mode_ms;
     bool central_contract_validation_allowed;
     bool contract_certificate_installation_enabled;
+    bool inoperative_error_use_vendor_id;
 };
 
 class EvseManager : public Everest::ModuleBase {
