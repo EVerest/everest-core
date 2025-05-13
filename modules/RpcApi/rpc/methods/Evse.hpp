@@ -17,6 +17,7 @@ static const std::string METHOD_EVSE_GET_INFO = "EVSE.GetInfo";
 static const std::string METHOD_EVSE_GET_STATUS = "EVSE.GetStatus";
 static const std::string METHOD_EVSE_GET_HARDWARE_CAPABILITIES = "EVSE.GetHardwareCapabilities";
 static const std::string METHOD_EVSE_SET_CHARGING_ALLOWED = "EVSE.SetChargingAllowed";
+static const std::string METHOD_EVSE_SET_AC_CHARGING = "EVSE.SetACCharging";
 
 /// This class includes all methods of the EVSE namespace.
 /// It contains the data object and the methods to access it.
@@ -104,16 +105,34 @@ public:
         return res;
     };
 
-    RPCDataTypes::ResponseErrorEnum setChargingAllowed(const std::string& evse_id, bool charging_allowed) {
+    RPCDataTypes::ErrorResObj setChargingAllowed(const std::string& evse_id, bool charging_allowed) {
+        RPCDataTypes::ErrorResObj res {};
         auto evse = getEVSEStore(evse_id);
         if (!evse) {
-            return RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
         }
         auto status = evse->evsestatus.get_data();
         status.value().charging_allowed = charging_allowed;
         evse->evsestatus.set_data(status.value());
 
-        return RPCDataTypes::ResponseErrorEnum::NoError;
+        res.error = RPCDataTypes::ResponseErrorEnum::NoError;
+        return res;
+    };
+
+    RPCDataTypes::ErrorResObj setACCharging(const std::string& evse_id, bool ac_charging) {
+        RPCDataTypes::ErrorResObj res {};
+        auto evse = getEVSEStore(evse_id);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+        auto status = evse->evsestatus.get_data();
+        status.value().ac_charge_param->charging = ac_charging;
+        evse->evsestatus.set_data(status.value());
+
+        res.error = RPCDataTypes::ResponseErrorEnum::NoError;
+        return res;
     };
 
 private:
