@@ -317,6 +317,43 @@ TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     send_req_and_validate_res(client, evse_get_hardware_capabilities_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
 }
 
+// Test: Connect to WebSocket server and send EVSE.SetChargingAllowed request with valid and invalid evse_id
+TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
+
+    // Set up requests
+    nlohmann::json evse_set_charging_allowed_req_valid_id = create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_id", "DEA12E000001"}, {"charging_allowed", true}}, 1);
+    nlohmann::json evse_set_charging_allowed_req_invalid_id = create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_id", "INVALID_ID"}, {"charging_allowed", true}}, 1);
+
+    // Set up the data store with test data
+    RPCDataTypes::EVSEInfoObj evse_info;
+    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    data_store.evses[0]->evseinfo.set_data(evse_info);
+
+    RPCDataTypes::EVSEStatusObj evse_status;
+    evse_status.available = false;
+    data_store.evses[0]->evsestatus.set_data(evse_status);
+
+    // Set up the expected responses
+    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
+    nlohmann::json expected_response = create_json_rpc_response(result, 1);
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+
+    // Send Api.Hello request
+    client.sendApiHelloReq();
+    client.wait_for_data(std::chrono::seconds(1));
+    // Send EVSE.SetChargingAllowed request with valid ID
+    send_req_and_validate_res(client, evse_set_charging_allowed_req_valid_id, expected_response);
+    // Check if the EVSE status is updated
+    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().has_value());
+    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
+
+    // Send EVSE.SetChargingAllowed request with invalid ID
+    send_req_and_validate_res(client, evse_set_charging_allowed_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+}
+
 // Test: Connect to WebSocket server and send invalid request
 TEST_F(RpcHandlerTest, InvalidRequest) {
     WebSocketTestClient client("localhost", test_port);
