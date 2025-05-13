@@ -703,3 +703,14 @@ types:
         description: Response error
         type: object
         $ref: /json_rpc_api#/ResponseErrorEnum
+  ErrorResObj:
+    description: Response which only contains an error type
+    type: object
+    additionalProperties: false
+    required:
+      - error
+    properties:
+      error:
+        description: Response error
+        type: object
+        $ref: /json_rpc_api#/ResponseErrorEnum
