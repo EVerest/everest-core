@@ -68,7 +68,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: ec4949cc8d2887c9d19d97b44b9236b8b88a8a7b
+  git_tag: v0.26.3
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -93,7 +93,7 @@ gtest:
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 everest-sqlite:
   git: https://github.com/EVerest/everest-sqlite.git
-  git_tag: v0.1.0
+  git_tag: v0.1.1
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0
