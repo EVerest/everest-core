@@ -59,7 +59,7 @@ struct ChargerTest : public testing::Test {
         charger_error_handling(std::make_unique<ErrorHandling>(
             error_handler_bsp, error_handler_hlc, error_handler_connector_lock, error_handler_ac_rcd,
             error_handler_evse, error_handler_imd, error_handler_powersupply, error_handler_powermeter,
-            error_handler_over_voltage_monitor)) {
+            error_handler_over_voltage_monitor, false)) {
     }
 
     void SetUp() override {
@@ -736,7 +736,8 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& r_bs
                              const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd,
                              const std::vector<std::unique_ptr<power_supply_DCIntf>>& _r_powersupply,
                              const std::vector<std::unique_ptr<powermeterIntf>>& _r_powermeter,
-                             const std::vector<std::unique_ptr<over_voltage_monitorIntf>>& _r_over_voltage_monitor) :
+                             const std::vector<std::unique_ptr<over_voltage_monitorIntf>>& _r_over_voltage_monitor,
+                             bool _inoperative_error_use_vendor_id) :
     r_bsp(r_bsp),
     r_hlc(r_hlc),
     r_connector_lock(r_connector_lock),
@@ -745,7 +746,8 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& r_bs
     r_imd(_r_imd),
     r_powersupply(r_powersupply),
     r_powermeter(_r_powermeter),
-    r_over_voltage_monitor(_r_over_voltage_monitor) {
+    r_over_voltage_monitor(_r_over_voltage_monitor),
+    inoperative_error_use_vendor_id(_inoperative_error_use_vendor_id) {
 }
 
 void ErrorHandling::raise_overcurrent_error(const std::string& description) {

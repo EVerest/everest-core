@@ -51,9 +51,12 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
     }
 
     if (error_type == INOPERATIVE_ERROR_TYPE) {
-        return ocpp::v16::ErrorInfo{uuid,      ocpp::v16::ChargePointErrorCode::OtherError,
-                                    true,      "EVSE is inoperative",
-                                    "EVerest", "caused_by:" + error.message};
+        return ocpp::v16::ErrorInfo{uuid,
+                                    ocpp::v16::ChargePointErrorCode::OtherError,
+                                    true,
+                                    "caused_by:" + error.message,
+                                    error.vendor_id,
+                                    error.description};
     }
 
     const auto get_simplified_error_type = [](const std::string& error_type) {
