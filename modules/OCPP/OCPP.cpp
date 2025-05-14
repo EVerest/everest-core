@@ -791,6 +791,13 @@ void OCPP::ready() {
     });
 
     this->charge_point->register_reset_callback([this](ocpp::v16::ResetType type) {
+        if (type == ocpp::v16::ResetType::Soft) {
+            // small delay before stopping the charge point to make sure all responses are received
+            std::this_thread::sleep_for(std::chrono::seconds(this->config.ResetStopDelay));
+            // properly stop charge point before stopping all of the software
+        }
+        this->charge_point->stop();
+        // If it is a hard reset we can go ahead and forcibly reset directly
         const auto reset_type = conversions::to_everest_reset_type(type);
         this->r_system->call_reset(reset_type, false);
     });

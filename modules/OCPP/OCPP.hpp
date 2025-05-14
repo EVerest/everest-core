@@ -64,6 +64,8 @@ struct Conf {
     std::string MessageLogPath;
     int MessageQueueResumeDelay;
     std::string RequestCompositeScheduleUnit;
+    int DelayOcppStart;
+    int ResetStopDelay;
 };
 
 class OCPP : public Everest::ModuleBase {
