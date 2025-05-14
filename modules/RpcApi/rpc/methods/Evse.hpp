@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../../data/DataStore.hpp"
+#include "../../rpc/RequestHandlerInterface.hpp"
 
 namespace RPCDataTypes = types::json_rpc_api;
 
@@ -26,7 +27,8 @@ public:
     // Constructor and Destructor
     // Deleting the default constructor to ensure the class is always initialized with a DataStoreCharger object
     Evse() = delete;
-    Evse(data::DataStoreCharger& dataobj) : m_dataobj(dataobj){};
+    Evse(data::DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> req_handler) :
+    m_dataobj(dataobj), m_request_handler_ptr(std::move(req_handler)) {}
 
     ~Evse() = default;
 
@@ -138,6 +140,8 @@ public:
 private:
     // Reference to the DataStoreCharger object that holds EVSE data
     data::DataStoreCharger& m_dataobj;
+    // Reference to the RequestHandlerInterface object for handling requests
+    std::unique_ptr<request_interface::RequestHandlerInterface> m_request_handler_ptr;
 };
 
 } // namespace methods
