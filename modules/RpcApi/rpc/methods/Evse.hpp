@@ -122,18 +122,8 @@ public:
         return res;
     };
 
-    RPCDataTypes::ErrorResObj setACCharging(const std::string& evse_id, bool ac_charging) {
+    RPCDataTypes::ErrorResObj setACCharging(const std::string& evse_id, bool charging_allowed, float max_current, std::optional<int> phase_count) {
         RPCDataTypes::ErrorResObj res {};
-        auto evse = getEVSEStore(evse_id);
-        if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
-            return res;
-        }
-        auto status = evse->evsestatus.get_data();
-        status.value().ac_charge_param->charging = ac_charging;
-        evse->evsestatus.set_data(status.value());
-
-        res.error = RPCDataTypes::ResponseErrorEnum::NoError;
         return res;
     };
 
