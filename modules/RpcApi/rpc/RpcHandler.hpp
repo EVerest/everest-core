@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "../server/TransportInterface.hpp"
+#include "RequestHandlerInterface.hpp"
 #include "methods/Api.hpp"
 #include "methods/ChargePoint.hpp"
 #include "methods/Evse.hpp"
@@ -40,11 +41,14 @@ struct ClientReq {
 
 class RpcHandler {
 public:
-    // Consturctor and Destructor
+    // Constructor and Destructor
     RpcHandler() = delete;
     // RpcHandler just needs just a tranport interface array
-    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transportInterfaces, DataStoreCharger& dataobj);
+    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
+        DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler);
+
     ~RpcHandler() = default;
+
     // Methods
     void start_server();
     void stop_server();
@@ -72,6 +76,7 @@ private:
 
     // Members
     std::vector<std::shared_ptr<TransportInterface>> m_transport_interfaces;
+    DataStoreCharger& m_data_store;
     std::mutex m_mtx;
     std::condition_variable m_cv_api_hello;
     std::condition_variable m_cv_data_available;

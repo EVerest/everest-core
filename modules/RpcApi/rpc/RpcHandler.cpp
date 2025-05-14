@@ -20,11 +20,12 @@ static const std::chrono::milliseconds
 
 // RpcHandler just needs just a tranport interface array
 RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
-                       DataStoreCharger& dataobj) :
+                        DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler) :
+    m_data_store(dataobj),
     m_transport_interfaces(std::move(transport_interfaces)),
     m_methods_api(dataobj),
     m_methods_chargepoint(dataobj),
-    m_methods_evse(dataobj) {
+    m_methods_evse(dataobj, std::move(request_handler)) {
     init_rpc_api();
     init_transport_interfaces();
 }
