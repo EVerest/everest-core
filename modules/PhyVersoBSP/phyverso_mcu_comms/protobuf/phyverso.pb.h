@@ -68,6 +68,9 @@ typedef struct _ErrorFlags {
     bool ventilation_not_available;
     bool connector_lock_failed;
     bool cp_signal_fault;
+    bool heartbeat_timeout;
+    bool coil_feedback_diverges_ac;
+    bool coil_feedback_diverges_dc;
 } ErrorFlags;
 
 typedef struct _KeepAlive {
@@ -231,7 +234,7 @@ extern "C" {
 /* Initializer values for message structs */
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}, 0}
 #define McuToEverest_init_default                {0, {KeepAlive_init_default}, 0}
-#define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0}
+#define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define KeepAlive_init_default                   {0, 0, 0, ""}
 #define Telemetry_init_default                   {0, 0}
 #define FanState_init_default                    {0, 0, 0, 0}
@@ -244,7 +247,7 @@ extern "C" {
 #define RcdCommand_init_default                  {0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
-#define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
+#define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define KeepAlive_init_zero                      {0, 0, 0, ""}
 #define Telemetry_init_zero                      {0, 0}
 #define FanState_init_zero                       {0, 0, 0, 0}
@@ -263,6 +266,9 @@ extern "C" {
 #define ErrorFlags_ventilation_not_available_tag 4
 #define ErrorFlags_connector_lock_failed_tag     5
 #define ErrorFlags_cp_signal_fault_tag           6
+#define ErrorFlags_heartbeat_timeout_tag         7
+#define ErrorFlags_coil_feedback_diverges_ac_tag 8
+#define ErrorFlags_coil_feedback_diverges_dc_tag 9
 #define KeepAlive_time_stamp_tag                 1
 #define KeepAlive_hw_type_tag                    2
 #define KeepAlive_hw_revision_tag                3
@@ -359,7 +365,10 @@ X(a, STATIC,   SINGULAR, BOOL,     rcd_selftest_failed,   2) \
 X(a, STATIC,   SINGULAR, BOOL,     rcd_triggered,     3) \
 X(a, STATIC,   SINGULAR, BOOL,     ventilation_not_available,   4) \
 X(a, STATIC,   SINGULAR, BOOL,     connector_lock_failed,   5) \
-X(a, STATIC,   SINGULAR, BOOL,     cp_signal_fault,   6)
+X(a, STATIC,   SINGULAR, BOOL,     cp_signal_fault,   6) \
+X(a, STATIC,   SINGULAR, BOOL,     heartbeat_timeout,   7) \
+X(a, STATIC,   SINGULAR, BOOL,     coil_feedback_diverges_ac,   8) \
+X(a, STATIC,   SINGULAR, BOOL,     coil_feedback_diverges_dc,   9)
 #define ErrorFlags_CALLBACK NULL
 #define ErrorFlags_DEFAULT NULL
 
@@ -464,7 +473,7 @@ extern const pb_msgdesc_t RcdCommand_msg;
 #define BootConfigResponse_size                  10
 #define CoilState_size                           4
 #define ConfigMotorLockType_size                 2
-#define ErrorFlags_size                          12
+#define ErrorFlags_size                          18
 #define EverestToMcu_size                        83
 #define FanState_size                            15
 #define KeepAlive_size                           70
