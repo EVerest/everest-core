@@ -88,12 +88,12 @@ def rec_exp_test2():
             start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
-                ChargingSchedulePeriod(start_period=10000, limit=22, number_phases=3),
-                ChargingSchedulePeriod(start_period=20000, limit=6, number_phases=3),
-                ChargingSchedulePeriod(start_period=86400, limit=10, number_phases=3),
-                ChargingSchedulePeriod(start_period=96400, limit=22, number_phases=3),
-                ChargingSchedulePeriod(start_period=106400, limit=6, number_phases=3),
+                ChargingSchedulePeriod(start_period=0, limit=10),
+                ChargingSchedulePeriod(start_period=10000, limit=22),
+                ChargingSchedulePeriod(start_period=20000, limit=6),
+                ChargingSchedulePeriod(start_period=86400, limit=10),
+                ChargingSchedulePeriod(start_period=96400, limit=22),
+                ChargingSchedulePeriod(start_period=106400, limit=6),
             ],
         ),
     )
@@ -158,10 +158,10 @@ def rec_exp_test3():
             start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
-                ChargingSchedulePeriod(start_period=10000, limit=22, number_phases=3),
-                ChargingSchedulePeriod(start_period=20000, limit=6, number_phases=3),
-                ChargingSchedulePeriod(start_period=86400, limit=20, number_phases=3),
+                ChargingSchedulePeriod(start_period=0, limit=10),
+                ChargingSchedulePeriod(start_period=10000, limit=22),
+                ChargingSchedulePeriod(start_period=20000, limit=6),
+                ChargingSchedulePeriod(start_period=86400, limit=20),
             ],
         ),
     )
