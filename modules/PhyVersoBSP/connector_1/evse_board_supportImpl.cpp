@@ -50,8 +50,8 @@ void evse_board_supportImpl::init() {
 
     mod->serial.signal_pp_state.connect([this](int connector, PpState s) {
         if (connector == 1) {
-            EVLOG_info << "[1] PpState " << s;
             if (last_pp_state != s) {
+                EVLOG_info << "[1] PpState " << s;
                 publish_ac_pp_ampacity(to_pp_ampacity(s));
             }
             last_pp_state = s;
