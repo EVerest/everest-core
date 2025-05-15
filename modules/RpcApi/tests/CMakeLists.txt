@@ -24,6 +24,7 @@ set(INCLUDE_DIR
 
 target_sources(${TEST_TARGET_NAME}
     PRIVATE
+        "helpers/RequestHandlerDummy.cpp"
         "helpers/WebSocketTestClient.cpp"
 )
 

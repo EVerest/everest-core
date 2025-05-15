@@ -1,12 +1,13 @@
+#include "../data/DataStore.hpp"
 #include <gtest/gtest.h>
 #include <thread>
-#include <everest/logging.hpp>
 
+#include "../data/DataStore.hpp"
+#include "../helpers/JsonRpcUtils.hpp"
+#include "../helpers/RequestHandlerDummy.hpp"
 #include "../helpers/WebSocketTestClient.hpp"
 #include "../rpc/RpcHandler.hpp"
 #include "../server/WebsocketServer.hpp"
-#include "../data/DataStore.hpp"
-#include "../helpers/JsonRpcUtils.hpp"
 
 using namespace server;
 using namespace rpc;
@@ -20,10 +21,11 @@ protected:
         m_websocket_server = std::make_unique<server::WebSocketServer>(false, test_port);
         lws_set_log_level(LLL_ERR | LLL_WARN, NULL);
 
-        // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
+        // Create RpcHandler instance. Move the transport interfaces and request handler to the RpcHandler
         std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
+        request_handler = std::make_unique<RequestHandlerDummy>();
         transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-        m_rpc_server = std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store);
+        m_rpc_server = std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store, std::move(request_handler));
         m_rpc_server->start_server();
         initialize_data_store();
     }
@@ -74,6 +76,8 @@ protected:
 
     // Data store object used to manage and access charger-related data, including EVSEs, connectors, and charger info.
     data::DataStoreCharger data_store;
+    // Dummy request handler. Needed to create the reponses of synchronous requests
+    std::unique_ptr<request_interface::RequestHandlerInterface> request_handler;
 };
 
 // Test: Connect to WebSocket server and check if API.Hello timeout occurs
