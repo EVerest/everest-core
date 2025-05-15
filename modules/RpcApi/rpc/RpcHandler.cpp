@@ -53,13 +53,13 @@ void RpcHandler::init_rpc_api() {
     m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
                       GetHandle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
     m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, GetHandle(&methods::Evse::getInfo, m_methods_evse),
-                      {"evse_id"});
+                      {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS, GetHandle(&methods::Evse::getStatus, m_methods_evse),
-                      {"evse_id"});
+                      {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_GET_HARDWARE_CAPABILITIES,
-                      GetHandle(&methods::Evse::getHardwareCapabilities, m_methods_evse), {"evse_id"});
+                      GetHandle(&methods::Evse::getHardwareCapabilities, m_methods_evse), {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_CHARGING_ALLOWED,
-                      GetHandle(&methods::Evse::setChargingAllowed, m_methods_evse), {"evse_id", "charging_allowed"});
+                      GetHandle(&methods::Evse::setChargingAllowed, m_methods_evse), {"evse_index", "charging_allowed"});
 }
 
 void RpcHandler::init_transport_interfaces() {

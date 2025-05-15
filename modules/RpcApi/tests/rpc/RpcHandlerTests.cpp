@@ -110,7 +110,7 @@ TEST_F(RpcHandlerTest, ApiHelloReq) {
     nlohmann::json expected_response = {
         {"jsonrpc", "2.0"},
         {"result", result},
-        {"id", 1}
+        {"index", 1}
     };
     
     // Send Api.Hello request
@@ -137,7 +137,7 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
     data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
     RPCDataTypes::EVSEInfoObj evse_info;
-    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    evse_info.index = 1;
     evse_info.available_connectors.emplace_back();
     evse_info.available_connectors[0].id = 1;
     evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
@@ -148,7 +148,7 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     evse_info.description = "Test EVSE 1";
     data_store.evses[0]->evseinfo.set_data(evse_info);
     result.infos.push_back(evse_info);
-    evse_info.id = "DEA12E000002"; ///< Unique identifier
+    evse_info.index = 2;
     evse_info.description = "Test EVSE 2";
     data_store.evses[1]->evseinfo.set_data(evse_info);
     
@@ -166,20 +166,20 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     send_req_and_validate_res(client, charge_point_get_evse_infos_req, expected_response);
 }
 
-// Test: Connect to WebSocket server and send EVSE.Infos request with valid and invalid evse_id
+// Test: Connect to WebSocket server and send EVSE.Infos request with valid and invalid id
 TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
      // Set up requests
-     nlohmann::json evse_get_evse_infos_req_1 = create_json_rpc_request("EVSE.GetInfo", {{"evse_id", "DEA12E000001"}}, 1);
-     nlohmann::json evse_get_evse_infos_req_2 = create_json_rpc_request("EVSE.GetInfo", {{"evse_id", "DEA12E000002"}}, 1);
-     nlohmann::json evse_get_infos_req = create_json_rpc_request("EVSE.GetInfo", {{"evse_id", "INVALID_ID"}}, 1);
+     nlohmann::json evse_get_evse_infos_req_1 = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 1}}, 1);
+     nlohmann::json evse_get_evse_infos_req_2 = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 2}}, 1);
+     nlohmann::json evse_get_infos_req_invalid_id = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 99}}, 1);
     
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
-    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    evse_info.index = 1; ///< Unique identifier
     evse_info.available_connectors.emplace_back();
     evse_info.available_connectors[0].id = 1;
     evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
@@ -196,7 +196,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     result_1.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
 
     // Set up the second EVSE info
-    evse_info.id = "DEA12E000002";
+    evse_info.index = 2;
     evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cType2;
     evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::sType2;
     data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
@@ -222,21 +222,21 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     // Send EVSE.GetEVSEInfos request 2 and validate response
     send_req_and_validate_res(client, evse_get_evse_infos_req_2, expected_response_2);
     // Send EVSE.GetEVSEInfos request with invalid ID and validate response
-    send_req_and_validate_res(client, evse_get_infos_req, expected_error, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_get_infos_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
 }
 
-// Test: Connect to WebSocket server and send Evse.GetStatusReq request with valid and invalid evse_id
+// Test: Connect to WebSocket server and send Evse.GetStatusReq request with valid and invalid id
 TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
     // Set up the requests
-    nlohmann::json evse_get_status_req_valid_id = create_json_rpc_request("EVSE.GetStatus", {{"evse_id", "DEA12E000001"}}, 1);
-    nlohmann::json evse_get_status_req_invalid_id = create_json_rpc_request("EVSE.GetStatus", {{"evse_id", "INVALID_ID"}}, 1);
+    nlohmann::json evse_get_status_req_valid_id = create_json_rpc_request("EVSE.GetStatus", {{"evse_index", 1}}, 1);
+    nlohmann::json evse_get_status_req_invalid_id = create_json_rpc_request("EVSE.GetStatus", {{"evse_index", 99}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
-    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    evse_info.index = 1; ///< Unique identifier
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
     RPCDataTypes::EVSEStatusObj evse_status;
@@ -270,19 +270,19 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     send_req_and_validate_res(client, evse_get_status_req_invalid_id, res_obj_invalid_id, is_key_value_in_json_rpc_result);
 }
 
-// Test: Connect to WebSocket server and send EVSE.GetHardwareCapabilities request with valid and invalid evse_id
+// Test: Connect to WebSocket server and send EVSE.GetHardwareCapabilities request with valid and invalid id
 TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_get_hardware_capabilities_req_valid_id = create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_id", "DEA12E000001"}}, 1);
-    nlohmann::json evse_get_hardware_capabilities_req_invalid_id = create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_id", "INVALID_ID"}}, 1);
+    nlohmann::json evse_get_hardware_capabilities_req_valid_id = create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_index", 1}}, 1);
+    nlohmann::json evse_get_hardware_capabilities_req_invalid_id = create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_index", 99}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
-    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    evse_info.index = 1;
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
     RPCDataTypes::EVSEGetHardwareCapabilitiesResObj result;
@@ -321,19 +321,19 @@ TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     send_req_and_validate_res(client, evse_get_hardware_capabilities_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
 }
 
-// Test: Connect to WebSocket server and send EVSE.SetChargingAllowed request with valid and invalid evse_id
+// Test: Connect to WebSocket server and send EVSE.SetChargingAllowed request with valid and invalid id
 TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_charging_allowed_req_valid_id = create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_id", "DEA12E000001"}, {"charging_allowed", true}}, 1);
-    nlohmann::json evse_set_charging_allowed_req_invalid_id = create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_id", "INVALID_ID"}, {"charging_allowed", true}}, 1);
+    nlohmann::json evse_set_charging_allowed_req_valid_id = create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 1}, {"charging_allowed", true}}, 1);
+    nlohmann::json evse_set_charging_allowed_req_invalid_id = create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 99}, {"charging_allowed", true}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
-    evse_info.id = "DEA12E000001"; ///< Unique identifier
+    evse_info.index = 1;
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
     RPCDataTypes::EVSEStatusObj evse_status;

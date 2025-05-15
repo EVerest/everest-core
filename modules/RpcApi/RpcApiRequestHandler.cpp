@@ -19,37 +19,38 @@ RpcApiRequestHandler::~RpcApiRequestHandler() {
     // Destructor implementation
 }
 
-ErrorResObj RpcApiRequestHandler::setChargingAllowed(const std::string& evse_id, bool charging_allowed) {
+ErrorResObj RpcApiRequestHandler::setChargingAllowed(const int32_t evse_index, bool charging_allowed) {
     ErrorResObj res {};
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setACCharging(bool charging_allowed, bool max_current, std::optional<int> phase_count) {
+ErrorResObj RpcApiRequestHandler::setACCharging(const int32_t evse_index, bool charging_allowed, bool max_current, std::optional<int> phase_count) {
+    ErrorResObj res {};
+    
+    return res;
+}
+
+ErrorResObj RpcApiRequestHandler::setACChargingCurrent(const int32_t evse_index, float max_current) {
     ErrorResObj res {};
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setACChargingCurrent(const std::string& evse_id, float max_current) {
+ErrorResObj RpcApiRequestHandler::setACChargingPhaseCount(const int32_t evse_index, int phase_count) {
     ErrorResObj res {};
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setACChargingPhaseCount(const std::string& evse_id, int phase_count) {
+ErrorResObj RpcApiRequestHandler::setDCCharging(const int32_t evse_index, bool charging_allowed, int max_power) {
     ErrorResObj res {};
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setDCCharging(const std::string& evse_id, bool charging_allowed, int max_power) {
+ErrorResObj RpcApiRequestHandler::setDCChargingPower(const int32_t evse_index, int max_power) {
     ErrorResObj res {};
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setDCChargingPower(const std::string& evse_id, int max_power) {
-    ErrorResObj res {};
-    return res;
-}
-
-ErrorResObj RpcApiRequestHandler::enableConnector(int connector_id, bool enable, int priority) {
+ErrorResObj RpcApiRequestHandler::enableConnector(const int32_t evse_index, int connector_id, bool enable, int priority) {
     ErrorResObj res {};
     return res;
 }

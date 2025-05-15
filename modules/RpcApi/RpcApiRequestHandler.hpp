@@ -16,13 +16,13 @@ public:
         const std::vector<std::unique_ptr<external_energy_limitsIntf>>& r_evse_energy_sink);
     ~RpcApiRequestHandler();
 
-    types::json_rpc_api::ErrorResObj setChargingAllowed(const std::string& evse_id, bool charging_allowed) override;
-    types::json_rpc_api::ErrorResObj setACCharging(bool charging_allowed, bool max_current, std::optional<int> phase_count) override;
-    types::json_rpc_api::ErrorResObj setACChargingCurrent(const std::string& evse_id, float max_current) override;
-    types::json_rpc_api::ErrorResObj setACChargingPhaseCount(const std::string& evse_id, int phase_count) override;
-    types::json_rpc_api::ErrorResObj setDCCharging(const std::string& evse_id, bool charging_allowed, int max_power) override;
-    types::json_rpc_api::ErrorResObj setDCChargingPower(const std::string& evse_id, int max_power) override;
-    types::json_rpc_api::ErrorResObj enableConnector(int connector_id, bool enable, int priority) override;
+    types::json_rpc_api::ErrorResObj setChargingAllowed(const int32_t evse_index, bool charging_allowed) override;
+    types::json_rpc_api::ErrorResObj setACCharging(const int32_t evse_index, bool charging_allowed, bool max_current, std::optional<int> phase_count) override;
+    types::json_rpc_api::ErrorResObj setACChargingCurrent(const int32_t evse_index, float max_current) override;
+    types::json_rpc_api::ErrorResObj setACChargingPhaseCount(const int32_t evse_index, int phase_count) override;
+    types::json_rpc_api::ErrorResObj setDCCharging(const int32_t evse_index, bool charging_allowed, int max_power) override;
+    types::json_rpc_api::ErrorResObj setDCChargingPower(const int32_t evse_index, int max_power) override;
+    types::json_rpc_api::ErrorResObj enableConnector(const int32_t evse_index, int connector_id, bool enable, int priority) override;
 private:
     // Add any private member variables or methods here
 
