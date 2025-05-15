@@ -591,7 +591,8 @@ void OCPP::ready() {
             upload_logs_request.oldest_timestamp.emplace(msg.startTime.value().to_rfc3339());
         }
         if (msg.retries.has_value()) {
-            upload_logs_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            upload_logs_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -622,7 +623,8 @@ void OCPP::ready() {
             upload_logs_request.oldest_timestamp.emplace(msg.log.oldestTimestamp.value().to_rfc3339());
         }
         if (msg.retries.has_value()) {
-            upload_logs_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            upload_logs_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -647,7 +649,8 @@ void OCPP::ready() {
         firmware_update_request.request_id = -1;
         firmware_update_request.retrieve_timestamp.emplace(msg.retrieveDate.to_rfc3339());
         if (msg.retries.has_value()) {
-            firmware_update_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            firmware_update_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             firmware_update_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -667,7 +670,8 @@ void OCPP::ready() {
             firmware_update_request.install_timestamp.emplace(msg.firmware.installDateTime.value());
         }
         if (msg.retries.has_value()) {
-            firmware_update_request.retries.emplace(msg.retries.value());
+            // We add +1 since as defined in OCPP retries does not include the initial attempt
+            firmware_update_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             firmware_update_request.retry_interval_s.emplace(msg.retryInterval.value());

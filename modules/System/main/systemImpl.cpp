@@ -52,6 +52,7 @@ void systemImpl::init() {
     this->firmware_download_running = false;
     this->firmware_installation_running = false;
     this->standard_firmware_update_running = false;
+    this->boot_reason_key = "ocpp_boot_reason";
 }
 
 void systemImpl::ready() {
@@ -90,7 +91,7 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
         firmware_status.firmware_update_status = firmware_status_enum;
 
         while (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
-               retries <= total_retries) {
+               retries < total_retries) {
             boost::process::ipstream stream;
             boost::process::child cmd(firmware_updater.string(), boost::process::args(args),
                                       boost::process::std_out > stream);
@@ -101,8 +102,13 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
                 this->publish_firmware_update_status(firmware_status);
             }
             if (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
-                retries <= total_retries) {
+                retries < total_retries) {
                 std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
+            }
+            if (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::Installed and
+                !this->mod->r_store.empty()) {
+                this->mod->r_store.at(0)->call_store(boot_reason_key,
+                                                     boot_reason_to_string(types::system::BootReason::FirmwareUpdate));
             }
             cmd.wait();
         }
@@ -232,7 +238,7 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
     firmware_status.firmware_update_status = firmware_status_enum;
 
     while (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
-           retries <= total_retries && !this->interrupt_firmware_download) {
+           retries < total_retries && !this->interrupt_firmware_download) {
         boost::process::ipstream download_stream;
         boost::process::child download_cmd(firmware_downloader.string(), boost::process::args(download_args),
                                            boost::process::std_out > download_stream);
@@ -248,7 +254,7 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
             download_cmd.terminate();
         }
         if (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
-            retries <= total_retries) {
+            retries < total_retries) {
             std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
         }
     }
@@ -303,6 +309,16 @@ void systemImpl::install_signed_firmware(const types::system::FirmwareUpdateRequ
         while (std::getline(install_stream, temp)) {
             firmware_status.firmware_update_status = types::system::string_to_firmware_update_status_enum(temp);
             this->publish_firmware_update_status(firmware_status);
+        }
+        if (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::Installed) {
+            if (!this->mod->r_store.empty()) {
+                this->mod->r_store.at(0)->call_store(boot_reason_key,
+                                                     boot_reason_to_string(types::system::BootReason::FirmwareUpdate));
+            }
+
+            auto reset_type = types::system::ResetType::Hard;
+            bool firmware_installation_running_copy = this->firmware_installation_running;
+            this->handle_reset(reset_type, firmware_installation_running_copy);
         }
     } else {
         firmware_status.firmware_update_status = types::system::FirmwareUpdateStatusEnum::InstallationFailed;
@@ -371,7 +387,7 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
             upload_logs_request.retry_interval_s.value_or(this->mod->config.DefaultRetryInterval);
 
         types::system::LogStatus log_status;
-        while (!uploaded && retries <= total_retries && !this->interrupt_log_upload) {
+        while (!uploaded && retries < total_retries && !this->interrupt_log_upload) {
 
             boost::process::ipstream stream;
             boost::process::child cmd(diagnostics_uploader.string(), boost::process::args(args),
@@ -397,7 +413,7 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
                 log_status.log_status = types::system::LogStatusEnum::AcceptedCanceled;
                 this->publish_log_status(log_status);
                 cmd.terminate();
-            } else if (log_status.log_status != types::system::LogStatusEnum::Uploaded && retries <= total_retries) {
+            } else if (log_status.log_status != types::system::LogStatusEnum::Uploaded && retries < total_retries) {
                 // command finished, but neither interrupted nor uploaded
                 std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
             } else {
@@ -425,6 +441,10 @@ void systemImpl::handle_reset(types::system::ResetType& type, bool& scheduled) {
     // channels in parallel when this call returns
     std::thread([this, type, scheduled] {
         EVLOG_info << "Reset request received: " << type << ", " << (scheduled ? "" : "not ") << "scheduled";
+        if (!this->mod->r_store.empty() and !this->mod->r_store.at(0)->call_exists(boot_reason_key)) {
+            this->mod->r_store.at(0)->call_store(boot_reason_key,
+                                                 boot_reason_to_string(types::system::BootReason::RemoteReset));
+        }
 
         std::this_thread::sleep_for(std::chrono::seconds(this->mod->config.ResetDelay));
 
@@ -444,8 +464,17 @@ bool systemImpl::handle_set_system_time(std::string& timestamp) {
 };
 
 types::system::BootReason systemImpl::handle_get_boot_reason() {
-    // FIXME(piet): Provide proper BootReason
-    return types::system::BootReason::PowerUp;
+    if (this->mod->r_store.empty()) {
+        return types::system::BootReason::PowerUp;
+    }
+    auto reason_variant = this->mod->r_store.at(0)->call_load(boot_reason_key);
+    auto* reason = std::get_if<std::string>(&reason_variant);
+    std::string final_reason{boot_reason_to_string(types::system::BootReason::PowerUp)};
+    if (reason != nullptr) {
+        final_reason = *reason;
+    }
+    this->mod->r_store.at(0)->call_delete(boot_reason_key);
+    return types::system::string_to_boot_reason(final_reason);
 }
 
 } // namespace main
