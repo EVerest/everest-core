@@ -33,7 +33,7 @@ public:
     ~Evse() = default;
 
     // Methods
-    data::DataStoreEvse* getEVSEStore(const std::string& evse_id) {
+    data::DataStoreEvse* getEVSEStore(const int32_t evse_index) {
         if (m_dataobj.evses.empty()) {
             return nullptr;
         }
@@ -44,17 +44,17 @@ public:
             }
 
             const auto data = evse->evseinfo.get_data().value();
-            if (data.id == evse_id) {
+            if (data.index == evse_index) {
                 return evse.get();
             }
         }
         return nullptr;
     };
 
-    RPCDataTypes::EVSEGetInfoResObj getInfo(const std::string& evse_id) {
+    RPCDataTypes::EVSEGetInfoResObj getInfo(const int32_t evse_index) {
         RPCDataTypes::EVSEGetInfoResObj res {};
 
-        auto evse = getEVSEStore(evse_id);
+        auto evse = getEVSEStore(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
             return res;
@@ -70,10 +70,10 @@ public:
         return res;
     };
 
-    RPCDataTypes::EVSEGetStatusResObj getStatus(const std::string& evse_id) {
+    RPCDataTypes::EVSEGetStatusResObj getStatus(const int32_t evse_index) {
         RPCDataTypes::EVSEGetStatusResObj res {};
 
-        auto evse = getEVSEStore(evse_id);
+        auto evse = getEVSEStore(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
             return res;
@@ -89,10 +89,10 @@ public:
         return res;
     };
 
-    RPCDataTypes::EVSEGetHardwareCapabilitiesResObj getHardwareCapabilities(const std::string& evse_id) {
+    RPCDataTypes::EVSEGetHardwareCapabilitiesResObj getHardwareCapabilities(const int32_t evse_index) {
         RPCDataTypes::EVSEGetHardwareCapabilitiesResObj res {};
 
-        auto evse = getEVSEStore(evse_id);
+        auto evse = getEVSEStore(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
             return res;
@@ -107,24 +107,13 @@ public:
         return res;
     };
 
-    RPCDataTypes::ErrorResObj setChargingAllowed(const std::string& evse_id, bool charging_allowed) {
-        RPCDataTypes::ErrorResObj res {};
-        auto evse = getEVSEStore(evse_id);
-        if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
-            return res;
-        }
-        auto status = evse->evsestatus.get_data();
-        status.value().charging_allowed = charging_allowed;
-        evse->evsestatus.set_data(status.value());
+    RPCDataTypes::ErrorResObj setChargingAllowed(const int32_t evse_index, bool charging_allowed) {
+        return m_request_handler_ptr->setChargingAllowed(evse_index, charging_allowed);
 
-        res.error = RPCDataTypes::ResponseErrorEnum::NoError;
-        return res;
     };
 
-    RPCDataTypes::ErrorResObj setACCharging(const std::string& evse_id, bool charging_allowed, float max_current, std::optional<int> phase_count) {
-        RPCDataTypes::ErrorResObj res {};
-        return res;
+    RPCDataTypes::ErrorResObj setACCharging(const int32_t evse_index, bool charging_allowed, float max_current, std::optional<int> phase_count) {
+        return m_request_handler_ptr->setACCharging(evse_index, charging_allowed, max_current, phase_count);
     };
 
 private:
