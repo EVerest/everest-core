@@ -28,6 +28,10 @@ public:
         return sim_data.state;
     }
 
+    std::optional<std::string>& get_modify_charging_session_cmds() {
+        return sim_data.modify_charging_session_cmds;
+    }
+
     void set_state(SimState state) {
         sim_data.state = state;
     }
@@ -62,6 +66,10 @@ public:
 
     void set_iso_stopped(bool iso_stopped) {
         sim_data.iso_stopped = iso_stopped;
+    }
+
+    void set_iso_d20_paused(bool iso_d20_paused) {
+        sim_data.iso_d20_paused = iso_d20_paused;
     }
 
     void set_v2g_finished(bool v2g_finished) {

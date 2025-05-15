@@ -54,3 +54,6 @@ vars:
   DC_PowerOn:
     description: The ev wants to close the dc contactors
     type: 'null'
+  pause_from_charger:
+    description: The charger wants to pause the session (only d20)
+    type: 'null'
