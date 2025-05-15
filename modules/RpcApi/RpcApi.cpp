@@ -36,12 +36,12 @@ void RpcApi::init() {
     // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
     transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-    m_rpc_server = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data, std::move(m_request_handler));
+    m_rpc_handler = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data, std::move(m_request_handler));
 }
 
 void RpcApi::ready() {
     // Start server instances
-    m_rpc_server->start_server();
+    m_rpc_handler->start_server();
 
     invoke_ready(*p_main);
 }
@@ -49,12 +49,12 @@ void RpcApi::ready() {
 void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager,
                                     data::DataStoreEvse& evse_data) {
     evse_manager->subscribe_powermeter([this, &evse_data](const types::powermeter::Powermeter& powermeter) {
-        this->meter_interface_to_datastore(powermeter, evse_data.meterdata);
+        this->meterdata_var_to_datastore(powermeter, evse_data.meterdata);
     });
     evse_manager->subscribe_hw_capabilities(
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
-            // there is only one connector supported currently
-            this->hwcaps_interface_to_datastore(hwcaps, evse_data.connectors[0]->hardwarecapabilities);
+        // there is only one connector supported currently
+        this->hwcaps_var_to_datastore(hwcaps, evse_data.connectors[0]->hardwarecapabilities);
         });
     evse_manager->subscribe_evse_id(
         [this, &evse_data](const std::string& evse_id) {
@@ -63,7 +63,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         });
 }
 
-void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter,
+void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
                                           data::MeterDataStore& meter_data) {
     types::json_rpc_api::MeterDataObj meter_data_new; // default initialized
     if (meter_data.get_data().has_value()) {
@@ -180,7 +180,7 @@ void RpcApi::meter_interface_to_datastore(const types::powermeter::Powermeter& p
     meter_data.set_data(meter_data_new);
 }
 
-void RpcApi::hwcaps_interface_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
+void RpcApi::hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
                                            data::HardwareCapabilitiesStore& hw_caps_data) {
     types::json_rpc_api::HardwareCapabilitiesObj hw_caps_data_new; // default initialized
     if (hw_caps_data.get_data().has_value()) {

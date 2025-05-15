@@ -69,16 +69,18 @@ RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> 
     m_transport_interfaces(std::move(transport_interfaces)),
     m_methods_api(dataobj),
     m_methods_chargepoint(dataobj),
-    m_methods_evse(dataobj, std::move(request_handler)) {
+    m_methods_evse(dataobj, std::move(request_handler)),
+    m_conn(m_transport_interfaces) {
     init_rpc_api();
     init_transport_interfaces();
+    m_notifications_evse = new notifications::Evse(m_rpc_server, dataobj);
 }
 
 void RpcHandler::init_rpc_api() {
     // Initialize the RPC API here
     m_methods_api.set_authentication_required(false);
     m_methods_api.set_api_version(API_VERSION);
-    m_rpc_server = std::make_unique<JsonRpc2Server>();
+    m_rpc_server = std::make_shared<JsonRpc2ServerWithClient>(m_conn);
     m_rpc_server->Add(methods::METHOD_API_HELLO, get_handle(&methods::Api::hello, m_methods_api), {});
     m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
         get_handle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
