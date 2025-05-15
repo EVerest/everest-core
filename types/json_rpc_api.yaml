@@ -387,12 +387,16 @@ types:
     description: Information about the EVSE
     type: object
     required:
+      - index
       - id
       - available_connectors
       - bidi_charging
     properties:
+      index:
+        description: Unique index of the EVSE, used for identifying it
+        type: integer
       id:
-        description: Unique identifier
+        description: Unique identifier string, as used in V2G communication
         type: string
       description:
         description: Description
