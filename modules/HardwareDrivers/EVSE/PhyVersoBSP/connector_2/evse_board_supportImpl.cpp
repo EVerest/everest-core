@@ -50,8 +50,8 @@ void evse_board_supportImpl::init() {
 
     mod->serial.signal_pp_state.connect([this](int connector, PpState s) {
         if (connector == 2) {
-            EVLOG_info << "[2] PpState " << s;
             if (last_pp_state != s) {
+                EVLOG_info << "[2] PpState " << s;
                 publish_ac_pp_ampacity(to_pp_ampacity(s));
             }
             last_pp_state = s;
@@ -65,6 +65,47 @@ void evse_board_supportImpl::init() {
             this->publish_request_stop_transaction(request);
             EVLOG_info << "[2] Request stop button state: " << (state ? "PUSHED" : "RELEASED");
             last_stop_button_state = state;
+        }
+    });
+
+    mod->serial.signal_error_flags.connect([this](int connector, ErrorFlags error_flags) {
+        if (connector == 2) {
+            // Contactor feedback divergence
+            if (error_flags.coil_feedback_diverges != last_error_flags.coil_feedback_diverges) {
+                if (error_flags.coil_feedback_diverges) {
+                    Everest::error::Error error_object = this->error_factory->create_error(
+                        "evse_board_support/MREC17EVSEContactorFault", "",
+                        "Port 2 contactor feedback diverges from target state", Everest::error::Severity::High);
+                    this->raise_error(error_object);
+                } else {
+                    this->clear_error("evse_board_support/MREC17EVSEContactorFault");
+                }
+            }
+
+            // Diode fault
+            if (error_flags.diode_fault != last_error_flags.diode_fault) {
+                if (error_flags.diode_fault) {
+                    Everest::error::Error error_object = this->error_factory->create_error(
+                        "evse_board_support/DiodeFault", "", "Port 2 diode fault", Everest::error::Severity::High);
+                    this->raise_error(error_object);
+                } else {
+                    this->clear_error("evse_board_support/DiodeFault");
+                }
+            }
+
+            // PP fault
+            if (error_flags.pp_signal_fault != last_error_flags.pp_signal_fault) {
+                if (error_flags.pp_signal_fault) {
+                    Everest::error::Error error_object =
+                        this->error_factory->create_error("evse_board_support/MREC23ProximityFault", "",
+                                                          "Port 2 PP signal fault", Everest::error::Severity::High);
+                    this->raise_error(error_object);
+                } else {
+                    this->clear_error("evse_board_support/MREC23ProximityFault");
+                }
+            }
+
+            last_error_flags = error_flags;
         }
     });
 }
@@ -101,14 +142,13 @@ void evse_board_supportImpl::handle_pwm_F() {
 }
 
 void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::PowerOnOff& value) {
+    if (mod->config.conn2_disable_port) {
+        EVLOG_error << "[2] Port disabled; Cannot set power_on!";
+        return;
+    }
+
     if (mod->config.conn2_dc) {
         mod->serial.set_coil_state_request(2, CoilType_COIL_DC1, value.allow_power_on);
-        // FIXME: implement in MCU with feedback
-        if (value.allow_power_on) {
-            publish_event({types::board_support_common::Event::PowerOn});
-        } else {
-            publish_event({types::board_support_common::Event::PowerOff});
-        }
     } else {
         mod->serial.set_coil_state_request(2, CoilType_COIL_AC, value.allow_power_on);
     }
