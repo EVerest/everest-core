@@ -219,11 +219,14 @@ void RpcHandler::process_client_requests() {
                     }
                 }
 
-                // Call the RPC server with the request
-                std::string res = m_rpc_server->HandleRequest(request.dump());
-                // Send the response back to the client
-                transport_interface->send_data(client_id, res);
-                EVLOG_debug << "Sent response to client " << client_id << ": " << res;
+                // Process the request in a detached thread, because HandleRequest is blocking until the response is received
+                std::thread([this, transport_interface, client_id, request]() {
+                    // Call the RPC server with the request
+                    std::string res = m_rpc_server->HandleRequest(request.dump());
+                    // Send the response back to the client
+                    transport_interface->send_data(client_id, res);
+                    EVLOG_debug << "Sent response to client " << client_id << ": " << res;
+                }).detach();
             }
         } while (!all_requests_processed && m_is_running);
     }
