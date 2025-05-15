@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <deque>
 #include <functional>
+#include <jsonrpccxx/client.hpp>
 #include <jsonrpccxx/server.hpp>
 #include <memory>
 #include <mutex>
@@ -74,6 +75,26 @@ private:
     }
     void process_client_requests();
 
+    class ClientConnector : public jsonrpccxx::IClientConnector {
+    public:
+        explicit ClientConnector(std::vector<std::shared_ptr<TransportInterface>> interfaces) :
+            transport_interfaces(interfaces) {
+        }
+        std::string Send(const std::string& notification) override {
+            const std::vector<uint8_t> notif_char_array{notification.begin(), notification.end()};
+            for (const auto& interface : transport_interfaces) {
+                interface->send_data(notif_char_array);
+            }
+            return "";
+        }
+
+    private:
+        std::vector<std::shared_ptr<TransportInterface>>& transport_interfaces;
+    };
+    class JsonRpc2ServerWithClient : public JsonRpc2Server, public JsonRpcClient {
+    public:
+        JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
+    };
     // Members
     std::vector<std::shared_ptr<TransportInterface>> m_transport_interfaces;
     DataStoreCharger& m_data_store;
@@ -81,7 +102,7 @@ private:
     std::condition_variable m_cv_api_hello;
     std::condition_variable m_cv_data_available;
     std::unordered_map<TransportInterface::ClientId, bool> m_api_hello_received;
-    std::unique_ptr<JsonRpc2Server> m_rpc_server;
+    std::unique_ptr<JsonRpc2ServerWithClient> m_rpc_server;
     std::unordered_map<TransportInterface::ClientId, ClientReq> messages;
     std::chrono::steady_clock::time_point m_last_req_notification; // Last tick time
     std::thread m_rpc_recv_thread;
