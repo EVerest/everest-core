@@ -132,6 +132,11 @@ void evse_board_supportImpl::handle_pwm_F() {
 }
 
 void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::PowerOnOff& value) {
+    if(mod->config.conn2_disable_port) {
+        EVLOG_error << "[2] Port disabled; Cannot set power_on!";
+        return;
+    }
+    
     if (mod->config.conn2_dc) {
         mod->serial.set_coil_state_request(2, CoilType_COIL_DC1, value.allow_power_on);
         // FIXME: implement in MCU with feedback

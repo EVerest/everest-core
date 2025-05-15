@@ -1,0 +1,6 @@
+{
+    "conn1_motor_lock_type": 1,
+    "conn2_motor_lock_type": 2,
+    "conn1_dc": true,
+    "conn2_dc": true
+}

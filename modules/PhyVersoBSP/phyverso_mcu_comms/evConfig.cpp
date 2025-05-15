@@ -51,17 +51,50 @@ bool evConfig::read_hw_eeprom(ConfigHardwareRevision& hw_rev) {
     return true;
 }
 
-// todo: needs to refactored a lot
 void evConfig::fill_config_packet() {
     config_packet.which_payload = EverestToMcu_config_response_tag;
     config_packet.connector = 0;
     read_hw_eeprom(config_packet.payload.config_response.hw_rev);
 
-    config_packet.payload.config_response.lock_1.type = static_cast<MotorLockType>(conf.conn1_motor_lock_type);
-    config_packet.payload.config_response.has_lock_1 = true;
+    
+    config_packet.payload.config_response.has_chargeport_config_1 = true;
+    config_packet.payload.config_response.has_chargeport_config_2 = true;
 
-    config_packet.payload.config_response.lock_2.type = static_cast<MotorLockType>(conf.conn2_motor_lock_type);
-    config_packet.payload.config_response.has_lock_2 = true;
+    /* fill port 1 config */
+    {
+        auto& chargeport_config = config_packet.payload.config_response.chargeport_config_1;
+
+        chargeport_config.has_lock = true;
+        chargeport_config.lock.type = static_cast<MotorLockType>(conf.conn1_motor_lock_type);
+        chargeport_config.feedback_active_low = conf.conn1_feedback_active_low;
+        chargeport_config.feedback_pull = static_cast<GpioPull>(conf.conn1_feedback_pull);
+
+        if(conf.conn1_disable_port) {
+            chargeport_config.type = ChargePortType_DISABLED;
+        } else if (conf.conn1_dc) {
+            chargeport_config.type = ChargePortType_DC;
+        } else {
+            chargeport_config.type = ChargePortType_AC;
+        }
+    }
+
+    /* fill port 2 config */
+    {
+        auto& chargeport_config = config_packet.payload.config_response.chargeport_config_2;
+
+        chargeport_config.has_lock = true;
+        chargeport_config.lock.type = static_cast<MotorLockType>(conf.conn2_motor_lock_type);
+        chargeport_config.feedback_active_low = conf.conn2_feedback_active_low;
+        chargeport_config.feedback_pull = static_cast<GpioPull>(conf.conn2_feedback_pull);
+
+        if(conf.conn2_disable_port) {
+            chargeport_config.type = ChargePortType_DISABLED;
+        } else if (conf.conn2_dc) {
+            chargeport_config.type = ChargePortType_DC;
+        } else {
+            chargeport_config.type = ChargePortType_AC;
+        }   
+    }
 }
 
 EverestToMcu evConfig::get_config_packet() {
@@ -69,6 +102,7 @@ EverestToMcu evConfig::get_config_packet() {
     return config_packet;
 }
 
+// TODO: refactor someday
 void evConfig::json_conf_to_evConfig() {
     conf.conn1_motor_lock_type = config_file["conn1_motor_lock_type"];
     conf.conn2_motor_lock_type = config_file["conn2_motor_lock_type"];
@@ -80,6 +114,38 @@ void evConfig::json_conf_to_evConfig() {
     }
     try {
         conf.reset_gpio_pin = config_file["reset_gpio_pin"];
+    } catch (...) {
+    }
+    try {
+        conf.conn1_disable_port = config_file["conn1_disable_port"];
+    } catch (...) {
+    }
+    try {
+        conf.conn2_disable_port = config_file["conn2_disable_port"];
+    } catch (...) {
+    }
+    try {
+        conf.conn1_feedback_active_low = config_file["conn1_feedback_active_low"];
+    } catch (...) {
+    }
+    try {
+        conf.conn2_feedback_active_low = config_file["conn2_feedback_active_low"];
+    } catch (...) {
+    }
+    try {
+        conf.conn1_feedback_pull = config_file["conn1_feedback_pull"];
+    } catch (...) {
+    }
+    try {
+        conf.conn2_feedback_pull = config_file["conn2_feedback_pull"];
+    } catch (...) {
+    }
+    try {
+        conf.conn1_dc = config_file["conn1_dc"];
+    } catch (...) {
+    }
+    try {
+        conf.conn2_dc = config_file["conn2_dc"];
     } catch (...) {
     }
 }

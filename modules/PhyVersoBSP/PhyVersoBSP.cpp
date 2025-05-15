@@ -64,6 +64,20 @@ void PhyVersoBSP::ready() {
 
 // fills evConfig bridge with config values from manifest/everest config
 void PhyVersoBSP::everest_config_to_verso_config() {
+    if((this->config.conn1_feedback_pull < 0) ||(this->config.conn1_feedback_pull > 2)) {
+        EVLOG_error << "conn1_feedback_pull out of range! Falling back to default: 2";
+        verso_config.conf.conn1_feedback_pull = 2;
+    } else {
+        verso_config.conf.conn1_feedback_pull = this->config.conn1_feedback_pull;
+    }
+
+    if((this->config.conn2_feedback_pull < 0) ||(this->config.conn2_feedback_pull > 2)) {
+        EVLOG_error << "conn2_feedback_pull out of range! Falling back to default: 2";
+        verso_config.conf.conn2_feedback_pull = 2;
+    } else {
+        verso_config.conf.conn2_feedback_pull = this->config.conn2_feedback_pull;
+    }
+
     verso_config.conf.serial_port = this->config.serial_port;
     verso_config.conf.baud_rate = this->config.baud_rate;
     verso_config.conf.reset_gpio_bank = this->config.reset_gpio_bank;
@@ -78,6 +92,10 @@ void PhyVersoBSP::everest_config_to_verso_config() {
     verso_config.conf.conn2_gpio_stop_button_bank = this->config.conn2_gpio_stop_button_bank;
     verso_config.conf.conn2_gpio_stop_button_pin = this->config.conn2_gpio_stop_button_pin;
     verso_config.conf.conn2_gpio_stop_button_invert = this->config.conn2_gpio_stop_button_invert;
+    verso_config.conf.conn1_disable_port = this->config.conn1_disable_port;
+    verso_config.conf.conn2_disable_port = this->config.conn2_disable_port;
+    verso_config.conf.conn1_feedback_active_low = this->config.conn1_feedback_active_low;
+    verso_config.conf.conn2_feedback_active_low = this->config.conn2_feedback_active_low;
 }
 
 } // namespace module

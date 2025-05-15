@@ -61,6 +61,12 @@ struct Conf {
     std::string conn2_gpio_stop_button_bank;
     int conn2_gpio_stop_button_pin;
     bool conn2_gpio_stop_button_invert;
+    bool conn1_disable_port;
+    bool conn2_disable_port;
+    bool conn1_feedback_active_low;
+    bool conn2_feedback_active_low;
+    int conn1_feedback_pull;
+    int conn2_feedback_pull;
 };
 
 class PhyVersoBSP : public Everest::ModuleBase {
