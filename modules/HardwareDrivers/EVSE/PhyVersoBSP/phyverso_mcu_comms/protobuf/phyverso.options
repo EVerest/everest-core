@@ -1,3 +1,5 @@
 KeepAlive.sw_version_string max_length:50
 FanState.fan_id int_size:IS_8
 FanState.rpm int_size:IS_16
+BootConfigResponse.chargeport_config max_count:2
+BootConfigResponse.chargeport_config fixed_count:true
