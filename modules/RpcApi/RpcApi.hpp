@@ -82,13 +82,13 @@ private:
     // insert your private definitions here
     data::DataStoreCharger data;
     std::unique_ptr<server::WebSocketServer> m_websocket_server;
-    std::unique_ptr<rpc::RpcHandler> m_rpc_server;
+    std::unique_ptr<rpc::RpcHandler> m_rpc_handler;
     std::unique_ptr<request_interface::RequestHandlerInterface> m_request_handler;
 
     void subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager, data::DataStoreEvse& evse_data);
-    void meter_interface_to_datastore(const types::powermeter::Powermeter& powermeter,
+    void meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
                                       data::MeterDataStore& meter_data);
-    void hwcaps_interface_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
+    void hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
                                        data::HardwareCapabilitiesStore& hw_caps_data);
     bool check_evse_energy_sink_mapping();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

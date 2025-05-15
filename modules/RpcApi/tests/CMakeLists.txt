@@ -2,6 +2,7 @@ set(TEST_TARGET_NAME ${PROJECT_NAME}_rpcapi_tests)
 
 set(TEST_SOURCES 
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/RpcHandler.cpp
+    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/notifications/Evse.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp
     server/WebsocketServerTests.cpp
     rpc/RpcHandlerTests.cpp

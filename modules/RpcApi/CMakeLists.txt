@@ -32,9 +32,10 @@ target_link_libraries(${MODULE_NAME}
 target_sources(${MODULE_NAME}
     PRIVATE
         "data/GenericInfoStore.cpp"
+        "rpc/RpcHandler.cpp"
+        "rpc/notifications/Evse.cpp"
         "server/TransportInterface.cpp"
         "server/WebsocketServer.cpp"
-        "rpc/RpcHandler.cpp"
         "RpcApiRequestHandler.cpp"
 )
 
