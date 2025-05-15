@@ -118,8 +118,29 @@ message BootConfigRequest {
 
 message BootConfigResponse {
   ConfigHardwareRevision hw_rev = 1;
-  ConfigMotorLockType lock_1 = 2;
-  ConfigMotorLockType lock_2 = 3;
+  //ConfigMotorLockType lock_1 = 2;
+  //ConfigMotorLockType lock_2 = 3;
+  ChargePortConfig chargeport_config_1 = 4;
+  ChargePortConfig chargeport_config_2 = 5;
+}
+
+message ChargePortConfig {
+  ChargePortType type = 1;
+  bool feedback_active_low = 2;
+  GpioPull feedback_pull = 3;
+  ConfigMotorLockType lock = 4;
+}
+
+enum ChargePortType {
+  DISABLED = 0;
+  AC = 1;
+  DC = 2;
+}
+
+enum GpioPull {
+  NONE = 0;
+  UP = 1;
+  DOWN = 2;
 }
 
 message ConfigMotorLockType {
