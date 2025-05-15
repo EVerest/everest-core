@@ -3,10 +3,7 @@
 
 #include "bank_session_token_providerImpl.hpp"
 
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <string>
+#include <everest/staging/helpers/helpers.hpp>
 
 namespace module {
 namespace main {
@@ -22,7 +19,7 @@ types::payment_terminal::BankSessionToken bank_session_token_providerImpl::handl
     bank_session_token.token = config.token;
 
     if (config.randomize) {
-        bank_session_token.token = boost::uuids::to_string(boost::uuids::random_generator()());
+        bank_session_token.token = everest::staging::helpers::get_uuid();
     }
     return bank_session_token;
 }

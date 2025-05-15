@@ -17,3 +17,13 @@ TEST(HelpersTest, redact_token) {
 
     EXPECT_THAT(redacted, StartsWith("[redacted] hash: "));
 }
+
+TEST(HelpersTest, get_uuid) {
+    auto uuid1 = get_uuid();
+    auto uuid2 = get_uuid();
+
+    EXPECT_GT(uuid1.length(), 0);
+    EXPECT_GT(uuid2.length(), 0);
+    EXPECT_EQ(uuid1.length(), uuid2.length());
+    EXPECT_NE(uuid1, uuid2);
+}

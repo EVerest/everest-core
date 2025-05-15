@@ -18,6 +18,10 @@ std::string redact(const std::string& token);
 
 types::authorization::ProvidedIdToken redact(const types::authorization::ProvidedIdToken& token);
 
+/// \brief Provide a UUID
+/// \returns a UUID string
+std::string get_uuid();
+
 } // namespace everest::staging::helpers
 
 #endif
