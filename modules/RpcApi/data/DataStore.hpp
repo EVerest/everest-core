@@ -19,6 +19,7 @@ public:
         this->data_is_valid = true;
     }
 };
+
 class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoObj> {
     // EXAMPLE, in case override is required
     // void init_data() override {
@@ -32,7 +33,6 @@ public:
     }
 };
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {
-
 public:
     void set_index(int32_t index) {
         std::unique_lock<std::mutex> data_lock(this->data_mutex);
@@ -41,6 +41,11 @@ public:
     void set_id(const std::string& id) {
         std::unique_lock<std::mutex> data_lock(this->data_mutex);
         this->dataobj.id = id;
+    }
+public:
+    int32_t get_index() {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        return this->dataobj.index;
     }
 };
 class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};

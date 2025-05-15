@@ -25,13 +25,13 @@ protected:
         std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
         request_handler = std::make_unique<RequestHandlerDummy>();
         transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-        m_rpc_server = std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store, std::move(request_handler));
-        m_rpc_server->start_server();
+        m_rpc_handler = std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store, std::move(request_handler));
+        m_rpc_handler->start_server();
         initialize_data_store();
     }
 
     void TearDown() override {
-        m_rpc_server->stop_server();
+        m_rpc_handler->stop_server();
     }
 
     void initialize_data_store() {
@@ -75,7 +75,7 @@ protected:
     }
 
     std::unique_ptr<server::WebSocketServer> m_websocket_server;
-    std::unique_ptr<rpc::RpcHandler> m_rpc_server;
+    std::unique_ptr<rpc::RpcHandler> m_rpc_handler;
 
     //Condition variable to wait for response
     std::condition_variable cv;

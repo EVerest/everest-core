@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <deque>
 #include <functional>
+#include <jsonrpccxx/client.hpp>
 #include <jsonrpccxx/server.hpp>
 #include <memory>
 #include <mutex>
@@ -25,6 +26,7 @@
 #include "methods/Api.hpp"
 #include "methods/ChargePoint.hpp"
 #include "methods/Evse.hpp"
+#include "notifications/Evse.hpp"
 
 using namespace server;
 using namespace jsonrpccxx;
@@ -39,13 +41,44 @@ struct ClientReq {
     std::deque<nlohmann::json> data; // Queue of requests
 };
 
+class ClientConnector : public jsonrpccxx::IClientConnector {
+public:
+    explicit ClientConnector(std::vector<std::shared_ptr<TransportInterface>>& interfaces) :
+        transport_interfaces(interfaces) {
+    }
+    std::string Send(const std::string& notification) override {
+        const std::vector<uint8_t> notif_char_array{notification.begin(), notification.end()};
+        for (const auto& interface : transport_interfaces) {
+            interface->send_data(notif_char_array);
+        }
+        return "";
+    }
+
+private:
+    std::vector<std::shared_ptr<TransportInterface>>& transport_interfaces;
+};
+// Members
+
+class JsonRpc2ServerWithClient : public JsonRpc2Server, public JsonRpcClient {
+public:
+    JsonRpc2ServerWithClient() = delete;
+    JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
+    // helper to be able to put data object into caller
+    // which is something which json-rpc-cxx should be doing
+    template <typename T> void CallNotificationWithObject(const std::string& name, const T& in) {
+        nlohmann::json j;
+        nlohmann::to_json(j, in);
+        CallNotificationNamed(name, j);
+    }
+};
+
 class RpcHandler {
 public:
     // Constructor and Destructor
     RpcHandler() = delete;
     // RpcHandler just needs just a tranport interface array
-    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
-        DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler);
+    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces, DataStoreCharger& dataobj,
+               std::unique_ptr<request_interface::RequestHandlerInterface> request_handler);
 
     ~RpcHandler() = default;
 
@@ -74,14 +107,13 @@ private:
     }
     void process_client_requests();
 
-    // Members
     std::vector<std::shared_ptr<TransportInterface>> m_transport_interfaces;
     DataStoreCharger& m_data_store;
     std::mutex m_mtx;
     std::condition_variable m_cv_api_hello;
     std::condition_variable m_cv_data_available;
     std::unordered_map<TransportInterface::ClientId, bool> m_api_hello_received;
-    std::unique_ptr<JsonRpc2Server> m_rpc_server;
+    std::shared_ptr<JsonRpc2ServerWithClient> m_rpc_server;
     std::unordered_map<TransportInterface::ClientId, ClientReq> messages;
     std::chrono::steady_clock::time_point m_last_req_notification; // Last tick time
     std::thread m_rpc_recv_thread;
@@ -90,6 +122,8 @@ private:
     methods::Api m_methods_api;
     methods::ChargePoint m_methods_chargepoint;
     methods::Evse m_methods_evse;
+    ClientConnector m_conn;
+    notifications::Evse* m_notifications_evse;
 };
 } // namespace rpc
 

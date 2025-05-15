@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
 
-#ifndef EVSE_HPP
-#define EVSE_HPP
+#ifndef METHODS_EVSE_HPP
+#define METHODS_EVSE_HPP
 
 #include <optional>
 #include <vector>
@@ -210,4 +210,4 @@ private:
 
 } // namespace methods
 
-#endif // EVSE_HPP
+#endif // METHODS_EVSE_HPP
