@@ -1,10 +1,10 @@
 # EVerest with docker
 
-You can build docker images of everest-core or out-of-tree repositories using the provided utility script. 
+You can build docker images of everest-core or out-of-tree repositories using the provided utility script.
 
 ## Build an EVerest docker image
 
-With 
+With
 
 ```bash
 ./build.sh [--conf <string>]
@@ -12,8 +12,12 @@ With
 
 a docker image of everest-core will be created using the given EVerest configuration file.
 
+**It is important to note that if you require ssh access, the ssh agent forwarding should be done without sudo privileges.
+By running the script in sudo this changes the user and causes issues with the ssh forwarding.**
+It is possible to make your user not require sudo privileges when running docker, this should be done instead.
+
 Specify the following options to create your desired docker image of EVerest:
-  
+
 * repo: Git repository (e.g. https://github.com/EVerest/everest-core.git) - Optional, defaults to: https://github.com/EVerest/everest-core.git
 * branch: Git branch or tag name (e.g main or 2024.6.0) - Optional, defaults to: main
 * conf: Path to EVerest config file (e.g. /home/$(whoami)/checkout/everest-workspace/everest-core/config/ config-sil.yaml) - Required.

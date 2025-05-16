@@ -39,13 +39,13 @@ RUN apt-get update \
 WORKDIR /workspace/everest
 
 # to avoid caching
-ARG BUILD_DATE=Unknown 
+ARG BUILD_DATE=Unknown
 
 # add github to known hosts
-RUN mkdir ~/.ssh
-RUN ssh-keyscan github.com > ~/.ssh/known_hosts
+RUN mkdir -p -m 0600 ~/.ssh
+RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-RUN mkdir -p /workspace/everest/cpm_source_cache    
+RUN mkdir -p /workspace/everest/cpm_source_cache
 ENV CPM_SOURCE_CACHE="/workspace/everest/cpm_source_cache"
 ENV EVEREST_VENV=/workspace/everest/venv
 RUN python3 -m venv ${EVEREST_VENV}
@@ -68,7 +68,7 @@ WORKDIR /workspace/everest
 RUN rm -rf "/workspace/everest/$(basename "${REPO}" .git)"
 RUN --mount=type=ssh git clone ${REPO}
 
-RUN rm -rf "/workspace/everest/$(basename "${REPO}" .git)/build" && \
+RUN --mount=type=ssh rm -rf "/workspace/everest/$(basename "${REPO}" .git)/build" && \
     cd "/workspace/everest/$(basename "${REPO}" .git)" && \
     git checkout "${BRANCH}" && \
     mkdir "/workspace/everest/$(basename "${REPO}" .git)/build" && \
@@ -94,6 +94,7 @@ RUN apt-get update \
     openjdk-17-jre \
     nodejs \
     npm \
+    curl \
     python3-pip \
     sqlite3 \
     libboost-program-options1.74.0 \
