@@ -89,6 +89,10 @@ if(NOT DISABLE_EDM)
     # FIXME (aw): this implicit definition for child projects is hacky
     set(THIRD_PARTY_APP_DST "${CMAKE_INSTALL_LIBEXECDIR}/everest/3rd_party")
 
+    if(GRPC_EDM)
+        enable_language(ASM)
+    endif()
+
     evc_setup_edm()
 
     # FIXME (aw): we need to set this by hand due to edm
