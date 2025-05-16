@@ -236,7 +236,8 @@ public:
      * @param callback
      */
     void register_publish_token_validation_status_callback(
-        const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback);
+        const std::function<void(const ProvidedIdToken&, TokenValidationStatus,
+                                 std::optional<std::vector<types::text_message::MessageContent>>)>& callback);
 
     WithdrawAuthorizationResult handle_withdraw_authorization(const WithdrawAuthorizationRequest& request);
 
@@ -281,7 +282,8 @@ private:
     std::function<void(const std::optional<int>& evse_index, const int32_t reservation_id,
                        const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
-    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status)>
+    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status,
+                       std::optional<std::vector<types::text_message::MessageContent>>)>
         publish_token_validation_status_callback;
 
     std::vector<int> get_referenced_evses(const ProvidedIdToken& provided_token);
@@ -292,7 +294,8 @@ private:
     bool any_parent_id_present(const std::vector<int>& evse_ids);
     bool equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token);
 
-    TokenHandlingResult handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk);
+    TokenHandlingResult handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk,
+                                     std::optional<std::vector<types::text_message::MessageContent>>& messages);
 
     /**
      * @brief Method selects an evse based on the configured selection algorithm. It might block until an event
