@@ -8,7 +8,7 @@ module(
 ###############################################################################
 
 bazel_dep(name = "everest-framework", version = "0.0.0")
-git_override(module_name="everest-framework", commit="d2414b65ceff250b55e69009d9686c025832a5c7", remote="https://github.com/EVerest/everest-framework")
+git_override(module_name="everest-framework", commit="149717e58f4ee3fc34a7f3737bed38277178387a", remote="https://github.com/EVerest/everest-framework")
 
 bazel_dep(name = "everest-utils", version = "0.0.0")
 git_override(module_name="everest-utils", commit="15da78b9a12295fe00d1ec649378f7fcfff159c5", remote="https://github.com/Qwello/everest-utils")
