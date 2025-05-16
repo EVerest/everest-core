@@ -23,7 +23,9 @@ public:
 
     // Methods
     bool running() const override;
-    void send_data(const ClientId &client_id, const Data &data) override;
+    void send_data(const std::vector<uint8_t>& data) override;
+    void send_data(const ClientId& client_id, const Data& data) override;
+    void send_data(struct lws* wsi, const std::vector<uint8_t>& data);
     void kill_client_connection(const ClientId &client_id, const std::string &kill_reason) override;
     uint connections_count() const override;
 
