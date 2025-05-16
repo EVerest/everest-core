@@ -111,7 +111,18 @@ bool WebSocketServer::running() const {
     return m_running;
 }
 
-void WebSocketServer::send_data(const ClientId &client_id, const std::vector<uint8_t> &data) {
+// send data to all connected clients
+void WebSocketServer::send_data(const std::vector<uint8_t>& data) {
+    std::lock_guard<std::mutex> lock(m_clients_mutex);
+
+    for (const auto& client : m_clients) {
+        struct lws* wsi = client.second;
+        send_data(wsi, data);
+    }
+}
+
+// send data to client identified by ClientId
+void WebSocketServer::send_data(const ClientId& client_id, const std::vector<uint8_t>& data) {
     try {
         std::lock_guard<std::mutex> lock(m_clients_mutex);
 
@@ -121,15 +132,25 @@ void WebSocketServer::send_data(const ClientId &client_id, const std::vector<uin
             return;
         }
 
-        struct lws *wsi = it->second;
+        struct lws* wsi = it->second;
+        send_data(wsi, data);
+    } catch (const std::exception& e) {
+        EVLOG_error << "Exception occurred while sending data to client " << client_id << ": " << e.what();
+    }
+}
+
+// send data to client identified by libwebsockets wsi
+void WebSocketServer::send_data(struct lws* wsi, const std::vector<uint8_t>& data) {
+    try {
         std::vector<unsigned char> buf(LWS_PRE + data.size());
         memcpy(buf.data() + LWS_PRE, data.data(), data.size());
 
         if (lws_write(wsi, buf.data() + LWS_PRE, data.size(), LWS_WRITE_BINARY) < 0) {
-            EVLOG_error << "Failed to send data to client " << client_id;
+            EVLOG_error << "Failed to send data to client";
         }
-    } catch (const std::exception &e) {
-        EVLOG_error << "Exception occurred while sending data to client " << client_id << ": " << e.what();
+    } catch (const std::exception& e) {
+        // Note: the code in the try{} block probably cannot throw an exception
+        EVLOG_error << "Exception occurred while sending data to client: " << e.what();
     }
 }
 

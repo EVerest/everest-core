@@ -38,6 +38,7 @@ public:
 
     std::string server_name() const;
 
+    virtual void send_data(const Data &data) = 0;
     virtual void send_data(const ClientId &clientId, const Data &data) = 0;
     inline void send_data(const ClientId &clientId, const std::string &data) {
         send_data(clientId, std::vector<uint8_t>(data.begin(), data.end()));
