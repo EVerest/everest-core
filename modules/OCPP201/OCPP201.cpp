@@ -1025,7 +1025,7 @@ void OCPP201::ready() {
 
     // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
     // plugged in at startup)
-    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
+    std::this_thread::sleep_for(std::chrono::seconds(this->config.DelayOcppStart));
     // start OCPP connection
     this->charge_point->connect_websocket();
 }

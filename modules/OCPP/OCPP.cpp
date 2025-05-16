@@ -1018,7 +1018,7 @@ void OCPP::ready() {
 
     // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
     // plugged in at startup)
-    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
+    std::this_thread::sleep_for(std::chrono::seconds(this->config.DelayOcppStart));
     const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
     // we can now start the OCPP connection
     if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
