@@ -211,7 +211,7 @@ bool WebSocketServer::stop_server() {
     }
     m_running = false;
 
-    lws_cancel_service(m_context); // To unblock the server thread loop emmediately
+    lws_cancel_service(m_context); // To unblock the server thread loop immediately
 
     if (m_server_thread.joinable()) {
         m_server_thread.join();  // Wait for server thread to finish
