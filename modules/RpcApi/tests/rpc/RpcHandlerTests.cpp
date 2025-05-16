@@ -110,7 +110,7 @@ TEST_F(RpcHandlerTest, ApiHelloReq) {
     nlohmann::json expected_response = {
         {"jsonrpc", "2.0"},
         {"result", result},
-        {"index", 1}
+        {"id", 1}
     };
     
     // Send Api.Hello request

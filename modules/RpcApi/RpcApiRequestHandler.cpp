@@ -21,6 +21,12 @@ RpcApiRequestHandler::~RpcApiRequestHandler() {
 
 ErrorResObj RpcApiRequestHandler::setChargingAllowed(const int32_t evse_index, bool charging_allowed) {
     ErrorResObj res {};
+    bool rv = evse_managers[0]->call_pause_charging();
+    if (rv) {
+        res.error = ResponseErrorEnum::NoError;
+    } else {
+        res.error = ResponseErrorEnum::ErrorValuesNotApplied;
+    }
     return res;
 }
 
