@@ -43,7 +43,8 @@ protected:
         charger_info.vendor = "Test Vendor";
         data_store.chargerinfo.set_data(charger_info);
         data_store.everest_version = "2025.1.0";
-        auto& ptr = data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>()); // Properly initialize EVSE objects
+        // Properly initialize EVSE objects
+        const auto& ptr = data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
         ptr->connectors.emplace_back(std::make_unique<data::DataStoreConnector>());
     }
 
