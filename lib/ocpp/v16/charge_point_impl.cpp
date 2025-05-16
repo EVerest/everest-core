@@ -335,8 +335,9 @@ void ChargePointImpl::init_websocket() {
                                             std::nullopt, true);
         }
         if (reason == ocpp::ConnectionFailedReason::InvalidCSMSCertificate) {
+            // This event is forced to accomodate for for TC_078_CS even if this event is not critical
             this->securityEventNotification(CiString<50>(ocpp::security_events::INVALIDCENTRALSYSTEMCERTIFICATE),
-                                            std::nullopt, true);
+                                            std::nullopt, true, true);
         }
     });
 
@@ -2810,9 +2811,10 @@ void ChargePointImpl::handleCertificateSignedRequest(ocpp::Call<CertificateSigne
     this->message_dispatcher->dispatch_call_result(call_result);
 
     if (response.status == CertificateSignedStatusEnumType::Rejected) {
+        // This event is forced to accomodate for for TC_077_CS even if this event is not critical
         this->securityEventNotification(
             ocpp::security_events::INVALIDCHARGEPOINTCERTIFICATE,
-            std::optional<CiString<255>>(ocpp::conversions::install_certificate_result_to_string(result)), true);
+            std::optional<CiString<255>>(ocpp::conversions::install_certificate_result_to_string(result)), true, true);
     }
 
     // reconnect with new certificate if valid and security profile is 3
@@ -2897,7 +2899,7 @@ void ChargePointImpl::handleInstallCertificateRequest(ocpp::Call<InstallCertific
     if (response.status == InstallCertificateStatusEnumType::Rejected) {
         this->securityEventNotification(
             ocpp::security_events::INVALIDCENTRALSYSTEMCERTIFICATE,
-            std::optional<CiString<255>>(ocpp::conversions::install_certificate_result_to_string(result)), true);
+            std::optional<CiString<255>>(ocpp::conversions::install_certificate_result_to_string(result)), true, false);
     }
 }
 
@@ -2959,10 +2961,7 @@ void ChargePointImpl::securityEventNotification(const CiString<50>& event_type,
         critical_security_event = utils::is_critical(event_type);
     }
 
-    bool send_event =
-        (critical_security_event || event_type == CiString<50>(ocpp::security_events::INVALIDCENTRALSYSTEMCERTIFICATE));
-
-    if (send_event and !this->configuration->getDisableSecurityEventNotifications()) {
+    if (critical_security_event and !this->configuration->getDisableSecurityEventNotifications()) {
         ocpp::Call<SecurityEventNotificationRequest> call(req);
         this->message_dispatcher->dispatch_call(call);
     }
