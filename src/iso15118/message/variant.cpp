@@ -107,6 +107,8 @@ static void handle_dc(VariantAccess& va) {
         insert_type(va, doc.DC_PreChargeRes);
     } else if (doc.DC_ChargeLoopReq_isUsed) {
         insert_type(va, doc.DC_ChargeLoopReq);
+    } else if (doc.DC_ChargeLoopRes_isUsed) {
+        insert_type(va, doc.DC_ChargeLoopRes);
     } else if (doc.DC_WeldingDetectionReq_isUsed) {
         insert_type(va, doc.DC_WeldingDetectionReq);
     } else {

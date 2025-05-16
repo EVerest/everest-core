@@ -57,11 +57,6 @@ template <> void convert(const struct iso20_PowerDeliveryReqType& in, PowerDeliv
 // End conversion for deserializing a PowerDeliveryRequest (EVSEside)
 
 // Begin conversion for deserializing a PowerDeliveryResponse (EVside)
-template <> void convert(const struct iso20_EVSEStatusType& in, datatypes::EvseStatus& out) {
-    cb_convert_enum(in.EVSENotification, out.notification);
-    out.notification_max_delay = in.NotificationMaxDelay;
-}
-
 template <> void convert(const struct iso20_PowerDeliveryResType& in, PowerDeliveryResponse& out) {
 
     cb_convert_enum(in.ResponseCode, out.response_code);

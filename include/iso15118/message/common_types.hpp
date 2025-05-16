@@ -256,7 +256,7 @@ struct MeterInfo {
     uint64_t charged_energy_reading_wh;
     std::optional<uint64_t> bpt_discharged_energy_reading_wh;
     std::optional<uint64_t> capacitive_energy_reading_varh;
-    std::optional<uint64_t> bpt_inductive_energery_reading_varh;
+    std::optional<uint64_t> bpt_inductive_energy_reading_varh;
     std::optional<MeterSignature> meter_signature;
     std::optional<int16_t> meter_status;
     std::optional<uint64_t> meter_timestamp;
@@ -288,7 +288,7 @@ struct DetailedTax {
 struct Receipt {
     uint64_t time_anchor;
     std::optional<DetailedCost> energy_costs;
-    std::optional<DetailedCost> occupany_costs;
+    std::optional<DetailedCost> occupancy_costs;
     std::optional<DetailedCost> additional_service_costs;
     std::optional<DetailedCost> overstay_costs;
     std::vector<DetailedTax> tax_costs; // 0 to 10 elements! // FIXME(sl): optional?

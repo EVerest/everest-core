@@ -73,6 +73,11 @@ template <> void convert(const datatypes::EvseStatus& in, struct iso20_dc_EVSESt
     cb_convert_enum(in.notification, out.EVSENotification);
 }
 
+template <> void convert(const struct iso20_dc_EVSEStatusType& in, datatypes::EvseStatus& out) {
+    cb_convert_enum(in.EVSENotification, out.notification);
+    out.notification_max_delay = in.NotificationMaxDelay;
+}
+
 template <> void convert(const datatypes::EvseStatus& in, struct iso20_ac_EVSEStatusType& out) {
     out.NotificationMaxDelay = in.notification_max_delay;
     cb_convert_enum(in.notification, out.EVSENotification);
@@ -85,7 +90,7 @@ template <typename cb_MeterInfoType> void convert_meterinfo(const datatypes::Met
 
     CPP2CB_ASSIGN_IF_USED(in.bpt_discharged_energy_reading_wh, out.BPT_DischargedEnergyReadingWh);
     CPP2CB_ASSIGN_IF_USED(in.capacitive_energy_reading_varh, out.CapacitiveEnergyReadingVARh);
-    CPP2CB_ASSIGN_IF_USED(in.bpt_inductive_energery_reading_varh, out.BPT_InductiveEnergyReadingVARh);
+    CPP2CB_ASSIGN_IF_USED(in.bpt_inductive_energy_reading_varh, out.BPT_InductiveEnergyReadingVARh);
 
     if (in.meter_signature) {
         CPP2CB_BYTES(in.meter_signature.value(), out.MeterSignature);
@@ -106,9 +111,34 @@ template <> void convert(const datatypes::MeterInfo& in, iso20_ac_MeterInfoType&
     convert_meterinfo(in, out);
 }
 
+template <typename cb_MeterInfoType>
+void convert_meterinfo_inverse(const cb_MeterInfoType& in, datatypes::MeterInfo& out) {
+    out.meter_id = CB2CPP_STRING(in.MeterID);
+    out.charged_energy_reading_wh = in.ChargedEnergyReadingWh;
+    CB2CPP_ASSIGN_IF_USED(in.BPT_DischargedEnergyReadingWh, out.bpt_discharged_energy_reading_wh);
+    CB2CPP_ASSIGN_IF_USED(in.BPT_InductiveEnergyReadingVARh, out.bpt_inductive_energy_reading_varh);
+    CB2CPP_ASSIGN_IF_USED(in.CapacitiveEnergyReadingVARh, out.capacitive_energy_reading_varh);
+    CB2CPP_BYTES_IF_USED(in.MeterSignature, out.meter_signature);
+    CB2CPP_ASSIGN_IF_USED(in.MeterStatus, out.meter_status);
+    CB2CPP_ASSIGN_IF_USED(in.MeterTimestamp, out.meter_timestamp);
+}
+
+template <> void convert(const iso20_dc_MeterInfoType& in, datatypes::MeterInfo& out) {
+    convert_meterinfo_inverse(in, out);
+}
+
+template <> void convert(const iso20_ac_MeterInfoType& in, datatypes::MeterInfo& out) {
+    convert_meterinfo_inverse(in, out);
+}
+
 template <> void convert(const datatypes::EvseStatus& in, iso20_EVSEStatusType& out) {
     out.NotificationMaxDelay = in.notification_max_delay;
     cb_convert_enum(in.notification, out.EVSENotification);
+}
+
+template <> void convert(const struct iso20_EVSEStatusType& in, datatypes::EvseStatus& out) {
+    cb_convert_enum(in.EVSENotification, out.notification);
+    out.notification_max_delay = in.NotificationMaxDelay;
 }
 
 template <> void convert(const struct iso20_PowerScheduleEntryType& in, datatypes::PowerScheduleEntry& out) {

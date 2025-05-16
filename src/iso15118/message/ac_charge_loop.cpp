@@ -161,7 +161,7 @@ template <> void convert(const datatypes::Receipt& in, struct iso20_ac_ReceiptTy
 
     out.TimeAnchor = in.time_anchor;
     CPP2CB_CONVERT_IF_USED(in.energy_costs, out.EnergyCosts);
-    CPP2CB_CONVERT_IF_USED(in.occupany_costs, out.OccupancyCosts);
+    CPP2CB_CONVERT_IF_USED(in.occupancy_costs, out.OccupancyCosts);
     CPP2CB_CONVERT_IF_USED(in.additional_service_costs, out.AdditionalServicesCosts);
     CPP2CB_CONVERT_IF_USED(in.overstay_costs, out.OverstayCosts);
 
