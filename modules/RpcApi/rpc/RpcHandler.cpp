@@ -69,7 +69,8 @@ RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> 
     m_transport_interfaces(std::move(transport_interfaces)),
     m_methods_api(dataobj),
     m_methods_chargepoint(dataobj),
-    m_methods_evse(dataobj, std::move(request_handler)) {
+    m_methods_evse(dataobj, std::move(request_handler)),
+    m_notifications_evse(dataobj) {
     init_rpc_api();
     init_transport_interfaces();
 }
