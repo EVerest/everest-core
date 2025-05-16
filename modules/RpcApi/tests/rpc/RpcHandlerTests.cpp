@@ -60,7 +60,13 @@ protected:
         // Check if the response is valid
         if (cmp_f != nullptr) {
             // Compare the response with the expected response using the provided comparison function
-            ASSERT_TRUE(cmp_f(response, expected_response));
+            bool res = cmp_f(response, expected_response);
+            if (!res) {
+                // If the comparison fails, print the response and expected response for debugging
+                EVLOG_error << "Expected equality of these values: response: " << response.dump();
+                EVLOG_error << "Expected response: " << expected_response.dump();
+            }
+            ASSERT_TRUE(res);
         } else {
             // Compare the response with the expected response
             ASSERT_EQ(response, expected_response);
