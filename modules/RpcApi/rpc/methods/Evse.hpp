@@ -108,11 +108,26 @@ public:
     };
 
     RPCDataTypes::ErrorResObj setChargingAllowed(const int32_t evse_index, bool charging_allowed) {
-        return m_request_handler_ptr->setChargingAllowed(evse_index, charging_allowed);
+        RPCDataTypes::ErrorResObj res {};
 
+        auto evse = getEVSEStore(evse_index);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+
+        return m_request_handler_ptr->setChargingAllowed(evse_index, charging_allowed);
     };
 
     RPCDataTypes::ErrorResObj setACCharging(const int32_t evse_index, bool charging_allowed, float max_current, std::optional<int> phase_count) {
+        RPCDataTypes::ErrorResObj res {};
+
+        auto evse = getEVSEStore(evse_index);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+
         return m_request_handler_ptr->setACCharging(evse_index, charging_allowed, max_current, phase_count);
     };
 
