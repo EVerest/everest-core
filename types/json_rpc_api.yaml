@@ -719,3 +719,46 @@ types:
         description: Response error
         type: object
         $ref: /json_rpc_api#/ResponseErrorEnum
+  # notifications
+  EVSEHardwareCapabilitiesChangedObj:
+    description: Notification EVSE.HardwareCapabilitiesChanged
+    type: object
+    additionalProperties: false
+    required:
+      - evse_index
+      - hardware_capabilities
+    properties:
+      evse_index:
+        description: Index of the EVSE
+        type: integer
+      hardware_capabilities:
+        type: object
+        $ref: /json_rpc_api#/HardwareCapabilitiesObj
+  EVSEStatusChangedObj:
+    description: Notification EVSE.StatusChanged
+    type: object
+    additionalProperties: false
+    required:
+      - evse_index
+      - evse_status
+    properties:
+      evse_index:
+        description: Index of the EVSE
+        type: integer
+      evse_status:
+        type: object
+        $ref: /json_rpc_api#/EVSEStatusObj
+  EVSEMeterDataChangedObj:
+    description: Notification EVSE.MeterDataChanged
+    type: object
+    additionalProperties: false
+    required:
+      - evse_index
+      - meter_data
+    properties:
+      evse_index:
+        description: Index of the EVSE
+        type: integer
+      meter_data:
+        type: object
+        $ref: /json_rpc_api#/MeterDataObj

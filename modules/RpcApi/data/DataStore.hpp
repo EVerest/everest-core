@@ -31,7 +31,13 @@ public:
         this->dataobj.id = id;
     }
 };
-class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {};
+class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {
+public:
+    int32_t get_index() {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        return this->dataobj.index;
+    }
+};
 class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};
 class HardwareCapabilitiesStore : public GenericInfoStore<RPCDataTypes::HardwareCapabilitiesObj> {};
 class MeterDataStore : public GenericInfoStore<RPCDataTypes::MeterDataObj> {};
