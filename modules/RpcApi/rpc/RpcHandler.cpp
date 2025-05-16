@@ -126,7 +126,7 @@ void RpcHandler::init_transport_interfaces() {
 
         transport_interface->on_data_available =
             [this, transport_interface](const server::TransportInterface::ClientId& client_id,
-                                        const server::TransportInterface::Data data) {
+                                        const server::TransportInterface::Data& data) {
                 this->data_available(transport_interface, client_id, data);
             };
     }
