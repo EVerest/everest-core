@@ -26,6 +26,7 @@
 #include "methods/Api.hpp"
 #include "methods/ChargePoint.hpp"
 #include "methods/Evse.hpp"
+#include "notifications/Evse.hpp"
 
 using namespace server;
 using namespace jsonrpccxx;
@@ -111,6 +112,7 @@ private:
     methods::Api m_methods_api;
     methods::ChargePoint m_methods_chargepoint;
     methods::Evse m_methods_evse;
+    notifications::Evse m_notifications_evse;
 };
 } // namespace rpc
 
