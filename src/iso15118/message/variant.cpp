@@ -78,6 +78,8 @@ static void handle_main(VariantAccess& va) {
         insert_type(va, doc.PowerDeliveryRes);
     } else if (doc.SessionStopReq_isUsed) {
         insert_type(va, doc.SessionStopReq);
+    } else if (doc.SessionStopRes_isUsed) {
+        insert_type(va, doc.SessionStopRes);
     } else {
         va.error = "chosen message type unhandled";
     }
