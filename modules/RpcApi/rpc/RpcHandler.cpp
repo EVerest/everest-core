@@ -18,6 +18,47 @@ static const std::chrono::milliseconds REQ_COLLECTION_TIMEOUT(
 static const std::chrono::milliseconds
     REQ_PROCESSING_TIMEOUT(50); // Timeout for processing requests. After this timeout, the request will be processed.
 
+
+// Helper functions
+template <typename T>
+struct is_optional<std::optional<T>> : std::true_type {};
+
+template <typename T>
+auto extract_param(const nlohmann::json& j) {
+    if constexpr (is_optional<T>::value) {
+        using InnerT = typename T::value_type;
+        if (j.is_null()) {
+            return std::optional<InnerT>{};
+        } else {
+            return std::optional<InnerT>{j.get<InnerT>()};
+        }
+    } else {
+        return j.get<T>();
+    }
+}
+
+// json-rpc-cpp does not support optional parameters in method signatures
+// so we need to create our own get_handle function to handle methods with optional parameters correctly
+template <typename T, typename ReturnType, typename... ParamTypes>
+MethodHandle get_handle(ReturnType (T::*method)(ParamTypes...), T& instance) {
+    return [&instance, method](const json& params) -> ReturnType {
+        if (!params.is_array()) {
+            throw std::runtime_error("params must be array");
+        }
+
+        constexpr size_t expected = sizeof...(ParamTypes);
+        if (params.size() != expected) {
+            throw std::runtime_error("invalid number of parameters");
+        }
+
+        return [&]<std::size_t... I>(std::index_sequence<I...>) {
+            return (instance.*method)(
+                (extract_param<std::remove_reference_t<ParamTypes>>(params.at(I)))...
+            );
+        }(std::index_sequence_for<ParamTypes...>{});
+    };
+}
+
 // RpcHandler just needs just a tranport interface array
 RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
                         DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler) :
@@ -30,36 +71,22 @@ RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> 
     init_transport_interfaces();
 }
 
-struct HelloResponse {
-    bool success;
-    bool authenticated;
-};
-
-void to_json(nlohmann::json& j, const HelloResponse& r) {
-    j = nlohmann::json{{"success", r.success}, {"authenticated", r.authenticated}};
-}
-
-void from_json(const nlohmann::json& j, HelloResponse& r) {
-    j.at("success").get_to(r.success);
-    j.at("authenticated").get_to(r.authenticated);
-}
-
 void RpcHandler::init_rpc_api() {
     // Initialize the RPC API here
     m_methods_api.set_authentication_required(false);
     m_methods_api.set_api_version(API_VERSION);
     m_rpc_server = std::make_unique<JsonRpc2Server>();
-    m_rpc_server->Add(methods::METHOD_API_HELLO, GetHandle(&methods::Api::hello, m_methods_api), {});
+    m_rpc_server->Add(methods::METHOD_API_HELLO, get_handle(&methods::Api::hello, m_methods_api), {});
     m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
-                      GetHandle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, GetHandle(&methods::Evse::getInfo, m_methods_evse),
+        get_handle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, get_handle(&methods::Evse::getInfo, m_methods_evse),
                       {"evse_index"});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS, GetHandle(&methods::Evse::getStatus, m_methods_evse),
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS, get_handle(&methods::Evse::getStatus, m_methods_evse),
                       {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_GET_HARDWARE_CAPABILITIES,
-                      GetHandle(&methods::Evse::getHardwareCapabilities, m_methods_evse), {"evse_index"});
+        get_handle(&methods::Evse::getHardwareCapabilities, m_methods_evse), {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_CHARGING_ALLOWED,
-                      GetHandle(&methods::Evse::setChargingAllowed, m_methods_evse), {"evse_index", "charging_allowed"});
+        get_handle(&methods::Evse::setChargingAllowed, m_methods_evse), {"evse_index", "charging_allowed"});
 }
 
 void RpcHandler::init_transport_interfaces() {
