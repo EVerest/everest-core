@@ -58,7 +58,7 @@ public:
             // call the notification callback if it is set
             if (this->notification_callback) {
                 // create a copy of the data object
-                decltype(dataobj) data_copy = this->dataobj;
+                T data_copy = this->dataobj;
                 // unlock explicitly before entering callback
                 data_lock.unlock();
                 this->notification_callback(data_copy);
@@ -70,7 +70,7 @@ public:
     // virtual void set_data(const nlohmann::json& in) = 0;
 
     // register a callback which is triggered when any data in the associated data store changes
-    void register_notification_callback(const std::function<void(const decltype(dataobj)&)>& callback) {
+    void register_notification_callback(const std::function<void(const T&)>& callback) {
         this->notification_callback = callback;
     }
 };
