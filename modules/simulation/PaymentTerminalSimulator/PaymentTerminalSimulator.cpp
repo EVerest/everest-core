@@ -62,12 +62,14 @@ namespace module {
 
 void PaymentTerminalSimulator::init() {
     m_VPT = std::make_shared<pterminal::VirtualPT>();
-    if (config.simulated_PT_has_open_preauthorizations) {
-        m_VPT->add_open_preauthorization(0, 1000);
-        m_VPT->add_open_preauthorization(1, 2000);
-        m_VPT->add_open_preauthorization(2, 3000);
-    }
     m_simIfc = m_VPT;
+
+    if (config.simulated_PT_has_open_preauthorizations) {
+        m_simIfc->add_open_preauthorization(0, 1000);
+        m_simIfc->add_open_preauthorization(1, 2000);
+        m_simIfc->add_open_preauthorization(2, 3000);
+    }
+
     m_PT_drv = std::make_unique<pterminal::PTDriver>(m_VPT);
 
     invoke_init(*p_token_provider);

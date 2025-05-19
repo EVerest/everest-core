@@ -27,14 +27,14 @@ ToDo
 ====
 
 * ToDo (CB): How to handle open pre-authorizations?
-** Add a config option for token timeout? (time after presenting the card until the token becomes invalid if no session is started)
-** maybe setup (async) timers in order to close them eventually?
-** Should use new TokenValidationStatus "Withdrawn"
-*** ...in order to make sure no charging session can be started, once a pre-authorization is about to be cancelled (e.g. because of a timeout)
-*** but does this work? (does sending "Withdrawn" really stop running EvseManager transactions? PG says yes!)
+ * Add a config option for token timeout? (time after presenting the card until the token becomes invalid if no session is started)
+ * maybe setup (async) timers in order to close them eventually?
+ * Should use new TokenValidationStatus "Withdrawn"
+  * ...in order to make sure no charging session can be started, once a pre-authorization is about to be cancelled (e.g. because of a timeout)
+  * but does this work? (does sending "Withdrawn" really stop running EvseManager transactions? PG says yes!)
 * Does not use the bank_session_token_provider yet, but should do should so (and should be forced to do so)
 * A real hardware payment-terminal device requires more robustness:
-** device might timeout
-** device may not be available during the module's init/ready time, but later
-** one should implement an internal ready/not-ready state and only set it when the list of open preauthorizations has been cleaned (maybe add more diagnostics + clear_list command)
+ * device might timeout
+ * device may not be available during the module's init/ready time, but later
+ * one should implement an internal ready/not-ready state and only set it when the list of open preauthorizations has been cleaned (maybe add more diagnostics + clear_list command)
 
