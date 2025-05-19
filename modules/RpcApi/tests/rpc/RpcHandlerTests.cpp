@@ -172,7 +172,7 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     send_req_and_validate_res(client, charge_point_get_evse_infos_req, expected_response);
 }
 
-// Test: Connect to WebSocket server and send EVSE.Infos request with valid and invalid id
+// Test: Connect to WebSocket server and send EVSE.Infos request with valid and invalid index
 TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
@@ -231,7 +231,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     send_req_and_validate_res(client, evse_get_infos_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
 }
 
-// Test: Connect to WebSocket server and send Evse.GetStatusReq request with valid and invalid id
+// Test: Connect to WebSocket server and send Evse.GetStatusReq request with valid and invalid index
 TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
@@ -276,7 +276,7 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     send_req_and_validate_res(client, evse_get_status_req_invalid_id, res_obj_invalid_id, is_key_value_in_json_rpc_result);
 }
 
-// Test: Connect to WebSocket server and send EVSE.GetHardwareCapabilities request with valid and invalid id
+// Test: Connect to WebSocket server and send EVSE.GetHardwareCapabilities request with valid and invalid index
 TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
@@ -327,7 +327,7 @@ TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     send_req_and_validate_res(client, evse_get_hardware_capabilities_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
 }
 
-// Test: Connect to WebSocket server and send EVSE.SetChargingAllowed request with valid and invalid id
+// Test: Connect to WebSocket server and send EVSE.SetChargingAllowed request with valid and invalid index
 TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
