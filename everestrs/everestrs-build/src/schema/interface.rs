@@ -35,7 +35,7 @@ pub struct InterfaceFromEverest {
 #[serde(deny_unknown_fields)]
 pub struct Command {
     // Note: EVerest config over mqtt does not return descriptions even so
-    // they should be necessary.    
+    // they should be necessary.
     #[serde(default)]
     pub description: String,
     #[serde(default)]

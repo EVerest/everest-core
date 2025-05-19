@@ -109,6 +109,20 @@ properties:
             type: integer
             minimum: 1
             default: 1
+          # Used for now for the Rust bindings.
+          ignore:
+            type: object
+            properties:
+              vars:
+                type:
+                  - string
+                  - array
+                items:
+                  type: string
+                uniqueItems: true
+              errors:
+                type: boolean
+                default: false
         # don't allow arbitrary additional properties
         additionalProperties: false
     # don't allow arbitrary additional properties

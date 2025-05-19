@@ -1,6 +1,6 @@
 use super::types::{BooleanOptions, IntegerOptions, NumberOptions, StringOptions};
 use serde::Deserialize;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -43,6 +43,18 @@ pub struct RequiresEntry {
     pub interface: String,
     pub min_connections: Option<i64>,
     pub max_connections: Option<i64>,
+    #[serde(default)]
+    pub ignore: Ignore,
+}
+
+#[derive(Debug, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub struct Ignore {
+    #[serde(default)]
+    pub vars: HashSet<String>,
+
+    #[serde(default)]
+    pub errors: bool,
 }
 
 #[derive(Debug, Deserialize)]

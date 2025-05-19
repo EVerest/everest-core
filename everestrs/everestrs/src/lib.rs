@@ -583,6 +583,9 @@ impl Runtime {
 
             for i in 0usize..connection {
                 for (name, _) in interface.vars.iter() {
+                    if requires.ignore.vars.contains(name) {
+                        continue;
+                    }
                     self.cpp_module.subscribe_variable(
                         self,
                         implementation_id.clone(),

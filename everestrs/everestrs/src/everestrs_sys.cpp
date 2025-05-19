@@ -151,8 +151,16 @@ void Module::subscribe_variable(const Runtime& rt, rust::String implementation_i
 
 void Module::subscribe_all_errors(const Runtime& rt) const {
     for (const Requirement& req : config_->get_requirements(module_id_)) {
+        std::shared_ptr<Everest::error::ErrorManagerReq> error_manager_ptr = nullptr;
+        try {
+            error_manager_ptr = handle_->get_error_manager_req(req);
+        } catch (const std::runtime_error& ex) {
+            // This is expected if the manifest has `ignore.errors=true`
+            // configured.
+            continue;
+        }
         const auto handle_ptr = handle_.get();
-        handle_->get_error_manager_req(req)->subscribe_all_errors(
+        error_manager_ptr->subscribe_all_errors(
             [&rt, req, handle_ptr](Everest::error::Error error) {
                 handle_ptr->ensure_ready();
                 const ErrorType rust_error{rust::String(error.type), rust::String(error.description),
