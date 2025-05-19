@@ -13,6 +13,9 @@
 
 namespace rpc {
 
+template <typename T>
+struct is_optional : std::false_type {};
+
 static const std::chrono::milliseconds REQ_COLLECTION_TIMEOUT(
     10); // Timeout for collecting client requests. After this timeout, the requests will be processed.
 static const std::chrono::milliseconds
