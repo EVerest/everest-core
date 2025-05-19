@@ -21,6 +21,7 @@ namespace main {
 
 struct Conf {
     std::string token;
+    bool randomize;
 };
 
 class bank_session_token_providerImpl : public bank_session_token_providerImplBase {

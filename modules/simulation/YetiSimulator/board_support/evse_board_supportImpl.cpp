@@ -35,6 +35,8 @@ void evse_board_supportImpl::handle_enable(bool& value) {
     if (value) {
         if (current_state == state::State::STATE_DISABLED) {
             current_state = state::State::STATE_A;
+        } else {
+            mod->module_state->republish_state = true;
         }
     } else {
         current_state = state::State::STATE_DISABLED;

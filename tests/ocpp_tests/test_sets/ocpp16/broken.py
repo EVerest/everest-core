@@ -27,24 +27,6 @@ from everest_test_utils import *
 # fmt: on
 
 
-async def send_message_without_validation(charge_point_v16, call_msg):
-    json_data = json.dumps(
-        [
-            call_msg.message_type_id,
-            call_msg.unique_id,
-            call_msg.action,
-            call_msg.payload,
-        ],
-        # By default json.dumps() adds a white space after every separator.
-        # By setting the separator manually that can be avoided.
-        separators=(",", ":"),
-        cls=_DecimalEncoder,
-    )
-
-    async with charge_point_v16._call_lock:
-        await charge_point_v16._send(json_data)
-
-
 @pytest.mark.everest_core_config(
     get_everest_config_path_str("everest-config-sil-ocpp.yaml")
 )
@@ -389,4 +371,32 @@ async def test_start_transaction_call_error_or_timeout(
 
     assert await wait_for_and_validate(
         test_utility, charge_point_v16, "StopTransaction", {"transactionId": 1}
+    )
+
+
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-sil-ocpp.yaml")
+)
+@pytest.mark.asyncio
+async def test_too_long_payload_field(
+    test_config,
+    charge_point_v16: ChargePoint16,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
+    logging.info("######### test_too_long_payload_field #########")
+
+    payload = call.ChangeConfigurationPayload(key="ThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50characters", value="0")
+    camel_case_payload = snake_to_camel_case(asdict(payload))
+
+    call_msg = Call(
+        unique_id=str(charge_point_v16._unique_id_generator()),
+        action=payload.__class__.__name__[:-7],
+        payload=remove_nones(camel_case_payload),
+    )
+
+    await send_message_without_validation(charge_point_v16, call_msg)
+
+    assert await wait_for_callerror_and_validate(
+        test_utility, charge_point_v16, "FormationViolation"
     )

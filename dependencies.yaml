@@ -42,12 +42,12 @@ libfsm:
 # libcbv2g
 libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.3.0
+  git_tag: v0.3.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: v0.5.1
+  git_tag: v0.5.2
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
@@ -68,7 +68,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.26.1
+  git_tag: v0.26.3
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -93,7 +93,7 @@ gtest:
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 everest-sqlite:
   git: https://github.com/EVerest/everest-sqlite.git
-  git_tag: v0.1.0
+  git_tag: v0.1.1
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0

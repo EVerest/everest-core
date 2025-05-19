@@ -51,9 +51,12 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
     }
 
     if (error_type == INOPERATIVE_ERROR_TYPE) {
-        return ocpp::v16::ErrorInfo{uuid,      ocpp::v16::ChargePointErrorCode::OtherError,
-                                    true,      "EVSE is inoperative",
-                                    "EVerest", "caused_by:" + error.message};
+        return ocpp::v16::ErrorInfo{uuid,
+                                    ocpp::v16::ChargePointErrorCode::OtherError,
+                                    true,
+                                    "caused_by:" + error.message,
+                                    error.vendor_id,
+                                    error.description};
     }
 
     const auto get_simplified_error_type = [](const std::string& error_type) {
@@ -578,25 +581,22 @@ void OCPP::ready() {
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_pause_charging();
-        } else {
-            return false;
         }
+        return false;
     });
     this->charge_point->register_resume_charging_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_resume_charging();
-        } else {
-            return false;
         }
+        return false;
     });
     this->charge_point->register_stop_transaction_callback([this](int32_t connector, ocpp::v16::Reason reason) {
         if (this->connector_evse_index_map.count(connector)) {
             types::evse_manager::StopTransactionRequest req;
             req.reason = conversions::to_everest_stop_transaction_reason(reason);
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_stop_transaction(req);
-        } else {
-            return false;
         }
+        return false;
     });
 
     this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
@@ -606,9 +606,8 @@ void OCPP::ready() {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_force_unlock(1)
                        ? ocpp::v16::UnlockStatus::Unlocked
                        : ocpp::v16::UnlockStatus::NotSupported;
-        } else {
-            return ocpp::v16::UnlockStatus::NotSupported;
         }
+        return ocpp::v16::UnlockStatus::NotSupported;
     });
 
     // int32_t reservation_id, CiString<20> auth_token, DateTime expiry_time,
@@ -646,7 +645,8 @@ void OCPP::ready() {
             upload_logs_request.oldest_timestamp.emplace(msg.startTime.value().to_rfc3339());
         }
         if (msg.retries.has_value()) {
-            upload_logs_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            upload_logs_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -677,7 +677,8 @@ void OCPP::ready() {
             upload_logs_request.oldest_timestamp.emplace(msg.log.oldestTimestamp.value().to_rfc3339());
         }
         if (msg.retries.has_value()) {
-            upload_logs_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            upload_logs_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -702,7 +703,8 @@ void OCPP::ready() {
         firmware_update_request.request_id = -1;
         firmware_update_request.retrieve_timestamp.emplace(msg.retrieveDate.to_rfc3339());
         if (msg.retries.has_value()) {
-            firmware_update_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            firmware_update_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             firmware_update_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -722,7 +724,8 @@ void OCPP::ready() {
             firmware_update_request.install_timestamp.emplace(msg.firmware.installDateTime.value());
         }
         if (msg.retries.has_value()) {
-            firmware_update_request.retries.emplace(msg.retries.value());
+            // We add +1 since as defined in OCPP retries does not include the initial attempt
+            firmware_update_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             firmware_update_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -843,6 +846,13 @@ void OCPP::ready() {
     });
 
     this->charge_point->register_reset_callback([this](ocpp::v16::ResetType type) {
+        if (type == ocpp::v16::ResetType::Soft) {
+            // small delay before stopping the charge point to make sure all responses are received
+            std::this_thread::sleep_for(std::chrono::seconds(this->config.ResetStopDelay));
+            // properly stop charge point before stopping all of the software
+        }
+        this->charge_point->stop();
+        // If it is a hard reset we can go ahead and forcibly reset directly
         const auto reset_type = conversions::to_everest_reset_type(type);
         this->r_system->call_reset(reset_type, false);
     });
@@ -890,6 +900,18 @@ void OCPP::ready() {
             tevent.session_id = session_id;
             tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+            if (id_tag_info.parentIdTag.has_value()) {
+                types::authorization::ValidationResultUpdate result_update;
+                types::authorization::IdToken id_token;
+                id_token.value = id_tag_info.parentIdTag.value();
+                // Default to RFID auth type for parentIdTag since we have no information about it in ocpp1.6
+                id_token.type = types::authorization::IdTokenType::ISO14443;
+                result_update.validation_result.parent_id_token = id_token;
+                result_update.validation_result.authorization_status =
+                    conversions::to_everest_authorization_status(id_tag_info.status);
+                result_update.connector_id = connector;
+                p_auth_validator->publish_validate_result_update(result_update);
+            }
         });
 
     this->charge_point->register_transaction_stopped_callback(
@@ -968,6 +990,8 @@ void OCPP::ready() {
         });
     }
 
+    // We must wait for EVSEs to be marked as ready before initializing ocpp since we will potentially update the
+    // operative status of the connectors
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {
         this->evse_ready_cv.wait(lk);
@@ -978,12 +1002,27 @@ void OCPP::ready() {
 
     this->init_module_configuration();
 
-    const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
-    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
+    // we can now call init(), which initializes the charge points state machine. It reads the connector availability
+    // from the internal database and potentially triggers enable/disable callbacks at the evse.
+    if (this->charge_point->init({}, this->resuming_session_ids)) {
         // signal that we're started
         this->started = true;
         EVLOG_info << "OCPP initialized";
+    }
 
+    // this signals to the evses they can now start their internal state machines
+    // signal to the EVSEs that OCPP is initialized
+    for (const auto& evse : this->r_evse_manager) {
+        evse->call_external_ready_to_start_charging();
+    }
+
+    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
+    // plugged in at startup)
+    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
+    const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
+    // we can now start the OCPP connection
+    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
+        EVLOG_info << "OCPP started";
         // process session event queue
         std::scoped_lock lock(this->session_event_mutex);
         for (auto& [evse_id, evse_event_queue] : this->event_queue) {
@@ -1009,11 +1048,6 @@ void OCPP::ready() {
                 evse_event_queue.pop();
             }
         }
-    }
-
-    // signal to the EVSEs that OCPP is initialized
-    for (const auto& evse : this->r_evse_manager) {
-        evse->call_external_ready_to_start_charging();
     }
 }
 

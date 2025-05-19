@@ -170,7 +170,8 @@ void EvseManager::ready() {
     const std::vector<std::unique_ptr<powermeterIntf>> empty;
     error_handling = std::unique_ptr<ErrorHandling>(
         new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC,
-                          config.fail_on_powermeter_errors ? r_powermeter_billing() : empty, r_over_voltage_monitor));
+                          config.fail_on_powermeter_errors ? r_powermeter_billing() : empty, r_over_voltage_monitor,
+                          config.inoperative_error_use_vendor_id));
 
     if (not config.lock_connector_in_state_b) {
         EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
@@ -375,47 +376,68 @@ void EvseManager::ready() {
             }
 
             // Car requests a target voltage and current limit
-            r_hlc[0]->subscribe_dc_ev_target_voltage_current([this](types::iso15118::DcEvTargetValues v) {
-                bool target_changed = false;
+            r_hlc[0]->subscribe_dc_ev_target_voltage_current(
+                [this](types::iso15118::DcEvTargetValues v) {
+                    bool target_changed = false;
 
-                // Hack for Skoda Enyaq that should be fixed in a different way
-                if (config.hack_skoda_enyaq and (v.dc_ev_target_voltage < 300 or v.dc_ev_target_current < 0))
-                    return;
+                    // Hack for Skoda Enyaq that should be fixed in a different way
+                    if (config.hack_skoda_enyaq and (v.dc_ev_target_voltage < 300 or v.dc_ev_target_current < 0))
+                        return;
 
-                // Limit voltage/current for broken EV implementations
-                const auto ev = get_ev_info();
-                if (ev.maximum_current_limit.has_value() and
-                    v.dc_ev_target_current > ev.maximum_current_limit.value()) {
-                    v.dc_ev_target_current = ev.maximum_current_limit.value();
-                }
-
-                if (ev.maximum_voltage_limit.has_value() and
-                    v.dc_ev_target_voltage > ev.maximum_voltage_limit.value()) {
-                    v.dc_ev_target_voltage = ev.maximum_voltage_limit.value();
-                }
-
-                if (v.dc_ev_target_voltage not_eq latest_target_voltage or
-                    v.dc_ev_target_current not_eq latest_target_current) {
-                    latest_target_voltage = v.dc_ev_target_voltage;
-                    latest_target_current = v.dc_ev_target_current;
-                    target_changed = true;
-                }
-
-                if (target_changed) {
-                    apply_new_target_voltage_current();
-                    if (not contactor_open) {
-                        powersupply_DC_on();
+                    // Limit voltage/current for broken EV implementations
+                    const auto ev = get_ev_info();
+                    if (ev.maximum_current_limit.has_value() and
+                        v.dc_ev_target_current > ev.maximum_current_limit.value()) {
+                        v.dc_ev_target_current = ev.maximum_current_limit.value();
                     }
 
-                    {
-                        Everest::scoped_lock_timeout lock(ev_info_mutex,
-                                                          Everest::MutexDescription::EVSE_publish_ev_info);
-                        ev_info.target_voltage = latest_target_voltage;
-                        ev_info.target_current = latest_target_current;
-                        p_evse->publish_ev_info(ev_info);
+                    if (ev.maximum_voltage_limit.has_value() and
+                        v.dc_ev_target_voltage > ev.maximum_voltage_limit.value()) {
+                        v.dc_ev_target_voltage = ev.maximum_voltage_limit.value();
                     }
-                }
-            });
+
+                    bool car_breaks_limit{false};
+                    const auto hlc_limits = charger->get_evse_max_hlc_limits();
+                    if (v.dc_ev_target_current > hlc_limits.evse_maximum_current_limit) {
+                        v.dc_ev_target_current = hlc_limits.evse_maximum_current_limit;
+                        car_breaks_limit = true;
+                    }
+
+                    const auto actual_voltage =
+                        ev_info.present_voltage.has_value() ? ev_info.present_voltage.value() : v.dc_ev_target_voltage;
+
+                    const auto target_power = v.dc_ev_target_current * actual_voltage;
+                    if (target_power > hlc_limits.evse_maximum_power_limit) {
+                        v.dc_ev_target_current = hlc_limits.evse_maximum_power_limit / actual_voltage;
+                        car_breaks_limit = true;
+                    }
+
+                    if (v.dc_ev_target_voltage not_eq latest_target_voltage or
+                        v.dc_ev_target_current not_eq latest_target_current) {
+                        latest_target_voltage = v.dc_ev_target_voltage;
+                        latest_target_current = v.dc_ev_target_current;
+                        target_changed = true;
+                    }
+
+                    if (target_changed) {
+                        apply_new_target_voltage_current();
+                        if (not contactor_open) {
+                            powersupply_DC_on();
+                        }
+                        if (car_breaks_limit) {
+                            EVLOG_warning
+                                << "EV ignores new EVSE max limits. Setting target current to new EVSE max limits";
+                        }
+
+                        {
+                            Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                              Everest::MutexDescription::EVSE_publish_ev_info);
+                            ev_info.target_voltage = latest_target_voltage;
+                            ev_info.target_current = latest_target_current;
+                            p_evse->publish_ev_info(ev_info);
+                        }
+                    }
+                });
 
             r_hlc[0]->subscribe_d20_dc_dynamic_charge_mode([this](types::iso15118::DcChargeDynamicModeValues values) {
                 constexpr auto PRE_CHARGE_MAX_POWER = 800.0f;
@@ -1038,6 +1060,13 @@ void EvseManager::ready() {
 }
 
 void EvseManager::ready_to_start_charging() {
+    Everest::scoped_lock_timeout lock(charger_ready_mutex, Everest::MutexDescription::EVSE_charger_ready);
+    if (charger_ready) {
+        EVLOG_warning << "Already ready to start charging!";
+        return;
+    }
+    charger_ready = true;
+
     timepoint_ready_for_charging = std::chrono::steady_clock::now();
     charger->run();
 

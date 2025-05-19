@@ -220,7 +220,14 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 bcb_toggle_reset();
                 shared_context.iec_allow_close_contactor = false;
-                shared_context.hlc_charging_active = false;
+                if (config_context.charge_mode == ChargeMode::AC) {
+                    // For AC, a session may start in BASIC charging mode and switch to HLC mode later on.
+                    // This variable will be set to true once the iso stack calls v2g_setup_finished.
+                    shared_context.hlc_charging_active = false;
+                } else {
+                    // For DC, it is always HLC mode.
+                    shared_context.hlc_charging_active = true;
+                }
                 shared_context.hlc_allow_close_contactor = false;
                 shared_context.max_current_cable = 0;
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
