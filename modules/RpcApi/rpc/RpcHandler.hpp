@@ -55,6 +55,11 @@ public:
     void start_server();
     void stop_server();
 
+    class JsonRpc2ServerWithClient : public JsonRpc2Server, public JsonRpcClient {
+    public:
+        JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
+    };
+
 private:
     void init_rpc_api();
     void init_transport_interfaces();
@@ -92,10 +97,6 @@ private:
     private:
         std::vector<std::shared_ptr<TransportInterface>>& transport_interfaces;
     };
-    class JsonRpc2ServerWithClient : public JsonRpc2Server, public JsonRpcClient {
-    public:
-        JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
-    };
     // Members
     std::vector<std::shared_ptr<TransportInterface>> m_transport_interfaces;
     DataStoreCharger& m_data_store;
@@ -103,7 +104,7 @@ private:
     std::condition_variable m_cv_api_hello;
     std::condition_variable m_cv_data_available;
     std::unordered_map<TransportInterface::ClientId, bool> m_api_hello_received;
-    std::unique_ptr<JsonRpc2ServerWithClient> m_rpc_server;
+    std::shared_ptr<JsonRpc2ServerWithClient> m_rpc_server;
     std::unordered_map<TransportInterface::ClientId, ClientReq> messages;
     std::chrono::steady_clock::time_point m_last_req_notification; // Last tick time
     std::thread m_rpc_recv_thread;
