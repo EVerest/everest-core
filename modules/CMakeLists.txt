@@ -35,6 +35,7 @@ ev_add_module(DummyTokenValidator)
 ev_add_module(DummyTokenProvider)
 ev_add_module(DummyTokenProviderManual)
 ev_add_module(PhyVersoBSP)
+ev_add_module(IsabellenhuetteIemDcr)
 
 add_subdirectory(examples)
 add_subdirectory(simulation)
