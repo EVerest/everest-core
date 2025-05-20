@@ -410,7 +410,7 @@ private:
     // Maximum duration of a BCB toggle sequence of 1-3 BCB toggles
     static constexpr auto TT_EVSE_VALD_TOGGLE =
         std::chrono::milliseconds(3500 + 200); // We give 200 msecs tolerance to the norm values (table 3 ISO15118-3)
-    static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::seconds(1);
+    static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::milliseconds(500);
     static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(100);
     static constexpr float PWM_5_PERCENT = 0.05;
     static constexpr int T_REPLUG_MS = 4000;

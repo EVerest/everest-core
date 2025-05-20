@@ -72,7 +72,7 @@ provides:
           But some cars directly send a CM_SLAC_PARAM.req message when the SLAC process aborts.
           To react to this message and restart the SLAC process, the EVSE go to the reset state here.
         type: boolean
-        default: false
+        default: true
 metadata:
   base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
   license: https://opensource.org/licenses/Apache-2.0
