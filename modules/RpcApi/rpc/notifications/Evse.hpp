@@ -4,6 +4,7 @@
 #ifndef NOTIFICATIONS_EVSE_HPP
 #define NOTIFICATIONS_EVSE_HPP
 
+#include "../RpcHandler.hpp"
 #include "../../data/DataStore.hpp"
 #include <jsonrpccxx/client.hpp>
 
@@ -20,7 +21,7 @@ public:
     // Constructor and Destructor
     // Deleting the default constructor to ensure the class is always initialized with a DataStoreCharger object
     Evse() = delete;
-    Evse(data::DataStoreCharger& dataobj) : m_dataobj(dataobj) {
+    Evse(std::shared_ptr<rpc::RpcHandlerKeks::JsonRpc2ServerWithClient> rpc_server, data::DataStoreCharger& dataobj) : m_rpc_server(rpc_server), m_dataobj(dataobj) {
         for (const auto& evse : m_dataobj.evses) {
             const int32_t index = evse->evseinfo.get_index();
             for (const auto& connector : evse->connectors) {
@@ -65,7 +66,9 @@ public:
 private:
     // Reference to the DataStoreCharger object that holds EVSE data
     data::DataStoreCharger& m_dataobj;
+    std::shared_ptr<rpc::RpcHandler::JsonRpc2ServerWithClient> m_rpc_server;
 };
+
 } // namespace notifications
 
 #endif // NOTIFICATIONS_EVSE_HPP
