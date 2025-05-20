@@ -175,8 +175,6 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
             num_retries = 0;
 
             return sa.HANDLED_INTERNALLY;
-
-            // Or return sa.create_simple<MatchingState>(ctx); // Todo(sl): Test
         }
         return sa.create_simple<FailedState>(ctx);
     }
