@@ -2,11 +2,6 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "errors",
-    srcs = glob(["errors/**/*.yaml"]),
-)
-
 exports_files([
     "dependencies.yaml",
     "WORKSPACE.bazel",
