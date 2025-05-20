@@ -308,7 +308,7 @@ config:
       enabling PWM, so the sleep allows SLAC to be ready for it. Some EV testers have issues with a value >= 1000ms,
       although ISO15118 or IEC61851 does not specify a timeout.
     type: integer
-    default: 1000
+    default: 500
   central_contract_validation_allowed:
     description: >-
       Used for ISO15118 plug and charge:
