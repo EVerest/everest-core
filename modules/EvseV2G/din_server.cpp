@@ -309,22 +309,13 @@ enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
     struct din_SessionSetupReqType* req = &conn->exi_in.dinEXIDocument->V2G_Message.Body.SessionSetupReq;
     struct din_SessionSetupResType* res = &conn->exi_out.dinEXIDocument->V2G_Message.Body.SessionSetupRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
-    char buffer[din_evccIDType_BYTES_SIZE * 2 + din_evccIDType_BYTES_SIZE - 1 +
-                1]; /* format: (%02x:) * n - 1x ':' + 1x NUL */
-    int idx;
 
     /* format EVCC ID */
-    for (idx = 0; idx < req->EVCCID.bytesLen; idx++) {
-        sprintf(&buffer[idx * 3], "%02" PRIX8 ":", req->EVCCID.bytes[idx]);
-    }
-    if (idx)
-        buffer[idx * 3 - 1] = '\0';
-    else
-        buffer[0] = '\0';
+    const auto strId = hexify(req->EVCCID.bytes, req->EVCCID.bytesLen);
 
-    conn->ctx->p_charger->publish_evcc_id(buffer); // publish EVCC ID
+    conn->ctx->p_charger->publish_evcc_id(strId.c_str()); // publish EVCC ID
 
-    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", std::string(buffer).size() ? buffer : "(zero length provided)");
+    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", strId.size() ? strId.c_str() : "(zero length provided)");
 
     /* Now fill the evse response message */
     res->ResponseCode = din_responseCodeType_OK_NewSessionEstablished; // [V2G-DC-393]
