@@ -818,7 +818,7 @@ void OCPP201::ready() {
         device_model_database_path, device_model_database_migration_path, device_model_config_path, true);
 
     // initialize everest device model
-    auto everest_device_model_storage = std::make_unique<device_model::EverestDeviceModelStorage>();
+    auto everest_device_model_storage = std::make_unique<device_model::EverestDeviceModelStorage>(r_evse_manager);
 
     // initialize composed device model, this will be provided to the ChargePoint constructor
     auto composed_device_model_storage = std::make_unique<module::device_model::ComposedDeviceModelStorage>();

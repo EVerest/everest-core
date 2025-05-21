@@ -3,11 +3,22 @@
 
 #pragma once
 
+#include <generated/interfaces/evse_manager/Interface.hpp>
+
 #include <ocpp/v2/device_model_storage_interface.hpp>
 
 namespace module::device_model {
+
+struct VariableData : ocpp::v2::VariableMetaData {
+    std::map<ocpp::v2::AttributeEnum, ocpp::v2::VariableAttribute> attributes;
+};
+
+using Variables = std::map<ocpp::v2::Variable, VariableData>;
+using ComponentsMap = std::map<ocpp::v2::Component, Variables>;
+
 class EverestDeviceModelStorage : public ocpp::v2::DeviceModelStorageInterface {
 public:
+    EverestDeviceModelStorage(const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager);
     virtual ~EverestDeviceModelStorage() override = default;
     virtual ocpp::v2::DeviceModelMap get_device_model() override;
     virtual std::optional<ocpp::v2::VariableAttribute>
@@ -30,5 +41,9 @@ public:
     virtual ocpp::v2::ClearMonitoringStatusEnum clear_variable_monitor(int monitor_id, bool allow_protected) override;
     virtual int32_t clear_custom_variable_monitors() override;
     virtual void check_integrity() override;
+
+private:
+    const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager;
+    ComponentsMap components;
 };
 } // namespace module::device_model
