@@ -208,3 +208,25 @@ target_link_libraries(${V2GCTX_NAME}
 
 add_test(${V2GCTX_NAME} ${V2GCTX_NAME})
 ev_register_test_target(${V2GCTX_NAME})
+
+set(BYTES_TO_MAC_NAME bytes_to_mac_test)
+add_executable(${BYTES_TO_MAC_NAME})
+target_include_directories(${BYTES_TO_MAC_NAME} PRIVATE
+    ..
+    ${GENERATED_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
+    ${CMAKE_BINARY_DIR}/generated/include
+)
+target_sources(${BYTES_TO_MAC_NAME} PRIVATE
+    bytes_to_mac_test
+    ../tools.cpp
+    log.cpp
+)
+target_link_libraries(${BYTES_TO_MAC_NAME} PRIVATE
+    GTest::gtest
+    GTest::gtest_main
+    everest::framework
+    everest::evse_security
+)
+add_test(${BYTES_TO_MAC_NAME} ${BYTES_TO_MAC_NAME})
+ev_register_test_target(${BYTES_TO_MAC_NAME})

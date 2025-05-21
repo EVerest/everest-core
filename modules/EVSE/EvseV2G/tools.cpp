@@ -3,12 +3,14 @@
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "tools.hpp"
 #include "log.hpp"
+#include <algorithm>
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <iomanip>
+#include <limits>
 #include <math.h>
 #include <sstream>
 #include <stdio.h>
@@ -209,4 +211,50 @@ convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPReq
         }
     }
     return certificate_hash_data_info_vec;
+}
+
+/*!
+ * \brief Format a byte array as a colon-separated MAC address string
+ */
+std::string to_mac_string(const uint8_t* data, size_t datalen, char fillch) {
+    // XXX Re-evaluate the use of constexpr when the project’s C++ standard is bumped,
+    //     since newer standards allow broader compile-time evaluation.
+    constexpr size_t ALEN = 6; // MAC address length
+    static constexpr char hexdigit[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                                          '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+    // normalize null pointer
+    if (data == nullptr)
+        datalen = 0;
+
+    /**
+     * Reserve either for the full MAC (3 * ALEN - 1 = 17 characters) or
+     * all input data (3 * datalen - 1), whichever is larger.
+     */
+    const size_t maxlen = std::numeric_limits<std::string::size_type>::max() / 3;
+
+    std::string out;
+    out.reserve(3 * std::max(std::min(datalen, maxlen), ALEN) - 1);
+
+    for (size_t i = 0; i < datalen; ++i) {
+        if (i > 0)
+            out.push_back(':');
+
+        const unsigned c = data[i];
+        out.push_back(hexdigit[c >> 4]);
+        out.push_back(hexdigit[c & 0xF]);
+    }
+
+    // pad to length ALEN unless fillch == 0
+    if (fillch != 0) {
+        for (size_t i = datalen; i < ALEN; ++i) {
+            if (i > 0)
+                out.push_back(':');
+
+            out.push_back(fillch);
+            out.push_back(fillch);
+        }
+    }
+
+    return out;
 }
