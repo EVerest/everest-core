@@ -67,4 +67,25 @@ types::iso15118::HashAlgorithm convert_to_hash_algorithm(const types::evse_secur
  */
 std::vector<types::iso15118::CertificateHashDataInfo>
 convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPRequestDataList& ocsp_request_data_list);
+
+/*!
+ * \brief Format a byte array as a colon-separated MAC address string
+ *
+ * Converts up to six bytes from the supplied array into a human-readable
+ * MAC address string (e.g., "01:23:45:67:AB"). If fewer than six bytes are
+ * available, the remaining octets are either padded with the specified character
+ * or omitted entirely, dependng on \p padch.
+ *
+ * \param data    Pointer to the raw MAC address bytes. May be nullptr if
+ *                \p datalen is zero.
+ * \param datalen Number of bytes available in @\ data. Values greater than six are ignored.
+ * \param fillch   Fill behavior
+ *                - If non-zero, the character used to fill missing octets
+ *                - If zero ('\0') the function terminates without padding or separators
+ *
+ * \return A formatted uppercase, colon-separated MAC address string
+ */
+[[nodiscard]]
+std::string to_mac_string(const uint8_t* data, size_t datalen, char fillch);
+
 #endif /* TOOLS_H */

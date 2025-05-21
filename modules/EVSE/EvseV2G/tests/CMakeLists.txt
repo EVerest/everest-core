@@ -208,3 +208,25 @@ target_link_libraries(${V2GCTX_NAME}
 
 add_test(${V2GCTX_NAME} ${V2GCTX_NAME})
 ev_register_test_target(${V2GCTX_NAME})
+
+set(HEXIFY_NAME hexify_test)
+add_executable(${HEXIFY_NAME})
+target_include_directories(${HEXIFY_NAME} PRIVATE
+    ..
+    ${GENERATED_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
+    ${CMAKE_BINARY_DIR}/generated/include
+)
+target_sources(${HEXIFY_NAME} PRIVATE
+    hexify_test.cpp
+    ../tools.cpp
+    log.cpp
+)
+target_link_libraries(${HEXIFY_NAME} PRIVATE
+    GTest::gtest
+    GTest::gtest_main
+    everest::framework
+    everest::evse_security
+)
+add_test(${HEXIFY_NAME} ${HEXIFY_NAME})
+ev_register_test_target(${HEXIFY_NAME})
