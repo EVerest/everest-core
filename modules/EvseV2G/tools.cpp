@@ -210,3 +210,42 @@ convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPReq
     }
     return certificate_hash_data_info_vec;
 }
+
+/*!
+ * \brief Converts binary data to a colon-separated uppercase hexadecimal string.
+ */
+std::string hexify(const uint8_t* data, size_t datalen) {
+    // XXX Re-evaluate the use of constexpr when the project’s C++ standard is bumped,
+    //     since newer standards may allow broader compile-time evaluation.
+    static constexpr char hexdigit[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                                          '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+    // Return empty string if either datalen is zero
+    if (datalen == 0)
+        return {};
+
+    // If datalen > 0, data must be non-null
+    if (data == nullptr)
+        return {};
+
+    std::string str;
+
+    // Overflow guard: Ensure 3*datalen does not wrap and 3*datalen-1 <= max_size
+    // Approximate check with floor(max_size / 3)
+    if (datalen > str.max_size() / 3)
+        return {};
+
+    // Allocate space for 2 hex characters + 1 colon per byte, minus one trailing colon
+    str.resize(3 * datalen - 1);
+
+    char* out = str.data();
+    for (size_t i = 0; i < datalen; ++i) {
+        if (i > 0)
+            *out++ = ':';
+        unsigned c = data[i];
+        *out++ = hexdigit[c >> 4];
+        *out++ = hexdigit[c & 0xF];
+    }
+
+    return str;
+}
