@@ -19,6 +19,14 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
     // store the sources of each variable to be able to lookup requests to the device model storage
     for (const auto& [component, variable_map] : device_model_map) {
         for (const auto& [variable, variable_meta] : variable_map) {
+            // check if component variable source is already exist in the map
+            if (this->component_variable_source_map.find(component) != this->component_variable_source_map.end() &&
+                this->component_variable_source_map.at(component).find(variable) !=
+                    this->component_variable_source_map.at(component).end()) {
+                EVLOG_warning << "Component variable source already exists for component: " << component.name
+                              << ", variable: " << variable.name << ". Fix your device model configuration.";
+            }
+
             // Note: Source should not be optional, should be changed in libocpp
             this->component_variable_source_map[component][variable] =
                 variable_meta.source.value_or(VARIABLE_SOURCE_OCPP);
