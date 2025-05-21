@@ -524,17 +524,18 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     struct iso2_SessionSetupReqType* req = &conn->exi_in.iso2EXIDocument->V2G_Message.Body.SessionSetupReq;
     struct iso2_SessionSetupResType* res = &conn->exi_out.iso2EXIDocument->V2G_Message.Body.SessionSetupRes;
     char buffer[iso2_evccIDType_BYTES_SIZE * 3 - 1 + 1]; /* format: (%02x:) * n - (1x ':') + (1x NULL) */
-    int i;
     enum v2g_event next_event = V2G_EVENT_NO_EVENT;
 
     /* format EVCC ID */
-    for (i = 0; i < req->EVCCID.bytesLen; i++) {
-        sprintf(&buffer[i * 3], "%02" PRIX8 ":", req->EVCCID.bytes[i]);
+    buffer[0] = '\0';
+    if (req->EVCCID.bytesLen > 0) {
+#define X_FMT "%02" PRIX8
+        snprintf(buffer, 3, X_FMT, req->EVCCID.bytes[0]);
+        for (int i = 1; i < req->EVCCID.bytesLen; i++) {
+            snprintf(&buffer[i * 3 - 1], 4, ":" X_FMT, req->EVCCID.bytes[i]);
+        }
+#undef X_FMT
     }
-    if (i)
-        buffer[i * 3 - 1] = '\0';
-    else
-        buffer[0] = '\0';
 
     conn->ctx->p_charger->publish_evcc_id(buffer); // publish EVCC ID
 
