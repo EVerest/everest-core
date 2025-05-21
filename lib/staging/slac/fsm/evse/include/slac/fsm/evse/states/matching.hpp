@@ -81,6 +81,7 @@ struct MatchingState : public FSMSimpleState {
     MatchingTimepoint timeout_slac_parm_req;
     bool seen_slac_parm_req{false};
     int num_retries{0};
+    int failed_count{0};
 };
 
 } // namespace slac::fsm::evse
