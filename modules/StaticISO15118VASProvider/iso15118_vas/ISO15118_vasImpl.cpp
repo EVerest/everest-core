@@ -109,9 +109,9 @@ void ISO15118_vasImpl::init() {
     EVLOG_info << "Loading VAS configuration from " << mod->config.service_file;
 
     auto yaml = Everest::load_yaml(mod->config.service_file);
-    auto services = yaml["services"];
+    auto raw_services = yaml["services"];
 
-    for (const auto& service : services) {
+    for (const auto& service : raw_services) {
         auto service_id = service["id"].get<uint16_t>();
 
         // check for duplicate service IDs
