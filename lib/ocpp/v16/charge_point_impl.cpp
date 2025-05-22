@@ -2985,6 +2985,12 @@ void ChargePointImpl::log_status_notification(UploadLogStatusEnumType status, in
 
     ocpp::Call<LogStatusNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
+    if (status != UploadLogStatusEnumType::Uploading) {
+        // Reset status to idle to avoid on trigger message sending an incorrect status
+        // Even if we have to retry the log upload resetting to Idle won't cause an issue since we do not trigger a
+        // status notification and we don't have a state machine to block certain state transitions
+        this->log_status = UploadLogStatusEnumType::Idle;
+    }
 }
 
 void ChargePointImpl::signed_firmware_update_status_notification(FirmwareStatusEnumType status, int requestId,
@@ -4484,6 +4490,21 @@ void ChargePointImpl::on_firmware_update_status_notification(int32_t request_id,
             }
         }
     }
+    if (firmware_update_status == FirmwareStatusNotification::InstallationFailed or
+        firmware_update_status == FirmwareStatusNotification::Installed or
+        firmware_update_status == FirmwareStatusNotification::InvalidSignature or
+        firmware_update_status == FirmwareStatusNotification::InstallVerificationFailed or
+        firmware_update_status == FirmwareStatusNotification::DownloadFailed or
+        firmware_update_status == FirmwareStatusNotification::InvalidSignature) {
+        // Reset status to idle to avoid on trigger message sending an incorrect status
+        // Even if we have to retry the firmware update resetting to Idle won't cause an issue since we do not trigger a
+        // status notification and we don't have a state machine to block certain state transitions
+        if (request_id != -1) {
+            this->signed_firmware_status = FirmwareStatusEnumType::Idle;
+        } else {
+            this->firmware_status = FirmwareStatus::Idle;
+        }
+    }
 }
 
 void ChargePointImpl::diagnostic_status_notification(DiagnosticsStatus status, bool initiated_by_trigger_message) {
@@ -4493,6 +4514,12 @@ void ChargePointImpl::diagnostic_status_notification(DiagnosticsStatus status, b
 
     ocpp::Call<DiagnosticsStatusNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call_async(call, true);
+    if (status != DiagnosticsStatus::Uploading) {
+        // Reset status to idle to avoid on trigger message sending an incorrect status
+        // Even if we have to retry the log upload resetting to Idle won't cause an issue since we do not trigger a
+        // status notification and we don't have a state machine to block certain state transitions
+        this->diagnostics_status = DiagnosticsStatus::Idle;
+    }
 }
 
 void ChargePointImpl::firmware_status_notification(FirmwareStatus status, bool initiated_by_trigger_message) {
