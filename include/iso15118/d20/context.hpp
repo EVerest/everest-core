@@ -53,7 +53,7 @@ private:
 
 std::unique_ptr<MessageExchange> create_message_exchange(uint8_t* buf, const size_t len);
 
-class StateBase;
+struct StateBase;
 using BasePointerType = std::unique_ptr<StateBase>;
 
 class Context {

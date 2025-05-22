@@ -74,7 +74,7 @@ SdpServer::SdpServer(const std::string& interface_name) {
 
     // Join multicast group
     struct ipv6_mreq mreq {};
-    mreq.ipv6mr_multiaddr = IN6ADDR_ALLNODES;
+    mreq.ipv6mr_multiaddr = {{IN6ADDR_ALLNODES}};
     mreq.ipv6mr_interface = if_nametoindex(interface_name.c_str());
 
     result = setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq));

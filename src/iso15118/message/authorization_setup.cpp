@@ -20,9 +20,8 @@ template <> void convert(const struct iso20_AuthorizationSetupResType& in, Autho
 
     out.authorization_services.resize(in.AuthorizationServices.arrayLen);
 
-    uint8_t element = 0;
-    for (auto const& service : in.AuthorizationServices.array) {
-        cb_convert_enum(service, out.authorization_services[element++]);
+    for (uint8_t element = 0; element < in.AuthorizationServices.arrayLen; element++) {
+        cb_convert_enum(in.AuthorizationServices.array[element], out.authorization_services.at(element));
     }
 
     out.certificate_installation_service = in.CertificateInstallationService;
