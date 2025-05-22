@@ -19,18 +19,26 @@ types::iso15118_vas::Parameter parameter_from_json(const nlohmann::ordered_json&
     types::iso15118_vas::Parameter parameter;
     parameter.name = param_name;
 
+    EVLOG_debug << "    Parameter name: " << param_name;
+
     if (param_type == "bool") {
         parameter.value.bool_value = json["value"].get<bool>();
+        EVLOG_debug << "      Parameter value: " << std::to_string(parameter.value.bool_value.value());
     } else if (param_type == "int32") {
         parameter.value.int_value = json["value"].get<int32_t>();
+        EVLOG_debug << "      Parameter value: " << std::to_string(parameter.value.int_value.value());
     } else if (param_type == "int16") {
         parameter.value.short_value = json["value"].get<int16_t>();
+        EVLOG_debug << "      Parameter value: " << std::to_string(parameter.value.short_value.value());
     } else if (param_type == "int8") {
         parameter.value.byte_value = json["value"].get<int8_t>();
+        EVLOG_debug << "      Parameter value: " << std::to_string(parameter.value.byte_value.value());
     } else if (param_type == "string") {
         parameter.value.finite_string = json["value"].get<std::string>();
+        EVLOG_debug << "      Parameter value: " << parameter.value.finite_string.value();
     } else if (param_type == "rational") {
         parameter.value.rational_number = json["value"].get<float>();
+        EVLOG_debug << "      Parameter value: " << std::to_string(parameter.value.rational_number.value());
     } else {
         EVLOG_AND_THROW(Everest::EverestConfigError("Unknown parameter type: " + param_type));
     }
@@ -51,6 +59,7 @@ types::iso15118_vas::ParameterSet parameter_set_from_json(const nlohmann::ordere
     std::vector<types::iso15118_vas::Parameter> parameters;
     std::set<std::string> parameter_names; // only used for duplicate check
 
+    EVLOG_debug << "  Parameter set ID: " << set_id;
     for (const auto& parameter : parameters_raw) {
         auto param = parameter_from_json(parameter);
         parameters.push_back(param);
@@ -60,6 +69,7 @@ types::iso15118_vas::ParameterSet parameter_set_from_json(const nlohmann::ordere
             EVLOG_AND_THROW(Everest::EverestConfigError(
                 "Parameter name " + param.name + " already exists in parameter set with id " + std::to_string(set_id)));
         }
+
         parameter_names.insert(param.name);
     }
 
@@ -88,6 +98,7 @@ std::vector<types::iso15118_vas::ParameterSet> parameter_sets_from_json(const nl
             EVLOG_AND_THROW(Everest::EverestConfigError("Parameter set ID " + std::to_string(parameter_set.set_id) +
                                                         " already exists"));
         }
+
         parameter_set_ids.insert(parameter_set.set_id);
     }
 
@@ -109,6 +120,7 @@ void ISO15118_vasImpl::init() {
                 Everest::EverestConfigError("Service ID " + std::to_string(service_id) + " already exists"));
         }
 
+        EVLOG_debug << "Service ID: " << service_id;
         value_added_services[service_id] = parameter_sets_from_json(service["parameter_sets"]);
     }
 
