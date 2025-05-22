@@ -22,8 +22,8 @@ def rel_req1_test1():
             charging_schedule=ChargingSchedule(
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=16),
-                    ChargingSchedulePeriod(start_period=50, limit=20),
+                    ChargingSchedulePeriod(start_period=0, limit=16, number_phases=1),
+                    ChargingSchedulePeriod(start_period=50, limit=20, number_phases=3),
                 ],
             ),
         ),
@@ -40,7 +40,7 @@ def rel_exp_test1():
             start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=16, number_phases=3),
+                ChargingSchedulePeriod(start_period=0, limit=16, number_phases=1),
                 ChargingSchedulePeriod(start_period=50, limit=20, number_phases=3),
             ],
         ),
@@ -60,8 +60,8 @@ def rel_req1_test2():
             charging_schedule=ChargingSchedule(
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=16),
-                    ChargingSchedulePeriod(start_period=100, limit=20),
+                    ChargingSchedulePeriod(start_period=0, limit=16, number_phases=3),
+                    ChargingSchedulePeriod(start_period=100, limit=20, number_phases=3),
                 ],
             ),
         ),
@@ -82,8 +82,8 @@ def rel_req2_test2():
                 duration=200,
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=10),
-                    ChargingSchedulePeriod(start_period=50, limit=6),
+                    ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
+                    ChargingSchedulePeriod(start_period=50, limit=6, number_phases=3),
                 ],
             ),
         ),
@@ -160,9 +160,9 @@ def rel_exp_test3():
             start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=32, number_phases=3),
-                ChargingSchedulePeriod(start_period=6, limit=20, number_phases=3),
-                ChargingSchedulePeriod(start_period=12, limit=8, number_phases=3),
+                ChargingSchedulePeriod(start_period=0, limit=32),
+                ChargingSchedulePeriod(start_period=6, limit=20),
+                ChargingSchedulePeriod(start_period=12, limit=8),
             ],
         ),
     )
