@@ -13,6 +13,8 @@ The following table shows the current support for the listed EVSE ISO15118-20 fe
 | TCP, TLS 1.2 & 1.3                 | :heavy_check_mark: |
 | DC, DC_BPT                         | :heavy_check_mark: |
 | AC, AC_BPT                         | WIP                |
+| MCS (Amd.)                         |                    |
+| AC DER (Amd.)                      |                    |
 | WPT                                |                    |
 | ACDP                               |                    |
 | ExternalPayment                    | :heavy_check_mark: |
@@ -21,7 +23,8 @@ The following table shows the current support for the listed EVSE ISO15118-20 fe
 | Scheduled Mode                     | :heavy_check_mark: |
 | Dynamic Mode (+ MobilityNeedsMode) | :heavy_check_mark: |
 | Private Env                        |                    |
-| Pause/Resume & Standby             | WIP                |
+| Pause/Resume                       | :heavy_check_mark: (dynamic mode) |
+| Standby                            |                    |
 | Schedule Renegotation              |                    |
 | Smart Charging                     |                    |
 | Multiplex messages                 |                    |

@@ -23,6 +23,7 @@ private:
     float present_voltage{0};
     float present_current{0};
     bool stop{false};
+    bool pause{false};
 
     UpdateDynamicModeParameters dynamic_parameters;
 

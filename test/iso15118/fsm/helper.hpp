@@ -21,8 +21,8 @@ using namespace iso15118;
 
 class FsmStateHelper {
 public:
-    FsmStateHelper(const d20::SessionConfig& config) :
-        log(this), ctx(callbacks, log, config, active_control_event, msg_exch) {
+    FsmStateHelper(const d20::SessionConfig& config, std::optional<d20::PauseContext>& pause_ctx_) :
+        log(this), ctx(callbacks, log, config, pause_ctx_, active_control_event, msg_exch) {
 
         session::logging::set_session_log_callback([](std::size_t, const session::logging::Event& event) {
             if (const auto* simple_event = std::get_if<session::logging::SimpleEvent>(&event)) {

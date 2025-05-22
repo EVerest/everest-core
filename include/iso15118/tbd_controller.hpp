@@ -4,6 +4,7 @@
 
 #include <list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -53,6 +54,8 @@ private:
     d20::EvseSetupConfig evse_setup;
 
     std::string interface_name;
+
+    std::optional<d20::PauseContext> pause_ctx{std::nullopt};
 };
 
 } // namespace iso15118

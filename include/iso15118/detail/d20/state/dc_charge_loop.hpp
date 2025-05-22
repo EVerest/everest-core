@@ -19,7 +19,7 @@ namespace iso15118::d20::state {
 
 message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoopRequest& req,
                                                  const d20::Session& session, const float present_voltage,
-                                                 const float present_current, const bool stop,
+                                                 const float present_current, const bool stop, const bool pause,
                                                  const DcTransferLimits& dc_limits,
                                                  const UpdateDynamicModeParameters& dynamic_parameters);
 

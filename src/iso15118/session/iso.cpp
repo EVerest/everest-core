@@ -122,10 +122,10 @@ static size_t setup_response_header(uint8_t* buffer, iso15118::io::v2gtp::Payloa
 }
 
 Session::Session(std::unique_ptr<io::IConnection> connection_, d20::SessionConfig session_config,
-                 const session::feedback::Callbacks& callbacks) :
+                 const session::feedback::Callbacks& callbacks, std::optional<d20::PauseContext>& pause_ctx) :
     connection(std::move(connection_)),
     log(this),
-    ctx(callbacks, log, std::move(session_config), active_control_event, message_exchange),
+    ctx(callbacks, log, std::move(session_config), pause_ctx, active_control_event, message_exchange),
     fsm(ctx.create_state<d20::state::SupportedAppProtocol>()) {
 
     next_session_event = offset_time_point_by_ms(get_current_time_point(), SESSION_IDLE_TIMEOUT_MS);
@@ -196,11 +196,14 @@ TimePoint const& Session::poll() {
 
         ctx.feedback.v2g_message(response_type);
 
-        if (ctx.session_stopped) {
+        if (ctx.session_stopped or ctx.session_paused) {
             // Wait for 5 seconds [V2G20-1643]
             std::this_thread::sleep_for(std::chrono::seconds(5));
             connection->close();
-            ctx.feedback.signal(session::feedback::Signal::DLINK_TERMINATE);
+
+            const auto signal = (ctx.session_paused) ? session::feedback::Signal::DLINK_PAUSE
+                                                     : session::feedback::Signal::DLINK_TERMINATE;
+            ctx.feedback.signal(signal);
         }
     }
 
@@ -225,6 +228,10 @@ void Session::handle_connection_event(io::ConnectionEvent event) {
 
     case Event::OPEN:
         assert(state.connected);
+        if (const auto new_vehicle_cert_hash = connection->get_vehicle_cert_hash()) {
+            logf_info("Vehicle Cert is available");
+            ctx.set_new_vehicle_cert_hash(new_vehicle_cert_hash);
+        }
         // NOTE (aw): for now, we don't really need this information ...
         return;
 

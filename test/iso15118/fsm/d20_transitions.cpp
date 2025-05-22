@@ -26,7 +26,9 @@ SCENARIO("ISO15118-20 state transitions") {
     const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
                                           dc_limits, control_mobility_modes};
 
-    auto state_helper = FsmStateHelper(d20::SessionConfig(evse_setup));
+    std::optional<d20::PauseContext> pause_ctx{std::nullopt};
+
+    auto state_helper = FsmStateHelper(d20::SessionConfig(evse_setup), pause_ctx);
     auto ctx = state_helper.get_context();
 
     fsm::v2::FSM<d20::StateBase> fsm{ctx.create_state<d20::state::SupportedAppProtocol>()};

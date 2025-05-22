@@ -9,6 +9,7 @@
 #include <variant>
 #include <vector>
 
+#include <iso15118/io/sha_hash.hpp>
 #include <iso15118/message/common_types.hpp>
 
 namespace iso15118::d20 {
@@ -57,6 +58,14 @@ struct SelectedVasParameter {
     dt::ParkingStatus parking_status;
 };
 
+// TODO(SL): How to handle d2 pause? Move Struct to a seperate header file?
+// TODO(SL): Missing handling scheduletuple in schedule mode [V2G20-1058]
+struct PauseContext {
+    io::sha512_hash_t vehicle_cert_session_id_hash{};
+    std::array<uint8_t, 8> old_session_id{};
+    SelectedServiceParameters selected_service_parameters{};
+};
+
 class Session {
 
     // todo(sl): move to a common defs file
@@ -64,6 +73,7 @@ class Session {
 
 public:
     Session();
+    Session(const PauseContext& pause_ctx);
     Session(SelectedServiceParameters);
     Session(OfferedServices);
 
