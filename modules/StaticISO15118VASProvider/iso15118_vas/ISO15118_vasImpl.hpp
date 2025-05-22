@@ -26,7 +26,7 @@ public:
     ISO15118_vasImpl() = delete;
     ISO15118_vasImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<StaticISO15118VASProvider>& mod,
                      Conf& config) :
-        ISO15118_vasImplBase(ev, "iso15118_vas"), mod(mod), config(config){};
+        ISO15118_vasImplBase(ev, "iso15118_vas"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -39,7 +39,7 @@ protected:
     handle_selected_services(std::vector<types::iso15118_vas::SelectedService>& selected_services) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
-    // insert your protected definitions here
+    std::map<uint16_t, std::vector<types::iso15118_vas::ParameterSet>> value_added_services;
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
