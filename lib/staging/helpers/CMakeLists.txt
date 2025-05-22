@@ -27,6 +27,7 @@ target_include_directories(everest_staging_helpers
 
 target_link_libraries(everest_staging_helpers
     PRIVATE
+        Boost::headers
         fmt::fmt
         nlohmann_json::nlohmann_json
 )

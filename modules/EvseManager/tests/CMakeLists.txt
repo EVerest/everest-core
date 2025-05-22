@@ -29,6 +29,7 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
     GTest::gtest_main
     everest::log
     everest::framework
+    everest::staging::helpers
     sigslot
 )
 
@@ -59,6 +60,7 @@ target_link_libraries(${CHARGER_TEST_TARGET_NAME} PRIVATE
     GTest::gmock
     GTest::gtest_main
     everest::framework
+    everest::staging::helpers
     sigslot
 )
 
