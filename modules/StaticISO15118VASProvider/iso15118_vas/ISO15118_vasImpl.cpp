@@ -23,7 +23,7 @@ types::iso15118_vas::Parameter parameter_from_json(const nlohmann::ordered_json&
 
     if (param_type == "bool") {
         parameter.value.bool_value = json["value"].get<bool>();
-        EVLOG_debug << "      Parameter value: " << std::to_string(parameter.value.bool_value.value());
+        EVLOG_debug << "      Parameter value: " << parameter.value.bool_value.value() ? "true" : "false";
     } else if (param_type == "int32") {
         parameter.value.int_value = json["value"].get<int32_t>();
         EVLOG_debug << "      Parameter value: " << std::to_string(parameter.value.int_value.value());
