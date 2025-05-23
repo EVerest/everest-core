@@ -223,7 +223,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     nlohmann::json expected_response_index_2 = create_json_rpc_response(result_2, 1);
 
     // Expected error object in case of invalid ID
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -267,7 +267,7 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     res_valid_id.status = evse_status;
     res_valid_id.error = RPCDataTypes::ResponseErrorEnum::NoError;
     nlohmann::json expected_error_no_data = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
-    nlohmann::json res_obj_invalid_index = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json res_obj_invalid_index = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
     nlohmann::json expected_response = create_json_rpc_response(res_valid_id, 1);
 
     // Send Api.Hello request
@@ -313,7 +313,7 @@ TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     // Set up the expected responses
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
     nlohmann::json expected_error_no_data =  {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
-    nlohmann::json expected_error_invalid_index =  {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error_invalid_index =  {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -351,7 +351,7 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -390,7 +390,7 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
     types::json_rpc_api::EVSEGetMeterDataResObj result {{meter_data}, RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response_no_error = create_json_rpc_response(result, 1);
     nlohmann::json expected_error_no_data = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
-    nlohmann::json expected_error_invalid_index = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error_invalid_index = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -439,7 +439,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingReq) {
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -478,7 +478,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -517,7 +517,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -555,7 +555,7 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingReq) {
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -594,7 +594,7 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingPowerReq) {
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.sendApiHelloReq();
@@ -619,7 +619,7 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
     nlohmann::json expected_error_invalid_connector_id = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorID)}};
 
     // Set up the data store with test data
