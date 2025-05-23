@@ -9,7 +9,7 @@ target_sources(everest_staging_helpers
         lib/helpers.cpp
 )
 
-if (EVEREST_CORE_BUILD_TESTING)
+if (EVEREST_CORE_BUILD_TESTING AND EVEREST_CORE_ENABLE_COVERAGE)
     target_compile_definitions(everest_staging_helpers PUBLIC EVEREST_COVERAGE_ENABLED)
 
     target_sources(everest_staging_helpers

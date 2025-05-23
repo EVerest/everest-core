@@ -1,0 +1,42 @@
+description: EEBUS module
+config:
+  manage_eebus_grpc_api_binary:
+    description: Whether the module should manage the eebus grpc api binary
+    type: boolean
+    default: true
+  control_service_rpc_port:
+    description: Port for the control service RPC server
+    type: integer
+    default: 50051
+  eebus_ems_ski:
+    description: EEBUS EMS SKI
+    type: string
+    required: true
+  certificate_path:
+    description: Path to the certificate file used by eebus go client. Must be absolute path.
+    type: string
+    required: false
+    default: /etc/everest/certs/eebus/evse_cert
+  private_key_path:
+    description: Path to the private key file used by eebus go client. Must be absolute path.
+    type: string
+    required: false
+    default: /etc/everest/certs/eebus/evse_key
+  eebus_grpc_api_binary_path:
+    description: Path to the eebus grpc api binary. Must be absolute path.
+    type: string
+    required: false
+    default: /bin/eebus_grpc_api
+provides:
+  main:
+    description: main
+    interface: empty
+requires:
+  eebus_energy_sink:
+    interface: external_energy_limits
+    min_connections: 1
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Andreas Heinrich
