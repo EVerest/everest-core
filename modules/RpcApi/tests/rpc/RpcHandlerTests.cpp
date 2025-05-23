@@ -364,6 +364,48 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     send_req_and_validate_res(client, evse_set_charging_allowed_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
 }
 
+// Test: Connect to WebSocket server and send EVSE.MeterData request with valid and invalid index
+TEST_F(RpcHandlerTest, EvseMeterDataReq) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
+
+    // Set up requests
+    nlohmann::json evse_meter_data_req_valid_id = create_json_rpc_request("EVSE.GetMeterData", {{"evse_index", 1}}, 1);
+    nlohmann::json evse_meter_data_req_invalid_id = create_json_rpc_request("EVSE.GetMeterData", {{"evse_index", 99}}, 1);
+
+    // Set up the data store with test data
+    RPCDataTypes::EVSEInfoObj evse_info;
+    evse_info.index = 1;
+    data_store.evses[0]->evseinfo.set_data(evse_info);
+
+    // Configure meter data, but do not set it in the data store
+    RPCDataTypes::MeterDataObj meter_data {};
+    meter_data.energy_Wh_import.total = 123.45;
+    meter_data.timestamp = 1234567890.0;
+
+    // Set up the expected responses
+    types::json_rpc_api::EVSEGetMeterDataResObj result {{meter_data}, RPCDataTypes::ResponseErrorEnum::NoError};
+    nlohmann::json expected_response_no_error = create_json_rpc_response(result, 1);
+    nlohmann::json expected_error_no_data = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
+    nlohmann::json expected_error_invalid_index = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID)}};
+
+    // Send Api.Hello request
+    client.sendApiHelloReq();
+    client.wait_for_data(std::chrono::seconds(1));
+    // Send EVSE.MeterData request with valid ID, but no meter data available
+    send_req_and_validate_res(client, evse_meter_data_req_valid_id, expected_error_no_data, is_key_value_in_json_rpc_result);
+
+    // Set the meter data in the data store
+    data_store.evses[0]->meterdata.set_data(meter_data);
+
+    // Send EVSE.MeterData request with valid ID and meter data available
+    send_req_and_validate_res(client, evse_meter_data_req_valid_id, expected_response_no_error);
+    
+    // Send EVSE.MeterData request with invalid ID
+    send_req_and_validate_res(client, evse_meter_data_req_invalid_id, expected_error_invalid_index, is_key_value_in_json_rpc_result);
+}
+
 // Test: Connect to WebSocket server and send EVSE.SetACCharging request with valid and invalid index
 TEST_F(RpcHandlerTest, EvseSetACChargingReq) {
     WebSocketTestClient client("localhost", test_port);
