@@ -63,7 +63,16 @@ class JsonRpc2ServerWithClient : public JsonRpc2Server, public JsonRpcClient {
 public:
     JsonRpc2ServerWithClient() = delete;
     JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
+    // helper to be able to put data object into caller
+    // which is something which json-rpc-cxx should be doing
+    template <typename T>
+    void CallNotificationNamed(const std::string &name, const T& in) {
+        nlohmann::json j;
+        nlohmann::to_json(j, in);
+        JsonRpcClient::CallNotificationNamed(name, j);
+    }
 };
+
 class RpcHandler {
 public:
     // Constructor and Destructor
