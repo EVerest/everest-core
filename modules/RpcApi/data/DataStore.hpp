@@ -45,6 +45,25 @@ struct DataStoreCharger {
     ChargerInfoStore chargerinfo;
     std::string everest_version;
     std::vector<std::unique_ptr<DataStoreEvse>> evses;
+
+    // get the EVSE data with a specific id
+    static data::DataStoreEvse* getEVSEStore(DataStoreCharger& dataobj, const int32_t evse_index) {
+        if (dataobj.evses.empty()) {
+            return nullptr;
+        }
+
+        for (const auto& evse : dataobj.evses) {
+            if (not evse->evseinfo.get_data().has_value()) {
+                continue;
+            }
+
+            const auto data = evse->evseinfo.get_data().value();
+            if (data.index == evse_index) {
+                return evse.get();
+            }
+        }
+        return nullptr;
+    };
 };
 
 } // namespace data
