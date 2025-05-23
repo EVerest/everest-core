@@ -26,7 +26,6 @@ static const std::string METHOD_EVSE_SET_DC_CHARGING = "EVSE.SetDCCharging";
 static const std::string METHOD_EVSE_SET_DC_CHARGING_POWER = "EVSE.SetDCChargingPower";
 static const std::string METHOD_EVSE_ENABLE_CONNECTOR = "EVSE.EnableConnector";
 
-
 /// This class includes all methods of the EVSE namespace.
 /// It contains the data object and the methods to access it.
 class Evse {
@@ -178,6 +177,26 @@ public:
             return res;
         }
         return m_request_handler_ptr->setDCChargingPower(evse_index, max_power);
+    };
+
+    RPCDataTypes::ErrorResObj enableConnector(const int32_t evse_index, int connector_id, bool enable, int priority) {
+        RPCDataTypes::ErrorResObj res {};
+
+        auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+        // Iterate through the connectors to find the one with the given ID
+        auto it = std::find_if(evse->connectors.begin(), evse->connectors.end(),
+            [connector_id](const auto& connector) { return connector->connectorinfo.get_data()->id == connector_id; });
+        // If not found, return an error
+        if (it == evse->connectors.end()) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorID;
+            return res;
+        }
+
+        return m_request_handler_ptr->enableConnector(evse_index, connector_id, enable, priority);
     };
 
 private:

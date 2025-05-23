@@ -102,6 +102,8 @@ void RpcHandler::init_rpc_api() {
                       {"evse_index", "charging_allowed", "max_power"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING_POWER,
         get_handle(&methods::Evse::setDCChargingPower, m_methods_evse), {"evse_index", "max_power"});
+    m_rpc_server->Add(methods::METHOD_EVSE_ENABLE_CONNECTOR,
+        get_handle(&methods::Evse::enableConnector, m_methods_evse), {"evse_index", "connector_id", "enable", "priority"});
 }
 
 void RpcHandler::init_transport_interfaces() {
