@@ -22,6 +22,7 @@ static const std::string METHOD_EVSE_GET_METER_DATA = "EVSE.GetMeterData";
 static const std::string METHOD_EVSE_SET_AC_CHARGING = "EVSE.SetACCharging";
 static const std::string METHOD_EVSE_SET_AC_CHARGING_CURRENT = "EVSE.SetACChargingCurrent";
 static const std::string METHOD_EVSE_SET_AC_CHARGING_PHASE_COUNT = "EVSE.SetACChargingPhaseCount";
+static const std::string METHOD_EVSE_SET_DC_CHARGING = "EVSE.SetDCCharging";
 
 /// This class includes all methods of the EVSE namespace.
 /// It contains the data object and the methods to access it.
@@ -141,7 +142,7 @@ public:
         }
         return m_request_handler_ptr->setACChargingCurrent(evse_index, max_current);
     };
-
+    
     RPCDataTypes::ErrorResObj setACChargingPhaseCount(const int32_t evse_index, int phase_count) {
         RPCDataTypes::ErrorResObj res {};
 
@@ -151,6 +152,18 @@ public:
             return res;
         }
         return m_request_handler_ptr->setACChargingPhaseCount(evse_index, phase_count);
+
+    };
+
+    RPCDataTypes::ErrorResObj setDCCharging(const int32_t evse_index, bool charging_allowed, int max_power) {
+        RPCDataTypes::ErrorResObj res {};
+
+        auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+        return m_request_handler_ptr->setDCCharging(evse_index, charging_allowed, max_power);
     };
 
 private:
