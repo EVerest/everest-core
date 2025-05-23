@@ -812,11 +812,23 @@ void OCPP201::ready() {
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
-    std::unique_ptr<module::device_model::ComposedDeviceModelStorage> device_model_storage =
-        std::make_unique<module::device_model::ComposedDeviceModelStorage>(
-            device_model_database_path, true, device_model_database_migration_path, device_model_config_path);
+
+    // initialize libocpp device model
+    auto libocpp_device_model_storage = std::make_unique<ocpp::v2::DeviceModelStorageSqlite>(
+        device_model_database_path, device_model_database_migration_path, device_model_config_path, true);
+
+    // initialize everest device model
+    auto everest_device_model_storage = std::make_unique<device_model::EverestDeviceModelStorage>();
+
+    // initialize composed device model, this will be provided to the ChargePoint constructor
+    auto composed_device_model_storage = std::make_unique<module::device_model::ComposedDeviceModelStorage>();
+
+    // register both device model storages
+    composed_device_model_storage->register_device_model_storage("OCPP", std::move(libocpp_device_model_storage));
+    composed_device_model_storage->register_device_model_storage("EVEREST", std::move(everest_device_model_storage));
+
     this->charge_point = std::make_unique<ocpp::v2::ChargePoint>(
-        evse_connector_structure, std::move(device_model_storage), this->ocpp_share_path.string(),
+        evse_connector_structure, std::move(composed_device_model_storage), this->ocpp_share_path.string(),
         this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
         std::make_shared<EvseSecurity>(*this->r_security), callbacks);
 
