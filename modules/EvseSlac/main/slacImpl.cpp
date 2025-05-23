@@ -77,7 +77,7 @@ void slacImpl::run() {
     fsm_ctx.slac_config.sounding_atten_adjustment = config.sounding_attenuation_adjustment;
 
     fsm_ctx.slac_config.chip_reset.enabled = config.do_chip_reset;
-    fsm_ctx.slac_config.chip_reset.delay_ms = config.chip_reset_delay_ms;
+    fsm_ctx.slac_config.chip_reset.delay_before_reset_ms = config.chip_reset_delay_ms;
     fsm_ctx.slac_config.chip_reset.timeout_ms = config.chip_reset_timeout_ms;
 
     fsm_ctx.slac_config.link_status.do_detect = config.link_status_detection;
