@@ -90,6 +90,8 @@ void RpcHandler::init_rpc_api() {
         get_handle(&methods::Evse::getHardwareCapabilities, m_methods_evse), {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_CHARGING_ALLOWED,
         get_handle(&methods::Evse::setChargingAllowed, m_methods_evse), {"evse_index", "charging_allowed"});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_METER_DATA, get_handle(&methods::Evse::getMeterData, m_methods_evse),
+                      {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING,  (get_handle(&methods::Evse::setACCharging, m_methods_evse)),
                       {"evse_index", "charging_allowed", "max_current", "phase_count"});
 }
