@@ -25,7 +25,6 @@ public:
     bool running() const override;
     void send_data(const ClientId &client_id, const Data &data) override;
     void kill_client_connection(const ClientId &client_id, const std::string &kill_reason) override;
-
     uint connections_count() const override;
 
     bool start_server() override;
