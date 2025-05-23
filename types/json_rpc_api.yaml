@@ -8,7 +8,7 @@ types:
     - ErrorInvalidParameter
     - ErrorOutOfRange
     - ErrorValuesNotApplied
-    - ErrorInvalidEVSEID
+    - ErrorInvalidEVSEIndex
     - ErrorInvalidConnectorID
     - ErrorNoDataAvailable
     - ErrorUnknownError
