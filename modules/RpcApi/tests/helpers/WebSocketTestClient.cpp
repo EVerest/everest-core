@@ -92,7 +92,6 @@ bool WebSocketTestClient::connect() {
         EVLOG_info << "Connecting to WebSocket server..";
         start_lws_service_thread();
     }
-
     return m_wsi != nullptr;
 }
 

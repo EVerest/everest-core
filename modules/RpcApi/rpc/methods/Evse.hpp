@@ -200,7 +200,9 @@ public:
     };
 
 private:
-    // Reference to the DataStoreCharger object that holds EVSE data
+    // Reference to the DataStoreCharger object that holds and manages EVSE-related data.
+    // This object is used to retrieve and update information about EVSEs, such as their status,
+    // hardware capabilities, and meter data, ensuring consistent access to the underlying data store.
     data::DataStoreCharger& m_dataobj;
     // Reference to the RequestHandlerInterface object for handling requests
     std::unique_ptr<request_interface::RequestHandlerInterface> m_request_handler_ptr;

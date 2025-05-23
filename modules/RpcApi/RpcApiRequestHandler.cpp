@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#include <everest/logging.hpp>
+
 #include "RpcApiRequestHandler.hpp"
 
-#include <everest/logging.hpp>
 
 using namespace types::json_rpc_api;
 
