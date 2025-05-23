@@ -100,6 +100,8 @@ void RpcHandler::init_rpc_api() {
         get_handle(&methods::Evse::setACChargingPhaseCount, m_methods_evse), {"evse_index", "phase_count"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING, (get_handle(&methods::Evse::setDCCharging, m_methods_evse)),
                       {"evse_index", "charging_allowed", "max_power"});
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING_POWER,
+        get_handle(&methods::Evse::setDCChargingPower, m_methods_evse), {"evse_index", "max_power"});
 }
 
 void RpcHandler::init_transport_interfaces() {
