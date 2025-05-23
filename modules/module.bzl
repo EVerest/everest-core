@@ -42,8 +42,9 @@ def cc_everest_module(
         ],
         srcs = [
             manifest,
-            "@everest-core//types:types",
             "@everest-framework//schemas:schemas",
+            "@everest-framework//:dependencies.yaml",
+            "@everest-core//types:types",
             "@everest-core//:WORKSPACE.bazel",
             "@everest-core//interfaces:interfaces",
         ],
@@ -54,7 +55,7 @@ def cc_everest_module(
     $(location @everest-utils//ev-dev-tools:ev-cli) module generate-loader \
         --work-dir `dirname $(location @everest-core//:WORKSPACE.bazel)` \
         --everest-dir ~/foo \
-        --schemas-dir external/everest-framework/schemas \
+        --schemas-dir `dirname $(location @everest-framework//:dependencies.yaml)`/schemas \
         --disable-clang-format \
         --output-dir `dirname $(location generated/modules/{module_name}/ld-ev.hpp)`/.. \
         {module_name}

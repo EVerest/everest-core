@@ -18,6 +18,7 @@ genrule(
     name = "cpp-headers",
     outs = cpp_headers,
     srcs = yaml_srcs + [
+        "@everest-framework//:dependencies.yaml",
         "@everest-framework//schemas:schemas",
         "@everest-core//:WORKSPACE.bazel",
     ],
@@ -28,7 +29,7 @@ genrule(
 $(location @everest-utils//ev-dev-tools:ev-cli) types generate-headers \
     --work-dir `dirname $(location @everest-core//:WORKSPACE.bazel)` \
     --everest-dir `dirname $(location @everest-core//:WORKSPACE.bazel)` \
-    --schemas-dir external/everest-framework/schemas \
+    --schemas-dir `dirname $(location @everest-framework//:dependencies.yaml)`/schemas \
     --disable-clang-format \
     --output-dir `dirname $(location {some_header})`
 """.format(
