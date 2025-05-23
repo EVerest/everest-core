@@ -35,22 +35,25 @@ void Evse::sendHardwareCapabilitiesChanged(int32_t evse_index, const RPCDataType
     RPCDataTypes::EVSEHardwareCapabilitiesChangedObj hwcap_changed;
     hwcap_changed.evse_index = evse_index;
     hwcap_changed.hardware_capabilities = hwcap;
-    // FIXME: the m_server has a Send() method, which is by inheritance from JsonRpcClient
-    // m_rpc_server->CallNotification(NOTIFICATION_EVSE_HWCAPS_CHANGED, hwcap_changed);
+    json j;
+    to_json(j, hwcap_changed); // not sure why this isn't done automatically when passing in
+    m_rpc_server->CallNotification(NOTIFICATION_EVSE_HWCAPS_CHANGED, j);
 }
 void Evse::sendStatusChanged(int32_t evse_index, const RPCDataTypes::EVSEStatusObj& status) {
     RPCDataTypes::EVSEStatusChangedObj status_changed;
     status_changed.evse_index = evse_index;
     status_changed.evse_status = status;
-    // FIXME: the m_server has a Send() method, which is by inheritance from JsonRpcClient
-    // m_rpc_server->CallNotification(NOTIFICATION_EVSE_STATUS_CHANGED, status_changed);
+    json j;
+    to_json(j, status_changed); // not sure why this isn't done automatically when passing in
+    m_rpc_server->CallNotification(NOTIFICATION_EVSE_STATUS_CHANGED, j);
 }
 void Evse::sendMeterDataChanged(int32_t evse_index, const RPCDataTypes::MeterDataObj& meter) {
     RPCDataTypes::EVSEMeterDataChangedObj meter_changed;
     meter_changed.evse_index = evse_index;
     meter_changed.meter_data = meter;
-    // FIXME: the m_server has a Send() method, which is by inheritance from JsonRpcClient
-    // m_rpc_server->CallNotification(NOTIFICATION_EVSE_METER_DATA_CHANGED, meter_changed);
+    json j;
+    to_json(j, meter_changed); // not sure why this isn't done automatically when passing in
+    m_rpc_server->CallNotification(NOTIFICATION_EVSE_METER_DATA_CHANGED, j);
 }
 
 } // namespace notifications
