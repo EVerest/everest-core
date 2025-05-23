@@ -20,6 +20,7 @@ static const std::string METHOD_EVSE_GET_HARDWARE_CAPABILITIES = "EVSE.GetHardwa
 static const std::string METHOD_EVSE_SET_CHARGING_ALLOWED = "EVSE.SetChargingAllowed";
 static const std::string METHOD_EVSE_GET_METER_DATA = "EVSE.GetMeterData";
 static const std::string METHOD_EVSE_SET_AC_CHARGING = "EVSE.SetACCharging";
+static const std::string METHOD_EVSE_SET_AC_CHARGING_CURRENT = "EVSE.SetACChargingCurrent";
 
 /// This class includes all methods of the EVSE namespace.
 /// It contains the data object and the methods to access it.
@@ -127,6 +128,17 @@ public:
             return res;
         }
         return m_request_handler_ptr->setACCharging(evse_index, charging_allowed, max_current, phase_count);
+    };
+
+    RPCDataTypes::ErrorResObj setACChargingCurrent(const int32_t evse_index, float max_current) {
+        RPCDataTypes::ErrorResObj res {};
+
+        auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
+        if (!evse) {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            return res;
+        }
+        return m_request_handler_ptr->setACChargingCurrent(evse_index, max_current);
     };
 
 private:

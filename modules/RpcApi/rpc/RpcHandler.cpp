@@ -94,6 +94,8 @@ void RpcHandler::init_rpc_api() {
                       {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING,  (get_handle(&methods::Evse::setACCharging, m_methods_evse)),
                       {"evse_index", "charging_allowed", "max_current", "phase_count"});
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING_CURRENT,
+        get_handle(&methods::Evse::setACChargingCurrent, m_methods_evse), {"evse_index", "max_current"});
 }
 
 void RpcHandler::init_transport_interfaces() {
