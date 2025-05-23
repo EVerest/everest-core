@@ -44,7 +44,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
 
@@ -63,7 +63,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
 
@@ -82,7 +82,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
 
@@ -100,7 +100,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
         return m_request_handler_ptr->setChargingAllowed(evse_index, charging_allowed);
@@ -111,7 +111,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
 
@@ -128,7 +128,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
         return m_request_handler_ptr->setACCharging(evse_index, charging_allowed, max_current, phase_count);
@@ -139,7 +139,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
         return m_request_handler_ptr->setACChargingCurrent(evse_index, max_current);
@@ -150,7 +150,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
         return m_request_handler_ptr->setACChargingPhaseCount(evse_index, phase_count);
@@ -162,7 +162,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
         return m_request_handler_ptr->setDCCharging(evse_index, charging_allowed, max_power);
@@ -173,7 +173,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
         return m_request_handler_ptr->setDCChargingPower(evse_index, max_power);
@@ -184,7 +184,7 @@ public:
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
         if (!evse) {
-            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEID;
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
         }
         // Iterate through the connectors to find the one with the given ID
