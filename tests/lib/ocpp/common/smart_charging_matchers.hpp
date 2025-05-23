@@ -5,8 +5,6 @@
 
 #include <gmock/gmock.h>
 
-#include <ocpp/v2/ocpp_enums.hpp>
-
 MATCHER_P2(PeriodEquals, start, limit,
            "Period start " + testing::DescribeMatcher<int32_t>(start, negation) + " and limit " +
                testing::DescribeMatcher<float>(limit, negation)) {

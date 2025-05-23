@@ -21,14 +21,6 @@ namespace {
 
 using ocpp::v16::EnhancedChargingSchedulePeriod;
 
-inline std::int32_t elapsed_seconds(const ocpp::DateTime& to, const ocpp::DateTime& from) {
-    return duration_cast<seconds>(to.to_time_point() - from.to_time_point()).count();
-}
-
-inline ocpp::DateTime floor_seconds(const ocpp::DateTime& dt) {
-    return ocpp::DateTime(std::chrono::floor<seconds>(dt.to_time_point()));
-}
-
 /// \brief update the iterator when the current period has elapsed
 /// \param[in] schedule_duration the time in seconds from the start of the composite schedule
 /// \param[inout] itt the iterator for the periods in the schedule
@@ -78,28 +70,17 @@ void update_itt(const int schedule_duration, std::vector<EnhancedChargingSchedul
     }
 }
 
-std::pair<float, std::int32_t> convert_limit(const ocpp::v16::period_entry_t* const entry,
-                                             const ocpp::v16::ChargingRateUnit selected_unit,
-                                             int32_t default_number_phases, int32_t supply_voltage) {
-    assert(entry != nullptr);
-    float limit = entry->limit;
-    std::int32_t number_phases = entry->number_phases.value_or(default_number_phases);
-
-    // if the units are the same - don't change the values
-    if (selected_unit != entry->charging_rate_unit) {
-        if (selected_unit == ocpp::v16::ChargingRateUnit::A) {
-            limit = entry->limit / (supply_voltage * number_phases);
-        } else {
-            limit = entry->limit * (supply_voltage * number_phases);
-        }
-    }
-
-    return {limit, number_phases};
-}
-
 } // namespace
 
 namespace ocpp::v16 {
+
+int32_t elapsed_seconds(const ocpp::DateTime& to, const ocpp::DateTime& from) {
+    return duration_cast<seconds>(to.to_time_point() - from.to_time_point()).count();
+}
+
+ocpp::DateTime floor_seconds(const ocpp::DateTime& dt) {
+    return ocpp::DateTime(std::chrono::floor<seconds>(dt.to_time_point()));
+}
 
 constexpr bool operator==(const ChargingSchedulePeriod& lhs, const ChargingSchedulePeriod& rhs) {
     return (lhs.startPeriod == rhs.startPeriod) && (lhs.limit == rhs.limit);
@@ -356,19 +337,13 @@ std::vector<period_entry_t> calculate_profile_entry(const DateTime& in_now, cons
     return entries;
 }
 
-/// \brief generate an ordered list of valid schedule periods for the profile
-/// \param now the current date and time
-/// \param end ignore entries beyond this date and time (i.e. that start after end)
-/// \param session_start optional when the charging session started
-/// \param profile the charging profile
-/// \return a list of profile periods with calculated date & time start and end times
-/// \note it is valid for there to be gaps (for recurring profiles)
-std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTime& end,
-                                              const std::optional<DateTime>& session_start,
-                                              const ChargingProfile& profile) {
+std::vector<period_entry_t> calculate_profile_unsorted(const DateTime& now, const DateTime& end,
+                                                       const std::optional<DateTime>& session_start,
+                                                       const ChargingProfile& profile) {
     std::vector<period_entry_t> entries;
 
-    for (std::uint8_t i = 0; i < profile.chargingSchedule.chargingSchedulePeriod.size(); i++) {
+    const auto nr_of_entries = profile.chargingSchedule.chargingSchedulePeriod.size();
+    for (uint8_t i = 0; i < nr_of_entries; i++) {
         const auto results = calculate_profile_entry(now, end, session_start, profile, i);
         for (const auto& entry : results) {
             if (entry.start <= end) {
@@ -377,6 +352,10 @@ std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTim
         }
     }
 
+    return entries;
+}
+
+void sort_periods_into_date_order(std::vector<period_entry_t>& periods) {
     // sort into date order
     struct {
         bool operator()(const period_entry_t& a, const period_entry_t& b) const {
@@ -384,25 +363,43 @@ std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTim
             return a.start < b.start;
         }
     } less_than;
-    std::sort(entries.begin(), entries.end(), less_than);
+    std::sort(periods.begin(), periods.end(), less_than);
+}
+
+std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTime& end,
+                                              const std::optional<DateTime>& session_start,
+                                              const ChargingProfile& profile) {
+    std::vector<period_entry_t> entries = calculate_profile_unsorted(now, end, session_start, profile);
+
+    sort_periods_into_date_order(entries);
     return entries;
 }
 
-/// \brief calculate the composite schedule for the list of periods
-/// \param in_combined_schedules the list of periods to build into the schedule
-/// \param in_now the start of the composite schedule
-/// \param in_end the end (i.e. duration) of the composite schedule
-/// \param in_charging_rate_unit the units to use (defaults to Amps)
-/// \return the calculated composite schedule
-EnhancedChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_combined_schedules,
-                                                      const DateTime& in_now, const DateTime& in_end,
-                                                      std::optional<ChargingRateUnit> in_charging_rate_unit,
-                                                      int32_t default_number_phases, int32_t supply_voltage) {
-    const ChargingRateUnit selected_unit =
-        (in_charging_rate_unit) ? in_charging_rate_unit.value() : ChargingRateUnit::A;
+std::vector<period_entry_t> calculate_all_profiles(const DateTime& now, const DateTime& end,
+                                                   const std::optional<DateTime>& session_start,
+                                                   const std::vector<ChargingProfile>& profiles,
+                                                   ChargingProfilePurposeType purpose) {
+    std::vector<period_entry_t> output;
+    for (const auto& profile : profiles) {
+        if (profile.chargingProfilePurpose == purpose) {
+            std::vector<period_entry_t> periods = calculate_profile_unsorted(now, end, session_start, profile);
+            output.insert(output.end(), periods.begin(), periods.end());
+        }
+    }
+
+    sort_periods_into_date_order(output);
+    return output;
+}
+
+IntermediateProfile generate_profile_from_periods(std::vector<period_entry_t>& periods, const DateTime& in_now,
+                                                  const DateTime& in_end) {
+
     const auto now = floor_seconds(in_now);
     const auto end = floor_seconds(in_end);
-    EnhancedChargingSchedule composite{selected_unit, {}, elapsed_seconds(end, now), now, std::nullopt};
+
+    if (periods.empty()) {
+        return {{0, NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED, 0, 0, std::nullopt, std::nullopt}};
+    }
 
     // sort the combined_schedules in stack priority order
     struct {
@@ -411,8 +408,9 @@ EnhancedChargingSchedule calculate_composite_schedule(std::vector<period_entry_t
             return a.stack_level > b.stack_level;
         }
     } less_than;
-    std::sort(in_combined_schedules.begin(), in_combined_schedules.end(), less_than);
+    std::sort(periods.begin(), periods.end(), less_than);
 
+    IntermediateProfile combined{};
     DateTime current = now;
 
     while (current < end) {
@@ -421,7 +419,7 @@ EnhancedChargingSchedule calculate_composite_schedule(std::vector<period_entry_t
         DateTime next_earliest = end;
         const period_entry_t* chosen{nullptr};
 
-        for (const auto& schedule : in_combined_schedules) {
+        for (const auto& schedule : periods) {
             if (schedule.start <= earliest) {
                 // ensure the earlier schedule is valid at the current time
                 if (schedule.end > current) {
@@ -437,16 +435,29 @@ EnhancedChargingSchedule calculate_composite_schedule(std::vector<period_entry_t
 
         if (earliest > current) {
             // there is a gap to fill
-            composite.chargingSchedulePeriod.push_back(
-                {elapsed_seconds(current, now), no_limit_specified, std::nullopt, 0});
+            combined.push_back({elapsed_seconds(current, now), NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED, 0, 0,
+                                std::nullopt, std::nullopt});
             current = earliest;
         } else {
             // there is a schedule to use
-            const auto [limit, number_phases] =
-                convert_limit(chosen, selected_unit, default_number_phases, supply_voltage);
-            composite.chargingSchedulePeriod.push_back({elapsed_seconds(current, now), limit, number_phases,
-                                                        chosen->stack_level,
-                                                        selected_unit != chosen->charging_rate_unit});
+            float current_limit = NO_LIMIT_SPECIFIED;
+            float power_limit = NO_LIMIT_SPECIFIED;
+            int32_t stack_level_current = 0;
+            int32_t stack_level_power = 0;
+
+            if (chosen->charging_rate_unit == ChargingRateUnit::A) {
+                current_limit = chosen->limit;
+                stack_level_current = chosen->stack_level;
+            } else {
+                power_limit = chosen->limit;
+                stack_level_power = chosen->stack_level;
+            }
+
+            IntermediatePeriod charging_schedule_period{
+                elapsed_seconds(current, now), current_limit, power_limit, stack_level_current, stack_level_power,
+                chosen->number_phases,         std::nullopt};
+
+            combined.push_back(charging_schedule_period);
             if (chosen->end < next_earliest) {
                 current = chosen->end;
             } else {
@@ -455,140 +466,239 @@ EnhancedChargingSchedule calculate_composite_schedule(std::vector<period_entry_t
         }
     }
 
-    return composite;
+    return combined;
 }
 
-/// \brief calculate the composite combined schedule
-/// \param charge_point_max the composite schedule for ChargePointMax profiles
-/// \param tx_default the composite schedule for TxDefault profiles
-/// \param tx the composite schedule for Tx profiles
-/// \return the calculated combined composite schedule
-/// \note all composite schedules must have the same units configured
-EnhancedChargingSchedule calculate_composite_schedule(const EnhancedChargingSchedule& charge_point_max,
-                                                      const EnhancedChargingSchedule& tx_default,
-                                                      const EnhancedChargingSchedule& tx,
-                                                      const CompositeScheduleDefaultLimits& default_limits,
-                                                      int32_t supply_voltage) {
-    EnhancedChargingSchedule combined{
-        tx_default.chargingRateUnit, {}, tx_default.duration, tx_default.startSchedule, tx_default.minChargingRate};
-    if (tx.minChargingRate) {
-        combined.minChargingRate = tx.minChargingRate.value();
+namespace {
+
+using period_iterator = IntermediateProfile::const_iterator;
+using period_pair_vector = std::vector<std::pair<period_iterator, period_iterator>>;
+using IntermediateProfileRef = std::reference_wrapper<const IntermediateProfile>;
+
+inline std::vector<IntermediateProfileRef> convert_to_ref_vector(const std::vector<IntermediateProfile>& profiles) {
+    std::vector<IntermediateProfileRef> references{};
+    for (auto& profile : profiles) {
+        references.push_back(profile);
+    }
+    return references;
+}
+
+IntermediateProfile combine_list_of_profiles(const std::vector<IntermediateProfileRef>& profiles,
+                                             std::function<IntermediatePeriod(const period_pair_vector&)> combinator) {
+    if (profiles.empty()) {
+        // We should never get here as there are always profiles, otherwise there is a mistake in the calling function
+        // Return an empty profile to be safe
+        return {{0, NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED, 0, 0, std::nullopt, std::nullopt}};
     }
 
-    const auto default_limit = (tx_default.chargingRateUnit == ChargingRateUnit::A)
-                                   ? static_cast<float>(default_limits.amps)
-                                   : static_cast<float>(default_limits.watts);
+    IntermediateProfile combined{};
 
-    int current{0};
-    const int end = std::max(std::max(charge_point_max.duration.value_or(0), tx_default.duration.value_or(0)),
-                             tx.duration.value_or(0));
+    period_pair_vector profile_iterators{};
+    for (const auto& wrapped_profile : profiles) {
+        auto& profile = wrapped_profile.get();
+        if (!profile.empty()) {
+            profile_iterators.push_back(std::make_pair(profile.begin(), profile.end()));
+        }
+    }
 
-    auto charge_point_max_itt = charge_point_max.chargingSchedulePeriod.begin();
-    auto tx_default_itt = tx_default.chargingSchedulePeriod.begin();
-    auto tx_itt = tx.chargingSchedulePeriod.begin();
+    int32_t current_period = 0;
+    while (std::any_of(profile_iterators.begin(), profile_iterators.end(),
+                       [](const std::pair<period_iterator, period_iterator>& it) { return it.first != it.second; })) {
 
-    int duration_charge_point_max{std::numeric_limits<int>::max()};
-    int duration_tx_default{std::numeric_limits<int>::max()};
-    int duration_tx{std::numeric_limits<int>::max()};
+        IntermediatePeriod period = combinator(profile_iterators);
+        period.startPeriod = current_period;
 
-    EnhancedChargingSchedulePeriod period_charge_point_max{-1, -1.0, std::nullopt};
-    EnhancedChargingSchedulePeriod period_tx_default{-1, -1.0, std::nullopt};
-    EnhancedChargingSchedulePeriod period_tx{-1, -1.0, std::nullopt};
-
-    update_itt(0, charge_point_max_itt, charge_point_max.chargingSchedulePeriod.end(), period_charge_point_max,
-               duration_charge_point_max);
-    update_itt(0, tx_default_itt, tx_default.chargingSchedulePeriod.end(), period_tx_default, duration_tx_default);
-    update_itt(0, tx_itt, tx.chargingSchedulePeriod.end(), period_tx, duration_tx);
-
-    EnhancedChargingSchedulePeriod last{-1, no_limit_specified, default_limits.number_phases, 0};
-
-    while (current < end) {
-        int duration = std::min(std::min(duration_charge_point_max, duration_tx_default), duration_tx);
-        EnhancedChargingSchedulePeriod period{-1, no_limit_specified, default_limits.number_phases, 0};
-
-        // use TxProfile when there is one
-        if (period_tx.startPeriod != -1) {
-            period = period_tx;
+        if (combined.empty() || (period.current_limit != combined.back().current_limit) ||
+            (period.power_limit != combined.back().power_limit) ||
+            (period.numberPhases != combined.back().numberPhases) ||
+            (period.stack_level_current != combined.back().stack_level_current) ||
+            (period.stack_level_power != combined.back().stack_level_power)) {
+            combined.push_back(period);
         }
 
-        if (period_tx_default.startPeriod != -1) {
-            period.startPeriod = current;
-            // use TxDefaultProfile when a TxProfile doesn't exist
-            if ((period.limit == no_limit_specified) && (period_tx_default.limit != no_limit_specified)) {
-                period = period_tx_default;
+        // Determine the next earliest period
+        int32_t next_lowest_period = std::numeric_limits<int32_t>::max();
+
+        for (const auto& [it, end] : profile_iterators) {
+            auto next = it + 1;
+            if (next != end && next->startPeriod > current_period && next->startPeriod < next_lowest_period) {
+                next_lowest_period = next->startPeriod;
             }
         }
 
-        if (period_charge_point_max.startPeriod != -1) {
-            period.startPeriod = current;
+        // If there is none, we are done
+        if (next_lowest_period == std::numeric_limits<int32_t>::max()) {
+            break;
+        }
 
-            if (period.limit == no_limit_specified) {
-                // use ChargePointMaxProfile when TxProfile and TxDefaultProfile don't exist
-                if (period_charge_point_max.limit != no_limit_specified) {
-                    period = period_charge_point_max;
+        // Otherwise update to next earliest period
+        for (auto& [it, end] : profile_iterators) {
+            auto next = it + 1;
+            if (next != end && next->startPeriod == next_lowest_period) {
+                it++;
+            }
+        }
+        current_period = next_lowest_period;
+    }
+
+    if (combined.empty()) {
+        combined.push_back({0, NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED, 0, 0, std::nullopt, std::nullopt});
+    }
+
+    return combined;
+}
+
+} // namespace
+
+IntermediateProfile merge_tx_profile_with_tx_default_profile(const IntermediateProfile& tx_profile,
+                                                             const IntermediateProfile& tx_default_profile) {
+
+    auto combinator = [](const period_pair_vector& periods) {
+        IntermediatePeriod period{};
+        period.current_limit = NO_LIMIT_SPECIFIED;
+        period.power_limit = NO_LIMIT_SPECIFIED;
+        period.stack_level_current = 0;
+        period.stack_level_power = 0;
+
+        for (const auto& [it, end] : periods) {
+            if (it->current_limit != NO_LIMIT_SPECIFIED || it->power_limit != NO_LIMIT_SPECIFIED) {
+                period.current_limit = it->current_limit;
+                period.power_limit = it->power_limit;
+                period.numberPhases = it->numberPhases;
+                period.stack_level_current = it->stack_level_current;
+                period.stack_level_power = it->stack_level_power;
+                break;
+            }
+        }
+
+        return period;
+    };
+
+    // This ordering together with the combinator will prefer the tx_profile above the default profile
+    std::vector<IntermediateProfileRef> profiles{tx_profile, tx_default_profile};
+
+    return combine_list_of_profiles(profiles, combinator);
+}
+
+IntermediateProfile merge_profiles_by_lowest_limit(const std::vector<IntermediateProfile>& profiles) {
+    auto combinator = [](const period_pair_vector& periods) {
+        IntermediatePeriod period{};
+        period.current_limit = std::numeric_limits<float>::max();
+        period.power_limit = std::numeric_limits<float>::max();
+
+        for (const auto& [it, end] : periods) {
+            if (it->current_limit >= 0.0F && it->current_limit < period.current_limit) {
+                period.current_limit = it->current_limit;
+                period.stack_level_current = it->stack_level_current;
+            }
+            if (it->power_limit >= 0.0F && it->power_limit < period.power_limit) {
+                period.power_limit = it->power_limit;
+                period.stack_level_power = it->stack_level_power;
+            }
+
+            // Copy number of phases if lower
+            if (!period.numberPhases.has_value()) {
+                // Don't care if this copies a nullopt, thats what it was already
+                period.numberPhases = it->numberPhases;
+            } else if (it->numberPhases.has_value() && it->numberPhases.value() < period.numberPhases.value()) {
+                period.numberPhases = it->numberPhases;
+            }
+        }
+
+        if (period.current_limit == std::numeric_limits<float>::max()) {
+            period.current_limit = NO_LIMIT_SPECIFIED;
+            period.stack_level_current = 0;
+        }
+        if (period.power_limit == std::numeric_limits<float>::max()) {
+            period.power_limit = NO_LIMIT_SPECIFIED;
+            period.stack_level_power = 0;
+        }
+
+        return period;
+    };
+
+    return combine_list_of_profiles(convert_to_ref_vector(profiles), combinator);
+}
+
+IntermediateProfile merge_profiles_by_summing_limits(const std::vector<IntermediateProfile>& profiles,
+                                                     float current_default, float power_default) {
+    auto combinator = [current_default, power_default](const period_pair_vector& periods) {
+        IntermediatePeriod period{};
+        for (const auto& [it, end] : periods) {
+            period.current_limit += it->current_limit >= 0.0F ? it->current_limit : current_default;
+            period.power_limit += it->power_limit >= 0.0F ? it->power_limit : power_default;
+            period.stack_level_current = 0; // Stack level cant be determined when summing intermediate profiles
+            period.stack_level_power = 0;   // Stack level cant be determined when summing intermediate profiles
+
+            // Copy number of phases if higher
+            if (!period.numberPhases.has_value()) {
+                // Don't care if this copies a nullopt, thats what it was already
+                period.numberPhases = it->numberPhases;
+            } else if (it->numberPhases.has_value() && it->numberPhases.value() > period.numberPhases.value()) {
+                period.numberPhases = it->numberPhases;
+            }
+        }
+        return period;
+    };
+
+    return combine_list_of_profiles(convert_to_ref_vector(profiles), combinator);
+}
+
+std::vector<EnhancedChargingSchedulePeriod>
+convert_intermediate_into_schedule(const IntermediateProfile& profile, ChargingRateUnit charging_rate_unit,
+                                   float default_limit, int32_t default_number_phases, float supply_voltage) {
+
+    std::vector<EnhancedChargingSchedulePeriod> output{};
+
+    for (const auto& period : profile) {
+        EnhancedChargingSchedulePeriod period_out{};
+        period_out.startPeriod = period.startPeriod;
+        period_out.numberPhases = period.numberPhases;
+
+        if (period.current_limit == NO_LIMIT_SPECIFIED && period.power_limit == NO_LIMIT_SPECIFIED) {
+            period_out.limit = default_limit;
+        } else {
+            float transform_value = supply_voltage * period_out.numberPhases.value_or(default_number_phases);
+            period_out.limit = std::numeric_limits<float>::max();
+            if (charging_rate_unit == ChargingRateUnit::A) {
+                if (period.current_limit != NO_LIMIT_SPECIFIED) {
+                    period_out.limit = period.current_limit;
+                    period_out.stackLevel = period.stack_level_current;
+                    period_out.periodTransformed = false;
+                }
+                if (period.power_limit != NO_LIMIT_SPECIFIED) {
+                    const auto converted_power_limit = period.power_limit / transform_value;
+                    if (converted_power_limit < period_out.limit) {
+                        period_out.limit = converted_power_limit;
+                        period_out.stackLevel = period.stack_level_power;
+                        period_out.periodTransformed = true;
+                    }
                 }
             } else {
-                // apply ChargePointMaxProfile limits
-                // Note the actual ChargePointMaxProfile limit is controlled outside of libocpp
-
-                if (period_charge_point_max.limit != no_limit_specified) {
-
-                    const auto charge_point_max_phases =
-                        period_charge_point_max.numberPhases.value_or(default_limits.number_phases);
-                    const auto period_max_phases = period.numberPhases.value_or(default_limits.number_phases);
-                    period.numberPhases = std::min(charge_point_max_phases, period_max_phases);
-
-                    if (combined.chargingRateUnit == ChargingRateUnit::A) {
-                        // limit is per phase
-                        if (period_charge_point_max.limit < period.limit) {
-                            // apply lower limit
-                            period.limit = period_charge_point_max.limit;
-                        }
-                    } else {
-                        // limit is total allowed power, changes in number of phases matter
-
-                        // adjust limits taking into account a potential change in number of phases
-                        const auto charge_point_limit_per_phase =
-                            period_charge_point_max.limit / charge_point_max_phases;
-                        const auto period_limit_per_phase = period.limit / period_max_phases;
-
-                        // avoid fractional results - 1 decimal place is allowed but tricky to ensure with a float
-                        period.limit = std::floor(std::min(charge_point_limit_per_phase, period_limit_per_phase) *
-                                                  period.numberPhases.value());
+                if (period.power_limit != NO_LIMIT_SPECIFIED) {
+                    period_out.limit = period.power_limit;
+                    period_out.stackLevel = period.stack_level_power;
+                    period_out.periodTransformed = false;
+                }
+                if (period.current_limit != NO_LIMIT_SPECIFIED) {
+                    const auto converted_current_limit = period.current_limit * transform_value;
+                    if (converted_current_limit < period_out.limit) {
+                        period_out.limit = converted_current_limit;
+                        period_out.stackLevel = period.stack_level_current;
+                        period_out.periodTransformed = true;
                     }
                 }
             }
         }
 
-        update_itt(duration, charge_point_max_itt, charge_point_max.chargingSchedulePeriod.end(),
-                   period_charge_point_max, duration_charge_point_max);
-        update_itt(duration, tx_default_itt, tx_default.chargingSchedulePeriod.end(), period_tx_default,
-                   duration_tx_default);
-        update_itt(duration, tx_itt, tx.chargingSchedulePeriod.end(), period_tx, duration_tx);
-
-        if (period.startPeriod != -1) {
-            if (!period.numberPhases.has_value()) {
-                period.numberPhases = default_limits.number_phases;
-            }
-
-            if (period.limit == no_limit_specified) {
-                period.limit = default_limit;
-            }
-            period.startPeriod = current;
-
-            // check this new period is a change from the previous one
-            if ((period.limit != last.limit) || (period.numberPhases.value() != last.numberPhases.value())) {
-                combined.chargingSchedulePeriod.push_back(period);
-            }
-            current = duration;
-            last = period;
-        } else {
-            combined.chargingSchedulePeriod.push_back({current, default_limit, default_limits.number_phases, 0});
-            current = end;
+        if (output.empty() || (period_out.limit != output.back().limit) ||
+            (period_out.numberPhases != output.back().numberPhases) ||
+            period_out.stackLevel != output.back().stackLevel) {
+            output.push_back(period_out);
         }
     }
 
-    return combined;
+    return output;
 }
 
 } // namespace ocpp::v16

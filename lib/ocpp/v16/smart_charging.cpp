@@ -12,6 +12,8 @@ using namespace std::chrono;
 
 using QueryExecutionException = everest::db::QueryExecutionException;
 
+const int32_t STATION_WIDE_ID = 0;
+
 namespace {
 /**
  * \brief remove expired profiles from the memory map structure and database
@@ -134,11 +136,74 @@ int SmartChargingHandler::get_number_installed_profiles() {
     return number;
 }
 
-ChargingSchedule SmartChargingHandler::calculate_composite_schedule(
-    const std::vector<ChargingProfile>& valid_profiles, const ocpp::DateTime& start_time,
-    const ocpp::DateTime& end_time, const int connector_id, std::optional<ChargingRateUnit> charging_rate_unit) {
+namespace {
+struct CompositeScheduleConfig {
+    std::set<ChargingProfilePurposeType> purposes_to_ignore;
+    float current_limit{};
+    float power_limit{};
+    int32_t default_number_phases{};
+    float supply_voltage{};
+
+    CompositeScheduleConfig(ChargePointConfiguration& configuration, bool is_offline) {
+
+        if (is_offline) {
+            const auto _purposes_to_ignore = configuration.getIgnoredProfilePurposesOffline();
+            for (const auto purpose : _purposes_to_ignore) {
+                purposes_to_ignore.insert(purpose);
+            }
+        }
+
+        this->current_limit = configuration.getCompositeScheduleDefaultLimitAmps().value_or(DEFAULT_LIMIT_AMPS);
+
+        this->power_limit = configuration.getCompositeScheduleDefaultLimitWatts().value_or(DEFAULT_LIMIT_WATTS);
+
+        this->default_number_phases =
+            configuration.getCompositeScheduleDefaultNumberPhases().value_or(DEFAULT_AND_MAX_NUMBER_PHASES);
+
+        this->supply_voltage = configuration.getSupplyVoltage().value_or(LOW_VOLTAGE);
+    }
+};
+
+std::vector<IntermediateProfile> generate_evse_intermediates(std::vector<ChargingProfile>&& evse_profiles,
+                                                             const std::vector<ChargingProfile>& station_wide_profiles,
+                                                             const ocpp::DateTime& start_time,
+                                                             const ocpp::DateTime& end_time,
+                                                             std::optional<ocpp::DateTime> session_start,
+                                                             bool simulate_transaction_active
+
+) {
+
+    // Combine the profiles with those from the station
+    evse_profiles.insert(evse_profiles.end(), station_wide_profiles.begin(), station_wide_profiles.end());
+
+    std::vector<IntermediateProfile> output;
+
+    // If there is a session active or we want to simulate, add the combined tx and tx_default to the output
+    if (session_start.has_value() || simulate_transaction_active) {
+        auto tx_default_periods = calculate_all_profiles(start_time, end_time, session_start, evse_profiles,
+                                                         ChargingProfilePurposeType::TxDefaultProfile);
+        auto tx_periods = calculate_all_profiles(start_time, end_time, session_start, evse_profiles,
+                                                 ChargingProfilePurposeType::TxProfile);
+
+        auto tx_default = generate_profile_from_periods(tx_default_periods, start_time, end_time);
+        auto tx = generate_profile_from_periods(tx_periods, start_time, end_time);
+
+        // Merges the TxProfile with the TxDefaultProfile, for every period preferring a tx period over a tx_default
+        // period
+        output.push_back(merge_tx_profile_with_tx_default_profile(tx, tx_default));
+    }
+
+    return output;
+}
+} // namespace
+
+ChargingSchedule SmartChargingHandler::calculate_composite_schedule(const ocpp::DateTime& start_time,
+                                                                    const ocpp::DateTime& end_time,
+                                                                    const int32_t evse_id,
+                                                                    ChargingRateUnit charging_rate_unit,
+                                                                    bool is_offline, bool simulate_transaction_active) {
     const auto enhanced_composite_schedule = this->calculate_enhanced_composite_schedule(
-        valid_profiles, start_time, end_time, connector_id, charging_rate_unit);
+        start_time, end_time, evse_id, charging_rate_unit, is_offline, simulate_transaction_active);
     ChargingSchedule composite_schedule;
     composite_schedule.chargingRateUnit = enhanced_composite_schedule.chargingRateUnit;
     composite_schedule.duration = enhanced_composite_schedule.duration;
@@ -155,12 +220,14 @@ ChargingSchedule SmartChargingHandler::calculate_composite_schedule(
 }
 
 EnhancedChargingSchedule SmartChargingHandler::calculate_enhanced_composite_schedule(
-    const std::vector<ChargingProfile>& valid_profiles, const ocpp::DateTime& start_time,
-    const ocpp::DateTime& end_time, const int connector_id, std::optional<ChargingRateUnit> charging_rate_unit) {
+    const ocpp::DateTime& start_time, const ocpp::DateTime& end_time, const int32_t evse_id,
+    ChargingRateUnit charging_rate_unit, bool is_offline, bool simulate_transaction_active) {
+
+    const CompositeScheduleConfig config{this->configuration, is_offline};
 
     std::optional<ocpp::DateTime> session_start{};
 
-    if (const auto& itt = connectors.find(connector_id); itt != connectors.end()) {
+    if (const auto& itt = connectors.find(evse_id); itt != connectors.end()) {
         // connector exists!
         if (itt->second->transaction) {
             session_start.emplace(ocpp::DateTime(
@@ -168,45 +235,59 @@ EnhancedChargingSchedule SmartChargingHandler::calculate_enhanced_composite_sche
         }
     }
 
-    std::vector<period_entry_t> charge_point_max{};
-    std::vector<period_entry_t> tx_default{};
-    std::vector<period_entry_t> tx{};
+    const auto station_wide_profiles =
+        get_valid_profiles(start_time, end_time, STATION_WIDE_ID, config.purposes_to_ignore);
 
-    for (const auto& profile : valid_profiles) {
-        std::vector<period_entry_t> periods{};
-        periods = ocpp::v16::calculate_profile(start_time, end_time, session_start, profile);
+    std::vector<IntermediateProfile> combined_profiles{};
 
-        switch (profile.chargingProfilePurpose) {
-        case ChargingProfilePurposeType::ChargePointMaxProfile:
-            charge_point_max.insert(charge_point_max.end(), periods.begin(), periods.end());
-            break;
-        case ChargingProfilePurposeType::TxDefaultProfile:
-            tx_default.insert(tx_default.end(), periods.begin(), periods.end());
-            break;
-        case ChargingProfilePurposeType::TxProfile:
-            tx.insert(tx.end(), periods.begin(), periods.end());
-            break;
+    if (evse_id == STATION_WIDE_ID) {
+        auto nr_of_evses = this->connectors.size() - 1;
+
+        // Get the ChargingStationExternalConstraints and Combined Tx(Default)Profiles per evse
+        std::vector<IntermediateProfile> evse_schedules{};
+        for (int evse = 1; evse <= nr_of_evses; evse++) {
+            auto intermediates = generate_evse_intermediates(
+                get_valid_profiles(start_time, end_time, evse, config.purposes_to_ignore), station_wide_profiles,
+                start_time, end_time, session_start, simulate_transaction_active);
+
+            // Determine the lowest limits per evse
+            evse_schedules.push_back(merge_profiles_by_lowest_limit(intermediates));
         }
+
+        // Add all the limits of all the evse's together since that will be the max the whole charging station can
+        // consume at any point in time
+        combined_profiles.push_back(
+            merge_profiles_by_summing_limits(evse_schedules, config.current_limit, config.power_limit));
+
+    } else {
+        combined_profiles = generate_evse_intermediates(
+            get_valid_profiles(start_time, end_time, evse_id, config.purposes_to_ignore), station_wide_profiles,
+            start_time, end_time, session_start, simulate_transaction_active);
     }
 
-    const auto default_amps_limit =
-        this->configuration.getCompositeScheduleDefaultLimitAmps().value_or(DEFAULT_LIMIT_AMPS);
-    const auto default_watts_limit =
-        this->configuration.getCompositeScheduleDefaultLimitWatts().value_or(DEFAULT_LIMIT_WATTS);
-    const auto default_number_phases =
-        this->configuration.getCompositeScheduleDefaultNumberPhases().value_or(DEFAULT_AND_MAX_NUMBER_PHASES);
-    const auto supply_voltage = this->configuration.getSupplyVoltage().value_or(LOW_VOLTAGE);
+    // ChargingStationMaxProfile is always station wide
+    auto charge_point_max_periods = calculate_all_profiles(start_time, end_time, session_start, station_wide_profiles,
+                                                           ChargingProfilePurposeType::ChargePointMaxProfile);
+    auto charge_point_max = generate_profile_from_periods(charge_point_max_periods, start_time, end_time);
 
-    CompositeScheduleDefaultLimits default_limits = {default_amps_limit, default_watts_limit, default_number_phases};
+    // Add the ChargingStationMaxProfile limits to the other profiles
+    combined_profiles.push_back(std::move(charge_point_max));
 
-    auto composite_charge_point_max = ocpp::v16::calculate_composite_schedule(
-        charge_point_max, start_time, end_time, charging_rate_unit, default_number_phases, supply_voltage);
-    auto composite_tx_default = ocpp::v16::calculate_composite_schedule(
-        tx_default, start_time, end_time, charging_rate_unit, default_number_phases, supply_voltage);
-    auto composite_tx = ocpp::v16::calculate_composite_schedule(tx, start_time, end_time, charging_rate_unit,
-                                                                default_number_phases, supply_voltage);
-    return ocpp::v16::calculate_composite_schedule(composite_charge_point_max, composite_tx_default, composite_tx,
-                                                   default_limits, supply_voltage);
+    // Calculate the final limit of all the combined profiles
+    auto retval = merge_profiles_by_lowest_limit(combined_profiles);
+
+    EnhancedChargingSchedule composite{};
+    composite.startSchedule = floor_seconds(start_time);
+    composite.duration = elapsed_seconds(floor_seconds(end_time), floor_seconds(start_time));
+    composite.chargingRateUnit = charging_rate_unit;
+
+    // Convert the intermediate result into a proper schedule. Will fill in the periods with no limits with the default
+    // one
+    const auto limit = charging_rate_unit == ChargingRateUnit::A ? config.current_limit : config.power_limit;
+    composite.chargingSchedulePeriod = convert_intermediate_into_schedule(
+        retval, charging_rate_unit, limit, config.default_number_phases, config.supply_voltage);
+
+    return composite;
 }
 
 bool SmartChargingHandler::validate_profile(

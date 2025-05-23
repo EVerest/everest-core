@@ -31,9 +31,6 @@ inline bool operator==(const DateTime& a, const char* b) {
     return a == DateTime(b);
 }
 
-inline ocpp::DateTime floor_seconds(const ocpp::DateTime& dt) {
-    return ocpp::DateTime(std::chrono::floor<std::chrono::seconds>(dt.to_time_point()));
-}
 } // namespace ocpp
 
 namespace ocpp::v16 {

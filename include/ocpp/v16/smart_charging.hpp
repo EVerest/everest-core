@@ -108,18 +108,15 @@ public:
     ///
     /// \brief Calculates the enhanced composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
-    EnhancedChargingSchedule calculate_enhanced_composite_schedule(const std::vector<ChargingProfile>& valid_profiles,
-                                                                   const ocpp::DateTime& start_time,
+    EnhancedChargingSchedule calculate_enhanced_composite_schedule(const ocpp::DateTime& start_time,
                                                                    const ocpp::DateTime& end_time,
-                                                                   const int connector_id,
-                                                                   std::optional<ChargingRateUnit> charging_rate_unit);
-    ///
-    /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
-    ///
-    ChargingSchedule calculate_composite_schedule(const std::vector<ChargingProfile>& valid_profiles,
-                                                  const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
-                                                  const int connector_id,
-                                                  std::optional<ChargingRateUnit> charging_rate_unit);
+                                                                   const int32_t evse_id,
+                                                                   ChargingRateUnit charging_rate_unit, bool is_offline,
+                                                                   bool simulate_transaction_active);
+
+    ChargingSchedule calculate_composite_schedule(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
+                                                  const int32_t evse_id, ChargingRateUnit charging_rate_unit,
+                                                  bool is_offline, bool simulate_transaction_active);
 };
 
 bool validate_schedule(const ChargingSchedule& schedule, const int charging_schedule_max_periods,

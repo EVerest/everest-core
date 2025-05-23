@@ -240,8 +240,8 @@ TEST_F(ProfileTestsC, DailyRecurringNotValidYet) {
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -274,8 +274,8 @@ TEST_F(ProfileTestsC, DailyRecurringAlmostValid) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -301,8 +301,8 @@ TEST_F(ProfileTestsC, DailyRecurringDuring) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -325,8 +325,8 @@ TEST_F(ProfileTestsC, DailyRecurringApproachingEnd) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -353,8 +353,8 @@ TEST_F(ProfileTestsC, DailyRecurringNextDay) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -375,8 +375,8 @@ TEST_F(ProfileTestsC, DailyRecurringNextDayStart) {
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -403,8 +403,8 @@ TEST_F(ProfileTestsC, DailyRecurringApproachingInvalid) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -432,8 +432,8 @@ TEST_F(ProfileTestsC, MinimumSession) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -454,8 +454,8 @@ TEST_F(ProfileTestsC, MinimumNoSession) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -481,8 +481,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltNotValidYet) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -499,8 +499,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltNotValidYet) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                      ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -524,8 +524,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltAlmostValid) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -546,8 +546,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltAlmostValid) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                      ChargingRateUnit::A, false, true);
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
     EXPECT_EQ(enhanced_schedule.startSchedule, start_time);
@@ -574,8 +574,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltDuring) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -592,8 +592,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltDuring) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                      ChargingRateUnit::A, false, true);
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
     EXPECT_EQ(enhanced_schedule.startSchedule, start_time);
@@ -616,8 +616,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltApproachingEnd) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -638,8 +638,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltApproachingEnd) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                      ChargingRateUnit::A, false, true);
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
     EXPECT_EQ(enhanced_schedule.startSchedule, start_time);
@@ -666,8 +666,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltNextDay) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -684,8 +684,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltNextDay) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                      ChargingRateUnit::A, false, true);
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
     EXPECT_EQ(enhanced_schedule.startSchedule, start_time);
@@ -708,8 +708,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltNextDayStart) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -730,8 +730,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltNextDayStart) {
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
-    enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                      ChargingRateUnit::A, false, true);
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
     EXPECT_EQ(enhanced_schedule.startSchedule, start_time);
@@ -758,8 +758,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltApproachingInvalid) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
     EXPECT_EQ(enhanced_schedule.startSchedule, start_time);
@@ -780,8 +780,8 @@ TEST_F(ProfileTestsC, DailyRecurringAltApproachingInvalid) {
 
     valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                      ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, 600);
@@ -878,8 +878,8 @@ TEST_F(ProfileTestsC, Issue609During) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time,
-                                                                           connector_id, ChargingRateUnit::W);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::W, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::W);
     EXPECT_EQ(enhanced_schedule.duration, duration);
@@ -907,8 +907,8 @@ TEST_F(ProfileTestsC, Issue609Before) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time,
-                                                                           connector_id, ChargingRateUnit::W);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::W, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::W);
     EXPECT_EQ(enhanced_schedule.duration, duration);
@@ -1033,8 +1033,8 @@ TEST_F(ProfileTestsC, ChargeRateW) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time,
-                                                                           connector_id, ChargingRateUnit::W);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::W, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::W);
     EXPECT_EQ(enhanced_schedule.duration, duration);
@@ -1092,8 +1092,8 @@ TEST_F(ProfileTestsC, ChargeRateA) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time,
-                                                                           connector_id, ChargingRateUnit::A);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, duration);
@@ -1139,8 +1139,8 @@ TEST_F(ProfileTestsC, ChargeRateA) {
               profileAmps.chargingSchedule.chargingSchedulePeriod[3].limit);
 
     // test default (Amps)
-    auto enhanced_schedule_default =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    auto enhanced_schedule_default = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                                   ChargingRateUnit::A, false, true);
     EXPECT_EQ(enhanced_schedule, enhanced_schedule_default);
 }
 
@@ -1245,63 +1245,71 @@ TEST_F(ProfileTestsC, Combined1) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time,
-                                                                           connector_id, ChargingRateUnit::W);
-    // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::W, false, true);
+    std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::W);
     EXPECT_EQ(enhanced_schedule.duration, duration);
     EXPECT_EQ(enhanced_schedule.startSchedule, start_time);
     ASSERT_EQ(enhanced_schedule.chargingSchedulePeriod.size(), 8);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].startPeriod, 0);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].stackLevel, profileCombinedTXD.stackLevel);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].stackLevel, profileCombinedCPM.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].limit, 6900);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].periodTransformed, true);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].numberPhases.value_or(-1), 3);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].startPeriod, 60);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].stackLevel, profileCombinedTXD.stackLevel);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].stackLevel, profileCombinedCPM.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].limit, 2300);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].periodTransformed, true);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].numberPhases.value_or(-1), 1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].startPeriod, 80);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].stackLevel, profileCombinedTXD.stackLevel);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].stackLevel, profileCombinedCPM.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].limit, 4600);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].periodTransformed, true);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].numberPhases.value_or(-1), 1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].startPeriod, 120);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].stackLevel, profileCombinedTXD.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].limit, 5520);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].periodTransformed, false);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].numberPhases.value_or(-1), 3);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].startPeriod, 180);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].stackLevel, profileCombinedTXD.stackLevel);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].stackLevel, profileCombinedCPM.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].limit, 13800);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].periodTransformed, true);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].numberPhases.value_or(-1), 3);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].startPeriod, 200);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].stackLevel, profileCombinedTXD.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].limit, 17250);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].periodTransformed, false);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].startPeriod, 260);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].stackLevel, profileCombinedTXD.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].limit, 5520);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].periodTransformed, false);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].startPeriod, 300);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].stackLevel, default_stack_level);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].limit, default_limit_W);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].numberPhases.value_or(-1), default_numberPhases);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].periodTransformed, false);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].numberPhases.value_or(-1), -1);
 
     // test default (Amps)
-    enhanced_schedule =
-        handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time, connector_id, std::nullopt);
+    enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                      ChargingRateUnit::A, false, true);
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, duration);
     EXPECT_EQ(enhanced_schedule.startSchedule, start_time);
     ASSERT_EQ(enhanced_schedule.chargingSchedulePeriod.size(), 8);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].startPeriod, 0);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].stackLevel, profileCombinedTXD.stackLevel);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].stackLevel, profileCombinedCPM.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].limit, 10);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].numberPhases.value_or(-1), 3);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].startPeriod, 60);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].stackLevel, profileCombinedTXD.stackLevel);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].stackLevel, profileCombinedCPM.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].limit, 10);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].numberPhases.value_or(-1), 1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].startPeriod, 80);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].stackLevel, profileCombinedTXD.stackLevel);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].stackLevel, profileCombinedCPM.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].limit, 20);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].numberPhases.value_or(-1), 1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].startPeriod, 120);
@@ -1309,21 +1317,21 @@ TEST_F(ProfileTestsC, Combined1) {
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].limit, 8);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].numberPhases.value_or(-1), 3);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].startPeriod, 180);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].stackLevel, profileCombinedTXD.stackLevel);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].stackLevel, profileCombinedCPM.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].limit, 20);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].numberPhases.value_or(-1), 3);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].startPeriod, 200);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].stackLevel, profileCombinedTXD.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].limit, 25);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].startPeriod, 260);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].stackLevel, profileCombinedTXD.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].limit, 8);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].startPeriod, 300);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].stackLevel, default_stack_level);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].limit, default_limit_A);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].numberPhases.value_or(-1), default_numberPhases);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].numberPhases.value_or(-1), -1);
 }
 
 const DateTime profileRecurringA_startSchedule("2024-06-03T12:31:53Z");
@@ -1417,8 +1425,8 @@ TEST_F(ProfileTestsC, Recurring2a) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time,
-                                                                           connector_id, ChargingRateUnit::A);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, duration);
@@ -1428,27 +1436,27 @@ TEST_F(ProfileTestsC, Recurring2a) {
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].startPeriod, 0);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].limit, 10);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].startPeriod, 10000);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].limit, 22);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].startPeriod, 20000);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].limit, 6);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].startPeriod, 86400);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].limit, 10);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].startPeriod, 96400);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].limit, 22);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].startPeriod, 106400);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].limit, 6);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].numberPhases.value_or(-1), -1);
 }
 
 TEST_F(ProfileTestsC, Recurring2b) {
@@ -1464,8 +1472,8 @@ TEST_F(ProfileTestsC, Recurring2b) {
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
     // std::cout << "valid_profiles: " << valid_profiles << std::endl;
-    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(valid_profiles, start_time, end_time,
-                                                                           connector_id, ChargingRateUnit::A);
+    auto enhanced_schedule = handler.calculate_enhanced_composite_schedule(start_time, end_time, connector_id,
+                                                                           ChargingRateUnit::A, false, true);
     // std::cout << "enhanced_schedule: " << enhanced_schedule << std::endl;
     EXPECT_EQ(enhanced_schedule.chargingRateUnit, ChargingRateUnit::A);
     EXPECT_EQ(enhanced_schedule.duration, duration);
@@ -1475,51 +1483,51 @@ TEST_F(ProfileTestsC, Recurring2b) {
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].startPeriod, 0);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].limit, 10);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[0].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].startPeriod, 10000);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].limit, 22);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[1].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].startPeriod, 20000);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].limit, 6);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[2].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].startPeriod, 86400);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].limit, 10);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[3].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].startPeriod, 96400);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].limit, 22);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[4].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].startPeriod, 106400);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].limit, 6);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[5].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].startPeriod, 172800);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].limit, 10);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[6].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].startPeriod, 182800);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].limit, 22);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[7].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[8].startPeriod, 192800);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[8].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[8].limit, 6);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[8].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[8].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[9].startPeriod, 259200);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[9].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[9].limit, 10);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[9].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[9].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[10].startPeriod, 269200);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[10].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[10].limit, 22);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[10].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[10].numberPhases.value_or(-1), -1);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[11].startPeriod, 279200);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[11].stackLevel, profileRecurringB.stackLevel);
     EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[11].limit, 6);
-    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[11].numberPhases.value_or(-1), 3);
+    EXPECT_EQ(enhanced_schedule.chargingSchedulePeriod[11].numberPhases.value_or(-1), -1);
 }
 
 } // namespace

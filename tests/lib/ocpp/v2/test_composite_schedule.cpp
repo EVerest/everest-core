@@ -25,8 +25,8 @@
 
 #include <optional>
 
-#include "smart_charging_matchers.hpp"
 #include "smart_charging_test_utils.hpp"
+#include <smart_charging_matchers.hpp>
 
 #include <sstream>
 #include <vector>

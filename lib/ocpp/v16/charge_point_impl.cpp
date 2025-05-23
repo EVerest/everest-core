@@ -2439,6 +2439,7 @@ void ChargePointImpl::handleGetCompositeScheduleRequest(ocpp::Call<GetCompositeS
 
     const auto connector_id = call.msg.connectorId;
     const auto allowed_charging_rate_units = this->configuration->getChargingScheduleAllowedChargingRateUnitVector();
+    const auto is_offline = this->websocket == nullptr or not this->websocket->is_connected();
 
     if (connector_id > this->configuration->getNumberOfConnectors() or connector_id < 0) {
         response.status = GetCompositeScheduleStatus::Rejected;
@@ -2456,11 +2457,10 @@ void ChargePointImpl::handleGetCompositeScheduleRequest(ocpp::Call<GetCompositeS
         }
         const auto duration = std::min(this->configuration->getMaxCompositeScheduleDuration(), call.msg.duration);
         const auto end_time = ocpp::DateTime(start_time.to_time_point() + std::chrono::seconds(duration));
-        const auto valid_profiles =
-            this->smart_charging_handler->get_valid_profiles(start_time, end_time, connector_id);
 
         const auto composite_schedule = this->smart_charging_handler->calculate_composite_schedule(
-            valid_profiles, start_time, end_time, connector_id, call.msg.chargingRateUnit);
+            start_time, end_time, connector_id, call.msg.chargingRateUnit.value_or(allowed_charging_rate_units.at(0)),
+            is_offline, true);
         response.status = GetCompositeScheduleStatus::Accepted;
         response.connectorId = connector_id;
         response.scheduleStart = start_time;
@@ -3472,8 +3472,9 @@ std::map<int32_t, ChargingSchedule> ChargePointImpl::get_all_composite_charging_
 
     std::map<int32_t, ChargingSchedule> charging_schedules;
     std::set<ChargingProfilePurposeType> purposes_to_ignore;
+    const auto is_offline = this->websocket == nullptr or not this->websocket->is_connected();
 
-    if (not this->websocket->is_connected()) {
+    if (not is_offline) {
         const auto purposes_to_ignore_vec = this->configuration->getIgnoredProfilePurposesOffline();
         purposes_to_ignore.insert(purposes_to_ignore_vec.begin(), purposes_to_ignore_vec.end());
     }
@@ -3486,7 +3487,7 @@ std::map<int32_t, ChargingSchedule> ChargePointImpl::get_all_composite_charging_
         const auto valid_profiles =
             this->smart_charging_handler->get_valid_profiles(start_time, end_time, connector_id, purposes_to_ignore);
         const auto composite_schedule = this->smart_charging_handler->calculate_composite_schedule(
-            valid_profiles, start_time, end_time, connector_id, unit);
+            start_time, end_time, connector_id, unit, is_offline, true);
         charging_schedules[connector_id] = composite_schedule;
     }
 
@@ -3509,10 +3510,9 @@ ChargePointImpl::get_all_enhanced_composite_charging_schedules(const int32_t dur
         const auto duration = std::chrono::seconds(duration_s);
         const auto end_time = ocpp::DateTime(start_time.to_time_point() + duration);
 
-        const auto valid_profiles =
-            this->smart_charging_handler->get_valid_profiles(start_time, end_time, connector_id, purposes_to_ignore);
         const auto composite_schedule = this->smart_charging_handler->calculate_enhanced_composite_schedule(
-            valid_profiles, start_time, end_time, connector_id, unit);
+            start_time, end_time, connector_id, unit, (this->connection_state != ChargePointConnectionState::Booted),
+            true);
         charging_schedules[connector_id] = composite_schedule;
     }
 
