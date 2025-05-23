@@ -9,6 +9,7 @@ types:
     - ErrorOutOfRange
     - ErrorValuesNotApplied
     - ErrorInvalidEVSEID
+    - ErrorInvalidConnectorID
     - ErrorNoDataAvailable
     - ErrorUnknownError
   ChargeProtocolEnum:
