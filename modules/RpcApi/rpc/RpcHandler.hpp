@@ -41,6 +41,29 @@ struct ClientReq {
     std::deque<nlohmann::json> data; // Queue of requests
 };
 
+class ClientConnector : public jsonrpccxx::IClientConnector {
+public:
+    explicit ClientConnector(std::vector<std::shared_ptr<TransportInterface>> interfaces) :
+        transport_interfaces(interfaces) {
+    }
+    std::string Send(const std::string& notification) override {
+        const std::vector<uint8_t> notif_char_array{notification.begin(), notification.end()};
+        for (const auto& interface : transport_interfaces) {
+            interface->send_data(notif_char_array);
+        }
+        return "";
+    }
+
+private:
+    std::vector<std::shared_ptr<TransportInterface>>& transport_interfaces;
+};
+// Members
+
+class JsonRpc2ServerWithClient : public JsonRpc2Server, public JsonRpcClient {
+public:
+    JsonRpc2ServerWithClient() = delete;
+    JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
+};
 class RpcHandler {
 public:
     // Constructor and Destructor
@@ -54,11 +77,6 @@ public:
     // Methods
     void start_server();
     void stop_server();
-
-    class JsonRpc2ServerWithClient : public JsonRpc2Server, public JsonRpcClient {
-    public:
-        JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
-    };
 
 private:
     void init_rpc_api();
@@ -81,23 +99,6 @@ private:
     }
     void process_client_requests();
 
-    class ClientConnector : public jsonrpccxx::IClientConnector {
-    public:
-        explicit ClientConnector(std::vector<std::shared_ptr<TransportInterface>> interfaces) :
-            transport_interfaces(interfaces) {
-        }
-        std::string Send(const std::string& notification) override {
-            const std::vector<uint8_t> notif_char_array{notification.begin(), notification.end()};
-            for (const auto& interface : transport_interfaces) {
-                interface->send_data(notif_char_array);
-            }
-            return "";
-        }
-
-    private:
-        std::vector<std::shared_ptr<TransportInterface>>& transport_interfaces;
-    };
-    // Members
     std::vector<std::shared_ptr<TransportInterface>> m_transport_interfaces;
     DataStoreCharger& m_data_store;
     std::mutex m_mtx;
