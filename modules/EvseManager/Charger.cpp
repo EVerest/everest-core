@@ -725,16 +725,18 @@ void Charger::run_state_machine() {
             break;
 
         case EvseState::ChargingPausedEVSE:
-
-            if (shared_context.hlc_charging_active) {
-                if (initialize_state) {
-                    bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
+            if (initialize_state) {
+                signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
+                if (shared_context.hlc_charging_active) {
                     if (config_context.charge_mode == ChargeMode::DC) {
                         signal_dc_supply_off();
                     }
-                    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
+                } else {
+                    pwm_off();
                 }
+            }
 
+            if (shared_context.hlc_charging_active) {
                 if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
                     // EV wants to terminate session
                     shared_context.current_state = EvseState::StoppingCharging;
@@ -746,11 +748,6 @@ void Charger::run_state_machine() {
                     if (shared_context.pwm_running) {
                         pwm_off();
                     }
-                }
-            } else {
-                if (initialize_state) {
-                    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
-                    pwm_off();
                 }
             }
             break;
