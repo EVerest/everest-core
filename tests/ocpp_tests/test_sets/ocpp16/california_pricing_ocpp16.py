@@ -23,6 +23,7 @@ from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility, ValidationMode
 from everest.testing.core_utils.controller.test_controller_interface import TestController
+from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP16ConfigAdjustment
 
 from everest_test_utils import *
 
@@ -289,6 +290,10 @@ class TestOcpp16CostAndPrice:
 
         # And it should contain the correct data
         session_cost_mock.assert_called_with(data_received)
+
+        test_controller.plug_out()
+
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction", {}) 
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.asyncio
@@ -1022,31 +1027,41 @@ class TestOcpp16CostAndPrice:
         assert response.configuration_key[0]['key'] == 'DefaultPrice'
         assert json.loads(response.configuration_key[0]['value']) == default_price
 
+    @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.probe_module
-    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment(
+        evse_manager_ids=["evse_manager"]))
     @pytest.mark.asyncio
     async def test_cost_and_price_set_user_price_timeout(self, test_config: OcppTestConfiguration,
-                                                                        test_utility: TestUtility,
-                                                                        test_controller: TestController, probe_module,
-                                                                        central_system: CentralSystem):
+                                                                  test_controller: TestController,
+                                                                  test_utility: TestUtility, probe_module,
+                                                                  central_system: CentralSystem):
         """
-        Test if no transaction is started while waiting for a user price.
+        Test if default price is applied if no SetUserPrice is received within the timeout.
         """
+        logging.info("######### test_cost_and_price_running_cost_trigger_time #########")
 
-        logging.info("######### test_cost_and_price_set_user_price_timeout #########")
-
-        data = {
-            "idToken": test_config.authorization_info.valid_id_tag_1,
-            "priceText": "GBP 0.12/kWh, no idle fee",
-            "priceTextExtra": [{"format": "UTF8", "language": "nl",
-                                "content": "€0.12/kWh, geen idle fee"},
-                               {"format": "UTF8", "language": "de",
-                                "content": "€0,12/kWh, keine Leerlaufgebühr"}
-                               ]
+        probe_module_mock_start_transaction_fn = Mock()
+        probe_module_mock_start_transaction_fn.return_value = {
+            "status": "OK"
+        }
+        probe_module_mock_stop_transaction_fn = Mock()
+        probe_module_mock_stop_transaction_fn.return_value = {
+            "status": "OK"
         }
 
-        session_cost_mock = Mock()
-        probe_module.subscribe_variable("session_cost", "tariff_message", session_cost_mock)
+        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
+        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
+
+        power_meter_value = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "energy_Wh_import": {
+                "total": 1.0
+            },
+            "power_W": {
+                "total": 1000.0
+            }
+        }
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -1054,14 +1069,16 @@ class TestOcpp16CostAndPrice:
         # wait for libocpp to go online
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
-        # start charging session
+        # Start transaction
         test_controller.plug_in()
 
         # expect StatusNotification with status preparing
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
                                            call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
                                                                           ChargePointStatus.preparing))
-
+        
+        # no StartTransaction.req before SetUserPrice is received
+        test_utility.forbidden_actions.append("StartTransaction")
         test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
 
         test_utility.validation_mode = ValidationMode.STRICT
@@ -1071,7 +1088,8 @@ class TestOcpp16CostAndPrice:
                                            "Authorize",
                                            call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1))
 
-        assert session_cost_mock.call_count == 0 # never called because no SetUserPrice was received during authorization
+        test_utility.forbidden_actions.clear()
+        test_utility.validation_mode = ValidationMode.EASY
 
         # expect StartTransaction.req
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StartTransaction",
@@ -1079,3 +1097,15 @@ class TestOcpp16CostAndPrice:
                                                1, test_config.authorization_info.valid_id_tag_1, 0, ""),
                                            validate_standard_start_transaction)
 
+        # assert default price text is used
+        probe_module_mock_start_transaction_fn.assert_called_with({
+            'value': {
+                'evse_id': '1',
+                'identification_data': 'RFID_VALID1',
+                'identification_flags': [],
+                'identification_status': 'ASSIGNED',
+                'identification_type': 'ISO14443',
+                'tariff_text': 'This is the price', # default price text
+                'transaction_id': ANY
+            }
+        })
