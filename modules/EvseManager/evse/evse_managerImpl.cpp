@@ -124,7 +124,8 @@ void evse_managerImpl::ready() {
                     provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
                     provided_token.id_token = {"FREESERVICE", types::authorization::IdTokenType::Local};
                     provided_token.prevalidated = true;
-                    mod->charger->authorize(true, provided_token);
+                    mod->charger->authorize(true, provided_token,
+                                            {types::authorization::AuthorizationStatus::Accepted});
                     mod->charger_was_authorized();
                 });
                 authorize_thread.detach();
@@ -360,7 +361,7 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
             return;
         }
 
-        this->mod->charger->authorize(true, provided_token);
+        this->mod->charger->authorize(true, provided_token, validation_result);
         mod->charger_was_authorized();
         if (validation_result.reservation_id.has_value()) {
             EVLOG_debug << "Reserve evse manager reservation id for id " << validation_result.reservation_id.value();

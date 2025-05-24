@@ -1008,24 +1008,18 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
     }
 
     if (idTokenInfo.personalMessage.has_value()) {
-        validation_result.reason = types::authorization::TokenValidationStatusMessage();
-        validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
         const types::text_message::MessageContent content =
             to_everest_message_content(idTokenInfo.personalMessage.value());
-        validation_result.reason->messages->push_back(content);
+        validation_result.tariff_messages.push_back(content);
     }
 
     if (idTokenInfo.customData.has_value() && idTokenInfo.customData.value().contains("vendorId") &&
         idTokenInfo.customData.value().at("vendorId").get<std::string>() == "org.openchargealliance.multilanguage" &&
         idTokenInfo.customData.value().contains("personalMessageExtra")) {
-        if (!validation_result.reason->messages.has_value()) {
-            validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
-        }
-
         const json& multi_language_personal_messages = idTokenInfo.customData.value().at("personalMessageExtra");
         for (const auto& messages : multi_language_personal_messages.items()) {
             const types::text_message::MessageContent content = messages.value();
-            validation_result.reason->messages->push_back(content);
+            validation_result.tariff_messages.push_back(content);
         }
     }
 

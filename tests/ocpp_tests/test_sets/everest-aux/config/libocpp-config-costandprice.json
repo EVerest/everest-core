@@ -85,7 +85,8 @@
         "CustomIdleFeeAfterStop": false,
         "SupportedLanguages": "en, nl, de, nb_NO",
         "CustomMultiLanguageMessages": true,
-        "Language": "en"
+        "Language": "en",
+        "WaitForSetUserPriceTimeout": 2000
     },
     "Reservation": {
         "ReserveConnectorZeroSupported": true
