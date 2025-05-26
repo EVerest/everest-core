@@ -699,13 +699,18 @@ void API::init() {
     std::string var_info = this->api_base + "info/var/info";
 
     if (this->config.charger_information_file != "") {
-        auto charger_information_path = std::filesystem::path(this->config.charger_information_file);
-        try {
-            this->charger_information = Everest::load_yaml(charger_information_path);
+        if (not r_charger_information.empty()) {
+            EVLOG_warning << "The configured charger information file (" << this->config.charger_information_file << ") "
+                          << "is ignored in favor of the charger information interface connection.";
+        } else {
+            auto charger_information_path = std::filesystem::path(this->config.charger_information_file);
+            try {
+                this->charger_information = Everest::load_yaml(charger_information_path);
 
-        } catch (const std::exception& err) {
-            EVLOG_error << "Error parsing charger information file at " << this->config.charger_information_file << ": "
-                        << err.what();
+            } catch (const std::exception& err) {
+                EVLOG_error << "Error parsing charger information file at " << this->config.charger_information_file << ": "
+                            << err.what();
+            }
         }
     }
 
