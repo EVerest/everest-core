@@ -1,4 +1,7 @@
-description: Provides a charger information interface, backed by simple KVS interface.
+description: >-
+  Provides a charger information interface, backed by simple KVS interface.
+  With the optional dependency to another charger information node, it is possible to chain
+  multiple sources of information.
 config:
   firmware_version_file:
     description: >-
@@ -16,7 +19,11 @@ requires:
   kvs:
     interface: kvs
     min_connections: 1
-    max_connections: 3
+    max_connections: 10
+  charger_information:
+    interface: charger_information
+    min_connections: 0
+    max_connections: 1
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
