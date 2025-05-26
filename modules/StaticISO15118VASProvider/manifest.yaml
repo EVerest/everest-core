@@ -1,5 +1,5 @@
 description: >-
-  This module provides a static ISO15118 value-added service (VAS) from a yaml file
+  This module provides static ISO15118 value-added services (VAS) defined in a yaml file
 
 config:
   service_file:
