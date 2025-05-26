@@ -96,6 +96,8 @@ void PhyVersoBSP::everest_config_to_verso_config() {
     verso_config.conf.conn2_disable_port = this->config.conn2_disable_port;
     verso_config.conf.conn1_feedback_active_low = this->config.conn1_feedback_active_low;
     verso_config.conf.conn2_feedback_active_low = this->config.conn2_feedback_active_low;
+    verso_config.conf.conn1_dc = this->config.conn1_dc;
+    verso_config.conf.conn2_dc = this->config.conn2_dc;
 }
 
 } // namespace module
