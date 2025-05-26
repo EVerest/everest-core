@@ -7,7 +7,18 @@
 
 namespace data {
 
-class ChargerInfoStore : public GenericInfoStore<RPCDataTypes::ChargerInfoObj> {};
+class ChargerInfoStore : public GenericInfoStore<RPCDataTypes::ChargerInfoObj> {
+public:
+    // we currently don't get this info from the system yet, so allow setting to unknown
+    void set_unknown() {
+        this->dataobj.vendor = "unknown";
+        this->dataobj.model = "unknown";
+        this->dataobj.serial = "unknown";
+        this->dataobj.firmware_version = "unknown";
+        // pretend we got something
+        this->data_is_valid = true;
+    }
+};
 class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoObj> {
     // EXAMPLE, in case override is required
     // void init_data() override {
