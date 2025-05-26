@@ -14,14 +14,12 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
     if (this->device_model_storages.find(device_model_storage_id) != this->device_model_storages.end()) {
         return false;
     }
+    this->device_model_map.merge(device_model_storage->get_device_model());
     this->device_model_storages[device_model_storage_id] = std::move(device_model_storage);
     return true;
 }
 
 ocpp::v2::DeviceModelMap ComposedDeviceModelStorage::get_device_model() {
-    for (const auto& [name, device_model_storage] : this->device_model_storages) {
-        this->device_model_map.merge(device_model_storage->get_device_model());
-    }
     return this->device_model_map;
 }
 
