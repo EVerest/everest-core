@@ -371,9 +371,9 @@ types:
       max_current_A_import:
         type: number
       max_phase_count_export:
-        type: number
+        type: integer
       max_phase_count_import:
-        type: number
+        type: integer
       min_current_A_export:
         type: number
       min_current_A_import:
