@@ -1004,7 +1004,9 @@ void OCPP::ready() {
     // which were loaded from configuration file(s)
     if (!this->r_charger_information.empty()) {
         auto ci = this->r_charger_information.at(0)->call_get_charger_information();
-        this->charge_point->update_chargepoint_information(ci.vendor, ci.model, ci.serial, ci.firmware_version);
+
+        this->charge_point->update_chargepoint_information(ci.vendor, ci.model, ci.chargepoint_serial,
+                                                           ci.chargebox_serial, ci.firmware_version);
     }
 
     // we can now call init(), which initializes the charge points state machine. It reads the connector availability
