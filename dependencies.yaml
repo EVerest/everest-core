@@ -55,7 +55,18 @@ libcurl:
   git: https://github.com/curl/curl.git
   git_tag: curl-8_13_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
-  options: ["CURL_USE_LIBPSL OFF"]
+  options: [
+    "BUILD_EXAMPLES OFF",
+    "BUILD_LIBCURL_DOCS OFF",
+    "BUILD_MISC_DOCS OFF",
+    "BUILD_TESTING OFF",
+    "CURL_BROTLI OFF",
+    "CURL_DISABLE_LDAP ON",
+    "CURL_USE_LIBPSL OFF",
+    "CURL_USE_LIBSSH2 OFF",
+    "ENABLE_CURL_MANUAL OFF",
+    "USE_NGHTTP2 OFF",
+  ]
 
 # EvseSecurity
 # This has to appear before libocpp in this file since it is also a direct dependency
