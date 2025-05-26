@@ -14,6 +14,7 @@
 #include <generated/interfaces/charger_information/Implementation.hpp>
 
 // headers for required interface implementations
+#include <generated/interfaces/charger_information/Interface.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -30,11 +31,17 @@ class ChargerInfo : public Everest::ModuleBase {
 public:
     ChargerInfo() = delete;
     ChargerInfo(const ModuleInfo& info, std::unique_ptr<charger_informationImplBase> p_main,
-                std::vector<std::unique_ptr<kvsIntf>> r_kvs, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_kvs(std::move(r_kvs)), config(config){};
+                std::vector<std::unique_ptr<kvsIntf>> r_kvs,
+                std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information, Conf& config) :
+        ModuleBase(info),
+        p_main(std::move(p_main)),
+        r_kvs(std::move(r_kvs)),
+        r_charger_information(std::move(r_charger_information)),
+        config(config){};
 
     const std::unique_ptr<charger_informationImplBase> p_main;
     const std::vector<std::unique_ptr<kvsIntf>> r_kvs;
+    const std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
