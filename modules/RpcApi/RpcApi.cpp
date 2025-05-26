@@ -20,6 +20,10 @@ void RpcApi::init() {
 
         // subscribe to evse_manager interface variables
         this->subscribe_evse_manager(evse_manager, *evse_data);
+
+        // no info available until we get the new charger_information interface, see
+        // https://github.com/EVerest/everest-core/pull/1109
+        this->data.chargerinfo.set_unknown();
     }
     
     // Create the request handler
