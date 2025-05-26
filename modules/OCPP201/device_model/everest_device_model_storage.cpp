@@ -51,13 +51,17 @@ VariableData make_variable(const ocpp::v2::VariableCharacteristics& characterist
 
 // Populates EVSE variables
 Variables build_evse_variables() {
-    return {{ocpp::v2::EvseComponentVariables::Available,
-             make_variable(EvseDefinitions::Characteristics::Available, "true")},
-            {ocpp::v2::EvseComponentVariables::AvailabilityState,
-             make_variable(EvseDefinitions::Characteristics::AvailabilityState, "Available")},
-            {ocpp::v2::EvseComponentVariables::Power, make_variable(EvseDefinitions::Characteristics::EVSEPower)},
-            {ocpp::v2::EvseComponentVariables::SupplyPhases,
-             make_variable(EvseDefinitions::Characteristics::SupplyPhases)}};
+    return {
+        {ocpp::v2::EvseComponentVariables::Available,
+         make_variable(EvseDefinitions::Characteristics::Available, "true")},
+        {ocpp::v2::EvseComponentVariables::AvailabilityState,
+         make_variable(EvseDefinitions::Characteristics::AvailabilityState, "Available")},
+        {ocpp::v2::EvseComponentVariables::Power, make_variable(EvseDefinitions::Characteristics::EVSEPower)},
+        {ocpp::v2::EvseComponentVariables::SupplyPhases, make_variable(EvseDefinitions::Characteristics::SupplyPhases)},
+        {ocpp::v2::EvseComponentVariables::AllowReset,
+         make_variable(EvseDefinitions::Characteristics::AllowReset, "false")},
+        {ocpp::v2::EvseComponentVariables::ISO15118EvseId,
+         make_variable(EvseDefinitions::Characteristics::ISO15118EvseId, "DEFAULT_EVSE_ID")}};
 }
 
 // Populates Connector variables
@@ -74,10 +78,11 @@ Variables build_connector_variables() {
 
 } // anonymous namespace
 
-// Refactored Constructor
 EverestDeviceModelStorage::EverestDeviceModelStorage(
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager) :
     r_evse_manager(r_evse_manager) {
+
+    EVLOG_info << "Initializing EverestDeviceModelStorage with " << r_evse_manager.size() << " EVSE managers";
 
     for (const auto& evse_manager : r_evse_manager) {
         const auto evse_info = evse_manager->call_get_evse();
@@ -108,13 +113,19 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
             }
         }
     }
+
+    EVLOG_info << "EverestDeviceModelStorage initialized with " << this->device_model.size()
+               << " components in the device model";
 }
 
 ocpp::v2::DeviceModelMap EverestDeviceModelStorage::get_device_model() {
     std::lock_guard<std::mutex> lock(device_model_mutex);
     ocpp::v2::DeviceModelMap device_model;
 
-    for (const auto& [component, variables] : device_model) {
+    EVLOG_info << "Building device model from EverestDeviceModelStorage";
+
+    for (const auto& [component, variables] : this->device_model) {
+        EVLOG_info << "OCPP201 Component: " << component.name;
         ocpp::v2::VariableMap variable_map;
         for (const auto& [variable, variable_data] : variables) {
             VariableMetaData meta_data = static_cast<VariableMetaData>(variable_data);

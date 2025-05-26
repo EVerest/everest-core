@@ -54,7 +54,7 @@ VariableCharacteristics EVSEPower = [] {
     var.dataType = DataEnum::decimal;
     var.supportsMonitoring = false;
     var.unit = CiString<16>("W");
-    // maxLimit is initialized at runtime
+    var.maxLimit = 0.0f; // will be updated at runtime
     return var;
 }();
 
@@ -90,13 +90,6 @@ const VariableCharacteristics AvailabilityState = [] {
 const VariableCharacteristics Available = [] {
     VariableCharacteristics var;
     var.dataType = DataEnum::boolean;
-    var.supportsMonitoring = false;
-    return var;
-}();
-
-const VariableCharacteristics ChargeProtocol = [] {
-    VariableCharacteristics var;
-    var.dataType = DataEnum::string;
     var.supportsMonitoring = false;
     return var;
 }();

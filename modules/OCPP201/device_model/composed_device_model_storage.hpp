@@ -55,7 +55,6 @@ private:
     /// \param component    Component the variable belongs to.
     /// \param variable     The variable to get the source from.
     /// \return The variable source. Defaults to 'OCPP'.
-    /// \throws DeviceModelError    When source is something else than 'OCPP' (not implemented yet)
     ///
     std::string get_variable_source(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable);
 };

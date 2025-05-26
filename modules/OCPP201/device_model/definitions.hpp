@@ -25,7 +25,6 @@ namespace ConnectorDefinitions {
 namespace Characteristics {
 extern const VariableCharacteristics AvailabilityState;
 extern const VariableCharacteristics Available;
-extern const VariableCharacteristics ChargeProtocol;
 extern const VariableCharacteristics ConnectorType;
 extern const VariableCharacteristics SupplyPhases;
 } // namespace Characteristics
