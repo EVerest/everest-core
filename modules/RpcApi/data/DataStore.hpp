@@ -19,6 +19,7 @@ public:
         this->data_is_valid = true;
     }
 };
+
 class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoObj> {
     // EXAMPLE, in case override is required
     // void init_data() override {
