@@ -30,9 +30,6 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
 }
 
 ocpp::v2::DeviceModelMap ComposedDeviceModelStorage::get_device_model() {
-    for (const auto& [name, device_model_storage] : this->device_model_storages) {
-        this->device_model_map.merge(device_model_storage->get_device_model());
-    }
     return this->device_model_map;
 }
 

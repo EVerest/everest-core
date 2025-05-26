@@ -14,6 +14,8 @@ using ocpp::v2::VariableCharacteristics;
 using ocpp::v2::VariableMap;
 using ocpp::v2::VariableMetaData;
 
+static constexpr auto VARIABLE_SOURCE_EVEREST = "EVEREST";
+
 namespace module::device_model {
 
 namespace {
@@ -36,7 +38,7 @@ Component get_connector_component(const int32_t evse_id, const int32_t connector
 VariableData make_variable(const ocpp::v2::VariableCharacteristics& characteristics, const std::string& value = "") {
     VariableData var_data;
     var_data.characteristics = characteristics;
-    var_data.source = "Internal";
+    var_data.source = VARIABLE_SOURCE_EVEREST;
 
     VariableAttribute attr;
     attr.type = ocpp::v2::AttributeEnum::Actual;
@@ -67,7 +69,7 @@ Variables build_connector_variables() {
             {ocpp::v2::ConnectorComponentVariables::Type,
              make_variable(ConnectorDefinitions::Characteristics::ConnectorType)},
             {ocpp::v2::ConnectorComponentVariables::SupplyPhases,
-             make_variable(ConnectorDefinitions::Characteristics::SupplyPhases, "3")}};
+             make_variable(ConnectorDefinitions::Characteristics::SupplyPhases)}};
 }
 
 } // anonymous namespace
@@ -79,41 +81,40 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
 
     for (const auto& evse_manager : r_evse_manager) {
         const auto evse_info = evse_manager->call_get_evse();
-
-        // TODO: variables:
-        //  max power
-        //  connector type
-
         // Build EVSE Component
         Component evse_component = get_evse_component(evse_info.id);
-        this->components[evse_component] = build_evse_variables();
+        this->device_model[evse_component] = build_evse_variables();
 
-        evse_manager->subscribe_hw_capabilities([this, &evse_info](const types::evse_board_support::HardwareCapabilities hw_capabilities) {
-            this->components[get_evse_component(evse_info.id)][ocpp::v2::EvseComponentVariables::SupplyPhases].attributes[ocpp::v2::AttributeEnum::Actual].value =
-                std::to_string(hw_capabilities.max_phase_count_import);
-            
-        });
-
-        this->components[get_evse_component(evse_info.id)][ocpp::v2::EvseComponentVariables::Power].characteristics.maxLimit = 10000.0f;
+        evse_manager->subscribe_hw_capabilities(
+            [this, evse_component](const types::evse_board_support::HardwareCapabilities hw_capabilities) {
+                this->device_model[evse_component][ocpp::v2::EvseComponentVariables::SupplyPhases]
+                    .attributes[ocpp::v2::AttributeEnum::Actual]
+                    .value = std::to_string(hw_capabilities.max_phase_count_import);
+                this->device_model[evse_component][ocpp::v2::EvseComponentVariables::Power].characteristics.maxLimit =
+                    hw_capabilities.max_current_A_import * 230.0f *
+                    hw_capabilities
+                        .max_phase_count_import; // this calculation is currently the best we can do with existing data
+            });
 
         // Build Connector Components
         for (const auto& connector : evse_info.connectors) {
             Component connector_component = get_connector_component(evse_info.id, connector.id);
-            this->components[connector_component] = build_connector_variables();
+            this->device_model[connector_component] = build_connector_variables();
 
             if (connector.type.has_value()) {
-                this->components[connector_component][ocpp::v2::ConnectorComponentVariables::Type]
-                .attributes[ocpp::v2::AttributeEnum::Actual]
-                .value = types::evse_manager::connector_type_enum_to_string(connector.type.value());
+                this->device_model[connector_component][ocpp::v2::ConnectorComponentVariables::Type]
+                    .attributes[ocpp::v2::AttributeEnum::Actual]
+                    .value = types::evse_manager::connector_type_enum_to_string(connector.type.value());
             }
         }
     }
 }
 
 ocpp::v2::DeviceModelMap EverestDeviceModelStorage::get_device_model() {
+    std::lock_guard<std::mutex> lock(device_model_mutex);
     ocpp::v2::DeviceModelMap device_model;
 
-    for (const auto& [component, variables] : components) {
+    for (const auto& [component, variables] : device_model) {
         ocpp::v2::VariableMap variable_map;
         for (const auto& [variable, variable_data] : variables) {
             VariableMetaData meta_data = static_cast<VariableMetaData>(variable_data);
@@ -129,8 +130,9 @@ std::optional<ocpp::v2::VariableAttribute>
 EverestDeviceModelStorage::get_variable_attribute(const ocpp::v2::Component& component_id,
                                                   const ocpp::v2::Variable& variable_id,
                                                   const ocpp::v2::AttributeEnum& attribute_enum) {
-    auto component_it = components.find(component_id);
-    if (component_it == components.end()) {
+    std::lock_guard<std::mutex> lock(device_model_mutex);
+    auto component_it = device_model.find(component_id);
+    if (component_it == device_model.end()) {
         return std::nullopt;
     }
     auto variable_it = component_it->second.find(variable_id);
@@ -149,13 +151,35 @@ std::vector<ocpp::v2::VariableAttribute>
 EverestDeviceModelStorage::get_variable_attributes(const ocpp::v2::Component& component_id,
                                                    const ocpp::v2::Variable& variable_id,
                                                    const std::optional<ocpp::v2::AttributeEnum>& attribute_enum) {
-    return {};
+    std::lock_guard<std::mutex> lock(device_model_mutex);
+    std::vector<ocpp::v2::VariableAttribute> attributes;
+    auto component_it = device_model.find(component_id);
+    if (component_it == device_model.end()) {
+        return attributes;
+    }
+    auto variable_it = component_it->second.find(variable_id);
+    if (variable_it == component_it->second.end()) {
+        return attributes;
+    }
+    auto& variable_data = variable_it->second;
+    if (attribute_enum.has_value()) {
+        auto attribute_it = variable_data.attributes.find(attribute_enum.value());
+        if (attribute_it != variable_data.attributes.end()) {
+            attributes.push_back(attribute_it->second);
+        }
+    } else {
+        for (const auto& [type, attribute] : variable_data.attributes) {
+            attributes.push_back(attribute);
+        }
+    }
+    return attributes;
 }
 
 bool EverestDeviceModelStorage::set_variable_attribute_value(const ocpp::v2::Component& component_id,
                                                              const ocpp::v2::Variable& variable_id,
                                                              const ocpp::v2::AttributeEnum& attribute_enum,
                                                              const std::string& value, const std::string& source) {
+    std::lock_guard<std::mutex> lock(device_model_mutex);
     auto component_it = components.find(component_id);
     if (component_it == components.end()) {
         return ocpp::v2::SetVariableStatusEnum::UnknownComponent;

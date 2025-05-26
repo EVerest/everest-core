@@ -3,12 +3,15 @@
 
 #pragma once
 
+#include <mutex>
+
 #include <generated/interfaces/evse_manager/Interface.hpp>
 
 #include <ocpp/v2/device_model_storage_interface.hpp>
 
 namespace module::device_model {
 
+/// \brief Extends VariableMetaData to include a map of VariableAttributes that contain the actual values of a variable
 struct VariableData : ocpp::v2::VariableMetaData {
     std::map<ocpp::v2::AttributeEnum, ocpp::v2::VariableAttribute> attributes;
 };
@@ -44,6 +47,7 @@ public:
 
 private:
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager;
-    ComponentsMap components;
+    ComponentsMap device_model;
+    std::mutex device_model_mutex;
 };
 } // namespace module::device_model
