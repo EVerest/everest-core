@@ -99,9 +99,6 @@ auth_token_validatorImpl::validate_standard_request(const types::authorization::
         if (enhanced_id_tag_info.tariff_message.has_value()) {
             // this can be used as the TT field of the OCMF.
             const auto& tariff_message = enhanced_id_tag_info.tariff_message.value();
-            if (tariff_message.message.size() > 0) {
-                result.tariff_messages = std::vector<types::text_message::MessageContent>();
-            }
             for (const auto& message : tariff_message.message) {
                 result.tariff_messages.push_back(ocpp_conversions::to_everest_display_message_content(message));
             }
