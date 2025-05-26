@@ -19,11 +19,10 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
 }
 
 ocpp::v2::DeviceModelMap ComposedDeviceModelStorage::get_device_model() {
-    ocpp::v2::DeviceModelMap device_model_map;
     for (const auto& [name, device_model_storage] : this->device_model_storages) {
-        device_model_map.merge(device_model_storage->get_device_model());
+        this->device_model_map.merge(device_model_storage->get_device_model());
     }
-    return device_model_map;
+    return this->device_model_map;
 }
 
 std::optional<ocpp::v2::VariableAttribute>
