@@ -143,7 +143,7 @@ def comb_exp_test2():
             start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
+                ChargingSchedulePeriod(start_period=0, limit=10),
                 ChargingSchedulePeriod(start_period=80, limit=20, number_phases=2),
                 ChargingSchedulePeriod(start_period=160, limit=20, number_phases=3),
             ],
