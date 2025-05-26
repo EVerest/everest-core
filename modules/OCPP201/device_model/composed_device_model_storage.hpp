@@ -10,15 +10,20 @@
 namespace module::device_model {
 class ComposedDeviceModelStorage : public ocpp::v2::DeviceModelStorageInterface {
 private: // Members
-    std::unique_ptr<EverestDeviceModelStorage> everest_device_model_storage;
-    std::unique_ptr<ocpp::v2::DeviceModelStorageSqlite> libocpp_device_model_storage;
+    std::map<std::string, std::unique_ptr<ocpp::v2::DeviceModelStorageInterface>>
+        device_model_storages; // key is identifier for the device model storage
     ocpp::v2::DeviceModelMap device_model_map;
 
 public:
-    ComposedDeviceModelStorage(const std::string& libocpp_device_model_storage_address,
-                               const bool libocpp_initialize_device_model,
-                               const std::string& device_model_migration_path,
-                               const std::string& device_model_config_path);
+    ComposedDeviceModelStorage();
+
+    /// \brief Register a device model storage.
+    /// \param device_model_storage_id   The id of the device model storage. Component variable combinations can be
+    /// used to map to this id to identify which device model is adressed for certain requests.
+    /// \param  device_model_storage The device model storage to register.
+    /// \return True if the device model storage name is not yet registered, false otherwise.
+    bool register_device_model_storage(std::string device_model_storage_id,
+                                       std::unique_ptr<ocpp::v2::DeviceModelStorageInterface> device_model_storage);
     virtual ~ComposedDeviceModelStorage() override = default;
     virtual ocpp::v2::DeviceModelMap get_device_model() override;
     virtual std::optional<ocpp::v2::VariableAttribute>
