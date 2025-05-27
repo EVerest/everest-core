@@ -76,7 +76,7 @@ RpcApiRequestHandler::~RpcApiRequestHandler() {
     // Destructor implementation
 }
 
-ErrorResObj RpcApiRequestHandler::setChargingAllowed(const int32_t evse_index, bool charging_allowed) {
+ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index, bool charging_allowed) {
     ErrorResObj res {};
 
     const std::string evse_index_str = std::to_string(evse_index);
@@ -109,7 +109,7 @@ ErrorResObj RpcApiRequestHandler::setChargingAllowed(const int32_t evse_index, b
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setACCharging(const int32_t evse_index, bool charging_allowed, bool max_current, std::optional<int> phase_count) {
+ErrorResObj RpcApiRequestHandler::set_ac_charging(const int32_t evse_index, bool charging_allowed, bool max_current, std::optional<int> phase_count) {
     ErrorResObj res {};
     res.error = ResponseErrorEnum::ErrorValuesNotApplied;
     // TODO: Currently not implemented.
@@ -141,31 +141,31 @@ ErrorResObj RpcApiRequestHandler::set_external_limit(const int32_t evse_index, T
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setACChargingCurrent(const int32_t evse_index, float max_current) {
+ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_index, float max_current) {
     return set_external_limit(evse_index, max_current,
                               std::function<types::energy::ExternalLimits(float)>(
                                   [this](float value) { return get_external_limits(value); }));
 }
 
-ErrorResObj RpcApiRequestHandler::setACChargingPhaseCount(const int32_t evse_index, int phase_count) {
+ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
     return set_external_limit(evse_index, phase_count,
                               std::function<types::energy::ExternalLimits(int)>(
                                   [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
 }
 
-ErrorResObj RpcApiRequestHandler::setDCCharging(const int32_t evse_index, bool charging_allowed, float max_power) {
+ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool charging_allowed, float max_power) {
     ErrorResObj res {};
     res.error = ResponseErrorEnum::ErrorValuesNotApplied;
     // TODO: Currently not implemented.
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setDCChargingPower(const int32_t evse_index, float max_power) {
+ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index, float max_power) {
     return set_external_limit(evse_index, max_power, std::function<types::energy::ExternalLimits(float)>(
                                 [this](float value) { return get_external_limits(value, true); }));
 }
 
-ErrorResObj RpcApiRequestHandler::enableConnector(const int32_t evse_index, int connector_id, bool enable, int priority) {
+ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int connector_id, bool enable, int priority) {
     ErrorResObj res {};
 
     const std::string evse_index_str = std::to_string(evse_index);

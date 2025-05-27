@@ -82,28 +82,28 @@ void RpcHandler::init_rpc_api() {
     m_rpc_server->Add(methods::METHOD_API_HELLO, get_handle(&methods::Api::hello, m_methods_api), {});
     m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
         get_handle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, get_handle(&methods::Evse::getInfo, m_methods_evse),
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, get_handle(&methods::Evse::get_info, m_methods_evse),
                       {"evse_index"});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS, get_handle(&methods::Evse::getStatus, m_methods_evse),
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS, get_handle(&methods::Evse::get_status, m_methods_evse),
                       {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_GET_HARDWARE_CAPABILITIES,
-        get_handle(&methods::Evse::getHardwareCapabilities, m_methods_evse), {"evse_index"});
+        get_handle(&methods::Evse::get_hardware_capabilities, m_methods_evse), {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_CHARGING_ALLOWED,
-        get_handle(&methods::Evse::setChargingAllowed, m_methods_evse), {"evse_index", "charging_allowed"});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_METER_DATA, get_handle(&methods::Evse::getMeterData, m_methods_evse),
+        get_handle(&methods::Evse::set_charging_allowed, m_methods_evse), {"evse_index", "charging_allowed"});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_METER_DATA, get_handle(&methods::Evse::get_meter_data, m_methods_evse),
                       {"evse_index"});
-    m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING,  (get_handle(&methods::Evse::setACCharging, m_methods_evse)),
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING,  (get_handle(&methods::Evse::set_ac_charging, m_methods_evse)),
                       {"evse_index", "charging_allowed", "max_current", "phase_count"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING_CURRENT,
-        get_handle(&methods::Evse::setACChargingCurrent, m_methods_evse), {"evse_index", "max_current"});
+        get_handle(&methods::Evse::set_ac_charging_current, m_methods_evse), {"evse_index", "max_current"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING_PHASE_COUNT,
-        get_handle(&methods::Evse::setACChargingPhaseCount, m_methods_evse), {"evse_index", "phase_count"});
-    m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING, (get_handle(&methods::Evse::setDCCharging, m_methods_evse)),
+        get_handle(&methods::Evse::set_ac_charging_phase_count, m_methods_evse), {"evse_index", "phase_count"});
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING, (get_handle(&methods::Evse::set_dc_charging, m_methods_evse)),
                       {"evse_index", "charging_allowed", "max_power"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING_POWER,
-        get_handle(&methods::Evse::setDCChargingPower, m_methods_evse), {"evse_index", "max_power"});
+        get_handle(&methods::Evse::set_dc_charging_power, m_methods_evse), {"evse_index", "max_power"});
     m_rpc_server->Add(methods::METHOD_EVSE_ENABLE_CONNECTOR,
-        get_handle(&methods::Evse::enableConnector, m_methods_evse), {"evse_index", "connector_id", "enable", "priority"});
+        get_handle(&methods::Evse::enable_connector, m_methods_evse), {"evse_index", "connector_id", "enable", "priority"});
 }
 
 void RpcHandler::init_transport_interfaces() {

@@ -20,7 +20,7 @@ public:
     bool connect();
     bool is_connected();
     void send(const std::string& message);
-    void sendApiHelloReq();
+    void send_api_hello_req();
     std::string receive();
     void close();
     std::string get_received_data() {
