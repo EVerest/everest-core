@@ -420,38 +420,20 @@ TEST_F(RpcHandlerTest, EvseSetACChargingReq) {
          {"charging_allowed", true},
          {"max_current", 12.3},
          {"phase_count", 3}}, 1);
-    nlohmann::json evse_set_ac_charging_req_invalid_id = create_json_rpc_request("EVSE.SetACCharging", 
-       {{"evse_index", 99},
-        {"charging_allowed", true},
-        {"max_current", 12.3},
-        {"phase_count", 3}}, 1);
-    // Set up the data store with test data
-    RPCDataTypes::EVSEInfoObj evse_info;
-    evse_info.index = 1;
-    data_store.evses[0]->evseinfo.set_data(evse_info);
 
-    RPCDataTypes::EVSEStatusObj evse_status;
-    evse_status.available = false;
-    evse_status.ac_charge_param.emplace();
-    evse_status.ac_charge_param->evse_max_current.emplace(12.3);
-    data_store.evses[0]->evsestatus.set_data(evse_status);
-
-    // Set up the expected responses
-    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
-    nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    // As long as the method is not implemented, we expect an error response that the method is not implemented
+    nlohmann::json expected_res = create_json_rpc_error_response(-32601, "method not found: EVSE.SetACCharging", 1);
 
     // Send Api.Hello request
     client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetACCharging request with valid ID
-    send_req_and_validate_res(client, evse_set_ac_charging_req_valid_id, expected_response);
-    // Check if the EVSE status is updated
-    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().has_value());
-    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
-
-    // Send EVSE.SetACCharging request with invalid ID
-    send_req_and_validate_res(client, evse_set_ac_charging_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+    client.send(evse_set_ac_charging_req_valid_id.dump());
+    // Wait for the response
+    std::string received_data = client.wait_for_data(std::chrono::seconds(1));
+    // Check if the response is valid
+    nlohmann::json response = nlohmann::json::parse(received_data);
+    ASSERT_EQ(response, expected_res);
 }
 
 // Test: Connect to WebSocket server and send EVSE.SetACChargingCurrent request with valid and invalid index
@@ -540,34 +522,19 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingReq) {
 
     // Set up requests
     nlohmann::json evse_set_dc_charging_req_valid_id = create_json_rpc_request("EVSE.SetDCCharging", {{"evse_index", 1}, {"charging_allowed", true}, {"max_power", 12.3}}, 1);
-    nlohmann::json evse_set_dc_charging_req_invalid_id = create_json_rpc_request("EVSE.SetDCCharging", {{"evse_index", 99}, {"charging_allowed", true}, {"max_power", 12.3}}, 1);
 
-    // Set up the data store with test data
-    RPCDataTypes::EVSEInfoObj evse_info;
-    evse_info.index = 1;
-    data_store.evses[0]->evseinfo.set_data(evse_info);
-
-    RPCDataTypes::EVSEStatusObj evse_status;
-    evse_status.available = false;
-    evse_status.dc_charge_param.emplace();
-    data_store.evses[0]->evsestatus.set_data(evse_status);
-
-    // Set up the expected responses
-    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
-    nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
-
+    // As long as the method is not implemented, we expect an error response that the method is not implemented
+    nlohmann::json expected_res = create_json_rpc_error_response(-32601, "method not found: EVSE.SetDCCharging", 1);
     // Send Api.Hello request
     client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetDCCharging request with valid ID
-    send_req_and_validate_res(client, evse_set_dc_charging_req_valid_id, expected_response);
-    // Check if the EVSE status is updated
-    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().has_value());
-    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
-
-    // Send EVSE.SetDCCharging request with invalid ID
-    send_req_and_validate_res(client, evse_set_dc_charging_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+    client.send(evse_set_dc_charging_req_valid_id.dump());
+    // Wait for the response
+    std::string received_data = client.wait_for_data(std::chrono::seconds(1));
+    // Check if the response is valid
+    nlohmann::json response = nlohmann::json::parse(received_data);
+    ASSERT_EQ(response, expected_res);
 }
 
 
