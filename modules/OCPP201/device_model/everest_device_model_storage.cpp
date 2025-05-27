@@ -79,7 +79,8 @@ Variables build_connector_variables() {
 } // anonymous namespace
 
 EverestDeviceModelStorage::EverestDeviceModelStorage(
-    const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager) :
+    const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager,
+    const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map) :
     r_evse_manager(r_evse_manager) {
 
     for (const auto& evse_manager : r_evse_manager) {
@@ -88,15 +89,15 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
         Component evse_component = get_evse_component(evse_info.id);
         this->device_model[evse_component] = build_evse_variables();
 
+        if (evse_hardware_capabilities_map.find(evse_info.id) != evse_hardware_capabilities_map.end()) {
+            this->update_hw_capabilities(evse_component, evse_hardware_capabilities_map.at(evse_info.id));
+        } else {
+            EVLOG_error << "No hardware capabilities found for EVSE with ID " << evse_info.id;
+        }
+
         evse_manager->subscribe_hw_capabilities(
             [this, evse_component](const types::evse_board_support::HardwareCapabilities hw_capabilities) {
-                this->device_model[evse_component][ocpp::v2::EvseComponentVariables::SupplyPhases]
-                    .attributes[ocpp::v2::AttributeEnum::Actual]
-                    .value = std::to_string(hw_capabilities.max_phase_count_import);
-                this->device_model[evse_component][ocpp::v2::EvseComponentVariables::Power].characteristics.maxLimit =
-                    hw_capabilities.max_current_A_import * 230.0f *
-                    hw_capabilities
-                        .max_phase_count_import; // this calculation is currently the best we can do with existing data
+                this->update_hw_capabilities(evse_component, hw_capabilities);
             });
 
         // Build Connector Components
@@ -111,6 +112,16 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
             }
         }
     }
+}
+
+void EverestDeviceModelStorage::update_hw_capabilities(
+    const Component& evse_component, const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
+    this->device_model[evse_component][ocpp::v2::EvseComponentVariables::SupplyPhases]
+        .attributes[ocpp::v2::AttributeEnum::Actual]
+        .value = std::to_string(hw_capabilities.max_phase_count_import);
+    this->device_model[evse_component][ocpp::v2::EvseComponentVariables::Power].characteristics.maxLimit =
+        hw_capabilities.max_current_A_import * 230.0f *
+        hw_capabilities.max_phase_count_import; // this calculation is currently the best we can do with existing data
 }
 
 ocpp::v2::DeviceModelMap EverestDeviceModelStorage::get_device_model() {
@@ -203,25 +214,25 @@ bool EverestDeviceModelStorage::set_variable_attribute_value(const ocpp::v2::Com
 }
 
 std::optional<ocpp::v2::VariableMonitoringMeta>
-EverestDeviceModelStorage::set_monitoring_data(const ocpp::v2::SetMonitoringData& data,
-                                               const ocpp::v2::VariableMonitorType type) {
+EverestDeviceModelStorage::set_monitoring_data(const ocpp::v2::SetMonitoringData& /*data*/,
+                                               const ocpp::v2::VariableMonitorType /*type*/) {
     return std::nullopt;
 }
 
-bool EverestDeviceModelStorage::update_monitoring_reference(const int32_t monitor_id,
-                                                            const std::string& reference_value) {
+bool EverestDeviceModelStorage::update_monitoring_reference(const int32_t /*monitor_id*/,
+                                                            const std::string& /*reference_value*/) {
     return false;
 }
 
 std::vector<ocpp::v2::VariableMonitoringMeta>
-EverestDeviceModelStorage::get_monitoring_data(const std::vector<ocpp::v2::MonitoringCriterionEnum>& criteria,
-                                               const ocpp::v2::Component& component_id,
-                                               const ocpp::v2::Variable& variable_id) {
+EverestDeviceModelStorage::get_monitoring_data(const std::vector<ocpp::v2::MonitoringCriterionEnum>& /*criteria*/,
+                                               const ocpp::v2::Component& /*component_id*/,
+                                               const ocpp::v2::Variable& /*variable_id*/) {
     return {};
 }
 
-ocpp::v2::ClearMonitoringStatusEnum EverestDeviceModelStorage::clear_variable_monitor(int monitor_id,
-                                                                                      bool allow_protected) {
+ocpp::v2::ClearMonitoringStatusEnum EverestDeviceModelStorage::clear_variable_monitor(int /*monitor_id*/,
+                                                                                      bool /*allow_protected*/) {
     return ocpp::v2::ClearMonitoringStatusEnum::NotFound;
 }
 
