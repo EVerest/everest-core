@@ -47,12 +47,12 @@ ErrorResObj RpcApiRequestHandler::setACChargingPhaseCount(const int32_t evse_ind
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setDCCharging(const int32_t evse_index, bool charging_allowed, int max_power) {
+ErrorResObj RpcApiRequestHandler::setDCCharging(const int32_t evse_index, bool charging_allowed, float max_power) {
     ErrorResObj res {};
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::setDCChargingPower(const int32_t evse_index, int max_power) {
+ErrorResObj RpcApiRequestHandler::setDCChargingPower(const int32_t evse_index, float max_power) {
     ErrorResObj res {};
     return res;
 }
