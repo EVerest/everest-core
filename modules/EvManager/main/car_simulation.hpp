@@ -103,7 +103,6 @@ public:
     bool iso_wait_for_resume(const CmdArguments&);
     bool iso_start_bcb_toggle(const CmdArguments&);
     bool wait_for_real_plugin(const CmdArguments&);
-    bool iso_set_departure_time(const CmdArguments&);
 
 private:
     SimulationData sim_data;

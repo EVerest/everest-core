@@ -340,22 +340,3 @@ bool CarSimulation::wait_for_real_plugin(const CmdArguments& arguments) {
 }
 
 
-bool CarSimulation::iso_set_departure_time(const CmdArguments& arguments) {
-    EVLOG_debug << "Before setting departure time is " << sim_data.iso_departure_time << " and eamount is " << sim_data.iso_eamount;
-
-    try {
-       sim_data.iso_departure_time = std::stof(arguments[0]);
-    } catch (const std::invalid_argument&) {
-        EVLOG_debug << "keeping current departure time " << sim_data.iso_departure_time;
-    }
-    try {
-        sim_data.iso_eamount = std::stof(arguments[1]);
-    } catch (const std::invalid_argument&) {
-        EVLOG_debug << "keeping current eamount " << sim_data.iso_eamount;
-    }
-
-    EVLOG_debug << "After setting departure time is " << sim_data.iso_departure_time << " and eamount is " << sim_data.iso_eamount;
-
-    return true;
-}
-
