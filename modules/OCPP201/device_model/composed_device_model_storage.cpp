@@ -14,13 +14,27 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
     if (this->device_model_storages.find(device_model_storage_id) != this->device_model_storages.end()) {
         return false;
     }
-    this->device_model_map.merge(device_model_storage->get_device_model());
+
+    const auto device_model_map = device_model_storage->get_device_model();
+    // store the sources of each variable to be able to lookup requests to the device model storage
+    for (const auto& [component, variable_map] : device_model_map) {
+        for (const auto& [variable, variable_meta] : variable_map) {
+            // Note: Source should not be optional, should be changed in libocpp
+            this->component_variable_source_map[component][variable] =
+                variable_meta.source.value_or(VARIABLE_SOURCE_OCPP);
+        }
+    }
+
     this->device_model_storages[device_model_storage_id] = std::move(device_model_storage);
     return true;
 }
 
 ocpp::v2::DeviceModelMap ComposedDeviceModelStorage::get_device_model() {
-    return this->device_model_map;
+    ocpp::v2::DeviceModelMap device_model_map;
+    for (const auto& [name, device_model_storage] : this->device_model_storages) {
+        device_model_map.merge(device_model_storage->get_device_model());
+    }
+    return device_model_map;
 }
 
 std::optional<ocpp::v2::VariableAttribute>
@@ -100,14 +114,14 @@ void ComposedDeviceModelStorage::check_integrity() {
 
 std::string module::device_model::ComposedDeviceModelStorage::get_variable_source(const ocpp::v2::Component& component,
                                                                                   const ocpp::v2::Variable& variable) {
-    std::optional<std::string> variable_source = device_model_map[component][variable].source;
-    if (variable_source.has_value() && variable_source.value() != VARIABLE_SOURCE_OCPP) {
-        // For now, this just throws because we only have the libocpp source. When the config service is
-        // implemented, this should not throw.
-        throw ocpp::v2::DeviceModelError("Source is not 'OCPP', not sure what to do");
+    if (this->component_variable_source_map.find(component) == this->component_variable_source_map.end()) {
+        return VARIABLE_SOURCE_OCPP; // default source
     }
-
-    return VARIABLE_SOURCE_OCPP;
+    const auto& variable_map = this->component_variable_source_map.at(component);
+    if (variable_map.find(variable) == variable_map.end()) {
+        return VARIABLE_SOURCE_OCPP; // default source
+    }
+    return variable_map.at(variable);
 }
 
 } // namespace module::device_model
