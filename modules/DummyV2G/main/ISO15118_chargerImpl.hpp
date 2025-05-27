@@ -47,6 +47,7 @@ protected:
     virtual void handle_cable_check_finished(bool& status) override;
     virtual void handle_receipt_is_required(bool& receipt_required) override;
     virtual void handle_stop_charging(bool& stop) override;
+    virtual void handle_pause_charging(bool& pause) override;
     virtual void handle_update_ac_max_current(double& max_current) override;
     virtual void handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) override;
     virtual void handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) override;

@@ -22,12 +22,10 @@ EverestDeviceModelStorage::get_variable_attributes(const ocpp::v2::Component& /*
     return {};
 }
 
-bool EverestDeviceModelStorage::set_variable_attribute_value(const ocpp::v2::Component& /*component_id*/,
-                                                             const ocpp::v2::Variable& /*variable_id*/,
-                                                             const ocpp::v2::AttributeEnum& /*attribute_enum*/,
-                                                             const std::string& /*value*/,
-                                                             const std::string& /*source*/) {
-    return false;
+ocpp::v2::SetVariableStatusEnum EverestDeviceModelStorage::set_variable_attribute_value(
+    const ocpp::v2::Component& component, const ocpp::v2::Variable& variable,
+    const ocpp::v2::AttributeEnum& attribute_enum, const std::string& value, const std::string& source) {
+    return ocpp::v2::SetVariableStatusEnum::Rejected;
 }
 
 std::optional<ocpp::v2::VariableMonitoringMeta>
