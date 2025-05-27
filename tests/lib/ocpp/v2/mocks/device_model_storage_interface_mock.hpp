@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #pragma once
 
@@ -15,7 +15,7 @@ public:
                 (const Component&, const Variable&, const AttributeEnum&));
     MOCK_METHOD(std::vector<VariableAttribute>, get_variable_attributes,
                 (const Component&, const Variable&, const std::optional<AttributeEnum>&));
-    MOCK_METHOD(bool, set_variable_attribute_value,
+    MOCK_METHOD(SetVariableStatusEnum, set_variable_attribute_value,
                 (const Component&, const Variable&, const AttributeEnum&, const std::string&, const std::string&));
     MOCK_METHOD(std::optional<VariableMonitoringMeta>, set_monitoring_data,
                 (const SetMonitoringData&, const VariableMonitorType));

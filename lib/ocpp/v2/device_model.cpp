@@ -360,8 +360,9 @@ SetVariableStatusEnum DeviceModel::set_value(const Component& component, const V
         return SetVariableStatusEnum::Rejected;
     }
 
-    const auto success =
+    const auto result =
         this->device_model->set_variable_attribute_value(component, variable, attribute_enum, value, source);
+    const auto success = (result == SetVariableStatusEnum::Accepted);
 
     // Only trigger for actual values
     if ((attribute_enum == AttributeEnum::Actual) && success && variable_listener) {
@@ -381,7 +382,7 @@ SetVariableStatusEnum DeviceModel::set_value(const Component& component, const V
         }
     }
 
-    return success ? SetVariableStatusEnum::Accepted : SetVariableStatusEnum::Rejected;
+    return result;
 };
 
 DeviceModel::DeviceModel(std::unique_ptr<DeviceModelStorageInterface> device_model_storage_interface) :

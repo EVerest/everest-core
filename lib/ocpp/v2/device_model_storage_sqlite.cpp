@@ -223,9 +223,11 @@ DeviceModelStorageSqlite::get_variable_attributes(const Component& component_id,
     return attributes;
 }
 
-bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
-                                                            const AttributeEnum& attribute_enum,
-                                                            const std::string& value, const std::string& source) {
+SetVariableStatusEnum DeviceModelStorageSqlite::set_variable_attribute_value(const Component& component_id,
+                                                                             const Variable& variable_id,
+                                                                             const AttributeEnum& attribute_enum,
+                                                                             const std::string& value,
+                                                                             const std::string& source) {
     auto transaction = this->db->begin_transaction();
 
     std::string insert_query =
@@ -235,7 +237,7 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
     const auto _variable_id = this->get_variable_id(component_id, variable_id);
 
     if (_variable_id == -1) {
-        return false;
+        return SetVariableStatusEnum::Rejected;
     }
 
     insert_stmt->bind_text(1, value);
@@ -244,11 +246,11 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
     insert_stmt->bind_int(4, static_cast<int>(attribute_enum));
     if (insert_stmt->step() != SQLITE_DONE) {
         EVLOG_error << this->db->get_error_message();
-        return false;
+        return SetVariableStatusEnum::Rejected;
     }
 
     transaction->commit();
-    return true;
+    return SetVariableStatusEnum::Accepted;
 }
 
 bool DeviceModelStorageSqlite::update_monitoring_reference(const int32_t monitor_id,

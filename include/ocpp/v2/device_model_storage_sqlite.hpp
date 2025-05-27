@@ -47,9 +47,9 @@ public:
     std::vector<VariableAttribute> get_variable_attributes(const Component& component_id, const Variable& variable_id,
                                                            const std::optional<AttributeEnum>& attribute_enum) final;
 
-    bool set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
-                                      const AttributeEnum& attribute_enum, const std::string& value,
-                                      const std::string& source) final;
+    SetVariableStatusEnum set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
+                                                       const AttributeEnum& attribute_enum, const std::string& value,
+                                                       const std::string& source) final;
 
     std::optional<VariableMonitoringMeta> set_monitoring_data(const SetMonitoringData& data,
                                                               const VariableMonitorType type) final;
