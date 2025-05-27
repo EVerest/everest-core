@@ -89,6 +89,63 @@ ParameterSet::ParameterSet(uint16_t _id, const DcBptParameterList& list) {
     generator_mode.value = static_cast<int32_t>(list.generator_mode);
 }
 
+ParameterSet::ParameterSet(uint16_t _id, const McsParameterList& list) {
+    id = _id;
+    // Connector
+    auto& connector = parameter.emplace_back();
+    connector.name = "Connector";
+    connector.value = static_cast<int32_t>(list.connector);
+    // ControlMode
+    auto& control_mode = parameter.emplace_back();
+    control_mode.name = "ControlMode";
+    control_mode.value = static_cast<int32_t>(list.control_mode);
+    // MobilityNeedsMode
+    auto& mobility = parameter.emplace_back();
+    mobility.name = "MobilityNeedsMode";
+    if (list.control_mode == ControlMode::Scheduled) {
+        mobility.value = static_cast<int32_t>(MobilityNeedsMode::ProvidedByEvcc);
+    } else {
+        mobility.value = static_cast<int32_t>(list.mobility_needs_mode);
+    }
+    // Pricing
+    auto& pricing = parameter.emplace_back();
+    pricing.name = "Pricing";
+    pricing.value = static_cast<int32_t>(list.pricing);
+}
+
+ParameterSet::ParameterSet(uint16_t _id, const McsBptParameterList& list) {
+    id = _id;
+    // Todo(sl): Refactor because of duplicate code
+    // Connector
+    auto& connector = parameter.emplace_back();
+    connector.name = "Connector";
+    connector.value = static_cast<int32_t>(list.connector);
+    // ControlMode
+    auto& control_mode = parameter.emplace_back();
+    control_mode.name = "ControlMode";
+    control_mode.value = static_cast<int32_t>(list.control_mode);
+    // MobilityNeedsMode
+    auto& mobility = parameter.emplace_back();
+    mobility.name = "MobilityNeedsMode";
+    if (list.control_mode == ControlMode::Scheduled) {
+        mobility.value = static_cast<int32_t>(MobilityNeedsMode::ProvidedByEvcc);
+    } else {
+        mobility.value = static_cast<int32_t>(list.mobility_needs_mode);
+    }
+    // Pricing
+    auto& pricing = parameter.emplace_back();
+    pricing.name = "Pricing";
+    pricing.value = static_cast<int32_t>(list.pricing);
+    // BPTChannel
+    auto& channel = parameter.emplace_back();
+    channel.name = "BPTChannel";
+    channel.value = static_cast<int32_t>(list.bpt_channel);
+    // GeneratorMode
+    auto& generator_mode = parameter.emplace_back();
+    generator_mode.name = "GeneratorMode";
+    generator_mode.value = static_cast<int32_t>(list.generator_mode);
+}
+
 ParameterSet::ParameterSet(uint16_t _id, const InternetParameterList& list) {
     id = _id;
 

@@ -55,7 +55,8 @@ handle_request(const message_20::DC_ChargeParameterDiscoveryRequest& req, const 
     const auto selected_energy_service = session.get_selected_services().selected_energy_service;
 
     if (std::holds_alternative<DC_ModeReq>(req.transfer_mode)) {
-        if (selected_energy_service != dt::ServiceCategory::DC) {
+        if (not(selected_energy_service == dt::ServiceCategory::DC or
+                selected_energy_service == dt::ServiceCategory::MCS)) {
             return response_with_code(res, dt::ResponseCode::FAILED_WrongChargeParameter);
         }
 
@@ -63,7 +64,8 @@ handle_request(const message_20::DC_ChargeParameterDiscoveryRequest& req, const 
         convert(mode, dc_limits);
 
     } else if (std::holds_alternative<BPT_DC_ModeReq>(req.transfer_mode)) {
-        if (selected_energy_service != dt::ServiceCategory::DC_BPT) {
+        if (not(selected_energy_service == dt::ServiceCategory::DC_BPT or
+                selected_energy_service == dt::ServiceCategory::MCS_BPT)) {
             return response_with_code(res, dt::ResponseCode::FAILED_WrongChargeParameter);
         }
 

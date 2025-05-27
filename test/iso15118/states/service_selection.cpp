@@ -261,6 +261,69 @@ SCENARIO("Service selection state handling") {
         }
     }
 
+    GIVEN("Good case - MCS") {
+        d20::Session session = d20::Session();
+
+        session.offered_services.energy_services = {dt::ServiceCategory::MCS};
+        session.offered_services.mcs_parameter_list[0] = {
+            dt::McsConnector::Mcs,
+            dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc,
+            dt::Pricing::NoPricing,
+        };
+
+        message_20::ServiceSelectionRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.selected_energy_transfer_service.service_id = dt::ServiceCategory::MCS;
+        req.selected_energy_transfer_service.parameter_set_id = 0;
+
+        const auto res = d20::state::handle_request(req, session);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+
+            const auto selected_services = session.get_selected_services();
+            REQUIRE(selected_services.selected_energy_service == dt::ServiceCategory::MCS);
+            REQUIRE(selected_services.selected_control_mode == dt::ControlMode::Scheduled);
+            REQUIRE(*std::get_if<dt::McsConnector>(&selected_services.selected_connector) == dt::McsConnector::Mcs);
+        }
+    }
+
+    GIVEN("Good case - MCS_BPT") {
+        d20::Session session = d20::Session();
+
+        session.offered_services.energy_services = {dt::ServiceCategory::MCS_BPT};
+        session.offered_services.mcs_bpt_parameter_list[0] = {{
+                                                                  dt::McsConnector::Mcs,
+                                                                  dt::ControlMode::Scheduled,
+                                                                  dt::MobilityNeedsMode::ProvidedByEvcc,
+                                                                  dt::Pricing::NoPricing,
+                                                              },
+                                                              dt::BptChannel::Unified,
+                                                              dt::GeneratorMode::GridFollowing};
+
+        message_20::ServiceSelectionRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.selected_energy_transfer_service.service_id = dt::ServiceCategory::MCS_BPT;
+        req.selected_energy_transfer_service.parameter_set_id = 0;
+
+        const auto res = d20::state::handle_request(req, session);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+
+            const auto selected_services = session.get_selected_services();
+            REQUIRE(selected_services.selected_energy_service == dt::ServiceCategory::MCS_BPT);
+            REQUIRE(selected_services.selected_control_mode == dt::ControlMode::Scheduled);
+            REQUIRE(*std::get_if<dt::McsConnector>(&selected_services.selected_connector) == dt::McsConnector::Mcs);
+            const auto bpt_channel = selected_services.selected_bpt_channel.has_value() and
+                                     selected_services.selected_bpt_channel.value() == dt::BptChannel::Unified;
+            REQUIRE(bpt_channel == true);
+        }
+    }
+
     // GIVEN("Bad case - FAILED_NoServiceRenegotiationSupported") {} // todo(sl): pause/resume not supported yet
 
     // GIVEN("Bad Case - sequence error") {} // todo(sl): not here

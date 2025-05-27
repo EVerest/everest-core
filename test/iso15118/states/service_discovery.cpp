@@ -60,6 +60,33 @@ SCENARIO("Service discovery state handling") {
         }
     }
 
+    GIVEN("Good Case - Setting MCS services") {
+
+        d20::Session session = d20::Session();
+
+        message_20::ServiceDiscoveryRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+
+        std::vector<dt::ServiceCategory> supported_energy_transfer_services = {dt::ServiceCategory::MCS,
+                                                                               dt::ServiceCategory::MCS_BPT};
+
+        const auto res = d20::state::handle_request(req, session, supported_energy_transfer_services, {});
+
+        THEN("ResponseCode: OK, energy_transfer_service_list: MCS & MCS_BPT, vaslist: empty") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.service_renegotiation_supported == false);
+            REQUIRE(res.energy_transfer_service_list.size() == 2);
+            REQUIRE(res.energy_transfer_service_list[0].free_service == false);
+            REQUIRE((res.energy_transfer_service_list[0].service_id == dt::ServiceCategory::MCS or
+                     res.energy_transfer_service_list[0].service_id == dt::ServiceCategory::MCS_BPT));
+            REQUIRE(res.energy_transfer_service_list[1].free_service == false);
+            REQUIRE((res.energy_transfer_service_list[1].service_id == dt::ServiceCategory::MCS or
+                     res.energy_transfer_service_list[1].service_id == dt::ServiceCategory::MCS_BPT));
+            REQUIRE(res.vas_list.has_value() == false);
+        }
+    }
+
     GIVEN("Good Case - Setting services + vas list") {
 
         d20::Session session = d20::Session();

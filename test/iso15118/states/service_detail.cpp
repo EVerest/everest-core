@@ -359,6 +359,95 @@ SCENARIO("Service detail state handling") {
     GIVEN("Good Case - AC_WPT Service") {
     } // todo(sl): later
 
+    GIVEN("Good Case - MCS Service") {
+
+        d20::Session session = d20::Session();
+        session.offered_services.energy_services = {dt::ServiceCategory::MCS};
+
+        const auto session_config = d20::SessionConfig(evse_setup);
+
+        message_20::ServiceDetailRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.service = dt::ServiceCategory::MCS;
+
+        const auto res = d20::state::handle_request(req, session, session_config);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.service == dt::ServiceCategory::MCS);
+            REQUIRE(res.service_parameter_list.size() == 1);
+            auto& parameters = res.service_parameter_list[0];
+            REQUIRE(parameters.id == 0);
+            REQUIRE(parameters.parameter.size() == 4);
+
+            // Connector == MCS
+            REQUIRE(parameters.parameter[0].name == "Connector");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[0].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[0].value) == 1);
+            // ControlMode == Scheduled
+            REQUIRE(parameters.parameter[1].name == "ControlMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[1].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[1].value) == 1);
+            // MobilityNeedsMode == ProvidedbyEvcc
+            REQUIRE(parameters.parameter[2].name == "MobilityNeedsMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[2].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[2].value) == 1);
+            // Pricing == No Pricing
+            REQUIRE(parameters.parameter[3].name == "Pricing");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[3].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[3].value) == 0);
+        }
+    }
+
+    GIVEN("Good Case - MCS_BPT Service") {
+        d20::Session session = d20::Session();
+        session.offered_services.energy_services = {dt::ServiceCategory::MCS_BPT};
+
+        const auto session_config = d20::SessionConfig(evse_setup);
+
+        message_20::ServiceDetailRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.service = dt::ServiceCategory::MCS_BPT;
+
+        const auto res = d20::state::handle_request(req, session, session_config);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.service == dt::ServiceCategory::MCS_BPT);
+            REQUIRE(res.service_parameter_list.size() == 1);
+            auto& parameters = res.service_parameter_list[0];
+            REQUIRE(parameters.id == 0);
+            REQUIRE(parameters.parameter.size() == 6);
+
+            // Connector == MCS
+            REQUIRE(parameters.parameter[0].name == "Connector");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[0].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[0].value) == 1);
+            // ControlMode == Scheduled
+            REQUIRE(parameters.parameter[1].name == "ControlMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[1].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[1].value) == 1);
+            // MobilityNeedsMode == ProvidedbyEvcc
+            REQUIRE(parameters.parameter[2].name == "MobilityNeedsMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[2].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[2].value) == 1);
+            // Pricing == No Pricing
+            REQUIRE(parameters.parameter[3].name == "Pricing");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[3].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[3].value) == 0);
+            // BPTChannel == Unified
+            REQUIRE(parameters.parameter[4].name == "BPTChannel");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[4].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[4].value) == 1);
+            // GeneratorMode == GridFollowing
+            REQUIRE(parameters.parameter[5].name == "GeneratorMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[5].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[5].value) == 1);
+        }
+    }
+
     // GIVEN("Bad Case - sequence error") {} // todo(sl): not here
 
     // GIVEN("Performance Timeout") {} // todo(sl): not here

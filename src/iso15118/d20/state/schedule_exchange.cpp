@@ -132,7 +132,9 @@ Result ScheduleExchange::feed(Event ev) {
         const auto selected_energy_service = selected_services.selected_energy_service;
 
         if (selected_energy_service == dt::ServiceCategory::DC or
-            selected_energy_service == dt::ServiceCategory::DC_BPT) {
+            selected_energy_service == dt::ServiceCategory::DC_BPT or
+            selected_energy_service == dt::ServiceCategory::MCS or
+            selected_energy_service == dt::ServiceCategory::MCS_BPT) {
             max_charge_power = m_ctx.session_config.dc_limits.charge_limits.power.max;
         }
 

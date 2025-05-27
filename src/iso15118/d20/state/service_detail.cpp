@@ -61,7 +61,20 @@ message_20::ServiceDetailResponse handle_request(const message_20::ServiceDetail
             res.service_parameter_list.push_back(dt::ParameterSet(id++, parameter_set));
         }
         break;
-
+    case dt::ServiceCategory::MCS:
+        res.service = dt::ServiceCategory::MCS;
+        for (auto& parameter_set : config.mcs_parameter_list) {
+            session.offered_services.mcs_parameter_list[id] = parameter_set;
+            res.service_parameter_list.push_back(dt::ParameterSet(id++, parameter_set));
+        }
+        break;
+    case dt::ServiceCategory::MCS_BPT:
+        res.service = dt::ServiceCategory::MCS_BPT;
+        for (auto& parameter_set : config.mcs_bpt_parameter_list) {
+            session.offered_services.mcs_bpt_parameter_list[id] = parameter_set;
+            res.service_parameter_list.push_back(dt::ParameterSet(id++, parameter_set));
+        }
+        break;
     case dt::ServiceCategory::Internet:
         res.service = dt::ServiceCategory::Internet;
 

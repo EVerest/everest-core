@@ -126,6 +126,31 @@ SCENARIO("Schedule Exchange state handling") {
         }
     }
 
+    GIVEN("Good case - MCS Dynamic Mode") {
+        d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
+            dt::ServiceCategory::MCS, dt::DcConnector::Extended, dt::ControlMode::Dynamic,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
+
+        auto session = d20::Session(service_parameters);
+
+        message_20::ScheduleExchangeRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+
+        req.control_mode.emplace<Dynamic_ModeReq>();
+
+        dt::RationalNumber max_power = {22, 3};
+
+        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters());
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.processing == dt::Processing::Finished);
+
+            REQUIRE(std::holds_alternative<Dynamic_ModeRes>(res.control_mode) == true);
+        }
+    }
+
     // GIVEN("Good case - setting new departure_time, target_soc & min_soc") // TODO(sl)
 
     // GIVEN("Bad Case - sequence error") {} // todo(sl): not here

@@ -33,6 +33,29 @@ SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_
     selected_connector.emplace<dt::DcConnector>(dc_connector_);
 };
 
+SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_service_,
+                                                     dt::McsConnector mcs_connector_, dt::ControlMode control_mode_,
+                                                     dt::MobilityNeedsMode mobility_, dt::Pricing pricing_) :
+    selected_energy_service(energy_service_),
+    selected_control_mode(control_mode_),
+    selected_mobility_needs_mode(mobility_),
+    selected_pricing(pricing_) {
+    selected_connector.emplace<dt::McsConnector>(mcs_connector_);
+};
+
+SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_service_,
+                                                     dt::McsConnector mcs_connector_, dt::ControlMode control_mode_,
+                                                     dt::MobilityNeedsMode mobility_, dt::Pricing pricing_,
+                                                     dt::BptChannel channel_, dt::GeneratorMode generator_) :
+    selected_energy_service(energy_service_),
+    selected_control_mode(control_mode_),
+    selected_mobility_needs_mode(mobility_),
+    selected_pricing(pricing_),
+    selected_bpt_channel(channel_),
+    selected_generator_mode(generator_) {
+    selected_connector.emplace<dt::McsConnector>(mcs_connector_);
+};
+
 Session::Session() {
     std::random_device rd;
     std::mt19937 generator(rd());
@@ -83,7 +106,17 @@ bool Session::find_parameter_set_id(const dt::ServiceCategory service, int16_t i
             return true;
         }
         break;
-
+    case dt::ServiceCategory::MCS:
+        if (this->offered_services.mcs_parameter_list.find(id) != this->offered_services.mcs_parameter_list.end()) {
+            return true;
+        }
+        break;
+    case dt::ServiceCategory::MCS_BPT:
+        if (this->offered_services.mcs_bpt_parameter_list.find(id) !=
+            this->offered_services.mcs_bpt_parameter_list.end()) {
+            return true;
+        }
+        break;
     case dt::ServiceCategory::Internet:
         if (this->offered_services.internet_parameter_list.find(id) !=
             this->offered_services.internet_parameter_list.end()) {
@@ -133,6 +166,37 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
                 parameters.mobility_needs_mode, parameters.pricing, parameters.bpt_channel, parameters.generator_mode);
 
             logf_info("Selected DC_BPT service parameters: control mode: %s, mobility needs mode: %s",
+                      dt::from_control_mode(parameters.control_mode).c_str(),
+                      dt::from_mobility_needs_mode(parameters.mobility_needs_mode).c_str());
+        } else {
+            // Todo(sl): Should be not the case -> Raise Error?
+        }
+        break;
+
+    case dt::ServiceCategory::MCS:
+        if (this->offered_services.mcs_parameter_list.find(id) != this->offered_services.mcs_parameter_list.end()) {
+            auto& parameters = this->offered_services.mcs_parameter_list.at(id);
+            this->selected_services =
+                SelectedServiceParameters(dt::ServiceCategory::MCS, parameters.connector, parameters.control_mode,
+                                          parameters.mobility_needs_mode, parameters.pricing);
+
+            logf_info("Selected MCS service parameters: control mode: %s, mobility needs mode: %s",
+                      dt::from_control_mode(parameters.control_mode).c_str(),
+                      dt::from_mobility_needs_mode(parameters.mobility_needs_mode).c_str());
+        } else {
+            // Todo(sl): Should be not the case -> Raise Error?
+        }
+        break;
+
+    case dt::ServiceCategory::MCS_BPT:
+        if (this->offered_services.mcs_bpt_parameter_list.find(id) !=
+            this->offered_services.mcs_bpt_parameter_list.end()) {
+            auto& parameters = this->offered_services.mcs_bpt_parameter_list.at(id);
+            this->selected_services = SelectedServiceParameters(
+                dt::ServiceCategory::MCS_BPT, parameters.connector, parameters.control_mode,
+                parameters.mobility_needs_mode, parameters.pricing, parameters.bpt_channel, parameters.generator_mode);
+
+            logf_info("Selected MCS_BPT service parameters: control mode: %s, mobility needs mode: %s",
                       dt::from_control_mode(parameters.control_mode).c_str(),
                       dt::from_mobility_needs_mode(parameters.mobility_needs_mode).c_str());
         } else {

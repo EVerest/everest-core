@@ -94,6 +94,9 @@ enum class ServiceCategory : uint16_t {
     AC_BPT = 5,
     DC_BPT = 6,
     DC_ACDP_BPT = 7,
+    MCS = 8,
+    MCS_BPT = 9,
+    AC_DER = 10,
     Internet = 65,
     ParkingStatus = 66,
 };
@@ -123,6 +126,16 @@ enum class DcConnector {
     Dual2 = 3,
     Dual4 = 4,
 };
+enum class McsConnector {
+    Mcs = 1,
+    Chaoji = 2,
+    UltraChaoji = 3,
+    rMcs = 4,
+    xMcs = 5,
+    Aviation = 6,
+    Marine = 7,
+};
+
 enum class ControlMode {
     Scheduled = 1,
     Dynamic = 2,
@@ -208,6 +221,18 @@ struct DcParameterList {
 };
 
 struct DcBptParameterList : DcParameterList {
+    BptChannel bpt_channel;
+    GeneratorMode generator_mode;
+};
+
+struct McsParameterList {
+    McsConnector connector;
+    ControlMode control_mode;
+    MobilityNeedsMode mobility_needs_mode;
+    Pricing pricing;
+};
+
+struct McsBptParameterList : McsParameterList {
     BptChannel bpt_channel;
     GeneratorMode generator_mode;
 };

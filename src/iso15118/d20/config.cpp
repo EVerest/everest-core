@@ -64,6 +64,44 @@ auto get_default_dc_bpt_parameter_list(const std::vector<ControlMobilityNeedsMod
     return param_list;
 }
 
+auto get_default_mcs_parameter_list(const std::vector<ControlMobilityNeedsModes>& control_mobility_modes) {
+    using namespace dt;
+
+    // TODO(sl): Add check if a control mode is more than one in that vector
+    std::vector<McsParameterList> param_list;
+
+    for (const auto& mode : control_mobility_modes) {
+        param_list.push_back({
+            McsConnector::Mcs,
+            mode.control_mode,
+            get_mobility_needs_mode(mode),
+            Pricing::NoPricing,
+        });
+    }
+
+    return param_list;
+}
+
+auto get_default_mcs_bpt_parameter_list(const std::vector<ControlMobilityNeedsModes>& control_mobility_modes) {
+    using namespace dt;
+
+    // TODO(sl): Add check if a control mode is more than one in that vector
+    std::vector<McsBptParameterList> param_list;
+
+    for (const auto& mode : control_mobility_modes) {
+        param_list.push_back({{
+                                  McsConnector::Mcs,
+                                  mode.control_mode,
+                                  get_mobility_needs_mode(mode),
+                                  Pricing::NoPricing,
+                              },
+                              BptChannel::Unified,
+                              GeneratorMode::GridFollowing});
+    }
+
+    return param_list;
+}
+
 } // namespace
 
 SessionConfig::SessionConfig(EvseSetupConfig config) :
@@ -74,12 +112,15 @@ SessionConfig::SessionConfig(EvseSetupConfig config) :
     dc_limits(std::move(config.dc_limits)),
     supported_control_mobility_modes(std::move(config.control_mobility_modes)) {
 
-    const auto is_bpt_service = [](dt::ServiceCategory service) { return service == dt::ServiceCategory::DC_BPT; };
+    // TODO(SL): How to handle this probaly
+    const auto is_bpt_service = [](dt::ServiceCategory service) {
+        return service == dt::ServiceCategory::DC_BPT or service == dt::ServiceCategory::MCS_BPT;
+    };
     const auto dc_bpt_found = std::any_of(supported_energy_transfer_services.begin(),
                                           supported_energy_transfer_services.end(), is_bpt_service);
 
     if (dc_bpt_found and not dc_limits.discharge_limits.has_value()) {
-        logf_warning("The supported energy services contain DC_BPT, but dc limits does not contain BPT "
+        logf_warning("The supported energy services contain DC_BPT or MCS_BPT, but dc limits does not contain BPT "
                      "limits. This can lead to session shutdowns.");
     }
 
@@ -90,6 +131,9 @@ SessionConfig::SessionConfig(EvseSetupConfig config) :
 
     dc_parameter_list = get_default_dc_parameter_list(supported_control_mobility_modes);
     dc_bpt_parameter_list = get_default_dc_bpt_parameter_list(supported_control_mobility_modes);
+
+    mcs_parameter_list = get_default_mcs_parameter_list(supported_control_mobility_modes);
+    mcs_bpt_parameter_list = get_default_mcs_bpt_parameter_list(supported_control_mobility_modes);
 }
 
 } // namespace iso15118::d20

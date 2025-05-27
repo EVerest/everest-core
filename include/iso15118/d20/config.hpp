@@ -40,6 +40,9 @@ struct SessionConfig {
     std::vector<message_20::datatypes::DcParameterList> dc_parameter_list;
     std::vector<message_20::datatypes::DcBptParameterList> dc_bpt_parameter_list;
 
+    std::vector<message_20::datatypes::McsParameterList> mcs_parameter_list;
+    std::vector<message_20::datatypes::McsBptParameterList> mcs_bpt_parameter_list;
+
     std::vector<message_20::datatypes::InternetParameterList> internet_parameter_list;
     std::vector<message_20::datatypes::ParkingParameterList> parking_parameter_list;
 

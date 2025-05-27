@@ -24,6 +24,8 @@ struct OfferedServices {
 
     std::map<uint8_t, dt::DcParameterList> dc_parameter_list;
     std::map<uint8_t, dt::DcBptParameterList> dc_bpt_parameter_list;
+    std::map<uint8_t, dt::McsParameterList> mcs_parameter_list;
+    std::map<uint8_t, dt::McsBptParameterList> mcs_bpt_parameter_list;
     std::map<uint8_t, dt::InternetParameterList> internet_parameter_list;
     std::map<uint8_t, dt::ParkingParameterList> parking_parameter_list;
 };
@@ -32,7 +34,7 @@ struct SelectedServiceParameters {
 
     dt::ServiceCategory selected_energy_service;
 
-    std::variant<dt::AcConnector, dt::DcConnector> selected_connector;
+    std::variant<dt::AcConnector, dt::DcConnector, dt::McsConnector> selected_connector;
     dt::ControlMode selected_control_mode;
     dt::MobilityNeedsMode selected_mobility_needs_mode;
     dt::Pricing selected_pricing;
@@ -44,6 +46,11 @@ struct SelectedServiceParameters {
     SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::DcConnector dc_connector_,
                               dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_, dt::Pricing pricing_);
     SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::DcConnector dc_connector_,
+                              dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_, dt::Pricing pricing_,
+                              dt::BptChannel channel_, dt::GeneratorMode generator_);
+    SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::McsConnector mcs_connector_,
+                              dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_, dt::Pricing pricing_);
+    SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::McsConnector mcs_connector_,
                               dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_, dt::Pricing pricing_,
                               dt::BptChannel channel_, dt::GeneratorMode generator_);
 };

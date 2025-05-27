@@ -105,7 +105,9 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 
         // If the ev sends a false control mode or a false energy service other than the previous selected ones, then
         // the charger should terminate the session
-        if (selected_control_mode != dt::ControlMode::Scheduled or selected_energy_service != dt::ServiceCategory::DC) {
+        if (selected_control_mode != dt::ControlMode::Scheduled or
+            not(selected_energy_service == dt::ServiceCategory::DC or
+                selected_energy_service == dt::ServiceCategory::MCS)) {
             return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
@@ -117,7 +119,8 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
         // If the ev sends a false control mode or a false energy service other than the previous selected ones, then
         // the charger should terminate the session
         if (selected_control_mode != dt::ControlMode::Scheduled or
-            selected_energy_service != dt::ServiceCategory::DC_BPT) {
+            not(selected_energy_service == dt::ServiceCategory::DC_BPT or
+                selected_energy_service == dt::ServiceCategory::MCS_BPT)) {
             return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
@@ -133,7 +136,9 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 
         // If the ev sends a false control mode or a false energy service other than the previous selected ones, then
         // the charger should terminate the session
-        if (selected_control_mode != dt::ControlMode::Dynamic or selected_energy_service != dt::ServiceCategory::DC) {
+        if (selected_control_mode != dt::ControlMode::Dynamic or
+            not(selected_energy_service == dt::ServiceCategory::DC or
+                selected_energy_service == dt::ServiceCategory::MCS)) {
             return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
@@ -149,7 +154,8 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
         // If the ev sends a false control mode or a false energy service other than the previous selected ones, then
         // the charger should terminate the session
         if (selected_control_mode != dt::ControlMode::Dynamic or
-            selected_energy_service != dt::ServiceCategory::DC_BPT) {
+            not(selected_energy_service == dt::ServiceCategory::DC_BPT or
+                selected_energy_service == dt::ServiceCategory::MCS_BPT)) {
             return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
