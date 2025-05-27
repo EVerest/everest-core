@@ -170,7 +170,7 @@ void WebSocketTestClient::close() {
     EVLOG_info << "WebSocket client closed";
 }
 
-void WebSocketTestClient::sendApiHelloReq() {
+void WebSocketTestClient::send_api_hello_req() {
     nlohmann::json apiHelloReq = create_json_rpc_request("API.Hello", {}, 1);
 
     send(apiHelloReq.dump());

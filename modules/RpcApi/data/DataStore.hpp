@@ -47,7 +47,7 @@ struct DataStoreCharger {
     std::vector<std::unique_ptr<DataStoreEvse>> evses;
 
     // get the EVSE data with a specific id
-    static data::DataStoreEvse* getEVSEStore(DataStoreCharger& dataobj, const int32_t evse_index) {
+    static data::DataStoreEvse* get_evse_store(DataStoreCharger& dataobj, const int32_t evse_index) {
         if (dataobj.evses.empty()) {
             return nullptr;
         }

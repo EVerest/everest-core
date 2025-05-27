@@ -120,7 +120,7 @@ TEST_F(RpcHandlerTest, ApiHelloReq) {
     };
     
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     // Wait for the response
     std::string data = client.wait_for_data(std::chrono::seconds(1));
     // Check if the response is not empty
@@ -160,7 +160,7 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     nlohmann::json expected_error_no_data = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send ChargePoint.GetEVSEInfos request and validate response, no data available
     send_req_and_validate_res(client, charge_point_get_evse_infos_req, expected_error_no_data, is_key_value_in_json_rpc_result);
@@ -226,7 +226,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.GetEVSEInfos request 1 and validate response
     send_req_and_validate_res(client, evse_get_evse_infos_req_1, expected_response_index_1);
@@ -271,7 +271,7 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     nlohmann::json expected_response = create_json_rpc_response(res_valid_id, 1);
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.GetStatus request with valid ID, but no data available
     send_req_and_validate_res(client, evse_get_status_req_valid_id, expected_error_no_data, is_key_value_in_json_rpc_result);
@@ -316,7 +316,7 @@ TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     nlohmann::json expected_error_invalid_index =  {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
 
     // Send EVSE.GetHardwareCapabilities request with valid ID, but no hardware capabilities available
@@ -354,7 +354,7 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetChargingAllowed request with valid ID
     send_req_and_validate_res(client, evse_set_charging_allowed_req_valid_id, expected_response);
@@ -393,7 +393,7 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
     nlohmann::json expected_error_invalid_index = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.MeterData request with valid ID, but no meter data available
     send_req_and_validate_res(client, evse_meter_data_req_valid_id, expected_error_no_data, is_key_value_in_json_rpc_result);
@@ -442,7 +442,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingReq) {
     nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetACCharging request with valid ID
     send_req_and_validate_res(client, evse_set_ac_charging_req_valid_id, expected_response);
@@ -481,7 +481,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
     nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetACChargingCurrent request with valid ID
     send_req_and_validate_res(client, evse_set_ac_charging_current_req_valid_id, expected_response);
@@ -520,7 +520,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetACChargingPhaseCount request with valid ID
     send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_valid_id, expected_response);
@@ -558,7 +558,7 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingReq) {
     nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetDCCharging request with valid ID
     send_req_and_validate_res(client, evse_set_dc_charging_req_valid_id, expected_response);
@@ -597,7 +597,7 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingPowerReq) {
     nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetDCChargingPower request with valid ID
     send_req_and_validate_res(client, evse_set_dc_charging_power_req_valid_id, expected_response);
@@ -637,7 +637,7 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.EnableConnector request with valid ID
     send_req_and_validate_res(client, evse_enable_connector_req_valid_id, expected_response);
@@ -654,7 +654,7 @@ TEST_F(RpcHandlerTest, InvalidRequest) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Send Api.Hello request
-    client.sendApiHelloReq();
+    client.send_api_hello_req();
     // Wait for the response
     client.wait_for_data(std::chrono::seconds(1));
     // Send invalid request
