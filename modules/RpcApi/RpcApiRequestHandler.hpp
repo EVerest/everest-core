@@ -25,6 +25,9 @@ public:
     types::json_rpc_api::ErrorResObj enableConnector(const int32_t evse_index, int connector_id, bool enable, int priority) override;
 private:
     // Add any private member variables or methods here
+    template <typename T>
+    types::json_rpc_api::ErrorResObj set_external_limit(int32_t evse_index, T value,
+        std::function<types::energy::ExternalLimits(T)> make_limits);
 
     const std::vector<std::unique_ptr<evse_managerIntf>>& evse_managers;
     const std::vector<std::unique_ptr<error_historyIntf>>& error_histories;

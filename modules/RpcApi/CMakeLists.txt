@@ -26,6 +26,7 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         websockets_shared
         json-rpc-cxx
+        everest::external_energy_limits
 )
 
 target_sources(${MODULE_NAME}
