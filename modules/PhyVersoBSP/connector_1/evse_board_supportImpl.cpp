@@ -69,30 +69,38 @@ void evse_board_supportImpl::init() {
     });
 
     mod->serial.signal_error_flags.connect([this](int connector, ErrorFlags error_flags) {
-        if ((connector == 1)) {
+        if (connector == 1) {
             // AC contactor feedback divergence
-            if (error_flags.coil_feedback_diverges_ac and not last_error_flags.coil_feedback_diverges_ac) {
-                Everest::error::Error error_object = this->error_factory->create_error(
-                    "ac/MREC17EVSEContactorFault", "", "Port 1 AC contactor feedback diverges from target state", Everest::error::Severity::High);
-                this->raise_error(error_object);
-            } else if (not error_flags.coil_feedback_diverges_ac and last_error_flags.coil_feedback_diverges_ac) {
-                this->clear_error("ac/MREC17EVSEContactorFault");
+            if (error_flags.coil_feedback_diverges_ac != last_error_flags.coil_feedback_diverges_ac) {
+                if(error_flags.coil_feedback_diverges_ac) {
+                    Everest::error::Error error_object = this->error_factory->create_error(
+                        "ac/MREC17EVSEContactorFault", "", "Port 1 AC contactor feedback diverges from target state", Everest::error::Severity::High);
+                    this->raise_error(error_object);
+                } else {
+                    this->clear_error("ac/MREC17EVSEContactorFault");
+                }
             }
+
             // DC contactor feedback divergence
-            if (error_flags.coil_feedback_diverges_dc and not last_error_flags.coil_feedback_diverges_dc) {
-                Everest::error::Error error_object = this->error_factory->create_error(
-                    "dc/MREC17EVSEContactorFault", "", "Port 1 DC contactor feedback diverges from target state", Everest::error::Severity::High);
-                this->raise_error(error_object);
-            } else if (not error_flags.coil_feedback_diverges_dc and last_error_flags.coil_feedback_diverges_dc) {
-                this->clear_error("dc/MREC17EVSEContactorFault");
+            if (error_flags.coil_feedback_diverges_dc != last_error_flags.coil_feedback_diverges_dc) {
+                if(error_flags.coil_feedback_diverges_dc) {
+                    Everest::error::Error error_object = this->error_factory->create_error(
+                        "dc/MREC17EVSEContactorFault", "", "Port 1 DC contactor feedback diverges from target state", Everest::error::Severity::High);
+                    this->raise_error(error_object);
+                } else {
+                    this->clear_error("dc/MREC17EVSEContactorFault");
+                }
             }
+
             // Diode fault
-            if (error_flags.diode_fault and not last_error_flags.diode_fault) {
-                Everest::error::Error error_object = this->error_factory->create_error(
-                    "DiodeFault", "", "Port 1 diode fault", Everest::error::Severity::High);
-                this->raise_error(error_object);
-            } else if (not error_flags.diode_fault and last_error_flags.diode_fault) {
-                this->clear_error("DiodeFault");
+            if (error_flags.diode_fault != last_error_flags.diode_fault) {
+                if(error_flags.diode_fault) {
+                    Everest::error::Error error_object = this->error_factory->create_error(
+                        "evse_board_support/DiodeFault", "", "Port 1 diode fault", Everest::error::Severity::High);
+                    this->raise_error(error_object);
+                } else {
+                    this->clear_error("evse_board_support/DiodeFault");
+                }
             }
 
             last_error_flags = error_flags;
