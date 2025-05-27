@@ -80,7 +80,7 @@ void RpcHandler::init_rpc_api() {
     m_methods_api.set_authentication_required(false);
     m_methods_api.set_api_version(API_VERSION);
     ClientConnector conn(m_transport_interfaces);
-    m_rpc_server = std::make_unique<JsonRpc2ServerWithClient>(conn);
+    m_rpc_server = std::make_shared<JsonRpc2ServerWithClient>(conn);
     m_rpc_server->Add(methods::METHOD_API_HELLO, get_handle(&methods::Api::hello, m_methods_api), {});
     m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
         get_handle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});

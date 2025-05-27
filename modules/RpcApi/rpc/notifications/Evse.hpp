@@ -21,6 +21,7 @@ public:
     // Constructor and Destructor
     // Deleting the default constructor to ensure the class is always initialized with a DataStoreCharger object
     Evse() = delete;
+    // This needs to take a copy of rpc_server for reference counting, not a reference to it
     Evse(std::shared_ptr<rpc::JsonRpc2ServerWithClient> rpc_server, data::DataStoreCharger& dataobj);
     ~Evse() = default;
 
