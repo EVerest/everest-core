@@ -55,8 +55,8 @@ message ErrorFlags {
   bool connector_lock_failed = 5;
   bool cp_signal_fault = 6;
   bool heartbeat_timeout = 7;
-  bool coil_feedback_diverges_ac = 8;
-  bool coil_feedback_diverges_dc = 9;
+  bool coil_feedback_diverges = 8;
+  bool pp_signal_fault = 9;
 }
 
 enum ResetReason {

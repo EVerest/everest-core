@@ -189,8 +189,8 @@ int main(int argc, char* argv[]) {
             printf("\tconnector_lock_failed: %d\n", error_flags.connector_lock_failed);
             printf("\tcp_signal_fault: %d\n", error_flags.cp_signal_fault);
             printf("\theartbeat_timeout: %d\n", error_flags.heartbeat_timeout);
-            printf("\tcoil_feedback_diverges_ac: %d\n", error_flags.coil_feedback_diverges_ac);
-            printf("\tcoil_feedback_diverges_dc: %d\n", error_flags.coil_feedback_diverges_dc);
+            printf("\tcoil_feedback_diverges_ac: %d\n", error_flags.coil_feedback_diverges);
+            printf("\tpp_signal_fault: %d\n", error_flags.pp_signal_fault);
             printf("------------\n");
         });
 
