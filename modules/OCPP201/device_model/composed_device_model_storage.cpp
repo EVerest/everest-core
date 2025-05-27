@@ -20,7 +20,8 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
     for (const auto& [component, variable_map] : device_model_map) {
         for (const auto& [variable, variable_meta] : variable_map) {
             // Note: Source should not be optional, should be changed in libocpp
-            this->component_variable_source_map[component][variable] = variable_meta.source.value_or(VARIABLE_SOURCE_OCPP);
+            this->component_variable_source_map[component][variable] =
+                variable_meta.source.value_or(VARIABLE_SOURCE_OCPP);
         }
     }
 
@@ -30,7 +31,7 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
 
 ocpp::v2::DeviceModelMap ComposedDeviceModelStorage::get_device_model() {
     ocpp::v2::DeviceModelMap device_model_map;
-    for (const auto &[name, device_model_storage] : this->device_model_storages) {
+    for (const auto& [name, device_model_storage] : this->device_model_storages) {
         device_model_map.merge(device_model_storage->get_device_model());
     }
     return device_model_map;
@@ -113,8 +114,7 @@ void ComposedDeviceModelStorage::check_integrity() {
 
 std::string module::device_model::ComposedDeviceModelStorage::get_variable_source(const ocpp::v2::Component& component,
                                                                                   const ocpp::v2::Variable& variable) {
-    if (this->component_variable_source_map.find(component) ==
-        this->component_variable_source_map.end()) {
+    if (this->component_variable_source_map.find(component) == this->component_variable_source_map.end()) {
         return VARIABLE_SOURCE_OCPP; // default source
     }
     const auto& variable_map = this->component_variable_source_map.at(component);
