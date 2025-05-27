@@ -16,10 +16,11 @@ public:
     virtual std::vector<ocpp::v2::VariableAttribute>
     get_variable_attributes(const ocpp::v2::Component& component_id, const ocpp::v2::Variable& variable_id,
                             const std::optional<ocpp::v2::AttributeEnum>& attribute_enum) override;
-    virtual bool set_variable_attribute_value(const ocpp::v2::Component& component_id,
-                                              const ocpp::v2::Variable& variable_id,
-                                              const ocpp::v2::AttributeEnum& attribute_enum, const std::string& value,
-                                              const std::string& source) override;
+    virtual ocpp::v2::SetVariableStatusEnum set_variable_attribute_value(const ocpp::v2::Component& component_id,
+                                                                         const ocpp::v2::Variable& variable_id,
+                                                                         const ocpp::v2::AttributeEnum& attribute_enum,
+                                                                         const std::string& value,
+                                                                         const std::string& source) override;
     virtual std::optional<ocpp::v2::VariableMonitoringMeta>
     set_monitoring_data(const ocpp::v2::SetMonitoringData& data, const ocpp::v2::VariableMonitorType type) override;
     virtual bool update_monitoring_reference(const int32_t monitor_id, const std::string& reference_value) override;

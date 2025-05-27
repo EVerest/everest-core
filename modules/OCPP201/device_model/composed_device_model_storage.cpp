@@ -61,14 +61,13 @@ ComposedDeviceModelStorage::get_variable_attributes(const ocpp::v2::Component& c
         ->get_variable_attributes(component_id, variable_id, attribute_enum);
 }
 
-bool ComposedDeviceModelStorage::set_variable_attribute_value(const ocpp::v2::Component& component_id,
-                                                              const ocpp::v2::Variable& variable_id,
-                                                              const ocpp::v2::AttributeEnum& attribute_enum,
-                                                              const std::string& value, const std::string& source) {
+ocpp::v2::SetVariableStatusEnum ComposedDeviceModelStorage::set_variable_attribute_value(
+    const ocpp::v2::Component& component_id, const ocpp::v2::Variable& variable_id,
+    const ocpp::v2::AttributeEnum& attribute_enum, const std::string& value, const std::string& source) {
     // the "source" parameter is the VALUE_SOURCE
     const auto variable_source = get_variable_source(component_id, variable_id);
     if (this->device_model_storages.find(variable_source) == this->device_model_storages.end()) {
-        return false;
+        return ocpp::v2::SetVariableStatusEnum::Rejected;
     }
     return this->device_model_storages.at(variable_source)
         ->set_variable_attribute_value(component_id, variable_id, attribute_enum, value, source);
