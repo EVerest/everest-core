@@ -1233,9 +1233,7 @@ struct linked_ac_params {
         /* Nominal voltage */
         res->AC_EVSEChargeParameter.EVSENominalVoltage = conn->ctx->evse_v2g_data.evse_nominal_voltage;
 
-        /* Calculate pmax based on max current, nominal voltage and phase count (which the car has selected above) */
-        int64_t pmax = default_params.pmax;
-        
+        /* Calculate pmax based on max current, nominal voltage and phase count (which the car has selected above) */        
         /* Check the SASchedule */
         if (res->SAScheduleList_isUsed == (unsigned int)1) {
             for (uint8_t idx = 0; idx < res->SAScheduleList.SAScheduleTuple.arrayLen; idx++) {
