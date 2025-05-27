@@ -12,7 +12,6 @@
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/ocpp_enums.hpp>
-#include <ocpp/v16/types.hpp>
 
 namespace ocpp {
 namespace v16 {

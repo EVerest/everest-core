@@ -12,6 +12,7 @@
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/ocpp_enums.hpp>
+#include <ocpp/v16/ocpp_types.hpp>
 
 using json = nlohmann::json;
 
@@ -230,6 +231,12 @@ void to_json(json& j, const EnhancedChargingSchedule& k);
 
 /// \brief Conversion from a given json object \p j to a given EnhancedChargingSchedule \p k
 void from_json(const json& j, EnhancedChargingSchedule& k);
+
+/// \brief Extends the IdTagInfo with an optional TariffMessage for california pricing
+struct EnhancedIdTagInfo {
+    IdTagInfo id_tag_info;
+    std::optional<TariffMessage> tariff_message;
+};
 
 } // namespace v16
 } // namespace ocpp

@@ -34,6 +34,7 @@ const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
 const auto DEFAULT_BOOT_NOTIFICATION_INTERVAL_S = 60; // fallback interval if BootNotification returns interval of 0.
 const auto DEFAULT_PRICE_NUMBER_OF_DECIMALS = 3;
+const auto DEFAULT_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS = 0;
 
 ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& share_path,
                                  const fs::path& user_config_path, const fs::path& database_path,
@@ -3224,6 +3225,14 @@ DataTransferResponse ChargePointImpl::handle_set_user_price(const std::optional<
         }
     }
 
+    {
+        std::lock_guard<std::mutex> lock(this->user_price_map_mutex);
+
+        if (this->user_price_cvs.find(id_token.value()) != this->user_price_cvs.end()) {
+            this->tariff_messages_by_id_token[id_token.value()] = tariff_message;
+            this->user_price_cvs[id_token.value()].notify_all();
+        }
+    }
     response = this->tariff_message_callback(tariff_message);
     return response;
 }
@@ -3392,7 +3401,9 @@ void ChargePointImpl::status_notification(const int32_t connector, const ChargeP
 
 // public API for Core profile
 
-IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool authorize_only_locally) {
+EnhancedIdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool authorize_only_locally) {
+    EnhancedIdTagInfo enhanced_id_tag_info;
+
     // only do authorize req when authorization locally not enabled or fails
     // proritize auth list over auth cache for same idTags
 
@@ -3404,12 +3415,26 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool aut
          (this->websocket != nullptr && this->websocket->is_connected())) ||
         (this->configuration->getLocalAuthorizeOffline() &&
          (this->websocket == nullptr || !this->websocket->is_connected()))) {
+
+        const auto update_tariff_message_if_eligible = [this](EnhancedIdTagInfo& enhanced_id_tag_info) {
+            if (enhanced_id_tag_info.id_tag_info.status == AuthorizationStatus::Accepted &&
+                this->configuration->getCustomDisplayCostAndPriceEnabled()) {
+                enhanced_id_tag_info.tariff_message =
+                    this->websocket->is_connected()
+                        ? this->configuration->getTariffMessageWithDefaultPriceText()
+                        : this->configuration->getTariffMessageWithDefaultPriceTextOffline();
+            }
+        };
+
         if (this->configuration->getLocalAuthListEnabled()) {
             try {
                 const auto auth_list_entry_opt = this->database_handler->get_local_authorization_list_entry(idTag);
                 if (auth_list_entry_opt.has_value()) {
                     EVLOG_info << "Found id_tag " << idTag.get() << " in AuthorizationList";
-                    return auth_list_entry_opt.value();
+                    enhanced_id_tag_info.id_tag_info = auth_list_entry_opt.value();
+
+                    update_tariff_message_if_eligible(enhanced_id_tag_info);
+                    return enhanced_id_tag_info;
                 }
             } catch (const QueryExecutionException& e) {
                 EVLOG_warning << "Could not request local authorization list entry: " << e.what();
@@ -3417,54 +3442,84 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool aut
                 EVLOG_warning << "Unknown Error while requesting local authorization list entry: " << e.what();
             }
         }
+
         if (this->configuration->getAuthorizationCacheEnabled()) {
             if (this->validate_against_cache_entries(idTag)) {
                 EVLOG_info << "Found valid id_tag " << idTag.get() << " in AuthorizationCache";
-                return this->database_handler->get_authorization_cache_entry(idTag).value();
+                enhanced_id_tag_info.id_tag_info = this->database_handler->get_authorization_cache_entry(idTag).value();
+                update_tariff_message_if_eligible(enhanced_id_tag_info);
+                return enhanced_id_tag_info;
             }
         }
     }
 
     if (authorize_only_locally) {
-        return {AuthorizationStatus::Invalid};
+        enhanced_id_tag_info.id_tag_info = {AuthorizationStatus::Invalid};
+        return enhanced_id_tag_info;
     }
+
+    std::unique_lock<std::mutex> lock(this->user_price_map_mutex);
+    this->tariff_messages_by_id_token.erase(idTag.get()); // reset any prior data
 
     AuthorizeRequest req;
     req.idTag = idTag;
-
     ocpp::Call<AuthorizeRequest> call(req);
 
     auto authorize_future = this->message_dispatcher->dispatch_call_async(call);
 
     if (authorize_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
         EVLOG_warning << "Waiting for Authorize.conf future timed out!";
-        return {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
+        enhanced_id_tag_info.id_tag_info = {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
+        return enhanced_id_tag_info;
     }
 
     auto enhanced_message = authorize_future.get();
 
-    IdTagInfo id_tag_info;
     if (enhanced_message.messageType == MessageType::AuthorizeResponse) {
         try {
             ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
             this->database_handler->insert_or_update_authorization_cache_entry(idTag, call_result.msg.idTagInfo);
-            return call_result.msg.idTagInfo;
-        } catch (const QueryExecutionException& e) {
-            EVLOG_warning << "Could not insert or update authorization cache entry";
-            return {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
-        } catch (const json::exception& e) {
-            EVLOG_warning << "CSMS returned a malformed response to the AuthorizeRequest, assuming id tag is invalid.";
-            return {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
+            enhanced_id_tag_info.id_tag_info = call_result.msg.idTagInfo;
+
+            if (this->configuration->getCustomDisplayCostAndPriceEnabled() &&
+                call_result.msg.idTagInfo.status == AuthorizationStatus::Accepted) {
+                EVLOG_info << "California pricing is active, waiting for set user price.";
+
+                this->user_price_cvs[idTag.get()].wait_for(
+                    lock,
+                    std::chrono::milliseconds(this->configuration->getWaitForSetUserPriceTimeout().value_or(
+                        DEFAULT_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS)),
+                    [&] {
+                        return this->tariff_messages_by_id_token.find(idTag.get()) !=
+                               this->tariff_messages_by_id_token.end();
+                    });
+
+                auto tariff_it = this->tariff_messages_by_id_token.find(idTag.get());
+                if (tariff_it != this->tariff_messages_by_id_token.end()) {
+                    EVLOG_info << "Tariff message received for idToken " << idTag.get();
+                    enhanced_id_tag_info.tariff_message = tariff_it->second;
+                    this->tariff_messages_by_id_token.erase(tariff_it);
+                } else {
+                    EVLOG_warning << "Tariff message was not received within timeout for idToken " << idTag.get();
+                    enhanced_id_tag_info.tariff_message = this->configuration->getTariffMessageWithDefaultPriceText();
+                }
+                this->user_price_cvs.erase(idTag.get());
+            }
+            return enhanced_id_tag_info;
+        } catch (const std::exception& e) {
+            EVLOG_warning << "Error processing AuthorizeResponse: " << e.what();
+            enhanced_id_tag_info.id_tag_info = {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
+            return enhanced_id_tag_info;
         }
     } else if (enhanced_message.offline) {
-        if (this->configuration->getAllowOfflineTxForUnknownId() != std::nullopt &&
-            this->configuration->getAllowOfflineTxForUnknownId().value()) {
-            id_tag_info = {AuthorizationStatus::Accepted, std::nullopt, std::nullopt};
-            return id_tag_info;
+        if (this->configuration->getAllowOfflineTxForUnknownId().value_or(false)) {
+            enhanced_id_tag_info.id_tag_info = {AuthorizationStatus::Accepted, std::nullopt, std::nullopt};
+            return enhanced_id_tag_info;
         }
     }
-    id_tag_info = {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
-    return id_tag_info;
+
+    enhanced_id_tag_info.id_tag_info = {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
+    return enhanced_id_tag_info;
 }
 
 std::map<int32_t, ChargingSchedule> ChargePointImpl::get_all_composite_charging_schedules(const int32_t duration_s,
@@ -3685,7 +3740,7 @@ ocpp::v2::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
         return authorize_response;
     } else {
         const auto local_authorize_result = this->authorize_id_token(emaid, true);
-        if (local_authorize_result.status == AuthorizationStatus::Accepted) {
+        if (local_authorize_result.id_tag_info.status == AuthorizationStatus::Accepted) {
             authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Accepted;
         } else {
             authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Invalid;

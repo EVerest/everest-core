@@ -280,7 +280,7 @@ int main(int argc, char* argv[]) {
                     uuid = boost::lexical_cast<std::string>(boost::uuids::random_generator()());
                     charge_point->on_session_started(1, uuid, ocpp::SessionStartedReason::EVConnected, std::nullopt);
                     const auto result = charge_point->authorize_id_token(ocpp::CiString<20>(std::string("DEADBEEF")));
-                    if (result.status == ocpp::v16::AuthorizationStatus::Accepted) {
+                    if (result.id_tag_info.status == ocpp::v16::AuthorizationStatus::Accepted) {
                         charge_point->on_transaction_started(1, uuid, "DEADBEEF", 0, std::nullopt, ocpp::DateTime(),
                                                              std::nullopt);
                         charge_point->on_resume_charging(1);

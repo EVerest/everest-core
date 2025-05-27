@@ -175,6 +175,7 @@
         "CustomIdleFeeAfterStop": false,
         "MultiLanguageSupportedLanguages": "en, nl, de, nb_NO",
         "CustomMultiLanguageMessages": true,
-        "Language": "en"
+        "Language": "en",
+        "WaitForSetUserPriceTimeout": 5000
     }
 }

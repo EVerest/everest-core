@@ -14,7 +14,13 @@ information.
 The User-specific price is used for display purposes only and can be sent as soon as the user identifies itself with an 
 id token. It should not be used to calculate prices.
 Internally, the messages in the DataTransfer json (for 1.6) is converted to a `TariffMessage`, defined in
-`common/types.hpp`. In case of multi language messages, they are all added to the TariffMessage vector.  
+`common/types.hpp`. In case of multi language messages, they are all added to the TariffMessage vector.
+
+In order to be able to use information from `SetUserPrice` before a transaction is started (e.g. for the OCMF TT field), OCPP1.6 implements a mechanism to wait for `DataTransfer.req(SetUserPrice)` from
+the CSMS before the `authorize_id_token` function returns. This is required because the `Authorize.conf` in OCPP1.6 does not contain this information (unlike OCPP2.x). This allows to integrate the information
+from `DataTransfer.req(SetUserPrice)` in the response of the authorization request. The timeout for waiting for this message from the CSMS can be controlled using the `WaitForSetUserPriceTimeout`
+configuration key, which is specified in milliseconds. If no `DataTransfer.req(SetUserPrice)` is received within the specified timeout, the result is returned and a transaction may still start.
+
 If the message is sent when a transaction has already started, the session id will be included in the session cost message and the `IdentifierType` will be set to `SessionId`. If it has not started yet, the id token is sent with
 `IdentifierType` set to `IdToken`.
 

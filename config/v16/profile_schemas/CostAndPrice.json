@@ -129,6 +129,13 @@
             "type": "string",
             "readOnly": false,
             "minLength": 1
+        },
+        "WaitForSetUserPriceTimeout": {
+            "description": "Timeout in milliseconds that the charge point will wait for a DataTransfer(SetUserPrice) after an Authorize.req if CustomDisplayCostAndPrice is true. If the timeout expires, the authorization response will be returned without a price",
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0,
+            "maximum": 30000
         }
     }
 }

@@ -144,8 +144,8 @@ public:
     /// \brief Authorizes the provided \p id_token against the central system, LocalAuthorizationList or
     /// AuthorizationCache depending on the values of the ConfigurationKeys LocalPreAuthorize, LocalAuthorizeOffline,
     /// LocalAuthListEnabled and AuthorizationCacheEnabled
-    /// \returns the IdTagInfo
-    IdTagInfo authorize_id_token(CiString<20> id_token);
+    /// \returns the EnhancedIdTagInfo that contains the result of the authorization and an optional tarriff message
+    EnhancedIdTagInfo authorize_id_token(CiString<20> id_token);
 
     // for plug&charge 1.6 whitepaper
 

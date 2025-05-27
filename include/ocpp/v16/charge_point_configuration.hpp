@@ -458,6 +458,8 @@ public:
     std::optional<KeyValue> getPriceNumberOfDecimalsForCostValuesKeyValue();
 
     std::optional<std::string> getDefaultPriceText(const std::string& language);
+    TariffMessage getTariffMessageWithDefaultPriceText();
+    TariffMessage getTariffMessageWithDefaultPriceTextOffline();
     ConfigurationStatus setDefaultPriceText(const CiString<50>& key, const CiString<500>& value);
     KeyValue getDefaultPriceTextKeyValue(const std::string& language);
     std::optional<std::vector<KeyValue>> getAllDefaultPriceTextKeyValues();
@@ -491,6 +493,10 @@ public:
     std::optional<std::string> getLanguage();
     void setLanguage(const std::string& language);
     std::optional<KeyValue> getLanguageKeyValue();
+
+    std::optional<int32_t> getWaitForSetUserPriceTimeout();
+    void setWaitForSetUserPriceTimeout(const int32_t wait_for_set_user_price_timeout);
+    std::optional<KeyValue> getWaitForSetUserPriceTimeoutKeyValue();
 
     // custom
     std::optional<KeyValue> getCustomKeyValue(CiString<50> key);

@@ -22,6 +22,7 @@ const size_t SECC_LEAF_SUBJECT_COUNTRY_LENGTH = 2;
 const size_t SECC_LEAF_SUBJECT_COMMON_NAME_MIN_LENGTH = 7;
 const size_t SECC_LEAF_SUBJECT_COMMON_NAME_MAX_LENGTH = 64;
 const size_t AUTHORIZATION_KEY_MIN_LENGTH = 8;
+const int32_t MAX_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS = 30000;
 
 ChargePointConfiguration::ChargePointConfiguration(const std::string& config, const fs::path& ocpp_main_path,
                                                    const fs::path& user_config_path) {
@@ -2618,6 +2619,50 @@ std::optional<std::string> ChargePointConfiguration::getDefaultPriceText(const s
     return std::nullopt;
 }
 
+TariffMessage ChargePointConfiguration::getTariffMessageWithDefaultPriceText() {
+    TariffMessage tariff_message;
+    if (this->config.contains("CostAndPrice") and this->config.at("CostAndPrice").contains("DefaultPriceText")) {
+        json& default_tariff = this->config["CostAndPrice"]["DefaultPriceText"];
+
+        if (!default_tariff.contains("priceTexts")) {
+            return tariff_message;
+        }
+
+        for (auto& item : default_tariff.at("priceTexts").items()) {
+            const auto tariff_message_item = item.value();
+            if (tariff_message_item.contains("priceText") and tariff_message_item.contains("language")) {
+                DisplayMessageContent content;
+                content.message = tariff_message_item.at("priceText");
+                content.language = tariff_message_item.at("language");
+                tariff_message.message.push_back(content);
+            }
+        }
+    }
+    return tariff_message;
+}
+
+TariffMessage ChargePointConfiguration::getTariffMessageWithDefaultPriceTextOffline() {
+    TariffMessage tariff_message;
+    if (this->config.contains("CostAndPrice") and this->config.at("CostAndPrice").contains("DefaultPriceText")) {
+        json& default_tariff = this->config["CostAndPrice"]["DefaultPriceText"];
+
+        if (!default_tariff.contains("priceTexts")) {
+            return tariff_message;
+        }
+
+        for (auto& item : default_tariff.at("priceTexts").items()) {
+            const auto tariff_message_item = item.value();
+            if (tariff_message_item.contains("priceTextOffline") and tariff_message_item.contains("language")) {
+                DisplayMessageContent content;
+                content.message = tariff_message_item.at("priceTextOffline");
+                content.language = tariff_message_item.at("language");
+                tariff_message.message.push_back(content);
+            }
+        }
+    }
+    return tariff_message;
+}
+
 ConfigurationStatus ChargePointConfiguration::setDefaultPriceText(const CiString<50>& key, const CiString<500>& value) {
     std::string language;
     const std::vector<std::string> default_prices = split_string(key.get(), ',');
@@ -2935,6 +2980,34 @@ std::optional<std::string> ChargePointConfiguration::getLanguage() {
     }
 
     return std::nullopt;
+}
+
+std::optional<int32_t> ChargePointConfiguration::getWaitForSetUserPriceTimeout() {
+    if (this->config.contains("CostAndPrice") and this->config["CostAndPrice"].contains("WaitForSetUserPriceTimeout")) {
+        return this->config["CostAndPrice"]["WaitForSetUserPriceTimeout"];
+    }
+
+    return std::nullopt;
+}
+
+void ChargePointConfiguration::setWaitForSetUserPriceTimeout(const int32_t wait_for_set_user_price_timeout) {
+    if (this->getWaitForSetUserPriceTimeout() != std::nullopt) {
+        this->config["CostAndPrice"]["WaitForSetUserPriceTimeout"] = wait_for_set_user_price_timeout;
+        this->setInUserConfig("CostAndPrice", "WaitForSetUserPriceTimeout", wait_for_set_user_price_timeout);
+    }
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getWaitForSetUserPriceTimeoutKeyValue() {
+    std::optional<KeyValue> result = std::nullopt;
+    const auto wait_for_set_user_price_timeout = getWaitForSetUserPriceTimeout();
+    if (wait_for_set_user_price_timeout.has_value()) {
+        result = KeyValue();
+        result->key = "WaitForSetUserPriceTimeout";
+        result->value = std::to_string(wait_for_set_user_price_timeout.value());
+        result->readonly = false;
+    }
+
+    return result;
 }
 
 void ChargePointConfiguration::setLanguage(const std::string& language) {
@@ -3368,6 +3441,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
         }
         if (key == "Language") {
             return this->getLanguageKeyValue();
+        }
+        if (key == "WaitForSetUserPriceTimeout") {
+            return this->getWaitForSetUserPriceTimeoutKeyValue();
         }
     }
 
@@ -3941,6 +4017,23 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
 
     if (key == "Language") {
         this->setLanguage(value);
+    }
+
+    if (key == "WaitForSetUserPriceTimeout") {
+        try {
+            auto [valid, wait_for_set_user_price_timeout] = is_positive_integer(value.get());
+            if (!valid) {
+                return ConfigurationStatus::Rejected;
+            }
+            if (wait_for_set_user_price_timeout > MAX_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setWaitForSetUserPriceTimeout(wait_for_set_user_price_timeout);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        } catch (const std::out_of_range& e) {
+            return ConfigurationStatus::Rejected;
+        }
     }
 
     if (key == "CentralSystemURI") {

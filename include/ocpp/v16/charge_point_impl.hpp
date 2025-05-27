@@ -139,6 +139,10 @@ private:
     std::mutex stop_transaction_mutex;
     std::condition_variable stop_transaction_cv;
 
+    std::mutex user_price_map_mutex;
+    std::map<std::string, std::condition_variable> user_price_cvs;
+    std::map<std::string, TariffMessage> tariff_messages_by_id_token;
+
     std::thread reset_thread;
 
     int log_status_request_id;
@@ -475,8 +479,8 @@ public:
     /// AuthorizationCache depending on the values of the ConfigurationKeys LocalPreAuthorize, LocalAuthorizeOffline,
     /// LocalAuthListEnabled and AuthorizationCacheEnabled. If \p authorize_only_locally is true, no Authorize.req will
     /// be sent to the CSMS but only LocalAuthorizationList and LocalAuthorizationCache will be used for the validation
-    /// \returns the IdTagInfo
-    IdTagInfo authorize_id_token(CiString<20> id_token, const bool authorize_only_locally = false);
+    /// \returns the EnhancedIdTagInfo that contains the result of the authorization and an optional tarriff message
+    EnhancedIdTagInfo authorize_id_token(CiString<20> id_token, const bool authorize_only_locally = false);
 
     // for plug&charge 1.6 whitepaper
 

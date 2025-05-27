@@ -51,7 +51,7 @@ void ChargePoint::call_set_connection_timeout() {
     this->charge_point->call_set_connection_timeout();
 }
 
-IdTagInfo ChargePoint::authorize_id_token(CiString<20> id_token) {
+EnhancedIdTagInfo ChargePoint::authorize_id_token(CiString<20> id_token) {
     return this->charge_point->authorize_id_token(id_token);
 }
 
