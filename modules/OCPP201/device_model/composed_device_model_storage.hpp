@@ -8,11 +8,13 @@
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
 
 namespace module::device_model {
+
+using ComponentVariableSourceMap = std::map<ocpp::v2::Component, std::map<ocpp::v2::Variable, std::string>>;
 class ComposedDeviceModelStorage : public ocpp::v2::DeviceModelStorageInterface {
 private: // Members
     std::map<std::string, std::unique_ptr<ocpp::v2::DeviceModelStorageInterface>>
         device_model_storages; // key is identifier for the device model storage
-    ocpp::v2::DeviceModelMap device_model_map;
+    ComponentVariableSourceMap component_variable_source_map;;
 
 public:
     ComposedDeviceModelStorage();
