@@ -165,7 +165,7 @@ types:
         $ref: /authorization#/CertificateStatus
       tariff_messages:
         description: >-
-          Messages that can contain session price information to show the user. The array can contain multiple messages in different languages. Empty if no messages are available.
+          Messages that can contain session price information to show the user. The array can contain multiple messages in different languages. The first message in this array shall be used to start the transaction at the powermeter (for OCMF).  Empty if no messages are available.
         type: array
         items:
           description: Message with pricing information in a specific language
