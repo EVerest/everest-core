@@ -22,8 +22,7 @@ def _everest_env(ctx):
     )
 
     symlinks = {}
-    files = ctx.attr.python_interpreter_target.files.to_list()
-    py_interpreter = ctx.attr.python_interpreter_target[DefaultInfo].files.to_list()[0].dirname
+    files = []
     py_imports = []
     py_transitive_sources = []
     modules = ctx.attr.modules + ctx.attr.test_modules
@@ -110,13 +109,13 @@ def _everest_env(ctx):
     script_content = """
 #!/bin/sh
 set -ex
-export PATH=$(realpath {}):$PATH
+export PATH=$(realpath $(PYTHON3)):$PATH
 declare -a PYTHON_ROOTS=({})
 for i in "${{PYTHON_ROOTS[@]}}"
 do
     export PYTHONPATH=$(realpath ../$i):$PYTHONPATH
 done
-    """.format(py_interpreter, " ".join(py_imports))
+    """.format(" ".join(py_imports))
     if ctx.attr._is_test:
         script_content += """
 bin/manager --prefix . --config etc/everest/config-sil.yaml --check
@@ -141,7 +140,7 @@ fi
     else:
         script_content += """
 bin/manager --prefix . --config etc/everest/config-sil.yaml
-        """.format(py_interpreter, " ".join(py_imports))
+        """
     ctx.actions.write(script, script_content, is_executable = True)
 
     runfiles = ctx.runfiles(
@@ -229,10 +228,6 @@ The rule will not enforce that these modules are defined in the given
         executable = True,
         cfg = "exec",
     ),
-    "python_interpreter_target": attr.label(
-        allow_single_file = True,
-        doc = "The python interpreter to use for the EVerest environment.",
-    ),
     "_is_test": attr.bool(
         default = False,
         doc = "Indicates if target is test target to validate config"
@@ -243,6 +238,7 @@ everest_impl_env = rule(
     implementation = _everest_env,
     attrs = ATTRS,
     executable = True,
+    toolchains = ["@bazel_tools//tools/python:toolchain_type"],
 )
 
 everest_test = rule(
@@ -264,12 +260,11 @@ everest_test(
     name = "my_everest_env",
     modules = [":ModuleFoo", ":ModuleBar"],
     config_file = ":my_config.yaml",
-    python_interpreter_target=interpreter,
+    toolchains = ["@rules_python//python:current_py_toolchain"],
     test_script=":my_test_script",
 )
 
 ```
-Where `interpreter` is a python interpreter, for example a python3.10 resource.
 
 You can run it with `bazel test`.
     """,
@@ -292,11 +287,10 @@ def everest_env(name, **kwargs):
         name = "my_everest_env",
         modules = [":ModuleFoo", ":ModuleBar"],
         config_file = ":my_config.yaml",
-        python_interpreter_target=interpreter,
+        toolchains = ["@rules_python//python:current_py_toolchain"],
     )
 
     ```
-    Where `interpreter` is a python interpreter, for example a python3.10 resource.
 
     You can either run this target with `bazel run` or pass it for example to a (py)
     test which will run your tests against the environment.

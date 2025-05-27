@@ -1,6 +1,5 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
-load("@python3_10//:defs.bzl", "interpreter")
 load("//bazel:everest_env.bzl", "everest_test")
 load("//bazel:modules_def.bzl", "rs_everest_module")
 
@@ -28,7 +27,7 @@ rust_binary(
     visibility = ["//visibility:public"],
     edition = "2021",
     deps = [
-        "@crate_index//:log",
+        "@everest_framework_crate_index//:log",
         "@everest-framework//everestrs/everestrs",
         "@everest-framework//everestrs/everestrs:everestrs_sys",
         "@everest-framework//everestrs/everestrs:everestrs_bridge",
@@ -48,7 +47,7 @@ everest_test(
         ":RsIgnore",
     ],
     config_file = "config.yaml",
-    python_interpreter_target = interpreter,
+    toolchains = ["@rules_python//python:current_py_toolchain"],
     test_script = "test.sh",
     tags = ["exclusive"]
 )

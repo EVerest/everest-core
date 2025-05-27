@@ -12,6 +12,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <everest/logging.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <date/date.h>
 #include <date/tz.h>

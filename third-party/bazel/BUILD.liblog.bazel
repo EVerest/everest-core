@@ -3,13 +3,13 @@ cc_library(
     srcs = glob(["lib/*.cpp"]),
     hdrs = glob(["include/**/*.hpp"]),
     deps = [
-        "@//third-party/bazel:boost_current_function",
-        "@//third-party/bazel:boost_exception",
-        "@//third-party/bazel:boost_log",
+        "@boost.utility",
+        "@boost.exception",
+        "@boost.log",
     ],
     visibility = [
         "//visibility:public",
     ],
     strip_include_prefix = "include",
-    copts = ["-std=c++17"]
+    cxxopts = ["-std=c++17"]
 )

@@ -23,6 +23,7 @@
 
 #include <fmt/color.h>
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 
 #include <everest/logging.hpp>
 #include <framework/everest.hpp>

@@ -34,7 +34,7 @@ rust_binary(
 
 rust_test(
     name = "RsErrorsTest",
-    deps = ["@crate_index//:serde_yaml"],
+    deps = ["@everest_framework_crate_index//:serde_yaml"],
     edition="2021",
     srcs = [],
     crate = ":RsErrors",

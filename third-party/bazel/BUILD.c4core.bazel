@@ -11,6 +11,6 @@ cc_library(
     ],
     deps = [
         "@com_github_biojppm_debugbreak//:debugbreak",
-        "@com_github_fastfloat_fastfloat//:fastfloat",
+        "@fast_float",
     ],
 )

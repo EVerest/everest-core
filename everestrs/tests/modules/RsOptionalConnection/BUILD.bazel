@@ -26,7 +26,7 @@ rust_binary(
     visibility = ["//visibility:public"],
     edition = "2021",
     deps = [
-        "@crate_index//:log",
+        "@everest_framework_crate_index//:log",
         "@everest-framework//everestrs/everestrs",
         "@everest-framework//everestrs/everestrs:everestrs_sys",
         "@everest-framework//everestrs/everestrs:everestrs_bridge",

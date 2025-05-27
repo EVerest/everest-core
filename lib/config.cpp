@@ -8,6 +8,7 @@
 #include <sstream>
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <everest/exceptions.hpp>
 #include <everest/logging.hpp>

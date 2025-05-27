@@ -20,6 +20,7 @@ cmake_project_version_search = r'(project\(everest-framework\n)+(\s+VERSION\s+)(
 python_package_version_search = r'(__version__\s+=\s+\')+(\d+.\d+.\d+)(\')+'
 python_cpp_version_search = r'(m\.attr\(\"__version__\"\)\s+=\s+\")+(\d+.\d+.\d+)(\";)+'
 everestrs_version_search = r'(\[package\]\nname = \"everest[a-zA-Z-]+\"\nversion = \")+(\d+.\d+.\d+)(\")+'
+bazel_module_version_search = r'(module\(\n\s+name\s+=\s+\"everest-framework\",\n\s+version\s+=\s+\")(\d+.\d+.\d+)(\",\n\))'
 
 
 def get_cmake_project_version(cmakelists_txt_path: Path) -> str:
@@ -127,6 +128,28 @@ def set_cargo_toml_version(cargo_toml_path: Path, version: str) -> str:
         f.write(version_search)
 
 
+def get_bazel_module_version(module_bazel_path: Path) -> str:
+    with open(module_bazel_path, 'r') as f:
+        module_bazel = f.read()
+
+        version_search = re.search(bazel_module_version_search, module_bazel)
+        if version_search:
+            return version_search.group(2)
+
+    raise Exception('Could not get Bazel module version')
+
+
+def set_bazel_module_version(module_bazel_path: Path, version: str) -> str:
+    with open(module_bazel_path, 'r+') as f:
+        module_bazel = f.read()
+        f.seek(0)
+
+        def replace(match):
+            return f'{match.group(1)}{version}{match.group(3)}'
+        version_search = re.sub(bazel_module_version_search, replace, module_bazel)
+        f.write(version_search)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description='check for consistent versions in everest-framework')
@@ -151,6 +174,7 @@ def main() -> int:
     everestpy_cpp_path = in_path / 'everestpy' / 'src' / 'everest' / 'everestpy.cpp'
     everestrs_cargo_toml_path = in_path / 'everestrs' / 'everestrs' / 'Cargo.toml'
     everestrs_build_cargo_toml_path = in_path / 'everestrs' / 'everestrs-build' / 'Cargo.toml'
+    module_bazel_path = in_path / 'MODULE.bazel'
 
     update_version = False
 
@@ -173,6 +197,7 @@ def main() -> int:
         set_python_cpp_version(everestpy_cpp_path, new_version)
         set_cargo_toml_version(everestrs_cargo_toml_path, new_version)
         set_cargo_toml_version(everestrs_build_cargo_toml_path, new_version)
+        set_bazel_module_version(module_bazel_path, new_version)
 
     everest_framework_version = get_cmake_project_version(cmakelists_txt_path)
     print(f'everest-framework version: {everest_framework_version}')
@@ -192,7 +217,10 @@ def main() -> int:
     everestrs_build_version = get_cargo_toml_version(everestrs_build_cargo_toml_path)
     print(f'everestrs-build version: {everestrs_build_version}')
 
-    if all(value == everest_framework_version for value in [everestjs_version, everestpy_python_version, everestpy_cpp_version, everestrs_version, everestrs_build_version]):
+    everest_framework_bazel_version = get_bazel_module_version(module_bazel_path)
+    print(f'everest-framework version (Bazel): {everest_framework_bazel_version}')
+
+    if all(value == everest_framework_version for value in [everestjs_version, everestpy_python_version, everestpy_cpp_version, everestrs_version, everestrs_build_version, everest_framework_bazel_version]):
         return 0
     print('Version mismatch, you can fix this by calling this script with "--fix" which will apply the "everest-framework version" defined in the toplevel CMakeLists.txt')
     print('Alternatively you can apply a new version by calling this script with "--update-version x.y.z" where x, y and z are positive integers')

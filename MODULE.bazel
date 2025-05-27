@@ -1,0 +1,119 @@
+module(
+    name = "everest-framework",
+    version = "0.20.4",
+)
+
+###############################################################################
+# B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
+###############################################################################
+
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+
+bazel_dep(name = "bazel_features", version = "1.21.0")
+
+bazel_dep(name = "platforms", version = "0.0.11")
+
+bazel_dep(name = "rules_python", version = "1.3.0")
+
+bazel_dep(name = "pybind11_bazel", version = "2.13.6")
+
+bazel_dep(name = "rules_rust", version = "0.59.2")
+
+BOOST_VERSION = "1.87.0"
+
+bazel_dep(name = "boost.uuid", version = BOOST_VERSION)
+
+bazel_dep(name = "boost.exception", version = BOOST_VERSION)
+
+bazel_dep(name = "boost.log", version = BOOST_VERSION)
+
+bazel_dep(name = "boost.program_options", version = BOOST_VERSION)
+
+bazel_dep(name = "boost.utility", version = BOOST_VERSION)
+
+bazel_dep(name = "boringssl", version = "0.20250311.0")
+
+bazel_dep(name = "fast_float", version = "6.1.6")
+
+bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "com_github_nlohmann_json")
+
+bazel_dep(name = "cxx.rs", version = "1.0.153")
+
+bazel_dep(name = "rules_foreign_cc", version = "0.14.0")
+
+bazel_dep(name = "fmt", version = "11.1.4", repo_name = "com_github_fmtlib_fmt")
+
+deps = use_extension("//third-party/bazel:extension.bzl", "deps")
+use_repo(
+    deps,
+    "com_github_everest_liblog",
+    "com_github_pboettch_json-schema-validator",
+    "com_github_HowardHinnant_date",
+    "com_github_biojppm_rapidyaml",
+    "com_github_biojppm_c4core",
+    "com_github_biojppm_debugbreak",
+    "com_github_warmcatt_libwebsockets",
+    "com_github_LiamBindle_mqtt-c",
+    "libcap",
+    "pybind11_json",
+)
+
+###############################################################################
+# T O O L C H A I N S
+###############################################################################
+
+# Rust toolchain
+RUST_EDITION = "2021"
+
+RUST_VERSION = "1.85.1"
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = RUST_EDITION,
+    versions = [RUST_VERSION],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+# Python toolchain
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = "3.10",
+)
+
+###############################################################################
+# C A R G O   W O R K S P A C E
+###############################################################################
+
+everest_framework_crate_index = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+everest_framework_crate_index.from_cargo(
+    name = "everest_framework_crate_index",
+    cargo_lockfile = "//everestrs:Cargo.lock",
+    manifests = [
+        "//everestrs:Cargo.toml",
+        "//everestrs/everestrs:Cargo.toml",
+        "//everestrs/everestrs-build:Cargo.toml",
+    ],
+)
+
+use_repo(
+    everest_framework_crate_index,
+    "everest_framework_crate_index",
+)
+
+everest_framework_validate_crate_index = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+everest_framework_validate_crate_index.from_cargo(
+    name = "everest_framework_validate_crate_index",
+    cargo_lockfile = "//bazel/validate:Cargo.lock",
+    manifests = [
+        "//bazel/validate:Cargo.toml",
+    ],
+)
+
+use_repo(
+    everest_framework_validate_crate_index,
+    "everest_framework_validate_crate_index",
+)
+

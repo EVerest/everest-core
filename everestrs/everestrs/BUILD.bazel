@@ -6,12 +6,12 @@ rust_library(
     srcs = glob(["src/**/*.rs"]),
     edition = "2021",
     deps =  [
-        "@crate_index//:clap",
-        "@crate_index//:log",
-        "@crate_index//:serde",
-        "@crate_index//:serde_json",
-        "@crate_index//:serde_yaml",
-        "@crate_index//:thiserror",
+        "@everest_framework_crate_index//:clap",
+        "@everest_framework_crate_index//:log",
+        "@everest_framework_crate_index//:serde",
+        "@everest_framework_crate_index//:serde_json",
+        "@everest_framework_crate_index//:serde_yaml",
+        "@everest_framework_crate_index//:thiserror",
         "@cxx.rs//:cxx",
         "@everest-framework//everestrs/everestrs:everestrs_sys",
         "@everest-framework//everestrs/everestrs:everestrs_bridge",
@@ -45,7 +45,7 @@ cc_library(
         "@everest-framework//everestrs/everestrs:everestrs_bridge/include",
         "@everest-framework//:framework",
     ],
-    copts = ["-std=c++17"],
+    cxxopts = ["-std=c++17"],
     visibility = ["//visibility:public"],
 )
 
@@ -57,7 +57,7 @@ cc_library(
         "@everest-framework//everestrs/everestrs:everestrs_bridge/include",
         "@everest-framework//:framework",
     ],
-    copts = ["-std=c++17"],
+    cxxopts = ["-std=c++17"],
     alwayslink = True,
     visibility = ["//visibility:public"],
 )

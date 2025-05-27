@@ -1,4 +1,4 @@
-load("@validate_crate_index//:defs.bzl", "all_crate_deps")
+load("@everest_framework_validate_crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 
 
