@@ -8,18 +8,17 @@ cmds:
           Selected energy transfer mode for charging that is requested
           by the EVCC
         type: string
-        $ref: /iso15118_ev#/EnergyTransferMode
+        $ref: /iso15118#/EnergyTransferMode
       DepartureTime:
-        description: >- 
-          Optional: Amount of time until requested departure in seconds
+        description: >-
+          The time when the EVCC wants to leave the charging station (in seconds)
+          (optional)
         type: number
-        $ref: /iso15118_ev#/DepartureTime
       EAmount:
-        description: >- 
-          Optional: Amount of energy requested for charging session
-          to be delivered before departure time in kWh
+        description: >-
+          The amount of energy that the EVCC wants to charge (in kWh)
+          (optional)
         type: number
-        $ref: /iso15118_ev#/EAmount
     result:
       description: Returns true if the evcc simulation started
       type: boolean

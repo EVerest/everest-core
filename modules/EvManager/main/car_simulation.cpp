@@ -206,21 +206,24 @@ bool CarSimulation::iso_dc_power_on(const CmdArguments& arguments) {
 }
 
 bool CarSimulation::iso_start_v2g_session(const CmdArguments& arguments, bool three_phases) {
+    //add departure time and eamount to arguments
+    //if have to provide but don't want to, use -1 as a flag to get default from config
     const auto& energy_mode = arguments[0];
-    const auto& departure_time = sim_data.iso_departure_time;
-    const auto& e_amount = sim_data.iso_eamount;
+    const auto& departure_time = std::stoi(arguments[1]);
+    const auto& e_amount = std::stoi(arguments[2]);
+
     EVLOG_debug << "energy mode: " << energy_mode << " departure time: " << departure_time << " eamount: " << e_amount << " three phases: " << three_phases;
-    
+ 
+
     if (energy_mode == constants::AC) {
         sim_data.energy_mode = EnergyMode::AC;
         if (three_phases == false) {
-            r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::AC_single_phase_core, departure_time, e_amount);
+            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_single_phase_core, departure_time, e_amount);
         } else {
-            r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::AC_three_phase_core, departure_time, e_amount);
+            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_three_phase_core, departure_time, e_amount);
         }
     } else if (energy_mode == constants::DC) {
-        r_ev[0]->call_start_charging(types::iso15118_ev::EnergyTransferMode::DC_extended, departure_time, e_amount);
-        sim_data.energy_mode = EnergyMode::DC;
+        r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::DC_extended, departure_time, e_amount);
     } else {
         return false;
     }

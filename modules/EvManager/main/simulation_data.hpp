@@ -58,6 +58,8 @@ struct SimulationData {
     float rcd_current_ma{0.0f};
     float pwm_duty_cycle{0.0f};
     float last_pwm_duty_cycle{0.0f};
+    float iso_departure_time{0.0f};
+    float iso_eamount{0.0f};
 
     bool dc_power_on{false};
 
