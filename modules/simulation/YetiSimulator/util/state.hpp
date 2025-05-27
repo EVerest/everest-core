@@ -230,6 +230,8 @@ struct ModuleState {
 
     double ev_max_current = 0.0;
     int ev_three_phases = 3;
+
+    bool republish_state = false;
 };
 
 std::string state_to_string(const state::ModuleState& module_state);

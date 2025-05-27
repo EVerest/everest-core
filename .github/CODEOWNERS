@@ -12,7 +12,7 @@
 /cmake/ @hikinggrass @a-w50 @corneliusclaussen @andistorm
 
 # config
-/config/ @hikinggrass @pietfried @corneliusclaussen @SebaLukas @maaikez @MarzellT @mlitre
+/config/ @hikinggrass @pietfried @corneliusclaussen @SebaLukas @MarzellT @mlitre
 
 # lib
 /lib/3rd_party/nanopb/ @a-w50 @corneliusclaussen @hikinggrass
@@ -34,8 +34,8 @@
 /modules/EvseSecurity/ @AssemblyJohn @pietfried @hikinggrass
 /modules/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc
 /modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas
-/modules/OCPP/ @hikinggrass @pietfried @maaikez @mlitre
-/modules/OCPP201/ @hikinggrass @pietfried @maaikez @mlitre
+/modules/OCPP/ @hikinggrass @pietfried @mlitre
+/modules/OCPP201/ @hikinggrass @pietfried @mlitre
 /modules/PacketSniffer/ @corneliusclaussen @SebaLukas @hikinggrass
 /modules/PhyVersoBSP/ @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
 /modules/PyEvJosev/ @SebaLukas @corneliusclaussen @pietfried
@@ -58,5 +58,5 @@
 # third-party/bazel
 /third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @dorezyuk
 
-/dependencies.yaml @hikinggrass @pietfried @corneliusclaussen @SebaLukas @maaikez @AssemblyJohn
-/module-dependencies.cmake @hikinggrass @pietfried @corneliusclaussen @SebaLukas @maaikez @AssemblyJohn
+/dependencies.yaml @hikinggrass @pietfried @corneliusclaussen @SebaLukas @AssemblyJohn @mlitre
+/module-dependencies.cmake @hikinggrass @pietfried @corneliusclaussen @SebaLukas @AssemblyJohn @mlitre

@@ -39,7 +39,7 @@ cmds:
         AuthorizationNotFound in case no match for request was found
         Rejected in case module could not process the request for other reasons
       type: string
-      $ref: /authorization#/WithdrawAuthorizationResponse
+      $ref: /authorization#/WithdrawAuthorizationResult
 vars:
   token_validation_status:
     description: Emits all events related to current token validation

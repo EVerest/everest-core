@@ -27,14 +27,6 @@ using namespace types::reservation;
 namespace types {
 namespace authorization {
 
-inline bool operator==(const IdToken& lhs, const IdToken& rhs) {
-    return lhs.value == rhs.value and lhs.type == rhs.type;
-}
-
-inline bool operator==(const ProvidedIdToken& lhs, const ProvidedIdToken& rhs) {
-    return lhs.id_token == rhs.id_token;
-}
-
 inline bool operator<(const IdToken& lhs, const IdToken& rhs) {
     return lhs.value < rhs.value;
 }
@@ -96,6 +88,13 @@ public:
      * @param provided_token
      */
     TokenHandlingResult on_token(const ProvidedIdToken& provided_token);
+
+    /**
+     * @brief Handler for an update to a token validation result. This is mainly used to update if we have a parent id.
+     *
+     * @param validation_result_update
+     */
+    void handle_token_validation_result_update(const ValidationResultUpdate& validation_result_update);
 
     /**
      * @brief Handler for new incoming \p reservation for the given \p connector . Places the reservation if possible.
@@ -293,7 +292,7 @@ private:
     bool any_parent_id_present(const std::vector<int>& evse_ids);
     bool equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token);
 
-    TokenHandlingResult handle_token(const ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk);
+    TokenHandlingResult handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk);
 
     /**
      * @brief Method selects an evse based on the configured selection algorithm. It might block until an event

@@ -13,7 +13,9 @@ target_include_directories(${TEST_TARGET_NAME} PRIVATE
 
 target_sources(${TEST_TARGET_NAME} PRIVATE
     EventQueueTest.cpp
+    ErrorHandlingTest.cpp
     IECStateMachineTest.cpp
+    ../ErrorHandling.cpp
     ../IECStateMachine.cpp
     ../backtrace.cpp
 )
@@ -27,6 +29,7 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
     GTest::gtest_main
     everest::log
     everest::framework
+    everest::staging::helpers
     sigslot
 )
 
@@ -57,6 +60,7 @@ target_link_libraries(${CHARGER_TEST_TARGET_NAME} PRIVATE
     GTest::gmock
     GTest::gtest_main
     everest::framework
+    everest::staging::helpers
     sigslot
 )
 

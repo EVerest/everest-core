@@ -1,9 +1,9 @@
 active_modules:
   iso15118_charger_1:
-    module: PyJosev
+    module: EvseV2G
     config_module:
       device: auto
-      supported_DIN70121: true
+      tls_security: allow
   iso15118_car:
     module: PyEvJosev
     config_module:

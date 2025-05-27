@@ -105,6 +105,10 @@ struct Conf {
     int state_F_after_fault_ms;
     bool fail_on_powermeter_errors;
     bool raise_mrec9;
+    int sleep_before_enabling_pwm_hlc_mode_ms;
+    bool central_contract_validation_allowed;
+    bool contract_certificate_installation_enabled;
+    bool inoperative_error_use_vendor_id;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -191,8 +195,11 @@ public:
     bool reserve(int32_t id, const bool signal_reservation_event = true);
     int32_t get_reservation_id();
 
-    bool get_hlc_enabled();
     bool get_hlc_waiting_for_auth_pnc();
+    void set_pnc_enabled(const bool pnc_enabled);
+    void set_central_contract_validation_allowed(const bool central_contract_validation_allowed);
+    void set_contract_certificate_installation_enabled(const bool contract_certificate_installation_enabled);
+
     sigslot::signal<types::evse_manager::SessionEvent> signalReservationEvent;
 
     void charger_was_authorized();
@@ -292,12 +299,16 @@ private:
 
     std::atomic_bool contactor_open{true};
 
-    Everest::timed_mutex_traceable hlc_mutex;
+    Everest::timed_mutex_traceable charger_ready_mutex;
+    bool charger_ready{false};
+    std::atomic_bool hlc_enabled;
 
-    bool hlc_enabled;
+    std::atomic_bool hlc_waiting_for_auth_eim;
+    std::atomic_bool hlc_waiting_for_auth_pnc;
 
-    bool hlc_waiting_for_auth_eim;
-    bool hlc_waiting_for_auth_pnc;
+    std::atomic_bool pnc_enabled{false};
+    std::atomic_bool central_contract_validation_allowed{false};
+    std::atomic_bool contract_certificate_installation_enabled{false};
 
     VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;

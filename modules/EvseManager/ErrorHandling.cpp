@@ -3,6 +3,33 @@
 
 #include "ErrorHandling.hpp"
 
+namespace {
+std::string generate_description(const Everest::error::Error& error) {
+    std::string result;
+    if (auto n = error.type.find('/'); n != std::string::npos) {
+        // found slash '/'
+        if ((n + 1) == error.type.size()) {
+            // slash is the last character
+            result = error.type.substr(0, n);
+        } else {
+            // remove upto and including the first /
+            result = error.type.substr(++n);
+            // remove slash at the end
+            if (result.back() == '/') {
+                result.pop_back();
+            }
+        }
+        if (!error.sub_type.empty()) {
+            result += '/' + error.sub_type;
+        }
+    } else {
+        // return the original description
+        result = error.description;
+    }
+    return result;
+}
+} // namespace
+
 namespace module {
 
 using ErrorList = std::list<Everest::error::ErrorType>;
@@ -27,7 +54,8 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                              const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd,
                              const std::vector<std::unique_ptr<power_supply_DCIntf>>& _r_powersupply,
                              const std::vector<std::unique_ptr<powermeterIntf>>& _r_powermeter,
-                             const std::vector<std::unique_ptr<over_voltage_monitorIntf>>& _r_over_voltage_monitor) :
+                             const std::vector<std::unique_ptr<over_voltage_monitorIntf>>& _r_over_voltage_monitor,
+                             bool _inoperative_error_use_vendor_id) :
     r_bsp(_r_bsp),
     r_hlc(_r_hlc),
     r_connector_lock(_r_connector_lock),
@@ -36,7 +64,8 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
     r_imd(_r_imd),
     r_powersupply(_r_powersupply),
     r_powermeter(_r_powermeter),
-    r_over_voltage_monitor(_r_over_voltage_monitor) {
+    r_over_voltage_monitor(_r_over_voltage_monitor),
+    inoperative_error_use_vendor_id(_inoperative_error_use_vendor_id) {
 
     // Subscribe to bsp driver to receive Errors from the bsp hardware
     r_bsp->subscribe_all_errors([this](const Everest::error::Error& error) { process_error(); },
@@ -130,12 +159,12 @@ void ErrorHandling::process_error() {
 }
 
 // Check all errors from p_evse and all requirements to see if they block charging
-std::optional<std::string> ErrorHandling::errors_prevent_charging() {
+std::optional<Everest::error::Error> ErrorHandling::errors_prevent_charging() {
 
-    auto is_fatal = [](auto errors, auto ignore_list) -> std::optional<std::string> {
+    auto is_fatal = [](auto errors, auto ignore_list) -> std::optional<Everest::error::Error> {
         for (const auto e : errors) {
             if (std::none_of(ignore_list.begin(), ignore_list.end(), [e](const auto& ign) { return e->type == ign; })) {
-                return e->type;
+                return *e;
             }
         }
         return std::nullopt;
@@ -197,7 +226,7 @@ std::optional<std::string> ErrorHandling::errors_prevent_charging() {
     return std::nullopt;
 }
 
-void ErrorHandling::raise_inoperative_error(const std::string& caused_by) {
+void ErrorHandling::raise_inoperative_error(const Everest::error::Error& caused_by) {
     if (p_evse->error_state_monitor->is_error_active("evse_manager/Inoperative", "")) {
         // dont raise if already raised
         return;
@@ -208,8 +237,14 @@ void ErrorHandling::raise_inoperative_error(const std::string& caused_by) {
     }
 
     // raise externally
-    Everest::error::Error error_object =
-        p_evse->error_factory->create_error("evse_manager/Inoperative", "", caused_by, Everest::error::Severity::High);
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/Inoperative", "", caused_by.type, Everest::error::Severity::High);
+    error_object.description = generate_description(caused_by);
+    if (inoperative_error_use_vendor_id && !caused_by.vendor_id.empty()) {
+        error_object.vendor_id = caused_by.vendor_id;
+    } else {
+        error_object.vendor_id = "EVerest";
+    }
     p_evse->raise_error(error_object);
 
     signal_error(true);

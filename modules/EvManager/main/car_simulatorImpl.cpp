@@ -9,6 +9,9 @@
 namespace module::main {
 
 void car_simulatorImpl::init() {
+    simulated_already_plugged_in_key = fmt::format("{}_{}_simulated_already_plugged_in", mod->info.name, mod->info.id);
+    simulated_plugged_in_command_key = fmt::format("{}_{}_simulated_plugged_in_command", mod->info.name, mod->info.id);
+    last_commands = {};
     loop_interval_ms = constants::DEFAULT_LOOP_INTERVAL_MS;
     register_all_commands();
     subscribe_to_variables_on_init();
@@ -23,6 +26,26 @@ void car_simulatorImpl::ready() {
 
     setup_ev_parameters();
 
+    if (mod->config.keep_cross_boot_plugin_state) {
+        if (!mod->r_kvs.empty()) {
+            auto plugin_command_variant = mod->r_kvs.at(0)->call_load(simulated_plugged_in_command_key);
+            auto* old_plugin_command = std::get_if<std::string>(&plugin_command_variant);
+            // If the old plugin command was not stored use this one as a default backup which will require an unplug
+            std::string plugin_command{"iec_wait_pwr_ready;sleep 60"};
+            if (old_plugin_command != nullptr) {
+                plugin_command = *old_plugin_command;
+            }
+
+            auto already_plugged_in_variant = mod->r_kvs.at(0)->call_load(simulated_already_plugged_in_key);
+            bool* was_plugged_in = std::get_if<bool>(&already_plugged_in_variant);
+            if (was_plugged_in != nullptr && *was_plugged_in) {
+                enabled = true;
+                handle_modify_charging_session(plugin_command);
+                plugged_in = true;
+                enabled = false;
+            }
+        }
+    }
     if (mod->config.auto_enable) {
         auto enable_copy = mod->config.auto_enable;
         handle_enable(enable_copy);
@@ -84,7 +107,7 @@ void car_simulatorImpl::handle_modify_charging_session(std::string& value) {
 
 void car_simulatorImpl::run() {
     while (true) {
-        if (enabled == true && execution_active == true) {
+        if (enabled && execution_active) {
 
             const auto finished = run_simulation_loop();
 
@@ -112,6 +135,11 @@ void car_simulatorImpl::register_all_commands() {
         return this->car_simulation->sleep(arguments, loop_interval_ms);
     });
     command_registry->register_command("iec_wait_pwr_ready", 0, [this](const CmdArguments& arguments) {
+        if (!mod->r_kvs.empty() and not plugged_in) {
+            plugged_in = true;
+            mod->r_kvs.at(0)->call_store(simulated_already_plugged_in_key, true);
+            mod->r_kvs.at(0)->call_store(simulated_plugged_in_command_key, last_commands);
+        }
         return this->car_simulation->iec_wait_pwr_ready(arguments);
     });
     command_registry->register_command("iso_wait_pwm_is_running", 0, [this](const CmdArguments& arguments) {
@@ -125,8 +153,13 @@ void car_simulatorImpl::register_all_commands() {
     });
     command_registry->register_command(
         "pause", 0, [this](const CmdArguments& arguments) { return this->car_simulation->pause(arguments); });
-    command_registry->register_command(
-        "unplug", 0, [this](const CmdArguments& arguments) { return this->car_simulation->unplug(arguments); });
+    command_registry->register_command("unplug", 0, [this](const CmdArguments& arguments) {
+        if (!mod->r_kvs.empty() and plugged_in) {
+            plugged_in = false;
+            mod->r_kvs.at(0)->call_store(simulated_already_plugged_in_key, false);
+        }
+        return this->car_simulation->unplug(arguments);
+    });
     command_registry->register_command(
         "error_e", 0, [this](const CmdArguments& arguments) { return this->car_simulation->error_e(arguments); });
     command_registry->register_command(
@@ -143,6 +176,11 @@ void car_simulatorImpl::register_all_commands() {
 
     if (!mod->r_slac.empty()) {
         command_registry->register_command("iso_wait_slac_matched", 0, [this](const CmdArguments& arguments) {
+            if (!mod->r_kvs.empty() and not plugged_in) {
+                plugged_in = true;
+                mod->r_kvs.at(0)->call_store(simulated_already_plugged_in_key, true);
+                mod->r_kvs.at(0)->call_store(simulated_plugged_in_command_key, last_commands);
+            }
             return this->car_simulation->iso_wait_slac_matched(arguments);
         });
     }
@@ -201,10 +239,7 @@ bool car_simulatorImpl::run_simulation_loop() {
 
     car_simulation->state_machine();
 
-    if (command_queue.empty()) {
-        return true;
-    }
-    return false;
+    return command_queue.empty();
 }
 
 bool car_simulatorImpl::check_can_execute() {
@@ -314,6 +349,7 @@ void car_simulatorImpl::reset_car_simulation_defaults() {
 
 void car_simulatorImpl::update_command_queue(std::string& value) {
     const std::lock_guard<std::mutex> lock{car_simulation_mutex};
+    last_commands = value;
     command_queue = SimulationCommand::parse_sim_commands(value, *command_registry);
 }
 

@@ -154,6 +154,9 @@ types::ocpp::DataTransferRequest to_everest_data_transfer_request(ocpp::v2::Data
 /// \brief Converts a given ocpp::v2::DataTransferResponse \p status to a types::ocpp::DataTransferResponse.
 types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v2::DataTransferResponse response);
 
+/// \brief Converts a given ocpp::v2::IdTokenInfo \p idTokenInfo to a types::authorization::ValidationResult.
+types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::IdTokenInfo& idTokenInfo);
+
 /// \brief Converts a given ocpp::v2::AuthorizeResponse \p response to a types::authorization::ValidationResult.
 types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::AuthorizeResponse& response);
 

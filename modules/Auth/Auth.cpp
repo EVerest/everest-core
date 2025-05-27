@@ -24,6 +24,11 @@ void Auth::init() {
             t.detach();
         });
     }
+    for (const auto& token_validator : this->r_token_validator) {
+        token_validator->subscribe_validate_result_update([this](ValidationResultUpdate validation_result_update) {
+            this->auth_handler->handle_token_validation_result_update(validation_result_update);
+        });
+    }
 }
 
 void Auth::ready() {

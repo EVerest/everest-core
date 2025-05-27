@@ -2,28 +2,41 @@
 # Copyright Pionix GmbH and Contributors to EVerest
 
 import pytest
-from datetime import datetime, timedelta
+import json
+from datetime import datetime, timedelta, timezone
 import logging
 import asyncio
 
 from everest.testing.core_utils.controller.test_controller_interface import (
     TestController,
 )
+
+from ocpp.charge_point import remove_nones, snake_to_camel_case
 from ocpp.routing import on, create_route_map
-from ocpp.v16.datatypes import (
-    IdTagInfo,
-)
+from ocpp.v16.datatypes import IdTagInfo
 from ocpp.v16 import call, call_result
-from ocpp.v16.enums import *
+from ocpp.v16.enums import (
+    UpdateType,
+    ChargePointErrorCode,
+    ChargePointStatus,
+    Reason,
+    TriggerMessageStatus,
+    AuthorizationStatus,
+    ReservationStatus,
+    MessageTrigger,
+    RemoteStartStopStatus,
+)
 
 # fmt: off
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v16
+from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 from everest_test_utils import *
 from validations import (validate_standard_start_transaction,
                                validate_standard_stop_transaction,
                                validate_remote_start_stop_transaction,
+                               wait_for_callerror_and_validate
                                )
 # fmt: on
 
@@ -198,7 +211,7 @@ async def test_parent_id_tag_reservation_1(
         key="AuthorizeRemoteTxRequests", value="true"
     )
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v16.reserve_now_req(
         connector_id=1,
@@ -319,7 +332,7 @@ async def test_parent_id_tag_reservation_2(
         key="AuthorizeRemoteTxRequests", value="true"
     )
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v16.reserve_now_req(
         connector_id=1,
@@ -440,7 +453,7 @@ async def test_parent_id_tag_reservation_3(
         key="AuthorizeRemoteTxRequests", value="true"
     )
 
-    t = datetime.utcnow() + timedelta(minutes=10)
+    t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await charge_point_v16.reserve_now_req(
         connector_id=1,
@@ -909,7 +922,7 @@ async def test_authorization_cache_entry_3(
         # accepted but expires just now
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
-            expiry_date=datetime.utcnow().isoformat(),
+            expiry_date=datetime.now(timezone.utc).isoformat(),
         )
         return call_result.AuthorizePayload(id_tag_info=id_tag_info)
 
@@ -917,7 +930,7 @@ async def test_authorization_cache_entry_3(
     def on_start_transaction(**kwargs):
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
-            expiry_date=datetime.utcnow().isoformat(),
+            expiry_date=datetime.now(timezone.utc).isoformat(),
         )
         return call_result.StartTransactionPayload(
             transaction_id=1, id_tag_info=id_tag_info
@@ -1315,4 +1328,59 @@ async def test_double_remote_start_transaction(
             2, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
+    )
+
+
+@pytest.mark.asyncio
+async def test_send_local_lost_large_token(
+    charge_point_v16: ChargePoint16,
+    test_utility: TestUtility,
+    test_controller: TestController,
+):
+
+    from ocpp.messages import Call, _DecimalEncoder
+
+    async def send_message_without_validation(charge_point_v16, call_msg):
+        json_data = json.dumps(
+            [
+                call_msg.message_type_id,
+                call_msg.unique_id,
+                call_msg.action,
+                call_msg.payload,
+            ],
+            # By default json.dumps() adds a white space after every separator.
+            # By setting the separator manually that can be avoided.
+            separators=(",", ":"),
+            cls=_DecimalEncoder,
+        )
+
+        async with charge_point_v16._call_lock:
+            await charge_point_v16._send(json_data)
+
+    payload = call.SendLocalListPayload(
+        list_version=1,
+        update_type=UpdateType.differential,
+        local_authorization_list=[
+            {
+                "idTag": "RFID111111111111111111111111111",
+                "idTagInfo": {
+                    "status": "Accepted",
+                    "expiryDate": "2342-06-19T09:10:00.000Z",
+                    "parentIdTag": "PTAG",
+                },
+            }
+        ],
+    )
+    camel_case_payload = snake_to_camel_case(asdict(payload))
+
+    call_msg = Call(
+        unique_id=str(charge_point_v16._unique_id_generator()),
+        action=payload.__class__.__name__[:-7],
+        payload=remove_nones(camel_case_payload),
+    )
+
+    await send_message_without_validation(charge_point_v16, call_msg)
+
+    assert await wait_for_callerror_and_validate(
+        test_utility, charge_point_v16, "FormationViolation"
     )
