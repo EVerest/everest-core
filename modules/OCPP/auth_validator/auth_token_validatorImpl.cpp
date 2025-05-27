@@ -94,6 +94,7 @@ auth_token_validatorImpl::validate_standard_request(const types::authorization::
         }
 
         result.reason = types::authorization::TokenValidationStatusMessage();
+        result.reason->token = provided_token;
         result.reason->messages = std::vector<types::text_message::MessageContent>();
         types::text_message::MessageContent content;
         content.content = "Validation by OCPP 1.6 Central System";

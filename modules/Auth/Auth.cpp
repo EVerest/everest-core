@@ -65,8 +65,9 @@ void Auth::ready() {
     }
 
     this->auth_handler->register_publish_token_validation_status_callback(
-        [this](const ProvidedIdToken& token, TokenValidationStatus status) {
-            this->p_main->publish_token_validation_status({token, status});
+        [this](const ProvidedIdToken& token, TokenValidationStatus status,
+               std::optional<std::vector<types::text_message::MessageContent>> messages) {
+            this->p_main->publish_token_validation_status({token, status, std::move(messages)});
         });
 
     this->auth_handler->register_notify_evse_callback(
