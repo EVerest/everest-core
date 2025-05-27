@@ -18,11 +18,11 @@ types::json_rpc_api::ErrorResObj RequestHandlerDummy::setACChargingPhaseCount(co
     types::json_rpc_api::ErrorResObj res {types::json_rpc_api::ResponseErrorEnum::NoError};
     return res;
 }
-types::json_rpc_api::ErrorResObj RequestHandlerDummy::setDCCharging(const int32_t evse_index, bool charging_allowed, int max_power) {
+types::json_rpc_api::ErrorResObj RequestHandlerDummy::setDCCharging(const int32_t evse_index, bool charging_allowed, float max_power) {
     types::json_rpc_api::ErrorResObj res {types::json_rpc_api::ResponseErrorEnum::NoError};
     return res;
 }
-types::json_rpc_api::ErrorResObj RequestHandlerDummy::setDCChargingPower(const int32_t evse_index, int max_power) {
+types::json_rpc_api::ErrorResObj RequestHandlerDummy::setDCChargingPower(const int32_t evse_index, float max_power) {
     types::json_rpc_api::ErrorResObj res {types::json_rpc_api::ResponseErrorEnum::NoError};
     return res;
 }

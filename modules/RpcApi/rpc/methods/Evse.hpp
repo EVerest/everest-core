@@ -157,7 +157,7 @@ public:
 
     };
 
-    RPCDataTypes::ErrorResObj setDCCharging(const int32_t evse_index, bool charging_allowed, int max_power) {
+    RPCDataTypes::ErrorResObj setDCCharging(const int32_t evse_index, bool charging_allowed, float max_power) {
         RPCDataTypes::ErrorResObj res {};
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
@@ -168,7 +168,7 @@ public:
         return m_request_handler_ptr->setDCCharging(evse_index, charging_allowed, max_power);
     };
 
-    RPCDataTypes::ErrorResObj setDCChargingPower(const int32_t evse_index, int max_power) {
+    RPCDataTypes::ErrorResObj setDCChargingPower(const int32_t evse_index, float max_power) {
         RPCDataTypes::ErrorResObj res {};
 
         auto evse = data::DataStoreCharger::getEVSEStore(m_dataobj, evse_index);
