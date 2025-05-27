@@ -177,7 +177,7 @@ static void check_iso2_charging_profile_values(iso2_PowerDeliveryReqType* req, i
                              req->ChargingProfile.ProfileEntry.array[ev_idx].ChargingProfileEntryMaxPower.Multiplier)) >
                         (evse_p_max_schedule->PMaxScheduleEntry.array[evse_idx].PMax.Value *
                          pow(10, evse_p_max_schedule->PMaxScheduleEntry.array[evse_idx].PMax.Multiplier))) {
-                        // res->ResponseCode = iso2_responseCodeType_FAILED_ChargingProfileInvalid; // [V2G2-224]
+                        res->ResponseCode = iso2_responseCodeType_FAILED_ChargingProfileInvalid; // [V2G2-224]
                         // [V2G2-225] [V2G2-478]
                         //  setting response code is commented because some EVs do not support schedules correctly
                         dlog(DLOG_LEVEL_WARNING,
@@ -1318,6 +1318,11 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         if ((unsigned int)1 == req->AC_EVChargeParameter_isUsed) {
             res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
         }
+        if (req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value < 0 ||
+            req->DC_EVChargeParameter.EVMaximumPowerLimit.Value < 0 ||
+            req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value < 0) {
+            res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
+        }
     }
 
     /* Check the current response code and check if no external error has occurred */
@@ -1332,6 +1337,13 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         conn->ctx->state = (iso2_EVSEProcessingType_Finished == res->EVSEProcessing)
                                ? (int)iso_ac_state_id::WAIT_FOR_POWERDELIVERY
                                : (int)iso_ac_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY;
+    }
+
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEChargeParameter.EVSECurrentRegulationTolerance_isUsed = 0;
+        res->DC_EVSEChargeParameter.EVSEEnergyToBeDelivered_isUsed = 0;
+        res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+        res->SAScheduleList_isUsed = 0;
     }
 
     return next_event;
@@ -1458,6 +1470,16 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
     /* Check EV charging profile values [V2G2-478] */
     check_iso2_charging_profile_values(req, res, conn, sa_schedule_tuple_idx);
 
+    const auto last_v2g_msg = conn->ctx->last_v2g_msg;
+
+    /* abort charging session if EV is ready to charge after current demand phase */
+    if ((req->ChargeProgress == iso2_chargeProgressType_Start and
+         (last_v2g_msg == V2G_CURRENT_DEMAND_MSG or last_v2g_msg == V2G_CHARGING_STATUS_MSG)) or
+        (req->ChargeProgress == iso2_chargeProgressType_Renegotiate and
+         (last_v2g_msg != V2G_CURRENT_DEMAND_MSG and last_v2g_msg != V2G_CHARGING_STATUS_MSG))) {
+        res->ResponseCode = iso2_responseCodeType_FAILED; // (/*[V2G2-812]*/
+    }
+
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
 
@@ -1488,13 +1510,13 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
                                ? (int)iso_dc_state_id::WAIT_FOR_CURRENTDEMAND
                                : (int)iso_ac_state_id::WAIT_FOR_CHARGINGSTATUS; // [V2G-590], [V2G2-576]
     } else {
-        /* abort charging session if EV is ready to charge after current demand phase */
-        if (req->ChargeProgress != iso2_chargeProgressType_Stop) {
-            res->ResponseCode = iso2_responseCodeType_FAILED; // (/*[V2G2-812]*/
-        }
         conn->ctx->state = (conn->ctx->is_dc_charger == true)
                                ? (int)iso_dc_state_id::WAIT_FOR_WELDINGDETECTION_SESSIONSTOP
                                : (int)iso_ac_state_id::WAIT_FOR_SESSIONSTOP; // [V2G-601], [V2G2-568]
+    }
+
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
     }
 
     return next_event;
@@ -1739,6 +1761,10 @@ static enum v2g_event handle_iso_cable_check(struct v2g_connection* conn) {
                            ? (int)iso_dc_state_id::WAIT_FOR_PRECHARGE
                            : (int)iso_dc_state_id::WAIT_FOR_CABLECHECK; // [V2G-584], [V2G-621]
 
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+    }
+
     return next_event;
 }
 
@@ -1772,6 +1798,10 @@ static enum v2g_event handle_iso_pre_charge(struct v2g_connection* conn) {
 
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_PRECHARGE_POWERDELIVERY; // [V2G-587]
+
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+    }
 
     return next_event;
 }
@@ -1910,6 +1940,15 @@ static enum v2g_event handle_iso_current_demand(struct v2g_connection* conn) {
                            ? (int)iso_dc_state_id::WAIT_FOR_METERINGRECEIPT
                            : (int)iso_dc_state_id::WAIT_FOR_CURRENTDEMAND_POWERDELIVERY; // [V2G-795], [V2G-593]
 
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+        res->MeterInfo_isUsed = 0;
+        res->MeterInfo.MeterReading_isUsed = 0;
+        res->EVSEMaximumVoltageLimit_isUsed = 0;
+        res->EVSEMaximumCurrentLimit_isUsed = 0;
+        res->EVSEMaximumPowerLimit_isUsed = 0;
+    }
+
     return next_event;
 }
 
@@ -1945,6 +1984,10 @@ static enum v2g_event handle_iso_welding_detection(struct v2g_connection* conn) 
 
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_WELDINGDETECTION_SESSIONSTOP; // [V2G-597]
+
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+    }
 
     return next_event;
 }
