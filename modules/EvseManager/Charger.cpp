@@ -1207,7 +1207,7 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
 void Charger::start_session(bool authfirst) {
     shared_context.session_active = true;
     shared_context.authorized = false;
-    shared_context.session_uuid = utils::generate_session_uuid();
+    shared_context.session_uuid = utils::generate_session_id(config_context.session_id_type);
     std::optional<types::authorization::ProvidedIdToken> provided_id_token;
     if (authfirst) {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
@@ -1371,7 +1371,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
                     const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
                     const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms,
                     const bool fail_on_powermeter_errors, const bool raise_mrec9,
-                    const int sleep_before_enabling_pwm_hlc_mode_ms) {
+                    const int sleep_before_enabling_pwm_hlc_mode_ms, const utils::SessionIdType session_id_type) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1394,6 +1394,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
     config_context.fail_on_powermeter_errors = fail_on_powermeter_errors;
     config_context.raise_mrec9 = raise_mrec9;
     config_context.sleep_before_enabling_pwm_hlc_mode_ms = sleep_before_enabling_pwm_hlc_mode_ms;
+    config_context.session_id_type = session_id_type;
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";

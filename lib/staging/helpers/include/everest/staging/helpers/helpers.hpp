@@ -19,8 +19,16 @@ std::string redact(const std::string& token);
 types::authorization::ProvidedIdToken redact(const types::authorization::ProvidedIdToken& token);
 
 /// \brief Provide a UUID
-/// \returns a UUID string
+/// \returns a UUID string. This UUID is 36 characters long
 std::string get_uuid();
+
+/// \brief Provide a base64 encoded UUID
+/// \returns a base64 encoded UUID string. This UUID is 22 characters long
+std::string get_base64_uuid();
+
+/// \brief Provide a base64 encoded ID
+/// \returns a base64 encoded ID string. This ID is 16 characters long
+std::string get_base64_id();
 
 } // namespace everest::staging::helpers
 
