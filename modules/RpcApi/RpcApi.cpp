@@ -40,7 +40,7 @@ void RpcApi::init() {
 }
 
 void RpcApi::ready() {
-    // Start the WebSocket server
+    // Start server instances
     m_rpc_server->start_server();
 
     invoke_ready(*p_main);
@@ -55,6 +55,11 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
             // there is only one connector supported currently
             this->hwcaps_interface_to_datastore(hwcaps, evse_data.connectors[0]->hardwarecapabilities);
+        });
+    evse_manager->subscribe_evse_id(
+        [this, &evse_data](const std::string& evse_id) {
+            // set the EVSE id in the data store
+            evse_data.evseinfo.set_id(evse_id);
         });
 }
 
