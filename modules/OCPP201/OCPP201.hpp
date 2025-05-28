@@ -32,6 +32,7 @@
 // insert your custom include headers here
 #include <tuple>
 
+#include <generated/types/evse_board_support.hpp>
 #include <ocpp/v2/charge_point.hpp>
 #include <transaction_handler.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -129,6 +130,7 @@ private:
     // key represents evse_id, value indicates if ready
     std::map<int32_t, bool> evse_ready_map;
     std::map<int32_t, std::optional<float>> evse_soc_map;
+    std::map<int32_t, types::evse_board_support::HardwareCapabilities> evse_hardware_capabilities_map;
     int32_t event_id_counter{0};
     std::mutex evse_ready_mutex;
     std::mutex session_event_mutex;
