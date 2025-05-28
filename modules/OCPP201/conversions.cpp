@@ -973,24 +973,18 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
     }
 
     if (idTokenInfo.personalMessage.has_value()) {
-        validation_result.reason = types::authorization::TokenValidationStatusMessage();
-        validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
         const types::text_message::MessageContent content =
-            to_everest_message_content(response.idTokenInfo.personalMessage.value());
-        validation_result.reason->messages->push_back(content);
+            to_everest_message_content(idTokenInfo.personalMessage.value());
+        validation_result.tariff_messages.push_back(content);
     }
 
     if (idTokenInfo.customData.has_value() && idTokenInfo.customData.value().contains("vendorId") &&
         idTokenInfo.customData.value().at("vendorId").get<std::string>() == "org.openchargealliance.multilanguage" &&
         idTokenInfo.customData.value().contains("personalMessageExtra")) {
-        if (!validation_result.reason->messages.has_value()) {
-            validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
-        }
-
         const json& multi_language_personal_messages = idTokenInfo.customData.value().at("personalMessageExtra");
         for (const auto& messages : multi_language_personal_messages.items()) {
             const types::text_message::MessageContent content = messages.value();
-            validation_result.reason->messages->push_back(content);
+            validation_result.tariff_messages.push_back(content);
         }
     }
 
@@ -1121,7 +1115,7 @@ types::text_message::MessageFormat to_everest_message_format(const ocpp::v201::M
     case ocpp::v201::MessageFormatEnum::URI:
         return types::text_message::MessageFormat::URI;
     case ocpp::v201::MessageFormatEnum::UTF8:
-        return types::display_message::MessageFormat::UTF8;
+        return types::text_message::MessageFormat::UTF8;
     }
     throw std::out_of_range("Could not convert ocpp::v201::MessageFormatEnum to types::ocpp::MessageFormat");
 }

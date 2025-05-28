@@ -18,6 +18,7 @@
 #include <ocpp/v16/messages/LogStatusNotification.hpp>
 #include <ocpp/v16/messages/ReserveNow.hpp>
 #include <ocpp/v16/messages/StopTransaction.hpp>
+#include <ocpp/v16/types.hpp>
 #include <ocpp/v201/messages/DeleteCertificate.hpp>
 #include <ocpp/v201/messages/Get15118EVCertificate.hpp>
 
