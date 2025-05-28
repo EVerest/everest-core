@@ -1,4 +1,4 @@
-__version__ = '0.20.4'
+__version__ = '0.21.0'
 
 try:
     from .everestpy import *
