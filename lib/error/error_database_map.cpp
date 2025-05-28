@@ -40,7 +40,7 @@ std::list<ErrorPtr> ErrorDatabaseMap::get_errors_no_mutex(const std::list<ErrorF
         std::function<bool(const ErrorPtr&)> pred;
         switch (filter.get_filter_type()) {
         case FilterType::State: {
-            pred = [](const ErrorPtr& error) { return false; };
+            pred = []([[maybe_unused]] const ErrorPtr& error) { return false; };
             EVLOG_error << "ErrorDatabaseMap does not support StateFilter. Ignoring.";
         } break;
         case FilterType::Origin: {

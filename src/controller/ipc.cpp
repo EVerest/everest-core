@@ -2,9 +2,10 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "ipc.hpp"
 
-#include <errno.h>
+#include <cerrno>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <system_error>
 #include <unistd.h>
 
 // FIXME (aw): this needs be done better!
@@ -27,7 +28,18 @@ void set_read_timeout(int fd, int timeout_in_ms) {
 
 void send_message(int fd, const nlohmann::json& msg) {
     auto raw = nlohmann::json::to_bson(msg);
-    write(fd, raw.data(), raw.size());
+    unsigned char* p = raw.data();
+    size_t already_sent = 0;
+
+    while (already_sent < raw.size()) {
+        ssize_t c = write(fd, &p[already_sent], raw.size() - already_sent);
+
+        if (c == -1) {
+            throw std::system_error(errno, std::system_category(), "Error while sending message");
+        }
+
+        already_sent += c;
+    }
 }
 
 // FIXME (aw): recv should be buffered and memory is not that costly here!
