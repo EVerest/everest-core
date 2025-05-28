@@ -70,6 +70,7 @@ void CarSimulation::state_machine() {
     case SimState::ISO_POWER_READY:
         if (state_has_changed) {
             r_ev_board_support->call_set_cp_state(EvCpState::C);
+            r_ev_board_support->call_allow_power_on(true);
         }
         break;
     case SimState::ISO_CHARGING_REGULATED:
