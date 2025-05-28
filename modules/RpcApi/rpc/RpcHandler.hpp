@@ -9,6 +9,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <deque>
+// #include <everest/logging.hpp>
 #include <functional>
 #include <jsonrpccxx/client.hpp>
 #include <jsonrpccxx/server.hpp>
@@ -47,9 +48,11 @@ public:
         transport_interfaces(interfaces) {
     }
     std::string Send(const std::string& notification) override {
+        // EVLOG_info << "Sending data for notification to transport interfaces: \"" << notification << "\"";
         const std::vector<uint8_t> notif_char_array{notification.begin(), notification.end()};
         for (const auto& interface : transport_interfaces) {
             interface->send_data(notif_char_array);
+            // EVLOG_info << "Sent data \"" << notification << "\"";
         }
         return "";
     }
@@ -70,6 +73,7 @@ public:
         nlohmann::json j;
         nlohmann::to_json(j, in);
         CallNotificationNamed(name, j);
+        // EVLOG_info << "Notification " << name << " emitted";
     }
 };
 
@@ -123,7 +127,8 @@ private:
     methods::Api m_methods_api;
     methods::ChargePoint m_methods_chargepoint;
     methods::Evse m_methods_evse;
-    notifications::Evse m_notifications_evse;
+    ClientConnector m_conn;
+    notifications::Evse* m_notifications_evse;
 };
 } // namespace rpc
 
