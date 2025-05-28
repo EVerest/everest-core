@@ -1238,7 +1238,10 @@ bool Charger::start_transaction() {
     req.identification_type = utils::convert_to_ocmf_identification_type(shared_context.id_token.id_token.type);
     req.identification_level = std::nullopt; // TODO: Not yet known to EVerest
     req.identification_data = shared_context.id_token.id_token.value;
-    req.tariff_text = std::nullopt; // TODO: Not yet known to EVerest
+    if (!shared_context.validation_result.tariff_messages.empty()) {
+        // TODO: Use proper langauge and format if multiple messages part of personal_messages
+        req.tariff_text = shared_context.validation_result.tariff_messages.at(0).content;
+    }
 
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);
@@ -1439,10 +1442,12 @@ std::string Charger::get_session_id() const {
     return shared_context.session_uuid;
 }
 
-void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& token) {
+void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& token,
+                        const types::authorization::ValidationResult& result) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_authorize);
     if (a) {
         shared_context.id_token = token;
+        shared_context.validation_result = result;
         // First user interaction was auth? Then start session already here and not at plug in
         if (not shared_context.session_active) {
             start_session(true);

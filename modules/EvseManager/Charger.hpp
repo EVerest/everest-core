@@ -124,7 +124,8 @@ public:
     std::string get_session_id() const;
 
     // call when in state WaitingForAuthentication
-    void authorize(bool a, const types::authorization::ProvidedIdToken& token);
+    void authorize(bool a, const types::authorization::ProvidedIdToken& token,
+                   const types::authorization::ValidationResult& result);
     bool deauthorize();
 
     bool get_authorized_pnc();
@@ -287,6 +288,7 @@ private:
         std::optional<types::authorization::ProvidedIdToken>
             stop_transaction_id_token; // only set in case transaction was stopped locally
         types::authorization::ProvidedIdToken id_token;
+        types::authorization::ValidationResult validation_result;
         bool authorized;
         // set to true if auth is from PnC, otherwise to false (EIM)
         bool authorized_pnc;
