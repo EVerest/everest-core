@@ -68,8 +68,7 @@ public:
     JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
     // helper to be able to put data object into caller
     // which is something which json-rpc-cxx should be doing
-    template <typename T>
-    void CallNotificationWithObject(const std::string &name, const T& in) {
+    template <typename T> void CallNotificationWithObject(const std::string& name, const T& in) {
         nlohmann::json j;
         nlohmann::to_json(j, in);
         CallNotificationNamed(name, j);
@@ -82,8 +81,8 @@ public:
     // Constructor and Destructor
     RpcHandler() = delete;
     // RpcHandler just needs just a tranport interface array
-    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
-        DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler);
+    RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces, DataStoreCharger& dataobj,
+               std::unique_ptr<request_interface::RequestHandlerInterface> request_handler);
 
     ~RpcHandler() = default;
 
