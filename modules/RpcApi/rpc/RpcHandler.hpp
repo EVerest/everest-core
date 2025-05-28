@@ -43,19 +43,25 @@ struct ClientReq {
 
 class ClientConnector : public jsonrpccxx::IClientConnector {
 public:
-    explicit ClientConnector(std::vector<std::shared_ptr<TransportInterface>>& interfaces) :
-        transport_interfaces(interfaces) {
+    explicit ClientConnector(std::vector<std::shared_ptr<TransportInterface>>& interfaces,
+                             std::unordered_map<TransportInterface::ClientId, bool>& api_hello_received) :
+        hello_received(api_hello_received), transport_interfaces(interfaces) {
     }
     std::string Send(const std::string& notification) override {
         const std::vector<uint8_t> notif_char_array{notification.begin(), notification.end()};
         for (const auto& interface : transport_interfaces) {
-            interface->send_data(notif_char_array);
+            for (const auto rec : hello_received) {
+                if (rec.second) {
+                    interface->send_data(rec.first, notif_char_array);
+                }
+            }
         }
         return "";
     }
 
 private:
     std::vector<std::shared_ptr<TransportInterface>>& transport_interfaces;
+    std::unordered_map<TransportInterface::ClientId, bool>& hello_received;
 };
 // Members
 
