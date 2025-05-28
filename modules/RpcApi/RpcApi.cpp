@@ -25,7 +25,10 @@ void RpcApi::init() {
         // https://github.com/EVerest/everest-core/pull/1109
         this->data.chargerinfo.set_unknown();
     }
-    
+
+    // Check if all evse_energy_sink(s) have a mapping to an EVSE
+    check_evse_energy_sink_mapping();
+
     // Create the request handler
     m_request_handler = std::make_unique<RpcApiRequestHandler>(r_evse_manager, r_error_history, r_evse_energy_sink);
 
@@ -196,4 +199,40 @@ void RpcApi::hwcaps_interface_to_datastore(const types::evse_board_support::Hard
     hw_caps_data.set_data(hw_caps_data_new);
 }
 
+bool RpcApi::check_evse_energy_sink_mapping() {
+    // Interate over all configured EVSE sinks and configure the data store accordingly
+    if (r_evse_energy_sink.empty()) {
+        EVLOG_error << "No EVSE energy sinks configured. Unable to extract EVSE index and connector id for the "
+                        "connected r_evse_energy_sink. Please check your configuration file.";
+        return false;
+    }
+    else if (r_evse_energy_sink.size() != this->data.evses.size()) {
+        EVLOG_error << "The number of configured r_evse_energy_sink does not match the number of configured EVSEs. "
+                        "Please check your configuration file.";
+        return false;
+    }
+    else {
+        // Iterate over all configured EVSE sinks and configure the data store accordingly
+        uint32_t idx = 0;
+        for (const auto& evse_energy_sink : r_evse_energy_sink) {
+            auto& evse_data = this->data.evses[idx++];
+            // create one DataStore object per EVSE sink
+            if (evse_energy_sink->get_mapping().has_value()) {
+                // Write EVSE index and connector id to the datastore
+                evse_data->evseinfo.set_index(evse_energy_sink->get_mapping().value().evse);
+                if (evse_energy_sink->get_mapping().value().connector.has_value()) {
+                    // Initialize connector id
+                    auto& connector = evse_data->connectors[0];
+                    connector->connectorinfo.set_id(evse_energy_sink->get_mapping().value().connector.value());
+                }
+            }
+            else {
+                EVLOG_error << "Please configure an evse mapping your configuration file for the connected "
+                                  "r_evse_energy_sink with module_id: " << evse_energy_sink->module_id;
+                return false;
+            }
+        }
+    }
+    return true;
+}
 } // namespace module
