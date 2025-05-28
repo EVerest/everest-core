@@ -1,0 +1,50 @@
+description: Driver module for the YETI hardware v1.0
+config:
+  serial_port:
+    description: Serial port the Yeti hardware is connected to
+    type: string
+    default: /dev/ttyUSB0
+  baud_rate:
+    description: Serial baud rate to use when communicating with Yeti hardware
+    type: integer
+    minimum: 9600
+    maximum: 230400
+    default: 115200
+  reset_gpio_chip:
+    description: >-
+      Reset GPIO chip to use to HW reset Yeti. If set to empty string, it is disabled.
+    type: string
+    default: 'gpiochip0'
+  reset_gpio:
+    description: GPIO line to use to reset Yeti
+    type: integer
+    default: 27
+  caps_min_current_A:
+    description: Minimal current on AC side. For AC this is typically 6, but for HLC this can be less. -1 means use limit reported by HW.
+    type: integer
+    default: -1
+  caps_max_current_A:
+    description: Maximum current on AC side. For AC this is typically 16 or 32, but for HLC this can be less. -1 means use limit reported by HW.
+    type: integer
+    default: -1
+provides:
+  powermeter:
+    interface: powermeter
+    description: provides the Yeti Internal Power Meter
+  board_support:
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, motor lock
+  rcd:
+    interface: ac_rcd
+    description: RCD interface of the onboard RCD
+  connector_lock:
+    interface: connector_lock
+    description: Interface for the motor lock
+enable_telemetry: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+    - Kai-Uwe Hermann
+    - Thilo Molitor
+    - Anton Wöllert
