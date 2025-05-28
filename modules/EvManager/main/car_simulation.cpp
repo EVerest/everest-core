@@ -224,6 +224,7 @@ bool CarSimulation::iso_start_v2g_session(const CmdArguments& arguments, bool th
         }
     } else if (energy_mode == constants::DC) {
         r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::DC_extended, departure_time, e_amount);
+        sim_data.energy_mode = EnergyMode::DC;
     } else {
         return false;
     }
