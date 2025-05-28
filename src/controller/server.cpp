@@ -259,7 +259,7 @@ void Server::Impl::push(const nlohmann::json& msg) {
     }
 
     for (auto session : sessions) {
-        session->push_output_data(std::move(msg.dump()));
+        session->push_output_data(msg.dump());
     }
     lws_cancel_service(context);
 }

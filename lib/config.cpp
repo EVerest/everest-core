@@ -515,7 +515,6 @@ std::vector<Fulfillment> ConfigBase::resolve_requirement(const std::string& modu
     // check for connections for this requirement
     const auto& module_config = this->module_configs.at(module_id);
     const auto module_name = module_config.module_name;
-    const auto& requirement = this->manifests.at(module_name).at("requires").at(requirement_id);
     if (module_config.connections.find(requirement_id) == module_config.connections.end()) {
         return {}; // return an empty array if our config does not contain any connections for this
                    // requirement id

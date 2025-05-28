@@ -187,7 +187,7 @@ nlohmann::json RPC::ipc_request(const std::string& method, const nlohmann::json&
     }
 
     const auto id = new_call.first->first;
-    auto call_result_future = std::move(new_call.first->second.get_future());
+    auto call_result_future = new_call.first->second.get_future();
 
     lock.unlock();
 

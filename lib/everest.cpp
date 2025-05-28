@@ -45,14 +45,14 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
     mqtt_abstraction(mqtt_abstraction),
     config(config_),
     module_id(std::move(module_id_)),
+    ready_received(false),
+    ready_processed(false),
     remote_cmd_res_timeout(remote_cmd_res_timeout_seconds),
     validate_data_with_schema(validate_data_with_schema),
     mqtt_everest_prefix(mqtt_abstraction->get_everest_prefix()),
     mqtt_external_prefix(mqtt_abstraction->get_external_prefix()),
     telemetry_prefix(telemetry_prefix),
-    telemetry_enabled(telemetry_enabled),
-    ready_received(false),
-    ready_processed(false) {
+    telemetry_enabled(telemetry_enabled) {
     BOOST_LOG_FUNCTION();
 
     EVLOG_debug << "Initializing EVerest framework...";
@@ -163,11 +163,12 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
 
         // setup error manager
         // clang-format off
-        const auto& requires = this->module_manifest.at("requires");
-        const std::string interface_name = requires.at(req.id).at("interface");
+        const auto& module_requires = this->module_manifest.at("requires");
+        const std::string interface_name = module_requires.at(req.id).at("interface");
         // clang-format on
-        if (requires.at(req.id).contains("ignore") && requires.at(req.id).at("ignore").contains("errors") &&
-            requires.at(req.id).at("ignore").at("errors").get<bool>()) {
+        if (module_requires.at(req.id).contains("ignore") &&
+            module_requires.at(req.id).at("ignore").contains("errors") &&
+            module_requires.at(req.id).at("ignore").at("errors").get<bool>()) {
             EVLOG_debug << "Ignoring errors for module " << req.id;
             continue;
         }

@@ -97,9 +97,9 @@ public:
     void unregister_handler(const std::string& topic, const Token& token);
 
 private:
-    std::unique_ptr<MQTTAbstractionImpl> mqtt_abstraction;
     std::string everest_prefix;
     std::string external_prefix;
+    std::unique_ptr<MQTTAbstractionImpl> mqtt_abstraction;
 };
 } // namespace Everest
 
