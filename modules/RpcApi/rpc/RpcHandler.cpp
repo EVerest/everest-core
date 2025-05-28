@@ -70,7 +70,7 @@ RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> 
     m_methods_api(dataobj),
     m_methods_chargepoint(dataobj),
     m_methods_evse(dataobj, std::move(request_handler)),
-    m_conn(m_transport_interfaces) {
+    m_conn(m_transport_interfaces, m_api_hello_received) {
     init_rpc_api();
     init_transport_interfaces();
     m_notifications_evse = new notifications::Evse(m_rpc_server, dataobj);
