@@ -1,6 +1,14 @@
 settings:
   telemetry_enabled: true
 active_modules:
+  rpc_api:
+    module: RpcApi
+    config_module:
+      websocket_port: 8080
+    connections:
+      evse_manager:
+        - implementation_id: evse
+          module_id: connector_1
   api:
     connections:
       evse_manager:
