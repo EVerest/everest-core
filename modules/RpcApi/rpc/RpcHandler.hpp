@@ -66,10 +66,10 @@ public:
     // helper to be able to put data object into caller
     // which is something which json-rpc-cxx should be doing
     template <typename T>
-    void CallNotificationNamed(const std::string &name, const T& in) {
+    void CallNotificationWithObject(const std::string &name, const T& in) {
         nlohmann::json j;
         nlohmann::to_json(j, in);
-        JsonRpcClient::CallNotificationNamed(name, j);
+        CallNotificationNamed(name, j);
     }
 };
 

@@ -13,7 +13,7 @@ static const std::string NOTIFICATION_EVSE_STATUS_CHANGED = "EVSE.StatusChanged"
 static const std::string NOTIFICATION_EVSE_METER_DATA_CHANGED = "EVSE.MeterDataChanged";
 
 Evse::Evse(std::shared_ptr<rpc::JsonRpc2ServerWithClient> rpc_server, data::DataStoreCharger& dataobj) :
-    m_rpc_server(rpc_server), m_dataobj(dataobj) {
+    m_rpc_server(std::move(rpc_server)), m_dataobj(dataobj) {
     for (const auto& evse : m_dataobj.evses) {
         const int32_t index = evse->evseinfo.get_index();
         for (const auto& connector : evse->connectors) {
@@ -35,19 +35,19 @@ void Evse::sendHardwareCapabilitiesChanged(int32_t evse_index, const RPCDataType
     RPCDataTypes::EVSEHardwareCapabilitiesChangedObj hwcap_changed;
     hwcap_changed.evse_index = evse_index;
     hwcap_changed.hardware_capabilities = hwcap;
-    m_rpc_server->CallNotificationNamed(NOTIFICATION_EVSE_HWCAPS_CHANGED, hwcap_changed);
+    m_rpc_server->CallNotificationWithObject(NOTIFICATION_EVSE_HWCAPS_CHANGED, hwcap_changed);
 }
 void Evse::sendStatusChanged(int32_t evse_index, const RPCDataTypes::EVSEStatusObj& status) {
     RPCDataTypes::EVSEStatusChangedObj status_changed;
     status_changed.evse_index = evse_index;
     status_changed.evse_status = status;
-    m_rpc_server->CallNotificationNamed(NOTIFICATION_EVSE_STATUS_CHANGED, status_changed);
+    m_rpc_server->CallNotificationWithObject(NOTIFICATION_EVSE_STATUS_CHANGED, status_changed);
 }
 void Evse::sendMeterDataChanged(int32_t evse_index, const RPCDataTypes::MeterDataObj& meter) {
     RPCDataTypes::EVSEMeterDataChangedObj meter_changed;
     meter_changed.evse_index = evse_index;
     meter_changed.meter_data = meter;
-    m_rpc_server->CallNotificationNamed(NOTIFICATION_EVSE_METER_DATA_CHANGED, meter_changed);
+    m_rpc_server->CallNotificationWithObject(NOTIFICATION_EVSE_METER_DATA_CHANGED, meter_changed);
 }
 
 } // namespace notifications
