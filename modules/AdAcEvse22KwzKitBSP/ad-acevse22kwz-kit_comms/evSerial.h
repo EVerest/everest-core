@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-#ifndef YETI_SERIAL
-#define YETI_SERIAL
+#ifndef AD_ACEVSE22KWZ_KIT_SERIAL
+#define AD_ACEVSE22KWZ_KIT_SERIAL
 
-#include "yeti.pb.h"
+#include "ad-acevse22kwz-kit.pb.h"
 #include <date/date.h>
 #include <date/tz.h>
 #include <sigslot/signal.hpp>

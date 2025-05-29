@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #include "firmware_version.hpp"
-#include "yeti.pb.h"
+#include "ad-acevse22kwz-kit.pb.h"
 #include <sigslot/signal.hpp>
 
 std::atomic_bool sw_version_received = false;

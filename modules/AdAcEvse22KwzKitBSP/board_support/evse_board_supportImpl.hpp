@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef BOARD_SUPPORT_EVSE_BOARD_SUPPORT_IMPL_HPP
-#define BOARD_SUPPORT_EVSE_BOARD_SUPPORT_IMPL_HPP
+#ifndef AD_ACEVSE22KWZ_KIT_EVSE_BOARD_SUPPORT_IMPL_HPP
+#define AD_ACEVSE22KWZ_KIT_EVSE_BOARD_SUPPORT_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -10,7 +10,7 @@
 
 #include <generated/interfaces/evse_board_support/Implementation.hpp>
 
-#include "../YetiDriver.hpp"
+#include "../AdAcEvse22KwzKitBSP.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -24,7 +24,7 @@ struct Conf {};
 class evse_board_supportImpl : public evse_board_supportImplBase {
 public:
     evse_board_supportImpl() = delete;
-    evse_board_supportImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver>& mod, Conf& config) :
+    evse_board_supportImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<AdAcEvse22KwzKitBSP>& mod, Conf& config) :
         evse_board_supportImplBase(ev, "board_support"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
@@ -48,7 +48,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<YetiDriver>& mod;
+    const Everest::PtrContainer<AdAcEvse22KwzKitBSP>& mod;
     const Conf& config;
 
     virtual void init() override;
@@ -74,4 +74,4 @@ private:
 } // namespace board_support
 } // namespace module
 
-#endif // BOARD_SUPPORT_EVSE_BOARD_SUPPORT_IMPL_HPP
+#endif // AD_ACEVSE22KWZ_KIT_EVSE_BOARD_SUPPORT_IMPL_HPP

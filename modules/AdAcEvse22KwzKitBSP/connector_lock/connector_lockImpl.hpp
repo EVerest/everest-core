@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef CONNECTOR_LOCK_CONNECTOR_LOCK_IMPL_HPP
-#define CONNECTOR_LOCK_CONNECTOR_LOCK_IMPL_HPP
+#ifndef AD_ACEVSE22KWZ_KIT_CONNECTOR_LOCK_IMPL_HPP
+#define AD_ACEVSE22KWZ_KIT_CONNECTOR_LOCK_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -10,7 +10,7 @@
 
 #include <generated/interfaces/connector_lock/Implementation.hpp>
 
-#include "../YetiDriver.hpp"
+#include "../AdAcEvse22KwzKitBSP.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -24,7 +24,7 @@ struct Conf {};
 class connector_lockImpl : public connector_lockImplBase {
 public:
     connector_lockImpl() = delete;
-    connector_lockImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver>& mod, Conf& config) :
+    connector_lockImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<AdAcEvse22KwzKitBSP>& mod, Conf& config) :
         connector_lockImplBase(ev, "connector_lock"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
@@ -41,7 +41,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<YetiDriver>& mod;
+    const Everest::PtrContainer<AdAcEvse22KwzKitBSP>& mod;
     const Conf& config;
 
     virtual void init() override;
@@ -60,4 +60,4 @@ private:
 } // namespace connector_lock
 } // namespace module
 
-#endif // CONNECTOR_LOCK_CONNECTOR_LOCK_IMPL_HPP
+#endif // AD_ACEVSE22KWZ_KIT_CONNECTOR_LOCK_IMPL_HPP

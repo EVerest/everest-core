@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-#include "YetiDriver.hpp"
+#include "AdAcEvse22KwzKitBSP.hpp"
 #include <fmt/core.h>
 #include <utils/date.hpp>
 
 namespace module {
 
-void YetiDriver::init() {
+void AdAcEvse22KwzKitBSP::init() {
 
     // initialize serial driver
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
@@ -64,7 +64,7 @@ void YetiDriver::init() {
     invoke_init(*p_rcd);
 }
 
-void YetiDriver::ready() {
+void AdAcEvse22KwzKitBSP::ready() {
     serial.run();
 
     if (!serial.reset(config.reset_gpio_chip, config.reset_gpio)) {
@@ -101,7 +101,7 @@ void YetiDriver::ready() {
     }
 }
 
-void YetiDriver::publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data) {
+void AdAcEvse22KwzKitBSP::publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data) {
     if (info.telemetry_enabled) {
         telemetry.publish("livedata", topic, data);
     }
@@ -112,7 +112,7 @@ bool rcd_selftest_failed;
 bool connector_lock_failed;
 bool cp_signal_fault;
 
-void YetiDriver::clear_errors_on_unplug() {
+void AdAcEvse22KwzKitBSP::clear_errors_on_unplug() {
     if (error_MREC2GroundFailure) {
         p_board_support->clear_error("evse_board_support/MREC2GroundFailure");
     }
@@ -124,7 +124,7 @@ void YetiDriver::clear_errors_on_unplug() {
     error_MREC1ConnectorLockFailure = false;
 }
 
-void YetiDriver::error_handling(ErrorFlags e) {
+void AdAcEvse22KwzKitBSP::error_handling(ErrorFlags e) {
 
     if (e.diode_fault and not last_error_flags.diode_fault) {
         Everest::error::Error error_object = p_board_support->error_factory->create_error(

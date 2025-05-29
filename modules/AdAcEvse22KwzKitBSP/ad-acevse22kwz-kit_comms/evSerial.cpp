@@ -20,7 +20,7 @@
 
 #include <gpio.hpp>
 
-#include "yeti.pb.h"
+#include "ad-acevse22kwz-kit.pb.h"
 
 evSerial::evSerial() {
     fd = 0;

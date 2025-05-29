@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef YETI_DRIVER_HPP
-#define YETI_DRIVER_HPP
+#ifndef AD_ACEVSE22KWZ_KIT_HPP
+#define AD_ACEVSE22KWZ_KIT_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -17,7 +17,7 @@
 #include <generated/interfaces/powermeter/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
-#include "yeti_comms/evSerial.h"
+#include "ad-acevse22kwz-kit_comms/evSerial.h"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -31,10 +31,10 @@ struct Conf {
     int caps_max_current_A;
 };
 
-class YetiDriver : public Everest::ModuleBase {
+class AdAcEvse22KwzKitBSP : public Everest::ModuleBase {
 public:
-    YetiDriver() = delete;
-    YetiDriver(const ModuleInfo& info, Everest::TelemetryProvider& telemetry,
+    AdAcEvse22KwzKitBSP() = delete;
+    AdAcEvse22KwzKitBSP(const ModuleInfo& info, Everest::TelemetryProvider& telemetry,
                std::unique_ptr<powermeterImplBase> p_powermeter,
                std::unique_ptr<evse_board_supportImplBase> p_board_support, std::unique_ptr<ac_rcdImplBase> p_rcd,
                std::unique_ptr<connector_lockImplBase> p_connector_lock, Conf& config) :
@@ -93,4 +93,4 @@ std::string error_type_to_string(ErrorFlags s);
 
 } // namespace module
 
-#endif // YETI_DRIVER_HPP
+#endif // AD_ACEVSE22KWZ_KIT_HPP
