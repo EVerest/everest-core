@@ -9,7 +9,6 @@ ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 add_subdirectory(ad-acevse22kwz-kit_comms)
-add_subdirectory(ad-acevse22kwz-kit_fwupdate)
 
 target_include_directories(${MODULE_NAME}
     PRIVATE
@@ -36,5 +35,5 @@ target_sources(${MODULE_NAME}
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
-install(FILES yetiR1_2.2_firmware.bin DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/ad-acevse22kwz-kit/firmware)
+
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

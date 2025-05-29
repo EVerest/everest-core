@@ -4,11 +4,10 @@ syntax = "proto3";
  This container message is send from EVerest to MCU and may contain any allowed message in that direction.
 */
 message EverestToMcu {
+ reserved 16;
  oneof payload {
-    // Needs to remain the same to allow firmware updates of older versions
-    FirmwareUpdate firmware_update = 16;
+    // Please keep IDs and don't use reserved IDs to maintain support with older firmware versions
 
-    // Other IDs are 100+ to avoid compatibility issues with older firmware versions
     KeepAlive keep_alive = 100;
     bool connector_lock = 102; // false: unlock, true: lock
     uint32 pwm_duty_cycle = 103; // in 0.01 %, 0 = State F, 10000 = X1
@@ -23,10 +22,9 @@ message EverestToMcu {
 */
 message McuToEverest {
  oneof payload {
-  // Needs to remain the same to allow firmware updates of older versions
+  // Please keep IDs and don't use reserved IDs to maintain support with older firmware versions
   KeepAliveLo keep_alive = 3;
 
-  // Other IDs are 100+ to avoid compatibility issues with older firmware versions
   ResetReason reset = 101;
   CpState cp_state = 102;
   bool relais_state = 103; // false: relais are off, true: relais are on
@@ -127,8 +125,4 @@ message PowerMeter {
   float freqL2 = 21;
   float freqL3 = 22;
   bool phaseSeqError = 23;
-}
-
-message FirmwareUpdate {
-  bool invoke_rom_bootloader = 1;
 }

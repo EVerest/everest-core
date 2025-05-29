@@ -26,7 +26,6 @@ public:
     void run();
 
     bool reset(const std::string& reset_chip, const int reset_line);
-    void firmwareUpdate(bool rom);
     void keepAlive();
 
     void setPWM(uint32_t dc);

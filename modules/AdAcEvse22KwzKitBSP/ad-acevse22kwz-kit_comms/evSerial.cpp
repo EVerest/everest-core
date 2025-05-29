@@ -392,13 +392,6 @@ bool evSerial::reset(const std::string& reset_chip, const int reset_line) {
     return success;
 }
 
-void evSerial::firmwareUpdate(bool rom) {
-    EverestToMcu msg_out = EverestToMcu_init_default;
-    msg_out.which_payload = EverestToMcu_firmware_update_tag;
-    msg_out.payload.firmware_update.invoke_rom_bootloader = rom;
-    linkWrite(&msg_out);
-}
-
 void evSerial::keepAlive() {
     EverestToMcu msg_out = EverestToMcu_init_default;
     msg_out.which_payload = EverestToMcu_keep_alive_tag;

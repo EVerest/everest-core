@@ -27,9 +27,6 @@ PB_BIND(Telemetry, Telemetry, AUTO)
 PB_BIND(PowerMeter, PowerMeter, AUTO)
 
 
-PB_BIND(FirmwareUpdate, FirmwareUpdate, AUTO)
-
-
 
 
 
