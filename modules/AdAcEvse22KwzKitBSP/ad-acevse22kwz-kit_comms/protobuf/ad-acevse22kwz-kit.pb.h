@@ -33,19 +33,12 @@ typedef enum _PpState {
     PpState_STATE_FAULT = 5 
 } PpState;
 
-typedef enum _LockState { 
-    LockState_UNDEFINED = 0, 
-    LockState_UNLOCKED = 1, 
-    LockState_LOCKED = 2 
-} LockState;
-
 /* Struct definitions */
 typedef struct _ErrorFlags { 
     bool diode_fault; 
     bool rcd_selftest_failed; 
     bool rcd_triggered; 
     bool ventilation_not_available; 
-    bool connector_lock_failed; 
     bool cp_signal_fault; 
     bool over_current; 
 } ErrorFlags;
@@ -107,7 +100,6 @@ typedef struct _EverestToMcu {
     pb_size_t which_payload;
     union {
         KeepAlive keep_alive;
-        bool connector_lock;
         uint32_t pwm_duty_cycle;
         bool allow_power_on;
         bool reset;
@@ -127,7 +119,6 @@ typedef struct _McuToEverest {
         ErrorFlags error_flags;
         Telemetry telemetry;
         PpState pp_state;
-        LockState lock_state;
         PowerMeter power_meter;
     } payload; 
 } McuToEverest;
@@ -146,10 +137,6 @@ typedef struct _McuToEverest {
 #define _PpState_MAX PpState_STATE_FAULT
 #define _PpState_ARRAYSIZE ((PpState)(PpState_STATE_FAULT+1))
 
-#define _LockState_MIN LockState_UNDEFINED
-#define _LockState_MAX LockState_LOCKED
-#define _LockState_ARRAYSIZE ((LockState)(LockState_LOCKED+1))
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -158,14 +145,14 @@ extern "C" {
 /* Initializer values for message structs */
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}}
 #define McuToEverest_init_default                {0, {KeepAliveLo_init_default}}
-#define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0, 0}
+#define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0}
 #define KeepAliveLo_init_default                 {0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0}
 #define KeepAlive_init_default                   {0, 0, 0, ""}
 #define Telemetry_init_default                   {0, 0}
 #define PowerMeter_init_default                  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}}
 #define McuToEverest_init_zero                   {0, {KeepAliveLo_init_zero}}
-#define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0, 0}
+#define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
 #define KeepAliveLo_init_zero                    {0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0}
 #define KeepAlive_init_zero                      {0, 0, 0, ""}
 #define Telemetry_init_zero                      {0, 0}
@@ -176,7 +163,6 @@ extern "C" {
 #define ErrorFlags_rcd_selftest_failed_tag       2
 #define ErrorFlags_rcd_triggered_tag             3
 #define ErrorFlags_ventilation_not_available_tag 4
-#define ErrorFlags_connector_lock_failed_tag     5
 #define ErrorFlags_cp_signal_fault_tag           6
 #define ErrorFlags_over_current_tag              7
 #define KeepAlive_time_stamp_tag                 1
@@ -220,7 +206,6 @@ extern "C" {
 #define Telemetry_cp_voltage_hi_tag              1
 #define Telemetry_cp_voltage_lo_tag              2
 #define EverestToMcu_keep_alive_tag              100
-#define EverestToMcu_connector_lock_tag          102
 #define EverestToMcu_pwm_duty_cycle_tag          103
 #define EverestToMcu_allow_power_on_tag          104
 #define EverestToMcu_reset_tag                   105
@@ -232,13 +217,11 @@ extern "C" {
 #define McuToEverest_error_flags_tag             104
 #define McuToEverest_telemetry_tag               105
 #define McuToEverest_pp_state_tag                106
-#define McuToEverest_lock_state_tag              107
 #define McuToEverest_power_meter_tag             108
 
 /* Struct field encoding specification for nanopb */
 #define EverestToMcu_FIELDLIST(X, a) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,keep_alive,payload.keep_alive), 100) \
-X(a, STATIC,   ONEOF,    BOOL,     (payload,connector_lock,payload.connector_lock), 102) \
 X(a, STATIC,   ONEOF,    UINT32,   (payload,pwm_duty_cycle,payload.pwm_duty_cycle), 103) \
 X(a, STATIC,   ONEOF,    BOOL,     (payload,allow_power_on,payload.allow_power_on), 104) \
 X(a, STATIC,   ONEOF,    BOOL,     (payload,reset,payload.reset), 105) \
@@ -255,7 +238,6 @@ X(a, STATIC,   ONEOF,    BOOL,     (payload,relais_state,payload.relais_state), 
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,error_flags,payload.error_flags), 104) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,telemetry,payload.telemetry), 105) \
 X(a, STATIC,   ONEOF,    UENUM,    (payload,pp_state,payload.pp_state), 106) \
-X(a, STATIC,   ONEOF,    UENUM,    (payload,lock_state,payload.lock_state), 107) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,power_meter,payload.power_meter), 108)
 #define McuToEverest_CALLBACK NULL
 #define McuToEverest_DEFAULT NULL
@@ -269,7 +251,6 @@ X(a, STATIC,   SINGULAR, BOOL,     diode_fault,       1) \
 X(a, STATIC,   SINGULAR, BOOL,     rcd_selftest_failed,   2) \
 X(a, STATIC,   SINGULAR, BOOL,     rcd_triggered,     3) \
 X(a, STATIC,   SINGULAR, BOOL,     ventilation_not_available,   4) \
-X(a, STATIC,   SINGULAR, BOOL,     connector_lock_failed,   5) \
 X(a, STATIC,   SINGULAR, BOOL,     cp_signal_fault,   6) \
 X(a, STATIC,   SINGULAR, BOOL,     over_current,      7)
 #define ErrorFlags_CALLBACK NULL
@@ -349,7 +330,7 @@ extern const pb_msgdesc_t PowerMeter_msg;
 #define PowerMeter_fields &PowerMeter_msg
 
 /* Maximum encoded size of messages (where known) */
-#define ErrorFlags_size                          14
+#define ErrorFlags_size                          12
 #define EverestToMcu_size                        73
 #define KeepAliveLo_size                         106
 #define KeepAlive_size                           70

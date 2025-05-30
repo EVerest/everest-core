@@ -31,4 +31,3 @@ PB_BIND(PowerMeter, PowerMeter, AUTO)
 
 
 
-

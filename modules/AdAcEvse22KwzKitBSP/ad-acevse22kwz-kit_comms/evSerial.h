@@ -30,7 +30,6 @@ public:
 
     void setPWM(uint32_t dc);
     void allowPowerOn(bool p);
-    void forceUnlock();
     void set_number_of_phases(bool p);
 
     sigslot::signal<KeepAliveLo> signalKeepAliveLo;
@@ -39,7 +38,6 @@ public:
     sigslot::signal<PpState> signalPPState;
     sigslot::signal<ErrorFlags> signalErrorFlags;
     sigslot::signal<bool> signalRelaisState;
-    sigslot::signal<bool> signalLockState;
 
     sigslot::signal<> signalSpuriousReset;
     sigslot::signal<> signalConnectionTimeout;

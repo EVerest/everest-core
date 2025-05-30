@@ -168,9 +168,6 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
         case McuToEverest_relais_state_tag:
             signalRelaisState(msg_in.payload.relais_state);
             break;
-        case McuToEverest_lock_state_tag:
-            signalLockState(msg_in.payload.lock_state);
-            break;
         case McuToEverest_error_flags_tag:
             signalErrorFlags(msg_in.payload.error_flags);
             break;
@@ -330,13 +327,6 @@ void evSerial::allowPowerOn(bool p) {
     EverestToMcu msg_out = EverestToMcu_init_default;
     msg_out.which_payload = EverestToMcu_allow_power_on_tag;
     msg_out.payload.allow_power_on = p;
-    linkWrite(&msg_out);
-}
-
-void evSerial::forceUnlock() {
-    EverestToMcu msg_out = EverestToMcu_init_default;
-    msg_out.which_payload = EverestToMcu_connector_lock_tag;
-    msg_out.payload.connector_lock = false;
     linkWrite(&msg_out);
 }
 

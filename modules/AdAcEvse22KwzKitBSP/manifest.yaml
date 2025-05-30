@@ -37,9 +37,6 @@ provides:
   rcd:
     interface: ac_rcd
     description: RCD interface of the onboard RCD
-  connector_lock:
-    interface: connector_lock
-    description: Interface for the motor lock
 enable_telemetry: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

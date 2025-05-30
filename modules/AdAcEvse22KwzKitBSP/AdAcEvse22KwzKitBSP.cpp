@@ -60,7 +60,6 @@ void AdAcEvse22KwzKitBSP::init() {
 
     invoke_init(*p_powermeter);
     invoke_init(*p_board_support);
-    invoke_init(*p_connector_lock);
     invoke_init(*p_rcd);
 }
 
@@ -76,7 +75,6 @@ void AdAcEvse22KwzKitBSP::ready() {
 
     invoke_ready(*p_powermeter);
     invoke_ready(*p_board_support);
-    invoke_ready(*p_connector_lock);
     invoke_ready(*p_rcd);
 
     telemetryThreadHandle = std::thread([this]() {
@@ -109,7 +107,6 @@ void AdAcEvse22KwzKitBSP::publish_external_telemetry_livedata(const std::string&
 
 bool rcd_selftest_failed;
 
-bool connector_lock_failed;
 bool cp_signal_fault;
 
 void AdAcEvse22KwzKitBSP::clear_errors_on_unplug() {
@@ -117,11 +114,6 @@ void AdAcEvse22KwzKitBSP::clear_errors_on_unplug() {
         p_board_support->clear_error("evse_board_support/MREC2GroundFailure");
     }
     error_MREC2GroundFailure = false;
-
-    if (error_MREC1ConnectorLockFailure) {
-        p_connector_lock->clear_error("connector_lock/MREC1ConnectorLockFailure");
-    }
-    error_MREC1ConnectorLockFailure = false;
 }
 
 void AdAcEvse22KwzKitBSP::error_handling(ErrorFlags e) {
@@ -148,14 +140,6 @@ void AdAcEvse22KwzKitBSP::error_handling(ErrorFlags e) {
         p_board_support->raise_error(error_object);
     } else if (not e.ventilation_not_available and last_error_flags.ventilation_not_available) {
         p_board_support->clear_error("evse_board_support/VentilationNotAvailable");
-    }
-
-    if (e.connector_lock_failed and not last_error_flags.connector_lock_failed) {
-        Everest::error::Error error_object = p_connector_lock->error_factory->create_error(
-            "connector_lock/MREC1ConnectorLockFailure", "", "Lock motor failure", Everest::error::Severity::High);
-
-        error_MREC1ConnectorLockFailure = true;
-        p_connector_lock->raise_error(error_object);
     }
 
     if (e.cp_signal_fault and not last_error_flags.cp_signal_fault) {
