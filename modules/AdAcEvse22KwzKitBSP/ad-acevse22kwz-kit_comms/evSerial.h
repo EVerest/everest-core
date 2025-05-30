@@ -30,7 +30,6 @@ public:
 
     void setPWM(uint32_t dc);
     void allowPowerOn(bool p);
-    void set_number_of_phases(bool p);
 
     sigslot::signal<KeepAliveLo> signalKeepAliveLo;
     sigslot::signal<PowerMeter> signalPowerMeter;

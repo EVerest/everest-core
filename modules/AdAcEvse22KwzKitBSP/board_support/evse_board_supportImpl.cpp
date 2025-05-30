@@ -188,7 +188,7 @@ void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
 }
 
 void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& value) {
-    mod->serial.set_number_of_phases(value);
+    EVLOG_error << "AdAdEvse22KwzKitBSP doesn't support switching three phases while charging, ignoring command.";
 }
 
 void evse_board_supportImpl::handle_evse_replug(int& value) {

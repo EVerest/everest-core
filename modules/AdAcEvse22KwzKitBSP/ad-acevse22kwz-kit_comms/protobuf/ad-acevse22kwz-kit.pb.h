@@ -103,13 +103,11 @@ typedef struct _EverestToMcu {
         uint32_t pwm_duty_cycle;
         bool allow_power_on;
         bool reset;
-        bool set_number_of_phases;
     } payload; 
 } EverestToMcu;
 
 /* This container message is send from MCU to EVerest and may contain any allowed message in that direction. */
 typedef struct _McuToEverest { 
-    /* Please keep IDs and don't use reserved IDs to maintain support with older firmware versions */
     pb_size_t which_payload;
     union {
         KeepAliveLo keep_alive;
@@ -209,7 +207,6 @@ extern "C" {
 #define EverestToMcu_pwm_duty_cycle_tag          103
 #define EverestToMcu_allow_power_on_tag          104
 #define EverestToMcu_reset_tag                   105
-#define EverestToMcu_set_number_of_phases_tag    106
 #define McuToEverest_keep_alive_tag              3
 #define McuToEverest_reset_tag                   101
 #define McuToEverest_cp_state_tag                102
@@ -224,8 +221,7 @@ extern "C" {
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,keep_alive,payload.keep_alive), 100) \
 X(a, STATIC,   ONEOF,    UINT32,   (payload,pwm_duty_cycle,payload.pwm_duty_cycle), 103) \
 X(a, STATIC,   ONEOF,    BOOL,     (payload,allow_power_on,payload.allow_power_on), 104) \
-X(a, STATIC,   ONEOF,    BOOL,     (payload,reset,payload.reset), 105) \
-X(a, STATIC,   ONEOF,    BOOL,     (payload,set_number_of_phases,payload.set_number_of_phases), 106)
+X(a, STATIC,   ONEOF,    BOOL,     (payload,reset,payload.reset), 105)
 #define EverestToMcu_CALLBACK NULL
 #define EverestToMcu_DEFAULT NULL
 #define EverestToMcu_payload_keep_alive_MSGTYPE KeepAlive

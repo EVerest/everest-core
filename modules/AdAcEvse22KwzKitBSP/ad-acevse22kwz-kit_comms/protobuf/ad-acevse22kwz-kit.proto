@@ -5,14 +5,13 @@ syntax = "proto3";
 */
 message EverestToMcu {
  // Please keep IDs and don't use reserved IDs to maintain support with older firmware versions
- reserved 16, 102;
+ reserved 16, 102, 106;
 
  oneof payload {
     KeepAlive keep_alive = 100;
     uint32 pwm_duty_cycle = 103; // in 0.01 %, 0 = State F, 10000 = X1
     bool allow_power_on = 104;
     bool reset = 105;
-    bool set_number_of_phases = 106;
   }
 }
 
