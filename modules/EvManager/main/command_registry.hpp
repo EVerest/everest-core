@@ -29,7 +29,8 @@ public:
 
     bool operator()(const std::vector<std::string>& arguments) const override {
         if (arguments.size() != argument_count) {
-            throw std::invalid_argument{"Invalid number of arguments for: " + command_name + " expected "  + std::to_string(argument_count) + " got " + std::to_string(arguments.size())};
+            throw std::invalid_argument{"Invalid number of arguments for: " + command_name + " expected " +
+                                        std::to_string(argument_count) + " got " + std::to_string(arguments.size())};
         }
         return function(arguments);
     }
