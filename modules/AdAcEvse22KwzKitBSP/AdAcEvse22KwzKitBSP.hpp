@@ -11,7 +11,6 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/ac_rcd/Implementation.hpp>
 #include <generated/interfaces/evse_board_support/Implementation.hpp>
 #include <generated/interfaces/powermeter/Implementation.hpp>
 
@@ -35,19 +34,17 @@ public:
     AdAcEvse22KwzKitBSP() = delete;
     AdAcEvse22KwzKitBSP(const ModuleInfo& info, Everest::TelemetryProvider& telemetry,
                std::unique_ptr<powermeterImplBase> p_powermeter,
-               std::unique_ptr<evse_board_supportImplBase> p_board_support, std::unique_ptr<ac_rcdImplBase> p_rcd,
+               std::unique_ptr<evse_board_supportImplBase> p_board_support,
                Conf& config) :
         ModuleBase(info),
         telemetry(telemetry),
         p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
-        p_rcd(std::move(p_rcd)),
         config(config){};
 
     Everest::TelemetryProvider& telemetry;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<evse_board_supportImplBase> p_board_support;
-    const std::unique_ptr<ac_rcdImplBase> p_rcd;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

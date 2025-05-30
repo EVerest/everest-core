@@ -34,9 +34,6 @@ provides:
   board_support:
     interface: evse_board_support
     description: provides the board support Interface to low level control control pilot, relais, motor lock
-  rcd:
-    interface: ac_rcd
-    description: RCD interface of the onboard RCD
 enable_telemetry: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

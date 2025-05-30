@@ -60,7 +60,6 @@ void AdAcEvse22KwzKitBSP::init() {
 
     invoke_init(*p_powermeter);
     invoke_init(*p_board_support);
-    invoke_init(*p_rcd);
 }
 
 void AdAcEvse22KwzKitBSP::ready() {
@@ -75,7 +74,6 @@ void AdAcEvse22KwzKitBSP::ready() {
 
     invoke_ready(*p_powermeter);
     invoke_ready(*p_board_support);
-    invoke_ready(*p_rcd);
 
     telemetryThreadHandle = std::thread([this]() {
         while (!telemetryThreadHandle.shouldExit()) {
@@ -104,8 +102,6 @@ void AdAcEvse22KwzKitBSP::publish_external_telemetry_livedata(const std::string&
         telemetry.publish("livedata", topic, data);
     }
 }
-
-bool rcd_selftest_failed;
 
 bool cp_signal_fault;
 

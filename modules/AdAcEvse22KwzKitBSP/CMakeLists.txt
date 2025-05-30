@@ -29,7 +29,6 @@ target_sources(${MODULE_NAME}
     PRIVATE
         "powermeter/powermeterImpl.cpp"
         "board_support/evse_board_supportImpl.cpp"
-        "rcd/ac_rcdImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
