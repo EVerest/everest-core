@@ -72,7 +72,9 @@ void RemoteTransactionControl::handle_unlock_connector(Call<UnlockConnectorReque
     const UnlockConnectorRequest& msg = call.msg;
     UnlockConnectorResponse unlock_response;
 
-    EVSE evse = {msg.evseId, std::nullopt, msg.connectorId};
+    EVSE evse;
+    evse.id = msg.evseId;
+    evse.connectorId = msg.connectorId;
 
     if (this->context.evse_manager.is_valid_evse(evse)) {
         if (!this->context.evse_manager.get_evse(msg.evseId).has_active_transaction()) {
