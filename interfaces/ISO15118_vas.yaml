@@ -1,5 +1,4 @@
 description: Custom VAS provider for ISO 15118
-
 vars:
   offered_vas:
     description: List of offered VAS Service IDs
@@ -7,7 +6,6 @@ vars:
     items:
       type: integer
       description: Service ID
-
 cmds:
   get_service_parameters:
     description: >-
@@ -23,7 +21,6 @@ cmds:
       items:
         type: object
         $ref: /iso15118_vas#/ParameterSet
-
   selected_services:
     description: >-
       Callback to notify the VAS provider which services and parameter sets were selected by the EV.
