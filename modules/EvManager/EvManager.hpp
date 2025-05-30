@@ -45,6 +45,8 @@ struct Conf {
     bool auto_exec_infinite;
     bool support_sae_j2847;
     bool three_phases;
+    int departure_time;
+    int e_amount;
     bool keep_cross_boot_plugin_state;
 };
 

@@ -9,6 +9,16 @@ cmds:
           by the EVCC
         type: string
         $ref: /iso15118#/EnergyTransferMode
+      DepartureTime:
+        description: >-
+          The time when the EVCC wants to leave the charging station (in seconds)
+          (optional)
+        type: number
+      EAmount:
+        description: >-
+          The amount of energy that the EVCC wants to charge (in kWh)
+          (optional)
+        type: number
     result:
       description: Returns true if the evcc simulation started
       type: boolean
