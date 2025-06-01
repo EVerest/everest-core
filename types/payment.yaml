@@ -1,0 +1,486 @@
+description: Types directly related to payment
+types:
+  TaxRate:
+    description: >-
+      Tax percentage with description and stacklevel 
+    type: object
+    additionalProperties: false
+    required:
+      - type
+      - tax
+    properties:
+      type:
+        description: >-
+          Description of type of this tax, as it may be shown on a receipt.
+        type: string
+      tax:
+        description: >-
+          Tax rate in units of 10^-4 (i.e. 1900 = 19%)
+        type: integer
+      stack:
+        description: >-
+          Level at which this tax is applied when multiple taxes exist (0 means this is applied to net value)
+        type: integer
+  Price:
+    description: >-
+      Price/Cost with and/or without tax. At least one of exclTax, inclTax should be present.
+      All numbers in minimal accountable units (mau)
+    type: object
+    additionalProperties: false
+    #    required: # Should we just require both of exclTax and inclTax?
+    properties:
+      excl_tax_mau:
+        description: Price/Cost excluding taxes
+        type: integer
+      incl_tax_mau:
+        description: Price/Cost excluding taxes
+        type: integer
+      tax_rates:
+        description: >-
+          Level at which this tax is applied when multiple taxes exist (0 means this is applied to net value)
+        type: array
+        items:
+          description: Multiple taxes (up to 5 forseen in OCPP2.1)
+          type: object
+          $ref: /payment#/TaxRate
+  TariffFixedPrice:
+    description: Tariff for fixed price components.
+    type: object
+    additionalProperties: false
+    required:
+      - price_fixed_tenth_mau
+    properties:
+      price_fixed_tenths_mau:
+        description: Net Price/Cost in tenth of minimal accountable units
+        type: integer
+      # TariffConditions as defined by OCPP2.1 not included
+  TariffTimePrice:
+    description: >-
+      Tariff for time-based price components.
+    type: object
+    additionalProperties: false
+    required:
+      - price_minutes_tenth_mau
+    properties:
+      price_minutes_tenth_mau:
+        description: >-
+          Net Price/Cost in tenth of minimal accountable units per minute
+        type: integer
+      # TariffConditions as defined by OCPP2.1 not included
+  TariffEnergyPrice:
+    description: >-
+      Tariff for energy-based price components.
+    type: object
+    additionalProperties: false
+    required:
+      - price_kwh_tenth_mau
+    properties:
+      price_kwh_tenth_mau:
+        description: >-
+          Net Price/Cost in tenth of minimal accountable units per kWh
+        type: integer
+      # TariffConditions as defined by OCPP2.1 not included
+  TariffFixed:
+    description: Tariff for fixed price components, may include taxes.
+    type: object
+    additionalProperties: false
+    required:
+      - prices
+    properties:
+      prices:
+        description: Net Prices
+        type: array
+        items:
+          description: Prices
+          type: object
+          $ref: /payment#/TariffFixedPrice
+      tax_rates:
+        description: Taxes to be applied.
+        type: array
+        items:
+          description: Multiple taxes (up to 5 forseen in OCPP2.1)
+          type: object
+          $ref: /payment#/TaxRate
+  TariffTime:
+    description: Tariff for time-based price components, may include taxes.
+    type: object
+    additionalProperties: false
+    required:
+      - prices
+    properties:
+      prices:
+        description: Net Prices
+        type: array
+        items:
+          description: Prices
+          type: object
+          $ref: /payment#/TariffTimePrice
+      tax_rates:
+        description: Taxes to be applied.
+        type: array
+        items:
+          description: Multiple taxes (up to 5 forseen in OCPP2.1)
+          type: object
+          $ref: /payment#/TaxRate
+  TariffEnergy:
+    description: Tariff for energy-based price components, may include taxes.
+    type: object
+    additionalProperties: false
+    required:
+      - prices
+    properties:
+      prices:
+        description: Net Prices
+        type: array
+        items:
+          description: Prices
+          type: object
+          $ref: /payment#/TariffEnergyPrice
+      tax_rates:
+        description: Taxes to be applied.
+        type: array
+        items:
+          description: Multiple taxes (up to 5 forseen in OCPP2.1)
+          type: object
+          $ref: /payment#/TaxRate
+  Tariff:
+    description: Full definition of a single tariff.
+    type: object
+    additionalProperties: false
+    required:
+      - tariff_id
+      - currency
+    properties:
+      tariff_id:
+        description: Unique id of tariff.
+        type: string
+      currency:
+        description: Currency of the prices in this tariff.
+        type: object
+        $ref: /money#/Currency
+      valid_from:
+        description: Time when this tariff becomes active (immediately active if missing).
+        type: string
+        format: date-time
+      description:
+        description: List of multi-language human-readable tariff information texts.
+        type: object
+        $ref: /text_message#/MessageContent
+      energy:
+        description: Energy tariff
+        type: object
+        $ref: /payment#/TariffEnergy
+      charging_time:
+        description: Time tariff
+        type: object
+        $ref: /payment#/TariffTime
+      idle_time:
+        description: Idle tariff
+        type: object
+        $ref: /payment#/TariffTime
+      fixed_fee:
+        description: Fixed fee tariff
+        type: object
+        $ref: /payment#/TariffFixed
+      min_cost:
+        description: Minimal cost for a session.
+        type: object
+        $ref: /payment#/Price
+      max_cost:
+        description: Maximum cost for a session.
+        type: object
+        $ref: /payment#/Price
+      reservation_time:
+        description: Reservation time tariff.
+        type: object
+        $ref: /payment#/Price
+      reservation_fixed:
+        description: Fixed fee for a reservation.
+        type: object
+        $ref: /payment#/Price
+
+  TotalPrice:
+    description: >-
+      Price/Cost with and/or without tax. At least one of exclTax, inclTax should be present.
+      All numbers in minimal accountable units (mau)
+    type: object
+    additionalProperties: false
+    #    required: # Should we just require both of exclTax and inclTax?
+    properties:
+      excl_tax_mau:
+        description: Price/Cost excluding taxes
+        type: integer
+      incl_tax_mau:
+        description: Price/Cost including taxes
+        type: integer
+  TariffCostEnum:
+    description: Type of cost - normal cost calculation, or limited to a min or max value.
+    type: string
+    enum:
+      - NormalCost
+      - MinCost
+      - MaxCost
+  CostDimensionEnum:
+    description: Usage dimension for cost in charging period.
+    type: string
+    enum:
+      - Energy
+      - MaxCurrent
+      - MinCurrent
+      - MaxPower
+      - MinPower
+      - IdleTime
+      - ChargingTime
+  CostDimension:
+    description: Volume consumed of cost dimension.
+    type: object
+    additionalProperties: false
+    required:
+      - type
+      - volume
+    properties:
+      type:
+        description: Type of cost dimension
+        type: object
+        $ref: /payment#/CostDimensionEnum
+      volume:
+        description: >-
+          Volume of the dimension consumed, measured according to the dimension type.
+        type: number   # TODO(CB): Better rely on integer?
+  ChargingPeriod:
+    description: Consists of start time,  and applicable tariff (identified by its id)
+    type: object
+    additionalProperties: false
+    required:
+      - start_period
+    properties:
+      tariff_id:
+        description: ID of Tariff that was used to calculate cost.
+        type: string
+      start_period:
+        description: Start timestamp of charging period. A period ends when the next period starts/the session ends.
+        type: string
+        format: date-time
+      dimensions:
+        description: >-
+          List of volume per cost dimension for this charging period.
+        type: array
+        items:
+          description: Volume per single cost dimension for this charging period.
+          type: object
+          $ref: /payment#/CostDimension
+  TotalUsage:
+    description: calculated usage of energy, charging time and idle time during a transaction.
+    type: object
+    additionalProperties: false
+    required:
+      - energy_10th_wh
+      - charging_time_s
+      - idle_time_s
+    properties:
+      energy_10th_wh:
+        description: Energy in 1/10Wh (to comply with california pricing)
+        type: integer
+      charging_time_s:
+        description: Total session duration where the EV was charging
+        type: integer
+      idle_time_s:
+        description: Total session duration where the EV was not charging
+        type: integer
+      reservation_time_s:
+        description: Time of reservation.
+        type: integer
+  TotalCost:
+    description: Total cost calculated during a transaction (final or running).
+    type: object
+    additionalProperties: false
+    required:
+      - currency
+      - type_of_cost
+      - total
+    properties:
+      currency:
+        description: Currency of the costs.
+        type: object
+        $ref: /money#/Currency
+      type_of_cost:
+        description: Type of cost - normal or the minimum or maximum cost.
+        type: object
+        $ref: /payment#/TariffCostEnum
+      fixed:
+        description: Total sum of all flat fees except reservation fees.
+        type: object
+        $ref: /payment#/Price
+      energy:
+        description: Total sum of all the cost of all the energy used.
+        type: object
+        $ref: /payment#/Price
+      charging_time:
+        description: Total sum of all the cost related to duration of charging.
+        type: object
+        $ref: /payment#/Price
+      idle_time:
+        description: Total sum of all the cost related to idle time, including fixed fees.  ## TODO(CB): But "all" fixed fees shall be in 'fixed'?!
+        type: object
+        $ref: /payment#/Price
+      reservation_time:
+        description: Sum of all time-based cost related to reservation.
+        type: object
+        $ref: /payment#/Price
+      total:
+        description: Total of associated cost elements for fixed, energy, chargingTime, idleTime and reservation.
+        type: object
+        $ref: /payment#/TotalPrice
+      reservation_fixed:
+        description: Sum of fixed cost related to reservation.
+        type: object
+        $ref: /payment#/Price
+  CostDetails:
+    description: Total cost calculated during a transaction (final or running).
+    type: object
+    additionalProperties: false
+    required:
+      - total_cost
+      - total_usage
+    properties:
+      failure_to_calculate:
+        description: True means, the Charging Station failed to calculate the cost.
+        type: boolean
+      failure_reason:
+        description: Human-readable reason in case of failure
+        type: string
+      charging_periods:
+        description: List that make up this charging session. Omitted in running cost updates during transactions.
+        type: array
+        items:
+          description: Single period, consisting of start time, dimension, costs, ...
+          type: object
+          $ref: /payment#/ChargingPeriod
+      total_cost:
+        description: Total sum of all costs of this transaction.
+        type: object
+        $ref: /payment#/TotalCost
+      total_usage:
+        description: Total usage of energy and time.
+        type: object
+        $ref: /payment#/TotalUsage
+
+  BankingPreauthorization:
+    description: Total cost to be charged from a customer. 
+    type: object
+    additionalProperties: false
+    required:
+      - amount
+      - id_token
+    properties:
+      amount:
+        description: Preauthorized amount
+        type: object
+        $ref: /money#/MoneyAmount
+      id_token:
+        description: ID tag associated with this preauthorization
+        type: object
+        $ref: /authorization#/IdToken
+
+  TotalCostAmount:
+    description: Total cost to be charged from a customer.
+    type: object
+    additionalProperties: false
+    required:
+      - cost
+      - id_token
+      - final
+    properties:
+      cost:
+        description: >-
+          Total Cost of the full charging session including everything (energy, time, fixed fees, reservation, taxes, ..)
+        type: object
+        $ref: /money#/MoneyAmount
+      id_token:
+        description: The id tag assigned to this transaction
+        type: object
+        $ref: /authorization#/IdToken
+      final:
+        description: false for running cost updates, true if this record carries the final costs
+        type: boolean
+  # ReceiptRecord:
+  #   description: >-
+  #     List of chargeable items and related information
+  #   type: object
+  #   additionalProperties: false
+  #   required:
+  #     - final_cost
+  #     - timestamp_from
+  #     - timestamp_to
+  #     - items
+  #   properties:
+  #     final_cost:
+  #       description: >-
+  #         Final cost, including the to identify the session and correlate more data (e.g. banking receipt)
+  #       type: object
+  #       $ref: /payment#/FinalCost
+  #     timestamp_from:
+  #       description: Absolute timestamp (start) (RFC3339 UTC) for this business transaction
+  #       type: string
+  #       format: date-time
+  #     timestamp_to:
+  #       description: Absolute timestamp (stop) (RFC3339 UTC) for this business transaction
+  #       type: string
+  #       format: date-time
+  #     total_metervalue_from:
+  #       description: >-
+  #         Metervalue (energy Wh import) at start of this business transaction
+  #       type: integer
+  #     total_metervalue_to:
+  #       description: >-
+  #         Metervalue (energy Wh import) at end of this business transaction
+  #       type: integer
+  #     total_metervalue_from_signed:
+  #       description: >-
+  #         signed version of property of similar name
+  #       $ref: /units_signed#/Energy
+  #     total_metervalue_to_signed:
+  #       description: >-
+  #         signed version of property of similar name
+  #       $ref: /units_signed#/Energy
+  #     items0:
+  #       type: array
+  #       items:
+  #         description: Individually chargeable items (energy slices, time slices, reservation, ...)
+  #         type: object
+  #         $ref: /payment#/PaymentRecordItem
+  # PaymentRecordItem:
+  #   description: >-
+  #     Tuple of price, cost and tax
+  #   type: object
+  #   additionalProperties: false
+  #   required:
+  #     - cost_chunk
+  #     - price_component
+  #     - tax_component
+  #   properties:
+  #     gross_cost_chunk:
+  #       description: Gross cost of a single slice of energy/charging time/flat/other
+  #       type: object
+  #       $ref: /session_cost#/SessionCostChunk
+  #     net_cost_chunk:
+  #       description: Net cost of a single slice of energy/charging time/flat/other
+  #       type: object
+  #       $ref: /session_cost#/SessionCostChunk
+  #     tax_component:
+  #       description: Absolute taxes and tax rate included in the cost_chunk
+  #       type: object
+  #       $ref: /payment#/TaxPortion
+  #     price_component:
+  #       description: Price for energy/charging time/flat/other which was used to calculate the cost_chunk
+  #       type: object
+  #       $ref: /session_cost#/ChargingPriceComponent
+
+
+## FIXME(CB): a session_accountant should do the tax calculation and the ReceiptRecord should contain final numbers only (which are consistent) - no user should be tempted to calculate anything himself
+##            include more signed items (time)
+##            introduce a timespan (date-time from-to)?
+##            use existing session_cost types (originate from OCPP/Cal.-Pricing) or do sth. new? (Net + Gross SessionCostChunks carry redundant information)
+##            signed values cannot be put in CostChunks!
+##            use bank_session_token as global ID or full ProvidedIdToken (inconsistent now)?
+##            Allow to transport 0.1Wh values in SessionCostChunk or create a new type
