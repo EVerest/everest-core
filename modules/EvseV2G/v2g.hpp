@@ -307,6 +307,7 @@ struct v2g_context {
         bool verify_contract_cert_chain;                            // for PnC
         types::authorization::CertificateStatus certificate_status; // for PnC
         bool authorization_rejected;                                // for PnC
+        types::authorization::ProvidedIdToken provided_id_token;    // for PnC
 
         bool renegotiation_required;  /* Is set to true if renegotiation is required. Only relevant for ISO */
         bool is_charging;             /* set to true if ChargeProgress is set to Start */

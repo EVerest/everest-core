@@ -995,7 +995,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         ProvidedIdToken.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
         ProvidedIdToken.iso15118CertificateHashData = iso15118_certificate_hash_data;
         ProvidedIdToken.certificate = contract_cert_chain_pem;
-        conn->ctx->p_charger->publish_require_auth_pnc(ProvidedIdToken);
+        conn->ctx->session.provided_id_token = ProvidedIdToken;
 
     } else {
         res->ResponseCode = iso2_responseCodeType_FAILED;
@@ -1064,6 +1064,7 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
             res->ResponseCode = iso2_responseCodeType_FAILED_SignatureError;
             goto error_out;
         }
+        conn->ctx->p_charger->publish_require_auth_pnc(conn->ctx->session.provided_id_token);
     }
     res->EVSEProcessing = (iso2_EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_AUTH];
 
