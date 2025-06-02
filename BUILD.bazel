@@ -4,5 +4,5 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "dependencies.yaml",
-    "WORKSPACE.bazel",
+    "MODULE.bazel",
 ])

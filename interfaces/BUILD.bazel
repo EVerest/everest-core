@@ -26,15 +26,15 @@ genrule(
         "@everest-framework//:dependencies.yaml",
         "@everest-core//types",
         "@everest-core//errors",
-        "@everest-core//:WORKSPACE.bazel",
+        "@everest-core//:MODULE.bazel",
     ],
     tools = [
         "@everest-utils//ev-dev-tools:ev-cli",
     ],
     cmd = """
 $(location @everest-utils//ev-dev-tools:ev-cli) interface generate-headers \
-    --work-dir `dirname $(location @everest-core//:WORKSPACE.bazel)` \
-    --everest-dir `dirname $(location @everest-core//:WORKSPACE.bazel)` \
+    --work-dir `dirname $(location @everest-core//:MODULE.bazel)` \
+    --everest-dir `dirname $(location @everest-core//:MODULE.bazel)` \
     --schemas-dir `dirname $(location @everest-framework//:dependencies.yaml)`/schemas \
     --disable-clang-format \
     --output-dir `dirname $(location {some_output})`/..

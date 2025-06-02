@@ -45,7 +45,7 @@ def cc_everest_module(
             "@everest-framework//schemas:schemas",
             "@everest-framework//:dependencies.yaml",
             "@everest-core//types:types",
-            "@everest-core//:WORKSPACE.bazel",
+            "@everest-core//:MODULE.bazel",
             "@everest-core//interfaces:interfaces",
         ],
         tools = [
@@ -53,7 +53,7 @@ def cc_everest_module(
         ],
         cmd = """
     $(location @everest-utils//ev-dev-tools:ev-cli) module generate-loader \
-        --work-dir `dirname $(location @everest-core//:WORKSPACE.bazel)` \
+        --work-dir `dirname $(location @everest-core//:MODULE.bazel)` \
         --everest-dir ~/foo \
         --schemas-dir `dirname $(location @everest-framework//:dependencies.yaml)`/schemas \
         --disable-clang-format \
