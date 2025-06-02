@@ -1,0 +1,75 @@
+description: Custom VAS types for ISO 15118
+types:
+  ParameterValue:
+    description: Value variant of a parameter -> only one of the values should be set
+    type: object
+    additionalProperties: false
+    properties:
+      finite_string:
+        description: String value of the parameter
+        type: string
+        minLength: 0
+        maxLength: 80
+      rational_number:
+        description: Rational value of the parameter
+        type: number
+      byte_value:
+        description: Byte value of the parameter
+        type: integer
+      short_value:
+        description: Short value of the parameter
+        type: integer
+      int_value:
+        description: Integer value of the parameter
+        type: integer
+      bool_value:
+        description: Boolean value of the parameter
+        type: boolean
+  Parameter:
+    description: Single Parameter
+    type: object
+    additionalProperties: false
+    required:
+      - name
+      - value
+    properties:
+      name:
+        description: Name of the parameter
+        type: string
+        minLength: 1
+        maxLength: 80
+      value:
+        description: Value of the parameter
+        type: object
+        $ref: /iso15118_vas#/ParameterValue
+  ParameterSet:
+    description: Parameter Set
+    type: object
+    required:
+      - set_id
+      - parameters
+    additionalProperties: false
+    properties:
+      set_id:
+        description: ParameterSetId
+        type: integer
+      parameters:
+        description: List of parameters
+        type: array
+        items:
+          type: object
+          $ref: /iso15118_vas#/Parameter
+  SelectedService:
+    description: Selected Service
+    type: object
+    required:
+      - service_id
+      - parameter_set_id
+    additionalProperties: false
+    properties:
+      service_id:
+        description: Service ID
+        type: integer
+      parameter_set_id:
+        description: Parameter Set ID
+        type: integer
