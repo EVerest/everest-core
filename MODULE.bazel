@@ -15,7 +15,9 @@ git_override(module_name="everest-utils", commit="a03ebb35c35f4b21f0b1604b9f4645
 
 bazel_dep(name = "bazel_features", version = "1.21.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "boost.asio", version = "1.87.0")
+BOOST_VERSION = "1.87.0"
+bazel_dep(name = "boost.asio", version = BOOST_VERSION)
+bazel_dep(name = "boost.uuid", version = BOOST_VERSION)
 bazel_dep(name = "fmt", version = "11.1.4", repo_name = "com_github_fmtlib_fmt")
 bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "com_github_nlohmann_json")
 bazel_dep(name = "rules_rust", version = "0.59.2")

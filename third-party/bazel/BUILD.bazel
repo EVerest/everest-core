@@ -7,6 +7,7 @@ load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
         visibility = ["//visibility:public"],
     )
     for name in [
-        "asio"
+        "asio",
+        "uuid",
     ]
 ]
