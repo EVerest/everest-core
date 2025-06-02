@@ -7,7 +7,7 @@ cc_library(
     strip_include_prefix = "include",
     deps = [
         "@libtimer//:libtimer",
-        "//third-party/bazel:boost_asio",
+        "@boost.asio",
         "@everest-framework//:framework",
         "@com_github_HowardHinnant_date//:date",
         "//types:types_lib",
