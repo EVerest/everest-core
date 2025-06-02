@@ -8,6 +8,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 
 #include <cstdlib>
 #include <errno.h>
@@ -263,7 +264,10 @@ struct ModuleReadyInfo {
 };
 
 // FIXME (aw): these are globals here, because they are used in the ready callback handlers
-std::map<std::string, ModuleReadyInfo> modules_ready;
+using ModulesReadyType = std::unordered_map<std::string, ModuleReadyInfo>;
+ModulesReadyType modules_ready;
+// Don't hold the mutex and use any function of the `mqtt_abstraction` since the
+// mutex is also held inside the `ready` handler which can deadlock.
 std::mutex modules_ready_mutex;
 
 static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbstraction& mqtt_abstraction,
@@ -361,7 +365,14 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
             EVLOG_debug << fmt::format("received module ready signal for module: {}({})", module_id, json.dump());
             const std::unique_lock<std::mutex> lock(modules_ready_mutex);
             // FIXME (aw): here are race conditions, if the ready handler gets called while modules are shut down!
-            modules_ready.at(module_id).ready = json.get<bool>();
+            try {
+                modules_ready.at(module_id).ready = json.get<bool>();
+            } catch (const std::out_of_range& ex) {
+                // This can happen if we're shutting down and a module becomes
+                // ready.
+                EVLOG_error << "The module " << module_id << " is not in `modules_ready`: " << ex.what();
+                return;
+            }
             std::size_t modules_spawned = 0;
             for (const auto& mod : modules_ready) {
                 const std::string text_ready =
@@ -454,17 +465,19 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
 static void shutdown_modules(const std::map<pid_t, std::string>& modules, ManagerConfig& config,
                              MQTTAbstraction& mqtt_abstraction) {
 
+    ModulesReadyType modules_ready_moved;
     {
         const std::lock_guard<std::mutex> lck(modules_ready_mutex);
-
-        for (const auto& module : modules_ready) {
-            const auto& ready_info = module.second;
-            const auto& module_name = module.first;
-            const std::string topic = fmt::format("{}/ready", config.mqtt_module_prefix(module_name));
-            mqtt_abstraction.unregister_handler(topic, ready_info.ready_token);
-        }
-
+        modules_ready_moved = std::move(modules_ready);
+        // Probably not needed after our move but lets be explicit.
         modules_ready.clear();
+    }
+
+    for (const auto& module : modules_ready_moved) {
+        const auto& ready_info = module.second;
+        const auto& module_name = module.first;
+        const std::string topic = fmt::format("{}/ready", config.mqtt_module_prefix(module_name));
+        mqtt_abstraction.unregister_handler(topic, ready_info.ready_token);
     }
 
     for (const auto& child : modules) {
