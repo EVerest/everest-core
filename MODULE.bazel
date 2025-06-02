@@ -1,0 +1,93 @@
+module(
+    name = "everest-core",
+    version = "2025.4.0",
+)
+
+###############################################################################
+# B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
+###############################################################################
+
+bazel_dep(name = "everest-framework", version = "0.21.0")
+git_override(module_name="everest-framework", commit="7b989fbee69bf3bdf7f4ecbe19d184a2a5e19348", remote="https://github.com/EVerest/everest-framework")
+
+bazel_dep(name = "everest-utils", version = "0.5.2")
+git_override(module_name="everest-utils", commit="a03ebb35c35f4b21f0b1604b9f46451feb187ec6", remote="https://github.com/EVerest/everest-utils")
+
+bazel_dep(name = "bazel_features", version = "1.21.0")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+BOOST_VERSION = "1.87.0"
+bazel_dep(name = "boost.asio", version = BOOST_VERSION)
+bazel_dep(name = "boost.uuid", version = BOOST_VERSION)
+bazel_dep(name = "fmt", version = "11.1.4", repo_name = "com_github_fmtlib_fmt")
+bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "com_github_nlohmann_json")
+bazel_dep(name = "rules_rust", version = "0.59.2")
+bazel_dep(name = "rules_python", version = "1.3.0")
+bazel_dep(name = "rules_foreign_cc", version = "0.14.0")
+
+###############################################################################
+# N O N   M O D U L E
+###############################################################################
+
+deps = use_extension("//third-party/bazel:extension.bzl", "deps")
+use_repo(
+    deps,
+    "libtimer",
+    "pugixml",
+    "sigslot",
+    "com_github_HowardHinnant_date",
+)
+
+###############################################################################
+# P Y T H O N
+###############################################################################
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.10",
+    is_default = True,
+)
+
+use_repo(python, "python_3_10")
+
+###############################################################################
+# R U S T
+###############################################################################
+
+RUST_EDITION = "2021"
+
+RUST_VERSION = "1.85.1"
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = RUST_EDITION,
+    extra_target_triples = [
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+    ],
+    versions = [RUST_VERSION],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+everest_core_crate_index = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+everest_core_crate_index.from_cargo(
+    name = "everest_core_crate_index",
+    cargo_lockfile = "@everest-core//modules:Cargo.lock",
+    manifests = [
+        "@everest-core//modules:Cargo.toml",
+        "@everest-core//modules/RsIskraMeter:Cargo.toml",
+        "@everest-core//modules/RsPaymentTerminal:Cargo.toml",
+        "@everest-core//modules/rust_examples/RsExample:Cargo.toml",
+        "@everest-core//modules/rust_examples/RsExampleUser:Cargo.toml",
+    ],   
+)
+everest_core_crate_index.annotation(
+    crate = "everestrs",
+    crate_features = ["build_bazel"],
+)
+
+use_repo(
+    everest_core_crate_index,
+    "everest_core_crate_index",
+)
