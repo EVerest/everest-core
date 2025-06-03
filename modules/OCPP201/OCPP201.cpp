@@ -102,12 +102,6 @@ ocpp::v2::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v2::R
         return ocpp::v2::TriggerReasonEnum::ChargingStateChanged;
     case ocpp::v2::ReasonEnum::MasterPass:
         return ocpp::v2::TriggerReasonEnum::StopAuthorized;
-    case ocpp::v2::ReasonEnum::Other:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
-    case ocpp::v2::ReasonEnum::OvercurrentFault:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
-    case ocpp::v2::ReasonEnum::PowerLoss:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     case ocpp::v2::ReasonEnum::PowerQuality:
         return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     case ocpp::v2::ReasonEnum::Reboot:
@@ -122,8 +116,10 @@ ocpp::v2::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v2::R
         return ocpp::v2::TriggerReasonEnum::TimeLimitReached;
     case ocpp::v2::ReasonEnum::Timeout:
         return ocpp::v2::TriggerReasonEnum::EVConnectTimeout;
+    case ocpp::v2::ReasonEnum::Other:
     case ocpp::v2::ReasonEnum::ReqEnergyTransferRejected:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v2::ReasonEnum::OvercurrentFault:
+    case ocpp::v2::ReasonEnum::PowerLoss:
     default:
         return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     }
