@@ -289,9 +289,9 @@ TEST(TrustedCaKeys, CertChain) {
               openssl::verify_result_t::Verified);
 
     EXPECT_EQ(openssl::verify_certificate(server[0].get(), alt_server_root, chain),
-              openssl::verify_result_t::NoCertificateAvailable);
+              openssl::verify_result_t::CertificateNotAllowed);
     EXPECT_EQ(openssl::verify_certificate(alt_server[0].get(), server_root, chain),
-              openssl::verify_result_t::NoCertificateAvailable);
+              openssl::verify_result_t::CertificateNotAllowed);
 }
 
 TEST(TrustedCaKeys, matchNone) {
