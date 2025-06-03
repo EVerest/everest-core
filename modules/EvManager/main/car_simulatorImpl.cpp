@@ -207,7 +207,7 @@ void car_simulatorImpl::register_all_commands() {
                 EVLOG_debug << "Using default departure time from config";
                 departure_time = mod->config.departure_time;
             }
-            if (e_amount < 0)  {
+            if (e_amount < 0) {
                 EVLOG_debug << "Using default eamount from config";
                 e_amount = mod->config.e_amount;
             }

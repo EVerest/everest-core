@@ -1130,14 +1130,14 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
     res->EVSEProcessing = (iso2_EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER];
 
     struct linked_ac_params {
-	    float max_current;
+        float max_current;
         int64_t voltage;
         int64_t pmax;
     };
 
     linked_ac_params default_params;
 
-   if (conn->ctx->is_dc_charger == false) {
+    if (conn->ctx->is_dc_charger == false) {
         int64_t departure_time_duration = req->AC_EVChargeParameter.DepartureTime;
         /* Determin max current and nominal voltage */
         /* Setup default params (before the departure time overrides) */
@@ -1149,9 +1149,9 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
             default_params.max_current * default_params.voltage *
             ((req->RequestedEnergyTransferMode == iso2_EnergyTransferModeType_AC_single_phase_core) ? 1 : 3);
 
-        dlog(DLOG_LEVEL_INFO, "before adjusting for departure time, max_current %f, nom_voltage %d, pmax %d, departure_duration %d",
-            default_params.max_current, default_params.voltage,
-            default_params.pmax, departure_time_duration);
+        dlog(DLOG_LEVEL_INFO,
+             "before adjusting for departure time, max_current %f, nom_voltage %d, pmax %d, departure_duration %d",
+             default_params.max_current, default_params.voltage, default_params.pmax, departure_time_duration);
     }
 
     /* Configure SA-schedules*/
@@ -1232,7 +1232,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         /* Nominal voltage */
         res->AC_EVSEChargeParameter.EVSENominalVoltage = conn->ctx->evse_v2g_data.evse_nominal_voltage;
 
-        /* Calculate pmax based on max current, nominal voltage and phase count (which the car has selected above) */ 
+        /* Calculate pmax based on max current, nominal voltage and phase count (which the car has selected above) */
         /* Check the SASchedule */
         if (res->SAScheduleList_isUsed == (unsigned int)1) {
             for (uint8_t idx = 0; idx < res->SAScheduleList.SAScheduleTuple.arrayLen; idx++) {
