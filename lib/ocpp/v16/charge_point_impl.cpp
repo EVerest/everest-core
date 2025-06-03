@@ -3767,7 +3767,8 @@ void ChargePointImpl::data_transfer_pnc_sign_certificate() {
     const auto result = this->evse_security->generate_certificate_signing_request(
         ocpp::CertificateSigningUseEnum::V2GCertificate,
         this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
-        this->configuration->getSeccLeafSubjectOrganization().value_or(this->configuration->getCpoName().value()),
+        this->configuration->getSeccLeafSubjectOrganization().value_or(
+            this->configuration->getCpoName().value_or("DEFAULT")),
         this->configuration->getSeccLeafSubjectCommonName().value_or(this->configuration->getChargeBoxSerialNumber()),
         this->configuration->getUseTPMSeccLeafCertificate());
 
