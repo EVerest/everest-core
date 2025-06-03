@@ -1060,6 +1060,14 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                     res->ResponseCode = iso2_responseCodeType_FAILED_NoCertificateAvailable;
                 }
                 break;
+            case crypto::verify_result_t::CertificateNotAllowed:
+                // forward to csms if central_contract_validation_allowed is true
+                if (conn->ctx->evse_v2g_data.central_contract_validation_allowed) {
+                    forward_contract = true;
+                } else {
+                    res->ResponseCode = iso2_responseCodeType_FAILED_CertificateNotAllowedAtThisEVSE;
+                }
+                break;
             case crypto::verify_result_t::CertChainError:
             default:
                 res->ResponseCode = iso2_responseCodeType_FAILED_CertChainError;

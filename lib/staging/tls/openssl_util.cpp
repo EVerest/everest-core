@@ -658,6 +658,10 @@ verify_result_t verify_certificate(const X509* cert, const certificate_list& tru
     auto* chain = sk_X509_new_null();
     X509* target{nullptr};
 
+    if (trust_anchors.empty()) {
+        log_error("No trust anchors provided");
+        return verify_result_t::NoCertificateAvailable;
+    }
     if (store_ctx == nullptr) {
         log_error("X509_STORE_CTX_new");
         result = verify_result_t::OtherError;
@@ -725,7 +729,7 @@ verify_result_t verify_certificate(const X509* cert, const certificate_list& tru
                     break;
                 case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
                 case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
-                    result = verify_result_t::NoCertificateAvailable;
+                    result = verify_result_t::CertificateNotAllowed;
                     break;
                 default:
                     break;

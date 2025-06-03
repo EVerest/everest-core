@@ -195,7 +195,7 @@ void EvseManager::ready() {
         types::iso15118_charger::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
         // Set up auth options for HLC
-        std::vector<types::iso15118::PaymentOption> payment_options;
+        std::vector<types::iso15118_charger::PaymentOption> payment_options;
         // if pnc is disabled, disable contract installation and central contract validation
         bool _contract_certificate_installation_enabled =
             pnc_enabled ? contract_certificate_installation_enabled.load() : false;
@@ -903,7 +903,7 @@ void EvseManager::ready() {
             p_evse->publish_ev_info(ev_info);
         }
 
-        std::vector<types::iso15118::PaymentOption> payment_options;
+        std::vector<types::iso15118_charger::PaymentOption> payment_options;
         // if pnc is disabled, disable contract installation and central contract validation
         bool _contract_certificate_installation_enabled =
             pnc_enabled ? contract_certificate_installation_enabled.load() : false;
@@ -933,7 +933,7 @@ void EvseManager::ready() {
             ev_info = types::evse_manager::EVInfo();
             p_evse->publish_ev_info(ev_info);
 
-            std::vector<types::iso15118::PaymentOption> payment_options;
+            std::vector<types::iso15118_charger::PaymentOption> payment_options;
             // if pnc is disabled, disable contract installation and central contract validation
             bool _contract_certificate_installation_enabled =
                 pnc_enabled ? contract_certificate_installation_enabled.load() : false;
@@ -943,7 +943,7 @@ void EvseManager::ready() {
             if (hlc_enabled) {
                 if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
                     // Session is already authorized, only use ExternalPayment in PaymentOptions
-                    payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
+                    payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
                     _contract_certificate_installation_enabled = false;
                     _central_contract_validation_allowed = false;
                 } else {
