@@ -34,6 +34,10 @@ public:
 };
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {
 public:
+    void set_bidi_charging(bool enabled) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        this->dataobj.bidi_charging = enabled;
+    }
     void set_index(int32_t index) {
         std::unique_lock<std::mutex> data_lock(this->data_mutex);
         this->dataobj.index = index;
