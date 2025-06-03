@@ -149,10 +149,9 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
         switch (msg_in.which_payload) {
 
         case McuToEverest_keep_alive_tag:
-            // printf("Received keep_alive_lo\n");
-            signalKeepAliveLo(msg_in.payload.keep_alive);
             // detect connection timeout if keep_alive packets stop coming...
             last_keep_alive_lo_timestamp = date::utc_clock::now();
+            signalKeepAliveLo(msg_in.payload.keep_alive);
             break;
         case McuToEverest_power_meter_tag: {
             auto unix_timestamp = std::chrono::seconds(std::time(NULL));
@@ -172,7 +171,8 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             signalErrorFlags(msg_in.payload.error_flags);
             break;
         case McuToEverest_reset_tag:
-            // printf("Received reset_done\n");
+            // reset keep alive so that timeouts don't occur upon reset during initial start up
+            last_keep_alive_lo_timestamp = date::utc_clock::now();
             reset_done_flag = true;
             if (!forced_reset)
                 signalSpuriousReset();
@@ -355,7 +355,7 @@ bool evSerial::reset(const std::string& reset_chip, const int reset_line) {
     bool success = false;
 
     // Wait for reset done message from uC
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 100; i++) {
         if (reset_done_flag) {
             success = true;
             break;
