@@ -24,11 +24,12 @@ SCENARIO("Commands can be registered", "[RegisteredCommand]") {
                 }
                 THEN("The command throws when the number of arguments is invalid") {
                     CHECK(registered_command({}) == true);
-                    CHECK_THROWS_WITH(registered_command({"arg1"}), "Invalid number of arguments for: test_command0");
+                    CHECK_THROWS_WITH(registered_command({"arg1"}),
+                                      "Invalid number of arguments for: test_command0 expected 0 got 1");
                     CHECK_THROWS_WITH(registered_command({"arg1", "arg2"}),
-                                      "Invalid number of arguments for: test_command0");
+                                      "Invalid number of arguments for: test_command0 expected 0 got 2");
                     CHECK_THROWS_WITH(registered_command({"arg1", "arg2", "arg3"}),
-                                      "Invalid number of arguments for: test_command0");
+                                      "Invalid number of arguments for: test_command0 expected 0 got 3");
                 }
             }
         }
@@ -51,9 +52,10 @@ SCENARIO("Commands can be registered", "[RegisteredCommand]") {
                     CHECK(registered_command({"arg1"}) == true);
                 }
                 THEN("The command throws when the number of arguments is invalid") {
-                    CHECK_THROWS_WITH(registered_command({}), "Invalid number of arguments for: test_command1");
+                    CHECK_THROWS_WITH(registered_command({}),
+                                      "Invalid number of arguments for: test_command1 expected 1 got 0");
                     CHECK_THROWS_WITH(registered_command({"arg1", "arg2"}),
-                                      "Invalid number of arguments for: test_command1");
+                                      "Invalid number of arguments for: test_command1 expected 1 got 2");
                 }
             }
         }
@@ -76,10 +78,12 @@ SCENARIO("Commands can be registered", "[RegisteredCommand]") {
                     CHECK(registered_command({"arg1", "arg2"}) == true);
                 }
                 THEN("The command throws when the number of arguments is invalid") {
-                    CHECK_THROWS_WITH(registered_command({}), "Invalid number of arguments for: test_command2");
-                    CHECK_THROWS_WITH(registered_command({"arg1"}), "Invalid number of arguments for: test_command2");
+                    CHECK_THROWS_WITH(registered_command({}),
+                                      "Invalid number of arguments for: test_command2 expected 2 got 0");
+                    CHECK_THROWS_WITH(registered_command({"arg1"}),
+                                      "Invalid number of arguments for: test_command2 expected 2 got 1");
                     CHECK_THROWS_WITH(registered_command({"arg1", "arg2", "arg3"}),
-                                      "Invalid number of arguments for: test_command2");
+                                      "Invalid number of arguments for: test_command2 expected 2 got 3");
                 }
             }
         }
