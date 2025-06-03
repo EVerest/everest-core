@@ -61,6 +61,8 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             // set the EVSE id in the data store
             evse_data.evseinfo.set_id(evse_id);
         });
+    //TODO: get bidi charging support info from interface
+    evse_data.evseinfo.set_bidi_charging(false);
 }
 
 void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
