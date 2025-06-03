@@ -5,6 +5,7 @@ import asyncio
 import logging
 import pytest
 import json
+import time
 
 from datetime import datetime, timedelta, timezone
 
@@ -144,9 +145,14 @@ class TestOcpp16CostAndPrice:
         test_utility.messages.clear()
 
     @staticmethod
-    async def await_mock_called(mock):
-        while not mock.call_count:
-            await asyncio.sleep(0.1)
+    async def await_mock_called(mock, expected_call_count=1, timeout=5, interval=0.1):
+        start = time.monotonic()
+        while time.monotonic() - start < timeout:
+            if mock.call_count >= expected_call_count:
+                return
+            await asyncio.sleep(interval)
+        raise AssertionError(f"Mock was called {mock.call_count} times, expected at least {expected_call_count}")
+
 
     @pytest.mark.probe_module
     @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
@@ -284,7 +290,7 @@ class TestOcpp16CostAndPrice:
                          "ocpp_transaction_id": "1"
                          }
 
-        await self.await_mock_called(session_cost_mock)
+        await self.await_mock_called(session_cost_mock, expected_call_count=2)
 
         assert session_cost_mock.call_count == 2 # one time during authorization process and one time in this test
 
