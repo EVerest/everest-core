@@ -29,7 +29,8 @@ SCENARIO("SimCommands can be created", "[SimCommand]") {
                 SimulationCommand{&command_registry.get_registered_command(command_name), {"arg1"}};
 
             THEN("The command throws") {
-                CHECK_THROWS_WITH(sim_command.execute(), "Invalid number of arguments for: test_command");
+                CHECK_THROWS_WITH(sim_command.execute(), 
+                    "Invalid number of arguments for: test_command expected 0 got 1");
             }
         }
     }
@@ -83,11 +84,14 @@ SCENARIO("SimCommands can be parsed", "[SimCommand]") {
             auto parsed_commands = SimulationCommand::parse_sim_commands(command_string, command_registry);
 
             THEN("The execution of the commands should fail.") {
-                CHECK_THROWS_WITH(parsed_commands.front().execute(), "Invalid number of arguments for: commanda");
+                CHECK_THROWS_WITH(parsed_commands.front().execute(),
+                                 "Invalid number of arguments for: commanda expected 0 got 1");
                 parsed_commands.pop();
-                CHECK_THROWS_WITH(parsed_commands.front().execute(), "Invalid number of arguments for: commandb");
+                CHECK_THROWS_WITH(parsed_commands.front().execute(),
+                                 "Invalid number of arguments for: commandb expected 1 got 0");
                 parsed_commands.pop();
-                CHECK_THROWS_WITH(parsed_commands.front().execute(), "Invalid number of arguments for: commandc");
+                CHECK_THROWS_WITH(parsed_commands.front().execute(),
+                                 "Invalid number of arguments for: commandc expected 2 got 3");
                 parsed_commands.pop();
                 CHECK(parsed_commands.empty());
             }
