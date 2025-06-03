@@ -7,8 +7,8 @@ module(
 # B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
 ###############################################################################
 
-bazel_dep(name = "everest-framework", version = "0.21.0")
-git_override(module_name="everest-framework", commit="7b989fbee69bf3bdf7f4ecbe19d184a2a5e19348", remote="https://github.com/EVerest/everest-framework")
+bazel_dep(name = "everest-framework", version = "0.21.1")
+git_override(module_name="everest-framework", commit="8031136e5c31a345044e187a68de70b4dcae2912", remote="https://github.com/EVerest/everest-framework")
 
 bazel_dep(name = "everest-utils", version = "0.5.2")
 git_override(module_name="everest-utils", commit="a03ebb35c35f4b21f0b1604b9f46451feb187ec6", remote="https://github.com/EVerest/everest-utils")
