@@ -139,6 +139,13 @@ def probe_module(
         module,
         skip_implementation,
         "ProbeModuleConnectorA",
+        "update_allowed_energy_transfer_modes",
+        lambda arg: None,
+    )
+    implement_command(
+        module,
+        skip_implementation,
+        "ProbeModuleConnectorA",
         "withdraw_authorization",
         lambda arg: None,
     )
@@ -231,6 +238,13 @@ def probe_module(
         skip_implementation,
         "ProbeModuleConnectorB",
         "authorize_response",
+        lambda arg: None,
+    )
+    implement_command(
+        module,
+        skip_implementation,
+        "ProbeModuleConnectorB",
+        "update_allowed_energy_transfer_modes",
         lambda arg: None,
     )
     implement_command(

@@ -455,5 +455,16 @@ void evse_managerImpl::handle_set_plug_and_charge_configuration(
     }
 }
 
+std::string evse_managerImpl::handle_update_allowed_energy_transfer_modes(
+    std::vector<types::iso15118::EnergyTransferMode>& allowed_energy_transfer_modes) {
+    // if (incompatible) {
+    //   return "IncompatibleType";
+    // }
+    if (!mod->r_hlc.empty() && mod->r_hlc[0]) {
+        mod->r_hlc[0]->call_update_energy_transfer_modes(allowed_energy_transfer_modes);
+    }
+    return "Accepted";
+}
+
 } // namespace evse
 } // namespace module

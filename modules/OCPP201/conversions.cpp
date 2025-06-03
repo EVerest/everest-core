@@ -1036,8 +1036,10 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
         validation_result.certificate_status.emplace(to_everest_certificate_status(response.certificateStatus.value()));
     }
 
-    validation_result.allowed_energy_transfer_modes =
-        to_everest_allowed_energy_transfer_modes(response.allowedEnergyTransfer);
+    if (validation_result.allowed_energy_transfer_modes.has_value()) {
+        validation_result.allowed_energy_transfer_modes =
+            to_everest_allowed_energy_transfer_modes(response.allowedEnergyTransfer.value());
+    }
     return validation_result;
 }
 
@@ -1545,18 +1547,15 @@ to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& 
     throw std::out_of_range("Could not convert EnergyTransferModeEnum");
 }
 
-std::optional<std::vector<types::iso15118::EnergyTransferMode>> to_everest_allowed_energy_transfer_modes(
-    const std::optional<std::vector<ocpp::v2::EnergyTransferModeEnum>>& allowed_energy_transfer_modes) {
-    std::optional<std::vector<types::iso15118::EnergyTransferMode>> ret = std::nullopt;
+std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_transfer_modes(
+    const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes) {
 
-    if (allowed_energy_transfer_modes.has_value()) {
-        std::vector<types::iso15118::EnergyTransferMode> value{};
-        for (const auto& mode : allowed_energy_transfer_modes.value()) {
-            value.push_back(to_everest_allowed_energy_transfer_mode(mode));
-        }
-        ret = value;
+    std::vector<types::iso15118::EnergyTransferMode> value{};
+    value.reserve(allowed_energy_transfer_modes.size());
+    for (const auto& mode : allowed_energy_transfer_modes) {
+        value.push_back(to_everest_allowed_energy_transfer_mode(mode));
     }
-    return ret;
+    return value;
 }
 
 } // namespace conversions
