@@ -278,10 +278,10 @@ to_ocpp_clear_display_message_response(const types::display_message::ClearDispla
 types::iso15118::EnergyTransferMode
 to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& allowed_energy_transfer_mode);
 
-/// \brief Converst a given std::optional<std::vector<ocpp::v2::EnergyTransferModeEnum>> \p to a
-/// std::optional<std::vector<types::iso15118::EnergyTransferMode>>
-std::optional<std::vector<types::iso15118::EnergyTransferMode>> to_everest_allowed_energy_transfer_modes(
-    const std::optional<std::vector<ocpp::v2::EnergyTransferModeEnum>>& allowed_energy_transfer_modes);
+/// \brief Converst a given std::vector<ocpp::v2::EnergyTransferModeEnum> \p to a
+/// std::vector<types::iso15118::EnergyTransferMode>
+std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_transfer_modes(
+    const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes);
 } // namespace conversions
 } // namespace module
 

@@ -193,8 +193,8 @@ types:
         type: integer
       allowed_energy_transfer_modes:
         description: >-
-          Only used with OCPP 2.1, this allows the CSMS to transmit to the charging station
-          which energy transfer modes are allowed with the vehicle.
+          This is only used when we want to specify which energy transfer modes are allowed for
+          the respective authorization request.
         type: array
         items:
           type: string

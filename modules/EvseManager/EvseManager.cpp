@@ -263,27 +263,22 @@ void EvseManager::ready() {
         auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-        std::vector<types::iso15118::SupportedEnergyMode> transfer_modes;
+        std::vector<types::iso15118::EnergyTransferMode> transfer_modes;
         if (config.charge_mode == "AC") {
             types::iso15118::SetupPhysicalValues setup_physical_values;
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
             r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-            constexpr auto support_bidi = false;
-
-            // FIXME: we cannot change this during run time at the moment. Refactor ISO interface to exclude transfer
-            // modes from setup
-            // transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
-            transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, support_bidi});
+            transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_three_phase_core);
 
         } else if (config.charge_mode == "DC") {
-            transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, false});
+            transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
 
             const auto caps = get_powersupply_capabilities();
             update_powersupply_capabilities(caps);
 
             if (caps.bidirectional) {
-                transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, true});
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
             }
 
             // Set present measurements on HLC to sane defaults
@@ -635,7 +630,8 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+        r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
 
         // reset error flags
         r_hlc[0]->call_reset_error();
@@ -1136,13 +1132,12 @@ void EvseManager::setup_fake_DC_mode() {
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-    std::vector<types::iso15118::SupportedEnergyMode> transfer_modes;
-    constexpr auto support_bidi = false;
+    std::vector<types::iso15118::EnergyTransferMode> transfer_modes;
 
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_core, support_bidi});
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, support_bidi});
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_combo_core, support_bidi});
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_unique, support_bidi});
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_core);
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_combo_core);
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_unique);
 
     types::iso15118::DcEvsePresentVoltageCurrent present_values;
     present_values.evse_present_voltage = 400; // FIXME: set a correct values
@@ -1163,7 +1158,8 @@ void EvseManager::setup_fake_DC_mode() {
 
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
-    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+    r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+    r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
 }
 
 void EvseManager::setup_AC_mode() {
@@ -1177,13 +1173,12 @@ void EvseManager::setup_AC_mode() {
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-    std::vector<types::iso15118::SupportedEnergyMode> transfer_modes;
-    constexpr auto support_bidi = false;
+    std::vector<types::iso15118::EnergyTransferMode> transfer_modes;
 
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_single_phase_core, support_bidi});
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
 
     if (get_hw_capabilities().max_phase_count_import == 3) {
-        transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, support_bidi});
+        transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_three_phase_core);
     }
 
     types::iso15118::SetupPhysicalValues setup_physical_values;
@@ -1191,7 +1186,8 @@ void EvseManager::setup_AC_mode() {
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
     if (hlc_enabled) {
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+        r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
     }
 }
 
