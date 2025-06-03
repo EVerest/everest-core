@@ -66,11 +66,11 @@ void AdAcEvse22KwzKitBSP::ready() {
     serial.run();
 
     if (!serial.reset(config.reset_gpio_chip, config.reset_gpio)) {
-        EVLOG_error << "Yeti reset not successful.";
+        EVLOG_error << "AD-ACEVSE22KWZ-KIT reset not successful.";
     }
 
-    serial.signalSpuriousReset.connect([this]() { EVLOG_error << "Yeti uC spurious reset!"; });
-    serial.signalConnectionTimeout.connect([this]() { EVLOG_error << "Yeti UART timeout!"; });
+    serial.signalSpuriousReset.connect([this]() { EVLOG_error << "AD-ACEVSE22KWZ-KIT spurious reset!"; });
+    serial.signalConnectionTimeout.connect([this]() { EVLOG_error << "AD-ACEVSE22KWZ-KIT UART timeout!"; });
 
     invoke_ready(*p_powermeter);
     invoke_ready(*p_board_support);

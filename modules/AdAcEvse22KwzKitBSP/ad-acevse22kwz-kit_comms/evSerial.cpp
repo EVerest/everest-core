@@ -336,7 +336,7 @@ bool evSerial::reset(const std::string& reset_chip, const int reset_line) {
     forced_reset = true;
 
     if (not reset_chip.empty()) {
-        // Try to hardware reset Yeti controller to be in a known state
+        // Try to hardware reset AD-ACEVSE22KWZ-KIT controller to be in a known state
         Everest::Gpio reset_gpio;
         reset_gpio.open(reset_chip, reset_line);
         reset_gpio.set_output(true);
@@ -346,7 +346,7 @@ bool evSerial::reset(const std::string& reset_chip, const int reset_line) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         reset_gpio.set(true);
     } else {
-        // Try to soft reset Yeti controller to be in a known state
+        // Try to soft reset AD-ACEVSE22KWZ-KIT controller to be in a known state
         EverestToMcu msg_out = EverestToMcu_init_default;
         msg_out.which_payload = EverestToMcu_reset_tag;
         linkWrite(&msg_out);

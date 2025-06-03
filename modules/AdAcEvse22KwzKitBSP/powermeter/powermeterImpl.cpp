@@ -6,11 +6,11 @@
 namespace module {
 namespace powermeter {
 
-static types::powermeter::Powermeter yeti_to_everest(const PowerMeter& p) {
+static types::powermeter::Powermeter adacevse22kwzkit_to_everest(const PowerMeter& p) {
     types::powermeter::Powermeter j;
 
     j.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-    j.meter_id = "YETI_POWERMETER";
+    j.meter_id = "AD_ACEVSE22KWZ_KIT_POWERMETER";
     j.phase_seq_error = p.phaseSeqError;
 
     j.energy_Wh_import.total = p.totalWattHr;
@@ -48,7 +48,7 @@ static types::powermeter::Powermeter yeti_to_everest(const PowerMeter& p) {
 }
 
 void powermeterImpl::init() {
-    mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) { publish_powermeter(yeti_to_everest(p)); });
+    mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) { publish_powermeter(adacevse22kwzkit_to_everest(p)); });
 }
 
 void powermeterImpl::ready() {
@@ -58,13 +58,13 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
     return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
             {},
             {},
-            "YetiDriver powermeter does not support the stop_transaction command"};
+            "AdAcEvse22KwzKitBSP powermeter does not support the stop_transaction command"};
 };
 
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
     return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
-            "YetiDriver powermeter does not support the start_transaction command"};
+            "AdAcEvse22KwzKitBSP powermeter does not support the start_transaction command"};
 }
 
 } // namespace powermeter

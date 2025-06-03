@@ -130,7 +130,7 @@ void evse_board_supportImpl::init() {
 
         caps.supports_changing_phases_during_charging = l.supports_changing_phases_during_charging;
         if (not caps_received) {
-            EVLOG_info << "Yeti Controller Configuration:";
+            EVLOG_info << "AD-ACEVSE22KWZ-KIT Configuration:";
             EVLOG_info << "  Hardware revision: " << l.hw_revision;
             EVLOG_info << "  Firmware version: " << l.sw_version_string;
             EVLOG_info << "  Current Limit: " << l.hwcap_max_current;
@@ -157,7 +157,7 @@ void evse_board_supportImpl::wait_for_caps() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (i == 50) {
-        EVLOG_error << "Did not receive hardware capabilities from Yeti hardware, using defaults.";
+        EVLOG_error << "Did not receive hardware capabilities from AD-ACEVSE22KWZ-KIT hardware, using defaults.";
     }
 }
 
@@ -178,7 +178,7 @@ void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::Po
 }
 
 types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
-    // FIXME: read PP ampacity from yeti, report back maximum current the hardware can handle for now
+    // FIXME: read PP ampacity from AD-ACEVSE22KWZ-KIT, report back maximum current the hardware can handle for now
     std::lock_guard<std::mutex> lock(capsMutex);
     return last_pp;
 }
