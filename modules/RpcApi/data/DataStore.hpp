@@ -41,6 +41,7 @@ public:
     void set_id(const std::string& id) {
         std::unique_lock<std::mutex> data_lock(this->data_mutex);
         this->dataobj.id = id;
+        this->data_is_valid = true; // set the data as valid, since we have a valid id now
     }
 public:
     int32_t get_index() {
