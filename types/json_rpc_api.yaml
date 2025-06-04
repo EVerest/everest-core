@@ -584,7 +584,8 @@ types:
             description: DC / AC Sum value
             type: number
       timestamp:
-        type: number
+        description: Timestamp of the meter values, as RFC3339 string
+        type: string
       voltage_V:
         description: Voltage in Volts
         type: object
