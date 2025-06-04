@@ -90,7 +90,7 @@ private:
                                       data::MeterDataStore& meter_data);
     void hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
                                        data::HardwareCapabilitiesStore& hw_caps_data);
-    bool check_evse_energy_sink_mapping();
+    bool check_evse_mapping();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

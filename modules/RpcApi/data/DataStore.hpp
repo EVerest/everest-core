@@ -20,18 +20,6 @@ public:
     }
 };
 
-class ConnectorInfoStore : public GenericInfoStore<RPCDataTypes::ConnectorInfoObj> {
-    // EXAMPLE, in case override is required
-    // void init_data() override {
-    //     memset(&dataobj, 0, sizeof(dataobj));
-    //     this->dataobj.id = -1;
-    // }
-public:
-    void set_id(int id) {
-        std::unique_lock<std::mutex> data_lock(this->data_mutex);
-        this->dataobj.id = id;
-    }
-};
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {
 public:
     void set_bidi_charging(bool enabled) {
@@ -47,28 +35,43 @@ public:
         this->dataobj.id = id;
         this->data_is_valid = true; // set the data as valid, since we have a valid id now
     }
-public:
+    void set_available_connectors(const std::vector<RPCDataTypes::ConnectorInfoObj>& connectors) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        this->dataobj.available_connectors = connectors;
+    }
+
+    void set_available_connector(types::json_rpc_api::ConnectorInfoObj& available_connector) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        // Interate through the vector and set the connector with the given id
+        for (auto& connector : this->dataobj.available_connectors) {
+            if (connector.id == available_connector.id) {
+                connector = available_connector; // Update the existing connector
+                return;
+            }
+        }
+        // If the connector with the given id is not found, add it to the vector
+        this->dataobj.available_connectors.push_back(available_connector);
+    }
+
     int32_t get_index() {
         std::unique_lock<std::mutex> data_lock(this->data_mutex);
         return this->dataobj.index;
+    }
+    std::vector<types::json_rpc_api::ConnectorInfoObj> get_available_connectors() {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        return this->dataobj.available_connectors;
     }
 };
 class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};
 class HardwareCapabilitiesStore : public GenericInfoStore<RPCDataTypes::HardwareCapabilitiesObj> {};
 class MeterDataStore : public GenericInfoStore<RPCDataTypes::MeterDataObj> {};
 
-// This is the data store for a single connector.
-struct DataStoreConnector {
-    ConnectorInfoStore connectorinfo;
-    HardwareCapabilitiesStore hardwarecapabilities;
-};
-
 // This is the data store for a single EVSE. An EVSE can have multiple connectors.
 struct DataStoreEvse {
     EVSEInfoStore evseinfo;
     EVSEStatusStore evsestatus;
     MeterDataStore meterdata;
-    std::vector<std::unique_ptr<DataStoreConnector>> connectors;
+    HardwareCapabilitiesStore hardwarecapabilities;
 };
 
 // This is the main data store for the charger. A charger can have multiple EVSEs, each with multiple connectors.

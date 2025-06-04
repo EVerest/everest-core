@@ -593,12 +593,10 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
     evse_info.index = 1;
+    evse_info.available_connectors.emplace_back();
+    evse_info.available_connectors[0].id = 1;
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
     data_store.evses[0]->evseinfo.set_data(evse_info);
-
-    RPCDataTypes::ConnectorInfoObj connectorinfo;
-    connectorinfo.id = 1;
-    connectorinfo.type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
-    data_store.evses[0]->connectors[0]->connectorinfo.set_data(connectorinfo);
 
     RPCDataTypes::EVSEStatusObj evse_status;
     evse_status.available = false;

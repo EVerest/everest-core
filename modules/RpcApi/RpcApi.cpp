@@ -13,10 +13,10 @@ void RpcApi::init() {
         // create one DataStore object per EVSE
         auto& evse_data = this->data.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
         // create one connector per EVSE
-        auto& connector = evse_data->connectors.emplace_back(std::make_unique<data::DataStoreConnector>());
-        // initialize connector id, counting from 0
-        connector->connectorinfo.set_id(0);
-
+        std::vector<types::json_rpc_api::ConnectorInfoObj> connectors;
+        connectors.emplace_back(types::json_rpc_api::ConnectorInfoObj());
+        connectors[0].id = 0; // initialize connector id, counting from 0
+        evse_data->evseinfo.set_available_connectors(std::move(connectors));
         // subscribe to evse_manager interface variables
         this->subscribe_evse_manager(evse_manager, *evse_data);
 
@@ -24,9 +24,6 @@ void RpcApi::init() {
         // https://github.com/EVerest/everest-core/pull/1109
         this->data.chargerinfo.set_unknown();
     }
-
-    // Check if all evse_energy_sink(s) have a mapping to an EVSE
-    check_evse_energy_sink_mapping();
 
     // Create the request handler
     m_request_handler = std::make_unique<RpcApiRequestHandler>(r_evse_manager, r_error_history, r_evse_energy_sink);
@@ -39,6 +36,8 @@ void RpcApi::init() {
 }
 
 void RpcApi::ready() {
+    // Check if all evse_energy_sink(s) have a mapping to an EVSE
+    check_evse_mapping();
     // Start server instances
     m_rpc_handler->start_server();
 
@@ -53,7 +52,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_hw_capabilities(
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
         // there is only one connector supported currently
-        this->hwcaps_var_to_datastore(hwcaps, evse_data.connectors[0]->hardwarecapabilities);
+        this->hwcaps_var_to_datastore(hwcaps, evse_data.hardwarecapabilities);
         });
     evse_manager->subscribe_evse_id(
         [this, &evse_data](const std::string& evse_id) {
@@ -202,36 +201,44 @@ void RpcApi::hwcaps_var_to_datastore(const types::evse_board_support::HardwareCa
     hw_caps_data.set_data(hw_caps_data_new);
 }
 
-bool RpcApi::check_evse_energy_sink_mapping() {
-    // Interate over all configured EVSE sinks and configure the data store accordingly
+bool RpcApi::check_evse_mapping() {
+    // Interate over the configured EVSE mapping and configure the data store accordingly
     if (r_evse_energy_sink.empty()) {
         EVLOG_error << "No EVSE energy sinks configured. Unable to extract EVSE index and connector id for the "
                         "connected r_evse_energy_sink. Please check your configuration file.";
         return false;
     }
-    else if (r_evse_energy_sink.size() != this->data.evses.size()) {
-        EVLOG_error << "The number of configured r_evse_energy_sink does not match the number of configured EVSEs. "
-                        "Please check your configuration file.";
-        return false;
+    if (r_evse_manager.size() != this->data.evses.size()) {
+        throw std::runtime_error(
+            "The number of EVSE managers does not match the number of EVSE data stores. ");
     }
     else {
-        // Iterate over all configured EVSE sinks and configure the data store accordingly
-        uint32_t idx = 0;
-        for (const auto& evse_energy_sink : r_evse_energy_sink) {
+        // As long as the EvseManager only supports one staticaly configured connector, we extract the
+        // connector id from the mapping. Only the connector type is retrieved from the EvseManager.
+        // Iterate over all over the mapping of the EVSE's and configure the data store accordingly
+        for (std::size_t idx = 0; idx < r_evse_manager.size(); idx++) {
+            const auto& evse_manager = r_evse_manager[idx];
+
             auto& evse_data = this->data.evses[idx++];
             // create one DataStore object per EVSE sink
-            if (evse_energy_sink->get_mapping().has_value()) {
+            if (evse_manager->get_mapping().has_value()) {
                 // Write EVSE index and connector id to the datastore
-                evse_data->evseinfo.set_index(evse_energy_sink->get_mapping().value().evse);
-                if (evse_energy_sink->get_mapping().value().connector.has_value()) {
+                evse_data->evseinfo.set_index(evse_manager->get_mapping().value().evse);
+                if (evse_manager->get_mapping().value().connector.has_value()) {
                     // Initialize connector id
-                    auto& connector = evse_data->connectors[0];
-                    connector->connectorinfo.set_id(evse_energy_sink->get_mapping().value().connector.value());
+                    types::json_rpc_api::ConnectorInfoObj connector;
+                    connector.id = evse_manager->get_mapping().value().connector.value();
+                    types::evse_manager::Evse evse = evse_manager->call_get_evse();
+                    if (!evse.connectors.empty()) {
+                        connector.id = evse.connectors[0].id;
+                    }
+                    else {
+                        connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
+                    }
+                    evse_data->evseinfo.set_available_connector(connector);
                 }
-            }
-            else {
-                EVLOG_error << "Please configure an evse mapping your configuration file for the connected "
-                                  "r_evse_energy_sink with module_id: " << evse_energy_sink->module_id;
+            } else {
+                EVLOG_error << "Please configure an evse mapping to your configuration file for the connected ";
                 return false;
             }
         }
