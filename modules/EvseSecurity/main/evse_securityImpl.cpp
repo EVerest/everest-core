@@ -34,8 +34,15 @@ types::evse_security::InstallCertificateResult
 evse_securityImpl::handle_install_ca_certificate(std::string& certificate,
                                                  types::evse_security::CaCertificateType& certificate_type) {
     try {
-        return conversions::to_everest(
+        const auto response = conversions::to_everest(
             this->evse_security->install_ca_certificate(certificate, conversions::from_everest(certificate_type)));
+        if (response == types::evse_security::InstallCertificateResult::Accepted) {
+            types::evse_security::CertificateStoreUpdate update;
+            update.operation = types::evse_security::CertificateStoreUpdateOperation::Installed;
+            update.ca_certificate_type = certificate_type;
+            this->publish_certificate_store_update(update);
+        }
+        return response;
     } catch (const std::out_of_range& e) {
         EVLOG_warning << e.what();
         return types::evse_security::InstallCertificateResult::WriteError;
@@ -45,8 +52,15 @@ evse_securityImpl::handle_install_ca_certificate(std::string& certificate,
 types::evse_security::DeleteCertificateResult
 evse_securityImpl::handle_delete_certificate(types::evse_security::CertificateHashData& certificate_hash_data) {
     try {
-        return conversions::to_everest(
+        const auto response = conversions::to_everest(
             this->evse_security->delete_certificate(conversions::from_everest(certificate_hash_data)));
+        if (response == types::evse_security::DeleteCertificateResult::Accepted) {
+            types::evse_security::CertificateStoreUpdate update;
+            update.operation = types::evse_security::CertificateStoreUpdateOperation::Deleted;
+            update.deleted_certificate_hash_data = certificate_hash_data;
+            this->publish_certificate_store_update(update);
+        }
+        return response;
     } catch (const std::out_of_range& e) {
         EVLOG_warning << e.what();
         return types::evse_security::DeleteCertificateResult::Failed;
@@ -57,8 +71,15 @@ types::evse_security::InstallCertificateResult
 evse_securityImpl::handle_update_leaf_certificate(std::string& certificate_chain,
                                                   types::evse_security::LeafCertificateType& certificate_type) {
     try {
-        return conversions::to_everest(this->evse_security->update_leaf_certificate(
+        const auto response = conversions::to_everest(this->evse_security->update_leaf_certificate(
             certificate_chain, conversions::from_everest(certificate_type)));
+        if (response == types::evse_security::InstallCertificateResult::Accepted) {
+            types::evse_security::CertificateStoreUpdate update;
+            update.operation = types::evse_security::CertificateStoreUpdateOperation::Installed;
+            update.leaf_certificate_type = certificate_type;
+            this->publish_certificate_store_update(update);
+        }
+        return response;
     } catch (const std::out_of_range& e) {
         EVLOG_warning << e.what();
         return types::evse_security::InstallCertificateResult::WriteError;
