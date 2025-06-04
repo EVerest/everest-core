@@ -16,12 +16,10 @@ Evse::Evse(std::shared_ptr<rpc::JsonRpc2ServerWithClient> rpc_server, data::Data
     m_rpc_server(std::move(rpc_server)), m_dataobj(dataobj) {
     for (const auto& evse : m_dataobj.evses) {
         const int32_t index = evse->evseinfo.get_index();
-        for (const auto& connector : evse->connectors) {
-            connector->hardwarecapabilities.register_notification_callback(
-                [this, index](const RPCDataTypes::HardwareCapabilitiesObj& data) {
-                    this->sendHardwareCapabilitiesChanged(index, data);
-                });
-        }
+        evse->hardwarecapabilities.register_notification_callback(
+            [this, index](const RPCDataTypes::HardwareCapabilitiesObj& data) {
+                this->sendHardwareCapabilitiesChanged(index, data);
+            });
         evse->evsestatus.register_notification_callback(
             [this, index](const RPCDataTypes::EVSEStatusObj& data) { this->sendStatusChanged(index, data); });
         evse->meterdata.register_notification_callback(

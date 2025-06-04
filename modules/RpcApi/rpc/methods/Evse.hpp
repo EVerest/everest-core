@@ -86,12 +86,12 @@ public:
             return res;
         }
 
-        if (evse->connectors.empty() || !evse->connectors[0]->hardwarecapabilities.get_data().has_value()) {
+        if (!evse->hardwarecapabilities.get_data().has_value()) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
             return res;
         }
 
-        res.hardware_capabilities = evse->connectors[0]->hardwarecapabilities.get_data().value();
+        res.hardware_capabilities = evse->hardwarecapabilities.get_data().value();
         return res;
     };
 
@@ -188,14 +188,14 @@ public:
             return res;
         }
         // Iterate through the connectors to find the one with the given ID
-        auto it = std::find_if(evse->connectors.begin(), evse->connectors.end(),
-            [connector_id](const auto& connector) { return connector->connectorinfo.get_data()->id == connector_id; });
+        auto connectors = evse->evseinfo.get_available_connectors();
+        auto it = std::find_if(connectors.begin(), connectors.end(),
+            [connector_id](const auto& connector) { return connector.id == connector_id; });
         // If not found, return an error
-        if (it == evse->connectors.end()) {
+        if (it == connectors.end()) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorID;
             return res;
         }
-
         return m_request_handler_ptr->enable_connector(evse_index, connector_id, enable, priority);
     };
 
