@@ -290,6 +290,11 @@ config:
       timeout occurs. It is recommended to disable it if OCPP1.6 is used.
     type: boolean
     default: false
+  inoperative_error_use_vendor_id:
+    description: >-
+      When raising evse_manager/Inoperative use the vendor ID from the original cause
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager

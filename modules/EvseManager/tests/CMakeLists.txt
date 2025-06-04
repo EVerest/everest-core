@@ -12,8 +12,10 @@ target_include_directories(${TEST_TARGET_NAME} PRIVATE
 )
 
 target_sources(${TEST_TARGET_NAME} PRIVATE
+    ErrorHandlingTest.cpp
     EventQueueTest.cpp
     IECStateMachineTest.cpp
+    ../ErrorHandling.cpp
     ../IECStateMachine.cpp
     ../backtrace.cpp
 )

@@ -105,6 +105,7 @@ struct Conf {
     int state_F_after_fault_ms;
     bool fail_on_powermeter_errors;
     bool raise_mrec9;
+    bool inoperative_error_use_vendor_id;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -141,8 +142,7 @@ public:
         r_over_voltage_monitor(std::move(r_over_voltage_monitor)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
-        config(config) {
-    }
+        config(config){};
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;

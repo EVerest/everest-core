@@ -11,6 +11,8 @@
 namespace module::stub {
 
 struct evse_managerImplStub : public evse_managerImplBase {
+    evse_managerImplStub(Everest::ModuleAdapter* ev, const std::string& name) : evse_managerImplBase(ev, name) {
+    }
     evse_managerImplStub() : evse_managerImplBase(nullptr, "manager") {
     }
     virtual void init() {
@@ -59,11 +61,11 @@ struct evse_managerImplStub : public evse_managerImplBase {
     handle_switch_three_phases_while_charging(bool& three_phases) {
         return types::evse_manager::SwitchThreePhasesWhileChargingResult::Success;
     }
-    virtual void
-    handle_set_get_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
-    }
     virtual bool handle_external_ready_to_start_charging() {
         return true;
+    }
+    virtual void
+    handle_set_get_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
     }
 };
 
