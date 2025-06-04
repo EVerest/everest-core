@@ -3,7 +3,6 @@
 #include "RpcApi.hpp"
 
 #include <boost/uuid/uuid_io.hpp>
-#include <utils/date.hpp>
 
 namespace module {
 
@@ -75,11 +74,8 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
 
     // mandatory objects from the EVerest powermeter interface variable
     // timestamp
-    const std::chrono::time_point<date::utc_clock> ts = Everest::Date::from_rfc3339(powermeter.timestamp);
-    // const std::chrono::milliseconds ts_millis = std::chrono::duration_cast<std::chrono::milliseconds>(ts);
-    const std::chrono::nanoseconds ts_nanos = ts.time_since_epoch();
-    // FIXME this is only a hack, as it only accepts nanos
-    meter_data_new.timestamp = ts_nanos.count() / 1000000000.f; // nanoseconds integer precision back to float seconds
+    meter_data_new.timestamp = powermeter.timestamp;
+
     // energy_Wh_import
     if (powermeter.energy_Wh_import.L1.has_value()) {
         meter_data_new.energy_Wh_import.L1 = powermeter.energy_Wh_import.L1.value();
