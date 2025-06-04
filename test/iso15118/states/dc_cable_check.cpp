@@ -56,9 +56,9 @@ SCENARIO("DC cable check state handling") {
         }
     }
 
-    // GIVEN("Bad Case - sequence error") {} // todo(sl): not here
+    // GIVEN("Bad Case - sequence error") {} // TODO(sl): not here
 
-    // GIVEN("Bad Case - Performance Timeout") {} // todo(sl): not here
+    // GIVEN("Bad Case - Performance Timeout") {} // TODO(sl): not here
 
-    // GIVEN("Bad Case - Sequence Timeout") {} // todo(sl): not here
+    // GIVEN("Bad Case - Sequence Timeout") {} // TODO(sl): not here
 }

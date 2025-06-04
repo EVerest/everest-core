@@ -32,7 +32,7 @@ template <> void convert(const struct iso20_AuthorizationSetupResType& in, Autho
         auto& pnc_out = out.authorization_mode.emplace<datatypes::PnC_ASResAuthorizationMode>();
         CB2CPP_BYTES(in.PnC_ASResAuthorizationMode.GenChallenge, pnc_out.gen_challenge);
 
-        // todo(sl): supported_providers missing
+        // TODO(sl): supported_providers missing
     }
 
     convert(in.Header, out.header);
@@ -54,7 +54,7 @@ struct AuthorizationModeVisitor {
         CB_SET_USED(out.PnC_ASResAuthorizationMode);
         init_iso20_PnC_ASResAuthorizationModeType(&out.PnC_ASResAuthorizationMode);
         CPP2CB_BYTES(in.gen_challenge, out.PnC_ASResAuthorizationMode.GenChallenge);
-        // todo(sl): supported_providers missing
+        // TODO(sl): supported_providers missing
     }
 
 private:

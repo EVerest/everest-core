@@ -129,13 +129,15 @@ Result SessionSetup::feed(Event ev) {
         m_ctx.respond(res);
 
         if (not new_session) {
-            const auto& pause_selected_energy_service = m_ctx.session.get_selected_services().selected_energy_service;
-            if (pause_selected_energy_service == message_20::datatypes::ServiceCategory::AC or
-                pause_selected_energy_service == message_20::datatypes::ServiceCategory::AC_BPT) {
+            const auto& selected_services = m_ctx.session.get_selected_services();
+            m_ctx.feedback.selected_service_parameters(selected_services);
+
+            if (selected_services.selected_energy_service == message_20::datatypes::ServiceCategory::AC or
+                selected_services.selected_energy_service == message_20::datatypes::ServiceCategory::AC_BPT) {
                 // TODO(sl): Missing AC charge parameter discovery state
                 return {};
-            } else if (pause_selected_energy_service == message_20::datatypes::ServiceCategory::DC or
-                       pause_selected_energy_service == message_20::datatypes::ServiceCategory::DC_BPT) {
+            } else if (selected_services.selected_energy_service == message_20::datatypes::ServiceCategory::DC or
+                       selected_services.selected_energy_service == message_20::datatypes::ServiceCategory::DC_BPT) {
                 return m_ctx.create_state<DC_ChargeParameterDiscovery>();
             }
             // TODO(sl): Error handling

@@ -162,6 +162,8 @@ TimePoint const& Session::poll() {
         // TODO(sl): Save UpdateDynamicParameters as well for ScheduleExchange
         if (const auto control_data = ctx.get_control_event<d20::DcTransferLimits>()) {
             ctx.session_config.dc_limits = *control_data;
+        } else if (const auto control_data = ctx.get_control_event<d20::EnergyServices>()) {
+            ctx.session_config.supported_energy_transfer_services = *control_data;
         }
 
         [[maybe_unused]] const auto res = fsm.feed(d20::Event::CONTROL_MESSAGE);

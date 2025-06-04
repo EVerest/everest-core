@@ -67,7 +67,9 @@ private:
     bool pause;
 };
 
+using EnergyServices = std::vector<message_20::datatypes::ServiceCategory>;
+
 using ControlEvent = std::variant<CableCheckFinished, PresentVoltageCurrent, AuthorizationResponse, StopCharging,
-                                  PauseCharging, DcTransferLimits, UpdateDynamicModeParameters>;
+                                  PauseCharging, DcTransferLimits, UpdateDynamicModeParameters, EnergyServices>;
 
 } // namespace iso15118::d20

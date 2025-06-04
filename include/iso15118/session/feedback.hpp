@@ -9,6 +9,7 @@
 #include <variant>
 
 #include <iso15118/d20/limits.hpp>
+#include <iso15118/d20/session.hpp>
 #include <iso15118/message/dc_charge_loop.hpp>
 #include <iso15118/message/dc_charge_parameter_discovery.hpp>
 #include <iso15118/message/schedule_exchange.hpp>
@@ -65,6 +66,7 @@ struct Callbacks {
                        const dt::MobilityNeedsMode&, const EvseTransferLimits&, const EvTransferLimits&,
                        const EvSEControlMode&)>
         notify_ev_charging_needs;
+    std::function<void(const d20::SelectedServiceParameters&)> selected_service_parameters;
 };
 
 } // namespace feedback
@@ -85,6 +87,7 @@ public:
                                   const dt::ControlMode&, const dt::MobilityNeedsMode&,
                                   const feedback::EvseTransferLimits&, const feedback::EvTransferLimits&,
                                   const feedback::EvSEControlMode&) const;
+    void selected_service_parameters(const d20::SelectedServiceParameters&) const;
 
 private:
     feedback::Callbacks callbacks;

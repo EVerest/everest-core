@@ -155,9 +155,9 @@ SCENARIO("Service discovery state handling") {
     GIVEN("Bad case - EV supported_service_ids do not match with evse supported services") {
     } // Todo(sl): Fill out
 
-    // GIVEN("Bad Case - sequence error") {} // todo(sl): not here
+    // GIVEN("Bad Case - sequence error") {} // TODO(sl): not here
 
-    // GIVEN("Performance Timeout") {} // todo(sl): not here
+    // GIVEN("Performance Timeout") {} // TODO(sl): not here
 
-    // GIVEN("Sequence Timeout") {} // todo(sl): not here
+    // GIVEN("Sequence Timeout") {} // TODO(sl): not here
 }

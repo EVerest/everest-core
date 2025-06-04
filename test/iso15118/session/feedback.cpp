@@ -223,4 +223,6 @@ SCENARIO("Feedback Tests") {
             REQUIRE(*std::get_if<feedback::MeterInfoRequested>(&feedback_results.dc_charge_loop_req) == expected);
         }
     }
+
+    // TODO(SL): Missing tests for notify_ev_charging_needs, selected_service_parameters
 }

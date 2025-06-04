@@ -114,9 +114,9 @@ SCENARIO("Authorization state handling") {
 
     // PnC test cases
 
-    // GIVEN("Bad Case - sequence error") {} // todo(sl): not here
+    // GIVEN("Bad Case - sequence error") {} // TODO(sl): not here
 
-    // GIVEN("Performance Timeout") {} // todo(sl): not here
+    // GIVEN("Performance Timeout") {} // TODO(sl): not here
 
-    // GIVEN("Sequence Timeout") {} // todo(sl): not here
+    // GIVEN("Sequence Timeout") {} // TODO(sl): not here
 }

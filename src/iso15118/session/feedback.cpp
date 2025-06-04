@@ -48,4 +48,8 @@ void Feedback::notify_ev_charging_needs(const dt::ServiceCategory& service_categ
                       mobility_needs_mode, evse_limits, ev_limits, ev_control_mode);
 }
 
+void Feedback::selected_service_parameters(const d20::SelectedServiceParameters& services) const {
+    call_if_available(callbacks.selected_service_parameters, services);
+}
+
 } // namespace iso15118::session

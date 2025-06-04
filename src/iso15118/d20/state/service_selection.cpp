@@ -105,6 +105,11 @@ Result ServiceSelection::feed(Event ev) {
     } else if (const auto req = variant->get_if<message_20::ServiceSelectionRequest>()) {
         const auto res = handle_request(*req, m_ctx.session);
 
+        if (res.response_code == message_20::datatypes::ResponseCode::OK) {
+            const auto selected_services = m_ctx.session.get_selected_services();
+            m_ctx.feedback.selected_service_parameters(selected_services);
+        }
+
         m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {

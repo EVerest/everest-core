@@ -52,20 +52,20 @@ SCENARIO("Power delivery state handling") {
     GIVEN("Bad case - ScheduleSelectionInvalid") {
     }
     GIVEN("Bad case - PowerDeliveryNotApplied") {
-    } // todo(sl): evse is not able to deliver energy
+    } // TODO(sl): evse is not able to deliver energy
 
     GIVEN("Bad case - PowerToleranceNotConfirmed") {
-    } // todo(sl): Scheduled Mode + Provided PowerTolerance in ScheduleExchangeRes
+    } // TODO(sl): Scheduled Mode + Provided PowerTolerance in ScheduleExchangeRes
     GIVEN("Not so bad case - WARNING_PowerToleranceNotConfirmed") {
-    } // todo(sl): Scheduled Mode + Provided PowerTolerance in ScheduleExchangeRes
+    } // TODO(sl): Scheduled Mode + Provided PowerTolerance in ScheduleExchangeRes
     GIVEN("Good case - OK_PowerToleranceConfirmed") {
-    } // todo(sl): Scheduled Mode + Provided PowerTolerance in ScheduleExchangeRes
+    } // TODO(sl): Scheduled Mode + Provided PowerTolerance in ScheduleExchangeRes
     GIVEN("Bad case - AC ContactorError") {
-    } // todo(sl): AC stuff
+    } // TODO(sl): AC stuff
 
-    // GIVEN("Bad Case - sequence error") {} // todo(sl): not here
+    // GIVEN("Bad Case - sequence error") {} // TODO(sl): not here
 
-    // GIVEN("Bad Case - Performance Timeout") {} // todo(sl): not here
+    // GIVEN("Bad Case - Performance Timeout") {} // TODO(sl): not here
 
-    // GIVEN("Bad Case - Sequence Timeout") {} // todo(sl): not here
+    // GIVEN("Bad Case - Sequence Timeout") {} // TODO(sl): not here
 }

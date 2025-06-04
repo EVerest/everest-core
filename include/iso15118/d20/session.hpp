@@ -75,7 +75,7 @@ struct PauseContext {
 
 class Session {
 
-    // todo(sl): move to a common defs file
+    // TODO(sl): move to a common defs file
     static constexpr auto ID_LENGTH = 8;
 
 public:

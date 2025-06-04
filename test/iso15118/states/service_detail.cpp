@@ -354,10 +354,10 @@ SCENARIO("Service detail state handling") {
     }
 
     GIVEN("Good Case - AC Service") {
-    } // todo(sl): later
+    } // TODO(sl): later
 
     GIVEN("Good Case - AC_WPT Service") {
-    } // todo(sl): later
+    } // TODO(sl): later
 
     GIVEN("Good Case - MCS Service") {
 
@@ -450,7 +450,7 @@ SCENARIO("Service detail state handling") {
 
     // GIVEN("Bad Case - sequence error") {} // todo(sl): not here
 
-    // GIVEN("Performance Timeout") {} // todo(sl): not here
+    // GIVEN("Performance Timeout") {} // TODO(sl): not here
 
-    // GIVEN("Sequence Timeout") {} // todo(sl): not here
+    // GIVEN("Sequence Timeout") {} // TODO(sl): not here
 }

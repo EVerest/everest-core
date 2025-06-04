@@ -59,17 +59,17 @@ SCENARIO("Session Stop state handling") {
         }
     }
 
-    // GIVEN("Bad case - Dynamic mode, FAILED_PauseNotAllowed") {} // todo(sl): EVCC requests Pause, but Secc didnt
+    // GIVEN("Bad case - Dynamic mode, FAILED_PauseNotAllowed") {} // TODO(sl): EVCC requests Pause, but Secc didnt
     // initiated
 
-    // GIVEN("Bad case - Scheduled mode , FAILED_PauseNotAllowed") {} // todo(sl): Check current EVPowerProfileEntry for
+    // GIVEN("Bad case - Scheduled mode , FAILED_PauseNotAllowed") {} // TODO(sl): Check current EVPowerProfileEntry for
     // 0kW
 
-    // GIVEN("Bad case - State B was not measuered -> FAILED") {} // todo(sl): check evse_manager?
+    // GIVEN("Bad case - State B was not measuered -> FAILED") {} // TODO(sl): check evse_manager?
 
-    // GIVEN("Bad Case - sequence error") {} // todo(sl): not here
+    // GIVEN("Bad Case - sequence error") {} // TODO(sl): not here
 
-    // GIVEN("Bad Case - Performance Timeout") {} // todo(sl): not here
+    // GIVEN("Bad Case - Performance Timeout") {} // TODO(sl): not here
 
-    // GIVEN("Bad Case - Sequence Timeout") {} // todo(sl): not here
+    // GIVEN("Bad Case - Sequence Timeout") {} // TODO(sl): not here
 }
