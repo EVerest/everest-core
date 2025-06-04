@@ -48,7 +48,8 @@ static types::powermeter::Powermeter adacevse22kwzkit_to_everest(const PowerMete
 }
 
 void powermeterImpl::init() {
-    mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) { publish_powermeter(adacevse22kwzkit_to_everest(p)); });
+    mod->serial.signalPowerMeter.connect(
+        [this](const PowerMeter& p) { publish_powermeter(adacevse22kwzkit_to_everest(p)); });
 }
 
 void powermeterImpl::ready() {

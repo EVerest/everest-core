@@ -97,7 +97,8 @@ void AdAcEvse22KwzKitBSP::ready() {
     }
 }
 
-void AdAcEvse22KwzKitBSP::publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data) {
+void AdAcEvse22KwzKitBSP::publish_external_telemetry_livedata(const std::string& topic,
+                                                              const Everest::TelemetryMap& data) {
     if (info.telemetry_enabled) {
         telemetry.publish("livedata", topic, data);
     }

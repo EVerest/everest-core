@@ -15,7 +15,7 @@
 #include <generated/interfaces/powermeter/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
-#include "ad-acevse22kwz-kit_comms/evSerial.h"
+#include "ad-acevse22kwz-kit_comms/evSerial.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -33,9 +33,8 @@ class AdAcEvse22KwzKitBSP : public Everest::ModuleBase {
 public:
     AdAcEvse22KwzKitBSP() = delete;
     AdAcEvse22KwzKitBSP(const ModuleInfo& info, Everest::TelemetryProvider& telemetry,
-               std::unique_ptr<powermeterImplBase> p_powermeter,
-               std::unique_ptr<evse_board_supportImplBase> p_board_support,
-               Conf& config) :
+                        std::unique_ptr<powermeterImplBase> p_powermeter,
+                        std::unique_ptr<evse_board_supportImplBase> p_board_support, Conf& config) :
         ModuleBase(info),
         telemetry(telemetry),
         p_powermeter(std::move(p_powermeter)),
