@@ -52,15 +52,24 @@ evse_securityImpl::handle_install_ca_certificate(std::string& certificate,
 types::evse_security::DeleteCertificateResult
 evse_securityImpl::handle_delete_certificate(types::evse_security::CertificateHashData& certificate_hash_data) {
     try {
-        const auto response = conversions::to_everest(
-            this->evse_security->delete_certificate(conversions::from_everest(certificate_hash_data)));
-        if (response == types::evse_security::DeleteCertificateResult::Accepted) {
+        const auto response = this->evse_security->delete_certificate(conversions::from_everest(certificate_hash_data));
+        const auto result = conversions::to_everest(response.result);
+
+        if (result == types::evse_security::DeleteCertificateResult::Accepted) {
             types::evse_security::CertificateStoreUpdate update;
             update.operation = types::evse_security::CertificateStoreUpdateOperation::Deleted;
-            update.deleted_certificate_hash_data = certificate_hash_data;
+
+            if (response.ca_certificate_type.has_value()) {
+                update.ca_certificate_type = conversions::to_everest(response.ca_certificate_type.value());
+            }
+            if (response.leaf_certificate_type.has_value()) {
+                update.leaf_certificate_type = conversions::to_everest(response.leaf_certificate_type.value());
+            }
+
             this->publish_certificate_store_update(update);
         }
-        return response;
+
+        return result;
     } catch (const std::out_of_range& e) {
         EVLOG_warning << e.what();
         return types::evse_security::DeleteCertificateResult::Failed;
