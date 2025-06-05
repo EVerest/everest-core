@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Portions (c) 2025 Analog Devices Inc.
 #ifndef AD_ACEVSE22KWZ_KIT_SERIAL_HPP
 #define AD_ACEVSE22KWZ_KIT_SERIAL_HPP
 
