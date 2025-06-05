@@ -31,7 +31,8 @@ InstallCertificateResult EvseSecurityImpl::install_ca_certificate(const std::str
 }
 
 DeleteCertificateResult EvseSecurityImpl::delete_certificate(const CertificateHashDataType& certificate_hash_data) {
-    return conversions::to_ocpp(this->evse_security->delete_certificate(conversions::from_ocpp(certificate_hash_data)));
+    return conversions::to_ocpp(
+        this->evse_security->delete_certificate(conversions::from_ocpp(certificate_hash_data)).result);
 }
 
 InstallCertificateResult EvseSecurityImpl::update_leaf_certificate(const std::string& certificate_chain,
