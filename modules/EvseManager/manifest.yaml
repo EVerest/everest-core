@@ -295,6 +295,18 @@ config:
       When raising evse_manager/Inoperative use the vendor ID from the original cause
     type: boolean
     default: false
+  session_id_type:
+    description: >-
+      Type to use for generation of session ids.
+      UUID: 36 characters UUIDs
+      UUID_BASE64: 22 characters base64 encoded uuids
+      SHORT_BASE64: 16 characters base64 encoded ids
+    type: string
+    enum:
+      - UUID
+      - UUID_BASE64
+      - SHORT_BASE64
+    default: UUID
 provides:
   evse:
     interface: evse_manager

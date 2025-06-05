@@ -106,6 +106,7 @@ struct Conf {
     bool fail_on_powermeter_errors;
     bool raise_mrec9;
     bool inoperative_error_use_vendor_id;
+    std::string session_id_type;
 };
 
 class EvseManager : public Everest::ModuleBase {

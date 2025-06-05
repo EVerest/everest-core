@@ -106,7 +106,8 @@ public:
                bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
                const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms,
-               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, const bool raise_mrec9);
+               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, const bool raise_mrec9,
+               const utils::SessionIdType session_id_type);
 
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
@@ -332,6 +333,8 @@ private:
         bool fail_on_powermeter_errors;
         // Raise MREC9 authorization timeout error
         bool raise_mrec9;
+        // type used to generate session ids
+        utils::SessionIdType session_id_type{utils::SessionIdType::UUID};
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
