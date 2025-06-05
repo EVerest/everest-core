@@ -77,7 +77,7 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
     // const std::chrono::milliseconds ts_millis = std::chrono::duration_cast<std::chrono::milliseconds>(ts);
     const std::chrono::nanoseconds ts_nanos = ts.time_since_epoch();
     // FIXME this is only a hack, as it only accepts nanos
-    meter_data_new.timestamp = ts_nanos.count() * 1000000000.f; // nanoseconds integer  precision back to float seconds
+    meter_data_new.timestamp = ts_nanos.count() / 1000000000.f; // nanoseconds integer precision back to float seconds
     // energy_Wh_import
     if (powermeter.energy_Wh_import.L1.has_value()) {
         meter_data_new.energy_Wh_import.L1 = powermeter.energy_Wh_import.L1.value();
