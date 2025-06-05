@@ -213,12 +213,11 @@ bool RpcApi::check_evse_mapping() {
             "The number of EVSE managers does not match the number of EVSE data stores. ");
     }
     else {
-        // As long as the EvseManager only supports one staticaly configured connector, we extract the
+        // As long as the EvseManager only supports one statically configured connector, we extract the
         // connector id from the mapping. Only the connector type is retrieved from the EvseManager.
         // Iterate over all over the mapping of the EVSE's and configure the data store accordingly
         for (std::size_t idx = 0; idx < r_evse_manager.size(); idx++) {
             const auto& evse_manager = r_evse_manager[idx];
-
             auto& evse_data = this->data.evses[idx++];
             // create one DataStore object per EVSE sink
             if (evse_manager->get_mapping().has_value()) {
@@ -229,8 +228,13 @@ bool RpcApi::check_evse_mapping() {
                     types::json_rpc_api::ConnectorInfoObj connector;
                     connector.id = evse_manager->get_mapping().value().connector.value();
                     types::evse_manager::Evse evse = evse_manager->call_get_evse();
-                    if (!evse.connectors.empty()) {
-                        connector.id = evse.connectors[0].id;
+                    if (!evse.connectors.empty() && evse.connectors[0].type.has_value()) {
+                        try {
+                            connector.type = types::json_rpc_api::string_to_connector_type_enum(types::evse_manager::connector_type_enum_to_string(evse.connectors[0].type.value()));//evse.connectors[0].type; // use the first connector type
+                        } catch (const std::out_of_range& e) {
+                            EVLOG_debug << "Unknown connector typ";
+                            connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown;
+                        }
                     }
                     else {
                         connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
