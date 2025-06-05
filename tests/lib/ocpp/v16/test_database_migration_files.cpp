@@ -79,3 +79,38 @@ TEST_P(DatabaseMigrationFilesTestV16, V16_MigrationFile2) {
     EXPECT_EQ(stmt->column_int(0), 55);
     EXPECT_EQ(stmt->step(), SQLITE_DONE);
 }
+
+TEST_P(DatabaseMigrationFilesTestV16, V16_MigrationFile4_OCSPRequest) {
+    everest::db::sqlite::SchemaUpdater updater{this->database.get()};
+
+    // Migrate up to version 3
+    EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 3));
+    this->ExpectUserVersion(3);
+
+    // OCSP_REQUEST table should exist at this version
+    EXPECT_TRUE(this->DoesTableExist("OCSP_REQUEST"));
+
+    // Migrate to version 4 (OCSP_REQUEST table should be dropped)
+    EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 4));
+    this->ExpectUserVersion(4);
+
+    // The table should be gone
+    EXPECT_FALSE(this->DoesTableExist("OCSP_REQUEST"));
+
+    // Now roll back to version 3
+    EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 3));
+    this->ExpectUserVersion(3);
+
+    // OCSP_REQUEST table should be recreated
+    EXPECT_TRUE(this->DoesTableExist("OCSP_REQUEST"));
+
+    // Optional: try to insert a row to verify it's functional
+    EXPECT_TRUE(
+        this->database->execute_statement("INSERT INTO OCSP_REQUEST (LAST_UPDATE) VALUES (\"2025-06-05T12:00:00Z\")"));
+
+    // Select to verify insert worked
+    auto stmt = this->database->new_statement("SELECT LAST_UPDATE FROM OCSP_REQUEST");
+    EXPECT_EQ(stmt->step(), SQLITE_ROW);
+    EXPECT_EQ(stmt->column_text(0), "2025-06-05T12:00:00Z");
+    EXPECT_EQ(stmt->step(), SQLITE_DONE);
+}

@@ -611,34 +611,5 @@ int DatabaseHandler::get_connector_id(const int profile_id) {
     return stmt->column_int(0);
 }
 
-void DatabaseHandler::insert_ocsp_update() {
-    std::string sql = "INSERT OR REPLACE INTO OCSP_REQUEST (LAST_UPDATE) VALUES "
-                      "(@last_update)";
-    auto stmt = this->database->new_statement(sql);
-
-    stmt->bind_text("@last_update", DateTime().to_rfc3339(), SQLiteString::Transient);
-
-    if (stmt->step() != SQLITE_DONE) {
-        throw QueryExecutionException(this->database->get_error_message());
-    }
-}
-
-std::optional<DateTime> DatabaseHandler::get_last_ocsp_update() {
-    std::string sql = "SELECT LAST_UPDATE FROM OCSP_REQUEST";
-    auto stmt = this->database->new_statement(sql);
-
-    int status = stmt->step();
-
-    if (status == SQLITE_DONE) {
-        return std::nullopt;
-    }
-
-    if (status == SQLITE_ROW) {
-        return DateTime(stmt->column_text(0));
-    }
-
-    throw QueryExecutionException(this->database->get_error_message());
-}
-
 } // namespace v16
 } // namespace ocpp

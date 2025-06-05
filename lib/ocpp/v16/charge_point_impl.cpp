@@ -2768,28 +2768,15 @@ void ChargePointImpl::sign_certificate(const ocpp::CertificateSigningUseEnum& ce
 }
 
 void ChargePointImpl::update_ocsp_cache() {
-    EVLOG_info << "Checking if OCSP cache should be updated";
     try {
-        const auto last_update = this->database_handler->get_last_ocsp_update();
-        const auto now = DateTime();
-        if (!last_update.has_value() or
-            (last_update.value().to_time_point() + std::chrono::seconds(this->configuration->getOcspRequestInterval()) <
-             now.to_time_point())) {
-            EVLOG_info << "Requesting OCSP response.";
-            const auto ocsp_request_data = this->evse_security->get_v2g_ocsp_request_data();
-            for (const auto& ocsp_request_entry : ocsp_request_data) {
-                ocpp::v2::OCSPRequestData ocsp_request =
-                    ocpp::evse_security_conversions::to_ocpp_v2(ocsp_request_entry);
-                this->data_transfer_pnc_get_certificate_status(ocsp_request);
-            }
-            this->database_handler->insert_ocsp_update();
-        } else {
-            EVLOG_info << "OCSP Cache is up-to-date enough";
+        EVLOG_info << "Updating OCSP cache for V2G leaf certificates";
+        const auto ocsp_request_data = this->evse_security->get_v2g_ocsp_request_data();
+        for (const auto& ocsp_request_entry : ocsp_request_data) {
+            ocpp::v2::OCSPRequestData ocsp_request = ocpp::evse_security_conversions::to_ocpp_v2(ocsp_request_entry);
+            this->data_transfer_pnc_get_certificate_status(ocsp_request);
         }
-    } catch (const QueryExecutionException& e) {
-        EVLOG_warning << "Could not insert OCSP update in database: " << e.what();
     } catch (const std::exception& e) {
-        EVLOG_warning << "Unknown Error while requesting OCSP Response: " << e.what();
+        EVLOG_warning << "Unknown Error while updating OCSP: " << e.what();
     }
 }
 
@@ -3988,6 +3975,9 @@ void ChargePointImpl::handle_data_transfer_pnc_certificate_signed(Call<DataTrans
         if (certificate_response.status == CertificateSignedStatusEnumType::Rejected) {
             this->securityEventNotification(ocpp::security_events::INVALIDCHARGEPOINTCERTIFICATE,
                                             std::optional<CiString<255>>(tech_info), true);
+        } else {
+            // update the OCSP cache in case a new certificate was installed
+            this->update_ocsp_cache();
         }
     } catch (const json::exception& e) {
         EVLOG_warning << "Could not parse data of DataTransfer message CertificateSigned.req: " << e.what();
