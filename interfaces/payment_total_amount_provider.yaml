@@ -1,0 +1,28 @@
+description: >-
+  This interface publishes the final or running costs and allows to announce preauthorization of money.
+cmds:
+  cmd_announce_preauthorization:
+    description: Allows to announce id_tokens which are associated with a preauthorization of money
+    arguments:
+      preauthorization:
+        description: Request to stop the transaction.
+        type: object
+        $ref: /payment#/BankingPreauthorization
+    result:
+      description: Returns true if successful
+      type: boolean
+  cmd_withdraw_preauthorization:
+    description: Allows to withdraw an earlier announced preauthorization (e.g. because the payment session needs to close)
+    arguments:
+      id_token:
+        description: Token which the preauthorization to be withdrawn is assocciated with
+        type: object
+        $ref: /authorization#/IdToken
+    result:
+      description: Returns true if successful
+      type: boolean
+vars:
+  total_cost_amount:
+    description: Carries the total amount.
+    type: object
+    $ref: /payment#/TotalCostAmount

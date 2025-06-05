@@ -41,6 +41,18 @@ void SessionMonitor::set_tariff(Tariff tariff) {
     }
 }
 
+void SessionMonitor::set_cost_limit(int32_t limit) {
+    if (m_payment_session) {
+        m_payment_session->set_cost_limit(limit);
+    }
+}
+
+void SessionMonitor::stop_session(types::evse_manager::StopTransactionReason reason) {
+    // TODO(CB): Is this lock sufficient?
+    std::scoped_lock<std::mutex> lock(*m_start_new_mtx);
+    m_payment_session->finish_now(reason);
+}
+
 SessionMonitor::~SessionMonitor() {
     std::scoped_lock<std::mutex> lock(*m_start_new_mtx);
     cancel_running_session();
@@ -52,10 +64,10 @@ void SessionMonitor::handle_Evse_SessionEvent(const types::evse_manager::Session
         // this will start a new session, no matter what (does not test if an old session is still running!)
         handle_session_start(event);
     } else {
-        // One could make handle_event throw, if the session_id does not match
-        // and reset the session here
-        // in case of a new session_start this will happen anyway because then
-        // the first branch of this if-statement applies
+        // One could make m_payment_session->handle_Evse_SessionEvent throws, if the session_id does not match
+        // and reset the session here.
+        // In case of a new session_start this will happen anyway because then
+        // the first branch of this if-statement applies.
         if (m_payment_session) {
             try {
                 m_payment_session->handle_Evse_SessionEvent(event);
@@ -78,15 +90,6 @@ void SessionMonitor::handle_session_start(const types::evse_manager::SessionEven
     auto future = m_payment_session->get_future();
 
     std::thread([this, future = std::move(future)]() mutable { await_session_finish(std::move(future)); }).detach();
-
-    // FIXME(CB): We use the provided_token from the Transaction_Start _or_ Session_Start:
-    //            Need to decide when to start the session timeout
-    m_session_timeout = m_timer_factory.get_session_timer();
-    m_session_timeout->set_callback([this]() {
-        std::scoped_lock<std::mutex> lock(*m_start_new_mtx);
-        m_payment_session->finish_now();
-    });
-    m_session_timeout->start();
 }
 
 void SessionMonitor::await_session_finish(std::future<ResultType>&& future) {
@@ -96,7 +99,6 @@ void SessionMonitor::await_session_finish(std::future<ResultType>&& future) {
         m_cost_update_callback(result.value());
     }
     std::scoped_lock<std::mutex> lock(*m_finish_mtx);
-    m_session_timeout.reset();
     m_payment_session.reset();
     m_session_finish_cv.notify_all();
 }

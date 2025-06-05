@@ -55,8 +55,8 @@ private:
     std::optional<receipt_id_t> get_receipt_id_from_local_list(const bank_session_token_t& bank_session_id);
     std::optional<bank_session_token_t> find_key_for_card_id(const card_id_t& card_id);
 
+    std::shared_ptr<PaymentTerminalIfc> m_VPT;
     std::unique_ptr<ConcurrencyControl> m_cc;
-    std::shared_ptr<PaymentTerminalIfc> m_VPT{};
     std::map<bank_session_token_t, Preauthorization> m_open_bank_preauths;
     std::optional<CardData> m_active_card{};
     std::vector<receipt_id_t> m_unmatched_open_preauthorizations;

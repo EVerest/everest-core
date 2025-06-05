@@ -1,11 +1,5 @@
-/*
- * Licensor: Pionix GmbH, 2024
- * License: BaseCamp - License Version 1.0
- *
- * Licensed under the terms and conditions of the BaseCamp License contained in the "LICENSE" file, also available
- * under: https://pionix.com/pionix-license-terms
- * You may not use this file/code except in compliance with said License.
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2022 - 2024 Pionix GmbH and Contributors to EVerest
 #ifndef PAYMENT_TERMINAL_SIMULATOR_HPP
 #define PAYMENT_TERMINAL_SIMULATOR_HPP
 
@@ -20,7 +14,7 @@
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/interfaces/session_cost/Interface.hpp>
+#include <generated/interfaces/payment_total_amount_provider/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include <memory>
@@ -29,8 +23,8 @@
 #include <vector>
 
 #include "PaymentTerminalDriver/PTDriver.hpp"
-#include "include/PTSimulationIfc.hpp"
 #include "VirtualPaymentTerminal/VirtualPT.hpp"
+#include "include/PTSimulationIfc.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -40,6 +34,7 @@ struct Conf {
     int pre_authorization_amount;
     int token_debounce_interval_ms;
     bool simulated_PT_has_open_preauthorizations;
+    int session_timeout_s;
     int max_open_transactions;
 };
 
@@ -48,16 +43,16 @@ public:
     PaymentTerminalSimulator() = delete;
     PaymentTerminalSimulator(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                              std::unique_ptr<auth_token_providerImplBase> p_token_provider,
-                             std::unique_ptr<session_costIntf> r_cost_provider, Conf& config) :
+                             std::unique_ptr<payment_total_amount_providerIntf> r_total_amount_provider, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_token_provider(std::move(p_token_provider)),
-        r_cost_provider(std::move(r_cost_provider)),
+        r_total_amount_provider(std::move(r_total_amount_provider)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
-    const std::unique_ptr<session_costIntf> r_cost_provider;
+    const std::unique_ptr<payment_total_amount_providerIntf> r_total_amount_provider;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -75,21 +70,24 @@ private:
     void ready();
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
-    void receive_session_cost(types::session_cost::SessionCost session_cost);
+    void receive_final_cost(types::payment::TotalCostAmount total_amount);
     void read_cards_forever();
-    void publish_costs_to_nodered(const types::session_cost::SessionCost& session_cost, int32_t total_cost);
-    void print_costs_to_log(const types::session_cost::SessionCost& session_cost, int32_t total_cost);
-    bool finalize_payment(const types::session_cost::SessionCost& session_cost, int32_t total_cost);
-    void print_and_publish_to_nodered_finalization_result(const types::session_cost::SessionCost& session_cost, int32_t total_cost, bool success);
+    void publish_costs_to_nodered(const types::payment::TotalCostAmount& total_amount);
+    void print_costs_to_log(int32_t total_cost);
+    bool finalize_payment(const types::payment::TotalCostAmount& total_amount);
+    void print_and_publish_to_nodered_finalization_result(const types::payment::TotalCostAmount& total_amount,
+                                                          bool success);
 
     const std::string bankcard_mqtttopic{"everest_external/nodered/payment_terminal/cmd/present_banking_card"};
     const std::string rfidcard_mqtttopic{"everest_external/nodered/payment_terminal/cmd/present_rfid_card"};
-    const std::string preauthorizations_mqtttopic{"everest_external/nodered/payment_terminal/stat/open_preauthorizations"};
+    const std::string preauthorizations_mqtttopic{
+        "everest_external/nodered/payment_terminal/stat/open_preauthorizations"};
     const std::string partial_reversal_mqtttopic{"everest_external/nodered/payment_terminal/stat/partial_reversal"};
     const std::string running_costs_mqtttopic{"everest_external/nodered/payment_terminal/stat/running_costs"};
     std::unique_ptr<pterminal::PTDriver> m_PT_drv{};
     std::shared_ptr<pterminal::VirtualPT> m_VPT{};
     std::shared_ptr<pterminal::PTSimulationIfc> m_simIfc{};
+    std::vector<std::future<void>> session_timeout_futures{};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

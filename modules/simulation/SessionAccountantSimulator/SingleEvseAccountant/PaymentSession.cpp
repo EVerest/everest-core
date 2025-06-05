@@ -10,13 +10,16 @@
 #include "PaymentSession.hpp"
 
 #include <chrono>
+
+#include <iostream>  // TODO(CB): remove!
+
 #include <memory>
 #include <utility>
 #include <vector>
 
 namespace {
 
-// TODO(CB): this function is more or less a duplicate from PaymentTerminalSimulator
+// TODO(CB): this function is more or less a duplicate from SessionAccountantSimulator.cpp
 uint32_t calc_total_cost(const std::vector<types::session_cost::SessionCostChunk>& cost_chunks) {
     auto sum_optionals = [](uint32_t lhs, std::optional<types::session_cost::SessionCostChunk> rhs) {
         return lhs + (rhs ? (rhs->cost ? rhs->cost->value : 0) : 0);
@@ -34,7 +37,6 @@ namespace SessionAccountant {
 PaymentSession::PaymentSession(const types::evse_manager::SessionEvent& session_started_event,
                                SessionAccountant::Tariff tariff, SessionAccountant::TimerFactory timer_factory) :
     m_cost_calculator(tariff),
-    m_reserved_amount_of_money(tariff.reserved_amount_of_money_mau),
     m_timer_factory(timer_factory) {
     m_session_cost.session_id = session_started_event.uuid;
     m_session_cost.status = types::session_cost::SessionStatus::Idle;
@@ -88,8 +90,7 @@ void PaymentSession::handle_Evse_SessionEvent(const types::evse_manager::Session
 void PaymentSession::handle_transaction_start(const types::evse_manager::SessionEvent& event) {
     m_transaction_running = true;
     if (m_session_cost.id_tag) {
-        // TODO(CB): Not a complete comparison!
-        if (m_session_cost.id_tag.value().id_token.value == event.transaction_started->id_tag.id_token.value) {
+        if (m_session_cost.id_tag.value() == event.transaction_started->id_tag) {
             // TODO(CB): That's fine
         } else {
             // TODO(CB): Any valid scenario where one expects different authentication IDs?
@@ -107,6 +108,10 @@ void PaymentSession::handle_transaction_start(const types::evse_manager::Session
     m_powermeter_timeout->start();
 
     m_session_cost.status = types::session_cost::SessionStatus::Running;
+
+    // Check cost_limit for the first time - if cost limit was 0 we need to stop again
+    update_session_cost();
+    check_cost_limit();
 }
 
 void PaymentSession::handle_transaction_finish(const types::evse_manager::SessionEvent& event) {
@@ -149,6 +154,10 @@ void PaymentSession::set_update_cost_callback(const update_cost_callback& callba
     m_update_cost_callback = callback;
 }
 
+void PaymentSession::set_cost_limit(int32_t limit) {
+    m_cost_limit = limit;
+}
+
 void PaymentSession::handle_pmeter_update(SessionAccountant::PowermeterUpdate powermeter) {
     if (not m_transaction_running or not m_enabled) {
         return;
@@ -171,10 +180,10 @@ void PaymentSession::handle_tariff_update(Tariff tariff) {
     m_cost_calculator.handle_tariff_update(tariff);
 }
 
-void PaymentSession::finish_now() {
+void PaymentSession::finish_now(types::evse_manager::StopTransactionReason reason) {
     if (m_transaction_running) {
         m_end_after_transaction_finish = true;
-        call_stop_transaction_callback(types::evse_manager::StopTransactionReason::TimeLimitReached);
+        call_stop_transaction_callback(reason);
     } else {
         finish_payment_session();
     }
@@ -187,15 +196,20 @@ void PaymentSession::update_session_cost() {
 
     m_total_cost = calc_total_cost(m_session_cost.cost_chunks.value());
 
+    // TODO(CB): Behaviour of YetiSimulator: sometimes negative energy amounts can occur
+    if (m_total_cost < 0) {
+        std::cout << "m_total_cost = " << m_total_cost <<" ;  " << m_session_cost << std::endl;
+    }
+
     // TODO(CB): extrapolate when the pre_authorized_amount of money will be exhausted (Timer)
 
     call_update_cost_callback();
 }
 
 void PaymentSession::check_cost_limit() {
-    if (m_reserved_amount_of_money <= m_total_cost) {
+    if (m_cost_limit <= m_total_cost) {
         call_stop_transaction_callback(types::evse_manager::StopTransactionReason::LocalOutOfCredit);
-        m_end_after_transaction_finish = true;   // TODO(CB): Commented for debugging
+        m_end_after_transaction_finish = true;
     }
 }
 

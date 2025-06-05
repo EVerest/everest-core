@@ -18,10 +18,6 @@ config:
     description: Currency in ISO 4217 format.
     default: 978
     type: integer
-  pre_authorization_amount_mau:
-    description: Pre authentication amount in minimal accountable unit (cents).
-    default: 5000
-    type: integer
   session_timeout_s:
     description: Time a payment session is allowed to be active. Charging is forced to stop when time runs out.
     default: 50
@@ -39,10 +35,14 @@ requires:
     interface: evse_manager
     min_connections: 1
     max_connections: 128
+  evse_manager:
+    interface: evse_manager
+    min_connections: 1
+    max_connections: 128
 provides:
-  session_cost:
+  total_amount:
     description: Provides billable prices for finished charging sessions.
-    interface: session_cost
+    interface: payment_total_amount_provider
 enable_external_mqtt: true
 metadata:
   license: https://pionix.com/pionix-license-terms

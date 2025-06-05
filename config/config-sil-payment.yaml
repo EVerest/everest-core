@@ -174,18 +174,17 @@ active_modules:
   payment_terminal:
     config_module:
       pre_authorization_amount: 200
+      session_timeout_s: 200
     connections:
-      cost_provider:
-        - implementation_id: session_cost
+      total_amount_provider:
+        - implementation_id: total_amount
           module_id: accountant
     module: PaymentTerminalSimulator
   accountant:
     config_module:
       start_session_price_mau: 0
-      kWh_price_millimau: 400000
+      kWh_price_millimau: 800000
       idle_hourly_price_mau: 200
-      pre_authorization_amount_mau: 200
-      session_timeout_s: 20
       powermeter_timeout_s: 2
       grace_period_minutes: 1
     connections:

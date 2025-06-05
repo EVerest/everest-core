@@ -16,7 +16,6 @@
 namespace SessionAccountant {
 
 struct TimerFactory {
-std::function<std::shared_ptr<Timeout::TimeoutBase>()> get_session_timer;
 std::function<std::shared_ptr<Timeout::TimeoutBase>()> get_powermeter_timeout_timer;
 std::function<std::shared_ptr<Timeout::TimeoutBase>()> get_generic_timer;
 };

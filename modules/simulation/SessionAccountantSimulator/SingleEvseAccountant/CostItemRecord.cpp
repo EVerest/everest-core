@@ -104,6 +104,7 @@ void CostItemRecord::add_consecutive_idle_item() {
 }
 
 const std::vector<CostItem>* CostItemRecord::get_items() const {
+    // TODO(CB): Returning a ref to a member is a bad idea (use shared_ptr)
     return &m_cost_items;
 }
 

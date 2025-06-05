@@ -13,7 +13,7 @@ ev_setup_cpp_module()
 
 target_sources(${MODULE_NAME}
     PRIVATE
-        "session_cost/session_costImpl.cpp"
+        "total_amount/payment_total_amount_providerImpl.cpp"
         "SingleEvseAccountant/PaymentSession.cpp"
         "SingleEvseAccountant/SingleEvseAccountantTypes.cpp"
         "SingleEvseAccountant/CostItemRecord.cpp"

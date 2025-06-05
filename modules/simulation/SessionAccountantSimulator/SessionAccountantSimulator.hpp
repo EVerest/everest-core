@@ -17,7 +17,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/session_cost/Implementation.hpp>
+#include <generated/interfaces/payment_total_amount_provider/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "SingleEvseAccountant/CostCalculator.hpp"
@@ -39,7 +40,6 @@ struct Conf {
     int kWh_price_millimau;
     int idle_hourly_price_mau;
     int currency;
-    int pre_authorization_amount_mau;
     int session_timeout_s;
     int powermeter_timeout_s;
     int grace_period_minutes;
@@ -49,21 +49,23 @@ class SessionAccountantSimulator : public Everest::ModuleBase {
 public:
     SessionAccountantSimulator() = delete;
     SessionAccountantSimulator(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                               std::unique_ptr<session_costImplBase> p_session_cost,
+                               std::unique_ptr<payment_total_amount_providerImplBase> p_total_amount,
                                std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_session_cost(std::move(p_session_cost)),
+        p_total_amount(std::move(p_total_amount)),
         r_evse_manager(std::move(r_evse_manager)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<session_costImplBase> p_session_cost;
+    const std::unique_ptr<payment_total_amount_providerImplBase> p_total_amount;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
+    bool add_preauthorization(const types::payment::BankingPreauthorization& preauthorization);
+    bool withdraw_preauthorization(const types::authorization::IdToken& id_token);
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -78,8 +80,17 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     void init_session_monitor(evse_managerIntf* evse_manager);
+    std::optional<types::money::MoneyAmount>
+    get_preauthorization_amount_for_IdToken(types::authorization::IdToken, SessionAccountant::SessionMonitor*);
 
     std::vector<std::unique_ptr<SessionAccountant::SessionMonitor>> m_session_monitors{};
+
+    std::map<std::string, std::pair<types::payment::BankingPreauthorization, SessionAccountant::SessionMonitor*>>
+        m_unmatched_preauthorizations{};
+    std::map<std::string, std::pair<types::payment::BankingPreauthorization, SessionAccountant::SessionMonitor*>>
+        m_matched_preauthorizations{};
+
+    std::mutex m_preauthorizations_mtx;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

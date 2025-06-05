@@ -1,11 +1,5 @@
-/*
- * Licensor: Pionix GmbH, 2024
- * License: BaseCamp - License Version 1.0
- *
- * Licensed under the terms and conditions of the BaseCamp License contained in the "LICENSE" file, also available
- * under: https://pionix.com/pionix-license-terms
- * You may not use this file/code except in compliance with said License.
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2022 - 2024 Pionix GmbH and Contributors to EVerest
 #ifndef TOKEN_PROVIDER_AUTH_TOKEN_PROVIDER_IMPL_HPP
 #define TOKEN_PROVIDER_AUTH_TOKEN_PROVIDER_IMPL_HPP
 

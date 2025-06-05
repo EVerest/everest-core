@@ -41,9 +41,10 @@ public:
 
     void set_stop_transaction_callback(const stop_transaction_callback& callback);
     void set_update_cost_callback(const update_cost_callback& callback);
+    void set_cost_limit(int32_t limit);
     void handle_pmeter_update(SessionAccountant::PowermeterUpdate powermeter);
     void handle_tariff_update(Tariff tariff);
-    void finish_now();
+    void finish_now(types::evse_manager::StopTransactionReason reason);
 
 private:
     void handle_transaction_start(const types::evse_manager::SessionEvent& event);
@@ -58,7 +59,7 @@ private:
 
     types::session_cost::SessionCost m_session_cost{};
     std::promise<ResultType> m_done_promise{};
-    int32_t m_reserved_amount_of_money{0};
+    int32_t m_cost_limit{0};
     uint32_t m_total_cost{0};
     bool m_enabled{true};
     bool m_transaction_running{false};

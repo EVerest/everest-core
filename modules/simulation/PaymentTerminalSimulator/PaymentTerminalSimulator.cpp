@@ -1,13 +1,9 @@
-/*
- * Licensor: Pionix GmbH, 2024
- * License: BaseCamp - License Version 1.0
- *
- * Licensed under the terms and conditions of the BaseCamp License contained in the "LICENSE" file, also available
- * under: https://pionix.com/pionix-license-terms
- * You may not use this file/code except in compliance with said License.
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2022 - 2024 Pionix GmbH and Contributors to EVerest
+
 #include "PaymentTerminalSimulator.hpp"
 
+#include <ctime>
 #include <fmt/format.h>
 #include <iomanip>
 #include <numeric>
@@ -18,20 +14,6 @@ std::string generate_banking_id() {
     static int id_int{555555};
 
     return fmt::format("{:#08x}", id_int++);
-}
-
-uint32_t calc_total_cost(const types::session_cost::SessionCost& session_cost) {
-    auto sum_optionals = [](uint32_t lhs, std::optional<types::session_cost::SessionCostChunk> rhs) {
-        return lhs + (rhs ? (rhs->cost ? rhs->cost->value : 0) : 0);
-    };
-
-    auto& cost_chunks = session_cost.cost_chunks;
-
-    uint32_t total_cost{0};
-    if (cost_chunks) {
-        total_cost = std::accumulate(cost_chunks->cbegin(), cost_chunks->cend(), 0, sum_optionals);
-    }
-    return total_cost;
 }
 
 int32_t pow10(int32_t exponent) {
@@ -76,8 +58,8 @@ void PaymentTerminalSimulator::init() {
 }
 
 void PaymentTerminalSimulator::ready() {
-    r_cost_provider->subscribe_session_cost(
-        [this](types::session_cost::SessionCost cost) { receive_session_cost(cost); });
+    r_total_amount_provider->subscribe_total_cost_amount(
+        [this](types::payment::TotalCostAmount total_amount) { receive_final_cost(total_amount); });
 
     invoke_ready(*p_token_provider);
 
@@ -95,25 +77,20 @@ void PaymentTerminalSimulator::ready() {
     read_cards_forever();
 }
 
-void PaymentTerminalSimulator::receive_session_cost(types::session_cost::SessionCost session_cost) {
-    if (!session_cost.id_tag ||
-        session_cost.id_tag->authorization_type != types::authorization::AuthorizationType::BankCard) {
+void PaymentTerminalSimulator::receive_final_cost(types::payment::TotalCostAmount total_amount) {
+    int32_t total_cost = total_amount.cost.value;
+
+    if (not total_amount.final) {
+        publish_costs_to_nodered(total_amount);
+
+        print_costs_to_log(total_cost);
         return;
     }
 
-    int32_t total_cost = calc_total_cost(session_cost);
+    bool success = finalize_payment(total_amount);
+    // TODO(CB): What if that failed?
 
-    publish_costs_to_nodered(session_cost, total_cost);
-
-    if (session_cost.status != types::session_cost::SessionStatus::Finished) {
-        return;
-    }
-
-    print_costs_to_log(session_cost, total_cost);
-
-    bool success = finalize_payment(session_cost, total_cost);
-
-    print_and_publish_to_nodered_finalization_result(session_cost, total_cost, success);
+    print_and_publish_to_nodered_finalization_result(total_amount, success);
 }
 
 void PaymentTerminalSimulator::read_cards_forever() {
@@ -136,13 +113,33 @@ void PaymentTerminalSimulator::read_cards_forever() {
             }
             token.id_token.value = banking_id;
             token.authorization_type = types::authorization::AuthorizationType::BankCard;
-            // TODO(CB): Is "Local" the correct token type?
+            // token.id_token.type = types::authorization::IdTokenType::DirectPayment;  // TODO(CB): Use this line, once this enum value is defined in the authorization type!
             token.id_token.type = types::authorization::IdTokenType::Local;
             token.prevalidated = true;
             EVLOG_info << "Received an authentication record: Banking card";
+            types::money::MoneyAmount preauthorized_amount{config.pre_authorization_amount};
+            types::payment::BankingPreauthorization preauthorization{preauthorized_amount, token.id_token};
+            bool success = r_total_amount_provider->call_cmd_announce_preauthorization(preauthorization);
+            // TODO(CB): What if that failed!?
+
+            // TODO(CB): Need a robust timer which can also be cancelled
+            session_timeout_futures.push_back(std::async(std::launch::async, [this, id_token = token.id_token]() {
+                auto scheduled_time = std::chrono::steady_clock::now() + std::chrono::seconds(config.session_timeout_s);
+                std::this_thread::sleep_until(scheduled_time);
+                bool success = r_total_amount_provider->call_cmd_withdraw_preauthorization(id_token);
+                // TODO(CB): Log if not successfull?
+            }));
+            if (session_timeout_futures.back().valid()) {
+                auto withdraw_time = std::chrono::system_clock::to_time_t(
+                    std::chrono::system_clock::now() + std::chrono::seconds(config.session_timeout_s));
+                EVLOG_info << "Announced token '" << token.id_token.value << "' for amount °"
+                           << config.pre_authorization_amount << "° - will be withdrawn at "
+                           << std::ctime(&withdraw_time) << " (in " << config.session_timeout_s << "s)";
+            }
+
             // TODO(CB): Banking card data needs to be stored persistently:
-            // [banking_id, amount, card_id, receipt_id]
-            // deletion has to occure immediatly after completion of the payment
+            // [banking_id, amount, card_id, receipt_id, withdraw_time]
+            // but deletion has to occure immediatly after completion of the payment
         } else {
             token.authorization_type = types::authorization::AuthorizationType::RFID;
             if (not card_data->auth_id.has_value()) {
@@ -159,41 +156,22 @@ void PaymentTerminalSimulator::read_cards_forever() {
     }
 }
 
-void PaymentTerminalSimulator::publish_costs_to_nodered(const types::session_cost::SessionCost& session_cost,
-                                                        int32_t total_cost) {
+void PaymentTerminalSimulator::publish_costs_to_nodered(const types::payment::TotalCostAmount& total_amount) {
     std::ostringstream oss;
-    oss << "Costs: ID=" << session_cost.id_tag->id_token.value
-        << "; cost=" << format_money_str(total_cost, session_cost.currency);
+    oss << "Costs: ID=" << total_amount.id_token.value << "; cost="
+        << format_money_str(total_amount.cost.value, types::money::Currency{types::money::CurrencyCode::EUR,
+                                                                            2}); // TODO(CB): Change currency arg ...
     mqtt.publish(running_costs_mqtttopic, oss.str());
 }
 
-void PaymentTerminalSimulator::print_costs_to_log(const types::session_cost::SessionCost& session_cost,
-                                                  int32_t total_cost) {
-    EVLOG_info << "Received session_cost: Total cost: " << format_money_str(total_cost, session_cost.currency)
-               << ", status: " << session_cost.status
-               << "; # cost chunks: " << (session_cost.cost_chunks ? session_cost.cost_chunks->size() : 0)
-               << "; session ID: '" << session_cost.session_id << "'; Authorization Token: "
-               << (session_cost.id_tag ? session_cost.id_tag->id_token.value : std::string("<NONE>"));
-
-    int count = 0;
-    for (const auto& chunk : session_cost.cost_chunks.value_or(std::vector<types::session_cost::SessionCostChunk>{})) {
-        count += 1;
-        EVLOG_info << count << ".: '" << chunk.timestamp_from.value_or("") << "' to '"
-                   << chunk.timestamp_to.value_or("") << "'; " << chunk.metervalue_from.value_or(0) << " Wh to "
-                   << chunk.metervalue_to.value_or(0) << " Wh; type: "
-                   << (chunk.category.has_value() ? types::session_cost::cost_category_to_string(chunk.category.value())
-                                                  : "<NONE>")
-                   << "; Cost: "
-                   << (chunk.cost.has_value() ? format_money_str(chunk.cost.value().value, session_cost.currency)
-                                              : "<NONE>");
-    }
+void PaymentTerminalSimulator::print_costs_to_log(int32_t total_cost) {
+    EVLOG_info << "Received total cost: "
+               << format_money_str(total_cost, types::money::Currency{types::money::CurrencyCode::EUR, 2});
 }
 
-bool PaymentTerminalSimulator::finalize_payment(const types::session_cost::SessionCost& session_cost,
-                                                int32_t total_cost) {
-    uint32_t reversal_amount = config.pre_authorization_amount - total_cost;
-    bool success = false;
-    { success = m_PT_drv->partial_reversal(session_cost.id_tag->id_token.value, reversal_amount); }
+bool PaymentTerminalSimulator::finalize_payment(const types::payment::TotalCostAmount& total_amount) {
+    uint32_t reversal_amount = config.pre_authorization_amount - total_amount.cost.value;
+    bool success = m_PT_drv->partial_reversal(total_amount.id_token.value, reversal_amount);
 
     if (!success) {
         // TODO(CB): ...
@@ -203,16 +181,23 @@ bool PaymentTerminalSimulator::finalize_payment(const types::session_cost::Sessi
 }
 
 void PaymentTerminalSimulator::print_and_publish_to_nodered_finalization_result(
-    const types::session_cost::SessionCost& session_cost, int32_t total_cost, bool success) {
-    EVLOG_info << "Partial reversal " << (success ? "succeeded" : "failed") << ": ID "
-               << session_cost.id_tag->id_token.value
-               << " cost: " << format_money_str(config.pre_authorization_amount, session_cost.currency) << " - "
-               << format_money_str(total_cost, session_cost.currency) << " = "
-               << format_money_str(config.pre_authorization_amount - total_cost, session_cost.currency);
+    const types::payment::TotalCostAmount& total_amount, bool success) {
+    EVLOG_info << "Partial reversal " << (success ? "succeeded" : "failed") << ": ID " << total_amount.id_token.value
+               << " cost: "
+               << format_money_str(config.pre_authorization_amount,
+                                   types::money::Currency{types::money::CurrencyCode::EUR, 2})
+               << " - " // TODO(CB): Change currency arg ...
+               << format_money_str(total_amount.cost.value, types::money::Currency{types::money::CurrencyCode::EUR, 2})
+               << " = " // TODO(CB): Change currency arg ...
+               << format_money_str(
+                      config.pre_authorization_amount - total_amount.cost.value,
+                      types::money::Currency{types::money::CurrencyCode::EUR, 2}); // TODO(CB): Change currency arg ...
 
     std::ostringstream oss;
-    oss << "Reversal: ID=" << session_cost.id_tag->id_token.value
-        << "; reversal=" << format_money_str(config.pre_authorization_amount - total_cost, session_cost.currency)
+    oss << "Reversal: ID=" << total_amount.id_token.value << "; reversal="
+        << format_money_str(
+               config.pre_authorization_amount - total_amount.cost.value,
+               types::money::Currency{types::money::CurrencyCode::EUR, 2}) // TODO(CB): Change currency arg ...
         << ": " << (success ? "SUCCESS" : "FAILURE");
     mqtt.publish(partial_reversal_mqtttopic, oss.str());
 }

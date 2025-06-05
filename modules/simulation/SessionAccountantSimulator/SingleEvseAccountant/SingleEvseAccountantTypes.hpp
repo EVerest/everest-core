@@ -34,7 +34,6 @@ struct Tariff {
     int32_t energy_price_kWh_millimau;
     int32_t idle_grace_minutes;
     int32_t idle_hourly_price_mau;
-    int32_t reserved_amount_of_money_mau;
     types::money::Currency currency;
 };
 struct PowermeterUpdate {

@@ -10,6 +10,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <functional>
 #include <future>
 #include <memory>
 #include <mutex>
@@ -26,6 +27,7 @@ namespace SessionAccountant {
 
 using CostUpdateCallback = std::function<void(types::session_cost::SessionCost)>;
 using StopTransactionCallback = std::function<void(types::evse_manager::StopTransactionReason)>;
+using PreauthorizationsAccessor = std::function<std::optional<types::money::MoneyAmount>(types::authorization::IdToken)>;
 
 // Forward declarations
 class PaymentSession;
@@ -45,6 +47,8 @@ public:
     void set_cost_update_callback(const CostUpdateCallback& callback);
     void set_stop_transaction_callback(const StopTransactionCallback& callback);
     void set_tariff(SessionAccountant::Tariff tariff);
+    void set_cost_limit(int32_t limit);
+    void stop_session(types::evse_manager::StopTransactionReason reason);
 
 private:
     void handle_session_start(const types::evse_manager::SessionEvent& event);

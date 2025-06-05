@@ -195,6 +195,7 @@ void CostCalculator::update_cost_chunks() {
 }
 
 const std::vector<types::session_cost::SessionCostChunk>* CostCalculator::get_cost_chunks() const {
+    // TODO(CB): Returning a ref to a member is a bad idea (use shared_ptr)
     return &m_cost_chunks;
 }
 } // namespace SessionAccountant

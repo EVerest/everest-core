@@ -18,14 +18,13 @@ config:
     description: A real PT could have open transaction in its memory, when the module is initialized.
     default: false
     type: boolean
-  max_open_transactions:
-    description: >-
-      The maximum number open pre-authorizations. Additional transactions will be rejected.
-    default: 3
+  session_timeout_s:
+    description: Time a payment session is allowed to be active. Charging is forced to stop when time runs out.
+    default: 50
     type: integer
 requires:
-  cost_provider:
-    interface: session_cost
+  total_amount_provider:
+    interface: payment_total_amount_provider
 #  session_token_provider:
 #    interface: bank_session_token_provider
 provides:
@@ -34,6 +33,6 @@ provides:
     description: Provides authentication tokens.
 enable_external_mqtt: true
 metadata:
-  license: https://pionix.com/pionix-license-terms
+  license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Christoph Burandt (Pionix GmbH)
