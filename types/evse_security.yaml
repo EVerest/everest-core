@@ -289,7 +289,7 @@ types:
       - Deleted
   CertificateStoreUpdate:
     description: >-
-      Type that specifies the update of the certificate store. If operation is Installed, one of leaf_certificate_type 
+      Type that specifies the update of the certificate store. One of leaf_certificate_type 
       or ca_certificate_type must be present.
     type: object
     required:
@@ -298,11 +298,7 @@ types:
       operation:
         description: The operation perfomred on the certificate store
         type: string
-        $ref: /evse_security#/CertificateStoreUpdateOperation
-      deleted_certificate_hash_data:
-        description: The hash data of the certificate that was deleted. Only present if the operation is "Deleted"
-        type: object
-        $ref: /evse_security#/CertificateHashData
+        $ref: /evse_security#/CertificateStoreUpdateOperation      
       leaf_certificate_type:
         description: The type of the leaf certificate that was installed or deleted. Only present if type of updated certificate is a leaf certificate
         type: string

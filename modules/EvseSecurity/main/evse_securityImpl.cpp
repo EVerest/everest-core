@@ -57,6 +57,7 @@ evse_securityImpl::handle_delete_certificate(types::evse_security::CertificateHa
 
         if (result == types::evse_security::DeleteCertificateResult::Accepted) {
             types::evse_security::CertificateStoreUpdate update;
+
             update.operation = types::evse_security::CertificateStoreUpdateOperation::Deleted;
 
             if (response.ca_certificate_type.has_value()) {
