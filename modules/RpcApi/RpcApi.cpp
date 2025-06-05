@@ -12,11 +12,6 @@ void RpcApi::init() {
     for (const auto& evse_manager : r_evse_manager) {
         // create one DataStore object per EVSE
         auto& evse_data = this->data.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
-        // create one connector per EVSE
-        std::vector<types::json_rpc_api::ConnectorInfoObj> connectors;
-        connectors.emplace_back(types::json_rpc_api::ConnectorInfoObj());
-        connectors[0].id = 0; // initialize connector id, counting from 0
-        evse_data->evseinfo.set_available_connectors(std::move(connectors));
         // subscribe to evse_manager interface variables
         this->subscribe_evse_manager(evse_manager, *evse_data);
 
@@ -219,13 +214,13 @@ bool RpcApi::check_evse_mapping() {
         for (std::size_t idx = 0; idx < r_evse_manager.size(); idx++) {
             const auto& evse_manager = r_evse_manager[idx];
             auto& evse_data = this->data.evses[idx++];
+            types::json_rpc_api::ConnectorInfoObj connector;
             // create one DataStore object per EVSE sink
             if (evse_manager->get_mapping().has_value()) {
                 // Write EVSE index and connector id to the datastore
                 evse_data->evseinfo.set_index(evse_manager->get_mapping().value().evse);
                 if (evse_manager->get_mapping().value().connector.has_value()) {
                     // Initialize connector id
-                    types::json_rpc_api::ConnectorInfoObj connector;
                     connector.id = evse_manager->get_mapping().value().connector.value();
                     types::evse_manager::Evse evse = evse_manager->call_get_evse();
                     if (!evse.connectors.empty() && evse.connectors[0].type.has_value()) {
@@ -242,6 +237,9 @@ bool RpcApi::check_evse_mapping() {
                     evse_data->evseinfo.set_available_connector(connector);
                 }
             } else {
+                connector.id = 1;
+                connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown;
+                evse_data->evseinfo.set_available_connector(connector);
                 EVLOG_error << "Please configure an evse mapping to your configuration file for the connected ";
                 return false;
             }
