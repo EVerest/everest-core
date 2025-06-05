@@ -165,6 +165,11 @@ struct GetInstalledCertificatesResult {
     std::vector<CertificateHashDataChain>
         certificate_hash_data_chain; ///< the hashed certificate data for each requested certificates
 };
+struct DeleteResult {
+    DeleteCertificateResult result;                           ///< Indicates the status of the request
+    std::optional<CaCertificateType> ca_certificate_type;     ///< Valid if we deleted a root
+    std::optional<LeafCertificateType> leaf_certificate_type; ///< Valid if we deleted a leaf
+};
 struct OCSPRequestData {
     std::optional<CertificateHashData> certificate_hash_data; ///< Contains the hash data of the certificate
     std::optional<std::string> responder_url;                 ///< Contains the responder URL

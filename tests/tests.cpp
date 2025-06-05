@@ -592,6 +592,27 @@ TEST_F(EvseSecurityTests, delete_root_ca_01) {
 
     const auto root_certs = this->evse_security->get_installed_certificates(certificate_types);
 
+    CaCertificateType root_type;
+    CertificateType deleted_type = root_certs.certificate_hash_data_chain.at(0).certificate_type;
+
+    switch (deleted_type) {
+    case CertificateType::V2GRootCertificate:
+        root_type = CaCertificateType::V2G;
+        break;
+    case CertificateType::MORootCertificate:
+        root_type = CaCertificateType::MO;
+        break;
+    case CertificateType::CSMSRootCertificate:
+        root_type = CaCertificateType::CSMS;
+        break;
+    case CertificateType::V2GCertificateChain:
+        root_type = CaCertificateType::V2G;
+        break;
+    case CertificateType::MFRootCertificate:
+        root_type = CaCertificateType::MF;
+        break;
+    }
+
     CertificateHashData certificate_hash_data;
     certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
     certificate_hash_data.issuer_key_hash =
@@ -602,7 +623,9 @@ TEST_F(EvseSecurityTests, delete_root_ca_01) {
         root_certs.certificate_hash_data_chain.at(0).certificate_hash_data.serial_number;
     const auto result = this->evse_security->delete_certificate(certificate_hash_data);
 
-    ASSERT_EQ(result, DeleteCertificateResult::Accepted);
+    ASSERT_EQ(result.result, DeleteCertificateResult::Accepted);
+    ASSERT_TRUE(result.ca_certificate_type.has_value());
+    ASSERT_EQ(result.ca_certificate_type.value(), root_type);
 }
 
 TEST_F(EvseSecurityTests, delete_root_ca_02) {
@@ -613,7 +636,9 @@ TEST_F(EvseSecurityTests, delete_root_ca_02) {
     certificate_hash_data.serial_number = "3046";
     const auto result = this->evse_security->delete_certificate(certificate_hash_data);
 
-    ASSERT_EQ(result, DeleteCertificateResult::NotFound);
+    ASSERT_EQ(result.result, DeleteCertificateResult::NotFound);
+    ASSERT_FALSE(result.ca_certificate_type.has_value());
+    ASSERT_FALSE(result.leaf_certificate_type.has_value());
 }
 
 TEST_F(EvseSecurityTests, delete_sub_ca_1) {
@@ -636,7 +661,10 @@ TEST_F(EvseSecurityTests, delete_sub_ca_1) {
     const auto subca1_x509 = X509Wrapper(new_root_sub_ca_1, EncodingFormat::PEM);
     const auto subca1_hash_data = subca1_x509.get_certificate_hash_data(root_x509);
 
-    ASSERT_EQ(this->evse_security->delete_certificate(subca1_hash_data), DeleteCertificateResult::Accepted);
+    const auto delete_result = this->evse_security->delete_certificate(subca1_hash_data);
+    ASSERT_EQ(delete_result.result, DeleteCertificateResult::Accepted);
+    ASSERT_TRUE(delete_result.ca_certificate_type.has_value());
+    ASSERT_EQ(delete_result.ca_certificate_type.value(), CaCertificateType::V2G);
 
     std::vector<CertificateType> certificate_types;
     certificate_types.push_back(CertificateType::V2GRootCertificate);
@@ -678,7 +706,10 @@ TEST_F(EvseSecurityTests, delete_sub_ca_2) {
     const auto subca2_x509 = X509Wrapper(new_root_sub_ca_2, EncodingFormat::PEM);
     const auto subca2_hash_data = subca2_x509.get_certificate_hash_data(subca1_x509);
 
-    ASSERT_EQ(this->evse_security->delete_certificate(subca2_hash_data), DeleteCertificateResult::Accepted);
+    const auto delete_result = this->evse_security->delete_certificate(subca2_hash_data);
+    ASSERT_EQ(delete_result.result, DeleteCertificateResult::Accepted);
+    ASSERT_TRUE(delete_result.ca_certificate_type.has_value());
+    ASSERT_EQ(delete_result.ca_certificate_type.value(), CaCertificateType::V2G);
 
     std::vector<CertificateType> certificate_types;
     certificate_types.push_back(CertificateType::V2GRootCertificate);
@@ -745,7 +776,7 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
 
     // Do not allow the SECC delete since it's the ChargingStationCertificate
     auto delete_response = this->evse_security->delete_certificate(secc_leaf_data);
-    ASSERT_EQ(delete_response, DeleteCertificateResult::Failed);
+    ASSERT_EQ(delete_response.result, DeleteCertificateResult::Failed);
 }
 
 TEST_F(EvseSecurityTests, leaf_cert_starts_in_future_accepted) {

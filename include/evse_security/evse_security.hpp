@@ -109,7 +109,7 @@ public:
     /// hierarchies persisted on the filesystem
     /// @param certificate_hash_data specifies the certificate to be deleted
     /// @return result of the operation
-    DeleteCertificateResult delete_certificate(const CertificateHashData& certificate_hash_data);
+    DeleteResult delete_certificate(const CertificateHashData& certificate_hash_data);
 
     /// @brief Verifies the given \p certificate_chain against the respective CA
     /// trust anchors (indicated by the given \p certificate_type) for the leaf.

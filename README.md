@@ -34,6 +34,11 @@ make -j$(nproc) install
 make test
 ```
 
+In order to run a single test use:
+```bash
+./everest-evse_security_tests --gtest_filter=EvseSecurityTests.test_name
+```
+
 ## Certificate Structure
 
 We allow any certificate structure with the following recommendations:
