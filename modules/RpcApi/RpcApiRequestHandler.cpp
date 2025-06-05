@@ -79,10 +79,10 @@ RpcApiRequestHandler::~RpcApiRequestHandler() {
 ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index, bool charging_allowed) {
     ErrorResObj res {};
 
-    const std::string evse_index_str = std::to_string(evse_index);
     const auto it = std::find_if(evse_managers.begin(), evse_managers.end(),
-                                 [&evse_index_str](const auto& manager) {
-                                     return manager->module_id == evse_index_str;
+                                 [&evse_index](const auto& manager) {
+                                     return (manager->get_mapping().has_value() &&
+                                     (manager->get_mapping().value().evse == evse_index));
                                  });
 
     if (it == evse_managers.end()) {
