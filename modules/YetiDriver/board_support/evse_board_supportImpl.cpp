@@ -200,7 +200,7 @@ void evse_board_supportImpl::handle_enable(bool& value) {
     publish_event(cast_event_type(last_cp_state));
 }
 
-void evse_board_supportImpl::handle_ce_on() {
+void evse_board_supportImpl::handle_ce_on(double& value) {
     // your code for cmd ce_on goes here
 }
 

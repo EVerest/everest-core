@@ -177,10 +177,11 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 
         case RawCPState::Disabled:
             if (last_cp_state != RawCPState::Disabled) {
-                pwm_running = false;
                 if (mcs_enabled) {
-                    set_ce_internal(false);
+                    ce_is_set = false;
+                    r_bsp->call_ce_off();
                 } else {
+                    pwm_running = false;
                     r_bsp->call_pwm_off();
                 }
                 ev_simplified_mode = false;
@@ -192,10 +193,11 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 
         case RawCPState::A:
             if (last_cp_state != RawCPState::A) {
-                pwm_running = false;
                 if (mcs_enabled) {
-                    set_ce_internal(false);
+                    ce_is_set = false;
+                    r_bsp->call_ce_off();
                 } else {
+                    pwm_running = false;
                     r_bsp->call_pwm_off();
                 }
                 ev_simplified_mode = false;
@@ -321,10 +323,11 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             if (last_cp_state != RawCPState::E) {
                 timer_state_C1 = TimerControl::stop;
                 call_allow_power_on_bsp(false);
-                pwm_running = false;
                 if (mcs_enabled) {
-                    set_ce_internal(false);
+                    ce_is_set = false;
+                    r_bsp->call_ce_off();
                 } else {
+                    pwm_running = false;
                     r_bsp->call_pwm_off();
                 }
                 if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C ||
@@ -427,17 +430,23 @@ void IECStateMachine::set_pwm_off() {
 void IECStateMachine::set_ce_off() {
     {
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::ISO_set_ce);
-        set_ce_internal(false);
+        ce_is_set = false;
     }
     // Don't run the state machine in the callers context
     feed_state_machine();
 }
 
-void IECStateMachine::set_ce_on() {
+void IECStateMachine::set_ce_on(double value) {
     {
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::ISO_set_ce);
-        set_ce_internal(true);
+        if (value > 0 && value < 1) {
+            ce_is_set = true;
+        } else {
+            ce_is_set = false;
+
+        }
     }
+    r_bsp->call_ce_on(value * 100);
 
     // Don't run the state machine in the callers context
     feed_state_machine();
@@ -577,15 +586,4 @@ void IECStateMachine::check_connector_lock() {
         is_locked = false;
     }
 }
-
-void IECStateMachine::set_ce_internal(bool state) {
-    ce_is_set = state;
-
-    if (state) {
-        r_bsp->call_ce_on();
-    } else {
-        r_bsp->call_ce_off();
-    }
-}
-
 } // namespace module

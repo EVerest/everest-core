@@ -158,7 +158,7 @@ void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
     // your code for cmd ac_set_overcurrent_limit_A goes here
 }
 
-void evse_board_supportImpl::handle_ce_on() {
+void evse_board_supportImpl::handle_ce_on(double& value) {
     // your code for cmd ce_on goes here
 }
 

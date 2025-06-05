@@ -35,7 +35,7 @@ protected:
     virtual void handle_pwm_on(double& value) override;
     virtual void handle_pwm_off() override;
     virtual void handle_pwm_F() override;
-    virtual void handle_ce_on() override;
+    virtual void handle_ce_on(double& value) override;
     virtual void handle_ce_off() override;
     virtual void handle_allow_power_on(types::evse_board_support::PowerOnOff& value) override;
     virtual void handle_ac_switch_three_phases_while_charging(bool& value) override;

@@ -231,7 +231,7 @@ void Charger::run_state_machine() {
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
                 shared_context.legacy_wakeup_done = false;
                 if (config_context.mcs_enabled) {
-                   ce_off();
+                    ce_off();
                 } else {
                     pwm_off();
                 }
@@ -285,6 +285,10 @@ void Charger::run_state_machine() {
                     std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
                     update_pwm_now(PWM_5_PERCENT);
                     stopwatch.mark("HLC_PWM_5%_ON");
+                } else if (config_context.mcs_enabled) {
+                    std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
+                    ce_on(0.05);
+                    stopwatch.mark("HLC_CE_5%_ON");
                 }
             }
 
@@ -344,8 +348,6 @@ void Charger::run_state_machine() {
                 }
 
                 const EvseState target_state(EvseState::PrepareCharging);
-
-                if (config_context.mcs_enabled) {ce_on();}
 
                 // EIM done and matching process not started -> we need to go through t_step_EF and fall back to nominal
                 // PWM. This is a complete waste of 4 precious seconds.
@@ -430,8 +432,6 @@ void Charger::run_state_machine() {
                 }
 
                 const EvseState target_state(EvseState::PrepareCharging);
-
-                if (config_context.mcs_enabled) {ce_on();}
 
                 // We got authorization by Plug and Charge
                 session_log.evse(false, "PnC Authorization received");
@@ -1051,9 +1051,18 @@ void Charger::ce_off() {
     bsp->set_ce_off();
 }
 
-void Charger::ce_on() {
-    session_log.evse(false, "Set CE On");
-    bsp->set_ce_on();
+void Charger::ce_on(float dc) {
+    auto start = std::chrono::steady_clock::now();
+    internal_context.update_ce_last_dc = dc;
+    shared_context.ce_is_on = true;
+
+    session_log.evse(
+        false,
+        fmt::format(
+            "Set CE On ({}%) took {} ms", dc * 100.,
+            (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)).count()));
+    internal_context.last_ce_update = std::chrono::steady_clock::now();
+    bsp->set_ce_on(dc);
 }
 
 void Charger::run() {

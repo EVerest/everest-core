@@ -85,7 +85,7 @@ public:
     void set_pwm_off();
     void set_pwm_F();
     void set_ce_off();
-    void set_ce_on();
+    void set_ce_on(double value);
 
     void set_ce_internal(bool state);
 

@@ -249,7 +249,7 @@ private:
     void pwm_F();
 
     void ce_off();
-    void ce_on();
+    void ce_on(float dc);
 
     void process_cp_events_independent(CPEvent cp_event);
     void process_cp_events_state(CPEvent cp_event);
@@ -288,6 +288,7 @@ private:
         HlcTerminatePause hlc_charging_terminate_pause;
         types::iso15118::DcEvseMaximumLimits current_evse_max_limits;
         bool pwm_running{false};
+        bool ce_is_on{false};
         std::optional<types::authorization::ProvidedIdToken>
             stop_transaction_id_token; // only set in case transaction was stopped locally
         types::authorization::ProvidedIdToken id_token;
@@ -361,6 +362,9 @@ private:
         std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb_sequence;
         float update_pwm_last_dc;
         std::chrono::time_point<std::chrono::steady_clock> last_pwm_update;
+
+        float update_ce_last_dc;
+        std::chrono::time_point<std::chrono::steady_clock> last_ce_update;
 
         EvseState t_step_EF_return_state;
         float t_step_EF_return_pwm;

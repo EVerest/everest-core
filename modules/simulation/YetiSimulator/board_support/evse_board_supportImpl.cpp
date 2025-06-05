@@ -54,8 +54,9 @@ void evse_board_supportImpl::handle_pwm_F() {
     mod->pwm_f();
 }
 
-void evse_board_supportImpl::handle_ce_on() {
-    mod->pwm_on(25.0);
+void evse_board_supportImpl::handle_ce_on(double& value) {
+    const auto dutycycle = value / 100.0;
+    mod->pwm_on(dutycycle);
 }
 
 void evse_board_supportImpl::handle_ce_off() {
