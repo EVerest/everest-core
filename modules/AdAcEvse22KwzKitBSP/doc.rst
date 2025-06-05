@@ -1,28 +1,105 @@
-.. _everest_modules_handwritten_YetiDriver:
+.. _everest_modules_handwritten_AdAcEvse22KwzKitBSP:
 
 ************************
-YetiDriver
+AdAcEvse22KwzKitBSP
 ************************
 
-See also module's :ref:`auto-generated reference <everest_modules_YetiDriver>`.
-The module ``YetiDriver`` is a board support driver for Pionix Yeti Power
-Board.
+See also module's :ref:`auto-generated reference <everest_modules_AdAcEvse22KwzKitBSP>`.
+The module ``AdAcEvse22KwzKitBSP`` is a board support driver for the Analog Devices 
+AD-ACEVSE22KWZ-KIT EVSE reference design.
 
-Communication between the Yeti microcontroller and this driver module
-=====================================================================
+AdAcEvse22KwzKitBSP Quickstart
+==============================
 
-The hardware connection between Yeti and Yak (the board running EVerest and
-this module) is 3.3V TTL UART plus 2 GPIOs (one to reset the microcontroller
-from Linux and one to wakeup Linux from the microcontroller, which is 
-currrently unused).
+A typical hardware setup would consist of the AD-ACEVSE22KWZ-KIT and a Raspberry Pi 4 running 
+EVerest with this module. Communication between AD-ACEVSE22KWZ-KIT and the AdAcEvse22KwzKitBSP 
+on the Raspberry Pi 4 is through a 3.3V TTL UART link with a default configuration of 115200 bps 8N1. 
+There is also a GPIO used to reset AD-ACEVSE22KWZ-KIT from EVerest so the firmware is in a known state. 
 
-The default configuration is 115200 bps 8N1.
+Hardware Connectivity
+---------------------
+
+By default, AD-ACEVSE22KWZ-KIT supports the Pionix Yak board and Raspberry Pi 4 as host boards running 
+Everest. 
+
+The simplest way to get AD-ACEVSE22KWZ-KIT up and running with EVerest is with a Pionix Yak board. First,
+you must connect AD-ACEVSE22KWZ-KIT's P3 to Yak's J3 using a 10-wire cable. Note that using the 10-wire 
+cable has Yak powered off AD-ACEVSE22KWZ-KIT's 12V supply. 
+
+Next, we need to add the AdAcEvse22KwzKitBSP as an active module inside the configuration YAML file 
+passed to EVerest:
+
+.. code-block:: yaml
+
+    active_modules:
+      # ** Other EVerest modules **
+      adacevse22kwz_driver:
+        telemetry:
+          id: 1
+        config_module:
+          baud_rate: 115200 # default baud rate
+          reset_gpio: 27 # Yak reset GPIO pin
+          serial_port: /dev/serial0 # Yak UART0 port
+        connections: {}
+        module: AdAcEvse22KwzKitBSP
+        # ** Other EVerest modules **
+
+Next, we need to link our active AdAcEvse22KwzKitBSP to EvseManager to facilitate high-level charging 
+logic. This can be done by adding the following to EvseManager inside the EVerest configuration YAML:
+
+.. code-block:: yaml
+
+    active_modules:
+      # ** Other EVerest modules **
+      evse_manager:
+        config_module:
+          # ** Various EvseManager configurations **
+        connections:
+          bsp:
+          - implementation_id: board_support
+            module_id: adacevse22kwz_driver
+          powermeter_grid_side:
+          - implementation_id: powermeter
+            module_id: adacevse22kwz_driver
+        module: EvseManager
+        telemetry:
+          id: 1
+      # ** Other EVerest modules **
+
+Finally, we can start Everset. AD-ACEVSE22KWZ-KIT should now be able to communicate with EVerest 
+on the Yak board using AdAcEvse22KwzKitBSP.
+
+AD-ACEVSE22KWZ-KIT can also be run off a Raspberry Pi 4 by using various test points on the 
+AD-ACEVSE22KWZ-KIT instead of the 10-wire cable. These test points can then be connected to 
+Raspberry Pi pins which can operate as a UART link and a standard GPIO:
+
+.. list-table::
+    :header-rows: 1
+
+    * - Purpose
+      - Test Point
+      - RPI Pin
+    * - Reset Pin
+      - TP_18
+      - GPIO27
+    * - Host TX
+      - TP_28
+      - TX_D0
+    * - Host RX
+      - TP_41
+      - RX_D0
+    * - Shared ground
+      - Any GND pin
+      - Any GND pin
+
+You can now follow the steps used for configuring EVerest on the Yeti board to start EVerest 
+on the Raspberry Pi.
 
 Protocol
 ========
 
-EVerest can send commands to Yeti and Yeti publishes data and events back
-to EVerest. The packets are defined with protobuf to serialize the C structs
+EVerest can send commands to AD-ACEVSE22KWZ-KIT and AD-ACEVSE22KWZ-KIT publishes 
+data and events back to EVerest. The packets are defined with protobuf to serialize the C structs
 into a binary representation that is transferred over the serial wire in a 
 stream:
 
@@ -36,7 +113,7 @@ https://en.wikipedia.org/wiki/Consistent_Overhead_Byte_Stuffing
 COBS
 ----
 
-COBS is implemented in ``yeti_comms/evSerial.cpp``. Whenever a new packet
+COBS is implemented in ``ad-acevse22kwz-kit_comms/evSerial.cpp``. Whenever a new packet
 was extracted from the stream ``handlePacket()`` is called to decode protobuf
 and generate the corresponding signals. 
 Other parts of the module subscribe to these signals to handle the incoming 
@@ -47,12 +124,11 @@ For TX ``linkWrite`` encodes the packet with COBS and outputs it to the UART.
 Protobuf
 --------
 
-The actual packet definitions are located under ``yeti_comms/protobuf``.
+The actual packet definitions are located under ``ad-acevse22kwz-kit_comms/protobuf``.
 
-``hi2lo.proto`` contains all messages that can be sent from EVerest to Yeti
-while ``lo2hi.proto`` defines all messages that Yeti sends to EVerest.
+``ad-acevse22kwz-kit.proto`` contains all messages that can be sent by EVerest and AD-ACEVSE22KWZ-KIT.
 
-Refer to these files for an up to date definition as they may change 
+Refer to these files for an up-to-date definition as they may change 
 frequently.
 
 To generate the C code nanopb is used:
@@ -62,113 +138,84 @@ To generate the C code nanopb is used:
 The output should also be manually copied to Yeti Firmware to ensure the same
 definition is used on both sides when making changes.
 
-EVerest to Yeti
----------------
 
-The most important commands that EVerest sends to Yeti are the following:
+Modes of Operation
+-----------------------------
 
-``SetControlMode(mode)``: Yeti firmware can operate in different modes:
+AD-ACEVSE22KWZ-KIT board operates in the following two modes:
 
-``Mode NONE = 0``: In this mode Yeti does not allow control over UART. It will
-still send telemetry data. Yeti operates as a standalone non-smart AC charger
-and EVerest does not need to be running.
+``Host-less mode``: AD-ACEVSE22KWZ-KIT acts as a standalone EVSE 
+and will control PWM and relay state without external influence. In this 
+mode, PWM will be enabled immediately upon entering state B1 with the 
+relay opening in state C2 assuming no errors occur. If an error occurs 
+(i.e. RCD trigger, diode short, C1 timeout, etc.), AD-ACEVSE22KWZ-KIT 
+will close the relay and disable PWM until state A1 is reentered. 
 
-``HIGH = 1``: In this mode high level control is possible.
-Yeti operates as a standalone AC charger and EVerest does not need to be 
-running, but it does allow certain control such as setMaxCurrent from EVerest.
-This mode is not documented here as it is not used by EVerest anymore.
+``Host-driven mode``: AD-ACEVSE22KWZ-KIT will allow EVerest to influence PWM
+and relay states. In this mode, PWM will not be enabled until an EVerest 
+``PwmDutyCycle`` command is received. Similarly, the relay will not open in state 
+C2 until an ``AllowPowerOn`` message is received. AD-ACEVSE22KWZ-KIT can 
+override relay and PWM state in the event of an error.
 
-``LOW = 2``: In this mode Yeti allows low level control. Yeti does not act
-as a standalone charger, it needs to be controlled by EVerest. It does however
-still run the very basic state machine to follow the car's states A-F and
-switches relais on and off accordingly. This ensures that basic electrical
-safety remains within the microcontroller and not within EVerest. 
-It generates more human readable events from state A-F transitions.
+By default, the AD-ACEVSE22KWZ-KIT operates in host-less mode until a message
+is received from the host. Additionally, all outbound messages from 
+AD-ACEVSE22KWZ-KIT are sent irrespective of mode of operation. This enables 
+AD-ACEVSE22KWZ-KIT evaluation without using EVerest.
 
-PWM is directly controlled from EVerest in this mode.
+Message types
+-------------
+AD-ACEVSE22KWZ-KIT supports the following set of messages:
 
-Low control mode:
-_________________
+EVerest to AD-ACEVSE22KWZ-KIT:
+______________________________
 
-The following commands describe the Low level control mode only:
+``AllowPowerOn(bool)``: Inform AD-ACEVSE22KWZ-KIT that it is allowed to 
+switch on the power relays/contactors to the car on (true) or must switch 
+off now (false). The final decision remains with AD-ACEVSE22KWZ-KIT in 
+case of power on, it should only power on after all other requirements 
+are met (such as RCD current is below limit, car is in CP state C etc). 
+On power off AD-ACEVSE22KWZ-KIT must switch off immediately.
 
-``AllowPowerOn(bool)``: Inform yeti that it is allowed to switch on the power 
-relais/contactors to the car on (true) or must switch off now (false). The 
-final decision remains with Yeti in case of power on, it should only power on
-after all other requirements are met (such as RCD current is below limit,
-car is in CP state B etc). On power off Yeti must switch off immediately.
+``PwmDutyCycle(uint32)``: Set AD-ACEVSE22KWZ-KIT PWM state and duty 
+cycle. PWM can be enabled at specific duty cycle by passing a value of 
+1-10000, where each value corresponds to 0.0001% duty cycle (i.e. 50% 
+duty cycle = 5000 passed value). AD-ACEVSE22KWZ will ignore any duty cycles 
+greater than 5333 as this corresponds to the maximum duty cycle supported.
+PWM can be disabled by passing a value greater than 10000. PWM state F can 
+be enabled by passing a PWM value of 0.
 
-``SetPWM(mode, duty_cycle)``: mode 0: OFF (+12V), 1: ON (PWM with duty_cycle),
- 2: F (-12V). Yeti sets the PWM immediately.
+``KeepAlive(Message)``: EVerest sends this packet to AD-ACEVSE22KWZ-KIT at 1Hz. 
+Currently unused by AD-ACEVSE22KWZ-KIT.
 
+``Reset(bool)``: Reset AD-ACEVSE22KWZ-KIT firmware.
 
-Other commands for all modes:
-_____________________________
+AD-ACEVSE22KWZ-KIT to EVerest
+-----------------------------
 
-``FirmwareUpdate(bool)``: Send true to reboot Yeti into ROM boot loader. 
-After that stm32flash tool can be used to flash any firmware binary to it.
-Note that this is a dev kit and for a real product this needs to be implemented
-differently.
+``CpState(enum)``: Notify EVerest of current CP state (A/B/C/D/E/F). Sent upon 
+state change. AD-ACEVSE22KWZ-KIT currently doesn't support State D. 
 
-``KeepAliveHi``: Send this packet to Yeti at 1Hz. If no heartbeat is received
-for a longer amount of time Yeti may fall back to control mode NONE to act
-as a stand alone emergency backup charger or go into failure mode (can be 
-modified in the firmware).
+``RelaisState(bool)``: Notify EVerest of current relay state. Sent upon relay 
+closing/opening. True corresponds to relay closed and false is sent when relay 
+is open.
 
-``SetThreePhases``: true: switches to 3ph on next switch on, else single phase.
-Only works on hardware configurations with dual relais. Does not switch while
-charging session is running, Yeti firmware will delay the change to the next
-charging session.
+``PpState(enum)``: Notify EVerest of current PP state (NC/13A/20A/32A/70A/F).
+AD-ACEVSE22KWZ-KIT currently doesn't support PP for maximum output current  
+so 32A is sent by default.
 
-``EnableRCD``: enable or disable the onboard RCD. Some cars generate quite high
-residual current spikes and may not charge properly if RCD is enabled.
+``PowerMeter(Message)``: Sent at roughly 1 Hz when relay is closed. Contains 
+all data from the ADE9178 power measurement.
 
-``Enable``: Enable CP output
+``ErrorState(Message)``: Notify EVerest of active errors. Sent when an errors 
+are set/cleared. Each error has an associated boolean value where true 
+corresponds to active error and false corresponds to error not active. Currently,
+only diode faults, RCD triggered, and overcurrent are supported by 
+AD-ACEVSE22KWZ-KIT.
 
-``Disable``: Disable CP output (goes to floating/high impedance)
+``Telemetry(Message)``: Telemetry message with cp pwm high and low voltage 
+values. Not currently supported by AD-ACEVSE22KWZ-KIT.
 
-``Reset``: Reset yeti firmware
+``KeepAliveLo(Message)``: AD-ACEVSE22KWZ-KIT sends this every 3 seconds to keep 
+connection online.
 
-``Replug``: Initiate special virtual replug sequence without starting a new
-charging session.
-
-``SwitchThreePhasesWhileCharging``: Change between 1 and 3 phases while
-charging. This is currently not implemented in yeti firmware and will need
-special precautions because some cars may be destroyed by switching from one
-phase to three phase while charging is running (E.g. Zoe 1)
-
-``ForceUnlock``: Force unlock motor lock now regardless of state.
-
-Yeti to EVerest
----------------
-
-The following messages are relevant for LOW control mode:
-
-``Event``: This is the most important message from Yeti. It will send an event
-on CP transitions:
-
-* ``CAR_PLUGGED_IN``: CP State A -> B
-* ``CAR_REQUESTED_POWER``: CP State B->C or B->D
-* ``POWER_ON``: Relais switched on succesfully (i.e. after mirror contact check)
-* ``POWER_OFF``: Relais switched off succesfully
-* ``CAR_REQUESTED_STOP_POWER``: CP State C/D -> any other state
-* ``CAR_UNPLUGGED``: any other state -> A
-* ``ERROR_E``: any other state -> E
-* ``ERROR_DF``: Car diode failure detected
-* ``ERROR_RELAIS``: Relais error (mirror contact check failed)
-* ``ERROR_RCD``:: RCD over current event
-* ``ERROR_VENTILATION_NOT_AVAILABLE``: Car requested D but no ventilation available
-* ``ERROR_OVER_CURRENT``: Yeti detected quick over current on AC lines
-* ``ENTER_BCD``: any other state -> B/C/D. Used to start SLAC
-* ``LEAVE_BCD``: B/C/D -> any other state. Stops SLAC.
-* ``PERMANENT_FAULT``: Permanent fault that cannot be cleared by unplugging car
-* ``EVSE_REPLUG_STARTED``: Replugging sequence started
-* ``EVSE_REPLUG_FINISHED``: Replugging sequence completed
-
-``PowerMeter``: Contains all data from the power measurement, sent at roughly
-1Hz
-
-``KeepAliveLo``: Yeti sends this at 1Hz to keep up connection.
-
-``ResetDone``: Sent once on boot of yeti firmware.
-
+``ResetReason(enum)``: Sent once on boot of the AD-ACEVSE22KWZ-KIT firmware.
