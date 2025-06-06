@@ -17,7 +17,7 @@ namespace server {
 class WebSocketServer : public TransportInterface {
 public:
     // Constructor and Destructor
-    explicit WebSocketServer(bool ssl_enabled, int port);
+    explicit WebSocketServer(bool ssl_enabled, int port, const std::string& iface);
     ~WebSocketServer() override;
 
     // Methods
@@ -34,6 +34,7 @@ public:
 private:
     // Members
     bool m_ssl_enabled;
+    char* m_iface;
     struct lws_context_creation_info m_info {};
     struct lws_protocols m_lws_protocols[2];
     std::atomic<bool> m_running{false};

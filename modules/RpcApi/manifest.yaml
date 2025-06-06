@@ -7,9 +7,15 @@ config:
     type: boolean
     default: true
   websocket_port:
-    description: Port for the websocket server.
+    description: Port for the websocket server to listen on.
     type: integer
     default: 80
+  websocket_interface:
+    description: >-
+      Network interface/device for the websocket server to listen on. E.g. 'lo' or 'eth1'.
+      Listen on all interfaces if empty.
+    type: string
+    default: ""
   websocket_tls_enabled:
     description: Enable TLS for the websocket server.
     type: boolean
