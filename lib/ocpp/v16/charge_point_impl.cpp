@@ -3977,7 +3977,8 @@ void ChargePointImpl::handle_data_transfer_pnc_certificate_signed(Call<DataTrans
                                             std::optional<CiString<255>>(tech_info), true);
         } else {
             // update the OCSP cache in case a new certificate was installed
-            this->update_ocsp_cache();
+            this->ocsp_request_timer->stop();
+            this->ocsp_request_timer->timeout(std::chrono::seconds(0));
         }
     } catch (const json::exception& e) {
         EVLOG_warning << "Could not parse data of DataTransfer message CertificateSigned.req: " << e.what();
