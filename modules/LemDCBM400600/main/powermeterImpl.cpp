@@ -26,7 +26,7 @@ void powermeterImpl::init() {
             mod->config.resilience_initial_connection_retries, mod->config.resilience_initial_connection_retry_delay,
             mod->config.resilience_transaction_request_retries, mod->config.resilience_transaction_request_retry_delay,
             mod->config.cable_id, mod->config.tariff_id, mod->config.meter_timezone, mod->config.meter_dst,
-            mod->config.SC, mod->config.UV, mod->config.UD});
+            mod->config.SC, mod->config.UV, mod->config.UD, mod->config.command_timeout_ms});
 }
 
 void powermeterImpl::ready() {

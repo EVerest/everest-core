@@ -46,6 +46,9 @@ public:
         curl_global_cleanup();
     }
 
+    void set_command_timeout(const int command_timeout_ms) override {
+        this->command_timeout_ms = command_timeout_ms;
+    }
     [[nodiscard]] HttpResponse get(const std::string& path) const override;
     [[nodiscard]] HttpResponse put(const std::string& path, const std::string& body) const override;
     [[nodiscard]] HttpResponse post(const std::string& path, const std::string& body) const override;
@@ -55,6 +58,7 @@ private:
     int port;
     bool tls_enabled;
     std::string dcbm_tls_certificate;
+    int command_timeout_ms = 5000; // default timeout in milliseconds
 
     [[nodiscard]] CURL* create_curl_handle_and_setup_url(const std::string& path) const;
     HttpResponse perform_request(CURL* connection, const std::string& request_body, const char* method_name,
