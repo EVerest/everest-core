@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-
 #include "RunApplicationStub.hpp"
 #include <gtest/gtest.h>
 
 #include <utility>
+
+using namespace everest::staging::run_application;
 
 namespace stub {
 
@@ -60,8 +61,8 @@ RunApplication::~RunApplication() {
     active_p = nullptr;
 }
 
-module::CmdOutput RunApplication::run_application(const std::string& name, std::vector<std::string> args) {
-    module::CmdOutput result = {{}, {}, -1};
+CmdOutput RunApplication::run_application(const std::string& name, std::vector<std::string> args) {
+    CmdOutput result = {{}, {}, -1};
     EXPECT_EQ(name, "/usr/sbin/wpa_cli");
     EXPECT_EQ(args[0], "-i");
     if (args[2] == "signal_poll") {
@@ -95,12 +96,13 @@ module::CmdOutput RunApplication::run_application(const std::string& name, std::
 
 } // namespace stub
 
-namespace module {
-CmdOutput run_application(const std::string& name, std::vector<std::string> args) {
+namespace everest::staging::run_application {
+CmdOutput run_application(const std::string& name, std::vector<std::string> args,
+                          const std::function<CmdControl(const std::string& output_line)> output_callback) {
     CmdOutput result = {{}, {}, -1};
     if (stub::RunApplication::active_p != nullptr) {
         result = std::move(stub::RunApplication::active_p->run_application(name, args));
     }
     return result;
 }
-} // namespace module
+} // namespace everest::staging::run_application

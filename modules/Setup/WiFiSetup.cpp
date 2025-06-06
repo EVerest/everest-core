@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-
 #include "WiFiSetup.hpp"
-#include "RunApplication.hpp"
 
 #include <filesystem>
 #include <functional>
@@ -10,6 +8,10 @@
 #include <sstream>
 #include <thread>
 #include <utility>
+
+#include <everest/staging/run_application/run_application.hpp>
+
+using namespace everest::staging::run_application;
 
 /**
  * @file

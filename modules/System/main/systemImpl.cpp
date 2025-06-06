@@ -13,7 +13,9 @@
 
 #include <utils/date.hpp>
 
-#include <boost/process.hpp>
+#include <everest/staging/run_application/run_application.hpp>
+
+using namespace everest::staging::run_application;
 
 namespace module {
 namespace main {
@@ -92,15 +94,13 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
 
         while (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
                retries < total_retries) {
-            boost::process::ipstream stream;
-            boost::process::child cmd(firmware_updater.string(), boost::process::args(args),
-                                      boost::process::std_out > stream);
-            std::string temp;
             retries += 1;
-            while (std::getline(stream, temp)) {
-                firmware_status.firmware_update_status = types::system::string_to_firmware_update_status_enum(temp);
+            run_application(firmware_updater.string(), args, [this, &firmware_status](const std::string& output_line) {
+                firmware_status.firmware_update_status =
+                    types::system::string_to_firmware_update_status_enum(output_line);
                 this->publish_firmware_update_status(firmware_status);
-            }
+                return CmdControl::Continue;
+            });
             if (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
                 retries < total_retries) {
                 std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
@@ -110,7 +110,6 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
                 this->mod->r_store.at(0)->call_store(boot_reason_key,
                                                      boot_reason_to_string(types::system::BootReason::FirmwareUpdate));
             }
-            cmd.wait();
         }
         this->standard_firmware_update_running = false;
     });
@@ -239,20 +238,19 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
 
     while (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
            retries < total_retries && !this->interrupt_firmware_download) {
-        boost::process::ipstream download_stream;
-        boost::process::child download_cmd(firmware_downloader.string(), boost::process::args(download_args),
-                                           boost::process::std_out > download_stream);
-        std::string temp;
+        run_application(
+            firmware_downloader.string(), download_args, [this, &firmware_status](const std::string& output_line) {
+                firmware_status.firmware_update_status =
+                    types::system::string_to_firmware_update_status_enum(output_line);
+                this->publish_firmware_update_status(firmware_status);
+                if (this->interrupt_firmware_download) {
+                    EVLOG_info << "Updating firmware was interrupted, terminating firmware update script, requestId: "
+                               << firmware_status.request_id;
+                    return CmdControl::Terminate;
+                }
+                return CmdControl::Continue;
+            });
         retries += 1;
-        while (std::getline(download_stream, temp) && !this->interrupt_firmware_download) {
-            firmware_status.firmware_update_status = types::system::string_to_firmware_update_status_enum(temp);
-            this->publish_firmware_update_status(firmware_status);
-        }
-        if (this->interrupt_firmware_download) {
-            EVLOG_info << "Updating firmware was interrupted, terminating firmware update script, requestId: "
-                       << firmware_status.request_id;
-            download_cmd.terminate();
-        }
         if (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
             retries < total_retries) {
             std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
@@ -299,17 +297,16 @@ void systemImpl::install_signed_firmware(const types::system::FirmwareUpdateRequ
     firmware_status.firmware_update_status = firmware_status_enum;
     if (!this->firmware_installation_running) {
         this->firmware_installation_running = true;
-        boost::process::ipstream install_stream;
         const auto firmware_installer = this->scripts_path / SIGNED_FIRMWARE_INSTALLER;
         const auto constants = this->scripts_path / CONSTANTS;
         const std::vector<std::string> install_args = {constants.string()};
-        boost::process::child install_cmd(firmware_installer.string(), boost::process::args(install_args),
-                                          boost::process::std_out > install_stream);
-        std::string temp;
-        while (std::getline(install_stream, temp)) {
-            firmware_status.firmware_update_status = types::system::string_to_firmware_update_status_enum(temp);
-            this->publish_firmware_update_status(firmware_status);
-        }
+        run_application(firmware_installer.string(), install_args,
+                        [this, &firmware_status](const std::string& output_line) {
+                            firmware_status.firmware_update_status =
+                                types::system::string_to_firmware_update_status_enum(output_line);
+                            this->publish_firmware_update_status(firmware_status);
+                            return CmdControl::Continue;
+                        });
         if (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::Installed) {
             if (!this->mod->r_store.empty()) {
                 this->mod->r_store.at(0)->call_store(boot_reason_key,
@@ -388,38 +385,35 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
 
         types::system::LogStatus log_status;
         while (!uploaded && retries < total_retries && !this->interrupt_log_upload) {
-
-            boost::process::ipstream stream;
-            boost::process::child cmd(diagnostics_uploader.string(), boost::process::args(args),
-                                      boost::process::std_out > stream);
-            std::string temp;
             retries += 1;
             log_status.request_id = upload_logs_request.request_id.value_or(-1);
-            while (std::getline(stream, temp) && !this->interrupt_log_upload) {
-                if (temp == "Uploaded") {
-                    log_status.log_status = types::system::string_to_log_status_enum(temp);
-                } else if (temp == "UploadFailure" || temp == "PermissionDenied" || temp == "BadMessage" ||
-                           temp == "NotSupportedOperation") {
+            run_application(diagnostics_uploader.string(), args, [this, &log_status](const std::string& output_line) {
+                if (output_line == "Uploaded") {
+                    log_status.log_status = types::system::string_to_log_status_enum(output_line);
+                } else if (output_line == "UploadFailure" || output_line == "PermissionDenied" ||
+                           output_line == "BadMessage" || output_line == "NotSupportedOperation") {
                     log_status.log_status = types::system::LogStatusEnum::UploadFailure;
                 } else {
                     log_status.log_status = types::system::LogStatusEnum::Uploading;
                 }
                 this->publish_log_status(log_status);
-            }
+                if (this->interrupt_log_upload) {
+                    return CmdControl::Terminate;
+                }
+                return CmdControl::Continue;
+            });
             if (this->interrupt_log_upload) {
                 EVLOG_info << "Uploading Logs was interrupted, terminating upload script, requestId: "
                            << log_status.request_id;
                 // N01.FR.20
                 log_status.log_status = types::system::LogStatusEnum::AcceptedCanceled;
                 this->publish_log_status(log_status);
-                cmd.terminate();
             } else if (log_status.log_status != types::system::LogStatusEnum::Uploaded && retries < total_retries) {
                 // command finished, but neither interrupted nor uploaded
                 std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
             } else {
                 uploaded = true;
             }
-            cmd.wait();
         }
         this->log_upload_running = false;
         this->log_upload_cv.notify_one();

@@ -9,16 +9,12 @@ ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
-set (ADDITIONAL_MODULE_LIBS everest::timer)
-
-list(APPEND ADDITIONAL_MODULE_LIBS
-    date::date
-    date::date-tz
-)
-
 target_link_libraries(${MODULE_NAME}
     PRIVATE
-        ${ADDITIONAL_MODULE_LIBS}
+        date::date
+        date::date-tz
+        everest::timer
+        everest::staging::run_application
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
