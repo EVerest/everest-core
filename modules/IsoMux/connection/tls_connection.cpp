@@ -95,73 +95,6 @@ void server_loop_thread(struct v2g_context* ctx) {
     }
 }
 
-bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
-    assert(ctx != nullptr);
-    assert(ctx->r_security != nullptr);
-
-    using types::evse_security::CaCertificateType;
-    using types::evse_security::EncodingFormat;
-    using types::evse_security::GetCertificateInfoStatus;
-    using types::evse_security::LeafCertificateType;
-
-    /*
-     * libevse-security checks for an optional password and when one
-     * isn't set is uses an empty string as the password rather than nullptr.
-     * hence private keys are always encrypted.
-     */
-
-    bool bResult{false};
-
-    config.cipher_list = "ECDHE-ECDSA-AES128-SHA256:ECDH-ECDSA-AES128-SHA256";
-    config.ciphersuites = "";     // disable TLS 1.3
-    config.verify_client = false; // contract certificate managed in-band in 15118-2
-
-    // use the existing configured socket
-    // TODO(james-ctc): switch to server socket init code otherwise there
-    //                  may be issues with reinitialisation
-    config.socket = ctx->tls_socket.fd;
-    config.io_timeout_ms = static_cast<std::int32_t>(ctx->network_read_timeout_tls);
-
-    config.tls_key_logging = ctx->tls_key_logging;
-
-    // information from libevse-security
-    const auto cert_info =
-        ctx->r_security->call_get_leaf_certificate_info(LeafCertificateType::V2G, EncodingFormat::PEM, false);
-    if (cert_info.status != GetCertificateInfoStatus::Accepted) {
-        dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Not Accepted");
-    } else {
-        if (cert_info.info) {
-            const auto& info = cert_info.info.value();
-            const auto cert_path = info.certificate.value_or("");
-            const auto key_path = info.key;
-
-            // workaround (see above libevse-security comment)
-            const auto key_password = info.password.value_or("");
-
-            auto& ref = config.chains.emplace_back();
-            ref.certificate_chain_file = cert_path.c_str();
-            ref.private_key_file = key_path.c_str();
-            ref.private_key_password = key_password.c_str();
-
-            if (info.ocsp) {
-                for (const auto& ocsp : info.ocsp.value()) {
-                    const char* file{nullptr};
-                    if (ocsp.ocsp_path) {
-                        file = ocsp.ocsp_path.value().c_str();
-                    }
-                    ref.ocsp_response_files.push_back(file);
-                }
-            }
-
-            bResult = true;
-        } else {
-            dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Empty response");
-        }
-    }
-
-    return bResult;
-}
-
 tls::Server::OptionalConfig configure_ssl(struct v2g_context* ctx) {
     try {
         dlog(DLOG_LEVEL_WARNING, "configure_ssl");
@@ -323,6 +256,73 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
     }
 
     return (result < 0) ? result : static_cast<ssize_t>(bytes_written);
+}
+
+bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
+    assert(ctx != nullptr);
+    assert(ctx->r_security != nullptr);
+
+    using types::evse_security::CaCertificateType;
+    using types::evse_security::EncodingFormat;
+    using types::evse_security::GetCertificateInfoStatus;
+    using types::evse_security::LeafCertificateType;
+
+    /*
+     * libevse-security checks for an optional password and when one
+     * isn't set is uses an empty string as the password rather than nullptr.
+     * hence private keys are always encrypted.
+     */
+
+    bool bResult{false};
+
+    config.cipher_list = "ECDHE-ECDSA-AES128-SHA256:ECDH-ECDSA-AES128-SHA256";
+    config.ciphersuites = "";     // disable TLS 1.3
+    config.verify_client = false; // contract certificate managed in-band in 15118-2
+
+    // use the existing configured socket
+    // TODO(james-ctc): switch to server socket init code otherwise there
+    //                  may be issues with reinitialisation
+    config.socket = ctx->tls_socket.fd;
+    config.io_timeout_ms = static_cast<std::int32_t>(ctx->network_read_timeout_tls);
+
+    config.tls_key_logging = ctx->tls_key_logging;
+
+    // information from libevse-security
+    const auto cert_info =
+        ctx->r_security->call_get_leaf_certificate_info(LeafCertificateType::V2G, EncodingFormat::PEM, false);
+    if (cert_info.status != GetCertificateInfoStatus::Accepted) {
+        dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Not Accepted");
+    } else {
+        if (cert_info.info) {
+            const auto& info = cert_info.info.value();
+            const auto cert_path = info.certificate.value_or("");
+            const auto key_path = info.key;
+
+            // workaround (see above libevse-security comment)
+            const auto key_password = info.password.value_or("");
+
+            auto& ref = config.chains.emplace_back();
+            ref.certificate_chain_file = cert_path.c_str();
+            ref.private_key_file = key_path.c_str();
+            ref.private_key_password = key_password.c_str();
+
+            if (info.ocsp) {
+                for (const auto& ocsp : info.ocsp.value()) {
+                    const char* file{nullptr};
+                    if (ocsp.ocsp_path) {
+                        file = ocsp.ocsp_path.value().c_str();
+                    }
+                    ref.ocsp_response_files.push_back(file);
+                }
+            }
+
+            bResult = true;
+        } else {
+            dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Empty response");
+        }
+    }
+
+    return bResult;
 }
 
 int connection_proxy(struct v2g_connection* conn, int proxy_fd) {
