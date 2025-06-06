@@ -91,11 +91,17 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
     return 0;
 }
 
-WebSocketServer::WebSocketServer(bool ssl_enabled, int port)
+WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& iface)
     : m_ssl_enabled(ssl_enabled) {
     // Constructor implementation
     lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG, log_callback);
     m_info.port = port;
+    if (iface != "") {
+        // create a persistent copy
+        m_iface = new char[iface.size() + 1];
+        memcpy(m_iface, iface.c_str(), iface.size() + 1);
+        m_info.iface = m_iface;
+    }
     m_lws_protocols[0] = { "EVerestRpcApi", callback_ws, PER_SESSION_DATA_SIZE, 0 };
     m_lws_protocols[1] = LWS_PROTOCOL_LIST_TERM;
 
@@ -190,7 +196,9 @@ bool WebSocketServer::start_server() {
         return false;
     }
 
-    EVLOG_info << "WebSocket Server running on port " << m_info.port << (m_ssl_enabled? " with TLS":" without TLS");
+    EVLOG_info << "WebSocket Server running on port " << m_info.port
+               << (m_info.iface ? " (interface \"" + std::string(m_info.iface) + "\" only)" : "")
+               << (m_ssl_enabled ? " with" : " without") << " TLS";
 
     m_server_thread = std::thread([this]() {
         m_running = true;

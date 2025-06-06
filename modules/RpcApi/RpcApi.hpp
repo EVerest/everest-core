@@ -20,12 +20,12 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include <generated/types/json_rpc_api.hpp>
-#include <vector>
+#include "RpcApiRequestHandler.hpp"
 #include "data/DataStore.hpp"
 #include "rpc/RpcHandler.hpp"
 #include "server/WebsocketServer.hpp"
-#include "RpcApiRequestHandler.hpp"
+#include <generated/types/json_rpc_api.hpp>
+#include <vector>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -33,6 +33,7 @@ namespace module {
 struct Conf {
     bool websocket_enabled;
     int websocket_port;
+    std::string websocket_interface;
     bool websocket_tls_enabled;
     bool authentication_required;
     std::string charger_information_file;
@@ -86,10 +87,9 @@ private:
     std::unique_ptr<request_interface::RequestHandlerInterface> m_request_handler;
 
     void subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager, data::DataStoreEvse& evse_data);
-    void meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
-                                      data::MeterDataStore& meter_data);
+    void meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter, data::MeterDataStore& meter_data);
     void hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
-                                       data::HardwareCapabilitiesStore& hw_caps_data);
+                                 data::HardwareCapabilitiesStore& hw_caps_data);
     bool check_evse_mapping();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

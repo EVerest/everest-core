@@ -23,7 +23,7 @@ void RpcApi::init() {
     // Create the request handler
     m_request_handler = std::make_unique<RpcApiRequestHandler>(r_evse_manager, r_error_history, r_evse_energy_sink);
 
-    m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port);
+    m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port, config.websocket_interface);
     // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
     transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
