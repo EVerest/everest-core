@@ -226,5 +226,13 @@ cmds:
     result:
       description: True if verification succeeded, false if not
       type: boolean
+vars:
+  certificate_store_update:
+    description: >-
+      Variable that indicates that the certificate store has been updated, i.e. either a certificate has been installed or deleted. 
+      This is used to notify other modules that the certificate store has changed.
+    type: object
+    $ref: /evse_security#/CertificateStoreUpdate
+
 
 
