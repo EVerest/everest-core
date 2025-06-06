@@ -474,3 +474,177 @@ class TestPlugAndCharge:
             "StatusNotification",
             {"connectorStatus": "Available"},
         )
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.source_certs_dir(Path(__file__).parent.parent / "everest-aux/certs")
+    @pytest.mark.ocpp_config_adaptions(
+        GenericOCPP201ConfigAdjustment(
+            [
+                (
+                    OCPP201ConfigVariableIdentifier(
+                        "ISO15118Ctrlr",
+                        "V2GCertificateInstallationEnabled",
+                        "Actual",
+                    ),
+                    True,
+                ),
+                (
+                    OCPP201ConfigVariableIdentifier(
+                        "ISO15118Ctrlr",
+                        "ContractCertificateInstallationEnabled",
+                        "Actual",
+                    ),
+                    True,
+                ),
+                (
+                    OCPP201ConfigVariableIdentifier(
+                        "ISO15118Ctrlr",
+                        "SeccId",
+                        "Actual",
+                    ),
+                    "cp001",
+                ),
+                (
+                    OCPP201ConfigVariableIdentifier(
+                        "ISO15118Ctrlr",
+                        "ISO15118CtrlrOrganizationName",
+                        "Actual",
+                    ),
+                    "EVerest",
+                ),
+                (
+                    OCPP201ConfigVariableIdentifier(
+                        "ISO15118Ctrlr",
+                        "ISO15118CtrlrCountryName",
+                        "Actual",
+                    ),
+                    "DE",
+                ),
+            ]
+        )
+    )
+    async def test_no_tls_after_secc_leaf_deleted(
+        self,
+        central_system: CentralSystem,
+        charge_point: ChargePoint201,
+        test_controller: TestController,
+        test_config,
+        test_utility: TestUtility,
+    ):
+        """
+        Test for contract installation on the vehicle and succeeding authorization and charging process
+        """
+
+        setattr(
+            charge_point, "on_get_15118_ev_certificate", on_get_15118_ev_certificate
+        )
+        central_system.chargepoint.route_map = create_route_map(
+            central_system.chargepoint
+        )
+
+        test_controller.plug_in_dc_iso()
+
+        assert await wait_for_and_validate(
+            test_utility, charge_point, "Get15118EVCertificate", {"action": "Install"}
+        )
+
+        # expect authorize.req
+        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+            **await wait_for_and_validate(test_utility, charge_point, "Authorize", {})
+        )
+
+        assert validate_authorize_req(authorize_req, False, True)
+
+        # expect StartTransaction.req
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point,
+            "TransactionEvent",
+            {
+                "eventType": "Started",
+                "id_token": {
+                    "idToken": test_config.authorization_info.emaid,
+                    "type": "eMAID",
+                },
+            },
+        )
+
+        test_utility.messages.clear()
+        test_controller.plug_out_iso()
+
+        # expect StatusNotification with status available
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point,
+            "StatusNotification",
+            {"connectorStatus": "Available"},
+        )
+
+        certificate_hash_data = {
+            "hashAlgorithm": "SHA256",
+            "issuerKeyHash": "cd081d59ed5020a04c4dd028c92ee8758653464a69ebee8f90f4129ba4ef6d66",
+            "issuerNameHash": "e3883400da76434e273f52534ee5f9bb021bb436d1efef0d793213ad3b25d766",
+            "serialNumber": "303c"
+        }
+
+        delete_certificate_req = {"certificate_hash_data": certificate_hash_data}
+
+        # delete MO root
+        delete_certificate_response: call_result201.DeleteCertificatePayload = (
+            await charge_point.delete_certificate_req(
+                **delete_certificate_req,
+            )
+        )
+
+        assert (
+            delete_certificate_response.status == DeleteCertificateStatusType.accepted
+        )
+
+        test_controller.plug_in_dc_iso()
+
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point,
+            "StatusNotification",
+            {"connectorStatus": "Occupied"},
+        )
+
+        await asyncio.sleep(10) # wait for ISO process to start
+        
+        test_controller.swipe("DEADBEEF")
+
+        test_utility.messages.clear()
+
+        # expect authorize.req
+        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+            **await wait_for_and_validate(test_utility, charge_point, "Authorize", {})
+        )
+
+        assert validate_authorize_req(authorize_req, False, False)
+
+        # expect StartTransaction.req
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point,
+            "TransactionEvent",
+            {
+                "eventType": "Started",
+                "id_token": {
+                    "type": "ISO14443",
+                },
+            },
+        )
+
+        test_controller.plug_out_iso()
+
+        assert await wait_for_and_validate(
+        test_utility,
+        charge_point,
+        "TransactionEvent",
+        {
+            "eventType": "Ended",
+        },
+    )
+
+

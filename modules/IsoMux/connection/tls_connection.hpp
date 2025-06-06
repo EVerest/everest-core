@@ -5,6 +5,7 @@
 #define TLS_CONNECTION_HPP_
 
 #include <cstddef>
+#include <tls.hpp>
 #include <unistd.h>
 
 struct v2g_context;
@@ -43,6 +44,14 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, std::si
  * \return Returns the number of read bytes if successful, otherwise returns -1 for reading errors and
  * -2 for closed connection */
 ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::size_t count);
+
+/*!
+ * \brief build_config This builds the TLS server configuration based on the v2g context.
+ * \param config TLS server configuration to be filled
+ * \param ctx v2g connection context
+ * \return Returns true if the configuration was built successfully, otherwise false.
+ */
+bool build_config(tls::Server::config_t& config, struct v2g_context* ctx);
 
 int connection_proxy(struct v2g_connection* conn, int proxy_fd);
 
