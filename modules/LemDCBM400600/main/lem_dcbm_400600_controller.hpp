@@ -41,6 +41,8 @@ public:
         const std::string UV;
         // UD
         const std::string UD;
+        // command timeout in milliseconds
+        const int command_timeout_ms;
     };
 
     class DCBMUnexpectedResponseException : public std::exception {
@@ -97,6 +99,7 @@ private:
     bool v2_capable = false;
     bool need_to_stop_transaction = false;
     std::string current_transaction_id;
+    types::units_signed::SignedMeterValue current_signed_meter_value;
     std::unique_ptr<LemDCBMTimeSyncHelper> time_sync_helper;
     Conf config;
 
