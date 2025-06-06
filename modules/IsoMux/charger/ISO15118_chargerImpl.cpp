@@ -470,12 +470,16 @@ void ISO15118_chargerImpl::init() {
 void ISO15118_chargerImpl::ready() {
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
-    mod->r_iso20->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode);
-    mod->r_iso2->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode);
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    mod->r_iso20->call_setup(evse_id, sae_j2847_mode, debug_mode);
+    mod->r_iso2->call_setup(evse_id, sae_j2847_mode, debug_mode);
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes) {
+    mod->r_iso20->call_update_energy_transfer_modes(supported_energy_transfer_modes);
+    mod->r_iso2->call_update_energy_transfer_modes(supported_energy_transfer_modes);
 }
 
 void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
