@@ -279,7 +279,8 @@ types::powermeter::Powermeter LemDCBM400600Controller::get_powermeter() {
         // if there is no ongoing transaction, we do need to fetch the signed meter value to have it available
         // for the upper layers, otherwise we will not have the OCMF value if we lose connection to the device
         try {
-            current_signed_meter_value = types::units_signed::SignedMeterValue{fetch_ocmf_result(current_transaction_id), "", "OCMF"};
+            current_signed_meter_value =
+                types::units_signed::SignedMeterValue{fetch_ocmf_result(current_transaction_id), "", "OCMF"};
             current_signed_meter_value.public_key.emplace(public_key_ocmf);
             current_signed_meter_value.timestamp.emplace(powermeter_result.timestamp);
         } catch (UnexpectedDCBMResponseCode& error) {
@@ -287,8 +288,8 @@ types::powermeter::Powermeter LemDCBM400600Controller::get_powermeter() {
         } catch (UnexpectedDCBMResponseBody& error) {
             EVLOG_error << "LEM DCBM 400/600: Invalid OCMF value: " << error.what();
         } catch (HttpClientError& error) {
-            std::string error_message =
-                fmt::format("Failed get the OCMF field {} - connection to device failed: {}", current_transaction_id, error.what());
+            std::string error_message = fmt::format("Failed get the OCMF field {} - connection to device failed: {}",
+                                                    current_transaction_id, error.what());
             EVLOG_error << error_message;
         }
     }
