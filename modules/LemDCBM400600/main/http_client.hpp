@@ -46,7 +46,9 @@ public:
         curl_global_cleanup();
     }
 
-    virtual void set_command_timeout(const int command_timeout_ms);
+    void set_command_timeout(const int command_timeout_ms) override {
+        this->command_timeout_ms = command_timeout_ms;
+    }
     [[nodiscard]] HttpResponse get(const std::string& path) const override;
     [[nodiscard]] HttpResponse put(const std::string& path, const std::string& body) const override;
     [[nodiscard]] HttpResponse post(const std::string& path, const std::string& body) const override;

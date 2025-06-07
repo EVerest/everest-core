@@ -90,10 +90,6 @@ static void setup_libcurl_tls_options_for_connection(CURL* connection, struct cu
     }
 }
 
-void HttpClient::set_command_timeout(const int command_timeout_ms) {
-    this->command_timeout_ms = command_timeout_ms;
-}
-
 // Note: method_name and path are only there for the error message
 HttpResponse HttpClient::perform_request(CURL* connection, const std::string& request_body, const char* method_name,
                                          const std::string& path) const {
