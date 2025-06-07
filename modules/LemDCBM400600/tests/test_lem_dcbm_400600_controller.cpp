@@ -14,6 +14,7 @@ namespace module::main {
 
 class HTTPClientMock : public HttpClientInterface {
 public:
+    virtual void module::main::HttpClientInterface::set_command_timeout(int) {}
     MOCK_METHOD(HttpResponse, get, (const std::string& path), (override, const));
     MOCK_METHOD(HttpResponse, post, (const std::string& path, const std::string& body), (override, const));
     MOCK_METHOD(HttpResponse, put, (const std::string& path, const std::string& body), (override, const));
