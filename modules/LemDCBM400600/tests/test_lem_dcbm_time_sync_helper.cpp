@@ -91,6 +91,12 @@ TEST_F(LemDCBMTimeSyncHelperTest, test_sync_success_system_time) {
 /// \brief sync() sends correct HTTP request when in NTP mode
 TEST_F(LemDCBMTimeSyncHelperTest, test_sync_success_ntp) {
     // Setup
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_dst_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_tz_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
     EXPECT_CALL(*this->http_client, put("/v1/settings", expected_ntp_sync_request))
         .Times(1)
         .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
@@ -208,6 +214,12 @@ TEST_F(LemDCBMTimeSyncHelperTest, test_sync_if_deadline_expired_twice_when_first
 /// \brief sync() in NTP mode will not send the sync twice if the first sync succeeded
 TEST_F(LemDCBMTimeSyncHelperTest, test_sync_exception_twice_if_first_succeeds) {
     // Setup
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_dst_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_tz_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
     EXPECT_CALL(*this->http_client, put("/v1/settings", expected_ntp_sync_request))
         .Times(1)
         .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
@@ -229,6 +241,14 @@ TEST_F(LemDCBMTimeSyncHelperTest, test_sync_exception_twice_if_first_succeeds) {
 /// settings yet
 TEST_F(LemDCBMTimeSyncHelperTest, test_sync_exception_twice_if_first_succeeds_before_safe) {
     // Setup
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_dst_sync_request_regex)))
+        .Times(2)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}))
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_tz_sync_request_regex)))
+        .Times(2)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}))
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
     EXPECT_CALL(*this->http_client, put("/v1/settings", expected_ntp_sync_request))
         .Times(2)
         .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}))
@@ -251,6 +271,12 @@ TEST_F(LemDCBMTimeSyncHelperTest, test_sync_exception_twice_if_first_succeeds_be
 /// \brief sync() in NTP mode will send the sync twice if the first sync failed
 TEST_F(LemDCBMTimeSyncHelperTest, test_sync_exception_twice_if_first_fails) {
     // Setup
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_dst_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_tz_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
     EXPECT_CALL(*this->http_client, put("/v1/settings", expected_ntp_sync_request))
         .Times(2)
         .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_fail}))

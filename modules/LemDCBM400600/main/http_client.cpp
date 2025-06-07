@@ -40,7 +40,7 @@ static HttpClientError client_error(const std::string& host, unsigned int port, 
 }
 
 static void setup_connection(CURL* connection, struct payloadInTransit& request_payload, std::string& response_body,
-                             curl_slist*& headers) {
+                             curl_slist*& headers, const int command_timeout_ms) {
     // Override the Content-Type header
     headers = curl_slist_append(nullptr, CONTENT_TYPE_HEADER);
     if (curl_easy_setopt(connection, CURLOPT_HTTPHEADER, headers) != CURLE_OK) {
@@ -53,6 +53,7 @@ static void setup_connection(CURL* connection, struct payloadInTransit& request_
     curl_easy_setopt(connection, CURLOPT_WRITEDATA, &response_body);
     curl_easy_setopt(connection, CURLOPT_READFUNCTION, send_data);
     curl_easy_setopt(connection, CURLOPT_READDATA, &request_payload);
+    curl_easy_setopt(connection, CURLOPT_TIMEOUT_MS, command_timeout_ms);
 
     // Misc. settings come here
     curl_easy_setopt(connection, CURLOPT_FORBID_REUSE, 1);
@@ -102,7 +103,7 @@ HttpResponse HttpClient::perform_request(CURL* connection, const std::string& re
         request_body, 0
     };
     struct curl_slist* headers;
-    setup_connection(connection, request_payload, response_body, headers);
+    setup_connection(connection, request_payload, response_body, headers, command_timeout_ms);
 
     // Set up TLS options if TLS is enabled
     // we define dcbm_cert outside the "if" statement to ensure it outlives curl_easy_perform().

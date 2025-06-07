@@ -57,6 +57,8 @@ void LemDCBMTimeSyncHelper::sync(const HttpClientInterface& httpClient) {
 
     if (this->ntp_spec.ntp_enabled) {
         this->set_ntp_settings_on_device(httpClient);
+        this->sync_timezone(httpClient);
+        this->sync_dst(httpClient);
     } else {
         this->sync_system_time(httpClient);
         this->sync_timezone(httpClient);
