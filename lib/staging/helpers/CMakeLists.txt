@@ -30,6 +30,7 @@ target_link_libraries(everest_staging_helpers
         Boost::headers
         fmt::fmt
         nlohmann_json::nlohmann_json
+        everest::tls
 )
 
 add_dependencies(everest_staging_helpers generate_cpp_files)

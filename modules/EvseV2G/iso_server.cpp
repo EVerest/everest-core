@@ -955,6 +955,14 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                     res->ResponseCode = iso2_responseCodeType_FAILED_NoCertificateAvailable;
                 }
                 break;
+            case crypto::verify_result_t::CertificateNotAllowed:
+                // forward to csms if central_contract_validation_allowed is true
+                if (conn->ctx->evse_v2g_data.central_contract_validation_allowed) {
+                    forward_contract = true;
+                } else {
+                    res->ResponseCode = iso2_responseCodeType_FAILED_CertificateNotAllowedAtThisEVSE;
+                }
+                break;
             case crypto::verify_result_t::CertChainError:
             default:
                 res->ResponseCode = iso2_responseCodeType_FAILED_CertChainError;
@@ -995,7 +1003,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         ProvidedIdToken.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
         ProvidedIdToken.iso15118CertificateHashData = iso15118_certificate_hash_data;
         ProvidedIdToken.certificate = contract_cert_chain_pem;
-        conn->ctx->p_charger->publish_require_auth_pnc(ProvidedIdToken);
+        conn->ctx->session.provided_id_token.emplace(ProvidedIdToken);
 
     } else {
         res->ResponseCode = iso2_responseCodeType_FAILED;
@@ -1062,6 +1070,16 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
 
         if (!bSigRes) {
             res->ResponseCode = iso2_responseCodeType_FAILED_SignatureError;
+            goto error_out;
+        }
+        if (conn->ctx->session.provided_id_token.has_value()) {
+            conn->ctx->p_charger->publish_require_auth_pnc(conn->ctx->session.provided_id_token.value());
+            conn->ctx->session.provided_id_token.reset();
+        } else {
+            // this should never happen, since the contract certificate is set in handle_iso_payment_details in case
+            // contract is selected
+            dlog(DLOG_LEVEL_ERROR, "No contract certificate could be retrieved!");
+            res->ResponseCode = iso2_responseCodeType_FAILED;
             goto error_out;
         }
     }

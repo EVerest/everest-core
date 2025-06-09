@@ -129,17 +129,17 @@ bool check_iso2_signature(const struct iso2_SignatureType* iso2_signature, EVP_P
 
 bool load_contract_root_cert(::openssl::certificate_list& trust_anchors, const char* V2G_file_path,
                              const char* MO_file_path) {
-    // note the file(s) may contain more than one certificate (hence must be PEM)
-    // try MO_file_path first then fallback to V2G_file_path
-
     trust_anchors.clear();
-    trust_anchors = ::openssl::load_certificates(MO_file_path);
+
+    auto mo_certs = ::openssl::load_certificates(MO_file_path);
+    trust_anchors = std::move(mo_certs);
+
+    auto v2g_certs = ::openssl::load_certificates(V2G_file_path);
+    trust_anchors.insert(trust_anchors.end(), std::make_move_iterator(v2g_certs.begin()),
+                         std::make_move_iterator(v2g_certs.end()));
+
     if (trust_anchors.empty()) {
-        log_error("Unable to load MO root(s)");
-        trust_anchors = ::openssl::load_certificates(V2G_file_path);
-        if (trust_anchors.empty()) {
-            log_error("Unable to load V2G root(s)");
-        }
+        log_error("Unable to load any MO or V2G root(s)");
     }
 
     return !trust_anchors.empty();

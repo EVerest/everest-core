@@ -302,11 +302,12 @@ struct v2g_context {
         iso2_paymentOptionType iso_selected_payment_option;
         long long int auth_start_timeout;
         int auth_timeout_eim;
-        int auth_timeout_pnc;                                       // for PnC
-        uint8_t gen_challenge[16];                                  // for PnC
-        bool verify_contract_cert_chain;                            // for PnC
-        types::authorization::CertificateStatus certificate_status; // for PnC
-        bool authorization_rejected;                                // for PnC
+        int auth_timeout_pnc;                                                   // for PnC
+        uint8_t gen_challenge[16];                                              // for PnC
+        bool verify_contract_cert_chain;                                        // for PnC
+        types::authorization::CertificateStatus certificate_status;             // for PnC
+        bool authorization_rejected;                                            // for PnC
+        std::optional<types::authorization::ProvidedIdToken> provided_id_token; // for PnC
 
         bool renegotiation_required;  /* Is set to true if renegotiation is required. Only relevant for ISO */
         bool is_charging;             /* set to true if ChargeProgress is set to Start */
