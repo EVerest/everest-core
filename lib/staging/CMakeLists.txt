@@ -20,5 +20,3 @@ endif()
 if(EVEREST_DEPENDENCY_ENABLED_LIBOCPP)
     add_subdirectory(ocpp)
 endif()
-
-add_subdirectory(run_application)
