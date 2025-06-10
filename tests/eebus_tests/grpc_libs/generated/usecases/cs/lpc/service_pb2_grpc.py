@@ -5,7 +5,7 @@ import warnings
 
 from usecases.cs.lpc import messages_pb2 as usecases_dot_cs_dot_lpc_dot_messages__pb2
 
-GRPC_GENERATED_VERSION = '1.66.2'
+GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
