@@ -3,6 +3,7 @@
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "IsoMux.hpp"
 #include "connection.hpp"
+#include "connection/tls_connection.hpp"
 #include "log.hpp"
 #include "sdp.hpp"
 
@@ -46,6 +47,27 @@ void IsoMux::init() {
 
     (void)openssl::set_log_handler(log_handler);
     v2g_ctx->tls_server = &tls_server;
+
+    this->r_security->subscribe_certificate_store_update(
+        [this](const types::evse_security::CertificateStoreUpdate& update) {
+            if (!update.leaf_certificate_type.has_value()) {
+                return;
+            }
+
+            if (update.leaf_certificate_type.value() != types::evse_security::LeafCertificateType::V2G) {
+                return;
+            }
+
+            dlog(DLOG_LEVEL_INFO, "Certificate store update received, reconfiguring TLS server");
+            auto config = std::make_unique<tls::Server::config_t>();
+            if (build_config(*config, v2g_ctx)) {
+                dlog(DLOG_LEVEL_INFO, "Configuration of TLS server successful, updating it");
+                v2g_ctx->tls_server->update(*config);
+            } else {
+                dlog(DLOG_LEVEL_INFO, "Configuration of TLS server failed, suspending it");
+                v2g_ctx->tls_server->suspend();
+            }
+        });
 
     invoke_init(*p_charger);
 }
