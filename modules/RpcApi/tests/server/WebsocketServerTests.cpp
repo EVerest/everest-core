@@ -25,7 +25,7 @@ protected:
                 EVLOG_error << "Exception occurred while handling client connected: " << e.what();
             }
         };
-    
+
         ws_server->on_client_disconnected = [this](const TransportInterface::ClientId& client_id) {
             // Handle client disconnected logic here
             std::lock_guard<std::mutex> lock(cv_mutex);
@@ -35,7 +35,7 @@ protected:
                 EVLOG_error << "Exception occurred while handling client disconnected: " << e.what();
             }
         };
-    
+
         ws_server->on_data_available = [this](const TransportInterface::ClientId& client_id, const server::TransportInterface::Data& data) {
             // Handle data available logic here
             std::lock_guard<std::mutex> lock(cv_mutex);
