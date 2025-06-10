@@ -32,7 +32,7 @@ ev_define_dependency(
 
 ev_define_dependency(
     DEPENDENCY_NAME Josev
-    DEPENDENT_MODULES_LIST PyJosev PyEvJosev)
+    DEPENDENT_MODULES_LIST PyEvJosev)
 
 ev_define_dependency(
     DEPENDENCY_NAME libcbv2g
@@ -45,7 +45,7 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST OCPP OCPP201 EvseSecurity EvseV2G)
 
 ev_define_dependency(
-    DEPENDENCY_NAME sqlite_cpp
+    DEPENDENCY_NAME everest-sqlite
     DEPENDENT_MODULES_LIST ErrorHistory)
 
 ev_define_dependency(

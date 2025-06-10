@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <poll.h>
+#include <thread>
 
 using namespace std::chrono_literals;
 
@@ -866,6 +867,42 @@ TEST_F(TlsTest, TCKeysInvalid) {
     }
     EXPECT_TRUE(is_set(flags_t::connected));
     EXPECT_EQ(subject["CN"], server_root_CN);
+}
+
+TEST_F(TlsTest, Suspend) {
+    using state_t = tls::Server::state_t;
+    start();
+    EXPECT_EQ(server.state(), state_t::running);
+    connect();
+    EXPECT_TRUE(is_set(flags_t::connected));
+    EXPECT_TRUE(server.suspend());
+    EXPECT_EQ(server.state(), state_t::init_socket);
+    connect();
+    EXPECT_FALSE(is_set(flags_t::connected));
+    EXPECT_EQ(server.state(), state_t::init_socket);
+    EXPECT_TRUE(server.update(server_config));
+    EXPECT_EQ(server.state(), state_t::init_complete);
+    connect();
+    EXPECT_TRUE(is_set(flags_t::connected));
+    EXPECT_EQ(server.state(), state_t::running);
+}
+
+TEST_F(TlsTest, SuspendToRunning) {
+    using state_t = tls::Server::state_t;
+    start();
+    EXPECT_EQ(server.state(), state_t::running);
+    connect();
+    EXPECT_TRUE(is_set(flags_t::connected));
+    EXPECT_TRUE(server.suspend());
+    EXPECT_EQ(server.state(), state_t::init_socket);
+    connect();
+    EXPECT_FALSE(is_set(flags_t::connected));
+    EXPECT_EQ(server.state(), state_t::init_socket);
+    EXPECT_TRUE(server.update(server_config));
+    EXPECT_EQ(server.state(), state_t::init_complete);
+    // should switch to running after a timeout
+    std::this_thread::sleep_for(std::chrono::milliseconds(tls::c_serve_timeout_ms + 100));
+    EXPECT_EQ(server.state(), state_t::running);
 }
 
 } // namespace

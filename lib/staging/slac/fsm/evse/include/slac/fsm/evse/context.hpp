@@ -182,6 +182,8 @@ struct EvseSlacConfig {
 
     // offset for adjusting the calculated sounding attenuation
     int sounding_atten_adjustment = 0;
+
+    bool reset_instead_of_fail{false};
 };
 
 struct Context {

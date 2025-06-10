@@ -8,7 +8,7 @@ liblog:
   options: ["BUILD_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.20.3
+  git_tag: v0.21.1
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -46,12 +46,12 @@ libfsm:
 # libcbv2g
 libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.3.0
+  git_tag: v0.3.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: v0.5.1
+  git_tag: v0.6.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
@@ -59,25 +59,36 @@ libcurl:
   git: https://github.com/curl/curl.git
   git_tag: curl-8_13_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
-  options: ["CURL_USE_LIBPSL OFF"]
+  options: [
+    "BUILD_EXAMPLES OFF",
+    "BUILD_LIBCURL_DOCS OFF",
+    "BUILD_MISC_DOCS OFF",
+    "BUILD_TESTING OFF",
+    "CURL_BROTLI OFF",
+    "CURL_DISABLE_LDAP ON",
+    "CURL_USE_LIBPSL OFF",
+    "CURL_USE_LIBSSH2 OFF",
+    "ENABLE_CURL_MANUAL OFF",
+    "USE_NGHTTP2 OFF",
+  ]
 
 # EvseSecurity
 # This has to appear before libocpp in this file since it is also a direct dependency
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.5
+  git_tag: 3b1231392c9f93e1a1375e4691cb20b83cc63a9b
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.26.0
+  git_tag: 663f59772c37ac7e83a051b3042504f4d013fe85
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2025.2.0
+  git_tag: 2025.5.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # everest-testing and ev-dev-tools
 everest-utils:
@@ -97,7 +108,7 @@ gtest:
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 everest-sqlite:
   git: https://github.com/EVerest/everest-sqlite.git
-  git_tag: v0.1.0
+  git_tag: v0.1.1
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0

@@ -108,6 +108,8 @@ struct Conf {
     int sleep_before_enabling_pwm_hlc_mode_ms;
     bool central_contract_validation_allowed;
     bool contract_certificate_installation_enabled;
+    bool inoperative_error_use_vendor_id;
+    std::string session_id_type;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -298,6 +300,8 @@ private:
 
     std::atomic_bool contactor_open{true};
 
+    Everest::timed_mutex_traceable charger_ready_mutex;
+    bool charger_ready{false};
     std::atomic_bool hlc_enabled;
 
     std::atomic_bool hlc_waiting_for_auth_eim;

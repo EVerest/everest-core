@@ -11,6 +11,8 @@
 namespace module::stub {
 
 struct evse_managerImplStub : public evse_managerImplBase {
+    evse_managerImplStub(Everest::ModuleAdapter* ev, const std::string& name) : evse_managerImplBase(ev, name) {
+    }
     evse_managerImplStub() : evse_managerImplBase(nullptr, "manager") {
     }
     virtual void init() {
@@ -61,6 +63,9 @@ struct evse_managerImplStub : public evse_managerImplBase {
     }
     virtual bool handle_external_ready_to_start_charging() {
         return true;
+    }
+    virtual void handle_set_plug_and_charge_configuration(
+        types::evse_manager::PlugAndChargeConfiguration& plug_and_charge_configuration) {
     }
 };
 

@@ -556,8 +556,7 @@ class TestOCPP16GenericInterfaceIntegration:
                             "charging_rate_unit": "A",
                             "charging_schedule_period": [
                                 {
-                                    "limit": 48,
-                                    "number_phases": 3,
+                                    "limit": 64,
                                     "stack_level": 0,
                                     "start_period": 0,
                                 }
@@ -571,7 +570,6 @@ class TestOCPP16GenericInterfaceIntegration:
                             "charging_schedule_period": [
                                 {
                                     "limit": 32,
-                                    "number_phases": 3,
                                     "stack_level": 1,
                                     "start_period": 0,
                                 }
@@ -585,7 +583,6 @@ class TestOCPP16GenericInterfaceIntegration:
                             "charging_schedule_period": [
                                 {
                                     "limit": 32,
-                                    "number_phases": 3,
                                     "stack_level": 1,
                                     "start_period": 0,
                                 }

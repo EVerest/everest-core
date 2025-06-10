@@ -27,7 +27,8 @@ enum class verify_result_t : std::uint8_t {
     CertChainError,
     CertificateExpired,
     CertificateRevoked,
-    NoCertificateAvailable,
+    NoCertificateAvailable, // no root certificate available at all
+    CertificateNotAllowed,  // correct root certificate not available
     OtherError,
 };
 

@@ -23,7 +23,7 @@ def abs_req1_test1():
                 start_schedule=datetime.now(timezone.utc).isoformat(),
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=10)
+                    ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3)
                 ],
             ),
         ),
@@ -45,11 +45,11 @@ def abs_req2_test1():
                 start_schedule=datetime.now(timezone.utc).isoformat(),
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=6),
-                    ChargingSchedulePeriod(start_period=60, limit=10),
-                    ChargingSchedulePeriod(start_period=120, limit=8),
-                    ChargingSchedulePeriod(start_period=180, limit=25),
-                    ChargingSchedulePeriod(start_period=260, limit=8),
+                    ChargingSchedulePeriod(start_period=0, limit=6, number_phases=3),
+                    ChargingSchedulePeriod(start_period=60, limit=10, number_phases=3),
+                    ChargingSchedulePeriod(start_period=120, limit=8, number_phases=3),
+                    ChargingSchedulePeriod(start_period=180, limit=25, number_phases=3),
+                    ChargingSchedulePeriod(start_period=260, limit=8, number_phases=3),
                 ],
             ),
         ),
@@ -223,15 +223,15 @@ def abs_exp_test3(passed_seconds):
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=6, number_phases=3),
+                    start_period=0, limit=6),
                 ChargingSchedulePeriod(
-                    start_period=60 - passed_seconds, limit=10, number_phases=3
+                    start_period=60 - passed_seconds, limit=10
                 ),
                 ChargingSchedulePeriod(
-                    start_period=120 - passed_seconds, limit=8, number_phases=3
+                    start_period=120 - passed_seconds, limit=8
                 ),
                 ChargingSchedulePeriod(
-                    start_period=260 - passed_seconds, limit=48, number_phases=3
+                    start_period=260 - passed_seconds, limit=48
                 ),
             ],
         ),
@@ -297,15 +297,15 @@ def abs_exp_test5_1(passed_seconds):
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=7, number_phases=3),
+                    start_period=0, limit=7),
                 ChargingSchedulePeriod(
-                    start_period=100 - passed_seconds, limit=9, number_phases=3
+                    start_period=100 - passed_seconds, limit=9
                 ),
                 ChargingSchedulePeriod(
-                    start_period=150 - passed_seconds, limit=8, number_phases=3
+                    start_period=150 - passed_seconds, limit=8
                 ),
                 ChargingSchedulePeriod(
-                    start_period=200 - passed_seconds, limit=10, number_phases=3
+                    start_period=200 - passed_seconds, limit=10
                 ),
             ],
         ),
@@ -323,18 +323,18 @@ def abs_exp_test5_2(passed_seconds):
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=7, number_phases=3),
+                    start_period=0, limit=7),
                 ChargingSchedulePeriod(
-                    start_period=100 - passed_seconds, limit=9, number_phases=3
+                    start_period=100 - passed_seconds, limit=9
                 ),
                 ChargingSchedulePeriod(
-                    start_period=150 - passed_seconds, limit=8, number_phases=3
+                    start_period=150 - passed_seconds, limit=8
                 ),
                 ChargingSchedulePeriod(
-                    start_period=200 - passed_seconds, limit=10, number_phases=3
+                    start_period=200 - passed_seconds, limit=10
                 ),
                 ChargingSchedulePeriod(
-                    start_period=400 - passed_seconds, limit=48, number_phases=3
+                    start_period=400 - passed_seconds, limit=48
                 ),
             ],
         ),
@@ -423,13 +423,13 @@ def abs_exp_test6_con0():
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=18, number_phases=3),
+                    start_period=0, limit=18),
                 ChargingSchedulePeriod(
-                    start_period=50, limit=24, number_phases=3),
+                    start_period=50, limit=24),
                 ChargingSchedulePeriod(
-                    start_period=100, limit=14, number_phases=3),
+                    start_period=100, limit=14),
                 ChargingSchedulePeriod(
-                    start_period=200, limit=24, number_phases=3),
+                    start_period=200, limit=24),
             ],
         ),
     )
@@ -446,18 +446,18 @@ def abs_exp_test6_con1(passed_seconds):
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=16, number_phases=3),
+                    start_period=0, limit=16),
                 ChargingSchedulePeriod(
-                    start_period=100 - passed_seconds, limit=14, number_phases=3
+                    start_period=100 - passed_seconds, limit=14
                 ),
                 ChargingSchedulePeriod(
-                    start_period=200 - passed_seconds, limit=20, number_phases=3
+                    start_period=200 - passed_seconds, limit=20
                 ),
                 ChargingSchedulePeriod(
-                    start_period=400 - passed_seconds, limit=24, number_phases=3
+                    start_period=400 - passed_seconds, limit=24
                 ),
                 ChargingSchedulePeriod(
-                    start_period=800 - passed_seconds, limit=48, number_phases=3
+                    start_period=800 - passed_seconds, limit=48
                 ),
             ],
         ),
@@ -475,12 +475,12 @@ def abs_exp_test6_con2(passed_seconds):
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=10, number_phases=3),
+                    start_period=0, limit=10),
                 ChargingSchedulePeriod(
-                    start_period=100 - passed_seconds, limit=14, number_phases=3
+                    start_period=100 - passed_seconds, limit=14
                 ),
                 ChargingSchedulePeriod(
-                    start_period=200 - passed_seconds, limit=16, number_phases=3
+                    start_period=200 - passed_seconds, limit=16
                 ),
             ],
         ),
@@ -498,7 +498,7 @@ def abs_exp_test1_con0(passed_seconds):
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=10, number_phases=3)
+                    start_period=0, limit=10)
             ],
         ),
     )
@@ -515,7 +515,7 @@ def abs_exp_test2_con0(passed_seconds):
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=20, number_phases=3)
+                    start_period=0, limit=20)
             ],
         ),
     )
@@ -532,7 +532,7 @@ def abs_exp_test3_con0(passed_seconds):
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(
-                    start_period=0, limit=48, number_phases=3)
+                    start_period=0, limit=48)
             ],
         ),
     )

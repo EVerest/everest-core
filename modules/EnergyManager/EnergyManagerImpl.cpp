@@ -68,6 +68,7 @@ EnergyManagerImpl::EnergyManagerImpl(
     const EnergyManagerConfig& config,
     const std::function<void(const std::vector<types::energy::EnforcedLimits>& limits)>& enforced_limits_callback) :
     config(config), enforced_limits_callback(enforced_limits_callback) {
+    this->energy_flow_request.node_type = types::energy::NodeType::Undefined;
 }
 
 void EnergyManagerImpl::start() {

@@ -19,6 +19,15 @@ namespace module {
 const std::string SQL_CORE_MIGRATIONS = "core_migrations";
 const std::string CERTS_DIR = "certs";
 
+// OCPP 2.0.1 specific configuration variable names
+const std::string PNC_ENABLED_VAR_NAME = "PnCEnabled";
+const std::string MASTER_PASS_GROUP_ID_VAR_NAME = "MasterPassGroupId";
+const std::string EV_CONNECTION_TIMEOUT_VAR_NAME = "EVConnectionTimeOut";
+const std::string CENTRAL_CONTRACT_VALIDATION_ALLOWED_VAR_NAME = "CentralContractValidationAllowed";
+const std::string CONTRACT_CERTIFICATE_INSTALLATION_ENABLED_VAR_NAME = "ContractCertificateInstallationEnabled";
+const std::string TX_START_POINT_VAR_NAME = "TxStartPoint";
+const std::string TX_STOP_POINT_VAR_NAME = "TxStopPoint";
+
 namespace fs = std::filesystem;
 
 TxEvent get_tx_event(const ocpp::v2::ReasonEnum reason) {
@@ -146,7 +155,7 @@ void OCPP201::init_evse_maps() {
 
 void OCPP201::init_module_configuration() {
     const auto ev_connection_timeout_request_value_response = this->charge_point->request_value<int32_t>(
-        ocpp::v2::ControllerComponents::TxCtrlr, ocpp::v2::Variable{"EVConnectionTimeOut"},
+        ocpp::v2::ControllerComponents::TxCtrlr, ocpp::v2::Variable{EV_CONNECTION_TIMEOUT_VAR_NAME},
         ocpp::v2::AttributeEnum::Actual);
     if (ev_connection_timeout_request_value_response.status == ocpp::v2::GetVariableStatusEnum::Accepted and
         ev_connection_timeout_request_value_response.value.has_value()) {
@@ -154,7 +163,7 @@ void OCPP201::init_module_configuration() {
     }
 
     const auto master_pass_group_id_response = this->charge_point->request_value<std::string>(
-        ocpp::v2::ControllerComponents::AuthCtrlr, ocpp::v2::Variable{"MasterPassGroupId"},
+        ocpp::v2::ControllerComponents::AuthCtrlr, ocpp::v2::Variable{MASTER_PASS_GROUP_ID_VAR_NAME},
         ocpp::v2::AttributeEnum::Actual);
     if (master_pass_group_id_response.status == ocpp::v2::GetVariableStatusEnum::Accepted and
         master_pass_group_id_response.value.has_value()) {
@@ -162,16 +171,16 @@ void OCPP201::init_module_configuration() {
     }
 
     types::evse_manager::PlugAndChargeConfiguration pnc_config;
-    const auto iso15118_pnc_enabled_response =
-        this->charge_point->request_value<bool>(ocpp::v2::ControllerComponents::ISO15118Ctrlr,
-                                                ocpp::v2::Variable{"PncEnabled"}, ocpp::v2::AttributeEnum::Actual);
+    const auto iso15118_pnc_enabled_response = this->charge_point->request_value<bool>(
+        ocpp::v2::ControllerComponents::ISO15118Ctrlr, ocpp::v2::Variable{PNC_ENABLED_VAR_NAME},
+        ocpp::v2::AttributeEnum::Actual);
     if (iso15118_pnc_enabled_response.status == ocpp::v2::GetVariableStatusEnum::Accepted and
         iso15118_pnc_enabled_response.value.has_value()) {
         pnc_config.pnc_enabled = iso15118_pnc_enabled_response.value.value();
     }
 
     const auto central_contract_validation_allowed_response = this->charge_point->request_value<bool>(
-        ocpp::v2::ControllerComponents::ISO15118Ctrlr, ocpp::v2::Variable{"CentralContractValidationAllowed"},
+        ocpp::v2::ControllerComponents::ISO15118Ctrlr, ocpp::v2::Variable{CENTRAL_CONTRACT_VALIDATION_ALLOWED_VAR_NAME},
         ocpp::v2::AttributeEnum::Actual);
     if (central_contract_validation_allowed_response.status == ocpp::v2::GetVariableStatusEnum::Accepted and
         central_contract_validation_allowed_response.value.has_value()) {
@@ -179,8 +188,8 @@ void OCPP201::init_module_configuration() {
     }
 
     const auto contract_certificate_installation_enabled_response = this->charge_point->request_value<bool>(
-        ocpp::v2::ControllerComponents::ISO15118Ctrlr, ocpp::v2::Variable{"ContractCertificateInstallationEnabled"},
-        ocpp::v2::AttributeEnum::Actual);
+        ocpp::v2::ControllerComponents::ISO15118Ctrlr,
+        ocpp::v2::Variable{CONTRACT_CERTIFICATE_INSTALLATION_ENABLED_VAR_NAME}, ocpp::v2::AttributeEnum::Actual);
     if (contract_certificate_installation_enabled_response.status == ocpp::v2::GetVariableStatusEnum::Accepted and
         contract_certificate_installation_enabled_response.value.has_value()) {
         pnc_config.contract_certificate_installation_enabled =
@@ -343,6 +352,13 @@ void OCPP201::init() {
     this->init_evse_maps();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+        this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
+            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+            if (ready) {
+                this->evse_ready_map[evse_id] = true;
+                this->evse_ready_cv.notify_one();
+            }
+        });
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
             std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
             if (ready) {
@@ -498,7 +514,11 @@ void OCPP201::ready() {
     };
 
     callbacks.get_log_request_callback = [this](const ocpp::v2::GetLogRequest& request) {
-        const auto response = this->r_system->call_upload_logs(conversions::to_everest_upload_logs_request(request));
+        auto req = conversions::to_everest_upload_logs_request(request);
+        if (req.retries.has_value()) {
+            req.retries = req.retries.value() + 1;
+        }
+        const auto response = this->r_system->call_upload_logs(req);
         return conversions::to_ocpp_get_log_response(response);
     };
 
@@ -522,14 +542,17 @@ void OCPP201::ready() {
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v2::UpdateFirmwareRequest& request) {
-        const auto response =
-            this->r_system->call_update_firmware(conversions::to_everest_firmware_update_request(request));
+        auto req = conversions::to_everest_firmware_update_request(request);
+        if (req.retries.has_value()) {
+            req.retries = req.retries.value() + 1;
+        }
+        const auto response = this->r_system->call_update_firmware(req);
         return conversions::to_ocpp_update_firmware_response(response);
     };
 
     callbacks.variable_changed_callback = [this](const ocpp::v2::SetVariableData& set_variable_data) {
         if (set_variable_data.component == ocpp::v2::ControllerComponents::TxCtrlr and
-            set_variable_data.variable.name == "EVConnectionTimeOut") {
+            set_variable_data.variable.name.get() == EV_CONNECTION_TIMEOUT_VAR_NAME) {
             try {
                 auto ev_connection_timeout = std::stoi(set_variable_data.attributeValue.get());
                 this->r_auth->call_set_connection_timeout(ev_connection_timeout);
@@ -539,10 +562,10 @@ void OCPP201::ready() {
                 return;
             }
         } else if (set_variable_data.component == ocpp::v2::ControllerComponents::AuthCtrlr and
-                   set_variable_data.variable.name == "MasterPassGroupId") {
+                   set_variable_data.variable.name.get() == MASTER_PASS_GROUP_ID_VAR_NAME) {
             this->r_auth->call_set_master_pass_group_id(set_variable_data.attributeValue.get());
         } else if (set_variable_data.component == ocpp::v2::ControllerComponents::TxCtrlr and
-                   set_variable_data.variable.name == "TxStartPoint") {
+                   set_variable_data.variable.name.get() == TX_START_POINT_VAR_NAME) {
             const auto tx_start_points = get_tx_start_stop_points(set_variable_data.attributeValue.get());
             if (tx_start_points.empty()) {
                 EVLOG_warning << "Could not set TxStartPoints";
@@ -550,7 +573,7 @@ void OCPP201::ready() {
             }
             this->transaction_handler->set_tx_start_points(tx_start_points);
         } else if (set_variable_data.component == ocpp::v2::ControllerComponents::TxCtrlr and
-                   set_variable_data.variable.name == "TxStopPoint") {
+                   set_variable_data.variable.name.get() == TX_STOP_POINT_VAR_NAME) {
             const auto tx_stop_points = get_tx_start_stop_points(set_variable_data.attributeValue.get());
             if (tx_stop_points.empty()) {
                 EVLOG_warning << "Could not set TxStartPoints";
@@ -558,14 +581,14 @@ void OCPP201::ready() {
             }
             this->transaction_handler->set_tx_stop_points(tx_stop_points);
         } else if (set_variable_data.component == ocpp::v2::ControllerComponents::ISO15118Ctrlr and
-                   set_variable_data.variable.name == "PncEnabled") {
+                   set_variable_data.variable.name.get() == PNC_ENABLED_VAR_NAME) {
             types::evse_manager::PlugAndChargeConfiguration pnc_config;
             pnc_config.pnc_enabled = ocpp::conversions::string_to_bool(set_variable_data.attributeValue.get());
             for (const auto& evse_manager : this->r_evse_manager) {
                 evse_manager->call_set_plug_and_charge_configuration(pnc_config);
             }
         } else if (set_variable_data.component == ocpp::v2::ControllerComponents::ISO15118Ctrlr and
-                   set_variable_data.variable.name == "CentralContractValidationAllowed") {
+                   set_variable_data.variable.name.get() == CENTRAL_CONTRACT_VALIDATION_ALLOWED_VAR_NAME) {
             types::evse_manager::PlugAndChargeConfiguration pnc_config;
             pnc_config.central_contract_validation_allowed =
                 ocpp::conversions::string_to_bool(set_variable_data.attributeValue.get());
@@ -573,7 +596,7 @@ void OCPP201::ready() {
                 evse_manager->call_set_plug_and_charge_configuration(pnc_config);
             }
         } else if (set_variable_data.component == ocpp::v2::ControllerComponents::ISO15118Ctrlr and
-                   set_variable_data.variable.name == "ContractCertificateInstallationEnabled") {
+                   set_variable_data.variable.name.get() == CONTRACT_CERTIFICATE_INSTALLATION_ENABLED_VAR_NAME) {
             types::evse_manager::PlugAndChargeConfiguration pnc_config;
             pnc_config.contract_certificate_installation_enabled =
                 ocpp::conversions::string_to_bool(set_variable_data.attributeValue.get());
@@ -623,6 +646,13 @@ void OCPP201::ready() {
                 conversions::to_everest_transaction_event_response(transaction_event_response);
             ocpp_transaction_event_response.original_transaction_event = ocpp_transaction_event;
             this->p_ocpp_generic->publish_ocpp_transaction_event_response(ocpp_transaction_event_response);
+            if (transaction_event_response.idTokenInfo.has_value() and transaction_event.evse.has_value()) {
+                types::authorization::ValidationResultUpdate result_update;
+                result_update.validation_result =
+                    conversions::to_everest_validation_result(transaction_event_response.idTokenInfo.value());
+                result_update.connector_id = transaction_event.evse->id;
+                p_auth_validator->publish_validate_result_update(result_update);
+            }
         };
 
     callbacks.boot_notification_callback =
@@ -791,11 +821,23 @@ void OCPP201::ready() {
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
-    std::unique_ptr<module::device_model::ComposedDeviceModelStorage> device_model_storage =
-        std::make_unique<module::device_model::ComposedDeviceModelStorage>(
-            device_model_database_path, true, device_model_database_migration_path, device_model_config_path);
+
+    // initialize libocpp device model
+    auto libocpp_device_model_storage = std::make_unique<ocpp::v2::DeviceModelStorageSqlite>(
+        device_model_database_path, device_model_database_migration_path, device_model_config_path, true);
+
+    // initialize everest device model
+    auto everest_device_model_storage = std::make_unique<device_model::EverestDeviceModelStorage>();
+
+    // initialize composed device model, this will be provided to the ChargePoint constructor
+    auto composed_device_model_storage = std::make_unique<module::device_model::ComposedDeviceModelStorage>();
+
+    // register both device model storages
+    composed_device_model_storage->register_device_model_storage("OCPP", std::move(libocpp_device_model_storage));
+    composed_device_model_storage->register_device_model_storage("EVEREST", std::move(everest_device_model_storage));
+
     this->charge_point = std::make_unique<ocpp::v2::ChargePoint>(
-        evse_connector_structure, std::move(device_model_storage), this->ocpp_share_path.string(),
+        evse_connector_structure, std::move(composed_device_model_storage), this->ocpp_share_path.string(),
         this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
         std::make_shared<EvseSecurity>(*this->r_security), callbacks);
 
@@ -843,7 +885,7 @@ void OCPP201::ready() {
     std::set<TxStartStopPoint> tx_stop_points;
 
     const auto tx_start_point_request_value_response = this->charge_point->request_value<std::string>(
-        ocpp::v2::Component{"TxCtrlr"}, ocpp::v2::Variable{"TxStartPoint"}, ocpp::v2::AttributeEnum::Actual);
+        ocpp::v2::Component{"TxCtrlr"}, ocpp::v2::Variable{TX_START_POINT_VAR_NAME}, ocpp::v2::AttributeEnum::Actual);
     if (tx_start_point_request_value_response.status == ocpp::v2::GetVariableStatusEnum::Accepted and
         tx_start_point_request_value_response.value.has_value()) {
         auto tx_start_point_csl =
@@ -857,7 +899,7 @@ void OCPP201::ready() {
     }
 
     const auto tx_stop_point_request_value_response = this->charge_point->request_value<std::string>(
-        ocpp::v2::Component{"TxCtrlr"}, ocpp::v2::Variable{"TxStopPoint"}, ocpp::v2::AttributeEnum::Actual);
+        ocpp::v2::Component{"TxCtrlr"}, ocpp::v2::Variable{TX_STOP_POINT_VAR_NAME}, ocpp::v2::AttributeEnum::Actual);
     if (tx_stop_point_request_value_response.status == ocpp::v2::GetVariableStatusEnum::Accepted and
         tx_stop_point_request_value_response.value.has_value()) {
         auto tx_stop_point_csl =
@@ -982,6 +1024,8 @@ void OCPP201::ready() {
             });
     }
 
+    // wait for all EVSE to be ready before we can initialize libocpp before being able to trigger enable/disable
+    // connector callbacks
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {
         this->evse_ready_cv.wait(lk);
@@ -991,7 +1035,20 @@ void OCPP201::ready() {
 
     const auto boot_reason = conversions::to_ocpp_boot_reason(this->r_system->call_get_boot_reason());
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(this->config.MessageQueueResumeDelay));
-    this->charge_point->start(boot_reason);
+    // we can now initialize the charge point's state machine. It reads the connector availability from the internal
+    // database and potentially triggers enable/disable callbacks at the evse.
+    this->charge_point->start(boot_reason, false);
+
+    // Signal to EVSEs to start their internal state machines
+    for (const auto& evse : this->r_evse_manager) {
+        evse->call_external_ready_to_start_charging();
+    }
+
+    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
+    // plugged in at startup)
+    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
+    // start OCPP connection
+    this->charge_point->connect_websocket();
 }
 
 void OCPP201::process_session_event(const int32_t evse_id, const types::evse_manager::SessionEvent& session_event) {

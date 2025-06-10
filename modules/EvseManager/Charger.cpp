@@ -220,7 +220,14 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 bcb_toggle_reset();
                 shared_context.iec_allow_close_contactor = false;
-                shared_context.hlc_charging_active = false;
+                if (config_context.charge_mode == ChargeMode::AC) {
+                    // For AC, a session may start in BASIC charging mode and switch to HLC mode later on.
+                    // This variable will be set to true once the iso stack calls v2g_setup_finished.
+                    shared_context.hlc_charging_active = false;
+                } else {
+                    // For DC, it is always HLC mode.
+                    shared_context.hlc_charging_active = true;
+                }
                 shared_context.hlc_allow_close_contactor = false;
                 shared_context.max_current_cable = 0;
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
@@ -721,13 +728,26 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
                 if (shared_context.hlc_charging_active) {
-                    // currentState = EvseState::StoppingCharging;
-                    shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::Local;
-                    // tell HLC stack to stop the session
-                    signal_hlc_stop_charging();
-                    pwm_off();
+                    if (config_context.charge_mode == ChargeMode::DC) {
+                        signal_dc_supply_off();
+                    }
                 } else {
                     pwm_off();
+                }
+            }
+
+            if (shared_context.hlc_charging_active) {
+                if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
+                    // EV wants to terminate session
+                    shared_context.current_state = EvseState::StoppingCharging;
+                    if (shared_context.pwm_running) {
+                        pwm_off();
+                    }
+                } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
+                    // EV wants an actual pause
+                    if (shared_context.pwm_running) {
+                        pwm_off();
+                    }
                 }
             }
             break;
@@ -1070,6 +1090,9 @@ bool Charger::set_max_current(float c, std::chrono::time_point<date::utc_clock> 
 bool Charger::pause_charging() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_pause_charging);
     if (shared_context.current_state == EvseState::Charging) {
+        if (shared_context.hlc_charging_active and shared_context.transaction_active) {
+            signal_hlc_pause_charging();
+        }
         shared_context.legacy_wakeup_done = false;
         shared_context.current_state = EvseState::ChargingPausedEVSE;
         return true;
@@ -1083,8 +1106,9 @@ bool Charger::resume_charging() {
     if (shared_context.hlc_charging_active and shared_context.transaction_active and
         shared_context.current_state == EvseState::ChargingPausedEVSE) {
         shared_context.current_state = EvseState::PrepareCharging;
-        // wake up SLAC as well
-        signal_slac_start();
+        if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
+            signal_slac_start(); // wake up SLAC as well
+        }
         return true;
     } else if (shared_context.transaction_active and shared_context.current_state == EvseState::ChargingPausedEVSE) {
         shared_context.current_state = EvseState::WaitingForEnergy;
@@ -1183,7 +1207,7 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
 void Charger::start_session(bool authfirst) {
     shared_context.session_active = true;
     shared_context.authorized = false;
-    shared_context.session_uuid = utils::generate_session_uuid();
+    shared_context.session_uuid = utils::generate_session_id(config_context.session_id_type);
     std::optional<types::authorization::ProvidedIdToken> provided_id_token;
     if (authfirst) {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
@@ -1214,7 +1238,10 @@ bool Charger::start_transaction() {
     req.identification_type = utils::convert_to_ocmf_identification_type(shared_context.id_token.id_token.type);
     req.identification_level = std::nullopt; // TODO: Not yet known to EVerest
     req.identification_data = shared_context.id_token.id_token.value;
-    req.tariff_text = std::nullopt; // TODO: Not yet known to EVerest
+    if (!shared_context.validation_result.tariff_messages.empty()) {
+        // TODO: Use proper langauge and format if multiple messages part of personal_messages
+        req.tariff_text = shared_context.validation_result.tariff_messages.at(0).content;
+    }
 
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);
@@ -1344,7 +1371,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
                     const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
                     const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms,
                     const bool fail_on_powermeter_errors, const bool raise_mrec9,
-                    const int sleep_before_enabling_pwm_hlc_mode_ms) {
+                    const int sleep_before_enabling_pwm_hlc_mode_ms, const utils::SessionIdType session_id_type) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1367,6 +1394,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
     config_context.fail_on_powermeter_errors = fail_on_powermeter_errors;
     config_context.raise_mrec9 = raise_mrec9;
     config_context.sleep_before_enabling_pwm_hlc_mode_ms = sleep_before_enabling_pwm_hlc_mode_ms;
+    config_context.session_id_type = session_id_type;
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";
@@ -1415,10 +1443,12 @@ std::string Charger::get_session_id() const {
     return shared_context.session_uuid;
 }
 
-void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& token) {
+void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& token,
+                        const types::authorization::ValidationResult& result) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_authorize);
     if (a) {
         shared_context.id_token = token;
+        shared_context.validation_result = result;
         // First user interaction was auth? Then start session already here and not at plug in
         if (not shared_context.session_active) {
             start_session(true);
