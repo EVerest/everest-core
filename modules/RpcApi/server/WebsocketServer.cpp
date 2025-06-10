@@ -106,7 +106,8 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& 
     m_lws_protocols[1] = LWS_PROTOCOL_LIST_TERM;
 
     m_info.protocols = m_lws_protocols;
-    m_info.options = m_ssl_enabled ? LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT : 0;
+    m_info.options = LWS_SERVER_OPTION_FAIL_UPON_UNABLE_TO_BIND;
+    m_info.options |= (m_ssl_enabled ? LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT : 0);
     m_info.user = this; // To access WebSocketServer instance in callback
 }
 
