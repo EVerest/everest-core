@@ -113,7 +113,7 @@ https://en.wikipedia.org/wiki/Consistent_Overhead_Byte_Stuffing
 COBS
 ----
 
-COBS is implemented in ``ad-acevse22kwz-kit_comms/evSerial.cpp``. Whenever a new packet
+COBS is implemented in ``adkit_comms/evSerial.cpp``. Whenever a new packet
 was extracted from the stream ``handlePacket()`` is called to decode protobuf
 and generate the corresponding signals. 
 Other parts of the module subscribe to these signals to handle the incoming 
@@ -124,7 +124,7 @@ For TX ``linkWrite`` encodes the packet with COBS and outputs it to the UART.
 Protobuf
 --------
 
-The actual packet definitions are located under ``ad-acevse22kwz-kit_comms/protobuf``.
+The actual packet definitions are located under ``adkit_comms/protobuf``.
 
 ``ad-acevse22kwz-kit.proto`` contains all messages that can be sent by EVerest and AD-ACEVSE22KWZ-KIT.
 

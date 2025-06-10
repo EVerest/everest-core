@@ -8,20 +8,20 @@
 ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
-add_subdirectory(ad-acevse22kwz-kit_comms)
+add_subdirectory(adkit_comms)
 
 target_include_directories(${MODULE_NAME}
     PRIVATE
         "common"
-        "ad-acevse22kwz-kit_comms"
-        "ad-acevse22kwz-kit_comms/nanopb"
-        "ad-acevse22kwz-kit_comms/protobuf"
+        "adkit_comms"
+        "adkit_comms/nanopb"
+        "adkit_comms/protobuf"
 )
 
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         Pal::Sigslot
-        ad-acevse22kwz-kit_comms
+        adkit_comms
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 

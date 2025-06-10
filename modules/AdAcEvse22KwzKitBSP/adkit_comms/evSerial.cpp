@@ -21,7 +21,7 @@
 
 #include <gpio.hpp>
 
-#include "ad-acevse22kwz-kit.pb.h"
+#include "adkit.pb.h"
 
 evSerial::evSerial() {
     fd = 0;

@@ -4,7 +4,7 @@
 #ifndef AD_ACEVSE22KWZ_KIT_SERIAL_HPP
 #define AD_ACEVSE22KWZ_KIT_SERIAL_HPP
 
-#include "ad-acevse22kwz-kit.pb.h"
+#include "adkit.pb.h"
 #include <date/date.h>
 #include <date/tz.h>
 #include <sigslot/signal.hpp>
