@@ -27,7 +27,11 @@ namespace tls {
 
 constexpr int INVALID_SOCKET{-1};
 constexpr std::uint32_t c_shutdown_timeout_ms = 5000; // 5 seconds
-constexpr std::uint32_t c_serve_timeout_ms = 60000;   // 60 seconds
+#ifdef UNIT_TEST
+constexpr std::uint32_t c_serve_timeout_ms = 1000; // 1 second
+#else
+constexpr std::uint32_t c_serve_timeout_ms = 60000; // 60 seconds
+#endif
 
 struct connection_ctx;
 struct server_ctx;
@@ -429,6 +433,7 @@ private:
     std::atomic_bool m_exit{false};                     //!< stop listening for connections
     std::atomic<state_t> m_state{state_t::init_needed}; //!< server state
     std::mutex m_mutex;                                 //!< prevent multiple initialisation or serve requests
+    std::mutex m_update_mutex;                          //!< ensure safe updating of SSL configuration
     std::mutex m_cv_mutex;                              //!< used by wait_running() and wait_stopped()
     std::condition_variable m_cv;                       //!< used by wait_running() and wait_stopped()
     OcspCache m_cache;                                  //!< cached OCSP responses
@@ -456,11 +461,21 @@ private:
     bool init_ssl(const config_t& cfg);
 
     /**
+     * \brief unconfigure SSL
+     */
+    void deinit_ssl();
+
+    /**
      * \brief initialise server certificate chains
      * \param[in] chain_files server certificate chains
      * \return true on success
      */
     bool init_certificates(const std::vector<certificate_config_t>& chain_files);
+
+    /**
+     * \brief unconfigure SSL certificates
+     */
+    void deinit_certificates();
 
     /**
      * \brief waits for incoming connections
@@ -523,6 +538,13 @@ public:
      *       before further connections can be managed
      */
     state_t serve(const ConnectionHandler& handler);
+
+    /**
+     * \brief stop accepting new connections and wait until SSL configuration
+     *        is loaded via update()
+     * \returns true when the suspend was successful
+     */
+    bool suspend();
 
     /**
      * \brief stop listening for new connections
