@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Pionix GmbH and Contributors to EVerest
 
-from .types import LimitsReq, ScheduleReqEntry, ExternalLimits
+from .types import LimitsReq, ScheduleReqEntry, ExternalLimits, TotalPowerW
 import datetime
 
 def convert_limits(limits_in: dict) -> LimitsReq:
@@ -12,7 +12,18 @@ def convert_limits(limits_in: dict) -> LimitsReq:
         raise TypeError("limits_in is not a dict")
     limits = LimitsReq()
     if "total_power_W" in limits_in:
-        limits.total_power_W = limits_in["total_power_W"]
+        total_power_W_in = limits_in["total_power_W"]
+        if not isinstance(total_power_W_in, dict):
+            raise TypeError("total_power_W is not a dict")
+        if not "source" in total_power_W_in or total_power_W_in["source"] is None:
+            raise ValueError("total_power_W source is not provided")
+        if not "value" in total_power_W_in or total_power_W_in["value"] is None:
+            raise ValueError("total_power_W value is not provided")
+        total_power_W = TotalPowerW(
+            source=total_power_W_in["source"],
+            value=float(total_power_W_in["value"])
+        )
+        limits.total_power_W = total_power_W
     if "ac_max_current_A" in limits_in:
         limits.ac_max_current_A = limits_in["ac_max_current_A"]
     if "ac_min_current_A" in limits_in:
