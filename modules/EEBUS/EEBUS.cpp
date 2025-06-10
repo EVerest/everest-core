@@ -12,7 +12,8 @@
 #include <grpcpp/grpcpp.h>
 
 // everest core staging
-#include <RunApplication.hpp>
+#include <everest/staging/run_application/run_application.hpp>
+using namespace everest::staging::run_application;
 
 // module internal
 #include <helper.hpp>
@@ -30,7 +31,7 @@ void start_eebus_grpc_api(std::filesystem::path binary_path, int port, std::file
     args.push_back(cert_file.string());
     args.push_back("-private-key-path");
     args.push_back(key_file.string());
-    module::CmdOutput output = module::run_application(binary_path.string(), args);
+    CmdOutput output = run_application(binary_path.string(), args);
     EVLOG_error << "eebus-grpc output: " << output.output;
     EVLOG_error << "eebus-grpc exit code: " << output.exit_code;
 }
