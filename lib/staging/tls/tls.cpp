@@ -992,6 +992,10 @@ bool Server::init_ssl(const config_t& cfg) {
     return ctx != nullptr;
 }
 
+void Server::deinit_ssl() {
+    m_context = std::make_unique<server_ctx>();
+}
+
 bool Server::init_certificates(const std::vector<certificate_config_t>& chain_files) {
     std::vector<OcspCache::ocsp_entry_t> entries;
     openssl::chain_list chains;
@@ -1062,18 +1066,25 @@ bool Server::init_certificates(const std::vector<certificate_config_t>& chain_fi
     if (chains.empty()) {
         // continue without trusted_ca_keys support
         log_warning("trusted_ca_keys support disabled");
-    } else {
-        m_server_trusted_ca_keys.update(std::move(chains));
     }
+    m_server_trusted_ca_keys.update(std::move(chains));
 
     // don't error when there are no OCSP cached responses
     if (!entries.empty()) {
         if (!m_cache.load(entries)) {
             result = false;
         }
+    } else {
+        // remove any existing entries
+        (void)m_cache.load(entries);
     }
 
     return result;
+}
+
+void Server::deinit_certificates() {
+    m_cache.load({});
+    m_server_trusted_ca_keys.update({});
 }
 
 void Server::wait_for_connection(const ConnectionHandler& handler) {
@@ -1085,6 +1096,9 @@ void Server::wait_for_connection(const ConnectionHandler& handler) {
         int soc{INVALID_SOCKET};
         while ((soc < 0) && !m_exit) {
             auto poll_res = wait_for(m_socket, false, c_serve_timeout_ms);
+            if (m_state == state_t::init_complete) {
+                m_state = state_t::running;
+            }
             if (poll_res == -1) {
                 // poll() has failed
                 m_exit = true;
@@ -1098,18 +1112,38 @@ void Server::wait_for_connection(const ConnectionHandler& handler) {
                     break;
                 }
             }
-        };
+        }
 
-        // attempt to get SSL configuration when not set yet
-        if ((soc >= 0) && (m_state == state_t::init_socket)) {
-            auto new_config = m_init_callback();
-            bool success{false};
-            if (new_config && new_config.value()) {
-                success = update(*new_config.value());
+        if (soc >= 0) {
+            bool reject{true};
+            state_t tmp = m_state;
+            switch (tmp) {
+            case state_t::init_socket: {
+                if (m_init_callback != nullptr) {
+                    // attempt to get SSL configuration when not set yet
+                    auto new_config = m_init_callback();
+                    bool success{false};
+                    if (new_config && new_config.value()) {
+                        success = update(*new_config.value());
+                    }
+                    if (success) {
+                        m_state = state_t::running;
+                        reject = false;
+                    }
+                }
+                break;
             }
-            if (success) {
-                m_state = state_t::running;
-            } else {
+            case state_t::init_complete:
+            case state_t::running:
+                reject = false;
+                break;
+            case state_t::init_needed:
+            case state_t::stopped:
+            default:
+                break;
+            }
+
+            if (reject) {
                 // updated configuration failed
                 BIO_closesocket(soc);
                 soc = INVALID_SOCKET;
@@ -1154,15 +1188,13 @@ Server::state_t Server::init(const config_t& cfg, const ConfigurationCallback& i
     m_init_callback = init_ssl_cb; // save handler for later
     m_state = state_t::init_needed;
     if (init_socket(cfg)) {
-        m_state = state_t::init_socket;
-        if (update(cfg)) {
-            m_state = state_t::init_complete;
-        }
+        (void)update(cfg);
     }
     return m_state;
 }
 
 bool Server::update(const config_t& cfg) {
+    std::lock_guard lock(m_update_mutex);
     // does not change server socket settings, use init() if needed
     std::vector<OcspCache::ocsp_entry_t> entries;
 
@@ -1172,6 +1204,7 @@ bool Server::update(const config_t& cfg) {
     if (!init_ssl(cfg)) {
         result = false;
     }
+    m_state = (result) ? state_t::init_complete : state_t::init_socket;
     return result;
 }
 
@@ -1217,6 +1250,9 @@ Server::state_t Server::serve(const ConnectionHandler& handler) {
         BIO_closesocket(m_socket);
         m_socket = INVALID_SOCKET;
         m_state = state_t::stopped;
+    } else {
+        // there wasn't a valid socket
+        m_state = state_t::init_needed;
     }
 
     // wakeup wait_stopped()
@@ -1226,6 +1262,27 @@ Server::state_t Server::serve(const ConnectionHandler& handler) {
     }
     m_cv.notify_all();
     return m_state;
+}
+
+bool Server::suspend() {
+    bool result{false};
+    std::lock_guard lock(m_update_mutex);
+    state_t tmp = m_state;
+    switch (tmp) {
+    case state_t::running:
+    case state_t::init_complete:
+        m_state = state_t::init_socket;
+        deinit_certificates();
+        deinit_ssl();
+        result = true;
+        break;
+    case state_t::init_socket:
+    case state_t::init_needed:
+    case state_t::stopped:
+    default:
+        break;
+    }
+    return result;
 }
 
 void Server::stop() {
