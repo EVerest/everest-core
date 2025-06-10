@@ -13,20 +13,20 @@ config:
     type: string
     required: true
   certificate_path:
-    description: Path to the certificate file used by eebus go client. Must be absolute path.
+    description: Path to the certificate file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
     required: false
-    default: /etc/everest/certs/eebus/evse_cert
+    default: eebus/evse_cert
   private_key_path:
-    description: Path to the private key file used by eebus go client. Must be absolute path.
+    description: Path to the private key file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
     required: false
-    default: /etc/everest/certs/eebus/evse_key
+    default: eebus/evse_key
   eebus_grpc_api_binary_path:
-    description: Path to the eebus grpc api binary. Must be absolute path.
+    description: Path to the eebus grpc api binary. If relative will be prefixed with everest prefix + libexec. Otherwise absolute file path is used.
     type: string
     required: false
-    default: /bin/eebus_grpc_api
+    default: eebus_grpc_api
 provides:
   main:
     description: main
