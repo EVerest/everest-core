@@ -5,7 +5,7 @@ import os, pathlib
 import datetime
 
 from .test_data import TestData
-from helpers.types import ExternalLimits, ScheduleReqEntry, LimitsReq
+from helpers.types import ExternalLimits, ScheduleReqEntry, LimitsReq, TotalPowerW
 
 from helpers.import_helpers import insert_dir_to_sys_path
 insert_dir_to_sys_path(pathlib.Path(os.path.dirname(os.path.realpath(__file__))) / "../grpc_libs/generated")
@@ -40,10 +40,16 @@ class TestDataActiveLoadLimitWithDuration(TestData):
                 ScheduleReqEntry(
                     timestamp=datetime.datetime.now(),
                     limits_to_root=LimitsReq(
-                        total_power_W=4200.0,
+                        total_power_W=TotalPowerW(
+                            source='EEBUS LPC',
+                            value=4200.0,
+                        ),
                     ),
                     limits_to_leaves=LimitsReq(
-                        total_power_W=4200.0,
+                        total_power_W=TotalPowerW(
+                            source='EEBUS LPC',
+                            value=4200.0,
+                        ),
                     ),
                     conversion_efficiency=None,
                     prive_per_kwh=None
@@ -55,7 +61,8 @@ class TestDataActiveLoadLimitWithDuration(TestData):
                     conversion_efficiency=None,
                     prive_per_kwh=None
                 )
-            ]
+            ],
+            schedule_export=[],
         )
     def run_additional_assertions(self, limits: ExternalLimits):
         assert_time_delta(
