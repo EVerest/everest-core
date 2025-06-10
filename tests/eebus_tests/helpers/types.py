@@ -14,11 +14,19 @@ class PricePerKWh:
     currency: str
 
 @dataclass
+class TotalPowerW:
+    """
+    EVerest type
+    """
+    source: str
+    value: float
+
+@dataclass
 class LimitsReq:
     """
     EVerest type
     """
-    total_power_W: float | None = None
+    total_power_W: TotalPowerW | None = None
     ac_max_current_A: float | None = None
     ac_min_current_A: float | None = None
     ac_max_phase_count: int | None = None

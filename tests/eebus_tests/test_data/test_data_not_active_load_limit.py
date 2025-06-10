@@ -37,7 +37,8 @@ class TestDataNotActiveLoadLimit(TestData):
                     conversion_efficiency=None,
                     prive_per_kwh=None
                 )
-            ]
+            ],
+            schedule_export=[],
         )
     def run_additional_assertions(self, limits: ExternalLimits):
         assert True
