@@ -115,6 +115,11 @@ bool X509Wrapper::is_valid() const {
     return (get_valid_in() <= 0) && (get_valid_to() >= 0);
 }
 
+bool X509Wrapper::is_valid_in_future() const {
+    // valid_in must be in the future, and valid_to must also be in the future
+    return (get_valid_in() > 0) && (get_valid_to() > 0);
+}
+
 bool X509Wrapper::is_expired() const {
     return (get_valid_to() < 0);
 }

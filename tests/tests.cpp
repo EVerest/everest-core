@@ -835,19 +835,67 @@ TEST_F(EvseSecurityTests, verify_full_filesystem_install_reject) {
     ASSERT_TRUE(result == InstallCertificateResult::CertificateStoreMaxLengthExceeded);
 }
 
-TEST_F(EvseSecurityTests, verify_oscp_request_mo_generate) {
+TEST_F(EvseSecurityTestsMultiLeaf, verify_ocsp_request_multi_valid) {
+    // Verify the OCSP request when we have multiple possible valid certificates
+    OCSPRequestDataList data = this->evse_security->get_v2g_ocsp_request_data();
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 4);
+
+    ASSERT_TRUE(data.ocsp_request_data_list[0].certificate_hash_data.has_value());
+    ASSERT_TRUE(data.ocsp_request_data_list[1].certificate_hash_data.has_value());
+    ASSERT_TRUE(data.ocsp_request_data_list[2].certificate_hash_data.has_value());
+    ASSERT_TRUE(data.ocsp_request_data_list[3].certificate_hash_data.has_value());
+
+    ASSERT_TRUE(
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("CPOSubCA2");
+        }) != data.ocsp_request_data_list.end());
+
+    ASSERT_TRUE(
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("CPOSubCA1");
+        }) != data.ocsp_request_data_list.end());
+
+    ASSERT_TRUE(
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("SECCCert");
+        }) != data.ocsp_request_data_list.end());
+
+    ASSERT_TRUE(
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("SECCGridSyncCert");
+        }) != data.ocsp_request_data_list.end());
+}
+
+TEST_F(EvseSecurityTests, verify_ocsp_request_mo_generate) {
     // Read a leaf, should work since this SECC will be tested against both MO and V2G
     const auto secc_leaf = read_file_to_string("certs/client/cso/SECC_LEAF.pem");
     OCSPRequestDataList data = this->evse_security->get_mo_ocsp_request_data(secc_leaf);
 
-    // Expect 2 chain certifs, since SECC_LEAF does not have an responder URL
-    ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
+    // Expect 3 chain certifs, since SECC_LEAF has an responder URL
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 3);
 
     // Assert a leaf->sub2->sub1 order
     ASSERT_TRUE(data.ocsp_request_data_list[0].certificate_hash_data.has_value());
     ASSERT_TRUE(data.ocsp_request_data_list[1].certificate_hash_data.has_value());
-    ASSERT_EQ(data.ocsp_request_data_list[0].certificate_hash_data.value().debug_common_name, std::string("CPOSubCA2"));
-    ASSERT_EQ(data.ocsp_request_data_list[1].certificate_hash_data.value().debug_common_name, std::string("CPOSubCA1"));
+    ASSERT_TRUE(data.ocsp_request_data_list[2].certificate_hash_data.has_value());
+
+    bool has_intermediate_1 =
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("CPOSubCA1");
+        }) != data.ocsp_request_data_list.end();
+    ASSERT_TRUE(has_intermediate_1);
+
+    bool has_intermediate_2 =
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("CPOSubCA2");
+        }) != data.ocsp_request_data_list.end();
+    ASSERT_TRUE(has_intermediate_2);
+
+    bool has_leaf =
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("SECCCert");
+        }) != data.ocsp_request_data_list.end();
+    ASSERT_TRUE(has_leaf);
 
     // Read the MO leaf
     const auto mo_leaf = read_file_to_string("certs/client/mo/MO_LEAF.pem");
@@ -857,27 +905,48 @@ TEST_F(EvseSecurityTests, verify_oscp_request_mo_generate) {
     ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
     ASSERT_TRUE(data.ocsp_request_data_list[0].certificate_hash_data.has_value());
     ASSERT_TRUE(data.ocsp_request_data_list[1].certificate_hash_data.has_value());
-    ASSERT_EQ(data.ocsp_request_data_list[0].certificate_hash_data.value().debug_common_name, std::string("MOSubCA2"));
-    ASSERT_EQ(data.ocsp_request_data_list[1].certificate_hash_data.value().debug_common_name, std::string("MOSubCA1"));
+
+    has_intermediate_1 =
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("MOSubCA2");
+        }) != data.ocsp_request_data_list.end();
+    ASSERT_TRUE(has_intermediate_1);
+
+    has_intermediate_2 =
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("MOSubCA1");
+        }) != data.ocsp_request_data_list.end();
+    ASSERT_TRUE(has_intermediate_2);
 
     // Read the MO signed by V2G leaf
     const auto mo_v2g_leaf = read_file_to_string("certs/client/mo/MO_LEAF_V2G.pem");
     data = this->evse_security->get_mo_ocsp_request_data(mo_v2g_leaf);
 
+    // Again expect 2 since the mo leaf does not have a responder URL
     ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
     ASSERT_TRUE(data.ocsp_request_data_list[0].certificate_hash_data.has_value());
     ASSERT_TRUE(data.ocsp_request_data_list[1].certificate_hash_data.has_value());
-    ASSERT_EQ(data.ocsp_request_data_list[0].certificate_hash_data.value().debug_common_name, std::string("CPOSubCA2"));
-    ASSERT_EQ(data.ocsp_request_data_list[1].certificate_hash_data.value().debug_common_name, std::string("CPOSubCA1"));
+
+    has_intermediate_1 =
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("CPOSubCA1");
+        }) != data.ocsp_request_data_list.end();
+    ASSERT_TRUE(has_intermediate_1);
+
+    has_intermediate_2 =
+        std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(), [](const auto& ocsp_data) {
+            return ocsp_data.certificate_hash_data.value().debug_common_name == std::string("CPOSubCA2");
+        }) != data.ocsp_request_data_list.end();
+    ASSERT_TRUE(has_intermediate_2);
 }
 
-TEST_F(EvseSecurityTests, verify_oscp_cache) {
+TEST_F(EvseSecurityTests, verify_ocsp_cache) {
     std::string ocsp_mock_response_data = "OCSP_MOCK_RESPONSE_DATA";
     std::string ocsp_mock_response_data_v2 = "OCSP_MOCK_RESPONSE_DATA_V2";
 
     OCSPRequestDataList data = this->evse_security->get_v2g_ocsp_request_data();
 
-    ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 3);
 
     // Mock a response
     for (auto& ocsp : data.ocsp_request_data_list) {
@@ -885,7 +954,7 @@ TEST_F(EvseSecurityTests, verify_oscp_cache) {
     }
 
     // Make sure all info was written and that it is correct
-    fs::path ocsp_path = "certs/ca/v2g/ocsp";
+    fs::path ocsp_path = "certs/client/cso/ocsp";
 
     ASSERT_TRUE(fs::exists(ocsp_path));
 
@@ -921,7 +990,7 @@ TEST_F(EvseSecurityTests, verify_oscp_cache) {
         entries++;
     }
 
-    ASSERT_EQ(entries, 4); // 2 for hash, 2 for data
+    ASSERT_EQ(entries, 6); // 3 for hash, 3 for data
 
     // Write data again to test over-writing
     for (auto& ocsp : data.ocsp_request_data_list) {
@@ -961,7 +1030,7 @@ TEST_F(EvseSecurityTests, verify_oscp_cache) {
         entries++;
     }
 
-    ASSERT_EQ(entries, 4); // 4 still, since we have to over-write
+    ASSERT_EQ(entries, 6); // 6 still, since we have to over-write
 
     // Retrieve OCSP data along with certificates
     GetCertificateInfoResult response =
@@ -988,7 +1057,7 @@ TEST_F(EvseSecurityTests, verify_ocsp_garbage_collect) {
     std::string ocsp_mock_response_data = "OCSP_MOCK_RESPONSE_DATA";
 
     OCSPRequestDataList data = this->evse_security->get_v2g_ocsp_request_data();
-    ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 3);
 
     // Mock a response
     for (auto& ocsp : data.ocsp_request_data_list) {
@@ -1027,7 +1096,7 @@ TEST_F(EvseSecurityTests, verify_ocsp_garbage_collect) {
         }
     }
 
-    ASSERT_EQ(existing, 8);
+    ASSERT_EQ(existing, 10);
 
     // Delete the certificates that had their OCSP data appended
     fs::remove("certs/ca/v2g/V2G_CA_BUNDLE.pem");

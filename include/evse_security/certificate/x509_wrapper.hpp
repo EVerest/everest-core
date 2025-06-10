@@ -110,6 +110,10 @@ public:
     /// we are not in force yet
     bool is_valid() const;
 
+    /// @brief  If the certificate will be valid in the future, that is (current date > valid_in)
+    /// and (current data > valid_to)
+    bool is_valid_in_future() const;
+
     /// @brief If the certificate has expired
     bool is_expired() const;
 

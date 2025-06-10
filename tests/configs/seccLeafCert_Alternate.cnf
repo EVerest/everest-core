@@ -12,4 +12,4 @@ domainComponent			= CPO
 basicConstraints		= critical,CA:false
 keyUsage				= critical,digitalSignature,keyAgreement
 subjectKeyIdentifier	= hash
-
+authorityInfoAccess = OCSP;URI:https://www.example.com/, caIssuers;URI:https://www.example.com/Leaf-CA.cer

@@ -51,6 +51,9 @@ struct CertificateQueryParams {
     /// if true, all valid leafs will be included, sorted in order, with the newest being
     /// first. If false, only the newest one will be returned
     bool include_all_valid{false};
+    /// if true the leafs that will be valid in the future will be included, with the newest
+    /// being first
+    bool include_future_valid{false};
     /// if true, will remove all duplicates found, since we can find a leaf for example
     /// in 2 files, one in 'leaf_single' and one in 'leaf_chain'. For delete routines
     /// we need both files returned, while for queries (v2g_chain) we don't need duplicates
@@ -314,9 +317,6 @@ private:
 
     /// @brief Retrieves information related to leaf certificates
     GetCertificateFullInfoResult get_full_leaf_certificate_info_internal(const CertificateQueryParams& params);
-
-    OCSPRequestDataList generate_ocsp_request_data_internal(const std::set<CaCertificateType>& possible_roots,
-                                                            const std::string& leaf_chain);
 
     GetCertificateInfoResult get_ca_certificate_info_internal(CaCertificateType certificate_type);
     std::optional<fs::path> retrieve_ocsp_cache_internal(const CertificateHashData& certificate_hash_data);
