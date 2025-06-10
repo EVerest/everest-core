@@ -74,7 +74,7 @@ void EEBUS::init() {
     invoke_init(*p_main);
     this->failed = false;
 
-    this->config_validator = std::make_unique<ConfigValidator>(this->config);
+    this->config_validator = std::make_unique<ConfigValidator>(this->config, this->info.paths.etc, this->info.paths.libexec);
     if (!this->config_validator->validate()) {
         EVLOG_error << "EEBUS module configuration is invalid";
         this->failed = true;
