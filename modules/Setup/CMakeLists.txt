@@ -13,6 +13,7 @@ target_sources(${MODULE_NAME}
     PRIVATE
         "WiFiSetup.cpp"
 )
+
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         everest::staging::run_application
