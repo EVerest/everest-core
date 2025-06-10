@@ -39,4 +39,22 @@ target_include_directories(${MODULE_NAME}
         ${CMAKE_CURRENT_BINARY_DIR}/generated
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+get_target_property(EEBUS_GRPC_API_CMD_BINARY_PATH eebus_grpc_api_cmd TARGET_FILE)
+install(
+    FILES
+        ${EEBUS_GRPC_API_CMD_BINARY_PATH}
+    DESTINATION
+        "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+    RENAME
+        eebus_grpc_api
+    PERMISSIONS
+        OWNER_EXECUTE OWNER_WRITE OWNER_READ
+        GROUP_EXECUTE GROUP_READ
+        WORLD_EXECUTE WORLD_READ
+)
+
+if (EEBUS_GENERATE_AND_INSTALL_CERTIFICATES)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/eebus-generate-and-install-certificates.cmake)
+endif()
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

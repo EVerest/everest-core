@@ -6,11 +6,8 @@ active_modules:
         - module_id: eebus_energy_sink
           implementation_id: external_limits
     config_module:
-      certificate_path: /home/andistorm/workspaces/eebus-general/certs/evse_cert
       control_service_rpc_port: 50051
       eebus_ems_ski: "fa2548488be47c89a342ea29c2fc9867df7cf700"
-      private_key_path: /home/andistorm/workspaces/eebus-general/certs/evse_key
-      eebus_grpc_api_binary_path: /home/andistorm/workspaces/eebus-general/build/eebus-grpc/cmd
   eebus_energy_sink:
     module: EnergyNode
     config_module:
