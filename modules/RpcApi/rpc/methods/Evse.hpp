@@ -144,7 +144,7 @@ public:
         }
         return m_request_handler_ptr->set_ac_charging_current(evse_index, max_current);
     };
-    
+
     RPCDataTypes::ErrorResObj set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
         RPCDataTypes::ErrorResObj res {};
 

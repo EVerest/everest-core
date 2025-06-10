@@ -6,7 +6,7 @@
     or a set of files in the doc/ directory.
     In the latter case, you can delete the doc.rst file.
     In the former case, you can delete the doc/ directory.
-    
+
 ..  This handwritten documentation is optional. In case
     you do not want to write it, you can delete this file
     and the doc/ directory.

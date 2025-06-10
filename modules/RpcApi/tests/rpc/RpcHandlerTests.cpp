@@ -119,7 +119,7 @@ TEST_F(RpcHandlerTest, ApiHelloReq) {
         {"result", result},
         {"id", 1}
     };
-    
+
     // Send Api.Hello request
     client.send_api_hello_req();
     // Wait for the response
@@ -153,7 +153,7 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
     evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
     evse_info.description = "Test EVSE 1";
-    
+
     result.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
 
     // Set up request and expected response
@@ -188,7 +188,7 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
      nlohmann::json evse_get_evse_infos_req_1 = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 1}}, 1);
      nlohmann::json evse_get_evse_infos_req_2 = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 2}}, 1);
      nlohmann::json evse_get_infos_req_invalid_id = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 99}}, 1);
-    
+
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
     evse_info.index = 1; ///< Unique identifier
@@ -404,7 +404,7 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
 
     // Send EVSE.MeterData request with valid ID and meter data available
     send_req_and_validate_res(client, evse_meter_data_req_valid_id, expected_response_no_error);
-    
+
     // Send EVSE.MeterData request with invalid ID
     send_req_and_validate_res(client, evse_meter_data_req_invalid_id, expected_error_invalid_index, is_key_value_in_json_rpc_result);
 }
@@ -416,7 +416,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_ac_charging_req_valid_id = create_json_rpc_request("EVSE.SetACCharging", 
+    nlohmann::json evse_set_ac_charging_req_valid_id = create_json_rpc_request("EVSE.SetACCharging",
         {{"evse_index", 1},
          {"charging_allowed", true},
          {"max_current", 12.3},

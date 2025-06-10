@@ -31,7 +31,7 @@ types::energy::ExternalLimits get_external_limits(int32_t phases) {
 
     external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
-    
+
     return external_limits;
 }
 
@@ -59,7 +59,7 @@ types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power
         external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
         external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
     }
-    
+
     return external_limits;
 }
 

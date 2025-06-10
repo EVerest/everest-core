@@ -52,7 +52,7 @@ public:
 
     void start_lws_service_thread();
     void stop_lws_service_thread();
-    
+
 private:
     static int callback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len);
 

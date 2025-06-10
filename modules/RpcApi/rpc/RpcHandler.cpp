@@ -289,7 +289,7 @@ void RpcHandler::start_server() {
 
     // Start RPC receiver thread
     m_rpc_recv_thread = std::thread([this]() {
-        this->process_client_requests(); 
+        this->process_client_requests();
     });
 }
 

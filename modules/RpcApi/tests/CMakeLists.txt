@@ -1,6 +1,6 @@
 set(TEST_TARGET_NAME ${PROJECT_NAME}_rpcapi_tests)
 
-set(TEST_SOURCES 
+set(TEST_SOURCES
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/RpcHandler.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/notifications/Evse.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp
@@ -17,7 +17,7 @@ if (RPCAPI_COMPILE_DEFINITIONS)
     target_compile_definitions(${TEST_TARGET_NAME} PRIVATE ${RPCAPI_COMPILE_DEFINITIONS})
 endif()
 
-set(INCLUDE_DIR 
+set(INCLUDE_DIR
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/server"
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc"
     "${PROJECT_SOURCE_DIR}/modules/RpcApi/data"

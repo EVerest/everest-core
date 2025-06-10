@@ -46,7 +46,7 @@ public:
     virtual void kill_client_connection(const ClientId &clientId, const std::string &killReason) = 0;
 
     virtual uint32_t connections_count() const = 0;
-    
+
     std::string server_url() const;
     void set_server_url(const std::string &serverUrl);
 
