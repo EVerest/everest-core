@@ -52,7 +52,8 @@ int WebSocketServer::callback_ws(struct lws *wsi, enum lws_callback_reasons reas
             lock.unlock();  // Unlock before calling the callback
             server->on_client_connected(client_id, ip_address);  // Call the on_client_connected callback
             lock.lock();  // Lock again after the callback
-            EVLOG_info << "Client " << boost::uuids::to_string(client_id) << " connected";
+            EVLOG_info << "Client " << boost::uuids::to_string(client_id) << " connected"
+                       << (strlen(ip_address) > 0 ? (" from " + std::string(ip_address)) : "");
             break;
         }
         case LWS_CALLBACK_CLOSED: {
