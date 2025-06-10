@@ -151,7 +151,7 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
 
         case McuToEverest_keep_alive_tag:
             // detect connection timeout if keep_alive packets stop coming...
-            last_keep_alive_lo_timestamp = date::utc_clock::now();
+            last_timeout_detection_timestamp = date::utc_clock::now();
             signalKeepAliveLo(msg_in.payload.keep_alive);
             break;
         case McuToEverest_power_meter_tag: {
@@ -173,7 +173,7 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             break;
         case McuToEverest_reset_tag:
             // reset keep alive so that timeouts don't occur upon reset during initial start up
-            last_keep_alive_lo_timestamp = date::utc_clock::now();
+            last_timeout_detection_timestamp = date::utc_clock::now();
             reset_done_flag = true;
             if (!forced_reset)
                 signalSpuriousReset();
@@ -311,7 +311,7 @@ size_t evSerial::cobsEncode(const void* data, size_t length, uint8_t* buffer) {
 bool evSerial::serial_timed_out() {
     auto now = date::utc_clock::now();
     auto timeSinceLastKeepAlive =
-        std::chrono::duration_cast<std::chrono::milliseconds>(now - last_keep_alive_lo_timestamp).count();
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - last_timeout_detection_timestamp).count();
     if (timeSinceLastKeepAlive >= 5000)
         return true;
     return false;

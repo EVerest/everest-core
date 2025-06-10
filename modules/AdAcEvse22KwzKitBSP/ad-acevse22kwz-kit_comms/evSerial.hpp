@@ -70,7 +70,7 @@ private:
 
     bool serial_timed_out();
     void timeoutDetectionThread();
-    std::chrono::time_point<date::utc_clock> last_keep_alive_lo_timestamp;
+    std::chrono::time_point<date::utc_clock> last_timeout_detection_timestamp;
 };
 
 #endif
