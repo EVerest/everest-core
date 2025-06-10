@@ -30,6 +30,7 @@ jobs:
       do_not_run_coverage_badge_creation: true
       run_install_wheels: true
       run_integration_tests: true
+      build_kit_base_image_tag: feature-eebus
   ocpp-tests:
     name: OCPP Tests
     needs:
