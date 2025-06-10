@@ -385,7 +385,7 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
     // Configure meter data, but do not set it in the data store
     RPCDataTypes::MeterDataObj meter_data {};
     meter_data.energy_Wh_import.total = 123.45;
-    meter_data.timestamp = 1234567890.0;
+    meter_data.timestamp = "2025-06-10T09:51:56Z";
 
     // Set up the expected responses
     types::json_rpc_api::EVSEGetMeterDataResObj result {{meter_data}, RPCDataTypes::ResponseErrorEnum::NoError};
