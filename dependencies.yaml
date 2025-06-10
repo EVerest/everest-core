@@ -25,7 +25,7 @@ pugixml:
 # Auth module
 libtimer:
   git: https://github.com/EVerest/libtimer.git
-  git_tag: v0.1.1
+  git_tag: v0.1.2
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBTIMER"
   options: ["BUILD_EXAMPLES OFF"]
 
@@ -68,7 +68,7 @@ libevse-security:
 libocpp:
   git: git@github.com:PionixPro/libocpp.git
   # in branch v0.23.2
-  git_tag: 752d1246cfac62048748cd798aefeccd8db19753
+  git_tag: 5e84dc512bcb2a3cb902fb697d435cbe41bc4422
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
