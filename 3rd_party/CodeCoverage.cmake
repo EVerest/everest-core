@@ -549,9 +549,17 @@ function(setup_target_for_coverage_gcovr_html)
     set(GCOVR_HTML_FOLDER_CMD
         ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/${Coverage_NAME}
     )
+
+    # clang
+    set(GCOVR_CLANG_ARGS "")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
+        list(APPEND GCOVR_CLANG_ARGS "--gcov-executable")
+        list(APPEND GCOVR_CLANG_ARGS "llvm-cov gcov")
+    endif()
+
     # Running gcovr
     set(GCOVR_HTML_CMD
-        ${GCOVR_PATH} --html ${Coverage_NAME}/index.html --html-details -r ${BASEDIR} ${GCOVR_ADDITIONAL_ARGS}
+        ${GCOVR_PATH} ${GCOVR_CLANG_ARGS} --html ${Coverage_NAME}/index.html --html-details -r ${BASEDIR} ${GCOVR_ADDITIONAL_ARGS}
         ${GCOVR_EXCLUDE_ARGS} --object-directory=${PROJECT_BINARY_DIR}
     )
 
@@ -746,5 +754,7 @@ function(append_coverage_compiler_flags_to_target name)
     target_compile_options(${name} PRIVATE ${_flag_list})
     if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
         target_link_libraries(${name} PRIVATE gcov)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
+        target_link_options(${name} PUBLIC ${_flag_list})
     endif()
 endfunction()
