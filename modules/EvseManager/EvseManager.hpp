@@ -261,12 +261,19 @@ public:
         // FIXME: this is not implemented yet: enforce_limits uses the enforced limits to tell HLC, but capabilities
         // limits are not yet included in request.
 
-        // Inform charger about new max limits
-        types::iso15118::DcEvseMaximumLimits evse_max_limits;
-        evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
-        evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
-        evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_export_voltage_V;
-        if (charger) {
+        if (!charger) {
+            return;
+        }
+
+        // Inform charger about new max limits if new hardware capabilities are lower than the current target
+        // voltage/current/power.
+        if (latest_target_current > powersupply_capabilities.max_export_current_A or
+            latest_target_voltage > powersupply_capabilities.max_export_voltage_V or
+            (latest_target_current * latest_target_voltage) > powersupply_capabilities.max_export_power_W) {
+            types::iso15118_charger::DcEvseMaximumLimits evse_max_limits;
+            evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
+            evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
+            evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_export_voltage_V;
             charger->inform_new_evse_max_hlc_limits(evse_max_limits);
         }
     }
