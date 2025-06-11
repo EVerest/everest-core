@@ -45,7 +45,6 @@ protected:
         data_store.everest_version = "2025.1.0";
         // Properly initialize EVSE objects
         const auto& ptr = data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
-        ptr->connectors.emplace_back(std::make_unique<data::DataStoreConnector>());
     }
 
     void send_req_and_validate_res(
@@ -323,7 +322,7 @@ TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     // Send EVSE.GetHardwareCapabilities request with valid ID, but no hardware capabilities available
     send_req_and_validate_res(client, evse_get_hardware_capabilities_req_valid_id, expected_error_no_data, is_key_value_in_json_rpc_result);
     // Set the hardware capabilities in the data store
-    data_store.evses[0]->connectors[0]->hardwarecapabilities.set_data(result.hardware_capabilities);
+    data_store.evses[0]->hardwarecapabilities.set_data(result.hardware_capabilities);
     // Send EVSE.GetHardwareCapabilities request with valid ID
     send_req_and_validate_res(client, evse_get_hardware_capabilities_req_valid_id, expected_response);
     // Send EVSE.GetHardwareCapabilities request with invalid ID
