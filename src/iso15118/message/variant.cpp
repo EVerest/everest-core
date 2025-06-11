@@ -132,6 +132,8 @@ static void handle_ac(VariantAccess& va) {
 
     if (doc.AC_ChargeParameterDiscoveryReq_isUsed) {
         insert_type(va, doc.AC_ChargeParameterDiscoveryReq);
+    } else if (doc.AC_ChargeParameterDiscoveryRes_isUsed) {
+        insert_type(va, doc.AC_ChargeParameterDiscoveryRes);
     } else if (doc.AC_ChargeLoopReq_isUsed) {
         insert_type(va, doc.AC_ChargeLoopReq);
     } else {
