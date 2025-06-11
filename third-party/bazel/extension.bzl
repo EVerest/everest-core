@@ -15,6 +15,15 @@ def _deps_impl(module_ctx):
 
     maybe(
         http_archive,
+        name = "com_github_everest_everest-sqlite",
+        url = "https://github.com/EVerest/everest-sqlite/archive/80f374bde3adafb9c946654e9e803749c7c2d9ca.tar.gz",
+        sha256 = "9ee74458627f5aa581e5d735d54ea602abf012a4b78cfe2c60e275f1a1c9f3dc",
+        strip_prefix = "everest-sqlite-80f374bde3adafb9c946654e9e803749c7c2d9ca",
+        build_file = "@everest-framework//third-party/bazel:BUILD.everest-sqlite.bazel",
+    )
+
+    maybe(
+        http_archive,
         name = "com_github_pboettch_json-schema-validator",
         url = "https://github.com/pboettch/json-schema-validator/archive/f4194d7e24e2e2365660ff35b57a7c4e088b27fa.tar.gz",
         sha256 = "f71f2fbef135a61ad7bd9444f4202f9698a4b1c70279cb1e9b2567a6d996aaa1",

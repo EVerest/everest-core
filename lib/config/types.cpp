@@ -200,6 +200,28 @@ ModuleConnections parse_connections(const json& connections_json) {
     return connections;
 }
 
+ConfigEntry parse_config_value(Datatype datatype, const std::string& value_str) {
+    try {
+        switch (datatype) {
+        case Datatype::String:
+            return value_str;
+        case Datatype::Decimal:
+            return std::stod(value_str);
+        case Datatype::Integer:
+            return std::stoi(value_str);
+        case Datatype::Boolean:
+            return value_str == "true" || value_str == "1";
+        case Datatype::Path:
+            return std::filesystem::path(value_str);
+        default:
+            throw std::out_of_range("Unsupported datatype: " + datatype_to_string(datatype));
+        }
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to parse config value '" + value_str + "' as type " +
+                                 datatype_to_string(datatype) + ": " + e.what());
+    }
+}
+
 ModuleConfig parse_module_config(const std::string& module_id, const json& module_json) {
 
     if (!module_json.contains("module")) {

@@ -78,3 +78,8 @@ pybind11_json:
   git: https://github.com/pybind/pybind11_json.git
   git_tag: 0.2.13
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT"
+everest-sqlite:
+  git: https://github.com/EVerest/everest-sqlite.git
+  git_tag: v0.1.1
+  options:
+    ["CMAKE_POSITION_INDEPENDENT_CODE ON"]

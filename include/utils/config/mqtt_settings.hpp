@@ -3,8 +3,7 @@
 #ifndef UTILS_CONFIG_MQTT_SETTINGS_HPP
 #define UTILS_CONFIG_MQTT_SETTINGS_HPP
 
-#include <date/date.h>
-#include <date/tz.h>
+#include <string>
 
 namespace Everest {
 

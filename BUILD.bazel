@@ -1,10 +1,22 @@
+py_binary(
+    name = "collect_migration_files",
+    srcs = [
+        ".ci/build-kit/scripts/collect_migration_files.py"
+    ],
+    main = ".ci/build-kit/scripts/collect_migration_files.py",
+    imports = ["."],
+)
+
 genrule(
     name = "compile_time_settings",
+    srcs = ["@//schemas/migrations:migrations"],
     outs = ["include/everest/compile_time_settings.hpp"],
+    tools = [":collect_migration_files"],
     cmd = """
     echo "#define EVEREST_INSTALL_PREFIX \\"/usr\\"" > $@
     echo "#define EVEREST_INSTALL_LIBDIR \\"/lib\\"" >> $@
     echo "#define EVEREST_NAMESPACE (\\"everest\\")" >> $@
+    $(location :collect_migration_files) --migration-files $(locations @//schemas/migrations:migrations) --output $@
   """,
 )
 
@@ -34,6 +46,7 @@ cc_library(
         "@com_github_LiamBindle_mqtt-c//:libmqtt",
         "@com_github_biojppm_rapidyaml//:ryml",
         "@com_github_everest_liblog//:liblog",
+        "@com_github_everest_everest-sqlite//:everest-sqlite",
         "@com_github_fmtlib_fmt//:fmt",
         "@com_github_nlohmann_json//:json",
         "@com_github_pboettch_json-schema-validator//:json-schema-validator",

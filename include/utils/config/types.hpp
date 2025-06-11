@@ -102,7 +102,7 @@ struct ConfigurationParameter;
 struct ModuleConfig;
 using ModuleId = std::string;
 using RequirementId = std::string;
-using ConfigEntry = std::variant<std::string, bool, int, double>;
+using ConfigEntry = std::variant<std::string, bool, int, double, fs::path>;
 using ImplementationIdentifier = std::string;
 using ModuleConnections = std::map<RequirementId, std::vector<Fulfillment>>;
 using ModuleConfigurations = std::map<ModuleId, ModuleConfig>;
@@ -176,6 +176,7 @@ struct ModuleConfig {
     ModuleTierMappings mapping;
 };
 
+ConfigEntry parse_config_value(Datatype datatype, const std::string& value_str);
 ModuleConfigurations parse_module_configs(const nlohmann::json& config);
 Settings parse_settings(const nlohmann::json& settings_json);
 

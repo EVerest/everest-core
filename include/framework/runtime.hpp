@@ -105,30 +105,6 @@ const auto TERMINAL_STYLE_ERROR = fmt::emphasis::bold | fg(fmt::terminal_color::
 const auto TERMINAL_STYLE_OK = fmt::emphasis::bold | fg(fmt::terminal_color::green);
 const auto TERMINAL_STYLE_BLUE = fmt::emphasis::bold | fg(fmt::terminal_color::blue);
 
-/// \brief Settings needed by the manager to load and validate a config
-struct ManagerSettings {
-    fs::path configs_dir;          ///< Directory that contains EVerest configs
-    fs::path schemas_dir;          ///< Directory that contains schemas for config, manifest, interfaces, etc.
-    fs::path interfaces_dir;       ///< Directory that contains interface definitions
-    fs::path types_dir;            ///< Directory that contains type definitions
-    fs::path errors_dir;           ///< Directory that contains error definitions
-    fs::path config_file;          ///< Path to the loaded config file
-    fs::path www_dir;              ///< Directory that contains the everest-admin-panel
-    int controller_port;           ///< Websocket port of the controller
-    int controller_rpc_timeout_ms; ///< RPC timeout for controller commands
-
-    std::string run_as_user; ///< Username under which EVerest should run
-
-    std::string version_information; ///< Version information string reported on startup of the manager
-
-    nlohmann::json config; ///< Parsed json of the config_file
-
-    MQTTSettings mqtt_settings;       ///< MQTT connection settings
-    RuntimeSettings runtime_settings; ///< Runtime settings needed to successfully run modules
-
-    ManagerSettings(const std::string& prefix, const std::string& config);
-};
-
 // NOTE: this function needs the be called with a pre-initialized ModuleInfo struct
 void populate_module_info_path_from_runtime_settings(ModuleInfo&, const RuntimeSettings& rs);
 
