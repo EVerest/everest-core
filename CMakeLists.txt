@@ -9,6 +9,10 @@ project(everest-core
 find_package(everest-cmake 0.5
     COMPONENTS bundling
     PATHS ../everest-cmake
+    NO_DEFAULT_PATH
+)
+find_package(everest-cmake 0.5
+    COMPONENTS bundling
 )
 
 if (NOT everest-cmake_FOUND)
