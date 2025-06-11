@@ -285,9 +285,9 @@ void Charger::run_state_machine() {
                     std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
                     update_pwm_now(PWM_5_PERCENT);
                     stopwatch.mark("HLC_PWM_5%_ON");
-                } else if (config_context.mcs_enabled) {
+                } else if (config_context.mcs_enabled and shared_context.mcs_hlc_active) {
                     std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
-                    ce_on(0.05);
+                    ce_on(PWM_5_PERCENT);
                     stopwatch.mark("HLC_CE_5%_ON");
                 }
             }
@@ -543,6 +543,11 @@ void Charger::run_state_machine() {
                     update_pwm_now_if_changed_ampere(m);
                 } else {
                     update_pwm_now_if_changed(PWM_5_PERCENT);
+                }
+            } else {
+                // In MCS mode, when authorization passed but state change from B0 to B is not triggered wait here
+                if (shared_context.mcs_hlc_active and not shared_context.ce_is_on) {
+                    ce_on(PWM_5_PERCENT);
                 }
             }
 
@@ -1048,6 +1053,7 @@ void Charger::pwm_F() {
 
 void Charger::ce_off() {
     session_log.evse(false, "Set CE Off");
+    shared_context.ce_is_on = false;
     bsp->set_ce_off();
 }
 
@@ -2074,6 +2080,13 @@ void Charger::clear_errors_on_unplug() {
 
 types::evse_manager::EnableDisableSource Charger::get_last_enable_disable_source() {
     return active_enable_disable_source;
+}
+
+void Charger::set_mcs_hlc_active(bool value) {
+    {
+        Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_set_mcs_hlc_enable);
+        shared_context.mcs_hlc_active = value;
+    }
 }
 
 } // namespace module

@@ -70,9 +70,12 @@ void EvseManager::init() {
     // check if a slac module is connected to the optional requirement
     slac_enabled = not r_slac.empty();
 
+    // check if a Mcs module is connected to the optional requirement
+    mcs_enabled = not r_mcs.empty();
+
     // if hlc is disabled in config, disable slac even if requirement is connected
     if (not(config.ac_hlc_enabled or config.ac_with_soc or config.charge_mode == "DC")
-            or config.mcs_enable) {
+            or mcs_enabled) {
         slac_enabled = false;
     }
 
@@ -84,10 +87,10 @@ void EvseManager::init() {
     }
 
     hlc_enabled = not r_hlc.empty();
-    if (not (slac_enabled or config.mcs_enable))
+    if (not (slac_enabled or mcs_enabled))
         hlc_enabled = false;
 
-    if (config.charge_mode == "DC" and not config.mcs_enable and
+    if (config.charge_mode == "DC" and not mcs_enabled and
         (not hlc_enabled or not slac_enabled or r_powersupply_DC.empty())) {
         EVLOG_error << "DC mode requires slac, HLC and powersupply DC to be connected";
         exit(255);
@@ -97,7 +100,7 @@ void EvseManager::init() {
         EVLOG_warning << "DC mode without isolation monitoring configured, please check your national regulations.";
     }
 
-    if (config.charge_mode == "AC" and config.mcs_enable) {
+    if (config.charge_mode == "AC" and mcs_enabled) {
         EVLOG_error << "MCS mode requires DC charge_mode";
         exit(255);
     }
@@ -129,7 +132,7 @@ void EvseManager::init() {
                     transfer_modes,
                     types::iso15118::string_to_sae_j2847bidi_mode(config.sae_j2847_2_bpt_mode),
                     config.session_logging,
-                    config.mcs_enable);
+                    mcs_enabled);
             });
         }
     }
@@ -174,7 +177,7 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp, config.lock_connector_in_state_b, config.mcs_enable));
+    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp, r_mcs, config.lock_connector_in_state_b, mcs_enabled));
 
     if (config.hack_simplified_mode_limit_10A) {
         bsp->set_ev_simplified_mode_evse_limit(true);
@@ -630,7 +633,7 @@ void EvseManager::ready() {
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
         if (r_powersupply_DC.empty() or config.charge_mode == "AC") {
-            r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, config.mcs_enable);
+            r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, mcs_enabled);
         }
 
         // reset error flags
@@ -926,7 +929,7 @@ void EvseManager::ready() {
                        config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
                        config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A,
                        config.switch_3ph1ph_delay_s, config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms,
-                       config.state_F_after_fault_ms, config.fail_on_powermeter_errors, config.mcs_enable, config.raise_mrec9);
+                       config.state_F_after_fault_ms, config.fail_on_powermeter_errors, mcs_enabled, config.raise_mrec9);
     }
 
     telemetryThreadHandle = std::thread([this]() {
@@ -1107,7 +1110,7 @@ void EvseManager::setup_fake_DC_mode() {
                    config.ac_enforce_hlc, false, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
-                   config.fail_on_powermeter_errors, config.mcs_enable, config.raise_mrec9);
+                   config.fail_on_powermeter_errors, mcs_enabled, config.raise_mrec9);
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1147,7 +1150,7 @@ void EvseManager::setup_AC_mode() {
                    config.ac_enforce_hlc, true, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
-                   config.fail_on_powermeter_errors, config.mcs_enable, config.raise_mrec9);
+                   config.fail_on_powermeter_errors, mcs_enabled, config.raise_mrec9);
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 

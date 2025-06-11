@@ -428,6 +428,11 @@ bool evse_managerImpl::handle_external_ready_to_start_charging() {
     return false;
 }
 
+void evse_managerImpl::handle_external_ready_to_start_hlc(bool& ready) {
+    if (not mod->r_mcs.empty())
+        mod->charger->set_mcs_hlc_active(ready);
+}
+
 bool evse_managerImpl::handle_force_unlock(int& connector_id) {
     if (not mod->r_connector_lock.empty()) {
         types::evse_manager::StopTransactionRequest request;

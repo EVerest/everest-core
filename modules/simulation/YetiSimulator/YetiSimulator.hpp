@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#pragma once
+#ifndef YETI_SIMULATOR_HPP
+#define YETI_SIMULATOR_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -14,6 +15,7 @@
 #include <generated/interfaces/connector_lock/Implementation.hpp>
 #include <generated/interfaces/ev_board_support/Implementation.hpp>
 #include <generated/interfaces/evse_board_support/Implementation.hpp>
+#include <generated/interfaces/evse_megawatt_charging/Implementation.hpp>
 #include <generated/interfaces/powermeter/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -33,6 +35,7 @@ public:
     YetiSimulator(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
                   std::unique_ptr<powermeterImplBase> p_powermeter,
                   std::unique_ptr<evse_board_supportImplBase> p_board_support,
+                  std::unique_ptr<evse_megawatt_chargingImplBase> p_mcs,
                   std::unique_ptr<ev_board_supportImplBase> p_ev_board_support, std::unique_ptr<ac_rcdImplBase> p_rcd,
                   std::unique_ptr<connector_lockImplBase> p_connector_lock, Conf& config) :
         ModuleBase(info),
@@ -40,6 +43,7 @@ public:
         telemetry(telemetry),
         p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
+        p_mcs(std::move(p_mcs)),
         p_ev_board_support(std::move(p_ev_board_support)),
         p_rcd(std::move(p_rcd)),
         p_connector_lock(std::move(p_connector_lock)),
@@ -49,6 +53,7 @@ public:
     Everest::TelemetryProvider& telemetry;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<evse_board_supportImplBase> p_board_support;
+    const std::unique_ptr<evse_megawatt_chargingImplBase> p_mcs;
     const std::unique_ptr<ev_board_supportImplBase> p_ev_board_support;
     const std::unique_ptr<ac_rcdImplBase> p_rcd;
     const std::unique_ptr<connector_lockImplBase> p_connector_lock;
@@ -74,7 +79,7 @@ protected:
     // ev@4714b2ab-a24f-4b95-ab81-36439e1478de:v1
 
 private:
-    friend struct LdEverest;
+    friend class LdEverest;
     void init();
     void ready();
 
@@ -99,11 +104,13 @@ private:
     [[nodiscard]] types::board_support_common::ProximityPilot read_pp_ampacity() const;
 
     void publish_event(state::State event);
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
+// insert other definitions here
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module
+
+#endif // YETI_SIMULATOR_HPP

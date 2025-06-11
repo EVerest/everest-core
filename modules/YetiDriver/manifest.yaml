@@ -40,6 +40,9 @@ provides:
   connector_lock:
     interface: connector_lock
     description: Interface for the motor lock
+  mcs:
+    interface: evse_megawatt_charging
+    description: Interface for Megawatt charging feature
 enable_telemetry: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

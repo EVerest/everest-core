@@ -91,7 +91,8 @@ enum class MutexDescription {
     EVSE_get_hlc_enabled,
     EVSE_get_hlc_waiting_for_auth_pnc,
     EVSE_charger_was_authorized,
-    EVSE_get_ev_info
+    EVSE_get_ev_info,
+    Charger_set_mcs_hlc_enable
 };
 
 static std::string to_string(MutexDescription d) {

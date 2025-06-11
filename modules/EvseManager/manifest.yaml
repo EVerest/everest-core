@@ -65,10 +65,6 @@ config:
       - AC
       - DC
     default: AC
-  mcs_enable:
-    description: Enable MCS mode
-    type: boolean
-    default: false
   ac_hlc_enabled:
     description: Enable or disable HLC (aka ISO15118) for AC mode
     type: boolean
@@ -322,6 +318,10 @@ provides:
 requires:
   bsp:
     interface: evse_board_support
+  mcs:
+    interface: evse_megawatt_charging
+    min_connections: 0
+    max_connections: 1
   ac_rcd:
     interface: ac_rcd
     min_connections: 0

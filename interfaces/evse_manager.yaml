@@ -112,6 +112,14 @@ cmds:
     result:
       description: Returns true if the signal was used by the evse manager implementation
       type: boolean
+  external_ready_to_start_hlc:
+    description: >-
+      In MCS charging a state change from B0 to B is defined. In B0 the car is plugged but no HLC is started. In B0 the HLC data link is established
+      This is equivalent to PWM dutycycle change from 100% to 5%. This command must be used to trigger the state change externaly.
+    arguments:
+      ready:
+        description: Specifies wether hlc start is approved or not
+        type: boolean
 vars:
   session_event:
     description: Emits all events related to sessions

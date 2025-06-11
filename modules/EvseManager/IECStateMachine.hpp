@@ -27,6 +27,7 @@
 #include <queue>
 
 #include <generated/interfaces/evse_board_support/Interface.hpp>
+#include <generated/interfaces/evse_megawatt_charging/Interface.hpp>
 #include <sigslot/signal.hpp>
 
 #include "Timeout.hpp"
@@ -68,7 +69,7 @@ enum class RawCPState {
 class IECStateMachine {
 public:
     // We need the r_bsp reference to be able to talk to the bsp driver module
-    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_, bool mcs_enable);
+    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, const std::vector<std::unique_ptr<evse_megawatt_chargingIntf>>& r_mcs_, bool lock_connector_in_state_b_, bool mcs_enable);
     // Call when new events from BSP requirement come in. Will signal internal events
     void process_bsp_event(const types::board_support_common::BspEvent bsp_event);
     // Allow power on from Charger state machine
@@ -111,6 +112,7 @@ private:
     void connector_unlock();
     void check_connector_lock();
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
+    const std::vector<std::unique_ptr<evse_megawatt_chargingIntf>>& r_mcs;
     bool lock_connector_in_state_b{true};
 
     bool pwm_running{false};

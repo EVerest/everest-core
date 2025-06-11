@@ -79,16 +79,6 @@ cmds:
       value:
         description: Ampere current limit value
         type: number
-  ce_on:
-    description: Turns CE on with duty cycle(in MCS mode)
-    arguments:
-      value:
-        description: CE duty cycle (>0, <100)
-        type: number
-        minimum: 0
-        maximum: 100
-  ce_off:
-    description: Turns CE off (in MCS mode)
 vars:
   event:
     description: Event from ControlPilot signal/output relais

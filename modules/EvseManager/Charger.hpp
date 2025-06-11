@@ -194,6 +194,8 @@ public:
     void set_hlc_charging_active();
     void set_hlc_allow_close_contactor(bool on);
 
+    void set_mcs_hlc_active(bool value);
+
     bool stop_charging_on_fatal_error();
     bool entered_fatal_error_state();
     int time_in_fatal_error_state_ms();
@@ -285,6 +287,9 @@ private:
         bool hlc_allow_close_contactor{false};
         bool iec_allow_close_contactor{false};
         bool hlc_charging_active{false};
+
+        bool mcs_hlc_active{false};
+
         HlcTerminatePause hlc_charging_terminate_pause;
         types::iso15118::DcEvseMaximumLimits current_evse_max_limits;
         bool pwm_running{false};

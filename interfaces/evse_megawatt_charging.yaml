@@ -1,0 +1,15 @@
+description: >-
+  This interface defines the evse megawatt charging. An evse megawatt charging represents the
+  megawatt charging kernel of one physical connector.
+cmds:
+  ce_on:
+    description: Turns CE on with duty cycle(in MCS mode)
+    arguments:
+      value:
+        description: CE duty cycle (>0, <100)
+        type: number
+        minimum: 0
+        maximum: 100
+  ce_off:
+    description: Turns CE off (in MCS mode)
+ 

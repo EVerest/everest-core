@@ -80,8 +80,9 @@ const std::string cpevent_to_string(CPEvent e) {
 }
 
 IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_,
+                                 const std::vector<std::unique_ptr<evse_megawatt_chargingIntf>>& r_mcs_,
                                  bool lock_connector_in_state_b_, bool mcs_enable) :
-    r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
+    r_bsp(r_bsp_), r_mcs(r_mcs_),lock_connector_in_state_b(lock_connector_in_state_b_) {
     // feed the state machine whenever the timer expires
     timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
     timeout_unlock_state_F.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
@@ -179,7 +180,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             if (last_cp_state != RawCPState::Disabled) {
                 if (mcs_enabled) {
                     ce_is_set = false;
-                    r_bsp->call_ce_off();
+                    r_mcs[0]->call_ce_off();
                 } else {
                     pwm_running = false;
                     r_bsp->call_pwm_off();
@@ -195,7 +196,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             if (last_cp_state != RawCPState::A) {
                 if (mcs_enabled) {
                     ce_is_set = false;
-                    r_bsp->call_ce_off();
+                    r_mcs[0]->call_ce_off();
                 } else {
                     pwm_running = false;
                     r_bsp->call_pwm_off();
@@ -325,7 +326,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 call_allow_power_on_bsp(false);
                 if (mcs_enabled) {
                     ce_is_set = false;
-                    r_bsp->call_ce_off();
+                    r_mcs[0]->call_ce_off();
                 } else {
                     pwm_running = false;
                     r_bsp->call_pwm_off();
@@ -446,7 +447,7 @@ void IECStateMachine::set_ce_on(double value) {
 
         }
     }
-    r_bsp->call_ce_on(value * 100);
+    r_mcs[0]->call_ce_on(value * 100);
 
     // Don't run the state machine in the callers context
     feed_state_machine();

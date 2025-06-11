@@ -32,6 +32,7 @@ target_sources(${MODULE_NAME}
         "board_support/evse_board_supportImpl.cpp"
         "rcd/ac_rcdImpl.cpp"
         "connector_lock/connector_lockImpl.cpp"
+        "mcs/evse_megawatt_chargingImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

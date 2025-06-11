@@ -21,6 +21,7 @@
 #include <generated/interfaces/ac_rcd/Interface.hpp>
 #include <generated/interfaces/connector_lock/Interface.hpp>
 #include <generated/interfaces/evse_board_support/Interface.hpp>
+#include <generated/interfaces/evse_megawatt_charging/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
 #include <generated/interfaces/over_voltage_monitor/Interface.hpp>
@@ -67,7 +68,6 @@ struct Conf {
     double max_current_import_A;
     double max_current_export_A;
     std::string charge_mode;
-    bool mcs_enable;
     bool ac_hlc_enabled;
     bool ac_hlc_use_5percent;
     bool ac_enforce_hlc;
@@ -115,6 +115,7 @@ public:
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
                 std::unique_ptr<uk_random_delayImplBase> p_random_delay, std::unique_ptr<evse_board_supportIntf> r_bsp,
+                std::vector<std::unique_ptr<evse_megawatt_chargingIntf>> r_mcs,
                 std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd,
                 std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock,
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side,
@@ -132,6 +133,7 @@ public:
         p_token_provider(std::move(p_token_provider)),
         p_random_delay(std::move(p_random_delay)),
         r_bsp(std::move(r_bsp)),
+        r_mcs(std::move(r_mcs)),
         r_ac_rcd(std::move(r_ac_rcd)),
         r_connector_lock(std::move(r_connector_lock)),
         r_powermeter_grid_side(std::move(r_powermeter_grid_side)),
@@ -151,6 +153,7 @@ public:
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
     const std::unique_ptr<uk_random_delayImplBase> p_random_delay;
     const std::unique_ptr<evse_board_supportIntf> r_bsp;
+    const std::vector<std::unique_ptr<evse_megawatt_chargingIntf>> r_mcs;
     const std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd;
     const std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock;
     const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side;
@@ -296,6 +299,7 @@ private:
     Everest::timed_mutex_traceable hlc_mutex;
 
     bool hlc_enabled;
+    bool mcs_enabled;
 
     bool hlc_waiting_for_auth_eim;
     bool hlc_waiting_for_auth_pnc;
