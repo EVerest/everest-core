@@ -274,6 +274,9 @@ void ISO15118_chargerImpl::ready() {
     const auto v2g_root_cert_path = mod->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
     const auto mo_root_cert_path = mod->r_security->call_get_verify_file(types::evse_security::CaCertificateType::MO);
 
+    // TODO(mlitre): Should be updated once libiso supports service renegotiation
+    this->mod->p_extensions->publish_service_renegotiation_supported(false);
+
     const iso15118::TbdConfig tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
