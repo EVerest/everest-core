@@ -125,11 +125,18 @@ InitDeviceModelDb::get_component_config_from_directory(const std::filesystem::pa
 
 std::map<ComponentKey, std::vector<DeviceModelVariable>>
 InitDeviceModelDb::get_all_component_configs(const std::filesystem::path& directory) {
-    const std::vector<std::filesystem::path> standardized_component_config_files =
-        get_component_config_from_directory(directory / STANDARDIZED_COMPONENT_CONFIG_DIR);
-    const std::vector<std::filesystem::path> custom_component_config_files =
-        get_component_config_from_directory(directory / CUSTOM_COMPONENT_CONFIG_DIR);
 
+    const auto standardized_dir = directory / STANDARDIZED_COMPONENT_CONFIG_DIR;
+    const auto custom_dir = directory / CUSTOM_COMPONENT_CONFIG_DIR;
+
+    const std::vector<std::filesystem::path> standardized_component_config_files =
+        get_component_config_from_directory(standardized_dir);
+
+    std::vector<std::filesystem::path> custom_component_config_files;
+
+    if (std::filesystem::exists(custom_dir)) {
+        custom_component_config_files = get_component_config_from_directory(custom_dir);
+    }
     std::map<ComponentKey, std::vector<DeviceModelVariable>> standardized_components_map =
         read_component_config(standardized_component_config_files);
     std::map<ComponentKey, std::vector<DeviceModelVariable>> components =

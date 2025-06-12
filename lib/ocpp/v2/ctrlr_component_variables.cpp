@@ -1165,6 +1165,7 @@ const Variable AvailabilityState = {"AvailabilityState"};
 const Variable SupplyPhases = {"SupplyPhases"};
 const Variable AllowReset = {"AllowReset"};
 const Variable Power = {"Power"};
+const Variable ISO15118EvseId = {"ISO15118EvseId"};
 
 ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable) {
     EVSE evse = {evse_id};

@@ -299,6 +299,7 @@ extern const Variable AvailabilityState;
 extern const Variable SupplyPhases;
 extern const Variable AllowReset;
 extern const Variable Power;
+extern const Variable ISO15118EvseId;
 ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable);
 } // namespace EvseComponentVariables
 

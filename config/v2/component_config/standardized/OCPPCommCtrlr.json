@@ -213,12 +213,13 @@
       "variable_name": "MessageTypesDiscardForQueueing",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "SequenceList"
+        "dataType": "string"
       },
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadOnly",
+          "value": ""
         }
       ],
       "description": "Comma seperated list of message types that shall not be queued (when offline) even in case QueueAllMessages is true. If QueueAllMessages is false, the configuration of this paramater has no effect.",
