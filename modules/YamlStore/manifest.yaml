@@ -1,0 +1,13 @@
+description: Provides a read-only key-value store interface, backed by a simple YAML file.
+config:
+  file:
+    description: Path to the YAML file used as a read-only key-value store.
+    type: string
+provides:
+  main:
+    interface: kvs
+    description: Provides a read-only key-value interface
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Michael Heimpold
