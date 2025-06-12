@@ -38,6 +38,7 @@ struct Conf {
     int SC;
     std::string UV;
     std::string UD;
+    int command_timeout_ms;
 };
 
 class LemDCBM400600 : public Everest::ModuleBase {

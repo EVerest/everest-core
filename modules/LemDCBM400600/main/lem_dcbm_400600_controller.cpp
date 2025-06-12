@@ -11,6 +11,7 @@ void LemDCBM400600Controller::init() {
     call_with_retry([this]() { this->fetch_meter_id_from_device(); }, this->config.init_number_of_http_retries,
                     this->config.init_retry_wait_in_milliseconds);
     this->time_sync_helper->restart_unsafe_period();
+    this->http_client->set_command_timeout(this->config.command_timeout_ms);
 }
 
 std::vector<std::string> split(const std::string& str, char delimiter) {
@@ -208,6 +209,14 @@ LemDCBM400600Controller::stop_transaction(const std::string& transaction_id) {
         std::string error_message =
             fmt::format("Failed to stop transaction {} - connection to device failed: {}", tid, error.what());
         EVLOG_error << error_message;
+        // if we have the last known OCMF value, we can return it
+        if (current_signed_meter_value.public_key.has_value()) {
+            EVLOG_warning << "LEM DCBM 400/600: Returning the last known OCMF value for transaction " << tid
+                          << " with value: " << current_signed_meter_value;
+            return types::powermeter::TransactionStopResponse{
+                types::powermeter::TransactionRequestStatus::OK, {}, current_signed_meter_value};
+        }
+        current_signed_meter_value = types::units_signed::SignedMeterValue{};
         return types::powermeter::TransactionStopResponse{
             types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, error_message};
     }
@@ -257,14 +266,34 @@ types::powermeter::Powermeter LemDCBM400600Controller::get_powermeter() {
 
     const std::string endpoint = v2_capable ? "/v2/livemeasure" : "/v1/livemeasure";
     auto response = this->http_client->get(endpoint);
+    types::powermeter::Powermeter powermeter_result;
     if (response.status_code != 200) {
         throw UnexpectedDCBMResponseCode(endpoint, 200, response);
     }
     try {
-        return this->convert_livemeasure_to_powermeter(response.body);
+        powermeter_result = this->convert_livemeasure_to_powermeter(response.body);
     } catch (json::exception& json_error) {
         throw UnexpectedDCBMResponseBody(endpoint, fmt::format("Json error '{}'", json_error.what()));
     }
+    if (this->need_to_stop_transaction) {
+        // if there is no ongoing transaction, we do need to fetch the signed meter value to have it available
+        // for the upper layers, otherwise we will not have the OCMF value if we lose connection to the device
+        try {
+            current_signed_meter_value =
+                types::units_signed::SignedMeterValue{fetch_ocmf_result(current_transaction_id), "", "OCMF"};
+            current_signed_meter_value.public_key.emplace(public_key_ocmf);
+            current_signed_meter_value.timestamp.emplace(powermeter_result.timestamp);
+        } catch (UnexpectedDCBMResponseCode& error) {
+            EVLOG_error << "LEM DCBM 400/600: Could not get the OCMF value: " << error.what();
+        } catch (UnexpectedDCBMResponseBody& error) {
+            EVLOG_error << "LEM DCBM 400/600: Invalid OCMF value: " << error.what();
+        } catch (HttpClientError& error) {
+            std::string error_message = fmt::format("Failed get the OCMF field {} - connection to device failed: {}",
+                                                    current_transaction_id, error.what());
+            EVLOG_error << error_message;
+        }
+    }
+    return powermeter_result;
 }
 
 types::powermeter::Powermeter
