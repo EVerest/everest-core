@@ -205,7 +205,7 @@ is open.
 AD-ACEVSE22KWZ-KIT currently doesn't support PP for maximum output current  
 so 32A is sent by default.
 
-``PowerMeter(Message)``: Sent at roughly every second when relay is closed. 
+``PowerMeter(Message)``: Sent roughly every second when relay is closed. 
 Contains all data from the ADE9178 power measurement.
 
 ``ErrorState(Message)``: Notify EVerest of active errors. Sent when an errors 
