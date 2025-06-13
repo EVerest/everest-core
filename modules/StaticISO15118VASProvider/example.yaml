@@ -1,0 +1,37 @@
+services:
+  - id: 34567
+    description: Test service 1
+    parameter_sets:
+      - id: 0
+        parameters:
+          - name: TestBool
+            type: bool
+            value: false
+          - name: TestRational
+            type: rational
+            value: 0.1209
+          - name: TestInt32
+            type: int32
+            value: 1234567
+          - name: TestInt16
+            type: int16
+            value: 12345
+          - name: TestInt8
+            type: int8
+            value: 123
+          - name: TestString
+            type: string
+            value: This is a test string
+      - id: 1
+        parameters:
+          - name: TestBool
+            type: bool
+            value: true
+  - id: 34568
+    description: Test service 2
+    parameter_sets:
+      - id: 0
+        parameters:
+          - name: TestInt8
+            type: int8
+            value: 42
