@@ -92,7 +92,7 @@ Raspberry Pi pins which can operate as a UART link and a standard GPIO:
       - Any GND pin
       - Any GND pin
 
-You can now follow the steps used for configuring EVerest on the Yeti board to start EVerest 
+You can now follow the steps used for configuring EVerest on the Yak board to start EVerest 
 on the Raspberry Pi.
 
 Protocol
@@ -135,7 +135,7 @@ To generate the C code nanopb is used:
 
 ``nanopb_generator -I . -D . *.proto``
 
-The output should also be manually copied to Yeti Firmware to ensure the same
+The output should also be manually copied to AD-ACEVSE22KWZ-KIT Firmware to ensure the same
 definition is used on both sides when making changes.
 
 
