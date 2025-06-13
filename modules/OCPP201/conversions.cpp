@@ -1035,6 +1035,9 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
     if (response.certificateStatus.has_value()) {
         validation_result.certificate_status.emplace(to_everest_certificate_status(response.certificateStatus.value()));
     }
+
+    validation_result.allowed_energy_transfer_modes =
+        to_everest_allowed_energy_transfer_modes(response.allowedEnergyTransfer);
     return validation_result;
 }
 
@@ -1511,6 +1514,49 @@ to_ocpp_clear_display_message_response(const types::display_message::ClearDispla
     }
 
     return result_response;
+}
+
+types::iso15118::EnergyTransferMode
+to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& allowed_energy_transfer_mode) {
+    switch (allowed_energy_transfer_mode) {
+    case ocpp::v2::EnergyTransferModeEnum::AC_BPT:
+        return types::iso15118::EnergyTransferMode::AC_BPT;
+    case ocpp::v2::EnergyTransferModeEnum::AC_BPT_DER:
+        return types::iso15118::EnergyTransferMode::AC_BPT_DER;
+    case ocpp::v2::EnergyTransferModeEnum::AC_DER:
+        return types::iso15118::EnergyTransferMode::AC_DER;
+    case ocpp::v2::EnergyTransferModeEnum::AC_single_phase:
+        return types::iso15118::EnergyTransferMode::AC_single_phase_core;
+    case ocpp::v2::EnergyTransferModeEnum::AC_three_phase:
+        return types::iso15118::EnergyTransferMode::AC_three_phase_core;
+    case ocpp::v2::EnergyTransferModeEnum::AC_two_phase:
+        return types::iso15118::EnergyTransferMode::AC_two_phase;
+    case ocpp::v2::EnergyTransferModeEnum::DC:
+        return types::iso15118::EnergyTransferMode::DC;
+    case ocpp::v2::EnergyTransferModeEnum::DC_BPT:
+        return types::iso15118::EnergyTransferMode::DC_BPT;
+    case ocpp::v2::EnergyTransferModeEnum::DC_ACDP:
+        return types::iso15118::EnergyTransferMode::DC_ACDP;
+    case ocpp::v2::EnergyTransferModeEnum::DC_ACDP_BPT:
+        return types::iso15118::EnergyTransferMode::DC_ACDP_BPT;
+    case ocpp::v2::EnergyTransferModeEnum::WPT:
+        return types::iso15118::EnergyTransferMode::WPT;
+    }
+    throw std::out_of_range("Could not convert EnergyTransferModeEnum");
+}
+
+std::optional<std::vector<types::iso15118::EnergyTransferMode>> to_everest_allowed_energy_transfer_modes(
+    const std::optional<std::vector<ocpp::v2::EnergyTransferModeEnum>>& allowed_energy_transfer_modes) {
+    std::optional<std::vector<types::iso15118::EnergyTransferMode>> ret = std::nullopt;
+
+    if (allowed_energy_transfer_modes.has_value()) {
+        std::vector<types::iso15118::EnergyTransferMode> value{};
+        for (const auto& mode : allowed_energy_transfer_modes.value()) {
+            value.push_back(to_everest_allowed_energy_transfer_mode(mode));
+        }
+        ret = value;
+    }
+    return ret;
 }
 
 } // namespace conversions

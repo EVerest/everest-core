@@ -111,12 +111,6 @@ ocpp::v2::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v2::R
         return ocpp::v2::TriggerReasonEnum::ChargingStateChanged;
     case ocpp::v2::ReasonEnum::MasterPass:
         return ocpp::v2::TriggerReasonEnum::StopAuthorized;
-    case ocpp::v2::ReasonEnum::Other:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
-    case ocpp::v2::ReasonEnum::OvercurrentFault:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
-    case ocpp::v2::ReasonEnum::PowerLoss:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     case ocpp::v2::ReasonEnum::PowerQuality:
         return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     case ocpp::v2::ReasonEnum::Reboot:
@@ -131,8 +125,10 @@ ocpp::v2::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v2::R
         return ocpp::v2::TriggerReasonEnum::TimeLimitReached;
     case ocpp::v2::ReasonEnum::Timeout:
         return ocpp::v2::TriggerReasonEnum::EVConnectTimeout;
+    case ocpp::v2::ReasonEnum::Other:
     case ocpp::v2::ReasonEnum::ReqEnergyTransferRejected:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v2::ReasonEnum::OvercurrentFault:
+    case ocpp::v2::ReasonEnum::PowerLoss:
     default:
         return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     }
@@ -943,7 +939,35 @@ void OCPP201::ready() {
 
         evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
             if (ev_info.soc.has_value()) {
-                this->evse_soc_map[evse_id] = ev_info.soc.value();
+                this->evse_soc_map[evse_id] = ev_info.soc;
+            }
+            if (ev_info.evcc_id.has_value()) {
+                // TODO(mlitre): Update ConnectedEVVehicleId DeviceModel
+                auto tx_data = this->transaction_handler->get_transaction_data(evse_id);
+                if (tx_data->id_token.has_value()) {
+                    auto info_vector = tx_data->id_token->additionalInfo.has_value()
+                                           ? tx_data->id_token->additionalInfo.value()
+                                           : std::vector<ocpp::v2::AdditionalInfo>{};
+                    if (!tx_data->id_token->additionalInfo.has_value() or
+                        (tx_data->id_token->additionalInfo.has_value() and
+                         std::find_if(tx_data->id_token->additionalInfo->cbegin(),
+                                      tx_data->id_token->additionalInfo->cend(),
+                                      [ev_info](const ocpp::v2::AdditionalInfo& info) {
+                                          return info.additionalIdToken.get() == ev_info.evcc_id.value();
+                                      }) == tx_data->id_token->additionalInfo->cend())) {
+                        ocpp::v2::AdditionalInfo info;
+                        info.additionalIdToken = ev_info.evcc_id.value();
+                        info.type = "EVCCID";
+                        info_vector.push_back(info);
+                        tx_data->id_token->additionalInfo = info_vector;
+                    }
+                } else {
+                    ocpp::v2::IdToken token;
+                    token.additionalInfo = {};
+                    token.additionalInfo->push_back(
+                        ocpp::v2::AdditionalInfo{ev_info.evcc_id.value(), "EVCCID", std::nullopt});
+                    tx_data->id_token = token;
+                }
             }
         });
 
@@ -1223,6 +1247,7 @@ void OCPP201::process_session_started(const int32_t evse_id, const int32_t conne
     if (session_started.reason == types::evse_manager::StartSessionReason::EVConnected) {
         this->charge_point->on_session_started(evse_id, connector_id);
     }
+    // TODO(mlitre): Update ConnectedEV device model to update available
 }
 
 void OCPP201::process_session_finished(const int32_t evse_id, const int32_t connector_id,
@@ -1237,6 +1262,7 @@ void OCPP201::process_session_finished(const int32_t evse_id, const int32_t conn
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::EV_DISCONNECTED);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
     this->charge_point->on_session_finished(evse_id, connector_id);
+    // TODO(mlitre): Update ConnectedEV device model to clear info and update available
 }
 
 void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t connector_id,

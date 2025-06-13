@@ -120,6 +120,19 @@ cmds:
         description: The plug and charge configuration object
         type: object
         $ref: /evse_manager#/PlugAndChargeConfiguration
+  update_allowed_energy_transfer_modes:
+    description: >-
+      Sets the supported energy transfer mode for ISO15118.
+    arguments:
+      allowed_energy_transfer_modes:
+        description: >-
+          Only used with OCPP 2.1, this allows the CSMS to transmit to the charging station
+          which energy transfer modes are allowed with the vehicle.
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/EnergyTransferMode
+        minItems: 1
 vars:
   session_event:
     description: Emits all events related to sessions

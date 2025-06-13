@@ -4,6 +4,7 @@
 #include "ISO15118_chargerImpl.hpp"
 #include "log.hpp"
 #include "v2g_ctx.hpp"
+#include <string_view>
 
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
 
@@ -64,10 +65,8 @@ void ISO15118_chargerImpl::init() {
 void ISO15118_chargerImpl::ready() {
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
 
     uint8_t len = evse_id.evse_id.length();
     if (len < iso2_EVSEID_CHARACTER_SIZE) {
@@ -77,6 +76,36 @@ void ISO15118_chargerImpl::handle_setup(
         dlog(DLOG_LEVEL_WARNING, "EVSEID_CHARACTER_SIZE exceeded (received: %u, max: %u)", len,
              iso2_EVSEID_CHARACTER_SIZE);
     }
+
+    v2g_ctx->debugMode = debug_mode;
+
+    if (sae_j2847_mode == BidiMode::V2H || sae_j2847_mode == BidiMode::V2G) {
+        struct iso2_ServiceType sae_service;
+
+        init_iso2_ServiceType(&sae_service);
+
+        sae_service.FreeService = 1;
+        sae_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
+
+        if (sae_j2847_mode == BidiMode::V2H) {
+            sae_service.ServiceID = 28472;
+            const std::string_view service_name = "SAE J2847/2 V2H";
+            memcpy(sae_service.ServiceName.characters, service_name.data(), service_name.length());
+            sae_service.ServiceName.charactersLen = service_name.length();
+            sae_service.ServiceName_isUsed = true;
+        } else {
+            sae_service.ServiceID = 28473;
+            const std::string_view service_name = "SAE J2847/2 V2G";
+            memcpy(sae_service.ServiceName.characters, service_name.data(), service_name.length());
+            sae_service.ServiceName.charactersLen = service_name.length();
+            sae_service.ServiceName_isUsed = true;
+        }
+
+        add_service_to_service_list(v2g_ctx, sae_service);
+    }
+}
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes) {
 
     if (v2g_ctx->hlc_pause_active != true) {
         uint16_t& energyArrayLen =
@@ -129,35 +158,6 @@ void ISO15118_chargerImpl::handle_setup(
             v2g_ctx->supported_protocols &= ~(1 << V2G_PROTO_DIN70121);
             dlog(DLOG_LEVEL_WARNING, "Removed DIN70121 from the list of supported protocols as AC is enabled");
         }
-    }
-
-    v2g_ctx->debugMode = debug_mode;
-
-    if (sae_j2847_mode == BidiMode::V2H || sae_j2847_mode == BidiMode::V2G) {
-        struct iso2_ServiceType sae_service;
-
-        init_iso2_ServiceType(&sae_service);
-
-        sae_service.FreeService = 1;
-        sae_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
-
-        if (sae_j2847_mode == BidiMode::V2H) {
-            sae_service.ServiceID = 28472;
-            const std::string service_name = "SAE J2847/2 V2H";
-            memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
-                   service_name.length());
-            sae_service.ServiceName.charactersLen = service_name.length();
-            sae_service.ServiceName_isUsed = true;
-        } else {
-            sae_service.ServiceID = 28473;
-            const std::string service_name = "SAE J2847/2 V2G";
-            memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
-                   service_name.length());
-            sae_service.ServiceName.charactersLen = service_name.length();
-            sae_service.ServiceName_isUsed = true;
-        }
-
-        add_service_to_service_list(v2g_ctx, sae_service);
     }
 }
 
