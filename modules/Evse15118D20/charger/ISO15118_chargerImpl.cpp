@@ -477,13 +477,19 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
     return callbacks;
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
 
     std::scoped_lock lock(GEL);
     setup_config.evse_id = evse_id.evse_id; // TODO(SL): Check format for d20
+
+    setup_steps_done.set(to_underlying_value(SetupStep::SETUP));
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes) {
+
+    std::scoped_lock lock(GEL);
 
     std::vector<dt::ServiceCategory> services;
 
@@ -508,6 +514,10 @@ void ISO15118_chargerImpl::handle_setup(
     }
 
     setup_config.supported_energy_services = services;
+
+    if (controller) {
+        controller->update_energy_modes(services);
+    }
 
     setup_steps_done.set(to_underlying_value(SetupStep::ENERGY_SERVICE));
 }

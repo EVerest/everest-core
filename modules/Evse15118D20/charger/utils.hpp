@@ -5,9 +5,10 @@
 #include <generated/types/iso15118.hpp>
 #include <iso15118/message/type.hpp>
 
-static constexpr auto NUMBER_OF_SETUP_STEPS = 4;
+static constexpr auto NUMBER_OF_SETUP_STEPS = 5;
 
 enum class SetupStep {
+    SETUP,
     ENERGY_SERVICE,
     AUTH_SETUP,
     MAX_LIMITS,
