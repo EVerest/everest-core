@@ -150,6 +150,7 @@ void OCPP201::init_evse_maps() {
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->evse_ready_map[evse_id] = false;
         this->evse_soc_map[evse_id] = std::nullopt;
+        this->evse_hardware_capabilities_map[evse_id] = types::evse_board_support::HardwareCapabilities{};
     }
 }
 
@@ -367,6 +368,11 @@ void OCPP201::init() {
                 this->evse_ready_cv.notify_one();
             }
         });
+        this->r_evse_manager.at(evse_id - 1)
+            ->subscribe_hw_capabilities(
+                [this, evse_id](const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
+                    this->evse_hardware_capabilities_map[evse_id] = hw_capabilities;
+                });
     }
 }
 
@@ -827,7 +833,8 @@ void OCPP201::ready() {
         device_model_database_path, device_model_database_migration_path, device_model_config_path, true);
 
     // initialize everest device model
-    auto everest_device_model_storage = std::make_unique<device_model::EverestDeviceModelStorage>();
+    auto everest_device_model_storage =
+        std::make_unique<device_model::EverestDeviceModelStorage>(r_evse_manager, evse_hardware_capabilities_map);
 
     // initialize composed device model, this will be provided to the ChargePoint constructor
     auto composed_device_model_storage = std::make_unique<module::device_model::ComposedDeviceModelStorage>();
