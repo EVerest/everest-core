@@ -6,7 +6,8 @@ AdAcEvse22KwzKitBSP
 
 See also module's :ref:`auto-generated reference <everest_modules_AdAcEvse22KwzKitBSP>`.
 The module ``AdAcEvse22KwzKitBSP`` is a board support driver for the Analog Devices 
-AD-ACEVSE22KWZ-KIT EVSE reference design.
+`AD-ACEVSE22KWZ-KIT <https://www.analog.com/en/resources/evaluation-hardware-and-software/evaluation-boards-kits/ad-acevse22kwz-kit.html#eb-overview>`_
+EVSE reference design.
 
 AdAcEvse22KwzKitBSP Quickstart
 ==============================
@@ -126,7 +127,7 @@ Protobuf
 
 The actual packet definitions are located under ``adkit_comms/protobuf``.
 
-``ad-acevse22kwz-kit.proto`` contains all messages that can be sent by EVerest and AD-ACEVSE22KWZ-KIT.
+``adkit.proto`` contains all messages that can be sent by EVerest and AD-ACEVSE22KWZ-KIT.
 
 Refer to these files for an up-to-date definition as they may change 
 frequently.
@@ -144,12 +145,13 @@ Modes of Operation
 
 AD-ACEVSE22KWZ-KIT board operates in the following two modes:
 
-``Host-less mode``: AD-ACEVSE22KWZ-KIT acts as a standalone EVSE 
+``Hostless mode``: AD-ACEVSE22KWZ-KIT acts as a standalone EVSE 
 and will control PWM and relay state without external influence. In this 
 mode, PWM will be enabled immediately upon entering state B1 with the 
-relay opening in state C2 assuming no errors occur. If an error occurs 
+relay closing in state C2 assuming no errors occur. If an error occurs 
 (i.e. RCD trigger, diode short, C1 timeout, etc.), AD-ACEVSE22KWZ-KIT 
-will close the relay and disable PWM until state A1 is reentered. 
+will open the relay and disable PWM until state A1 is reentered where 
+the errors will be cleared. 
 
 ``Host-driven mode``: AD-ACEVSE22KWZ-KIT will allow EVerest to influence PWM
 and relay states. In this mode, PWM will not be enabled until an EVerest 
@@ -157,7 +159,7 @@ and relay states. In this mode, PWM will not be enabled until an EVerest
 C2 until an ``AllowPowerOn`` message is received. AD-ACEVSE22KWZ-KIT can 
 override relay and PWM state in the event of an error.
 
-By default, the AD-ACEVSE22KWZ-KIT operates in host-less mode until a message
+By default, the AD-ACEVSE22KWZ-KIT operates in hostless mode until a message
 is received from the host. Additionally, all outbound messages from 
 AD-ACEVSE22KWZ-KIT are sent irrespective of mode of operation. This enables 
 AD-ACEVSE22KWZ-KIT evaluation without using EVerest.
@@ -174,7 +176,7 @@ switch on the power relays/contactors to the car on (true) or must switch
 off now (false). The final decision remains with AD-ACEVSE22KWZ-KIT in 
 case of power on, it should only power on after all other requirements 
 are met (such as RCD current is below limit, car is in CP state C etc). 
-On power off AD-ACEVSE22KWZ-KIT must switch off immediately.
+On power off, AD-ACEVSE22KWZ-KIT will switch off immediately.
 
 ``PwmDutyCycle(uint32)``: Set AD-ACEVSE22KWZ-KIT PWM state and duty 
 cycle. PWM can be enabled at specific duty cycle by passing a value of 
@@ -203,8 +205,8 @@ is open.
 AD-ACEVSE22KWZ-KIT currently doesn't support PP for maximum output current  
 so 32A is sent by default.
 
-``PowerMeter(Message)``: Sent at roughly 1 Hz when relay is closed. Contains 
-all data from the ADE9178 power measurement.
+``PowerMeter(Message)``: Sent at roughly every second when relay is closed. 
+Contains all data from the ADE9178 power measurement.
 
 ``ErrorState(Message)``: Notify EVerest of active errors. Sent when an errors 
 are set/cleared. Each error has an associated boolean value where true 
@@ -213,7 +215,7 @@ only diode faults, RCD triggered, and overcurrent are supported by
 AD-ACEVSE22KWZ-KIT.
 
 ``Telemetry(Message)``: Telemetry message with cp pwm high and low voltage 
-values. Not currently supported by AD-ACEVSE22KWZ-KIT.
+values. Not currently supported by AD-ACEVSE22KWZ-KIT firmware.
 
 ``KeepAliveLo(Message)``: AD-ACEVSE22KWZ-KIT sends this every 3 seconds to keep 
 connection online.
