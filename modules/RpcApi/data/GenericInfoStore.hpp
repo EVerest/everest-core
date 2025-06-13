@@ -55,14 +55,21 @@ public:
         if (in != this->dataobj) {
             this->dataobj = in;
             this->data_is_valid = true;
+            data_lock.unlock();
             // call the notification callback if it is set
-            if (this->notification_callback) {
-                // create a copy of the data object
-                T data_copy = this->dataobj;
-                // unlock explicitly before entering callback
-                data_lock.unlock();
-                this->notification_callback(data_copy);
-            }
+            notify_data_changed();
+        }
+    }
+
+    // notify that data has changed
+    void notify_data_changed() {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        if (this->notification_callback) {
+            // create a copy of the data object
+            T data_copy = this->dataobj;
+            // unlock explicitly before entering callback
+            data_lock.unlock();
+            this->notification_callback(data_copy);
         }
     }
 
