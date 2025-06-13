@@ -24,11 +24,14 @@ typedef struct ossl_lib_ctx_st OSSL_LIB_CTX;
 namespace evse_security {
 
 static auto KEY_HEADER_DEFAULT = "-----BEGIN PRIVATE KEY-----";
+static auto KEY_HEADER_DEFAULT_ENCRYPTED = "-----BEGIN ENCRYPTED PRIVATE KEY-----";
+
 static auto KEY_HEADER_TPM2 = "-----BEGIN TSS2 PRIVATE KEY-----";
 
 bool is_custom_private_key_string(const std::string& private_key_pem) {
     // If we can't find the standard header it means it's a custom key
-    return private_key_pem.find(KEY_HEADER_DEFAULT) == std::string::npos;
+    return private_key_pem.find(KEY_HEADER_DEFAULT) == std::string::npos &&
+           private_key_pem.find(KEY_HEADER_DEFAULT_ENCRYPTED) == std::string::npos;
 }
 
 bool is_custom_private_key_file(const fs::path& private_key_file_pem) {

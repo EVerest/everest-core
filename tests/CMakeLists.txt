@@ -67,6 +67,12 @@ file(COPY
 )
 
 file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/csms_certs"
+    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    FILES_MATCHING PATTERN "*"
+)
+
+file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/expired_leaf"
         DESTINATION "${CMAKE_BINARY_DIR}/tests"
         FILES_MATCHING PATTERN "*"

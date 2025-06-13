@@ -51,8 +51,9 @@ X509CertificateBundle::X509CertificateBundle(const fs::path& path, const Encodin
     if (fs::is_directory(path)) {
         source = X509CertificateSource::DIRECTORY;
 
-        // Iterate directory
-        for (const auto& entry : fs::recursive_directory_iterator(path)) {
+        // Iterate directory, not recursively since we might have the ocsp sub-directory
+        // that contains the .der OCSP data that we don't have to use
+        for (const auto& entry : fs::directory_iterator(path)) {
             if (is_certificate_file(entry)) {
                 std::string certificate{};
                 if (filesystem_utils::read_from_file(entry.path(), certificate)) {
@@ -135,11 +136,11 @@ bool X509CertificateBundle::contains_certificate(const CertificateHashData& cert
 
     // Nothing found, build the hierarchy and search by the issued hash
     X509CertificateHierarchy& hierarchy = get_certificate_hierarchy();
-    return hierarchy.contains_certificate_hash(certificate_hash);
+    return hierarchy.contains_certificate_hash(certificate_hash, true);
 }
 
-X509Wrapper X509CertificateBundle::find_certificate(const CertificateHashData& certificate_hash,
-                                                    bool case_insensitive_comparison) {
+std::optional<X509Wrapper> X509CertificateBundle::find_certificate(const CertificateHashData& certificate_hash,
+                                                                   bool case_insensitive_comparison) {
     // Try an initial search for root certificates, else a hierarchy build will be required
     for (const auto& chain : certificates) {
         for (const auto& certif : chain.second) {
@@ -165,18 +166,31 @@ X509Wrapper X509CertificateBundle::find_certificate(const CertificateHashData& c
     return hierarchy.find_certificate(certificate_hash, case_insensitive_comparison);
 }
 
-int X509CertificateBundle::delete_certificate(const X509Wrapper& certificate, bool include_issued) {
+std::vector<X509Wrapper> X509CertificateBundle::delete_certificate(const X509Wrapper& certificate, bool include_issued,
+                                                                   bool include_top) {
     std::vector<X509Wrapper> to_delete;
+    std::vector<X509Wrapper> deleted;
 
-    if (include_issued) {
+    if (include_issued || include_top) {
         // Include all descendants in the delete list
         auto& hierarchy = get_certificate_hierarchy();
-        to_delete = hierarchy.collect_descendants(certificate);
+
+        if (include_issued) {
+            auto issued = hierarchy.collect_descendants(certificate);
+
+            to_delete.insert(to_delete.end(), std::make_move_iterator(issued.begin()),
+                             std::make_move_iterator(issued.end()));
+        }
+
+        if (include_top) {
+            auto top = hierarchy.collect_top(certificate);
+
+            to_delete.insert(to_delete.end(), std::make_move_iterator(top.begin()), std::make_move_iterator(top.end()));
+        }
     }
 
     // Include default delete
     to_delete.push_back(certificate);
-    int deleted = 0;
 
     for (auto& chains : certificates) {
         auto& certifs = chains.second;
@@ -186,8 +200,9 @@ int X509CertificateBundle::delete_certificate(const X509Wrapper& certificate, bo
                                          bool found =
                                              std::find(to_delete.begin(), to_delete.end(), certif) != to_delete.end();
 
-                                         if (found)
-                                             deleted++;
+                                         if (found) {
+                                             deleted.push_back(certif);
+                                         }
 
                                          return found;
                                      }),
@@ -195,24 +210,23 @@ int X509CertificateBundle::delete_certificate(const X509Wrapper& certificate, bo
     }
 
     // If we deleted any, invalidate the built hierarchy
-    if (deleted) {
+    if (false == deleted.empty()) {
         invalidate_hierarchy();
     }
 
     return deleted;
 }
 
-int X509CertificateBundle::delete_certificate(const CertificateHashData& data, bool include_issued) {
+std::vector<X509Wrapper> X509CertificateBundle::delete_certificate(const CertificateHashData& data, bool include_issued,
+                                                                   bool include_top) {
     auto& hierarchy = get_certificate_hierarchy();
 
-    try {
-        // Try to find the certificate by correct hierarchy hash
-        X509Wrapper to_delete = hierarchy.find_certificate(data, true /* = Case insensitive search */);
-        return delete_certificate(to_delete, include_issued);
-    } catch (NoCertificateFound& e) {
+    std::optional<X509Wrapper> to_delete = hierarchy.find_certificate(data, true /* = Case insensitive search */);
+    if (to_delete.has_value()) {
+        return delete_certificate(to_delete.value(), include_issued, include_top);
     }
 
-    return 0;
+    return {};
 }
 
 void X509CertificateBundle::delete_all_certificates() {

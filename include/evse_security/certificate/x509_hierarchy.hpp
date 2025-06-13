@@ -22,16 +22,16 @@ public:
 struct NodeState {
     std::uint32_t is_selfsigned : 1;
     std::uint32_t is_orphan : 1; // 0 means temporary orphan, 1 is permanent orphan, no relevance if it is self-signed
-    std::uint32_t is_hash_computed : 1; // if the hash was correctly computed or if a placeholder hash is set
 };
 
 struct X509Node {
     NodeState state;
 
-    X509Wrapper certificate;
-    CertificateHashData hash;
+    X509Wrapper certificate; ///< Certificate that we hold
+    std::optional<CertificateHashData>
+        hash; ///< Precomputed certificate hash, in case of an orphan certificate it might not be set
 
-    X509Wrapper issuer;
+    X509Wrapper issuer; ///< Issuer of this certificate, can be == with certificate if we are a root
     std::vector<X509Node> children;
 };
 
@@ -57,18 +57,24 @@ public:
     /// @param top Certificate that issued the descendants
     std::vector<X509Wrapper> collect_descendants(const X509Wrapper& top);
 
+    /// @brief Collects all the top certificates of the provided leaf, in the
+    /// order from the leaf towards the top (LEAF->SUBCA2->SUBCA1)
+    /// @param leaf Leaf certificate for which we collect the top certificates
+    std::vector<X509Wrapper> collect_top(const X509Wrapper& leaf);
+
     /// @brief Obtains the hash data of the certificate, finding its issuer if needed
     /// @return True if a hash could be found, false otherwise
     bool get_certificate_hash(const X509Wrapper& certificate, CertificateHashData& out_hash);
 
     /// @brief returns true if we contain a certificate with the following hash
-    bool contains_certificate_hash(const CertificateHashData& hash);
+    bool contains_certificate_hash(const CertificateHashData& hash, bool case_insensitive_comparison);
 
-    /// @brief Searches for the root of the provided leaf, throwing a NoCertificateFound if not found
-    X509Wrapper find_certificate_root(const X509Wrapper& leaf);
+    /// @brief Searches for the root of the provided leaf, returning an empty optional if none was found
+    std::optional<X509Wrapper> find_certificate_root(const X509Wrapper& leaf);
 
-    /// @brief Searches for the provided hash, throwing a NoCertificateFound if not found
-    X509Wrapper find_certificate(const CertificateHashData& hash, bool case_insensitive_comparison = false);
+    /// @brief Searches for the provided hash, returning an empty optional if none was found
+    std::optional<X509Wrapper> find_certificate(const CertificateHashData& hash,
+                                                bool case_insensitive_comparison = false);
 
     /// @brief Searches for all the certificates with the provided hash, throwing a NoCertificateFound
     // if none were found. Can be useful when we have SUB-CAs in multiple bundles
@@ -139,6 +145,8 @@ public:
     }
 
 private:
+    std::optional<std::pair<const X509Node*, int>> find_certificate_root_node(const X509Wrapper& leaf);
+
     /// @brief Inserts the certificate in the hierarchy. If it is not a root
     /// and a parent is not found, it will be inserted as a temporary orphan
     void insert(X509Wrapper&& certificate);

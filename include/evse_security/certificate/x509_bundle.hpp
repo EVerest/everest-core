@@ -119,8 +119,9 @@ public:
     /// @brief If we already have the certificate hash
     bool contains_certificate(const CertificateHashData& certificate_hash);
 
-    /// @brief Finds a certificate based on its hash
-    X509Wrapper find_certificate(const CertificateHashData& certificate_hash, bool case_insensitive_comparison = false);
+    /// @brief Finds a certificate based on its hash, returning an empty optional if none is found
+    std::optional<X509Wrapper> find_certificate(const CertificateHashData& certificate_hash,
+                                                bool case_insensitive_comparison = false);
 
     /// @brief Adds a single certificate in the bundle. Only in memory, use @ref export_certificates to filesystem
     void add_certificate(X509Wrapper&& certificate);
@@ -134,15 +135,21 @@ public:
 
     /// @brief Deletes all instances of the provided certificate. Only in memory, use @ref export_certificates
     /// to filesystem export
-    /// @param include_issued If true the child certificates will also be deleted, if any are found
-    /// @return count of certificates deleted
-    int delete_certificate(const X509Wrapper& certificate, bool include_issued);
+    /// @param include_issued If true the child certificates will also be deleted, if any are found, for
+    /// example if we delete CA1 from CA1->CA2->Leaf, all the chain will be deleted
+    /// @param include_top If true the certificates that issues this will also be deleted if any are found, for
+    /// example if we have a chain CA1->CA2->Leaf and we delete the Leaf, CA1 and CA2 will also be deleted
+    /// @return the certificates that have been removed from memory
+    std::vector<X509Wrapper> delete_certificate(const X509Wrapper& certificate, bool include_issued, bool include_top);
 
     /// @brief Deletes all certificates with the  provided certificate hash. Only in memory,
     /// use @ref export_certificates to filesystem export
-    /// @param include_issued If true the child certificates will also be deleted, if any are found
-    /// @return count of certificates deleted
-    int delete_certificate(const CertificateHashData& data, bool include_issued);
+    /// @param include_issued If true the child certificates will also be deleted, if any are found, for
+    /// example if we delete CA1 from CA1->CA2->Leaf, all the chain will be deleted
+    /// @param include_top If true the certificates that issues this will also be deleted if any are found, for
+    /// example if we have a chain CA1->CA2->Leaf and we delete the Leaf, CA1 and CA2 will also be deleted
+    /// @return the certificates that have been removed from memory
+    std::vector<X509Wrapper> delete_certificate(const CertificateHashData& data, bool include_issued, bool include_top);
 
     /// @brief Deletes all certificates. Only in memory, use @ref export_certificates to filesystem export
     void delete_all_certificates();
