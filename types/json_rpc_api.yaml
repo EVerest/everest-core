@@ -25,16 +25,20 @@ types:
     description: EVSE state
     type: string
     enum:
+    - Unknown
     - Unplugged
     - Disabled
     - Preparing
     - Reserved
     - AuthRequired
     - WaitingForEnergy
-    - Charging
     - ChargingPausedEV
     - ChargingPausedEVSE
+    - Charging
+    - AuthTimeout
     - Finished
+    - FinishedEVSE
+    - FinishedEV
   ConnectorTypeEnum:
     description: Enumerator of connector types
     type: string
