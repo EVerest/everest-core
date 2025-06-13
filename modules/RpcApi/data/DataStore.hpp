@@ -7,6 +7,23 @@
 
 namespace data {
 
+enum class EVSEStatusField {
+    ActiveConnectorId,
+    ChargingAllowed,
+    State,
+    EVSEError,
+    ChargeProtocol,
+    ChargingDurationS,
+    ChargedEnergyWh,
+    DischargedEnergyWh,
+    Available,
+    ACChargeParam,
+    DCChargeParam,
+    ACChargeLoop,
+    DCChargeLoop,
+    DisplayParameters
+};
+
 class ChargerInfoStore : public GenericInfoStore<RPCDataTypes::ChargerInfoObj> {
 public:
     // we currently don't get this info from the system yet, so allow setting to unknown
@@ -62,7 +79,186 @@ public:
         return this->dataobj.available_connectors;
     }
 };
-class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {};
+
+ class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {
+private:
+    std::map<EVSEStatusField, bool> field_status; // Tracks whether each field has been set
+
+    void update_data_is_valid() {
+        if (this->data_is_valid) {
+            return; // No need to update if data is already valid
+        }
+        // Check if all fields are set
+        for (const auto& [field, is_set] : field_status) {
+            if (!is_set) {
+                this->data_is_valid = false;
+                return;
+            }
+        }
+        this->data_is_valid = true;
+    }
+
+public:
+    EVSEStatusStore() {
+        // Initialize field_status map with all fields set to false
+        field_status = {
+            {EVSEStatusField::ActiveConnectorId, false},
+            {EVSEStatusField::ChargingAllowed, false},
+            {EVSEStatusField::State, false},
+            {EVSEStatusField::EVSEError, false},
+            {EVSEStatusField::ChargeProtocol, false},
+            {EVSEStatusField::ChargingDurationS, false},
+            {EVSEStatusField::ChargedEnergyWh, false},
+            {EVSEStatusField::DischargedEnergyWh, false},
+            {EVSEStatusField::Available, false},
+        };
+    }
+
+    // Example set method using the enum
+    void set_active_connector_id(int32_t active_connector_id) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);// check if data has changed
+        field_status[EVSEStatusField::ActiveConnectorId] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.active_connector_id != active_connector_id) {
+            this->dataobj.active_connector_id = active_connector_id;
+            this->notify_data_changed();
+        }
+    }
+    // set the charging allowed flag
+    void set_charging_allowed(bool charging_allowed) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        field_status[EVSEStatusField::ChargingAllowed] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.charging_allowed != charging_allowed) {
+            this->dataobj.charging_allowed = charging_allowed;
+            this->notify_data_changed();
+        }
+    }
+    // set the EVSE state
+    void set_state(types::json_rpc_api::EVSEStateEnum state) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        field_status[EVSEStatusField::State] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.state != state) {
+            this->dataobj.state = state;
+            this->notify_data_changed();
+        }
+    }
+    // set the EVSE error
+    void set_evse_error(types::json_rpc_api::EVSEErrorEnum evse_error) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        field_status[EVSEStatusField::EVSEError] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.evse_error != evse_error) {
+            this->dataobj.evse_error = evse_error;
+            this->notify_data_changed();
+        }
+    }
+    // set the charge protocol
+    void set_charge_protocol(types::json_rpc_api::ChargeProtocolEnum charge_protocol) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        field_status[EVSEStatusField::ChargeProtocol] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.charge_protocol != charge_protocol) {
+            this->dataobj.charge_protocol = charge_protocol;
+            this->notify_data_changed();
+        }
+    }
+    // set the charging duration in seconds
+    void set_charging_duration_s(int32_t charging_duration_s) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        field_status[EVSEStatusField::ChargingDurationS] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.charging_duration_s != charging_duration_s) {
+            this->dataobj.charging_duration_s = charging_duration_s;
+            this->notify_data_changed();
+        }
+    }
+    // set the charged energy in Wh
+    void set_charged_energy_wh(float charged_energy_wh) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        field_status[EVSEStatusField::ChargedEnergyWh] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.charged_energy_wh != charged_energy_wh) {
+            this->dataobj.charged_energy_wh = charged_energy_wh;
+            this->notify_data_changed();
+        }
+    }
+    // set the discharged energy in Wh
+    void set_discharged_energy_wh(float discharged_energy_wh) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        field_status[EVSEStatusField::DischargedEnergyWh] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.discharged_energy_wh != discharged_energy_wh) {
+            this->dataobj.discharged_energy_wh = discharged_energy_wh;
+            this->notify_data_changed();
+        }
+    }
+    // set the available flag
+    void set_available(bool available) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        field_status[EVSEStatusField::Available] = true; // Mark field as set
+        update_data_is_valid();
+        // check if data has changed
+        if (this->dataobj.available != available) {
+            this->dataobj.available = available;
+            this->notify_data_changed();
+        }
+    }
+    // set the AC charge parameters
+    void set_ac_charge_param(const std::optional<RPCDataTypes::ACChargeParametersObj>& ac_charge_param) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        // check if data has changed
+        if (this->dataobj.ac_charge_param != ac_charge_param) {
+            this->dataobj.ac_charge_param = ac_charge_param;
+            this->notify_data_changed();
+        }
+    }
+    // set the DC charge parameters
+    void set_dc_charge_param(const std::optional<RPCDataTypes::DCChargeParametersObj>& dc_charge_param) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        // check if data has changed
+        if (this->dataobj.dc_charge_param != dc_charge_param) {
+            this->dataobj.dc_charge_param = dc_charge_param;
+            this->notify_data_changed();
+        }
+    }
+    // set the AC charge loop
+    void set_ac_charge_loop(const std::optional<RPCDataTypes::ACChargeLoopObj>& ac_charge_loop) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        // check if data has changed
+        if (this->dataobj.ac_charge_loop != ac_charge_loop) {
+            this->dataobj.ac_charge_loop = ac_charge_loop;
+            this->notify_data_changed();
+        }
+    }
+    // set the DC charge loop
+    void set_dc_charge_loop(const std::optional<RPCDataTypes::DCChargeLoopObj>& dc_charge_loop) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        // check if data has changed
+        if (this->dataobj.dc_charge_loop != dc_charge_loop) {
+            this->dataobj.dc_charge_loop = dc_charge_loop;
+            this->notify_data_changed();
+        }
+    }
+    // set the display parameters
+    void set_display_parameters(const std::optional<RPCDataTypes::DisplayParametersObj>& display_parameters) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        // check if data has changed
+        if (this->dataobj.display_parameters != display_parameters) {
+            this->dataobj.display_parameters = display_parameters;
+            this->notify_data_changed();
+        }
+    }
+};
 class HardwareCapabilitiesStore : public GenericInfoStore<RPCDataTypes::HardwareCapabilitiesObj> {};
 class MeterDataStore : public GenericInfoStore<RPCDataTypes::MeterDataObj> {};
 
