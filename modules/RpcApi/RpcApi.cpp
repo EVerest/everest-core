@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#include "RpcApi.hpp"
-
 #include <boost/uuid/uuid_io.hpp>
+
+#include "RpcApi.hpp"
+#include "helpers/Conversions.hpp"
 
 namespace module {
 
@@ -56,6 +57,14 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         });
     //TODO: get bidi charging support info from interface
     evse_data.evseinfo.set_bidi_charging(false);
+
+    evse_manager->subscribe_session_event(
+        [this, &evse_data](types::evse_manager::SessionEvent session_event) {
+            // store the session info in the data store
+            types::json_rpc_api::EVSEStateEnum evse_state =
+            types::json_rpc_api::evse_manager_session_event_to_evse_state(session_event);
+            evse_data.evsestatus.set_state(evse_state);
+        });
 }
 
 void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
