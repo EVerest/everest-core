@@ -33,6 +33,7 @@ struct HttpClientInterface {
 
     virtual ~HttpClientInterface() = default;
 
+    virtual void set_command_timeout(const int command_timeout_ms){};
     [[nodiscard]] virtual HttpResponse get(const std::string& path) const = 0;
     [[nodiscard]] virtual HttpResponse put(const std::string& path, const std::string& body) const = 0;
     [[nodiscard]] virtual HttpResponse post(const std::string& path, const std::string& body) const = 0;

@@ -1,0 +1,28 @@
+cc_library(
+    name = "cert_rehash",
+    srcs = [],
+    hdrs = [
+        "3rd_party/cert_rehash/c_rehash.hpp",
+    ],
+    includes = ["3rd_party"],
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+cc_library(
+    name = "libevse-security",
+    srcs = glob(["lib/**/*.cpp"]),
+    hdrs = glob([
+        "include/**/*.hpp",
+    ]),
+    defines = ["LIBEVSE_CRYPTO_SUPPLIER_OPENSSL"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":cert_rehash",
+        "@everest-framework//:framework",
+        "@libtimer",
+        "@openssl//:crypto",
+        "@openssl//:ssl",
+    ],
+)

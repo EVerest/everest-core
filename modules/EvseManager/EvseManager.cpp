@@ -196,6 +196,10 @@ void EvseManager::ready() {
 
         // Set up auth options for HLC
         std::vector<types::iso15118::PaymentOption> payment_options;
+        // if pnc is disabled, disable contract installation and central contract validation
+        bool _contract_certificate_installation_enabled =
+            pnc_enabled ? contract_certificate_installation_enabled.load() : false;
+        bool _central_contract_validation_allowed = pnc_enabled ? central_contract_validation_allowed.load() : false;
 
         if (config.payment_enable_eim) {
             payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
@@ -207,8 +211,8 @@ void EvseManager::ready() {
             EVLOG_warning << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
             payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
         }
-        r_hlc[0]->call_session_setup(payment_options, contract_certificate_installation_enabled,
-                                     central_contract_validation_allowed);
+        r_hlc[0]->call_session_setup(payment_options, _contract_certificate_installation_enabled,
+                                     _central_contract_validation_allowed);
 
         r_hlc[0]->subscribe_dlink_error([this] {
             session_log.evse(true, "D-LINK_ERROR.req");
@@ -867,6 +871,10 @@ void EvseManager::ready() {
         }
 
         std::vector<types::iso15118::PaymentOption> payment_options;
+        // if pnc is disabled, disable contract installation and central contract validation
+        bool _contract_certificate_installation_enabled =
+            pnc_enabled ? contract_certificate_installation_enabled.load() : false;
+        bool _central_contract_validation_allowed = pnc_enabled ? central_contract_validation_allowed.load() : false;
 
         if (hlc_enabled and s == types::evse_manager::SessionEventEnum::SessionFinished) {
             if (config.payment_enable_eim) {
@@ -880,8 +888,8 @@ void EvseManager::ready() {
                     << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
                 payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
             }
-            r_hlc[0]->call_session_setup(payment_options, contract_certificate_installation_enabled,
-                                         central_contract_validation_allowed);
+            r_hlc[0]->call_session_setup(payment_options, _contract_certificate_installation_enabled,
+                                         _central_contract_validation_allowed);
         }
     });
 
@@ -893,11 +901,18 @@ void EvseManager::ready() {
             p_evse->publish_ev_info(ev_info);
 
             std::vector<types::iso15118::PaymentOption> payment_options;
+            // if pnc is disabled, disable contract installation and central contract validation
+            bool _contract_certificate_installation_enabled =
+                pnc_enabled ? contract_certificate_installation_enabled.load() : false;
+            bool _central_contract_validation_allowed =
+                pnc_enabled ? central_contract_validation_allowed.load() : false;
 
             if (hlc_enabled) {
                 if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
                     // Session is already authorized, only use ExternalPayment in PaymentOptions
                     payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
+                    _contract_certificate_installation_enabled = false;
+                    _central_contract_validation_allowed = false;
                 } else {
                     // Set payment options according to configuration
                     if (config.payment_enable_eim) {
@@ -907,8 +922,8 @@ void EvseManager::ready() {
                         payment_options.push_back(types::iso15118::PaymentOption::Contract);
                     }
                 }
-                r_hlc[0]->call_session_setup(payment_options, contract_certificate_installation_enabled,
-                                             central_contract_validation_allowed);
+                r_hlc[0]->call_session_setup(payment_options, _contract_certificate_installation_enabled,
+                                             _central_contract_validation_allowed);
             }
         });
 
@@ -926,7 +941,8 @@ void EvseManager::ready() {
                        config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A,
                        config.switch_3ph1ph_delay_s, config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms,
                        config.state_F_after_fault_ms, config.fail_on_powermeter_errors, config.raise_mrec9,
-                       config.sleep_before_enabling_pwm_hlc_mode_ms);
+                       config.sleep_before_enabling_pwm_hlc_mode_ms,
+                       utils::get_session_id_type_from_string(config.session_id_type));
     }
 
     telemetryThreadHandle = std::thread([this]() {
@@ -1114,7 +1130,8 @@ void EvseManager::setup_fake_DC_mode() {
                    config.ac_enforce_hlc, false, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
-                   config.fail_on_powermeter_errors, config.raise_mrec9, config.sleep_before_enabling_pwm_hlc_mode_ms);
+                   config.fail_on_powermeter_errors, config.raise_mrec9, config.sleep_before_enabling_pwm_hlc_mode_ms,
+                   utils::get_session_id_type_from_string(config.session_id_type));
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1154,7 +1171,8 @@ void EvseManager::setup_AC_mode() {
                    config.ac_enforce_hlc, true, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
-                   config.fail_on_powermeter_errors, config.raise_mrec9, config.sleep_before_enabling_pwm_hlc_mode_ms);
+                   config.fail_on_powermeter_errors, config.raise_mrec9, config.sleep_before_enabling_pwm_hlc_mode_ms,
+                   utils::get_session_id_type_from_string(config.session_id_type));
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 

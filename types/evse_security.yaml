@@ -281,4 +281,29 @@ types:
           minimum: 0
           type: object
           $ref: /evse_security#/CertificateInfo
-
+  CertificateStoreUpdateOperation:
+    description: Type that specifies the operation performed on the certificate store
+    type: string
+    enum:
+      - Installed
+      - Deleted
+  CertificateStoreUpdate:
+    description: >-
+      Type that specifies the update of the certificate store. One of leaf_certificate_type 
+      or ca_certificate_type must be present.
+    type: object
+    required:
+      - operation
+    properties:
+      operation:
+        description: The operation perfomred on the certificate store
+        type: string
+        $ref: /evse_security#/CertificateStoreUpdateOperation      
+      leaf_certificate_type:
+        description: The type of the leaf certificate that was installed or deleted. Only present if type of updated certificate is a leaf certificate
+        type: string
+        $ref: /evse_security#/LeafCertificateType
+      ca_certificate_type:
+        description: The type of the CA certificate that was installed or deleted. Only present if type of updated certificate is a CA certificate
+        type: string
+        $ref: /evse_security#/CaCertificateType

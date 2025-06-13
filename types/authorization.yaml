@@ -155,6 +155,7 @@ types:
     additionalProperties: false
     required:
       - authorization_status
+      - tariff_messages # defined as required to default initialize the vector, may be empty
     properties:
       authorization_status:
         type: string
@@ -162,9 +163,14 @@ types:
       certificate_status:
         type: string
         $ref: /authorization#/CertificateStatus
-      reason:
-        type: object
-        $ref: /authorization#/TokenValidationStatusMessage
+      tariff_messages:
+        description: >-
+          Messages that can contain session price information to show the user. The array can contain multiple messages in different languages. The first message in this array shall be used to start the transaction at the powermeter (for OCMF).  Empty if no messages are available.
+        type: array
+        items:
+          description: Message with pricing information in a specific language
+          type: object
+          $ref: /text_message#/MessageContent
       expiry_time:
         description: Absolute UTC time point when reservation expires in RFC3339 format
         type: string

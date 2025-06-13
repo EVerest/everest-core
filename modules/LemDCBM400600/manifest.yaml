@@ -28,7 +28,7 @@ config:
     type: integer
     default: 123
   meter_timezone:
-    description: The timezone offset (ignored if NTP servers are set) - it can go from -11 to +14 for hours and 00, 15, 30, 45 for minutes 
+    description: The timezone offset (ignored if NTP servers are set) - it can go from -11 to +14 for hours and 00, 15, 30, 45 for minutes
     type: string
     default: "+00:00"
   meter_dst:
@@ -71,6 +71,12 @@ config:
     description: UD (OCMF/transaction fields)
     type: string
     default: ""
+  command_timeout_ms:
+    description: The timeout in milliseconds for a HTTP command to the LEM power meter.
+    type: integer
+    default: 5000
+    maximum: 20000
+    minimum: 1000
 
 provides:
   main:

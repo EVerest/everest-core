@@ -3,12 +3,13 @@ cc_library(
     srcs = ["lib/helpers.cpp"],
     hdrs = ["include/everest/staging/helpers/helpers.hpp"],
     copts = ["-std=c++17"],
-    visibility = ["//visibility:public"],
     includes = ["include"],
+    visibility = ["//visibility:public"],
     deps = [
-        "@//third-party/bazel:boost_uuid",
+        "//lib/staging/tls",
+        "//types:types_lib",
+        "@boost.uuid",
         "@com_github_fmtlib_fmt//:fmt",
         "@com_github_nlohmann_json//:json",
-        "//types:types_lib",
     ],
 )
