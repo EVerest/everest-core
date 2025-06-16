@@ -7,15 +7,16 @@ from unittest.mock import Mock, ANY
 import logging
 from copy import deepcopy
 
-from everest_test_utils import *  # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
+# Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
+from everest_test_utils import *
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.core_utils.controller.test_controller_interface import TestController
 
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, ConnectorStatusType,
-                             ClearCacheStatusType)
+from ocpp.v201.enums import (IdTokenEnumType as IdTokenTypeEnum, ConnectorStatusEnumType,
+                             ClearCacheStatusEnumType)
 from ocpp.v201.datatypes import *
 from everest.testing.ocpp_utils.fixtures import *
 from everest_test_utils_probe_modules import (probe_module,
@@ -23,8 +24,8 @@ from everest_test_utils_probe_modules import (probe_module,
                                               ProbeModuleCostAndPriceSessionCostConfigurationAdjustment)
 
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
-    GenericOCPP201ConfigAdjustment,
-    OCPP201ConfigVariableIdentifier,
+    GenericOCPP2XConfigAdjustment,
+    OCPP2XConfigVariableIdentifier,
 )
 
 from validations import validate_status_notification_201
@@ -36,37 +37,39 @@ log = logging.getLogger("ocpp201CaliforniaPricingTest")
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.inject_csms_mock
 @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp201-costandprice.yaml'))
-@pytest.mark.ocpp_config_adaptions(GenericOCPP201ConfigAdjustment([
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageCtrlrAvailable", "Actual"),
+@pytest.mark.ocpp_config_adaptions(GenericOCPP2XConfigAdjustment([
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageCtrlrAvailable", "Actual"),
      "true"),
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "QRCodeDisplayCapable",
-                                                                    "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageLanguage", "Actual"),
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "QRCodeDisplayCapable",
+                                    "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageLanguage", "Actual"),
      "en"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrAvailableTariff", "Actual"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrAvailableTariff", "Actual"),
      "true"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrAvailableCost", "Actual"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrAvailableCost", "Actual"),
      "true"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrEnabledTariff", "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrEnabledCost", "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "NumberOfDecimalsForCostValues", "Actual"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr",
+     "TariffCostCtrlrEnabledTariff", "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr",
+     "TariffCostCtrlrEnabledCost", "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr", "NumberOfDecimalsForCostValues", "Actual"),
      "5"),
-    (OCPP201ConfigVariableIdentifier("OCPPCommCtrlr", "MessageTimeout", "Actual"),
+    (OCPP2XConfigVariableIdentifier("OCPPCommCtrlr", "MessageTimeout", "Actual"),
      "1"),
-    (OCPP201ConfigVariableIdentifier("OCPPCommCtrlr", "MessageAttemptInterval",
-                                                                    "Actual"), "1"),
-    (OCPP201ConfigVariableIdentifier("OCPPCommCtrlr", "MessageAttempts", "Actual"),
+    (OCPP2XConfigVariableIdentifier("OCPPCommCtrlr", "MessageAttemptInterval",
+                                    "Actual"), "1"),
+    (OCPP2XConfigVariableIdentifier("OCPPCommCtrlr", "MessageAttempts", "Actual"),
      "3"),
-    (OCPP201ConfigVariableIdentifier("AuthCacheCtrlr", "AuthCacheCtrlrEnabled", "Actual"),
+    (OCPP2XConfigVariableIdentifier("AuthCacheCtrlr", "AuthCacheCtrlrEnabled", "Actual"),
      "true"),
-    (OCPP201ConfigVariableIdentifier("AuthCtrlr", "LocalPreAuthorize",
-                                                                    "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("AuthCacheCtrlr", "AuthCacheLifeTime", "Actual"),
+    (OCPP2XConfigVariableIdentifier("AuthCtrlr", "LocalPreAuthorize",
+                                    "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("AuthCacheCtrlr", "AuthCacheLifeTime", "Actual"),
      "86400"),
-    (OCPP201ConfigVariableIdentifier("CustomizationCtrlr", "CustomImplementationCaliforniaPricingEnabled",
-                                                                    "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("CustomizationCtrlr", "CustomImplementationMultiLanguageEnabled",
-                                         "Actual"), "true")
+    (OCPP2XConfigVariableIdentifier("CustomizationCtrlr", "CustomImplementationCaliforniaPricingEnabled",
+                                    "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("CustomizationCtrlr", "CustomImplementationMultiLanguageEnabled",
+                                    "Actual"), "true")
 ]))
 class TestOcpp201CostAndPrice:
     """
@@ -105,18 +108,18 @@ class TestOcpp201CostAndPrice:
         )
 
         assert await wait_for_and_validate(test_utility, charge_point, "StatusNotification",
-                                           call201.StatusNotificationPayload(datetime.now().isoformat(),
-                                                                             ConnectorStatusType.available,
-                                                                             evse_id=evse_id1,
-                                                                             connector_id=connector_id),
+                                           call201.StatusNotification(datetime.now().isoformat(),
+                                                                      ConnectorStatusEnumType.available,
+                                                                      evse_id=evse_id1,
+                                                                      connector_id=connector_id),
                                            validate_status_notification_201)
 
         # Charging station is now available, start charging session.
         # swipe id tag to authorize
         test_controller.swipe(id_token.id_token)
         assert await wait_for_and_validate(test_utility, charge_point, "Authorize",
-                                           call201.AuthorizePayload(id_token
-                                                                    ))
+                                           call201.Authorize(id_token
+                                                             ))
 
         # start charging session
         test_controller.plug_in()
@@ -145,10 +148,11 @@ class TestOcpp201CostAndPrice:
         Test running and final cost, that is 'embedded' in the TransactionEventResponse.
         """
         # prepare data for the test
-        transaction_event_response_started = call_result201.TransactionEventPayload()
+        transaction_event_response_started = call_result201.TransactionEvent()
 
-        transaction_event_response = call_result201.TransactionEventPayload()
-        transaction_event_response.total_cost = 3.13  # According to the OCPP spec this should be a floating point number but the test framework does not allow that.
+        transaction_event_response = call_result201.TransactionEvent()
+        # According to the OCPP spec this should be a floating point number but the test framework does not allow that.
+        transaction_event_response.total_cost = 3.13
         transaction_event_response.updated_personal_message = {"format": "UTF8", "language": "en",
                                                                "content": "$2.81 @ $0.12/kWh, $0.50 @ $1/h, TOTAL KWH: 23.4 TIME: 03.50 COST: $3.31. Visit www.cpo.com/invoices/13546 for an invoice of your session."}
         transaction_event_response.custom_data = {"vendorId": "org.openchargealliance.org.qrcode",
@@ -159,18 +163,19 @@ class TestOcpp201CostAndPrice:
 
         received_data = {'cost_chunks': [{'cost': {'value': 313000}, 'timestamp_to': ANY}],
                          'currency': {'code': 'EUR', 'decimals': 5}, 'message': [{
-                'content': '$2.81 @ $0.12/kWh, $0.50 @ $1/h, TOTAL KWH: 23.4 TIME: 03.50 COST: $3.31. '
-                           'Visit www.cpo.com/invoices/13546 for an invoice of your session.',
-                'format': 'UTF8', 'language': 'en'},
-            ],
-                         'qr_code': 'https://www.cpo.com/invoices/13546', 'session_id': ANY, 'status': 'Running'}
+                             'content': '$2.81 @ $0.12/kWh, $0.50 @ $1/h, TOTAL KWH: 23.4 TIME: 03.50 COST: $3.31. '
+                             'Visit www.cpo.com/invoices/13546 for an invoice of your session.',
+                             'format': 'UTF8', 'language': 'en'},
+        ],
+            'qr_code': 'https://www.cpo.com/invoices/13546', 'session_id': ANY, 'status': 'Running'}
 
         evse_id1 = 1
         connector_id = 1
 
         probe_module_mock_fn = Mock()
 
-        probe_module.subscribe_variable("session_cost", "session_cost", probe_module_mock_fn)
+        probe_module.subscribe_variable(
+            "session_cost", "session_cost", probe_module_mock_fn)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -178,8 +183,8 @@ class TestOcpp201CostAndPrice:
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
         # Clear cache
-        r: call_result201.ClearCachePayload = await chargepoint_with_pm.clear_cache_req()
-        assert r.status == ClearCacheStatusType.accepted
+        r: call_result201.ClearCache = await chargepoint_with_pm.clear_cache_req()
+        assert r.status == ClearCacheStatusEnumType.accepted
 
         # make an unknown IdToken
         id_token = IdTokenType(
@@ -193,18 +198,18 @@ class TestOcpp201CostAndPrice:
                                                                 transaction_event_response_ended]  # Ended
 
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
-                                           call201.StatusNotificationPayload(datetime.now().isoformat(),
-                                                                             ConnectorStatusType.available,
-                                                                             evse_id=evse_id1,
-                                                                             connector_id=connector_id),
+                                           call201.StatusNotification(datetime.now().isoformat(),
+                                                                      ConnectorStatusEnumType.available,
+                                                                      evse_id=evse_id1,
+                                                                      connector_id=connector_id),
                                            validate_status_notification_201)
 
         # Charging station is now available, start charging session.
         # swipe id tag to authorize
         test_controller.swipe(id_token.id_token)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "Authorize",
-                                           call201.AuthorizePayload(id_token
-                                                                    ))
+                                           call201.Authorize(id_token
+                                                             ))
 
         # start charging session
         test_controller.plug_in()
@@ -224,7 +229,8 @@ class TestOcpp201CostAndPrice:
         test_controller.plug_out()
 
         # 'Final' costs are a bit different than the 'Running' costs.
-        received_data['cost_chunks'][0] = {'cost': {'value': 5510000}, 'metervalue_to': 0, 'timestamp_to': ANY}
+        received_data['cost_chunks'][0] = {
+            'cost': {'value': 5510000}, 'metervalue_to': 0, 'timestamp_to': ANY}
         received_data['status'] = 'Finished'
         probe_module_mock_fn.call_count = 0
 
@@ -245,7 +251,8 @@ class TestOcpp201CostAndPrice:
         """
         received_data = {
             'charging_price': [
-                {'category': 'Time', 'price': {'currency': {'code': 'EUR', 'decimals': 5}, 'value': {'value': 200000}}},
+                {'category': 'Time', 'price': {'currency': {
+                    'code': 'EUR', 'decimals': 5}, 'value': {'value': 200000}}},
                 {'category': 'Energy',
                  'price': {'currency': {'code': 'EUR', 'decimals': 5}, 'value': {'value': 12300}}},
                 {'category': 'FlatFee',
@@ -268,7 +275,8 @@ class TestOcpp201CostAndPrice:
             'session_id': ANY, 'status': 'Running'}
 
         session_cost_mock = Mock()
-        probe_module.subscribe_variable("session_cost", "session_cost", session_cost_mock)
+        probe_module.subscribe_variable(
+            "session_cost", "session_cost", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -286,10 +294,10 @@ class TestOcpp201CostAndPrice:
         )
 
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
-                                           call201.StatusNotificationPayload(datetime.now().isoformat(),
-                                                                             ConnectorStatusType.available,
-                                                                             evse_id=evse_id1,
-                                                                             connector_id=connector_id),
+                                           call201.StatusNotification(datetime.now().isoformat(),
+                                                                      ConnectorStatusEnumType.available,
+                                                                      evse_id=evse_id1,
+                                                                      connector_id=connector_id),
                                            validate_status_notification_201)
 
         # Send cost updated request while there is no transaction: This should just forward the request There is nothing
@@ -304,8 +312,8 @@ class TestOcpp201CostAndPrice:
         # swipe id tag to authorize
         test_controller.swipe(id_token.id_token)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "Authorize",
-                                           call201.AuthorizePayload(id_token
-                                                                    ))
+                                           call201.Authorize(id_token
+                                                             ))
 
         # start charging session
         test_controller.plug_in()
@@ -319,8 +327,8 @@ class TestOcpp201CostAndPrice:
                                            {"eventType": "Updated"})
 
         # Clear cache
-        r: call_result201.ClearCachePayload = await chargepoint_with_pm.clear_cache_req()
-        assert r.status == ClearCacheStatusType.accepted
+        r: call_result201.ClearCache = await chargepoint_with_pm.clear_cache_req()
+        assert r.status == ClearCacheStatusEnumType.accepted
         session_cost_mock.call_count = 0
 
         await chargepoint_with_pm.cost_update_req(total_cost=1.345, transaction_id=transaction_id,
@@ -331,8 +339,8 @@ class TestOcpp201CostAndPrice:
         session_cost_mock.assert_called_once_with(received_data)
 
         # Clear cache
-        r: call_result201.ClearCachePayload = await chargepoint_with_pm.clear_cache_req()
-        assert r.status == ClearCacheStatusType.accepted
+        r: call_result201.ClearCache = await chargepoint_with_pm.clear_cache_req()
+        assert r.status == ClearCacheStatusEnumType.accepted
         session_cost_mock.call_count = 0
 
         # Set transaction id to a not existing transaction id.
@@ -355,8 +363,10 @@ class TestOcpp201CostAndPrice:
             "status": "OK"
         }
 
-        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_fn)
-        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "start_transaction", probe_module_mock_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "stop_transaction", probe_module_mock_fn)
 
         power_meter_value = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -379,13 +389,15 @@ class TestOcpp201CostAndPrice:
 
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         test_utility.messages.clear()
 
         # Metervalues should be sent at below trigger time.
         data = self.cost_updated_custom_data.copy()
-        data["triggerMeterValue"]["atTime"] = (datetime.now(timezone.utc) + timedelta(seconds=3)).isoformat()
+        data["triggerMeterValue"]["atTime"] = (datetime.now(
+            timezone.utc) + timedelta(seconds=3)).isoformat()
 
         # Once the transaction is started, send a 'RunningCost' message.
         await chargepoint_with_pm.cost_update_req(total_cost=1.345, transaction_id=transaction_id,
@@ -413,8 +425,10 @@ class TestOcpp201CostAndPrice:
             "status": "OK"
         }
 
-        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_fn)
-        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "start_transaction", probe_module_mock_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "stop_transaction", probe_module_mock_fn)
 
         power_meter_value = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -434,7 +448,8 @@ class TestOcpp201CostAndPrice:
 
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         test_utility.messages.clear()
 
@@ -449,7 +464,8 @@ class TestOcpp201CostAndPrice:
         power_meter_value["energy_Wh_import"]["total"] = 6000.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         # Powermeter value should be sent because of the trigger.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
@@ -473,8 +489,10 @@ class TestOcpp201CostAndPrice:
             "status": "OK"
         }
 
-        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_fn)
-        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "start_transaction", probe_module_mock_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "stop_transaction", probe_module_mock_fn)
 
         power_meter_value = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -497,7 +515,8 @@ class TestOcpp201CostAndPrice:
 
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         test_utility.messages.clear()
 
@@ -513,7 +532,8 @@ class TestOcpp201CostAndPrice:
         power_meter_value["power_W"]["total"] = 10000.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         # Powermeter value should be sent because of the trigger.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
@@ -532,7 +552,8 @@ class TestOcpp201CostAndPrice:
         power_meter_value["power_W"]["total"] = 7990.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         # So no metervalue is sent
         assert not await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
@@ -551,7 +572,8 @@ class TestOcpp201CostAndPrice:
         power_meter_value["power_W"]["total"] = 7200.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
                                            {"evseId": 1, "meterValue": [{"sampledValue": [

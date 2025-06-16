@@ -89,7 +89,7 @@ Josev:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: c261e8a4be5367c5bc7e89106c5fb7a470de87bb
+  git_tag: 81b49db00c37870436dfe92d0b40a95f6fcdc4ba #FIXME
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git

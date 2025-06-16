@@ -35,15 +35,16 @@ async def test_invalid_payloads(
 ):
 
     # a payload field that is too long should trigger a FormationViolation CALLERROR
-    too_long_component_type_name_payload = call201.SetVariablesPayload(
+    too_long_component_type_name_payload = call201.SetVariables(
         set_variable_data=[SetVariableDataType(attribute_value="abc", component=ComponentType(
             name="ThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50characters"), variable=VariableType(name="VariableName"))]
     )
-    camel_case_payload = snake_to_camel_case(asdict(too_long_component_type_name_payload))
+    camel_case_payload = snake_to_camel_case(
+        asdict(too_long_component_type_name_payload))
 
     call_msg = Call(
         unique_id=str(charge_point_v201._unique_id_generator()),
-        action=too_long_component_type_name_payload.__class__.__name__[:-7],
+        action=too_long_component_type_name_payload.__class__.__name__,
         payload=remove_nones(camel_case_payload),
     )
 
@@ -57,7 +58,7 @@ async def test_invalid_payloads(
     call_msg = Call(
         unique_id=str(charge_point_v201._unique_id_generator()),
         action="ThisIsAnUnknownAction",
-        payload="InvalidPayload",
+        payload="Invalid",
     )
 
     await send_message_without_validation(charge_point_v201, call_msg)
@@ -67,7 +68,7 @@ async def test_invalid_payloads(
     )
 
     # a malformed CALL should trigger a RpcFrameworkError CALLERROR
-    call_msg = "{MalformedPayload"
+    call_msg = "{Malformed"
 
     async with charge_point_v201._call_lock:
         await charge_point_v201._send(call_msg)

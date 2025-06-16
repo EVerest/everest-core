@@ -86,7 +86,7 @@ class TestOcpp16CostAndPrice:
 
     @staticmethod
     async def start_transaction(test_controller: TestController, test_utility: TestUtility, charge_point: ChargePoint16,
-                          test_config: OcppTestConfiguration):
+                                test_config: OcppTestConfiguration):
         """
         Function to start a transaction during tests.
         """
@@ -98,9 +98,9 @@ class TestOcpp16CostAndPrice:
 
         # expect StatusNotification with status preparing
         assert await wait_for_and_validate(test_utility, charge_point, "StatusNotification",
-                                           call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
-                                                                          ChargePointStatus.preparing))
-        
+                                           call.StatusNotification(1, ChargePointErrorCode.no_error,
+                                                                   ChargePointStatus.preparing))
+
         # no StartTransaction.req before SetUserPrice is received
         test_utility.forbidden_actions.append("StartTransaction")
         test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
@@ -110,8 +110,8 @@ class TestOcpp16CostAndPrice:
         # expect authorize.req
         assert await wait_for_and_validate(test_utility, charge_point,
                                            "Authorize",
-                                           call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1))
-        
+                                           call.Authorize(test_config.authorization_info.valid_id_tag_1))
+
         data = {
             "idToken": test_config.authorization_info.valid_id_tag_1,
             "priceText": "GBP 0.12/kWh, no idle fee",
@@ -122,25 +122,26 @@ class TestOcpp16CostAndPrice:
                                ]
         }
 
-
+        # sleep needed to send auth response before data transfer req
+        await asyncio.sleep(1)
         # Send 'set user price', which is tight to a transaction.
         await charge_point.data_transfer_req(vendor_id="org.openchargealliance.costmsg",
-                                                    message_id="SetUserPrice",
-                                                    data=json.dumps(data))
+                                             message_id="SetUserPrice",
+                                             data=json.dumps(data))
 
         test_utility.forbidden_actions.clear()
         test_utility.validation_mode = ValidationMode.EASY
 
         # expect StartTransaction.req
         assert await wait_for_and_validate(test_utility, charge_point, "StartTransaction",
-                                           call.StartTransactionPayload(
+                                           call.StartTransaction(
                                                1, test_config.authorization_info.valid_id_tag_1, 0, ""),
                                            validate_standard_start_transaction)
 
         # expect StatusNotification with status charging
         assert await wait_for_and_validate(test_utility, charge_point, "StatusNotification",
-                                           call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
-                                                                          ChargePointStatus.charging))
+                                           call.StatusNotification(1, ChargePointErrorCode.no_error,
+                                                                   ChargePointStatus.charging))
 
         test_utility.messages.clear()
 
@@ -151,22 +152,23 @@ class TestOcpp16CostAndPrice:
             if mock.call_count >= expected_call_count:
                 return
             await asyncio.sleep(interval)
-        raise AssertionError(f"Mock was called {mock.call_count} times, expected at least {expected_call_count}")
-
+        raise AssertionError(f"Mock was called {
+                             mock.call_count} times, expected at least {expected_call_count}")
 
     @pytest.mark.probe_module
     @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
     @pytest.mark.asyncio
     async def test_cost_and_price_set_user_price_no_transaction(self, test_config: OcppTestConfiguration,
-                                                                      test_utility: TestUtility,
-                                                                      test_controller: TestController, probe_module,
-                                                                      central_system: CentralSystem):
+                                                                test_utility: TestUtility,
+                                                                test_controller: TestController, probe_module,
+                                                                central_system: CentralSystem):
         """
         Test if the datatransfer call returns 'rejected' when session cost is sent while there is no transaction
         running.
         """
 
-        logging.info("######### test_cost_and_price_set_user_price_no_transaction #########")
+        logging.info(
+            "######### test_cost_and_price_set_user_price_no_transaction #########")
 
         data = {
             "idToken": test_config.authorization_info.valid_id_tag_1,
@@ -179,7 +181,8 @@ class TestOcpp16CostAndPrice:
         }
 
         session_cost_mock = Mock()
-        probe_module.subscribe_variable("session_cost", "tariff_message", session_cost_mock)
+        probe_module.subscribe_variable(
+            "session_cost", "tariff_message", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -193,12 +196,13 @@ class TestOcpp16CostAndPrice:
 
         # No session running, datatransfer should return 'accepted' and id token is added to the message
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.accepted), timeout=5)
+                                           call_result.DataTransfer(DataTransferStatus.accepted), timeout=5)
 
         # Display message should have received a message with the current price information
         data_received = {'identifier_id': test_config.authorization_info.valid_id_tag_1, 'identifier_type': 'IdToken',
                          'messages': [{'content': 'GBP 0.12/kWh, no idle fee', 'language': 'en'},
-                                      {'content': '€0.12/kWh, geen idle fee', 'format': 'UTF8', 'language': 'nl'},
+                                      {'content': '€0.12/kWh, geen idle fee',
+                                          'format': 'UTF8', 'language': 'nl'},
                                       {'content': '€0,12/kWh, keine Leerlaufgebühr', 'format': 'UTF8',
                                        'language': 'de'}]
                          }
@@ -212,14 +216,15 @@ class TestOcpp16CostAndPrice:
 
     @pytest.mark.asyncio
     async def test_cost_and_price_set_user_price_no_transaction_no_id_token(self, test_config: OcppTestConfiguration,
-                                                                      charge_point_v16: ChargePoint16,
-                                                                      test_utility: TestUtility):
+                                                                            charge_point_v16: ChargePoint16,
+                                                                            test_utility: TestUtility):
         """
         Test if the datatransfer call returns 'rejected' when session cost is sent while there is no transaction
         running.
         """
 
-        logging.info("######### test_cost_and_price_set_user_price_no_transaction_no_id_token #########")
+        logging.info(
+            "######### test_cost_and_price_set_user_price_no_transaction_no_id_token #########")
 
         data = {
             "priceText": "GBP 0.12/kWh, no idle fee",
@@ -235,20 +240,21 @@ class TestOcpp16CostAndPrice:
 
         # No session running, and no id token, datatransfer should return 'rejected'
         assert await wait_for_and_validate(test_utility, charge_point_v16, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.rejected), timeout=5)
+                                           call_result.DataTransfer(DataTransferStatus.rejected), timeout=5)
 
     @pytest.mark.probe_module
     @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
     @pytest.mark.asyncio
     async def test_cost_and_price_set_user_price_with_transaction(self, test_config: OcppTestConfiguration,
-                                                                        test_utility: TestUtility,
-                                                                        test_controller: TestController, probe_module,
-                                                                        central_system: CentralSystem):
+                                                                  test_utility: TestUtility,
+                                                                  test_controller: TestController, probe_module,
+                                                                  central_system: CentralSystem):
         """
         Test if user price is sent correctly when there is a transaction.
         """
 
-        logging.info("######### test_cost_and_price_set_user_price_with_transaction #########")
+        logging.info(
+            "######### test_cost_and_price_set_user_price_with_transaction #########")
 
         data = {
             "idToken": test_config.authorization_info.valid_id_tag_1,
@@ -261,7 +267,8 @@ class TestOcpp16CostAndPrice:
         }
 
         session_cost_mock = Mock()
-        probe_module.subscribe_variable("session_cost", "tariff_message", session_cost_mock)
+        probe_module.subscribe_variable(
+            "session_cost", "tariff_message", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -279,12 +286,13 @@ class TestOcpp16CostAndPrice:
 
         # Datatransfer should be successful.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
-                                              call_result.DataTransferPayload(DataTransferStatus.accepted), timeout=5)
+                                           call_result.DataTransfer(DataTransferStatus.accepted), timeout=5)
 
         # Display message should have received a message with the current price information
         data_received = {'identifier_id': ANY, 'identifier_type': 'SessionId',
                          'messages': [{'content': 'GBP 0.12/kWh, no idle fee', 'language': 'en'},
-                                      {'content': '€0.12/kWh, geen idle fee', 'format': 'UTF8', 'language': 'nl'},
+                                      {'content': '€0.12/kWh, geen idle fee',
+                                          'format': 'UTF8', 'language': 'nl'},
                                       {'content': '€0,12/kWh, keine Leerlaufgebühr', 'format': 'UTF8',
                                        'language': 'de'}],
                          "ocpp_transaction_id": "1"
@@ -292,44 +300,47 @@ class TestOcpp16CostAndPrice:
 
         await self.await_mock_called(session_cost_mock, expected_call_count=2)
 
-        assert session_cost_mock.call_count == 2 # one time during authorization process and one time in this test
+        # one time during authorization process and one time in this test
+        assert session_cost_mock.call_count == 2
 
         # And it should contain the correct data
         session_cost_mock.assert_called_with(data_received)
 
         test_controller.plug_out()
 
-        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction", {}) 
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction", {})
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.asyncio
     async def test_cost_and_price_final_cost_no_transaction(self, test_config: OcppTestConfiguration,
-                                                                  charge_point_v16: ChargePoint16,
-                                                                  test_utility: TestUtility):
+                                                            charge_point_v16: ChargePoint16,
+                                                            test_utility: TestUtility):
         """
         Test sending of final price when there is no transaction: DataTransfer should return rejected.
         """
-        logging.info("######### test_cost_and_price_final_cost_no_transaction #########")
+        logging.info(
+            "######### test_cost_and_price_final_cost_no_transaction #########")
 
         await charge_point_v16.data_transfer_req(vendor_id="org.openchargealliance.costmsg", message_id="FinalCost",
                                                  data=json.dumps(self.final_cost_data))
 
         # Since there is no transaction, datatransfer should return 'rejected' here.
         success = await wait_for_and_validate(test_utility, charge_point_v16, "DataTransfer",
-                                              call_result.DataTransferPayload(DataTransferStatus.rejected), timeout=5)
+                                              call_result.DataTransfer(DataTransferStatus.rejected), timeout=5)
         assert success
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.asyncio
     async def test_cost_and_price_final_cost_with_transaction_not_found(self, test_config: OcppTestConfiguration,
-                                                                              charge_point_v16: ChargePoint16,
-                                                                              test_utility: TestUtility,
-                                                                              test_controller: TestController):
+                                                                        charge_point_v16: ChargePoint16,
+                                                                        test_utility: TestUtility,
+                                                                        test_controller: TestController):
         """
         A transaction is running when a final cost message is sent, but the transaction is not found. This should
         return a 'rejected' response on the DataTransfer message.
         """
-        logging.info("######### test_cost_and_price_final_cost_with_transaction_not_found #########")
+        logging.info(
+            "######### test_cost_and_price_final_cost_with_transaction_not_found #########")
 
         # Start transaction
         await self.start_transaction(test_controller, test_utility, charge_point_v16, test_config)
@@ -341,9 +352,9 @@ class TestOcpp16CostAndPrice:
         await charge_point_v16.data_transfer_req(vendor_id="org.openchargealliance.costmsg", message_id="FinalCost",
                                                  data=json.dumps(data))
 
-        #Transaction does not exist: 'rejected' must be returned.
+        # Transaction does not exist: 'rejected' must be returned.
         success = await wait_for_and_validate(test_utility, charge_point_v16, "DataTransfer",
-                                              call_result.DataTransferPayload(DataTransferStatus.rejected), timeout=5)
+                                              call_result.DataTransfer(DataTransferStatus.rejected), timeout=5)
         assert success
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
@@ -351,18 +362,20 @@ class TestOcpp16CostAndPrice:
     @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
     @pytest.mark.asyncio
     async def test_cost_and_price_final_cost_with_transaction(self, test_config: OcppTestConfiguration,
-                                                                    test_utility: TestUtility,
-                                                                    test_controller: TestController, probe_module,
-                                                                    central_system: CentralSystem):
+                                                              test_utility: TestUtility,
+                                                              test_controller: TestController, probe_module,
+                                                              central_system: CentralSystem):
         """
         A transaction is running whan a final cost message for that transaction is sent. A session cost message
         should be sent now.
         """
-        logging.info("######### test_cost_and_price_final_cost_with_transaction #########")
+        logging.info(
+            "######### test_cost_and_price_final_cost_with_transaction #########")
 
         session_cost_mock = Mock()
 
-        probe_module.subscribe_variable("session_cost", "session_cost", session_cost_mock)
+        probe_module.subscribe_variable(
+            "session_cost", "session_cost", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -375,11 +388,11 @@ class TestOcpp16CostAndPrice:
 
         # Send final cost message.
         await chargepoint_with_pm.data_transfer_req(vendor_id="org.openchargealliance.costmsg", message_id="FinalCost",
-                                                 data=json.dumps(self.final_cost_data))
+                                                    data=json.dumps(self.final_cost_data))
 
         # Which is accepted
         success = await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
-                                              call_result.DataTransferPayload(DataTransferStatus.accepted), timeout=5)
+                                              call_result.DataTransfer(DataTransferStatus.accepted), timeout=5)
 
         received_data = {'cost_chunks': [{'cost': {'value': 33100}}], 'currency': {'decimals': 4}, 'message': [{
             'content': 'GBP 2.81 @ 0.12/kWh, GBP 0.50 @ 1/h, TOTAL KWH: 23.4 TIME: 03.50 COST: GBP 3.31. '
@@ -394,7 +407,7 @@ class TestOcpp16CostAndPrice:
                            'Besuchen Sie www.cpo.com/invoices/13546 um eine Rechnung für Ihren Ladevorgang zu erhalten.',
                 'format': 'UTF8',
                 'language': 'de'}],
-                         'qr_code': 'https://www.cpo.com/invoices/13546', 'session_id': ANY, 'status': 'Finished'}
+            'qr_code': 'https://www.cpo.com/invoices/13546', 'session_id': ANY, 'status': 'Finished'}
 
         # A session cost message should have been received
         await self.await_mock_called(session_cost_mock)
@@ -411,9 +424,9 @@ class TestOcpp16CostAndPrice:
     @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
     @pytest.mark.asyncio
     async def test_cost_and_price_running_cost(self, test_config: OcppTestConfiguration,
-                                                     test_controller: TestController,
-                                                     test_utility: TestUtility, probe_module,
-                                                     central_system: CentralSystem):
+                                               test_controller: TestController,
+                                               test_utility: TestUtility, probe_module,
+                                               central_system: CentralSystem):
         """
         A transaction is started and a 'running cost' message with the transaction id is sent. This should send a
         session cost message over the interface.
@@ -421,7 +434,8 @@ class TestOcpp16CostAndPrice:
         logging.info("######### test_cost_and_price_running_cost #########")
 
         session_cost_mock = Mock()
-        probe_module.subscribe_variable("session_cost", "session_cost", session_cost_mock)
+        probe_module.subscribe_variable(
+            "session_cost", "session_cost", session_cost_mock)
 
         probe_module.start()
         await probe_module.wait_to_be_ready()
@@ -442,12 +456,13 @@ class TestOcpp16CostAndPrice:
         # Since there is a transaction running and the correct transaction id is sent in the running cost request,
         # the datatransfer message is accepted.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.accepted))
+                                           call_result.DataTransfer(DataTransferStatus.accepted))
 
         # A session cost call should have been sent now with the correct data.
         received_data = {
             'charging_price': [{'category': 'Time', 'price': {'currency': {'decimals': 4}, 'value': {'value': 20000}}},
-                               {'category': 'Energy', 'price': {'currency': {'decimals': 4}, 'value': {'value': 1230}}},
+                               {'category': 'Energy', 'price': {'currency': {
+                                   'decimals': 4}, 'value': {'value': 1230}}},
                                {'category': 'FlatFee',
                                 'price': {'currency': {'decimals': 4}, 'value': {'value': 424200}}}],
             'cost_chunks': [
@@ -474,14 +489,15 @@ class TestOcpp16CostAndPrice:
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.asyncio
     async def test_cost_and_price_running_cost_wrong_transaction(self, test_config: OcppTestConfiguration,
-                                                                       test_controller: TestController,
-                                                                       test_utility: TestUtility,
-                                                                       charge_point_v16: ChargePoint16):
+                                                                 test_controller: TestController,
+                                                                 test_utility: TestUtility,
+                                                                 charge_point_v16: ChargePoint16):
         """
         A transaction is started and a running cost message is sent, but the transaction id is not known so the message
         is rejected.
         """
-        logging.info("######### test_cost_and_price_running_cost_wrong_transaction #########")
+        logging.info(
+            "######### test_cost_and_price_running_cost_wrong_transaction #########")
 
         # Start transaction
         await self.start_transaction(test_controller, test_utility, charge_point_v16, test_config)
@@ -492,23 +508,24 @@ class TestOcpp16CostAndPrice:
 
         # Send running cost message with incorrect transaction id.
         assert await charge_point_v16.data_transfer_req(vendor_id="org.openchargealliance.costmsg",
-                                                           message_id="RunningCost",
-                                                           data=json.dumps(data))
+                                                        message_id="RunningCost",
+                                                        data=json.dumps(data))
 
         # DataTransfer should return 'rejected' because the transaction is not found.
         assert await wait_for_and_validate(test_utility, charge_point_v16, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.rejected), timeout=15)
+                                           call_result.DataTransfer(DataTransferStatus.rejected), timeout=15)
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.asyncio
     async def test_cost_and_price_running_cost_no_transaction(self, test_config: OcppTestConfiguration,
-                                                                    test_utility: TestUtility,
-                                                                    charge_point_v16: ChargePoint16):
+                                                              test_utility: TestUtility,
+                                                              charge_point_v16: ChargePoint16):
         """
         There is no transaction but there is a running cost message sent. This should return a 'rejected' on the
         DataTransfer request.
         """
-        logging.info("######### test_cost_and_price_running_cost_no_transaction #########")
+        logging.info(
+            "######### test_cost_and_price_running_cost_no_transaction #########")
 
         test_utility.messages.clear()
 
@@ -541,7 +558,7 @@ class TestOcpp16CostAndPrice:
 
         # This should return 'Rejected'
         assert await wait_for_and_validate(test_utility, charge_point_v16, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.rejected), timeout=15)
+                                           call_result.DataTransfer(DataTransferStatus.rejected), timeout=15)
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.probe_module
@@ -549,13 +566,14 @@ class TestOcpp16CostAndPrice:
         evse_manager_ids=["evse_manager"]))
     @pytest.mark.asyncio
     async def test_cost_and_price_running_cost_trigger_time(self, test_config: OcppTestConfiguration,
-                                                                  test_controller: TestController,
-                                                                  test_utility: TestUtility, probe_module,
-                                                                  central_system: CentralSystem):
+                                                            test_controller: TestController,
+                                                            test_utility: TestUtility, probe_module,
+                                                            central_system: CentralSystem):
         """
         Send running cost with a trigger time to return meter values.
         """
-        logging.info("######### test_cost_and_price_running_cost_trigger_time #########")
+        logging.info(
+            "######### test_cost_and_price_running_cost_trigger_time #########")
 
         probe_module_mock_start_transaction_fn = Mock()
         probe_module_mock_start_transaction_fn.return_value = {
@@ -566,8 +584,10 @@ class TestOcpp16CostAndPrice:
             "status": "OK"
         }
 
-        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
-        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
 
         power_meter_value = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -602,13 +622,15 @@ class TestOcpp16CostAndPrice:
 
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         test_utility.messages.clear()
 
         # Metervalues should be sent at below trigger time.
         data = self.running_cost_data.copy()
-        data["triggerMeterValue"]["atTime"] = (datetime.now(timezone.utc) + timedelta(seconds=3)).isoformat()
+        data["triggerMeterValue"]["atTime"] = (datetime.now(
+            timezone.utc) + timedelta(seconds=3)).isoformat()
 
         # While the transaction is started, send a 'RunningCost' message.
         assert await chargepoint_with_pm.data_transfer_req(vendor_id="org.openchargealliance.costmsg",
@@ -617,15 +639,15 @@ class TestOcpp16CostAndPrice:
 
         # Which is accepted.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.accepted))
+                                           call_result.DataTransfer(DataTransferStatus.accepted))
 
         # At the given time, metervalues must have been sent.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
-                                           call.MeterValuesPayload(1, meter_value=[{'sampledValue': [
+                                           call.MeterValues(1, meter_value=[{'sampledValue': [
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Energy.Active.Import.Register', 'unit': 'Wh',
                                                 'value': '1.00'}], 'timestamp': timestamp[:-9] + 'Z'}],
-                                                                   transaction_id=1), timeout=15)
+                                               transaction_id=1), timeout=15)
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.probe_module
@@ -634,13 +656,14 @@ class TestOcpp16CostAndPrice:
     ))
     @pytest.mark.asyncio
     async def test_cost_and_price_running_cost_trigger_energy(self, test_config: OcppTestConfiguration,
-                                                                     test_controller: TestController,
-                                                                     test_utility: TestUtility, probe_module,
-                                                                     central_system: CentralSystem):
+                                                              test_controller: TestController,
+                                                              test_utility: TestUtility, probe_module,
+                                                              central_system: CentralSystem):
         """
         Send running cost with a trigger kwh value to return meter values.
         """
-        logging.info("######### test_cost_and_price_running_cost_trigger_energy #########")
+        logging.info(
+            "######### test_cost_and_price_running_cost_trigger_energy #########")
 
         probe_module_mock_start_transaction_fn = Mock()
         probe_module_mock_start_transaction_fn.return_value = {
@@ -651,8 +674,10 @@ class TestOcpp16CostAndPrice:
             "status": "OK"
         }
 
-        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
-        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
 
         power_meter_value = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -684,7 +709,8 @@ class TestOcpp16CostAndPrice:
 
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         test_utility.messages.clear()
 
@@ -695,21 +721,22 @@ class TestOcpp16CostAndPrice:
 
         # Datatransfer is valid and should be accepted.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.accepted))
+                                           call_result.DataTransfer(DataTransferStatus.accepted))
 
         # Now increase power meter value so it is above the specified trigger and publish the powermeter value
         power_meter_value["energy_Wh_import"]["total"] = 6000.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         # Metervalues should now be sent
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
-                                           call.MeterValuesPayload(1, meter_value=[{'sampledValue': [
+                                           call.MeterValues(1, meter_value=[{'sampledValue': [
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Energy.Active.Import.Register', 'unit': 'Wh',
                                                 'value': '6000.00'}], 'timestamp': timestamp[:-9] + 'Z'}],
-                                                                   transaction_id=1))
+                                               transaction_id=1))
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.probe_module
@@ -718,13 +745,14 @@ class TestOcpp16CostAndPrice:
     ))
     @pytest.mark.asyncio
     async def test_cost_and_price_running_cost_trigger_power(self, test_config: OcppTestConfiguration,
-                                                                    test_controller: TestController,
-                                                                    test_utility: TestUtility, probe_module,
-                                                                    central_system: CentralSystem):
+                                                             test_controller: TestController,
+                                                             test_utility: TestUtility, probe_module,
+                                                             central_system: CentralSystem):
         """
         Send running cost with a trigger kw value to return meter values.
         """
-        logging.info("######### test_cost_and_price_running_cost_trigger_power #########")
+        logging.info(
+            "######### test_cost_and_price_running_cost_trigger_power #########")
 
         probe_module_mock_start_transaction_fn = Mock()
         probe_module_mock_start_transaction_fn.return_value = {
@@ -735,8 +763,10 @@ class TestOcpp16CostAndPrice:
             "status": "OK"
         }
 
-        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
-        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
 
         power_meter_value = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -771,7 +801,8 @@ class TestOcpp16CostAndPrice:
 
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         test_utility.messages.clear()
 
@@ -782,60 +813,63 @@ class TestOcpp16CostAndPrice:
 
         # DataTransfer message is valid, expect it's accepted.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.accepted))
+                                           call_result.DataTransfer(DataTransferStatus.accepted))
 
         # Set W above the trigger value and publish a new powermeter value.
         power_meter_value["energy_Wh_import"]["total"] = 1.0
         power_meter_value["power_W"]["total"] = 10000.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         # Powermeter value should be sent because of the trigger.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
-                                           call.MeterValuesPayload(1, meter_value=[{'sampledValue': [
+                                           call.MeterValues(1, meter_value=[{'sampledValue': [
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Energy.Active.Import.Register', 'unit': 'Wh',
                                                 'value': '1.00'},
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Power.Active.Import', 'unit': 'W',
                                                 'value': '10000.00'}], 'timestamp': timestamp[:-9] + 'Z'}],
-                                                                   transaction_id=1))
+                                               transaction_id=1))
 
         # W value is below trigger, but hysteresis prevents sending the metervalue.
         power_meter_value["energy_Wh_import"]["total"] = 8000.0
         power_meter_value["power_W"]["total"] = 7990.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         # So no metervalue is sent.
         assert not await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
-                                               call.MeterValuesPayload(1, meter_value=[{'sampledValue': [
+                                               call.MeterValues(1, meter_value=[{'sampledValue': [
                                                    {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                     'measurand': 'Energy.Active.Import.Register', 'unit': 'Wh',
                                                     'value': '8000.00'},
                                                    {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                     'measurand': 'Power.Active.Import', 'unit': 'W',
                                                     'value': '7990.00'}], 'timestamp': timestamp[:-9] + 'Z'}],
-                                                                       transaction_id=1))
+                                                   transaction_id=1))
 
         # Only when trigger is high ( / low) enough, metervalue will be sent.
         power_meter_value["energy_Wh_import"]["total"] = 9500.0
         power_meter_value["power_W"]["total"] = 7200.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
-                                           call.MeterValuesPayload(1, meter_value=[{'sampledValue': [
+                                           call.MeterValues(1, meter_value=[{'sampledValue': [
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Energy.Active.Import.Register', 'unit': 'Wh',
                                                 'value': '9500.00'},
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Power.Active.Import', 'unit': 'W',
                                                 'value': '7200.00'}], 'timestamp': timestamp[:-9] + 'Z'}],
-                                                                   transaction_id=1))
+                                               transaction_id=1))
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.probe_module
@@ -844,13 +878,14 @@ class TestOcpp16CostAndPrice:
     ))
     @pytest.mark.asyncio
     async def test_cost_and_price_running_cost_trigger_cp_status(self, test_config: OcppTestConfiguration,
-                                                                        test_controller: TestController,
-                                                                        test_utility: TestUtility, probe_module,
-                                                                        central_system: CentralSystem):
+                                                                 test_controller: TestController,
+                                                                 test_utility: TestUtility, probe_module,
+                                                                 central_system: CentralSystem):
         """
         Send running cost with a trigger chargepoint status to return meter values.
         """
-        logging.info("######### test_cost_and_price_running_cost_trigger_cp_status #########")
+        logging.info(
+            "######### test_cost_and_price_running_cost_trigger_cp_status #########")
 
         probe_module_mock_start_transaction_fn = Mock()
         probe_module_mock_start_transaction_fn.return_value = {
@@ -861,8 +896,10 @@ class TestOcpp16CostAndPrice:
             "status": "OK"
         }
 
-        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
-        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
 
         power_meter_value = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -897,7 +934,8 @@ class TestOcpp16CostAndPrice:
 
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
-        probe_module.publish_variable("ProbeModulePowerMeter", "powermeter", power_meter_value)
+        probe_module.publish_variable(
+            "ProbeModulePowerMeter", "powermeter", power_meter_value)
 
         test_utility.messages.clear()
 
@@ -927,24 +965,25 @@ class TestOcpp16CostAndPrice:
 
         # And wait for the datatransfer to be accepted.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "DataTransfer",
-                                           call_result.DataTransferPayload(DataTransferStatus.accepted), timeout=15)
+                                           call_result.DataTransfer(DataTransferStatus.accepted), timeout=15)
 
         # swipe id tag to finish transaction
         test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
 
         # expect StopTransaction.req
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction",
-                                           call.StopTransactionPayload(0, "", 1, Reason.local),
+                                           call.StopTransaction(
+                                               0, "", 1, Reason.local),
                                            validate_standard_stop_transaction)
 
         # expect StatusNotification with status finishing
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
-                                           call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
-                                                                          ChargePointStatus.finishing))
+                                           call.StatusNotification(1, ChargePointErrorCode.no_error,
+                                                                   ChargePointStatus.finishing))
 
         # As the chargepoint status is now 'finishing' new metervalues should be sent.
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "MeterValues",
-                                           call.MeterValuesPayload(1, meter_value=[{'sampledValue': [
+                                           call.MeterValues(1, meter_value=[{'sampledValue': [
                                                {'context': 'Other', 'format': 'Raw', 'location': 'Outlet',
                                                 'measurand': 'Energy.Active.Import.Register', 'unit': 'Wh',
                                                 'value': '1.00'}], 'timestamp': timestamp[:-9] + 'Z'}]))
@@ -953,14 +992,14 @@ class TestOcpp16CostAndPrice:
 
         # # expect StatusNotification.req with status available
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
-                                           call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
-                                                                          ChargePointStatus.available))
+                                           call.StatusNotification(1, ChargePointErrorCode.no_error,
+                                                                   ChargePointStatus.available))
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.asyncio
     async def test_cost_and_price_set_price_text(self, test_config: OcppTestConfiguration,
-                                                        charge_point_v16: ChargePoint16,
-                                                        test_utility: TestUtility):
+                                                 charge_point_v16: ChargePoint16,
+                                                 test_utility: TestUtility):
         """
         Test 'DefaultPriceText' configuration setting.
         """
@@ -1004,12 +1043,13 @@ class TestOcpp16CostAndPrice:
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.asyncio
     async def test_cost_and_price_set_charging_price(self, test_config: OcppTestConfiguration,
-                                                            charge_point_v16: ChargePoint16,
-                                                            test_utility: TestUtility):
+                                                     charge_point_v16: ChargePoint16,
+                                                     test_utility: TestUtility):
         """
         Test 'DefaultPrice' configuration setting.
         """
-        logging.info("######### test_cost_and_price_set_charging_price #########")
+        logging.info(
+            "######### test_cost_and_price_set_charging_price #########")
 
         test_utility.validation_mode = ValidationMode.STRICT
 
@@ -1031,7 +1071,8 @@ class TestOcpp16CostAndPrice:
         response = await charge_point_v16.get_configuration_req(key=['DefaultPrice'])
 
         assert response.configuration_key[0]['key'] == 'DefaultPrice'
-        assert json.loads(response.configuration_key[0]['value']) == default_price
+        assert json.loads(
+            response.configuration_key[0]['value']) == default_price
 
     @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp16-costandprice.yaml'))
     @pytest.mark.probe_module
@@ -1039,13 +1080,14 @@ class TestOcpp16CostAndPrice:
         evse_manager_ids=["evse_manager"]))
     @pytest.mark.asyncio
     async def test_cost_and_price_set_user_price_timeout(self, test_config: OcppTestConfiguration,
-                                                                  test_controller: TestController,
-                                                                  test_utility: TestUtility, probe_module,
-                                                                  central_system: CentralSystem):
+                                                         test_controller: TestController,
+                                                         test_utility: TestUtility, probe_module,
+                                                         central_system: CentralSystem):
         """
         Test if default price is applied if no SetUserPrice is received within the timeout.
         """
-        logging.info("######### test_cost_and_price_running_cost_trigger_time #########")
+        logging.info(
+            "######### test_cost_and_price_running_cost_trigger_time #########")
 
         probe_module_mock_start_transaction_fn = Mock()
         probe_module_mock_start_transaction_fn.return_value = {
@@ -1056,8 +1098,10 @@ class TestOcpp16CostAndPrice:
             "status": "OK"
         }
 
-        probe_module.implement_command("ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
-        probe_module.implement_command("ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "start_transaction", probe_module_mock_start_transaction_fn)
+        probe_module.implement_command(
+            "ProbeModulePowerMeter", "stop_transaction", probe_module_mock_stop_transaction_fn)
 
         power_meter_value = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -1080,9 +1124,9 @@ class TestOcpp16CostAndPrice:
 
         # expect StatusNotification with status preparing
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
-                                           call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
-                                                                          ChargePointStatus.preparing))
-        
+                                           call.StatusNotification(1, ChargePointErrorCode.no_error,
+                                                                   ChargePointStatus.preparing))
+
         # no StartTransaction.req before SetUserPrice is received
         test_utility.forbidden_actions.append("StartTransaction")
         test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
@@ -1092,14 +1136,14 @@ class TestOcpp16CostAndPrice:
         # expect authorize.req
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm,
                                            "Authorize",
-                                           call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1))
+                                           call.Authorize(test_config.authorization_info.valid_id_tag_1))
 
         test_utility.forbidden_actions.clear()
         test_utility.validation_mode = ValidationMode.EASY
 
         # expect StartTransaction.req
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StartTransaction",
-                                           call.StartTransactionPayload(
+                                           call.StartTransaction(
                                                1, test_config.authorization_info.valid_id_tag_1, 0, ""),
                                            validate_standard_start_transaction)
 
@@ -1111,7 +1155,7 @@ class TestOcpp16CostAndPrice:
                 'identification_flags': [],
                 'identification_status': 'ASSIGNED',
                 'identification_type': 'ISO14443',
-                'tariff_text': 'This is the price', # default price text
+                'tariff_text': 'This is the price',  # default price text
                 'transaction_id': ANY
             }
         })

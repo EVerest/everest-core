@@ -47,7 +47,7 @@ async def test_call_error_to_transaction_message(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1),
+        call.Authorize(test_config.authorization_info.valid_id_tag_1),
     )
 
     # expect StartTransaction.req
@@ -55,7 +55,7 @@ async def test_call_error_to_transaction_message(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -66,7 +66,7 @@ async def test_call_error_to_transaction_message(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -77,7 +77,7 @@ async def test_call_error_to_transaction_message(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -90,7 +90,8 @@ async def test_call_error_to_transaction_message(
 
     # expect StopTransaction.req
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "StopTransaction", {"reason": "EVDisconnected"}
+        test_utility, charge_point_v16, "StopTransaction", {
+            "reason": "EVDisconnected"}
     )
 
 
@@ -128,7 +129,8 @@ async def test_security_event_delivery_after_reconnect(
     csms_mock.on_security_event_notification.reset_mock()
     # Since on boot we expect a count of security events
     await probe_module.call_command(
-        "ocpp", "security_event", {"type": "SecurityLogWasCleared", "info": "test_info"}
+        "ocpp", "security_event", {
+            "type": "SecurityLogWasCleared", "info": "test_info"}
     )
 
     # Verify: CSMS has not received any event (since offline), reconnect and verify event is received
@@ -139,6 +141,7 @@ async def test_security_event_delivery_after_reconnect(
 
     await wait_for_mock_called(
         csms_mock.on_security_event_notification,
-        mock_call(tech_info="test_info", timestamp=ANY, type="SecurityLogWasCleared"),
+        mock_call(tech_info="test_info", timestamp=ANY,
+                  type="SecurityLogWasCleared"),
         10,
     )

@@ -13,8 +13,8 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../..")))
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility, ValidationMode
 from everest.testing.ocpp_utils.fixtures import *
-from ocpp.routing import on, create_route_map
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum)
+from ocpp.routing import on, after, create_route_map
+from ocpp.v201.enums import (IdTokenEnumType as IdTokenTypeEnum, TriggerMessageStatusEnumType)
 from ocpp.v201.enums import *
 from ocpp.v201.datatypes import *
 from ocpp.v201 import call as call201
@@ -51,7 +51,7 @@ async def test_F01_F02_F03(
     evse = EVSEType(id=evse_id, connector_id=connector_id)
 
     # Disable AuthCacheCtrlr
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "Enabled", "false"
         )
@@ -59,10 +59,10 @@ async def test_F01_F02_F03(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # get configured measurands in order to compare them to the measurands used in TransactionEvent(eventType=Started) for testing F01.FR.14
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "SampledDataCtrlr", "TxStartedMeasurands"
         )
@@ -70,11 +70,12 @@ async def test_F01_F02_F03(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
-    expected_started_measurands = get_variables_result.attribute_value.split(",")
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
+    expected_started_measurands = get_variables_result.attribute_value.split(
+        ",")
 
     # get configured measurands in order to compare them to the measurands used in TransactionEvent(eventType=Started) for testing F01.FR.14
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "SampledDataCtrlr", "TxUpdatedMeasurands"
         )
@@ -82,10 +83,10 @@ async def test_F01_F02_F03(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
 
     # get configured measurands in order to compare them to the measurands used in TransactionEvent(eventType=Started) for testing F01.FR.14
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "SampledDataCtrlr", "TxEndedMeasurands"
         )
@@ -93,11 +94,11 @@ async def test_F01_F02_F03(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     expected_ended_measurands = get_variables_result.attribute_value.split(",")
 
     # set AuthorizeRemoteStart to true
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "AuthorizeRemoteStart", "true"
         )
@@ -105,19 +106,19 @@ async def test_F01_F02_F03(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # put EVSE to unavailable
     await charge_point_v201.change_availablility_req(
-        operational_status=OperationalStatusType.inoperative, evse=evse
+        operational_status=OperationalStatusEnumType.inoperative, evse=evse
     )
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.unavailable,
+            ConnectorStatusEnumType.unavailable,
             evse_id,
             connector_id,
         ),
@@ -132,22 +133,22 @@ async def test_F01_F02_F03(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(
-            status=RequestStartStopStatusType.rejected
+        call_result201.RequestStartTransaction(
+            status=RequestStartStopStatusEnumType.rejected
         ),
     )
 
     # put EVSE to available
     await charge_point_v201.change_availablility_req(
-        operational_status=OperationalStatusType.operative, evse=evse
+        operational_status=OperationalStatusEnumType.operative, evse=evse
     )
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id,
             connector_id,
         ),
@@ -164,8 +165,8 @@ async def test_F01_F02_F03(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(
-            status=RequestStartStopStatusType.rejected
+        call_result201.RequestStartTransaction(
+            status=RequestStartStopStatusEnumType.rejected
         ),
     )
 
@@ -177,8 +178,8 @@ async def test_F01_F02_F03(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(
-            status=RequestStartStopStatusType.accepted
+        call_result201.RequestStartTransaction(
+            status=RequestStartStopStatusEnumType.accepted
         ),
     )
 
@@ -187,25 +188,27 @@ async def test_F01_F02_F03(
         test_utility,
         charge_point_v201,
         "Authorize",
-        call201.AuthorizePayload(id_token=id_token),
+        call201.Authorize(id_token=id_token),
     )
 
     test_controller.plug_in()
     # eventType=Started
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
     test_utility.messages.clear()
     test_controller.plug_out()
     # eventType=Ended
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )
 
     test_utility.messages.clear()
 
     # set AuthorizeRemoteStart to false
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "AuthorizeRemoteStart", "false"
         )
@@ -218,9 +221,9 @@ async def test_F01_F02_F03(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.occupied,
+            ConnectorStatusEnumType.occupied,
             evse_id,
             connector_id,
         ),
@@ -235,13 +238,13 @@ async def test_F01_F02_F03(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(
-            status=RequestStartStopStatusType.accepted
+        call_result201.RequestStartTransaction(
+            status=RequestStartStopStatusEnumType.accepted
         ),
     )
 
     # because AuthorizeRemoteStart is false we directly expect a TransactionEvent(eventType=Started)
-    r: call201.TransactionEventPayload = call201.TransactionEventPayload(
+    r: call201.TransactionEvent = call201.TransactionEvent(
         **await wait_for_and_validate(
             test_utility,
             charge_point_v201,
@@ -253,8 +256,8 @@ async def test_F01_F02_F03(
     transaction = TransactionType(**r.transaction_info)
 
     # do some basic checks on TransactionEvent
-    assert r.trigger_reason == TriggerReasonType.remote_start
-    assert r.event_type == TransactionEventType.started
+    assert r.trigger_reason == TriggerReasonEnumType.remote_start
+    assert r.event_type == TransactionEventEnumType.started
     assert EVSEType(**r.evse) == evse
     assert IdTokenType(**r.id_token) == id_token
 
@@ -273,8 +276,8 @@ async def test_F01_F02_F03(
         test_utility,
         charge_point_v201,
         "RequestStopTransaction",
-        call_result201.RequestStartTransactionPayload(
-            status=RequestStartStopStatusType.rejected
+        call_result201.RequestStartTransaction(
+            status=RequestStartStopStatusEnumType.rejected
         ),
     )
 
@@ -286,21 +289,22 @@ async def test_F01_F02_F03(
         test_utility,
         charge_point_v201,
         "RequestStopTransaction",
-        call_result201.RequestStartTransactionPayload(
-            status=RequestStartStopStatusType.accepted
+        call_result201.RequestStartTransaction(
+            status=RequestStartStopStatusEnumType.accepted
         ),
     )
 
-    r: call201.TransactionEventPayload = call201.TransactionEventPayload(
+    r: call201.TransactionEvent = call201.TransactionEvent(
         **await wait_for_and_validate(
-            test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+            test_utility, charge_point_v201, "TransactionEvent", {
+                "eventType": "Ended"}
         )
     )
 
     transaction = TransactionType(**r.transaction_info)
 
-    assert r.trigger_reason == TriggerReasonType.remote_stop
-    assert transaction.stopped_reason == ReasonType.remote
+    assert r.trigger_reason == TriggerReasonEnumType.remote_stop
+    assert transaction.stopped_reason == ReasonEnumType.remote
     assert transaction.remote_start_id == remote_start_id
 
     assert validate_measurands_match(
@@ -340,21 +344,30 @@ async def test_F06(
 
     # Test BootNotification
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_pending(**kwargs):
-        return call_result201.BootNotificationPayload(
+        return call_result201.BootNotification(
             current_time=datetime.now().isoformat(),
             interval=5,
-            status=RegistrationStatusType.rejected,
+            status=RegistrationStatusEnumType.rejected,
         )
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result201.BootNotificationPayload(
+        return call_result201.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=300,
-            status=RegistrationStatusType.accepted,
+            status=RegistrationStatusEnumType.accepted,
         )
+
+    @after(Action.boot_notification)
+    async def after_boot_notification(reason, charging_station, **kwargs):
+        # F06.FR.17: Reject trigger messages when boot_notification_state is Accepted
+        r: call_result201.TriggerMessage = await charge_point_v201.trigger_message_req(
+            requested_message=MessageTriggerEnumType.boot_notification
+        )
+        assert TriggerMessageStatusEnumType(
+            r.status) == TriggerMessageStatusEnumType.rejected
 
     central_system_v201.function_overrides.append(
         ("on_boot_notification", on_boot_notification_pending)
@@ -363,94 +376,98 @@ async def test_F06(
     test_controller.start()
     charge_point_v201: ChargePoint201 = await central_system_v201.wait_for_chargepoint()
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.boot_notification
+            requested_message=MessageTriggerEnumType.boot_notification
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     test_utility.validation_mode = ValidationMode.STRICT
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "BootNotification", {"reason": "Triggered"}
+        test_utility, charge_point_v201, "BootNotification", {
+            "reason": "Triggered"}
     )
 
-    setattr(charge_point_v201, "on_boot_notification", on_boot_notification_accepted)
+    central_system_v201.function_overrides.append(
+        ("on_boot_notification", on_boot_notification_accepted)
+    )
+    setattr(charge_point_v201, "after_boot_notification",
+            on_boot_notification_accepted)
     central_system_v201.chargepoint.route_map = create_route_map(
         central_system_v201.chargepoint
     )
 
     # Trigger again so we respond with accepted
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.boot_notification
+            requested_message=MessageTriggerEnumType.boot_notification
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "BootNotification", {"reason": "Triggered"}
+        test_utility, charge_point_v201, "BootNotification", {
+            "reason": "Triggered"}
     )
     test_utility.validation_mode = ValidationMode.EASY
 
-    # F06.FR.17: Reject trigger messages when boot_notification_state is Accepted
-    r: call_result201.TriggerMessagePayload = (
-        await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.boot_notification
-        )
-    )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.rejected
-
     # Limit the amount of data in metervalues and transactions
 
-    r: call_result201.SetVariablesPayload = (
-        await charge_point_v201.set_config_variables_req(
-            "AlignedDataCtrlr", "Measurands", MeasurandType.current_import
-        )
-    )
-    set_variable_result: SetVariableResultType = SetVariableResultType(
-        **r.set_variable_result[0]
-    )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    # add a sleep to ensure that the csms sends boot notification response before triggering SetVariables
+    await asyncio.sleep(2)
 
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
-            "SampledDataCtrlr", "TxStartedMeasurands", MeasurandType.power_active_import
+            "AlignedDataCtrlr", "Measurands", MeasurandEnumType.current_import
         )
     )
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
-            "SampledDataCtrlr", "TxUpdatedMeasurands", MeasurandType.power_active_import
+            "SampledDataCtrlr", "TxStartedMeasurands", MeasurandEnumType.power_active_import
         )
     )
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
-            "SampledDataCtrlr", "TxEndedMeasurands", MeasurandType.power_active_import
+            "SampledDataCtrlr", "TxUpdatedMeasurands", MeasurandEnumType.power_active_import
         )
     )
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
+
+    r: call_result201.SetVariables = (
+        await charge_point_v201.set_config_variables_req(
+            "SampledDataCtrlr", "TxEndedMeasurands", MeasurandEnumType.power_active_import
+        )
+    )
+    set_variable_result: SetVariableResultType = SetVariableResultType(
+        **r.set_variable_result[0]
+    )
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Test Heartbeat
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.heartbeat
+            requested_message=MessageTriggerEnumType.heartbeat
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     test_utility.validation_mode = ValidationMode.STRICT
     assert await wait_for_and_validate(
@@ -460,42 +477,45 @@ async def test_F06(
 
     # Test Metervalues
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.meter_values, evse=EVSEType(id=1)
+            requested_message=MessageTriggerEnumType.meter_values, evse=EVSEType(
+                id=1)
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     def check_meter_value(response):
         for meter_value in response.meter_value:
             value = MeterValueType(**meter_value)
             for sampled_value in value.sampled_value:
                 value = SampledValueType(**sampled_value)
-                assert value.measurand == MeasurandType.current_import
-                assert value.context == ReadingContextType.trigger
+                assert value.measurand == MeasurandEnumType.current_import
+                assert value.context == ReadingContextEnumType.trigger
 
-    r: call201.MeterValuesPayload = call201.MeterValuesPayload(
+    r: call201.MeterValues = call201.MeterValues(
         **await wait_for_and_validate(
             test_utility, charge_point_v201, "MeterValues", {"evseId": 1}
         )
     )
     check_meter_value(r)
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.meter_values
+            requested_message=MessageTriggerEnumType.meter_values
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
-    r: call201.MeterValuesPayload = call201.MeterValuesPayload(
+    r: call201.MeterValues = call201.MeterValues(
         **await wait_for_and_validate(
             test_utility, charge_point_v201, "MeterValues", {"evseId": 1}
         )
     )
     check_meter_value(r)
-    r: call201.MeterValuesPayload = call201.MeterValuesPayload(
+    r: call201.MeterValues = call201.MeterValues(
         **await wait_for_and_validate(
             test_utility, charge_point_v201, "MeterValues", {"evseId": 2}
         )
@@ -503,7 +523,8 @@ async def test_F06(
     check_meter_value(r)
 
     r = await charge_point_v201.trigger_message_req(
-        requested_message=MessageTriggerType.meter_values, evse=EVSEType(id=3)
+        requested_message=MessageTriggerEnumType.meter_values, evse=EVSEType(
+            id=3)
     )
     assert await wait_for_callerror_and_validate(
         test_utility, charge_point_v201, "OccurrenceConstraintViolation"
@@ -511,13 +532,14 @@ async def test_F06(
 
     # Test StatusNotification
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.status_notification,
+            requested_message=MessageTriggerEnumType.status_notification,
             evse=EVSEType(id=1, connector_id=1),
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     assert await wait_for_and_validate(
         test_utility,
@@ -526,17 +548,18 @@ async def test_F06(
         {"evseId": 1, "connectorId": 1, "connectorStatus": "Available"},
     )
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.status_notification,
+            requested_message=MessageTriggerEnumType.status_notification,
             evse=EVSEType(id=1, connector_id=2),
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.rejected
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.rejected
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.status_notification,
+            requested_message=MessageTriggerEnumType.status_notification,
             evse=EVSEType(id=3, connector_id=1),
         )
     )
@@ -545,34 +568,38 @@ async def test_F06(
     )
 
     # F06.FR.12
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.status_notification
+            requested_message=MessageTriggerEnumType.status_notification
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.rejected
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.rejected
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.status_notification,
+            requested_message=MessageTriggerEnumType.status_notification,
             evse=EVSEType(id=1),
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.rejected
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.rejected
 
     # Test TransactionEvent
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.transaction_event, evse=EVSEType(id=1)
+            requested_message=MessageTriggerEnumType.transaction_event, evse=EVSEType(
+                id=1)
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.rejected
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.rejected
 
     test_controller.swipe("001", connectors=[1, 2])
     test_controller.plug_in()
 
-    r: call201.TransactionEventPayload = call201.TransactionEventPayload(
+    r: call201.TransactionEvent = call201.TransactionEvent(
         **await wait_for_and_validate(
             test_utility,
             charge_point_v201,
@@ -583,12 +610,14 @@ async def test_F06(
     transaction_1: TransactionType = TransactionType(**r.transaction_info)
 
     test_utility.validation_mode = ValidationMode.STRICT
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.transaction_event, evse=EVSEType(id=1)
+            requested_message=MessageTriggerEnumType.transaction_event, evse=EVSEType(
+                id=1)
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     assert await wait_for_and_validate(
         test_utility,
@@ -601,12 +630,13 @@ async def test_F06(
         },
     )
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.transaction_event
+            requested_message=MessageTriggerEnumType.transaction_event
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     assert await wait_for_and_validate(
         test_utility,
@@ -623,7 +653,7 @@ async def test_F06(
     test_controller.swipe("002", connectors=[1, 2])
     test_controller.plug_in(connector_id=2)
 
-    r: call201.TransactionEventPayload = call201.TransactionEventPayload(
+    r: call201.TransactionEvent = call201.TransactionEvent(
         **await wait_for_and_validate(
             test_utility,
             charge_point_v201,
@@ -633,7 +663,7 @@ async def test_F06(
     )
     transaction_2: TransactionType = TransactionType(**r.transaction_info)
 
-    r: call201.TransactionEventPayload = call201.TransactionEventPayload(
+    r: call201.TransactionEvent = call201.TransactionEvent(
         **await wait_for_and_validate(
             test_utility,
             charge_point_v201,
@@ -647,12 +677,14 @@ async def test_F06(
     )
 
     test_utility.validation_mode = ValidationMode.STRICT
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.transaction_event, evse=EVSEType(id=2)
+            requested_message=MessageTriggerEnumType.transaction_event, evse=EVSEType(
+                id=2)
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     assert await wait_for_and_validate(
         test_utility,
@@ -665,12 +697,13 @@ async def test_F06(
         },
     )
 
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.transaction_event
+            requested_message=MessageTriggerEnumType.transaction_event
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     assert await wait_for_and_validate(
         test_utility,
@@ -700,15 +733,17 @@ async def test_F06(
     test_controller.plug_out(connector_id=2)
 
     # Test LogStatusNotificaiton
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.log_status_notification
+            requested_message=MessageTriggerEnumType.log_status_notification
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "LogStatusNotification", {"status": "Idle"}
+        test_utility, charge_point_v201, "LogStatusNotification", {
+            "status": "Idle"}
     )
 
     # Waiting for the log callback to be implemented in the everest core
@@ -718,23 +753,24 @@ async def test_F06(
     #     latest_timestamp=datetime.now(timezone.utc).isoformat()
     # )
 
-    # r: call_result201.TriggerMessagePayload = await charge_point_v201.get_log_req(log=log_param, log_type=LogType.diagnostics_log, request_id=10)
+    # r: call_result201.TriggerMessage = await charge_point_v201.get_log_req(log=log_param, log_type=LogType.diagnostics_log, request_id=10)
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "LogStatusNotification", {"status": "Uploading"})
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "LogStatusNotification", {"status": "UploadFailed"})
 
-    # r: call_result201.TriggerMessagePayload = await charge_point_v201.trigger_message_req(requested_message=MessageTriggerType.log_status_notification)
-    # assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    # r: call_result201.TriggerMessage = await charge_point_v201.trigger_message_req(requested_message=MessageTriggerEnumType.log_status_notification)
+    # assert TriggerMessageStatusEnumType(r.status) == TriggerMessageStatusEnumType.accepted
     # test_utility.validation_mode = ValidationMode.STRICT
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "LogStatusNotification", {"status": "Idle"})
     # test_utility.validation_mode = ValidationMode.EASY
 
     # Test FirmwareStatusNotification
-    r: call_result201.TriggerMessagePayload = (
+    r: call_result201.TriggerMessage = (
         await charge_point_v201.trigger_message_req(
-            requested_message=MessageTriggerType.firmware_status_notification
+            requested_message=MessageTriggerEnumType.firmware_status_notification
         )
     )
-    assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    assert TriggerMessageStatusEnumType(
+        r.status) == TriggerMessageStatusEnumType.accepted
 
     assert await wait_for_and_validate(
         test_utility,
@@ -751,11 +787,11 @@ async def test_F06(
 
     # test_utility.validation_mode = ValidationMode.STRICT
 
-    # r: call_result201.UpdateFirmwarePayload = await charge_point_v201.update_firmware(firmware=firmware_type, request_id=10)
+    # r: call_result201.UpdateFirmware = await charge_point_v201.update_firmware(firmware=firmware_type, request_id=10)
 
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "FirmwareStatusNotification", {"status": "DownloadScheduled", "requestId": 10})
-    # r: call_result201.TriggerMessagePayload = await charge_point_v201.trigger_message_req(requested_message=MessageTriggerType.firmware_status_notification)
-    # assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    # r: call_result201.TriggerMessage = await charge_point_v201.trigger_message_req(requested_message=MessageTriggerEnumType.firmware_status_notification)
+    # assert TriggerMessageStatusEnumType(r.status) == TriggerMessageStatusEnumType.accepted
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "FirmwareStatusNotification", {"status": "DownloadScheduled", "requestId": 10})
 
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "FirmwareStatusNotification", {"status": "Downloading", "requestId": 10})
@@ -764,8 +800,8 @@ async def test_F06(
 
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "FirmwareStatusNotification", {"status": "DownloadFailed", "requestId": 10})
 
-    # r: call_result201.TriggerMessagePayload = await charge_point_v201.trigger_message_req(requested_message=MessageTriggerType.firmware_status_notification)
-    # assert TriggerMessageStatusType(r.status) == TriggerMessageStatusType.accepted
+    # r: call_result201.TriggerMessage = await charge_point_v201.trigger_message_req(requested_message=MessageTriggerEnumType.firmware_status_notification)
+    # assert TriggerMessageStatusEnumType(r.status) == TriggerMessageStatusEnumType.accepted
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "FirmwareStatusNotification", {"status": "Idle"})
 
     # test_utility.validation_mode = ValidationMode.EASY
