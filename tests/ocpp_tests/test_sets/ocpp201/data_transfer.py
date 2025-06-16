@@ -94,13 +94,13 @@ class TestOcpp201DataTransferIntegration:
         # wait for libocpp to go online
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
-        data_transfer_result: call_result201.DataTransferPayload = await chargepoint_with_pm.data_transfer_req(
+        data_transfer_result: call_result201.DataTransfer = await chargepoint_with_pm.data_transfer_req(
             message_id=message_id,
             data=data,
             vendor_id="vendor123"
         )
 
-        assert data_transfer_result == call_result201.DataTransferPayload(
+        assert data_transfer_result == call_result201.DataTransfer(
             data="response123",
             status=response_status
         )
@@ -161,13 +161,13 @@ class TestOcpp201DataTransferIntegration:
         # wait for libocpp to go online
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
-        data_transfer_result: call_result201.DataTransferPayload = await chargepoint_with_pm.data_transfer_req(
+        data_transfer_result: call_result201.DataTransfer = await chargepoint_with_pm.data_transfer_req(
             message_id=message_id,
             data={"request987":"hi"},
             vendor_id="vendor123"
         )
 
-        assert data_transfer_result == call_result201.DataTransferPayload(
+        assert data_transfer_result == call_result201.DataTransfer(
             data={'response987':'hello'},
             status=response_status
         )
@@ -208,7 +208,7 @@ class TestOcpp201DataTransferIntegration:
         Use case P02: Data transfer to the CSMS
         """
         central_system.mock.on_data_transfer.side_effect = [
-            call_result201.DataTransferPayload(status=response_status, data="response123")
+            call_result201.DataTransfer(status=response_status, data="response123")
         ]
 
         response = json.dumps("response123")
@@ -249,7 +249,7 @@ class TestOcpp201DataTransferIntegration:
         Use case P02: Data transfer to the CSMS
         """
         central_system.mock.on_data_transfer.side_effect = [
-            call_result201.DataTransferPayload(status=response_status, data={'response987':'hello'})
+            call_result201.DataTransfer(status=response_status, data={'response987':'hello'})
         ]
 
         if message_id is None:
@@ -266,13 +266,13 @@ class TestOcpp201DataTransferIntegration:
         """
         Use case P01: Data transfer to the Charging Station
         """
-        data_transfer_result: call_result201.DataTransferPayload = await charge_point.data_transfer_req(
+        data_transfer_result: call_result201.DataTransfer = await charge_point.data_transfer_req(
             message_id="message123",
             data="request123",
             vendor_id="vendor123"
         )
 
-        assert data_transfer_result == call_result201.DataTransferPayload(
+        assert data_transfer_result == call_result201.DataTransfer(
             data=None,
             status="UnknownVendorId"
         )
@@ -294,7 +294,7 @@ class TestOcpp201DataTransferIntegration:
 
         def data_transfer_side_effect(*args, **kwargs):
             time.sleep(400)
-            return call_result201.DataTransferPayload(status="Accepted", data={'response987':'hello'})
+            return call_result201.DataTransfer(status="Accepted", data={'response987':'hello'})
 
         probe_module_mock_fn = Mock()
         probe_module_mock_fn.side_effect = data_transfer_side_effect
@@ -306,12 +306,12 @@ class TestOcpp201DataTransferIntegration:
         # wait for libocpp to go online
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
-        data_transfer_result: call_result201.DataTransferPayload = await chargepoint_with_pm.data_transfer_req(
+        data_transfer_result: call_result201.DataTransfer = await chargepoint_with_pm.data_transfer_req(
             message_id="message123",
             data="data",
             vendor_id="vendor123"
         )
 
-        assert data_transfer_result == call_result201.DataTransferPayload(
+        assert data_transfer_result == call_result201.DataTransfer(
             status="Rejected"
         )
