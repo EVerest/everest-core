@@ -10,7 +10,7 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../..")))
 from everest.testing.ocpp_utils.fixtures import *
-from ocpp.v201.enums import DeleteCertificateStatusType, AuthorizeCertificateStatusType
+from ocpp.v201.enums import DeleteCertificateStatusEnumType, AuthorizeCertificateStatusEnumType
 from ocpp.v201 import call as call201
 from ocpp.routing import create_route_map
 import asyncio
@@ -23,7 +23,7 @@ from everest_test_utils import *
 
 
 def validate_authorize_req(
-    authorize_req: call201.AuthorizePayload, contains_contract, contains_ocsp
+    authorize_req: call201.Authorize, contains_contract, contains_ocsp
 ):
     return (authorize_req.certificate != None) == contains_contract and (
         authorize_req.iso15118_certificate_hash_data != None
@@ -78,11 +78,12 @@ class TestPlugAndCharge:
         test_controller.plug_in_dc_iso()
 
         assert await wait_for_and_validate(
-            test_utility, charge_point, "Get15118EVCertificate", {"action": "Install"}
+            test_utility, charge_point, "Get15118EVCertificate", {
+                "action": "Install"}
         )
 
         # expect authorize.req
-        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+        authorize_req: call201.Authorize = call201.Authorize(
             **await wait_for_and_validate(test_utility, charge_point, "Authorize", {})
         )
 
@@ -126,11 +127,11 @@ class TestPlugAndCharge:
         Test for contract installation on the vehicle and succeeding authorization request that is rejected by CSMS
         """
 
-        @on(Action.Authorize)
+        @on(Action.authorize)
         def on_authorize(**kwargs):
-            return call_result201.AuthorizePayload(
+            return call_result201.Authorize(
                 id_token_info=IdTokenInfoType(
-                    status=AuthorizationStatusType.blocked,
+                    status=AuthorizationStatusEnumType.blocked,
                 )
             )
 
@@ -147,11 +148,12 @@ class TestPlugAndCharge:
         test_controller.plug_in_dc_iso()
 
         assert await wait_for_and_validate(
-            test_utility, charge_point, "Get15118EVCertificate", {"action": "Install"}
+            test_utility, charge_point, "Get15118EVCertificate", {
+                "action": "Install"}
         )
 
         # expect authorize.req
-        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+        authorize_req: call201.Authorize = call201.Authorize(
             **await wait_for_and_validate(test_utility, charge_point, "Authorize", {})
         )
 
@@ -222,29 +224,31 @@ class TestPlugAndCharge:
             "serialNumber": "3041",
         }
 
-        delete_certificate_req = {"certificate_hash_data": certificate_hash_data}
+        delete_certificate_req = {
+            "certificate_hash_data": certificate_hash_data}
 
         # delete MO root
-        delete_certificate_response: call_result201.DeleteCertificatePayload = (
+        delete_certificate_response: call_result201.DeleteCertificate = (
             await charge_point.delete_certificate_req(
                 **delete_certificate_req,
             )
         )
 
         assert (
-            delete_certificate_response.status == DeleteCertificateStatusType.accepted
+            delete_certificate_response.status == DeleteCertificateStatusEnumType.accepted
         )
 
         test_controller.plug_in_dc_iso()
 
         assert await wait_for_and_validate(
-            test_utility, charge_point, "Get15118EVCertificate", {"action": "Install"}
+            test_utility, charge_point, "Get15118EVCertificate", {
+                "action": "Install"}
         )
 
         test_utility.messages.clear()
 
         # expect authorize.req
-        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+        authorize_req: call201.Authorize = call201.Authorize(
             **await wait_for_and_validate(test_utility, charge_point, "Authorize", {})
         )
 
@@ -326,17 +330,18 @@ class TestPlugAndCharge:
             "serialNumber": "3041",
         }
 
-        delete_certificate_req = {"certificate_hash_data": certificate_hash_data}
+        delete_certificate_req = {
+            "certificate_hash_data": certificate_hash_data}
 
         # delete MO root
-        delete_certificate_response: call_result201.DeleteCertificatePayload = (
+        delete_certificate_response: call_result201.DeleteCertificate = (
             await charge_point.delete_certificate_req(
                 **delete_certificate_req,
             )
         )
 
         assert (
-            delete_certificate_response.status == DeleteCertificateStatusType.accepted
+            delete_certificate_response.status == DeleteCertificateStatusEnumType.accepted
         )
 
         test_controller.plug_in_dc_iso()
@@ -350,7 +355,8 @@ class TestPlugAndCharge:
         )
 
         assert await wait_for_and_validate(
-            test_utility, charge_point, "Get15118EVCertificate", {"action": "Install"}
+            test_utility, charge_point, "Get15118EVCertificate", {
+                "action": "Install"}
         )
 
         test_utility.messages.clear()
@@ -405,11 +411,12 @@ class TestPlugAndCharge:
         Test for contract installation on the vehicle and succeeding authorization request that is rejected by CSMS
         """
 
-        @on(Action.Authorize)
+        @on(Action.authorize)
         def on_authorize(**kwargs):
-            return call_result201.AuthorizePayload(
-                id_token_info=IdTokenInfoType(status=AuthorizationStatusType.blocked),
-                certificate_status=AuthorizeCertificateStatusType.certificate_revoked,
+            return call_result201.Authorize(
+                id_token_info=IdTokenInfoType(
+                    status=AuthorizationStatusEnumType.blocked),
+                certificate_status=AuthorizeCertificateStatusEnumType.certificate_revoked,
             )
 
         setattr(
@@ -428,28 +435,30 @@ class TestPlugAndCharge:
             "serialNumber": "3041",
         }
 
-        delete_certificate_req = {"certificate_hash_data": certificate_hash_data}
+        delete_certificate_req = {
+            "certificate_hash_data": certificate_hash_data}
 
         # delete MO root
-        delete_certificate_response: call_result201.DeleteCertificatePayload = (
+        delete_certificate_response: call_result201.DeleteCertificate = (
             await charge_point.delete_certificate_req(
                 **delete_certificate_req,
             )
         )
 
         assert (
-            delete_certificate_response.status == DeleteCertificateStatusType.accepted
+            delete_certificate_response.status == DeleteCertificateStatusEnumType.accepted
         )
 
         await asyncio.sleep(3)
         test_controller.plug_in_dc_iso()
 
         assert await wait_for_and_validate(
-            test_utility, charge_point, "Get15118EVCertificate", {"action": "Install"}
+            test_utility, charge_point, "Get15118EVCertificate", {
+                "action": "Install"}
         )
 
         # expect authorize.req
-        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+        authorize_req: call201.Authorize = call201.Authorize(
             **await wait_for_and_validate(
                 test_utility,
                 charge_point,
@@ -474,7 +483,6 @@ class TestPlugAndCharge:
             "StatusNotification",
             {"connectorStatus": "Available"},
         )
-
 
     @pytest.mark.asyncio
     @pytest.mark.source_certs_dir(Path(__file__).parent.parent / "everest-aux/certs")
@@ -546,11 +554,12 @@ class TestPlugAndCharge:
         test_controller.plug_in_dc_iso()
 
         assert await wait_for_and_validate(
-            test_utility, charge_point, "Get15118EVCertificate", {"action": "Install"}
+            test_utility, charge_point, "Get15118EVCertificate", {
+                "action": "Install"}
         )
 
         # expect authorize.req
-        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+        authorize_req: call201.Authorize = call201.Authorize(
             **await wait_for_and_validate(test_utility, charge_point, "Authorize", {})
         )
 
@@ -588,17 +597,18 @@ class TestPlugAndCharge:
             "serialNumber": "303c"
         }
 
-        delete_certificate_req = {"certificate_hash_data": certificate_hash_data}
+        delete_certificate_req = {
+            "certificate_hash_data": certificate_hash_data}
 
         # delete MO root
-        delete_certificate_response: call_result201.DeleteCertificatePayload = (
+        delete_certificate_response: call_result201.DeleteCertificate = (
             await charge_point.delete_certificate_req(
                 **delete_certificate_req,
             )
         )
 
         assert (
-            delete_certificate_response.status == DeleteCertificateStatusType.accepted
+            delete_certificate_response.status == DeleteCertificateStatusEnumType.accepted
         )
 
         test_controller.plug_in_dc_iso()
@@ -610,14 +620,14 @@ class TestPlugAndCharge:
             {"connectorStatus": "Occupied"},
         )
 
-        await asyncio.sleep(10) # wait for ISO process to start
-        
+        await asyncio.sleep(10)  # wait for ISO process to start
+
         test_controller.swipe("DEADBEEF")
 
         test_utility.messages.clear()
 
         # expect authorize.req
-        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+        authorize_req: call201.Authorize = call201.Authorize(
             **await wait_for_and_validate(test_utility, charge_point, "Authorize", {})
         )
 
@@ -639,12 +649,10 @@ class TestPlugAndCharge:
         test_controller.plug_out_iso()
 
         assert await wait_for_and_validate(
-        test_utility,
-        charge_point,
-        "TransactionEvent",
-        {
-            "eventType": "Ended",
-        },
-    )
-
-
+            test_utility,
+            charge_point,
+            "TransactionEvent",
+            {
+                "eventType": "Ended",
+            },
+        )

@@ -104,7 +104,8 @@ def validate_meter_values(
     validate_interval(periodic_meter_values, periodic_interval)
     validate_interval(clock_aligned_meter_values, clock_aligned_interval)
 
-    validate_clock_alignment(clock_aligned_meter_values, clock_aligned_interval)
+    validate_clock_alignment(
+        clock_aligned_meter_values, clock_aligned_interval)
 
     validate_measurands(periodic_meter_values, periodic_measurands)
     validate_measurands(clock_aligned_meter_values, clock_aligned_measurands)
@@ -119,7 +120,8 @@ def validate_clock_alignment(meter_values, interval):
 
     for meter_value in meter_values:
         dt = parser.parse(meter_value["timestamp"])
-        diff = (datetime.min - dt.replace(tzinfo=None)) % timedelta(seconds=interval)
+        diff = (datetime.min - dt.replace(tzinfo=None)
+                ) % timedelta(seconds=interval)
         if diff.seconds > 2 and diff.minutes == 0 and diff.hours == 0:
             return False
     return True
@@ -168,7 +170,7 @@ def dont_validate_boot_notification(x, y, z):
 
 
 def validate_composite_schedule(
-    meta_data, msg, exp_payload: call_result.GetCompositeSchedulePayload
+    meta_data, msg, exp_payload: call_result.GetCompositeSchedule
 ):
     return (
         msg.payload["status"] == exp_payload.status
@@ -322,7 +324,8 @@ async def wait_for_callerror_and_validate(
         and validate_call_error_against_old_messages(meta_data, exp_payload)
     ):
         logging.debug(
-            f"Found correct CallError message with payload {exp_payload} in old messages"
+            f"Found correct CallError message with payload {
+                exp_payload} in old messages"
         )
         logging.debug("OK!")
         return True

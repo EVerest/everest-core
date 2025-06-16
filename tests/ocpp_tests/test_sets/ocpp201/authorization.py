@@ -13,7 +13,7 @@ from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate,
 from everest.testing.ocpp_utils.fixtures import *
 
 from everest_test_utils import * # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
-from ocpp.v201.enums import (Action, IdTokenType as IdTokenTypeEnum, SetVariableStatusType, ClearCacheStatusType, ConnectorStatusType,GetVariableStatusType)
+from ocpp.v201.enums import (Action, IdTokenEnumType as IdTokenTypeEnum, SetVariableStatusEnumType, ClearCacheStatusEnumType, ConnectorStatusEnumType,GetVariableStatusEnumType)
 from ocpp.v201.datatypes import *
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
@@ -37,8 +37,9 @@ async def test_authorize_01(
         test_utility,
         charge_point_v201,
         "Authorize",
-        call201.AuthorizePayload(
-            id_token=IdTokenType(id_token="DEADBEEF", type=IdTokenTypeEnum.iso14443)
+        call201.Authorize(
+            id_token=IdTokenType(id_token="DEADBEEF",
+                                 type=IdTokenTypeEnum.iso14443)
         ),
     )
 
@@ -63,7 +64,7 @@ async def test_c09(
     """
 
     # Enable AuthCacheCtrlr
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "Enabled", "true"
         )
@@ -71,10 +72,10 @@ async def test_c09(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Enable LocalPreAuthorize
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "LocalPreAuthorize", "true"
         )
@@ -82,10 +83,10 @@ async def test_c09(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Set MasterPassGroupId
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "MasterPassGroupId", "00000000"
         )
@@ -93,10 +94,10 @@ async def test_c09(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Set AuthCacheLifeTime
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "LifeTime", "86400"
         )
@@ -104,48 +105,48 @@ async def test_c09(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Clear cache
-    r: call_result201.ClearCachePayload = await charge_point_v201.clear_cache_req()
-    assert r.status == ClearCacheStatusType.accepted
+    r: call_result201.ClearCache = await charge_point_v201.clear_cache_req()
+    assert r.status == ClearCacheStatusEnumType.accepted
 
     accepted_tags = ["001", "002"]
 
     def get_token_info(token: str):
         if token in accepted_tags:
             return IdTokenInfoType(
-                status=AuthorizationStatusType.accepted,
+                status=AuthorizationStatusEnumType.accepted,
                 group_id_token=IdTokenType(
                     id_token="123", type=IdTokenTypeEnum.central
                 ),
             )
         else:
             return IdTokenInfoType(
-                status=AuthorizationStatusType.blocked,
+                status=AuthorizationStatusEnumType.blocked,
                 group_id_token=IdTokenType(
                     id_token="123", type=IdTokenTypeEnum.central
                 ),
             )
 
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
-        msg = call201.AuthorizePayload(**kwargs)
+        msg = call201.Authorize(**kwargs)
         msg_token = IdTokenType(**msg.id_token)
-        return call_result201.AuthorizePayload(
+        return call_result201.Authorize(
             id_token_info=get_token_info(msg_token.id_token)
         )
 
-    @on(Action.TransactionEvent)
+    @on(Action.transaction_event)
     def on_transaction_event(**kwargs):
-        msg = call201.TransactionEventPayload(**kwargs)
+        msg = call201.TransactionEvent(**kwargs)
         if msg.id_token != None:
             msg_token = IdTokenType(**msg.id_token)
-            return call_result201.TransactionEventPayload(
+            return call_result201.TransactionEvent(
                 id_token_info=get_token_info(msg_token.id_token)
             )
         else:
-            return call_result201.TransactionEventPayload()
+            return call_result201.TransactionEvent()
 
     setattr(charge_point_v201, "on_authorize", on_authorize)
     setattr(charge_point_v201, "on_transaction_event", on_transaction_event)
@@ -167,7 +168,7 @@ async def test_c09(
         test_utility,
         charge_point_v201,
         "Authorize",
-        call201.AuthorizePayload(
+        call201.Authorize(
             id_token=IdTokenType(id_token="001", type=IdTokenTypeEnum.iso14443)
         ),
     )
@@ -175,7 +176,8 @@ async def test_c09(
     test_controller.plug_in()
     # eventType=Started
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
 
     test_controller.swipe("002")
@@ -183,7 +185,7 @@ async def test_c09(
         test_utility,
         charge_point_v201,
         "Authorize",
-        call201.AuthorizePayload(
+        call201.Authorize(
             id_token=IdTokenType(id_token="002", type=IdTokenTypeEnum.iso14443)
         ),
     )
@@ -214,7 +216,8 @@ async def test_c09(
     test_controller.plug_in()
     # eventType=Started
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
 
     # C09.FR.07: With a valid token in cache with the same groupId the CS shall end
@@ -250,7 +253,8 @@ async def test_c09(
     test_controller.swipe("001")
     test_controller.plug_in()
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
 
     # C09.FR.11: Swipe card with groupIdToken the same as transacton but status blocked SHALL NOT stop the transaction
@@ -283,7 +287,7 @@ async def test_c10_c11_c12(
     connector_id = 1
 
     # Enable AuthCacheCtrlr
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "Enabled", "true"
         )
@@ -291,10 +295,10 @@ async def test_c10_c11_c12(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Enable LocalPreAuthorize
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "LocalPreAuthorize", "true"
         )
@@ -302,10 +306,10 @@ async def test_c10_c11_c12(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Set AuthCacheLifeTime
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "LifeTime", "86400"
         )
@@ -313,32 +317,35 @@ async def test_c10_c11_c12(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Clear cache
-    r: call_result201.ClearCachePayload = await charge_point_v201.clear_cache_req()
-    assert r.status == ClearCacheStatusType.accepted
+    r: call_result201.ClearCache = await charge_point_v201.clear_cache_req()
+    assert r.status == ClearCacheStatusEnumType.accepted
 
     test_controller.swipe("DEADBEEF")
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
         "Authorize",
-        call201.AuthorizePayload(
-            id_token=IdTokenType(id_token="DEADBEEF", type=IdTokenTypeEnum.iso14443)
+        call201.Authorize(
+            id_token=IdTokenType(id_token="DEADBEEF",
+                                 type=IdTokenTypeEnum.iso14443)
         ),
     )
 
     test_controller.plug_in()
     # eventType=Started
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
     test_utility.messages.clear()
     test_controller.plug_out()
     # eventType=Ended
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )
 
     test_utility.messages.clear()
@@ -355,9 +362,9 @@ async def test_c10_c11_c12(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.occupied,
+            ConnectorStatusEnumType.occupied,
             evse_id,
             connector_id,
         ),
@@ -365,7 +372,7 @@ async def test_c10_c11_c12(
     )
 
     # because LocalPreAuthorize is true we dont expect an authorize here
-    r: call201.TransactionEventPayload = call201.TransactionEventPayload(
+    r: call201.TransactionEvent = call201.TransactionEvent(
         **await wait_for_and_validate(
             test_utility,
             charge_point_v201,
@@ -375,7 +382,7 @@ async def test_c10_c11_c12(
     )
 
     # Disable LocalPreAuthorize
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "LocalPreAuthorize", "false"
         )
@@ -383,10 +390,10 @@ async def test_c10_c11_c12(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Set AuthCacheLifeTime to 1s
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "LifeTime", "1"
         )
@@ -394,7 +401,7 @@ async def test_c10_c11_c12(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     test_utility.messages.clear()
     test_controller.plug_out()
@@ -403,9 +410,9 @@ async def test_c10_c11_c12(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id,
             connector_id,
         ),
@@ -414,7 +421,8 @@ async def test_c10_c11_c12(
 
     # eventType=Ended
     await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )
 
     test_utility.forbidden_actions.clear()
@@ -425,13 +433,14 @@ async def test_c10_c11_c12(
         test_utility,
         charge_point_v201,
         "Authorize",
-        call201.AuthorizePayload(
-            id_token=IdTokenType(id_token="DEADBEEF", type=IdTokenTypeEnum.iso14443)
+        call201.Authorize(
+            id_token=IdTokenType(id_token="DEADBEEF",
+                                 type=IdTokenTypeEnum.iso14443)
         ),
     )
 
     # Enable LocalPreAuthorize
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "LocalPreAuthorize", "true"
         )
@@ -439,27 +448,29 @@ async def test_c10_c11_c12(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     test_controller.plug_in()
     # eventType=Started
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
     test_utility.messages.clear()
     test_controller.plug_out()
     # eventType=Ended
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id,
             connector_id,
         ),
@@ -494,28 +505,29 @@ async def test_c15(
     connector_id = 1
 
     # make an unknown IdToken
-    id_tokenC15 = IdTokenType(id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
+    id_tokenC15 = IdTokenType(
+        id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
 
     # Generate a transaction response
     # TODO: This needs to be adapted for C15.FR.03-07 use cases
-    @on(Action.TransactionEvent)
+    @on(Action.transaction_event)
     def on_transaction_event(**kwargs):
-        msg = call201.TransactionEventPayload(**kwargs)
+        msg = call201.TransactionEvent(**kwargs)
         if msg.id_token != None:
             if stop_tx_on_invalid_id != None:
-                return call_result201.TransactionEventPayload(
+                return call_result201.TransactionEvent(
                     id_token_info=IdTokenInfoType(
-                        status=AuthorizationStatusType.unknown
+                        status=AuthorizationStatusEnumType.unknown
                     )
                 )
             else:
-                return call_result201.TransactionEventPayload(
+                return call_result201.TransactionEvent(
                     id_token_info=IdTokenInfoType(
-                        status=AuthorizationStatusType.accepted
+                        status=AuthorizationStatusEnumType.accepted
                     )
                 )
         else:
-            return call_result201.TransactionEventPayload()
+            return call_result201.TransactionEvent()
 
     central_system_v201.chargepoint.route_map = create_route_map(
         central_system_v201.chargepoint
@@ -527,7 +539,7 @@ async def test_c15(
     )
 
     # Enable AuthCacheCtrlr
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "Enabled", "true"
         )
@@ -535,10 +547,10 @@ async def test_c15(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Enable LocalPreAuthorize
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "LocalPreAuthorize", "true"
         )
@@ -546,10 +558,10 @@ async def test_c15(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Set AuthCacheLifeTime
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "LifeTime", "86400"
         )
@@ -557,14 +569,14 @@ async def test_c15(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Clear cache
-    r: call_result201.ClearCachePayload = await charge_point_v201.clear_cache_req()
-    assert r.status == ClearCacheStatusType.accepted
+    r: call_result201.ClearCache = await charge_point_v201.clear_cache_req()
+    assert r.status == ClearCacheStatusEnumType.accepted
 
     # set AuthorizeRemoteStart to false
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "AuthorizeRemoteStart", "false"
         )
@@ -572,13 +584,13 @@ async def test_c15(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # accept all transaction requests for now
     stop_tx_on_invalid_id = None
 
     # Get the value of MaxEnergyOnInvalidId
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "TxCtrlr", "MaxEnergyOnInvalidId"
         )
@@ -588,12 +600,12 @@ async def test_c15(
     )
     if (
         get_variables_result.attribute_status
-        == GetVariableStatusType.not_supported_attribute_type
+        == GetVariableStatusEnumType.not_supported_attribute_type
     ):
         pass
     else:
         # Enable LocalPreAuthorize
-        r: call_result201.SetVariablesPayload = (
+        r: call_result201.SetVariables = (
             await charge_point_v201.set_config_variables_req(
                 "TxCtrlr", "MaxEnergyOnInvalidId", "0"
             )
@@ -601,7 +613,7 @@ async def test_c15(
         set_variable_result: SetVariableResultType = SetVariableResultType(
             **r.set_variable_result[0]
         )
-        assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+        assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     log.debug(
         "==============================================C15.FR.08 ===================================="
@@ -610,7 +622,7 @@ async def test_c15(
         "The Charging Station rejects the unknown IdToken if OfflineTxForUnknownIdEnabled is set False "
     )
     # Disable offline authorization for unknown ID
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "OfflineTxForUnknownIdEnabled", "false"
         )
@@ -618,7 +630,7 @@ async def test_c15(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     test_utility.messages.clear()
 
@@ -657,9 +669,9 @@ async def test_c15(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id,
             connector_id,
         ),
@@ -677,7 +689,7 @@ async def test_c15(
         "The Charging Station accepts the unknown IdToken if OfflineTxForUnknownIdEnabled is set True "
     )
     # Enable offline authorization for unknown ID
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "OfflineTxForUnknownIdEnabled", "true"
         )
@@ -685,7 +697,7 @@ async def test_c15(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Disconnect CS
     log.debug(" Disconnect the CS from the CSMS")
@@ -715,14 +727,16 @@ async def test_c15(
     )
     # should send a  Transaction event C15.FR.02
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
 
     # swipe id tag to finish transaction
     test_controller.swipe(id_tokenC15.id_token)
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )
 
     # unplug
@@ -735,20 +749,20 @@ async def test_c15(
     # The transaction is still ongoing AND StopTxOnInvalidId is true AND TxStopPoint does NOT contain: (Authorized OR PowerPathClosed OR EnergyTransfer)
     # log.debug("=================================================C15.FR.03 ======================================================")
     #  # Enable stop Tx on invalid Id
-    # r: call_result201.SetVariablesPayload = await charge_point_v201.set_config_variables_req("TxCtrlr","StopTxOnInvalidId","true")
+    # r: call_result201.SetVariables = await charge_point_v201.set_config_variables_req("TxCtrlr","StopTxOnInvalidId","true")
     # set_variable_result: SetVariableResultType = SetVariableResultType(**r.set_variable_result[0])
-    # assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    # assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # # Get the value of StopTxOnInvalidId
-    # r: call_result201.GetVariablesPayload = await charge_point_v201.get_config_variables_req("TxCtrlr","StopTxOnInvalidId")
+    # r: call_result201.GetVariables = await charge_point_v201.get_config_variables_req("TxCtrlr","StopTxOnInvalidId")
     # get_variables_result: GetVariableResultType = GetVariableResultType(**r.get_variable_result[0])
-    # assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    # assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     # stop_tx_on_invalid_id = json.loads(get_variables_result.attribute_value)
 
     # # Get the value of TxStopPoint
-    # r: call_result201.GetVariablesPayload = await charge_point_v201.get_config_variables_req("TxCtrlr","TxStopPoint")
+    # r: call_result201.GetVariables = await charge_point_v201.get_config_variables_req("TxCtrlr","TxStopPoint")
     # get_variables_result: GetVariableResultType = GetVariableResultType(**r.get_variable_result[0])
-    # assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    # assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
 
     # # tx_stop_point = json.loads(get_variables_result.attribute_value)
     # # log.debug(" TxStop Point: %s " %(tx_stop_point))
@@ -795,7 +809,7 @@ async def test_c15(
         "=================================================C15.FR.04 ======================================================"
     )
     # Enable stop Tx on invalid Id
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "TxCtrlr", "StopTxOnInvalidId", "true"
         )
@@ -803,22 +817,22 @@ async def test_c15(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Get the value of StopTxOnInvalidId
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req("TxCtrlr", "StopTxOnInvalidId")
     )
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     stop_tx_on_invalid_id = json.loads(get_variables_result.attribute_value)
 
     # # Get the value of TxStopPoint
-    # r: call_result201.GetVariablesPayload = await charge_point_v201.get_config_variables_req("TxCtrlr","TxStopPoint")
+    # r: call_result201.GetVariables = await charge_point_v201.get_config_variables_req("TxCtrlr","TxStopPoint")
     # get_variables_result: GetVariableResultType = GetVariableResultType(**r.get_variable_result[0])
-    # assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    # assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
 
     # tx_stop_point = json.loads(get_variables_result.attribute_value)
     # log.debug(" TxStop Point: %s " %(tx_stop_point))
@@ -848,7 +862,8 @@ async def test_c15(
 
     # should send a  Transaction event C15.FR.02
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
 
     # should send a  Transaction event C15.FR.04 with ended
@@ -870,8 +885,8 @@ async def test_c15(
 
     # #connector status should still be occupied
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "StatusNotification",
-    #                                    call201.StatusNotificationPayload(datetime.now().isoformat(),
-    #                                                                      ConnectorStatusType.occupied, evse_id, connector_id),
+    #                                    call201.StatusNotification(datetime.now().isoformat(),
+    #                                                                      ConnectorStatusEnumType.occupied, evse_id, connector_id),
     #                                    validate_status_notification_201)
 
     #  # swipe id tag to authorize
@@ -879,8 +894,8 @@ async def test_c15(
 
     #  #connector status should still be available
     # assert await wait_for_and_validate(test_utility, charge_point_v201, "StatusNotification",
-    #                                    call201.StatusNotificationPayload(datetime.now().isoformat(),
-    #                                                                      ConnectorStatusType.available, evse_id, connector_id),
+    #                                    call201.StatusNotification(datetime.now().isoformat(),
+    #                                                                      ConnectorStatusEnumType.available, evse_id, connector_id),
     #                                    validate_status_notification_201)
 
     # C15.FR.05 The cable should be locked until the user presents the token
@@ -895,7 +910,7 @@ async def test_c15(
     )
 
     # Disable stop Tx on invalid Id
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "TxCtrlr", "StopTxOnInvalidId", "false"
         )
@@ -903,16 +918,16 @@ async def test_c15(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Get the value of StopTxOnInvalidId
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req("TxCtrlr", "StopTxOnInvalidId")
     )
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     stop_tx_on_invalid_id = json.loads(get_variables_result.attribute_value)
 
     # Disconnect CS
@@ -941,7 +956,8 @@ async def test_c15(
 
     # should send a  Transaction event C15.FR.02
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
 
     assert await wait_for_and_validate(
@@ -969,25 +985,25 @@ async def test_c15(
     # log.debug("==============================================C15.FR.07 ====================================")
 
     # #Disable stop Tx on invalid Id
-    # r: call_result201.SetVariablesPayload = await charge_point_v201.set_config_variables_req("TxCtrlr","StopTxOnInvalidId","false")
+    # r: call_result201.SetVariables = await charge_point_v201.set_config_variables_req("TxCtrlr","StopTxOnInvalidId","false")
     # set_variable_result: SetVariableResultType = SetVariableResultType(**r.set_variable_result[0])
-    # assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    # assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # # Get the value of StopTxOnInvalidId
-    # r: call_result201.GetVariablesPayload = await charge_point_v201.get_config_variables_req("TxCtrlr","StopTxOnInvalidId")
+    # r: call_result201.GetVariables = await charge_point_v201.get_config_variables_req("TxCtrlr","StopTxOnInvalidId")
     # get_variables_result: GetVariableResultType = GetVariableResultType(**r.get_variable_result[0])
-    # assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    # assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     # stop_tx_on_invalid_id = json.loads(get_variables_result.attribute_value)
 
     #  #Set a value for MaxEnergyOnInvalidId
-    # r: call_result201.SetVariablesPayload = await charge_point_v201.set_config_variables_req("TxCtrlr","MaxEnergyOnInvalidId","16")
+    # r: call_result201.SetVariables = await charge_point_v201.set_config_variables_req("TxCtrlr","MaxEnergyOnInvalidId","16")
     # set_variable_result: SetVariableResultType = SetVariableResultType(**r.set_variable_result[0])
-    # assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    # assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # # Get the value of MaxEnergyOnInvalidId
-    # r: call_result201.GetVariablesPayload = await charge_point_v201.get_config_variables_req("TxCtrlr","MaxEnergyOnInvalidId")
+    # r: call_result201.GetVariables = await charge_point_v201.get_config_variables_req("TxCtrlr","MaxEnergyOnInvalidId")
     # get_variables_result: GetVariableResultType = GetVariableResultType(**r.get_variable_result[0])
-    # if get_variables_result.attribute_status == GetVariableStatusType.accepted:
+    # if get_variables_result.attribute_status == GetVariableStatusEnumType.accepted:
     #     max_energy_on_invalid_id = json.loads(get_variables_result.attribute_value)
     #     log.debug("max energy on invalid Id %s " %max_energy_on_invalid_id)
     # else:

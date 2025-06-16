@@ -6,7 +6,7 @@ from everest.testing.core_utils.controller.test_controller_interface import (
     TestController,
 )
 
-from ocpp.v201.enums import OperationalStatusType, ChangeAvailabilityStatusType
+from ocpp.v201.enums import OperationalStatusEnumType, ChangeAvailabilityStatusEnumType
 from ocpp.v201.datatypes import EVSEType
 from ocpp.v201 import call_result as call_result
 
@@ -34,12 +34,12 @@ async def test_g03(
     evse_2 = EVSEType(id=2)
     evse_2_1 = EVSEType(id=2, connector_id=1)
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_1_1
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_1_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
@@ -47,12 +47,12 @@ async def test_g03(
         {"evseId": 1, "connectorId": 1, "connectorStatus": "Unavailable"},
     )
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_2_1
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_2_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
@@ -64,50 +64,50 @@ async def test_g03(
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_1
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_2
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_2
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative, evse=evse_1
+            operational_status=OperationalStatusEnumType.operative, evse=evse_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative, evse=evse_2
+            operational_status=OperationalStatusEnumType.operative, evse=evse_2
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
     test_utility.forbidden_actions.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative, evse=evse_1_1
+            operational_status=OperationalStatusEnumType.operative, evse=evse_1_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
@@ -139,12 +139,12 @@ async def test_g03(
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative, evse=evse_2_1
+            operational_status=OperationalStatusEnumType.operative, evse=evse_2_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
@@ -162,46 +162,47 @@ async def test_g03(
         {"eventType": "Started", "evse": {"id": 1}},
     )
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_1_1
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_1_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.scheduled
+    assert r.status == ChangeAvailabilityStatusEnumType.scheduled
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_2_1
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_2_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_1
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.scheduled
+    assert r.status == ChangeAvailabilityStatusEnumType.scheduled
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_2
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_2
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
     test_controller.plug_out()
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )
 
     assert await wait_for_and_validate(
@@ -220,28 +221,28 @@ async def test_g03(
     test_utility.messages.clear()
 
     # try state that EVSE is already in
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative, evse=evse_1_1
+            operational_status=OperationalStatusEnumType.inoperative, evse=evse_1_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative, evse=evse_1
+            operational_status=OperationalStatusEnumType.operative, evse=evse_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative, evse=evse_1_1
+            operational_status=OperationalStatusEnumType.operative, evse=evse_1_1
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     assert await wait_for_and_validate(
         test_utility,
@@ -262,12 +263,12 @@ async def test_g04(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative
+            operational_status=OperationalStatusEnumType.operative
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
@@ -281,25 +282,26 @@ async def test_g04(
         {"eventType": "Started", "evse": {"id": 1}},
     )
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative
+            operational_status=OperationalStatusEnumType.operative
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative
+            operational_status=OperationalStatusEnumType.inoperative
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.scheduled
+    assert r.status == ChangeAvailabilityStatusEnumType.scheduled
 
     test_controller.plug_out()
     test_utility.messages.clear()
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )
 
     assert await wait_for_and_validate(
@@ -337,12 +339,12 @@ async def test_g04(
         {"evseId": 2, "connectorId": 1, "connectorStatus": "Unavailable"},
     )
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative
+            operational_status=OperationalStatusEnumType.operative
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     test_utility.messages.clear()
 
@@ -376,21 +378,21 @@ async def test_g04(
         {"eventType": "Started", "evse": {"id": 1}},
     )
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.inoperative
+            operational_status=OperationalStatusEnumType.inoperative
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.scheduled
+    assert r.status == ChangeAvailabilityStatusEnumType.scheduled
 
     test_utility.messages.clear()
 
-    r: call_result.ChangeAvailabilityPayload = (
+    r: call_result.ChangeAvailability = (
         await charge_point_v201.change_availablility_req(
-            operational_status=OperationalStatusType.operative
+            operational_status=OperationalStatusEnumType.operative
         )
     )
-    assert r.status == ChangeAvailabilityStatusType.accepted
+    assert r.status == ChangeAvailabilityStatusEnumType.accepted
 
     await asyncio.sleep(2)
 
@@ -398,7 +400,8 @@ async def test_g04(
     test_utility.messages.clear()
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )
 
     assert await wait_for_and_validate(

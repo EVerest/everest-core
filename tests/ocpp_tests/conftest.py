@@ -12,9 +12,11 @@ from everest.testing.ocpp_utils.fixtures import (
     ocpp_version,
     charge_point,
     charge_point_v201,
+    charge_point_v21,
     central_system,
     central_system_v16,
     central_system_v201,
+    central_system_v21,
     central_system_v16_standalone,
     test_utility,
 )
@@ -60,7 +62,8 @@ def core_config(request) -> EverestEnvironmentCoreConfiguration:
         )
     else:
         everest_config_path = (
-            Path(__file__).parent / "test_sets/everest-aux/config" / marker.args[0]
+            Path(__file__).parent /
+            "test_sets/everest-aux/config" / marker.args[0]
         )
 
     return EverestEnvironmentCoreConfiguration(
