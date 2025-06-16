@@ -38,6 +38,7 @@ struct Conf {
     int auth_timeout_pnc;
     int auth_timeout_eim;
     bool enable_sdp_server;
+    bool enable_service_hpc1;
 };
 
 class EvseV2G : public Everest::ModuleBase {

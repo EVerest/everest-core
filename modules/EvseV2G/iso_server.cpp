@@ -19,6 +19,7 @@
 using namespace openssl;
 using namespace crypto::openssl;
 
+#include "EvseV2G.hpp"
 #include "iso_server.hpp"
 #include "log.hpp"
 #include "tools.hpp"
@@ -648,6 +649,19 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
         }
     }
 
+    /* Include the HPC1 Service if it is enabled */
+    if (conn->ctx->service_hpc1_enabled) {
+        res->ServiceList.Service.arrayLen++;
+        auto hpc1_service = iso2_ServiceType{};
+
+        init_iso2_ServiceType(&hpc1_service);
+
+        hpc1_service.ServiceID = 63000;
+        hpc1_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
+        hpc1_service.FreeService = true;
+        add_service_to_service_list(conn->ctx, hpc1_service);
+    }
+
     /*  The SECC always returns all supported services for all scopes if no specific ServiceScope has been
         indicated in request message. */
     if (scope_idx == (int8_t)-1) {
@@ -1192,7 +1206,11 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
 
         if ((req->MaxEntriesSAScheduleTuple_isUsed == (unsigned int)1) &&
             (req->MaxEntriesSAScheduleTuple < res->SAScheduleList.SAScheduleTuple.arrayLen)) {
-            dlog(DLOG_LEVEL_WARNING, "EV's max. SA-schedule-tuple entries exceeded");
+            if (conn->ctx->service_hpc1_enabled) {
+                dlog(DLOG_LEVEL_INFO, "Ignored MaxEntriesSAScheduleTuple parameter, because HPC1 is enabled");
+            } else {
+                dlog(DLOG_LEVEL_WARNING, "EV's max. SA-schedule-tuple entries exceeded");
+            }
         }
     } else {
         res->EVSEProcessing = iso2_EVSEProcessingType_Ongoing;
@@ -1435,8 +1453,10 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
         break;
 
     case iso2_chargeProgressType_Renegotiate:
-        conn->ctx->session.renegotiation_required = true;
-        break;
+        if (not conn->ctx->service_hpc1_enabled) {
+            conn->ctx->session.renegotiation_required = true;
+            break;
+        }
 
     default:
         dlog(DLOG_LEVEL_ERROR, "Unknown ChargeProgress %d received, signaling error", req->ChargeProgress);
@@ -1498,7 +1518,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
-    if ((req->ChargeProgress == iso2_chargeProgressType_Renegotiate) &&
+    if ((req->ChargeProgress == iso2_chargeProgressType_Renegotiate && not conn->ctx->service_hpc1_enabled) &&
         ((conn->ctx->last_v2g_msg == V2G_CURRENT_DEMAND_MSG) || (conn->ctx->last_v2g_msg == V2G_CHARGING_STATUS_MSG))) {
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY; // [V2G-813]
 
