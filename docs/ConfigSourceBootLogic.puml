@@ -1,0 +1,42 @@
+@startuml
+title Boot Source Decision Based on config, db, source
+
+start
+
+if ("config AND db are provided") then (yes)
+    if ("source is missing") then (yes)
+        :Error: source required when both config and db are set;
+        stop
+    else (no)
+        if ("source == db") then (yes)
+            :Boot from Database;
+            stop
+        else if ("source == config") then (yes)
+            :Boot from YAML Config;
+            stop
+        else if ("source == db_fallback_config") then (yes)
+            :Check if DB is valid;
+            if ("valid") then (yes)
+                :Boot from Database;
+                stop
+            else (no)
+                :Boot from YAML Config;
+                stop
+            endif
+        else (no)
+            :Error: Unknown source value;
+            stop
+        endif
+    endif
+else if ("config is provided") then (yes)
+    :Boot from YAML Config;
+    stop
+else if ("db is provided") then (yes)
+    :Boot from Database;
+    stop
+else (no)
+    :Error: Neither config nor db provided;
+    stop
+endif
+
+@enduml

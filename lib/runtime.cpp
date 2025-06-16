@@ -38,78 +38,37 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     // if prefix or config is empty, we assume they have not been set!
     // if they have been set, check their validity, otherwise bail out!
 
-    if (config_.length() != 0) {
-        try {
-            config_file = assert_file(config_, "User profided config");
-        } catch (const BootException& e) {
-            if (has_extension(config_file, ".yaml")) {
-                throw;
-            }
+    this->boot_source = ConfigBootSource::YamlFile;
 
-            // otherwise, we propbably got a simple config file name
-        }
-    }
-
-    fs::path prefix;
-    if (prefix_.length() != 0) {
-        // user provided
-        prefix = assert_dir(prefix_, "User provided prefix");
-    }
-
-    if (config_file.empty()) {
-        auto config_file_prefix = prefix;
-        if (config_file_prefix.empty()) {
-            config_file_prefix = assert_dir(defaults::PREFIX, "Default prefix");
-        }
-
-        if (config_file_prefix.string() == "/usr") {
-            // we're going to look in /etc, which isn't prefixed by /usr
-            config_file_prefix = "/";
-        }
-
-        if (config_.length() != 0) {
-            // user provided short form
-
-            const auto user_config_file =
-                config_file_prefix / defaults::SYSCONF_DIR / defaults::NAMESPACE / fmt::format("{}.yaml", config_);
-
-            const auto short_form_alias = fmt::format("User provided (by using short form: '{}')", config_);
-
-            config_file = assert_file(user_config_file, short_form_alias);
-        } else {
-            // default
-            config_file =
-                assert_file(config_file_prefix / defaults::SYSCONF_DIR / defaults::NAMESPACE / defaults::CONFIG_NAME,
-                            "Default config");
-        }
-    }
-
-    // now the config file should have been found
-    if (config_file.empty()) {
-        throw std::runtime_error("Assertion for found config file failed");
-    }
-
-    config = load_yaml(config_file);
-    if (config == nullptr) {
-        EVLOG_info << "Config file is null, treating it as empty";
-        config = json::object();
-    } else if (!config.is_object()) {
-        throw BootException(fmt::format("Config file '{}' is not an object", config_file.string()));
-    }
+    init_prefix_and_data_dir(prefix_);
+    init_config_file(config_);
     const auto settings = everest::config::parse_settings(config.value("settings", json::object()));
-    if (prefix.empty()) {
-        if (settings.prefix.has_value()) {
-            const auto settings_prefix = settings.prefix.value();
-            if (!settings_prefix.is_absolute()) {
-                throw BootException("Setting a non-absolute directory for the prefix is not allowed");
-            }
+    if (settings.prefix.has_value()) {
+        EVLOG_warning << "Setting the prefix in the config file is deprecated. Please use the --prefix command line "
+                         "option instead.";
+    }
+    init_settings(settings);
+}
 
-            prefix = assert_dir(settings_prefix, "Config provided prefix");
-        } else {
-            prefix = assert_dir(defaults::PREFIX, "Default prefix");
-        }
+ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& db_, DatabaseTag) {
+    this->boot_source = ConfigBootSource::Database;
+    init_prefix_and_data_dir(prefix_);
+    throw BootException("Database boot source is not supported in this version of EVerest");
+}
+
+ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_, const std::string& db_) {
+    this->boot_source = ConfigBootSource::DatabaseFallbackYaml;
+    init_prefix_and_data_dir(prefix_);
+    throw BootException("Database fallback YAML boot source is not supported in this version of EVerest");
+}
+
+void ManagerSettings::init_settings(const everest::config::Settings& settings) {
+    if (this->runtime_settings.prefix.empty()) {
+        throw std::runtime_error(
+            "Prefix must be set before initializing the settings. Please call init_prefix_and_data_dir() first.");
     }
 
+    const auto prefix = this->runtime_settings.prefix;
     fs::path etc_dir;
     {
         // etc directory
@@ -340,6 +299,80 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
 
     populate_runtime_settings(this->runtime_settings, prefix, etc_dir, data_dir, modules_dir, logging_config_file,
                               telemetry_prefix, telemetry_enabled, validate_schema);
+}
+
+void ManagerSettings::init_prefix_and_data_dir(const std::string& prefix_) {
+    fs::path prefix;
+    if (prefix_.length() != 0) {
+        // user provided
+        prefix = assert_dir(prefix_, "User provided prefix");
+    }
+    if (prefix.empty()) {
+        prefix = assert_dir(defaults::PREFIX, "Default prefix");
+    }
+    runtime_settings.data_dir =
+        assert_dir((prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE).string(), "Default share directory");
+    runtime_settings.prefix = prefix;
+}
+
+void ManagerSettings::init_config_file(const std::string& config_) {
+    if (this->runtime_settings.prefix.empty()) {
+        throw std::runtime_error(
+            "Prefix must be set before initializing the config file. Please call init_prefix_and_data_dir() first.");
+    }
+
+    if (config_.length() != 0) {
+        try {
+            config_file = assert_file(config_, "User profided config");
+        } catch (const BootException& e) {
+            if (has_extension(config_file, ".yaml")) {
+                throw;
+            }
+
+            // otherwise, we propbably got a simple config file name
+        }
+    }
+
+    if (config_file.empty()) {
+        auto config_file_prefix = this->runtime_settings.prefix;
+        if (config_file_prefix.empty()) {
+            config_file_prefix = assert_dir(defaults::PREFIX, "Default prefix");
+        }
+
+        if (config_file_prefix.string() == "/usr") {
+            // we're going to look in /etc, which isn't prefixed by /usr
+            config_file_prefix = "/";
+        }
+
+        if (config_.length() != 0) {
+            // user provided short form
+
+            const auto user_config_file =
+                config_file_prefix / defaults::SYSCONF_DIR / defaults::NAMESPACE / fmt::format("{}.yaml", config_);
+
+            const auto short_form_alias = fmt::format("User provided (by using short form: '{}')", config_);
+
+            config_file = assert_file(user_config_file, short_form_alias);
+        } else {
+            // default
+            config_file =
+                assert_file(config_file_prefix / defaults::SYSCONF_DIR / defaults::NAMESPACE / defaults::CONFIG_NAME,
+                            "Default config");
+        }
+    }
+
+    // now the config file should have been found
+    if (config_file.empty()) {
+        throw std::runtime_error("Assertion for found config file failed");
+    }
+
+    config = load_yaml(config_file);
+    if (config == nullptr) {
+        EVLOG_info << "Config file is null, treating it as empty";
+        config = json::object();
+    } else if (!config.is_object()) {
+        throw BootException(fmt::format("Config file '{}' is not an object", config_file.string()));
+    }
 }
 
 ModuleCallbacks::ModuleCallbacks(

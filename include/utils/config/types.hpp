@@ -12,8 +12,6 @@
 #include <variant>
 #include <vector>
 
-#include <utils/config/settings.hpp>
-
 class ConfigParseException : public std::exception {
 public:
     enum ParseErrorType {
