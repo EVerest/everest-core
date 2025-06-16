@@ -26,6 +26,7 @@
 #include <mutex>
 #include <queue>
 
+#include <generated/interfaces/evse_manager/Implementation.hpp>
 #include <generated/interfaces/evse_board_support/Interface.hpp>
 #include <sigslot/signal.hpp>
 
@@ -68,7 +69,8 @@ enum class RawCPState {
 class IECStateMachine {
 public:
     // We need the r_bsp reference to be able to talk to the bsp driver module
-    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_);
+    IECStateMachine(const std::unique_ptr<evse_managerImplBase>& p_evse_,
+                    const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_);
     // Call when new events from BSP requirement come in. Will signal internal events
     void process_bsp_event(const types::board_support_common::BspEvent bsp_event);
     // Allow power on from Charger state machine
@@ -106,6 +108,7 @@ private:
     void connector_lock();
     void connector_unlock();
     void check_connector_lock();
+    const std::unique_ptr<evse_managerImplBase>& p_evse;
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     bool lock_connector_in_state_b{true};
 
@@ -134,7 +137,7 @@ private:
     std::queue<CPEvent> state_machine();
 
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
-    void call_allow_power_on_bsp(bool value);
+    void notify_allow_power_on(bool value);
 
     std::atomic_bool is_locked{false};
     std::atomic_bool should_be_locked{false};

@@ -17,6 +17,9 @@ struct evse_managerImplStub : public evse_managerImplBase {
     }
     virtual void ready() {
     }
+    virtual void handle_set_plug_and_charge_configuration(types::evse_manager::PlugAndChargeConfiguration& plug_and_charge_configuration) {
+        return;
+    }
     virtual types::evse_manager::Evse handle_get_evse() {
         return types::evse_manager::Evse();
     }

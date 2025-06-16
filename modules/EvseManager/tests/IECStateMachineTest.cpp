@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#include "EvseManagerStub.hpp"
 #include "evse_board_supportIntfStub.hpp"
 #include <EventQueue.hpp>
 #include <IECStateMachine.hpp>
@@ -85,7 +86,9 @@ TEST(IECStateMachine, init) {
     module::stub::ModuleAdapterStub module_adapter = module::stub::ModuleAdapterStub();
     std::unique_ptr<evse_board_supportIntf> bsp_if =
         std::make_unique<module::stub::evse_board_supportIntfStub>(module_adapter);
-    module::IECStateMachine state_machine(std::move(bsp_if), true);
+    std::unique_ptr<evse_managerImplBase> manager_if =
+        std::make_unique<module::stub::evse_managerImplStub>();
+    module::IECStateMachine state_machine(std::move(manager_if), std::move(bsp_if), true);
 }
 
 #if 0
@@ -212,10 +215,11 @@ TEST(IECStateMachine, deadlock_test) {
 #ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
 #endif
-
+    std::unique_ptr<evse_managerImplBase> manager_if =
+        std::make_unique<module::stub::evse_managerImplStub>();
     BspStubDeadlock bsp;
     std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
-    module::IECStateMachine state_machine(std::move(bsp_if), true);
+    module::IECStateMachine state_machine(std::move(manager_if), std::move(bsp_if), true);
 
     std::uint8_t signal_lock_count = 0;
 
@@ -278,10 +282,11 @@ TEST(IECStateMachine, deadlock_fix) {
 #ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
 #endif
-
+    std::unique_ptr<evse_managerImplBase> manager_if =
+        std::make_unique<module::stub::evse_managerImplStub>();
     BspStubDeadlock bsp;
     std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
-    module::IECStateMachine state_machine(std::move(bsp_if), true);
+    module::IECStateMachine state_machine(std::move(manager_if), std::move(bsp_if), true);
 
     std::uint8_t signal_lock_count = 0;
 

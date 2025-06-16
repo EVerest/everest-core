@@ -121,6 +121,11 @@ cmds:
         type: object
         $ref: /evse_manager#/PlugAndChargeConfiguration
 vars:
+  allow_power_on:
+    description: >-
+      Signals that the EVSE Manager allows to power on the EVSE.
+    type: object
+    $ref: /evse_board_support#/PowerOnOff
   session_event:
     description: Emits all events related to sessions
     type: object

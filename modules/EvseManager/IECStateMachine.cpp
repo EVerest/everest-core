@@ -79,9 +79,10 @@ const std::string cpevent_to_string(CPEvent e) {
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }
 
-IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_,
+IECStateMachine::IECStateMachine(const std::unique_ptr<evse_managerImplBase>& p_evse_,
+                                 const std::unique_ptr<evse_board_supportIntf>& r_bsp_,
                                  bool lock_connector_in_state_b_) :
-    r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
+    p_evse(p_evse_), r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
     // feed the state machine whenever the timer expires
     timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
     timeout_unlock_state_F.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
@@ -165,7 +166,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 r_bsp->call_pwm_off();
                 ev_simplified_mode = false;
                 timer_state_C1 = TimerControl::stop;
-                call_allow_power_on_bsp(false);
+                notify_allow_power_on(false);
                 connector_unlock();
             }
             break;
@@ -176,7 +177,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 r_bsp->call_pwm_off();
                 ev_simplified_mode = false;
                 car_plugged_in = false;
-                call_allow_power_on_bsp(false);
+                notify_allow_power_on(false);
                 timer_state_C1 = TimerControl::stop;
                 connector_unlock();
             }
@@ -203,7 +204,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 events.push(CPEvent::CarRequestedStopPower);
                 // Need to switch off according to Table A.6 Sequence 8.1
                 // within 100ms
-                call_allow_power_on_bsp(false);
+                notify_allow_power_on(false);
                 timer_state_C1 = TimerControl::stop;
             }
 
@@ -225,7 +226,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             connector_lock();
             // If state D is not supported switch off.
             if (not has_ventilation) {
-                call_allow_power_on_bsp(false);
+                notify_allow_power_on(false);
                 timer_state_C1 = TimerControl::stop;
                 break;
             }
@@ -259,7 +260,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 // If we resume charging and the EV never left state C during pause we allow non-compliant EVs to switch
                 // on again.
                 if (power_on_allowed) {
-                    call_allow_power_on_bsp(true);
+                    notify_allow_power_on(true);
                 }
             }
 
@@ -268,7 +269,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                     << "Timeout of 6 seconds reached, EV did not go back to state B after PWM was switched off. "
                        "Powering off under load.";
                 // We are still in state C, but the 6 seconds timeout has been reached. Now force power off under load.
-                call_allow_power_on_bsp(false);
+                notify_allow_power_on(false);
             }
 
             if (pwm_running) { // C2
@@ -278,7 +279,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 if (power_on_allowed && (!last_power_on_allowed || last_cp_state == RawCPState::B)) {
                     // Table A.6: Sequence 4 EV ready to charge.
                     // Must enable power within 3 seconds.
-                    call_allow_power_on_bsp(true);
+                    notify_allow_power_on(true);
                 }
 
                 // Simulate Request power Event here for simplified mode
@@ -296,7 +297,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             connector_unlock();
             if (last_cp_state != RawCPState::E) {
                 timer_state_C1 = TimerControl::stop;
-                call_allow_power_on_bsp(false);
+                notify_allow_power_on(false);
                 pwm_running = false;
                 r_bsp->call_pwm_off();
                 if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C ||
@@ -309,7 +310,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 
         case RawCPState::F:
             timer_state_C1 = TimerControl::stop;
-            call_allow_power_on_bsp(false);
+            notify_allow_power_on(false);
             if (last_cp_state not_eq RawCPState::F) {
                 timer_unlock_state_F = TimerControl::start;
                 pwm_running = false;
@@ -415,7 +416,7 @@ void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reas
         power_on_reason = reason;
         // In case of power off, we can directly forward this to the BSP driver here
         if (not power_on_allowed) {
-            call_allow_power_on_bsp(false);
+            notify_allow_power_on(false);
         }
     }
     // The actual power on will be handled in the state machine to verify it is in the correct CP state etc.
@@ -423,14 +424,16 @@ void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reas
     feed_state_machine();
 }
 
-// Private member function used to actually call the BSP driver's allow_power_on
+// Private member function used to actually call the BSP driver's allow_power_on and to publish the event
+// to via the EvseManager interface.
 // No need to lock mutex as this will be called from state machine or locked context only
-void IECStateMachine::call_allow_power_on_bsp(bool value) {
+void IECStateMachine::notify_allow_power_on(bool value) {
     if (not value) {
         power_on_allowed = false;
         power_on_reason = types::evse_board_support::Reason::PowerOff;
     }
     r_bsp->call_allow_power_on({value, power_on_reason});
+    p_evse->publish_allow_power_on({value, power_on_reason});
 }
 
 // High level state machine requests reading PP ampacity value.
