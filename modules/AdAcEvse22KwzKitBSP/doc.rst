@@ -21,7 +21,7 @@ Hardware Connectivity
 ---------------------
 
 By default, AD-ACEVSE22KWZ-KIT supports the Pionix Yak board and Raspberry Pi 4 as host boards running 
-Everest. 
+EVerest. 
 
 The simplest way to get AD-ACEVSE22KWZ-KIT up and running with EVerest is with a Pionix Yak board. First,
 you must connect AD-ACEVSE22KWZ-KIT's P3 to Yak's J3 using a 10-wire cable. Note that using the 10-wire 
@@ -67,7 +67,7 @@ logic. This can be done by adding the following to EvseManager inside the EVeres
           id: 1
       # ** Other EVerest modules **
 
-Finally, we can start EVerest. AD-ACEVSE22KWZ-KIT should now be able to communicate with EVerest 
+Finally, we can start Everset. AD-ACEVSE22KWZ-KIT should now be able to communicate with EVerest 
 on the Yak board using AdAcEvse22KwzKitBSP.
 
 AD-ACEVSE22KWZ-KIT can also be run off a Raspberry Pi 4 by using various test points on the 
