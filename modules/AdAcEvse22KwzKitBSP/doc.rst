@@ -67,7 +67,7 @@ logic. This can be done by adding the following to EvseManager inside the EVeres
           id: 1
       # ** Other EVerest modules **
 
-Finally, we can start Everset. AD-ACEVSE22KWZ-KIT should now be able to communicate with EVerest 
+Finally, we can start EVerest. AD-ACEVSE22KWZ-KIT should now be able to communicate with EVerest 
 on the Yak board using AdAcEvse22KwzKitBSP.
 
 AD-ACEVSE22KWZ-KIT can also be run off a Raspberry Pi 4 by using various test points on the 
