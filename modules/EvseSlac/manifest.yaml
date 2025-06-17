@@ -13,9 +13,12 @@ provides:
         type: integer
         default: 10
       ac_mode_five_percent:
-        description: Use 5% mode in AC (true). Set to false for DC. The only difference is the handling of retries.
+        description: >-
+          Use AC 5% mode according to ISO15118-3. This restarts SLAC sessions if they fail according to the standard.
+          The standard only allows the retries for AC, not for DC. However, it is strongly recommended to always
+          set this option to true, also for DC, otherwise some EVs in the field will fail to do SLAC frequently.
         type: boolean
-        default: false
+        default: true
       set_key_timeout_ms:
         description: Timeout for CM_SET_KEY.REQ. Default works for QCA7000/QCA7005/CG5317.
         type: integer

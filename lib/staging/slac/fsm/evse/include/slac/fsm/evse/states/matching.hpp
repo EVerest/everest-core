@@ -85,6 +85,7 @@ struct MatchingState : public FSMSimpleState {
     int num_retries{0};
 
     std::unique_ptr<slac::messages::cm_slac_match_cnf> match_cnf_message;
+    int failed_count{0};
 };
 
 } // namespace slac::fsm::evse
