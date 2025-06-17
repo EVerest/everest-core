@@ -285,10 +285,6 @@ void Charger::run_state_machine() {
                     std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
                     update_pwm_now(PWM_5_PERCENT);
                     stopwatch.mark("HLC_PWM_5%_ON");
-                } else if (config_context.mcs_enabled and shared_context.mcs_hlc_active) {
-                    std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
-                    ce_on(PWM_5_PERCENT);
-                    stopwatch.mark("HLC_CE_5%_ON");
                 }
             }
 
@@ -318,6 +314,17 @@ void Charger::run_state_machine() {
                     }
                     break;
                 }
+
+                if (config_context.mcs_enabled and shared_context.mcs_hlc_active and
+                    not shared_context.ce_is_on) {
+
+                    std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
+                    ce_on(PWM_5_PERCENT);
+                    stopwatch.mark("HLC_CE_5%_ON");
+                } else if (not shared_context.mcs_hlc_active) {
+                    graceful_stop_charging();
+                }
+
             }
 
             // SLAC is running in the background trying to setup a PLC connection.
@@ -548,6 +555,8 @@ void Charger::run_state_machine() {
                 // In MCS mode, when authorization passed but state change from B0 to B is not triggered wait here
                 if (shared_context.mcs_hlc_active and not shared_context.ce_is_on) {
                     ce_on(PWM_5_PERCENT);
+                } else if (not shared_context.mcs_hlc_active) {
+                    graceful_stop_charging();
                 }
             }
 
@@ -635,6 +644,10 @@ void Charger::run_state_machine() {
                 if (initialize_state) {
                     bsp->allow_power_on(true, types::evse_board_support::Reason::FullPowerCharging);
                 }
+
+                if (config_context.mcs_enabled and not shared_context.mcs_hlc_active) {
+                    graceful_stop_charging();
+                }
             } else {
                 check_soft_over_current();
 
@@ -710,14 +723,20 @@ void Charger::run_state_machine() {
                     if (shared_context.pwm_running) {
                         pwm_off();
                     }
-                    if (config_context.mcs_enabled) {ce_off(); }
+                    if (config_context.mcs_enabled and
+                        not shared_context.mcs_hlc_active) {
+                            ce_off();
+                        }
 
                 } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
                     // EV wants an actual pause
                     if (shared_context.pwm_running) {
                         pwm_off();
                     }
-                    if (config_context.mcs_enabled) {ce_off(); }
+                    if (config_context.mcs_enabled and
+                        not shared_context.mcs_hlc_active) {
+                            ce_off();
+                        }
                 }
 
             } else {
@@ -748,10 +767,10 @@ void Charger::run_state_machine() {
                     // currentState = EvseState::StoppingCharging;
                     shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::Local;
                     // tell HLC stack to stop the session
-                    signal_hlc_stop_charging();
                     if (config_context.mcs_enabled) {
                         ce_off();
                     } else {
+                        signal_hlc_stop_charging();
                         pwm_off();
                     }
                 } else {
@@ -781,7 +800,9 @@ void Charger::run_state_machine() {
                         // DC supply off - actually this is after relais switched off
                         // this is a backup switch off, normally it should be switched off earlier by ISO protocol.
                         signal_dc_supply_off();
-                        if (config_context.mcs_enabled) {ce_off();}
+                        if (config_context.mcs_enabled) {
+                            ce_off();
+                        }
                     }
                     // Car is maybe not unplugged yet, so for HLC(AC/DC) wait in this state. We will go to Finished
                     // once car is unplugged.
@@ -1052,9 +1073,15 @@ void Charger::pwm_F() {
 }
 
 void Charger::ce_off() {
-    session_log.evse(false, "Set CE Off");
-    shared_context.ce_is_on = false;
-    bsp->set_ce_off();
+    if (shared_context.ce_is_on) {
+        session_log.evse(false, "Set CE Off");
+        internal_context.update_ce_last_dc = 1.;
+        shared_context.ce_is_on = false;
+        bsp->set_ce_off();
+    }
+
+    signal_hlc_stop_charging();
+
 }
 
 void Charger::ce_on(float dc) {
@@ -2055,16 +2082,13 @@ void Charger::graceful_stop_charging() {
         pwm_off();
     }
 
-    if (config_context.mcs_enabled) {
-        ce_off();
-        if (shared_context.hlc_charging_active) {
-            signal_hlc_stop_charging();
-        }
-    }
-
     // Shutdown DC power supplies
     if (config_context.charge_mode == ChargeMode::DC) {
         signal_dc_supply_off();
+
+        if (config_context.mcs_enabled) {
+            ce_off();
+        }
     }
 
     // open contactors
@@ -2087,6 +2111,10 @@ void Charger::set_mcs_hlc_active(bool value) {
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_set_mcs_hlc_enable);
         shared_context.mcs_hlc_active = value;
     }
+}
+
+bool Charger::get_mcs_hlc_active() {
+    return shared_context.mcs_hlc_active;
 }
 
 } // namespace module

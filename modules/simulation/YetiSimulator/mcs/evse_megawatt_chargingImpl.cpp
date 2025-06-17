@@ -14,11 +14,11 @@ void evse_megawatt_chargingImpl::ready() {
 
 void evse_megawatt_chargingImpl::handle_ce_on(double& value) {
     const auto dutycycle = value / 100.0;
-    mod->pwm_on(dutycycle);
+    mod->ce_on(dutycycle);
 }
 
 void evse_megawatt_chargingImpl::handle_ce_off() {
-    mod->pwm_off();
+    mod->ce_off();
 }
 
 } // namespace mcs

@@ -433,6 +433,7 @@ void IECStateMachine::set_ce_off() {
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::ISO_set_ce);
         ce_is_set = false;
     }
+    r_mcs[0]->call_ce_off();
     // Don't run the state machine in the callers context
     feed_state_machine();
 }

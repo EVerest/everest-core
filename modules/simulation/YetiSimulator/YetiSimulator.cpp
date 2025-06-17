@@ -682,10 +682,14 @@ void YetiSimulator::pwm_f() {
     module_state->pwm_error_f = true;
 }
 
-void YetiSimulator::ce_on() {
-    module_state->pwm_duty_cycle = 25.0;
-    module_state->pwm_running = true;
-    module_state->pwm_error_f = false;
+void YetiSimulator::ce_on(const double dutycycle) {
+    if (dutycycle > 0.0) {
+        module_state->pwm_duty_cycle = dutycycle;
+        module_state->pwm_running = true;
+        module_state->pwm_error_f = false;
+    } else {
+        ce_off();
+    }
 }
 void YetiSimulator::ce_off() {
     module_state->pwm_duty_cycle = 1.0;

@@ -195,6 +195,7 @@ public:
     void set_hlc_allow_close_contactor(bool on);
 
     void set_mcs_hlc_active(bool value);
+    bool get_mcs_hlc_active();
 
     bool stop_charging_on_fatal_error();
     bool entered_fatal_error_state();

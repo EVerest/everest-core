@@ -69,7 +69,7 @@ public:
     void pwm_on(const double dutycycle);
     void pwm_off();
     void pwm_f();
-    void ce_on();
+    void ce_on(const double dutycycle);
     void ce_off();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
