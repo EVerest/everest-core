@@ -19,6 +19,7 @@
 
 #include "ISO15118_chargerImplStub.hpp"
 #include "evse_securityIntfStub.hpp"
+#include "iso15118_vasIntfStub.hpp"
 
 #include <connection.hpp>
 #include <tls.hpp>
@@ -119,10 +120,12 @@ int main(int argc, char** argv) {
     parse_options(argc, argv);
 
     tls::Server tls_server;
-    module::stub::ISO15118_chargerImplStub charger;
-    EvseSecurity security;
+    module::stub::ModuleAdapterStub adapter;
+    module::stub::ISO15118_chargerImplStub charger{};
+    EvseSecurity security{};
+    module::stub::iso15118_vasIntfStub vas_item(adapter);
 
-    auto* ctx = v2g_ctx_create(&charger, &security);
+    auto* ctx = v2g_ctx_create(&charger, &security, {&vas_item});
     if (ctx == nullptr) {
         std::cerr << "failed to create context" << std::endl;
     } else {

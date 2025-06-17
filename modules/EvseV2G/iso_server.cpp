@@ -634,7 +634,7 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     /* Find requested scope id within evse service list */
     if (req->ServiceScope_isUsed) {
         /* Check if ServiceScope is in evse ServiceList */
-        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list_len; idx++) {
+        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list.size(); idx++) {
             if ((conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope_isUsed == (unsigned int)1) &&
                 (strcmp(conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope.characters,
                         req->ServiceScope.characters) == 0)) {
@@ -647,9 +647,9 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     /*  The SECC always returns all supported services for all scopes if no specific ServiceScope has been
         indicated in request message. */
     if (scope_idx == (int8_t)-1) {
-        memcpy(res->ServiceList.Service.array, conn->ctx->evse_v2g_data.evse_service_list,
-               sizeof(struct iso2_ServiceType) * conn->ctx->evse_v2g_data.evse_service_list_len);
-        res->ServiceList.Service.arrayLen = conn->ctx->evse_v2g_data.evse_service_list_len;
+        std::copy(conn->ctx->evse_v2g_data.evse_service_list.begin(), conn->ctx->evse_v2g_data.evse_service_list.end(),
+                  res->ServiceList.Service.array);
+        res->ServiceList.Service.arrayLen = conn->ctx->evse_v2g_data.evse_service_list.size();
     } else {
         /* Offer only the requested ServiceScope entry */
         res->ServiceList.Service.array[0] = conn->ctx->evse_v2g_data.evse_service_list[scope_idx];
@@ -657,7 +657,7 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     }
 
     res->ServiceList_isUsed =
-        ((uint16_t)0 < conn->ctx->evse_v2g_data.evse_service_list_len) ? (unsigned int)1 : (unsigned int)0;
+        ((uint16_t)0 < conn->ctx->evse_v2g_data.evse_service_list.size()) ? (unsigned int)1 : (unsigned int)0;
 
     /* Check the current response code and check if no external error has occurred */
     nextEvent = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
@@ -690,20 +690,88 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
     bool service_id_found = false;
 
-    for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list_len; idx++) {
+    for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list.size(); idx++) {
 
         if (req->ServiceID == conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceID) {
             service_id_found = true;
 
+            init_iso2_ServiceParameterListType(&res->ServiceParameterList);
             /* Fill parameter list of the requested service id [V2G2-549] */
-            for (uint8_t idx2 = 0; idx2 < conn->ctx->evse_v2g_data.service_parameter_list[idx].ParameterSet.arrayLen;
-                 idx2++) {
-                res->ServiceParameterList.ParameterSet.array[idx2] =
-                    conn->ctx->evse_v2g_data.service_parameter_list[idx].ParameterSet.array[idx2];
+            if (conn->ctx->evse_v2g_data.service_parameter_list.find(req->ServiceID) !=
+                conn->ctx->evse_v2g_data.service_parameter_list.end()) {
+                res->ServiceParameterList.ParameterSet =
+                    conn->ctx->evse_v2g_data.service_parameter_list.at(req->ServiceID).ParameterSet;
+                res->ServiceParameterList_isUsed = true;
+                break;
             }
-            res->ServiceParameterList.ParameterSet.arrayLen =
-                conn->ctx->evse_v2g_data.service_parameter_list[idx].ParameterSet.arrayLen;
-            res->ServiceParameterList_isUsed = (res->ServiceParameterList.ParameterSet.arrayLen != 0) ? 1 : 0;
+
+            for (size_t i = 0; i < conn->ctx->supported_vas_services_per_provider.size(); i++) {
+                const auto& provider_services = conn->ctx->supported_vas_services_per_provider.at(i);
+                if (std::find(provider_services.begin(), provider_services.end(), req->ServiceID) !=
+                    provider_services.end()) {
+                    const auto vas_parameters = conn->ctx->r_vas.at(i)->call_get_service_parameters(req->ServiceID);
+
+                    if (vas_parameters.empty()) {
+                        break;
+                    }
+
+                    iso2_ServiceParameterListType vas_parameter_list{};
+                    init_iso2_ServiceParameterListType(&vas_parameter_list);
+                    vas_parameter_list.ParameterSet.arrayLen = vas_parameters.size() <= 5 ? vas_parameters.size() : 5;
+
+                    for (size_t j = 0; j < vas_parameters.size() and j <= 5; j++) {
+                        const auto& vas_parameter = vas_parameters.at(j);
+
+                        vas_parameter_list.ParameterSet.array[j].ParameterSetID =
+                            static_cast<int16_t>(vas_parameter.set_id);
+
+                        size_t t{0};
+                        for (const auto& parameter : vas_parameter.parameters) {
+                            auto& out_parameter = vas_parameter_list.ParameterSet.array[j].Parameter.array[t++];
+
+                            init_iso2_ParameterType(&out_parameter);
+
+                            parameter.name.copy(out_parameter.Name.characters, parameter.name.length());
+                            out_parameter.Name.charactersLen = parameter.name.length();
+
+                            if (parameter.value.int_value.has_value()) {
+                                out_parameter.intValue = parameter.value.int_value.value();
+                                out_parameter.intValue_isUsed = true;
+                            } else if (parameter.value.finite_string.has_value()) {
+                                // TODO(SL): Check if string is too big to copy char array
+                                const auto& temp = parameter.value.finite_string.value();
+                                if (temp.length() > sizeof(out_parameter)) {
+                                    dlog(DLOG_LEVEL_WARNING, "Paramater String is too long to copy into char array");
+                                }
+                                temp.copy(out_parameter.stringValue.characters, temp.length());
+                                out_parameter.stringValue.charactersLen = temp.length();
+                                out_parameter.stringValue_isUsed = true;
+                            } else if (parameter.value.bool_value.has_value()) {
+                                out_parameter.boolValue = static_cast<int>(parameter.value.bool_value.value());
+                                out_parameter.boolValue_isUsed = true;
+                            } else if (parameter.value.byte_value.has_value()) {
+                                out_parameter.byteValue = static_cast<int8_t>(parameter.value.byte_value.value());
+                                out_parameter.byteValue_isUsed = true;
+                            } else if (parameter.value.short_value.has_value()) {
+                                out_parameter.shortValue = static_cast<int16_t>(parameter.value.short_value.value());
+                                out_parameter.shortValue_isUsed = true;
+                            } else if (parameter.value.rational_number.has_value()) {
+                                // TODO(SL): Specify the correct unit symbol
+                                populate_physical_value_float(&out_parameter.physicalValue,
+                                                              parameter.value.rational_number.value(), 1,
+                                                              iso2_unitSymbolType::iso2_unitSymbolType_W);
+                                out_parameter.physicalValue_isUsed = true;
+                            }
+                        }
+
+                        vas_parameter_list.ParameterSet.array[j].Parameter.arrayLen = vas_parameter.parameters.size();
+                    }
+
+                    res->ServiceParameterList.ParameterSet = vas_parameter_list.ParameterSet;
+                    res->ServiceParameterList_isUsed = true;
+                    break;
+                }
+            }
         }
     }
     service_id_found = (req->ServiceID == V2G_SERVICE_ID_CHARGING) ? true : service_id_found;
@@ -762,6 +830,8 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
     bool charge_service_found = false;
     bool selected_services_found = true;
 
+    std::map<size_t, std::vector<types::iso15118_vas::SelectedService>> services_by_provider;
+
     for (uint8_t req_idx = 0;
          (req_idx < req->SelectedServiceList.SelectedService.arrayLen) && (selected_services_found == true);
          req_idx++) {
@@ -774,10 +844,11 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
         else {
             bool entry_found = false;
             for (uint8_t ci_idx = 0;
-                 (ci_idx < conn->ctx->evse_v2g_data.evse_service_list_len) && (entry_found == false); ci_idx++) {
+                 (ci_idx < conn->ctx->evse_v2g_data.evse_service_list.size()) && (entry_found == false); ci_idx++) {
 
-                if (req->SelectedServiceList.SelectedService.array[req_idx].ServiceID ==
-                    conn->ctx->evse_v2g_data.evse_service_list[ci_idx].ServiceID) {
+                const auto& selected_service = req->SelectedServiceList.SelectedService.array[req_idx];
+
+                if (selected_service.ServiceID == conn->ctx->evse_v2g_data.evse_service_list[ci_idx].ServiceID) {
                     /* If it's stored, search for the next requested SelectedService entry */
                     dlog(DLOG_LEVEL_INFO, "Selected service id %i found",
                          conn->ctx->evse_v2g_data.evse_service_list[ci_idx].ServiceID);
@@ -791,6 +862,21 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
                         conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2g = true;
                         conn->ctx->p_charger->publish_sae_bidi_mode_active(nullptr);
                     }
+
+                    for (size_t i = 0; i < conn->ctx->supported_vas_services_per_provider.size(); i++) {
+                        const auto& provider_services = conn->ctx->supported_vas_services_per_provider.at(i);
+                        if (std::find(provider_services.begin(), provider_services.end(), selected_service.ServiceID) !=
+                            provider_services.end()) {
+
+                            // TODO(SL): What to do if parameterset is not available?
+                            types::iso15118_vas::SelectedService service{
+                                selected_service.ServiceID,
+                                selected_service.ParameterSetID_isUsed ? selected_service.ParameterSetID : 0};
+
+                            services_by_provider[i].push_back(service);
+                        }
+                    }
+
                     entry_found = true;
                     break;
                 }
@@ -800,6 +886,12 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
                 selected_services_found = false;
                 break;
             }
+        }
+    }
+
+    if (selected_services_found) {
+        for (const auto& [provider_index, services] : services_by_provider) {
+            conn->ctx->r_vas.at(provider_index)->call_selected_services(services);
         }
     }
 

@@ -47,7 +47,7 @@ config:
     default: /tmp
   tls_timeout:
     description: >-
-      Set the TLS timeout in ms when establishing a tls connection 
+      Set the TLS timeout in ms when establishing a tls connection
     type: integer
     default: 15000
   verify_contract_cert_chain:
@@ -84,7 +84,10 @@ provides:
 requires:
   security:
     interface: evse_security
-
+  iso15118_vas:
+    interface: ISO15118_vas
+    min_connections: 0
+    max_connections: 128
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

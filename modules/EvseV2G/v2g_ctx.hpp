@@ -17,7 +17,8 @@ static const char* selected_energy_transfer_mode_string[] = {
     "AC_single_phase_core", "AC_three_phase_core", "DC_core", "DC_extended", "DC_combo_core", "DC_unique",
 };
 
-struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase, evse_securityIntf* r_security);
+struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase, evse_securityIntf* r_security,
+                                   std::vector<ISO15118_vasIntf*> r_vas);
 
 /*!
  * \brief v2g_ctx_init_charging_session This funcion inits a charging session.
@@ -154,7 +155,7 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_
  * \param parameterSetId is the parameter-set-ID which belongs to the service ID.
  * \param serviceId is the service ID. Currently only service ID 2 ("Certificate") supported.
  */
-void configure_parameter_set(struct iso2_ServiceParameterListType* parameterSetList, int16_t parameterSetId,
+void configure_parameter_set(iso2_ServiceParameterListType& parameterSetList, int16_t parameterSetId,
                              uint16_t serviceId);
 
 #endif /* V2G_CTX_H */
