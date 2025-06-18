@@ -640,7 +640,7 @@ GetModuleDataResponse SqliteStorage::get_module_data(const std::string& module_i
 
     GetModuleDataResponse response;
 
-    const std::string sql = "SELECT NAME FROM MODULE WHERE ID = @module_id";
+    const std::string sql = "SELECT NAME, STANDALONE, CAPABILITIES FROM MODULE WHERE ID = @module_id";
 
     auto stmt = this->db->new_statement(sql);
     stmt->bind_text("@module_id", module_id);
@@ -655,8 +655,10 @@ GetModuleDataResponse SqliteStorage::get_module_data(const std::string& module_i
         ModuleData module_data;
         module_data.module_id = module_id;
         module_data.module_name = stmt->column_text(0);
-        response.status = GenericResponseStatus::OK;
+        module_data.standalone = stmt->column_int(1);
+        module_data.capabilities = stmt->column_text_nullable(2);
         response.module_data = module_data;
+        response.status = GenericResponseStatus::OK;
     }
 
     return response;
