@@ -156,6 +156,7 @@ bool evSerial::handle_McuToEverest_packet(uint8_t* buf, int len) {
 
     case McuToEverest_keep_alive_tag:
         signal_keep_alive(msg_in.payload.keep_alive);
+        last_keep_alive_lo_timestamp = date::utc_clock::now();
         break;
 
     case McuToEverest_cp_state_tag:
@@ -289,6 +290,7 @@ void evSerial::cobs_decode_byte(uint8_t byte) {
 void evSerial::run() {
     read_thread_handle = std::thread(&evSerial::read_thread, this);
     timeout_detection_thread_handle = std::thread(&evSerial::timeout_detection_thread, this);
+    last_keep_alive_lo_timestamp = date::utc_clock::now();
 }
 
 void evSerial::timeout_detection_thread() {

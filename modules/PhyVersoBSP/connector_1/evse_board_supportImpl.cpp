@@ -137,11 +137,13 @@ void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::Po
     if (mod->config.conn1_dc) {
         mod->serial.set_coil_state_request(1, CoilType_COIL_DC1, value.allow_power_on);
         // FIXME: implement in MCU with feedback
+        /*
         if (value.allow_power_on) {
             publish_event({types::board_support_common::Event::PowerOn});
         } else {
             publish_event({types::board_support_common::Event::PowerOff});
         }
+        */
     } else {
         mod->serial.set_coil_state_request(1, CoilType_COIL_AC, value.allow_power_on);
     }

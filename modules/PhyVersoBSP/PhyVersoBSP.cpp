@@ -60,6 +60,38 @@ void PhyVersoBSP::ready() {
                                                          "Could not open serial port.");
         p_connector_2->raise_error(err);
     }
+
+    serial.signal_connection_timeout.connect([this]() {
+        auto err = p_connector_1->error_factory->create_error("evse_board_support/CommunicationFault", "McuToEverest",
+                                                              "Serial connection to MCU timed out");
+        p_connector_1->raise_error(err);
+        err = p_connector_2->error_factory->create_error("evse_board_support/CommunicationFault", "McuToEverest",
+                                                         "Serial connection to MCU timed out");
+        p_connector_2->raise_error(err);
+    });
+
+    serial.signal_keep_alive.connect([this](KeepAlive d) {
+        p_connector_1->clear_error("evse_board_support/CommunicationFault", "McuToEverest");
+        p_connector_2->clear_error("evse_board_support/CommunicationFault", "McuToEverest");
+    });
+
+    serial.signal_error_flags.connect([this](int connector, ErrorFlags error_flags) {
+        // heartbeat failure from Mcu side (not receiving packets) will be visible in both connector errors
+        if (error_flags.heartbeat_timeout != last_heartbeat_error) {
+            if(error_flags.heartbeat_timeout) {
+                auto err = p_connector_1->error_factory->create_error("evse_board_support/CommunicationFault", "EverestToMcu",
+                                                                        "MCU did not receive Everest heartbeat");
+                p_connector_1->raise_error(err);
+                err = p_connector_2->error_factory->create_error("evse_board_support/CommunicationFault", "EverestToMcu",
+                                                                        "MCU did not receive Everest heartbeat");
+                p_connector_2->raise_error(err);
+            } else {
+                p_connector_1->clear_error("evse_board_support/CommunicationFault", "EverestToMcu");
+                p_connector_2->clear_error("evse_board_support/CommunicationFault", "EverestToMcu");
+            }
+        }
+        last_heartbeat_error = error_flags.heartbeat_timeout;
+    });
 }
 
 // fills evConfig bridge with config values from manifest/everest config
