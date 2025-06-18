@@ -3,6 +3,10 @@ config:
   connector_id:
     description: Connector id of the evse manager to which this simulator is connected to
     type: integer
+  reset_powermeter_on_session_start:
+    description: Reset absolute powermeter readings to zero when CP changes from state A to B
+    type: boolean
+    default: true
 provides:
   powermeter:
     interface: powermeter
