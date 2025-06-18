@@ -550,3 +550,24 @@ types:
       contract_certificate_installation_enabled:
         description: Indicates if ISO 15118 contract certificate installation/update is enabled
         type: boolean
+  OperationModeEnum:
+    description: >-
+      Operation mode during a charging session, this is based off of OCPP specification.
+      Idle: Minimize energy consumption by having the EV either on standby or in sleep.
+      ChargingOnly: Classic charging or smart charging mode. (default)
+      CentralSetpoint: Control of setpoint by CSMS or some secondary actor that relays through the CSMS.
+      ExternalSetpoint: Control of setpoint by an external actor directly on the Charging Station.
+      ExternalLimits: Control of (dis)charging limits by an external actor on the Charging Station.
+      CentralFrequency: Frequency support with control by CSMS or some secondary actor that relays through the CSMS.
+      LocalFrequency: Frequency support with control in the Charging Station.
+      LocalLoadBalancing: Load-balancing performed by the Charging Station.
+    type: string
+    enum:
+      - Idle
+      - ChargingOnly
+      - CentralSetpoint
+      - ExternalSetpoint
+      - ExternalLimits
+      - CentralFrequency
+      - LocalFrequency
+      - LocalLoadBalancing

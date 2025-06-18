@@ -338,6 +338,13 @@ config:
       - UUID_BASE64
       - SHORT_BASE64
     default: UUID
+    supported_operation_modes:
+      description: >-
+        Contains the list of supported operation modes
+      type: array
+      items:
+        type: string
+        $ref: /evse_manager#/OperationModeEnum
 provides:
   evse:
     interface: evse_manager

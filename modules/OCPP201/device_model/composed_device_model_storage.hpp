@@ -17,7 +17,7 @@ private:
     ComponentVariableSourceMap component_variable_source_map;
 
 public:
-    ComposedDeviceModelStorage();
+    ComposedDeviceModelStorage() = default;
 
     /// \brief Register a device model storage.
     /// \param device_model_storage_id   The id of the device model storage. Component variable combinations can be
