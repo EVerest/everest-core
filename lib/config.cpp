@@ -15,6 +15,7 @@
 
 #include <framework/runtime.hpp>
 #include <utils/config.hpp>
+#include <utils/config/types.hpp>
 #include <utils/formatter.hpp>
 #include <utils/yaml_loader.hpp>
 
@@ -197,8 +198,19 @@ static ParsedConfigMap parse_config_map(const json& config_map_schema,
 
         json config_entry_value;
         if (config_parameter_map.find(config_entry_name) != config_parameter_map.end()) {
-            config_parameter_map[config_entry_name].characteristics.datatype =
-                string_to_datatype(config_entry.at("type"));
+            const auto& expected_datatype = config_parameter_map.at(config_entry_name).characteristics.datatype;
+            const auto& actual_datatype = string_to_datatype(config_entry.at("type"));
+            if (expected_datatype != actual_datatype) {
+                // allow discrepancy when expected datatype is Integer but the actual datatype is Decimal which can
+                // present as Integer in the json representation
+                if (not(expected_datatype == Datatype::Integer and actual_datatype == Datatype::Decimal)) {
+                    throw ConfigParseException(
+                        ConfigParseException::SCHEMA, config_entry_name,
+                        "Expected and actualy datatypes disagree: " + datatype_to_string(expected_datatype) + " vs " +
+                            datatype_to_string(actual_datatype));
+                }
+            }
+            config_parameter_map[config_entry_name].characteristics.datatype = actual_datatype;
 
             config_entry_value = config_parameter_map[config_entry_name].value; // implicit conversion to json
 
@@ -238,9 +250,6 @@ static ParsedConfigMap parse_config_map(const json& config_map_schema,
             break;
         case Datatype::Boolean:
             config_param.value = config_entry_value.get<bool>();
-            break;
-        case Datatype::Path:
-            config_param.value = std::filesystem::path(config_entry_value.get<std::string>());
             break;
         default:
             throw ConfigParseException(ConfigParseException::SCHEMA, config_entry_name,

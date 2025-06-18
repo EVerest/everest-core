@@ -119,8 +119,6 @@ GenericResponseStatus SqliteStorage::write_module_configs(const ModuleConfigurat
                     std::string value;
                     if (std::holds_alternative<std::string>(param.value)) {
                         value = std::get<std::string>(param.value);
-                    } else if (std::holds_alternative<fs::path>(param.value)) {
-                        value = std::get<fs::path>(param.value).string();
                     } else {
                         const nlohmann::json temp = param.value;
                         value = temp.dump();

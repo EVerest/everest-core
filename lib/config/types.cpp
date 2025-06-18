@@ -115,16 +115,20 @@ ModuleConfigurationParameters parse_config_parameters(const json& config_json) {
     auto parse_entry = [](const std::string& name, const json& jval) -> ConfigurationParameter {
         ConfigurationParameter param;
         param.name = name;
+        param.characteristics.mutability = Mutability::ReadOnly;
 
-        // we cant parse to fs::path
         if (jval.is_string()) {
             param.value = jval.get<std::string>();
+            param.characteristics.datatype = Datatype::String;
         } else if (jval.is_boolean()) {
             param.value = jval.get<bool>();
+            param.characteristics.datatype = Datatype::Boolean;
         } else if (jval.is_number_integer()) {
             param.value = jval.get<int>();
+            param.characteristics.datatype = Datatype::Integer;
         } else if (jval.is_number_float()) {
             param.value = jval.get<double>();
+            param.characteristics.datatype = Datatype::Decimal;
         } else {
             throw std::runtime_error("Unsupported JSON type for config parameter: " + name);
         }
@@ -211,8 +215,6 @@ ConfigEntry parse_config_value(Datatype datatype, const std::string& value_str) 
             return std::stoi(value_str);
         case Datatype::Boolean:
             return value_str == "true" || value_str == "1";
-        case Datatype::Path:
-            return std::filesystem::path(value_str);
         default:
             throw std::out_of_range("Unsupported datatype: " + datatype_to_string(datatype));
         }
@@ -273,8 +275,8 @@ Datatype string_to_datatype(const std::string& str) {
         return Datatype::Integer;
     } else if (str == "boolean" or "bool") {
         return Datatype::Boolean;
-    } else if (str == "path") {
-        return Datatype::Path;
+    } else if (str == "unknown") {
+        return Datatype::Unknown;
     }
     throw std::out_of_range("Could not convert: " + str + " to Datatype");
 }
@@ -289,8 +291,8 @@ std::string datatype_to_string(const Datatype datatype) {
         return "integer";
     case Datatype::Boolean:
         return "bool";
-    case Datatype::Path:
-        return "path";
+    case Datatype::Unknown:
+        return "unknown";
     }
     throw std::out_of_range("Could not convert Datatype to string");
 }

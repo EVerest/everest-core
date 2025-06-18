@@ -46,10 +46,6 @@ std::map<ModuleId, ModuleConfig> get_example_module_configs() {
     characteristics2.datatype = Datatype::String;
     characteristics2.mutability = Mutability::ReadOnly;
 
-    ConfigurationParameterCharacteristics characteristics3;
-    characteristics3.datatype = Datatype::Path;
-    characteristics3.mutability = Mutability::ReadWrite;
-
     ConfigurationParameterCharacteristics characteristics4;
     characteristics4.datatype = Datatype::Decimal;
     characteristics4.mutability = Mutability::ReadWrite;
@@ -68,11 +64,6 @@ std::map<ModuleId, ModuleConfig> get_example_module_configs() {
     param2.value = std::string("example_value");
     param2.characteristics = characteristics2;
 
-    ConfigurationParameter param3;
-    param3.name = "path_param";
-    param3.value = fs::path("/example/path");
-    param3.characteristics = characteristics3;
-
     ConfigurationParameter param4;
     param4.name = "decimal_param";
     param4.value = 42.23;
@@ -85,7 +76,6 @@ std::map<ModuleId, ModuleConfig> get_example_module_configs() {
 
     module_config.configuration_parameters["!module"].push_back({param1});
     module_config.configuration_parameters["implementation_id1"].push_back({param2});
-    module_config.configuration_parameters["!module"].push_back({param3});
     module_config.configuration_parameters["!module"].push_back({param4});
     module_config.configuration_parameters["!module"].push_back({param5});
 
@@ -156,11 +146,6 @@ TEST_CASE("Database operations", "[db_operation]") {
         REQUIRE(response2.status == GetSetResponseStatus::OK);
         REQUIRE(response2.configuration_parameter.has_value());
         REQUIRE(std::get<std::string>(response2.configuration_parameter.value().value) == "example_value");
-
-        auto response3 = storage.get_configuration_parameter({"example_module", "path_param"});
-        REQUIRE(response3.status == GetSetResponseStatus::OK);
-        REQUIRE(response3.configuration_parameter.has_value());
-        REQUIRE(std::get<fs::path>(response3.configuration_parameter.value().value) == fs::path("/example/path"));
 
         auto response4 = storage.get_configuration_parameter({"example_module", "decimal_param"});
         REQUIRE(response4.status == GetSetResponseStatus::OK);
