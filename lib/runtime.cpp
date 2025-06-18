@@ -38,7 +38,7 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     // if prefix or config is empty, we assume they have not been set!
     // if they have been set, check their validity, otherwise bail out!
 
-    this->boot_source = ConfigBootSource::YamlFile;
+    this->boot_mode = ConfigBootMode::YamlFile;
 
     init_prefix_and_data_dir(prefix_);
     init_config_file(config_);
@@ -51,13 +51,13 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
 }
 
 ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& db_, DatabaseTag) {
-    this->boot_source = ConfigBootSource::Database;
+    this->boot_mode = ConfigBootMode::Database;
     init_prefix_and_data_dir(prefix_);
     throw BootException("Database boot source is not supported in this version of EVerest");
 }
 
 ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_, const std::string& db_) {
-    this->boot_source = ConfigBootSource::DatabaseFallbackYaml;
+    this->boot_mode = ConfigBootMode::DatabaseInit;
     init_prefix_and_data_dir(prefix_);
     throw BootException("Database fallback YAML boot source is not supported in this version of EVerest");
 }

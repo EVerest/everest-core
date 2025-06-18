@@ -551,37 +551,25 @@ static ControllerHandle start_controller(const ManagerSettings& ms) {
 }
 #endif
 
-ConfigBootSource parse_config_boot_source(const std::string& config_opt, const std::string& db_opt,
-                                          const std::string& config_source_opt) {
+ConfigBootMode parse_config_boot_mode(const std::string& config_opt, const std::string& db_opt, const bool db_init) {
     if (config_opt.empty() and db_opt.empty()) {
         // no config or db option given, use default
-        return ConfigBootSource::YamlFile;
+        return ConfigBootMode::YamlFile;
     }
     if (!config_opt.empty() && !db_opt.empty()) {
-        if (config_source_opt.empty()) {
-            throw BootException(
-                "Both config and db options are set, but no source option is given. "
-                "Please specify the source of the config (yaml, db or db_fallback_yaml) with --source.");
+        if (db_init == false) {
+            throw BootException("Both --config and --db options are set, but no --db-init option is given. "
+                                "This is not allowed.");
         }
-        if (config_source_opt == "yaml") {
-            return ConfigBootSource::YamlFile;
-        } else if (config_source_opt == "db") {
-            return ConfigBootSource::Database;
-        } else if (config_source_opt == "db_fallback_yaml") {
-            // use database, but fall back to yaml if database is not initialized or valid
-            return ConfigBootSource::DatabaseFallbackYaml;
-        } else {
-            throw BootException(fmt::format("Invalid source option: {}. Expected 'yaml', 'db' or 'db_fallback_yaml'.",
-                                            config_source_opt));
-        }
+        return ConfigBootMode::DatabaseInit;
     }
     if (!config_opt.empty()) {
         // only config option given, use yaml file
-        return ConfigBootSource::YamlFile;
+        return ConfigBootMode::YamlFile;
     }
     if (!db_opt.empty()) {
         // only db option given, use database
-        return ConfigBootSource::Database;
+        return ConfigBootMode::Database;
     }
     throw std::logic_error("Could not parse config boot source, this should never happen.");
 }
@@ -592,23 +580,23 @@ int boot(const po::variables_map& vm) {
     const auto prefix_opt = parse_string_option(vm, "prefix");
     const auto config_opt = parse_string_option(vm, "config");
     const auto db_opt = parse_string_option(vm, "db");
-    const auto config_source_opt = parse_string_option(vm, "source");
-    ConfigBootSource boot_source = parse_config_boot_source(config_opt, db_opt, config_source_opt);
+    const auto db_init = vm.count("db-init") != 0;
+    ConfigBootMode boot_mode = parse_config_boot_mode(config_opt, db_opt, db_init);
 
     ManagerSettings ms;
 
-    switch (boot_source) {
-    case ConfigBootSource::YamlFile:
+    switch (boot_mode) {
+    case ConfigBootMode::YamlFile:
         ms = ManagerSettings(prefix_opt, config_opt);
         break;
-    case ConfigBootSource::Database:
+    case ConfigBootMode::Database:
         ms = ManagerSettings(prefix_opt, db_opt, DatabaseTag{});
         break;
-    case ConfigBootSource::DatabaseFallbackYaml:
+    case ConfigBootMode::DatabaseInit:
         ms = ManagerSettings(prefix_opt, config_opt, db_opt);
         break;
     default:
-        throw BootException(fmt::format("Invalid boot source: {}", static_cast<int>(boot_source)));
+        throw BootException(fmt::format("Invalid boot source: {}", static_cast<int>(boot_mode)));
     }
 
     Logging::init(ms.runtime_settings.logging_config_file.string());
@@ -905,8 +893,8 @@ int main(int argc, char* argv[]) {
                        "Full path to a config file.  If the file does not exist and has no extension, it will be "
                        "looked up in the default config directory");
     desc.add_options()("db", po::value<std::string>(), "Full path to the configuration database file");
-    desc.add_options()("source", po::value<std::string>(),
-                       "Source from which the configuration shall be loaded: 'yaml', 'db' or 'db_fallback_yaml'");
+    desc.add_options()("db-init", "Indicator to initialize the database if it does not contain a valid configuration. "
+                                  "Requires --config and --db to be set.");
     desc.add_options()("status-fifo", po::value<std::string>()->default_value(""),
                        "Path to a named pipe, that shall be used for status updates from the manager");
     desc.add_options()("retain-topics", "Retain configuration MQTT topics setup by manager for inspection, by default "

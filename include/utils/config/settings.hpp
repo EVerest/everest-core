@@ -15,10 +15,11 @@ namespace Everest {
 
 namespace fs = std::filesystem;
 
-enum class ConfigBootSource {
-    YamlFile = 1,
-    Database = 2,
-    DatabaseFallbackYaml = 3
+enum class ConfigBootMode {
+    YamlFile = 1,    // configuration is loaded from a YAML file
+    Database = 2,    // configuration is loaded from a database
+    DatabaseInit = 3 // configuration is preferably loaded from a database, but if no valid config is found, it falls
+                     // back to a YAML file and initializes the database
 };
 
 /// \brief EVerest framework runtime settings needed to successfully run modules
@@ -64,7 +65,7 @@ struct ManagerSettings {
 
     MQTTSettings mqtt_settings;       ///< MQTT connection settings
     RuntimeSettings runtime_settings; ///< Runtime settings needed to successfully run modules
-    ConfigBootSource boot_source;
+    ConfigBootMode boot_mode;
 
     ManagerSettings() = default;
 
