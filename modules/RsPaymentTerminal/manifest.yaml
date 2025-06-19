@@ -40,7 +40,12 @@ config:
   password:
     description: Password for the Feig terminal.
     type: integer
-
+  end_of_day_max_interval:
+    description: >-
+      The maximum time (in sec) between end of day jobs. Payment backends might
+      force the payment terminals to run them regularly. Defaults to one day.
+    default: 86400
+    type: integer
 requires:
     session:
       interface: session_cost
