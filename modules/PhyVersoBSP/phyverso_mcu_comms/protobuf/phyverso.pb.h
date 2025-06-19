@@ -68,7 +68,7 @@ typedef enum _ConfigHardwareRevision {
 
 typedef enum _MotorLockType {
     MotorLockType_MOTOR_LOCK_UNKNOWN = 0,
-    MotorLockType_MOTOR_LOCK_QWELLO = 1,
+    MotorLockType_MOTOR_LOCK_HELLA = 1,
     MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC = 2
 } MotorLockType;
 
@@ -127,8 +127,6 @@ typedef struct _ChargePortConfig {
 
 typedef struct _BootConfigResponse {
     ConfigHardwareRevision hw_rev;
-    /* ConfigMotorLockType lock_1 = 2;
-ConfigMotorLockType lock_2 = 3; */
     bool has_chargeport_config_1;
     ChargePortConfig chargeport_config_1;
     bool has_chargeport_config_2;

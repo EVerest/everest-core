@@ -118,8 +118,6 @@ message BootConfigRequest {
 
 message BootConfigResponse {
   ConfigHardwareRevision hw_rev = 1;
-  //ConfigMotorLockType lock_1 = 2;
-  //ConfigMotorLockType lock_2 = 3;
   ChargePortConfig chargeport_config_1 = 4;
   ChargePortConfig chargeport_config_2 = 5;
 }
@@ -155,7 +153,7 @@ enum ConfigHardwareRevision {
 
 enum MotorLockType {
   MOTOR_LOCK_UNKNOWN = 0;
-  MOTOR_LOCK_QWELLO = 1;
+  MOTOR_LOCK_HELLA = 1;
   MOTOR_LOCK_DEBUG_VALEO_HVAC = 2;
 }
 
