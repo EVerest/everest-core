@@ -79,7 +79,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 7b4ba2c8a106b2eefad4009b515148888ba1133a
+  git_tag: refactor/sqlite-device-model # FIXME
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
