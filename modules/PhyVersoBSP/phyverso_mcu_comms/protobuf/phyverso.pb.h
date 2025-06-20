@@ -90,6 +90,7 @@ typedef struct _KeepAlive {
     uint32_t hw_type;
     uint32_t hw_revision;
     char sw_version_string[51];
+    bool configuration_done;
 } KeepAlive;
 
 typedef struct _Telemetry {
@@ -266,7 +267,7 @@ extern "C" {
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}, 0}
 #define McuToEverest_init_default                {0, {KeepAlive_init_default}, 0}
 #define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define KeepAlive_init_default                   {0, 0, 0, ""}
+#define KeepAlive_init_default                   {0, 0, 0, "", 0}
 #define Telemetry_init_default                   {0, 0}
 #define FanState_init_default                    {0, 0, 0, 0}
 #define CoilState_init_default                   {_CoilType_MIN, 0}
@@ -280,7 +281,7 @@ extern "C" {
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define KeepAlive_init_zero                      {0, 0, 0, ""}
+#define KeepAlive_init_zero                      {0, 0, 0, "", 0}
 #define Telemetry_init_zero                      {0, 0}
 #define FanState_init_zero                       {0, 0, 0, 0}
 #define CoilState_init_zero                      {_CoilType_MIN, 0}
@@ -306,6 +307,7 @@ extern "C" {
 #define KeepAlive_hw_type_tag                    2
 #define KeepAlive_hw_revision_tag                3
 #define KeepAlive_sw_version_string_tag          6
+#define KeepAlive_configuration_done_tag         7
 #define Telemetry_cp_voltage_hi_tag              1
 #define Telemetry_cp_voltage_lo_tag              2
 #define FanState_fan_id_tag                      1
@@ -413,7 +415,8 @@ X(a, STATIC,   SINGULAR, BOOL,     pp_signal_fault,   9)
 X(a, STATIC,   SINGULAR, UINT32,   time_stamp,        1) \
 X(a, STATIC,   SINGULAR, UINT32,   hw_type,           2) \
 X(a, STATIC,   SINGULAR, UINT32,   hw_revision,       3) \
-X(a, STATIC,   SINGULAR, STRING,   sw_version_string,   6)
+X(a, STATIC,   SINGULAR, STRING,   sw_version_string,   6) \
+X(a, STATIC,   SINGULAR, BOOL,     configuration_done,   7)
 #define KeepAlive_CALLBACK NULL
 #define KeepAlive_DEFAULT NULL
 
@@ -523,10 +526,10 @@ extern const pb_msgdesc_t RcdCommand_msg;
 #define CoilState_size                           4
 #define ConfigMotorLockType_size                 2
 #define ErrorFlags_size                          18
-#define EverestToMcu_size                        83
+#define EverestToMcu_size                        85
 #define FanState_size                            15
-#define KeepAlive_size                           70
-#define McuToEverest_size                        83
+#define KeepAlive_size                           72
+#define McuToEverest_size                        85
 #define OpaqueData_size                          285
 #define PHYVERSO_PB_H_MAX_SIZE                   OpaqueData_size
 #define RcdCommand_size                          4

@@ -69,6 +69,7 @@ message KeepAlive {
   uint32 hw_type = 2;
   uint32 hw_revision = 3;
   string sw_version_string = 6;
+  bool configuration_done = 7;
 }
 
 message Telemetry {

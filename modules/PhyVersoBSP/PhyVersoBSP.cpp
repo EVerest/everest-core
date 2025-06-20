@@ -22,44 +22,12 @@ void PhyVersoBSP::init() {
         return;
     }
 
-    invoke_init(*p_connector_1);
-    invoke_init(*p_connector_2);
-    invoke_init(*p_rcd_1);
-    invoke_init(*p_rcd_2);
-    invoke_init(*p_connector_lock_1);
-    invoke_init(*p_connector_lock_2);
-    invoke_init(*p_phyverso_mcu_temperature);
-    invoke_init(*p_system_specific_data_1);
-    invoke_init(*p_system_specific_data_2);
+    serial.flush_buffers();
 
     serial.signal_config_request.connect([&]() {
         serial.send_config();
         EVLOG_info << "Sent config packet to MCU";
     });
-}
-
-void PhyVersoBSP::ready() {
-    serial.run();
-    gpio.run();
-
-    invoke_ready(*p_connector_1);
-    invoke_ready(*p_connector_2);
-    invoke_ready(*p_rcd_1);
-    invoke_ready(*p_rcd_2);
-    invoke_ready(*p_connector_lock_1);
-    invoke_ready(*p_connector_lock_2);
-    invoke_ready(*p_phyverso_mcu_temperature);
-    invoke_ready(*p_system_specific_data_1);
-    invoke_ready(*p_system_specific_data_2);
-
-    if (not serial.is_open()) {
-        auto err = p_connector_1->error_factory->create_error("evse_board_support/CommunicationFault", "",
-                                                              "Could not open serial port.");
-        p_connector_1->raise_error(err);
-        err = p_connector_2->error_factory->create_error("evse_board_support/CommunicationFault", "",
-                                                         "Could not open serial port.");
-        p_connector_2->raise_error(err);
-    }
 
     serial.signal_connection_timeout.connect([this]() {
         auto err = p_connector_1->error_factory->create_error("evse_board_support/CommunicationFault", "McuToEverest",
@@ -68,11 +36,6 @@ void PhyVersoBSP::ready() {
         err = p_connector_2->error_factory->create_error("evse_board_support/CommunicationFault", "McuToEverest",
                                                          "Serial connection to MCU timed out");
         p_connector_2->raise_error(err);
-    });
-
-    serial.signal_keep_alive.connect([this](KeepAlive d) {
-        p_connector_1->clear_error("evse_board_support/CommunicationFault", "McuToEverest");
-        p_connector_2->clear_error("evse_board_support/CommunicationFault", "McuToEverest");
     });
 
     serial.signal_error_flags.connect([this](int connector, ErrorFlags error_flags) {
@@ -92,6 +55,62 @@ void PhyVersoBSP::ready() {
         }
         last_heartbeat_error = error_flags.heartbeat_timeout;
     });
+
+    serial.signal_keep_alive.connect([this](KeepAlive d) {
+        mcu_config_done = d.configuration_done;
+        p_connector_1->clear_error("evse_board_support/CommunicationFault", "McuToEverest");
+        p_connector_2->clear_error("evse_board_support/CommunicationFault", "McuToEverest");
+    });
+
+    serial.reset(1);
+
+    serial.run();
+    gpio.run();
+
+    // very sporadically multiple resets needed for MCU to respond -> retrying until we get MCU response in a configured, ready and running state
+    mcu_config_done = false;
+    uint16_t n_tries = 0;
+    while(!mcu_config_done) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        n_tries++;
+        if(n_tries > 20) {
+            EVLOG_info << "Trying reset again";
+            serial.flush_buffers();
+            serial.reset(1);
+            n_tries = 0;
+        }
+    }
+
+    invoke_init(*p_connector_1);
+    invoke_init(*p_connector_2);
+    invoke_init(*p_rcd_1);
+    invoke_init(*p_rcd_2);
+    invoke_init(*p_connector_lock_1);
+    invoke_init(*p_connector_lock_2);
+    invoke_init(*p_phyverso_mcu_temperature);
+    invoke_init(*p_system_specific_data_1);
+    invoke_init(*p_system_specific_data_2);
+}
+
+void PhyVersoBSP::ready() {
+    invoke_ready(*p_connector_1);
+    invoke_ready(*p_connector_2);
+    invoke_ready(*p_rcd_1);
+    invoke_ready(*p_rcd_2);
+    invoke_ready(*p_connector_lock_1);
+    invoke_ready(*p_connector_lock_2);
+    invoke_ready(*p_phyverso_mcu_temperature);
+    invoke_ready(*p_system_specific_data_1);
+    invoke_ready(*p_system_specific_data_2);
+
+    if (not serial.is_open()) {
+        auto err = p_connector_1->error_factory->create_error("evse_board_support/CommunicationFault", "",
+                                                              "Could not open serial port.");
+        p_connector_1->raise_error(err);
+        err = p_connector_2->error_factory->create_error("evse_board_support/CommunicationFault", "",
+                                                         "Could not open serial port.");
+        p_connector_2->raise_error(err);
+    }
 }
 
 // fills evConfig bridge with config values from manifest/everest config
