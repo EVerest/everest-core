@@ -64,4 +64,6 @@ Please refer to operation manual for details.
 
 References
 ============
-`Official website <https://www.isabellenhuette.de/iem-dcr>`_
+`IEM-DCR-125 <https://www.isabellenhuette.com/de/loesungen/produkte/iem-dcr-125>`_
+`IEM-DCR-1000 <https://www.isabellenhuette.com/de/loesungen/produkte/iem-dcr-1000>`_
+`IEM-DCR-1500 <https://www.isabellenhuette.com/de/loesungen/produkte/iem-dcr-1500>`_
