@@ -1147,29 +1147,21 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
     res->EVSEChargeParameter_isUsed = 0;
     res->EVSEProcessing = (iso2_EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER];
 
-    struct linked_ac_params {
-        float max_current;
-        int64_t voltage;
-        int64_t pmax;
-    };
-
-    linked_ac_params default_params;
+    int64_t pmax{0};
 
     if (conn->ctx->is_dc_charger == false) {
         int64_t departure_time_duration = req->AC_EVChargeParameter.DepartureTime;
         /* Determin max current and nominal voltage */
         /* Setup default params (before the departure time overrides) */
-        default_params.max_current = conn->ctx->basic_config.evse_ac_current_limit;
-        default_params.voltage =
-            conn->ctx->evse_v2g_data.evse_nominal_voltage.Value *
-            pow(10, conn->ctx->evse_v2g_data.evse_nominal_voltage.Multiplier); /* nominal voltage */
-        default_params.pmax =
-            default_params.max_current * default_params.voltage *
-            ((req->RequestedEnergyTransferMode == iso2_EnergyTransferModeType_AC_single_phase_core) ? 1 : 3);
+        float max_current = conn->ctx->basic_config.evse_ac_current_limit;
+        int64_t voltage = conn->ctx->evse_v2g_data.evse_nominal_voltage.Value *
+                          pow(10, conn->ctx->evse_v2g_data.evse_nominal_voltage.Multiplier); /* nominal voltage */
+        pmax = max_current * voltage *
+               ((req->RequestedEnergyTransferMode == iso2_EnergyTransferModeType_AC_single_phase_core) ? 1 : 3);
 
         dlog(DLOG_LEVEL_INFO,
              "before adjusting for departure time, max_current %f, nom_voltage %d, pmax %d, departure_duration %d",
-             default_params.max_current, default_params.voltage, default_params.pmax, departure_time_duration);
+             max_current, voltage, pmax, departure_time_duration);
     }
 
     /* Configure SA-schedules*/
@@ -1182,7 +1174,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                 populate_physical_value(&conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                                              .PMaxSchedule.PMaxScheduleEntry.array[0]
                                              .PMax,
-                                        default_params.pmax, iso2_unitSymbolType_W);
+                                        pmax, iso2_unitSymbolType_W);
             } else {
                 conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                     .PMaxSchedule.PMaxScheduleEntry.array[0]
@@ -1262,7 +1254,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                              .PMax.Value *
                          pow(10, res->SAScheduleList.SAScheduleTuple.array[idx]
                                      .PMaxSchedule.PMaxScheduleEntry.array[idx2]
-                                     .PMax.Multiplier)) > default_params.pmax) {
+                                     .PMax.Multiplier)) > pmax) {
                         dlog(DLOG_LEVEL_WARNING,
                              "Provided SA-schedule-list doesn't match with the physical value limits");
                     }
