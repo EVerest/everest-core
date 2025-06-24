@@ -47,7 +47,7 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: efb46a2b38ba01be792e5d18d98b00d881b512b0
+  git_tag: 9920f7449ab0eff62132c558975b0a3c5307eb99
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
@@ -89,7 +89,7 @@ Josev:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: c261e8a4be5367c5bc7e89106c5fb7a470de87bb
+  git_tag: 824abc6293f1d130f6166a7765319102cd7d7d92
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git

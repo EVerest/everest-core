@@ -1505,3 +1505,44 @@ types:
         type: number
         minimum: 0
         maximum: 99
+  EvInformation:
+    description: Information concerning TLS certificates used by EV, as well as supported protocols.
+    type: object
+    additionalProperties: false
+    required:
+      - supported_protocols
+      - selected_protocol
+      - evcc_id
+    properties:
+      supported_protocols:
+        type: object
+        description:
+          Ordered list of all of the supported protocols by the EV.
+        $ref: /iso15118#/AppProtocols
+      selected_protocol:
+        type: object
+        description:
+          The protocol chosen for the communication.
+        $ref: /iso15118#/AppProtocol
+      evcc_id:
+        description:
+          Specifies the EVs identification in a readable format. It contains
+          the MAC address of the EVCC in uppercase
+        type: string
+        pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
+      tls_leaf_certificate:
+        description:
+          Certificate used by the EV for the TLS1.3 communication.
+        type: string
+      tls_sub_ca_1_certificate:
+        description:
+          Certificate used by the EV for the TLS1.3 communication.
+        type: string
+      tls_sub_ca_2_certificate:
+        description:
+          Certificate used by the EV for the TLS1.3 communication.
+        type: string
+      tls_root_certificate:
+        description:
+          Certificate used by the EV for the TLS1.3 communication.
+        type: string
