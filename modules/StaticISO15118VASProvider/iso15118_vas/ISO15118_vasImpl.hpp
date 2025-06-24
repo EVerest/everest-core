@@ -39,7 +39,7 @@ protected:
     handle_selected_services(std::vector<types::iso15118_vas::SelectedService>& selected_services) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
-    std::map<uint16_t, std::vector<types::iso15118_vas::ParameterSet>> value_added_services;
+    // insert your protected definitions here
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
@@ -50,7 +50,7 @@ private:
     virtual void ready() override;
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
-    // insert your private definitions here
+    std::map<uint16_t, std::vector<types::iso15118_vas::ParameterSet>> value_added_services;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

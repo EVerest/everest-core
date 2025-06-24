@@ -60,7 +60,7 @@ types::iso15118_vas::ParameterSet parameter_set_from_json(const nlohmann::ordere
     std::set<std::string> parameter_names; // only used for duplicate check
 
     EVLOG_debug << "  Parameter set ID: " << set_id;
-    for (const auto& parameter : parameters_raw) {
+    for (const auto parameter : parameters_raw) {
         auto param = parameter_from_json(parameter);
         parameters.push_back(param);
 
@@ -73,10 +73,7 @@ types::iso15118_vas::ParameterSet parameter_set_from_json(const nlohmann::ordere
         parameter_names.insert(param.name);
     }
 
-    return types::iso15118_vas::ParameterSet{
-        .set_id = set_id,
-        .parameters = parameters,
-    };
+    return types::iso15118_vas::ParameterSet{set_id, parameters};
 }
 
 /**
@@ -89,7 +86,7 @@ std::vector<types::iso15118_vas::ParameterSet> parameter_sets_from_json(const nl
     std::vector<types::iso15118_vas::ParameterSet> parameter_sets;
     std::set<uint16_t> parameter_set_ids; // only used for duplicate check
 
-    for (const auto& parameter_set_raw : json) {
+    for (const auto parameter_set_raw : json) {
         auto parameter_set = parameter_set_from_json(parameter_set_raw);
         parameter_sets.push_back(parameter_set);
 

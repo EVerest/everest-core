@@ -1,16 +1,13 @@
 description: >-
   This module provides static ISO15118 value-added services (VAS) defined in a yaml file
-
 config:
   service_file:
     description: The path to the service yaml file
     type: string
-
 provides:
   iso15118_vas:
     interface: ISO15118_vas
     description: The custom VAS parsed from the yaml file
-
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
