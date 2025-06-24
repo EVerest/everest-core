@@ -9,7 +9,7 @@ namespace json_rpc_api {
         EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::SessionEvent state) {
             using Event = types::evse_manager::SessionEventEnum;
             using State = types::json_rpc_api::EVSEStateEnum;
-        
+
             switch (state.event) {
                 case Event::Enabled:
                     return State::Unplugged;
