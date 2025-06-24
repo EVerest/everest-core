@@ -22,7 +22,7 @@ class OCPPModulePaths201(OCPPModuleConfigurationBase):
     DeviceModelConfigPath: str
     CoreDatabasePath: str
     DeviceModelDatabasePath: str
-
+    EverestDeviceModelDatabasePath: str
 
 class OCPPModuleConfigurationStrategy(EverestConfigAdjustmentStrategy):
     """ Adjusts the Everest configuration by manipulating the OCPP module configuration to use proper (temporary test) paths.
