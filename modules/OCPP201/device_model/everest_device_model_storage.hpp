@@ -7,24 +7,19 @@
 
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/types/evse_board_support.hpp>
+#include <generated/types/powermeter.hpp>
 
 #include <ocpp/v2/device_model_storage_interface.hpp>
+#include <ocpp/v2/device_model_storage_sqlite.hpp>
 
 namespace module::device_model {
-
-/// \brief Extends VariableMetaData to include a map of VariableAttributes that contain the actual values of a variable
-struct VariableData : ocpp::v2::VariableMetaData {
-    std::map<ocpp::v2::AttributeEnum, ocpp::v2::VariableAttribute> attributes;
-};
-
-using Variables = std::map<ocpp::v2::Variable, VariableData>;
-using ComponentsMap = std::map<ocpp::v2::Component, Variables>;
 
 class EverestDeviceModelStorage : public ocpp::v2::DeviceModelStorageInterface {
 public:
     EverestDeviceModelStorage(
         const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager,
-        const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map);
+        const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map,
+        const std::filesystem::path& db_path, const std::filesystem::path& migration_files_path);
     virtual ~EverestDeviceModelStorage() override = default;
     virtual ocpp::v2::DeviceModelMap get_device_model() override;
     virtual std::optional<ocpp::v2::VariableAttribute>
@@ -48,11 +43,16 @@ public:
     virtual int32_t clear_custom_variable_monitors() override;
     virtual void check_integrity() override;
 
+    /// \brief Updates the actual value of the EVSE Power variable to the given \p total_power_active_import value
+    void update_power(const int32_t evse_id, const float total_power_active_import);
+
 private:
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager;
-    ComponentsMap device_model;
     std::mutex device_model_mutex;
+    std::unique_ptr<ocpp::v2::DeviceModelStorageSqlite> device_model_storage;
 
+    void init_hw_capabilities(
+        const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map);
     void update_hw_capabilities(const ocpp::v2::Component& evse_component,
                                 const types::evse_board_support::HardwareCapabilities& hw_capabilities);
 };
