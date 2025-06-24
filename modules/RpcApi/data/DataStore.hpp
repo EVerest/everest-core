@@ -122,6 +122,7 @@ public:
         // check if data has changed
         if (this->dataobj.active_connector_id != active_connector_id) {
             this->dataobj.active_connector_id = active_connector_id;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -133,6 +134,7 @@ public:
         // check if data has changed
         if (this->dataobj.charging_allowed != charging_allowed) {
             this->dataobj.charging_allowed = charging_allowed;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -144,6 +146,7 @@ public:
         // check if data has changed
         if (this->dataobj.state != state) {
             this->dataobj.state = state;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -155,6 +158,7 @@ public:
         // check if data has changed
         if (this->dataobj.evse_error != evse_error) {
             this->dataobj.evse_error = evse_error;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -166,6 +170,7 @@ public:
         // check if data has changed
         if (this->dataobj.charge_protocol != charge_protocol) {
             this->dataobj.charge_protocol = charge_protocol;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -177,6 +182,7 @@ public:
         // check if data has changed
         if (this->dataobj.charging_duration_s != charging_duration_s) {
             this->dataobj.charging_duration_s = charging_duration_s;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -188,6 +194,7 @@ public:
         // check if data has changed
         if (this->dataobj.charged_energy_wh != charged_energy_wh) {
             this->dataobj.charged_energy_wh = charged_energy_wh;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -199,6 +206,7 @@ public:
         // check if data has changed
         if (this->dataobj.discharged_energy_wh != discharged_energy_wh) {
             this->dataobj.discharged_energy_wh = discharged_energy_wh;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -210,6 +218,7 @@ public:
         // check if data has changed
         if (this->dataobj.available != available) {
             this->dataobj.available = available;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -219,6 +228,7 @@ public:
         // check if data has changed
         if (this->dataobj.ac_charge_param != ac_charge_param) {
             this->dataobj.ac_charge_param = ac_charge_param;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -228,6 +238,7 @@ public:
         // check if data has changed
         if (this->dataobj.dc_charge_param != dc_charge_param) {
             this->dataobj.dc_charge_param = dc_charge_param;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -237,6 +248,7 @@ public:
         // check if data has changed
         if (this->dataobj.ac_charge_loop != ac_charge_loop) {
             this->dataobj.ac_charge_loop = ac_charge_loop;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -246,6 +258,7 @@ public:
         // check if data has changed
         if (this->dataobj.dc_charge_loop != dc_charge_loop) {
             this->dataobj.dc_charge_loop = dc_charge_loop;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
@@ -255,6 +268,7 @@ public:
         // check if data has changed
         if (this->dataobj.display_parameters != display_parameters) {
             this->dataobj.display_parameters = display_parameters;
+            data_lock.unlock();
             this->notify_data_changed();
         }
     }
