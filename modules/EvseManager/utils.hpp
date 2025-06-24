@@ -5,7 +5,9 @@
 #define _EVSEMANAGER_UTILS_H_
 
 #include <everest/staging/helpers/helpers.hpp>
+#include <generated/types/evse_manager.hpp>
 #include <generated/types/powermeter.hpp>
+#include <vector>
 
 namespace module {
 namespace utils {
@@ -56,6 +58,17 @@ convert_to_ocmf_identification_type(const types::authorization::IdTokenType& id_
         return types::powermeter::OCMFIdentificationType::UNDEFINED;
     }
     return types::powermeter::OCMFIdentificationType::UNDEFINED;
+}
+
+inline std::vector<types::evse_manager::OperationModeEnum>
+convert_operation_mode_csv_to_vector(const std::string& operation_mode_csv) {
+    std::vector<types::evse_manager::OperationModeEnum> result;
+    std::string str;
+    std::stringstream string_stream(operation_mode_csv);
+    while (std::getline(string_stream, str, ',')) {
+        result.push_back(types::evse_manager::string_to_operation_mode_enum(str));
+    }
+    return result;
 }
 
 // Simple helper class to measure time in ms

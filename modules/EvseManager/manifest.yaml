@@ -338,6 +338,20 @@ config:
       - UUID_BASE64
       - SHORT_BASE64
     default: UUID
+  supported_operation_modes:
+    description: >-
+      Comma separated value list representing the list of supported operation modes.
+      These are based on the enum values of OperationModeEnum, which are
+      Idle
+      ChargingOnly
+      CentralSetpoint
+      ExternalSetpoint
+      ExternalLimits
+      CentralFrequency
+      LocalFrequency
+      LocalLoadBalancing
+    type: string
+    default: Idle,ChargingOnly
 provides:
   evse:
     interface: evse_manager
