@@ -12,6 +12,7 @@
 #include <error_handling.hpp>
 #include <evse_security_ocpp.hpp>
 #include <external_energy_limits.hpp>
+#include <ocpp/v2/utils.hpp>
 #include <ocpp_conversions.hpp>
 
 namespace module {
@@ -388,6 +389,15 @@ void OCPP201::ready() {
             return this->ocpp_share_path / config_device_model_path;
         } else {
             return config_device_model_path;
+        }
+    }();
+
+    const auto everest_device_model_database_path = [&]() {
+        const auto config_everest_device_model_path = fs::path(this->config.EverestDeviceModelDatabasePath);
+        if (config_everest_device_model_path.is_relative()) {
+            return this->ocpp_share_path / config_everest_device_model_path;
+        } else {
+            return config_everest_device_model_path;
         }
     }();
 
@@ -829,19 +839,20 @@ void OCPP201::ready() {
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
 
     // initialize libocpp device model
-    auto libocpp_device_model_storage = std::make_unique<ocpp::v2::DeviceModelStorageSqlite>(
-        device_model_database_path, device_model_database_migration_path, device_model_config_path, true);
+    auto libocpp_device_model_storage = std::make_shared<ocpp::v2::DeviceModelStorageSqlite>(
+        device_model_database_path, device_model_database_migration_path, device_model_config_path);
 
     // initialize everest device model
-    auto everest_device_model_storage =
-        std::make_unique<device_model::EverestDeviceModelStorage>(r_evse_manager, evse_hardware_capabilities_map);
+    this->everest_device_model_storage = std::make_shared<device_model::EverestDeviceModelStorage>(
+        r_evse_manager, this->evse_hardware_capabilities_map, everest_device_model_database_path,
+        device_model_database_migration_path);
 
     // initialize composed device model, this will be provided to the ChargePoint constructor
     auto composed_device_model_storage = std::make_unique<module::device_model::ComposedDeviceModelStorage>();
 
     // register both device model storages
     composed_device_model_storage->register_device_model_storage("OCPP", std::move(libocpp_device_model_storage));
-    composed_device_model_storage->register_device_model_storage("EVEREST", std::move(everest_device_model_storage));
+    composed_device_model_storage->register_device_model_storage("EVEREST", this->everest_device_model_storage);
 
     this->charge_point = std::make_unique<ocpp::v2::ChargePoint>(
         evse_connector_structure, std::move(composed_device_model_storage), this->ocpp_share_path.string(),
@@ -939,6 +950,10 @@ void OCPP201::ready() {
                 meter_value.sampledValue.push_back(sampled_soc_value);
             }
             this->charge_point->on_meter_value(evse_id, meter_value);
+            const auto total_power_active_import = ocpp::v2::utils::get_total_power_active_import(meter_value);
+            if (total_power_active_import.has_value()) {
+                this->everest_device_model_storage->update_power(evse_id, total_power_active_import.value());
+            }
         });
 
         evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
