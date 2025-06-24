@@ -47,7 +47,8 @@ public:
 
     void create_device_model_db(const std::string& path) {
         InitDeviceModelDb db(path, MIGRATION_FILES_PATH);
-        db.initialize_database(CONFIG_PATH, true);
+        const auto component_configs = get_all_component_configs(CONFIG_PATH);
+        db.initialize_database(component_configs, true);
     }
 
     std::shared_ptr<DeviceModel>

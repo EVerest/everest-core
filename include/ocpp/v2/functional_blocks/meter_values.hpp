@@ -45,9 +45,5 @@ private: // Members
 
     ClockAlignedTimer aligned_meter_values_timer;
     AverageMeterValues aligned_data_evse0; // represents evseId = 0 meter value
-
-private: // Functions
-    // Internal helper functions
-    void update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value);
 };
 } // namespace ocpp::v2

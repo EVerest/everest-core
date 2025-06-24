@@ -493,7 +493,6 @@ public:
     /// key represents the id of the EVSE and the value represents the number of connectors for this EVSE. The ids of
     /// the EVSEs have to increment starting with 1.
     /// \param device_model_storage_address address to device model storage (e.g. location of SQLite database)
-    /// \param initialize_device_model  Set to true to initialize the device model database
     /// \param device_model_migration_path  Path to the device model database migration files
     /// \param device_model_config_path    Path to the device model config
     /// \param ocpp_main_path Path where utility files for OCPP are read and written to
@@ -503,11 +502,11 @@ public:
     /// security_configuration must be set
     /// \param callbacks Callbacks that will be registered for ChargePoint
     ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
-                const std::string& device_model_storage_address, const bool initialize_device_model,
-                const std::string& device_model_migration_path, const std::string& device_model_config_path,
-                const std::string& ocpp_main_path, const std::string& core_database_path,
-                const std::string& sql_init_path, const std::string& message_log_path,
-                const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks);
+                const std::string& device_model_storage_address, const std::string& device_model_migration_path,
+                const std::string& device_model_config_path, const std::string& ocpp_main_path,
+                const std::string& core_database_path, const std::string& sql_init_path,
+                const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
+                const Callbacks& callbacks);
 
     /// @}  // End chargepoint 2.0.1 member group
 

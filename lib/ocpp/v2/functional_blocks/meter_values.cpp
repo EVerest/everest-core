@@ -93,7 +93,6 @@ void ocpp::v2::MeterValues::on_meter_value(const int32_t evse_id, const MeterVal
         this->aligned_data_evse0.set_values(meter_value);
     } else {
         this->context.evse_manager.get_evse(evse_id).on_meter_value(meter_value);
-        this->update_dm_evse_power(evse_id, meter_value);
     }
 }
 
@@ -116,22 +115,4 @@ void ocpp::v2::MeterValues::meter_values_req(const int32_t evse_id, const std::v
 
     ocpp::Call<MeterValuesRequest> call(req);
     this->context.message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
-}
-
-void ocpp::v2::MeterValues::update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value) {
-    ComponentVariable evse_power_cv =
-        EvseComponentVariables::get_component_variable(evse_id, EvseComponentVariables::Power);
-
-    if (!evse_power_cv.variable.has_value()) {
-        return;
-    }
-
-    const auto power = utils::get_total_power_active_import(meter_value);
-    if (!power.has_value()) {
-        return;
-    }
-
-    this->context.device_model.set_read_only_value(evse_power_cv.component, evse_power_cv.variable.value(),
-                                                   AttributeEnum::Actual, std::to_string(power.value()),
-                                                   VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
 }

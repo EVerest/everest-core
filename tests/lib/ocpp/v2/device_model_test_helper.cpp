@@ -212,7 +212,8 @@ bool DeviceModelTestHelper::set_variable_attribute_value_null(const std::string&
 
 void DeviceModelTestHelper::create_device_model_db() {
     InitDeviceModelDb db(this->database_path, this->migration_files_path);
-    db.initialize_database(this->config_path, true);
+    const auto component_configs = get_all_component_configs(this->config_path);
+    db.initialize_database(component_configs, true);
 }
 
 std::unique_ptr<DeviceModel> DeviceModelTestHelper::create_device_model(const bool init) {

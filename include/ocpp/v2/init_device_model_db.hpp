@@ -124,6 +124,14 @@ private:
     std::string reason;
 };
 
+///
+/// \brief Read all component config files from the given directory and create a map holding the structure.
+/// \param directory    The parent directory containing the standardized and custom component config files.
+/// \return A map with the device model components, variables, characteristics and attributes.
+///
+std::map<ComponentKey, std::vector<DeviceModelVariable>>
+get_all_component_configs(const std::filesystem::path& directory);
+
 class InitDeviceModelDb : public common::DatabaseHandlerCommon {
 private: // Members
     /// \brief Database path of the device model database.
@@ -146,7 +154,7 @@ public:
 
     ///
     /// \brief Initialize the database schema and component config.
-    /// \param config_path          Path to the component config.
+    /// \param component_configs    A map with all components, variables, characteristics and attributes.
     /// \param delete_db_if_exists  Set to true to delete the database if it already exists.
     ///
     /// \throws InitDeviceModelDbError  - When database could not be initialized or
@@ -158,7 +166,8 @@ public:
     /// \throws std::filesystem::filesystem_error   If the component config path does not exist
     ///
     ///
-    void initialize_database(const std::filesystem::path& config_path, const bool delete_db_if_exists);
+    void initialize_database(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs,
+                             const bool delete_db_if_exists);
 
 private: // Functions
     ///
@@ -181,14 +190,6 @@ private: // Functions
     std::vector<std::filesystem::path> get_component_config_from_directory(const std::filesystem::path& directory);
 
     ///
-    /// \brief Read all component config files from the given directory and create a map holding the structure.
-    /// \param directory    The parent directory containing the standardized and custom component config files.
-    /// \return A map with the device model components, variables, characteristics and attributes.
-    ///
-    std::map<ComponentKey, std::vector<DeviceModelVariable>>
-    get_all_component_configs(const std::filesystem::path& directory);
-
-    ///
     /// \brief Insert components, including variables, characteristics and attributes, to the database.
     /// \param components               The map with all components, variables, characteristics and attributes.
     /// \param existing_components      Vector with components that already exist in the database.
@@ -205,21 +206,6 @@ private: // Functions
     ///
     void insert_component(const ComponentKey& component_key,
                           const std::vector<DeviceModelVariable>& component_variables);
-
-    ///
-    /// \brief Read component config from given files.
-    /// \param components_config_path   The paths to the component config files.
-    /// \return A map holding the components with its variables, characteristics and attributes.
-    ///
-    std::map<ComponentKey, std::vector<DeviceModelVariable>>
-    read_component_config(const std::vector<std::filesystem::path>& components_config_path);
-
-    ///
-    /// \brief Get all component properties (variables) from the given (component) json.
-    /// \param component_properties The json component properties
-    /// \return A vector with all Variables belonging to this component.
-    ///
-    std::vector<DeviceModelVariable> get_all_component_properties(const json& component_properties);
 
     ///
     /// \brief Insert variable characteristics

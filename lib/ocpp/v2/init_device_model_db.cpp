@@ -54,7 +54,9 @@ InitDeviceModelDb::~InitDeviceModelDb() {
     close_connection();
 }
 
-void InitDeviceModelDb::initialize_database(const std::filesystem::path& config_path, bool delete_db_if_exists = true) {
+void InitDeviceModelDb::initialize_database(
+    const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs,
+    bool delete_db_if_exists = true) {
     execute_init_sql(delete_db_if_exists);
 
     // Get existing components from the database.
@@ -63,9 +65,6 @@ void InitDeviceModelDb::initialize_database(const std::filesystem::path& config_
     if (this->database_exists) {
         existing_components = get_all_components_from_db();
     }
-
-    // Get component config files from the filesystem.
-    std::map<ComponentKey, std::vector<DeviceModelVariable>> component_configs = get_all_component_configs(config_path);
 
     // Check if the config is consistent.
     check_integrity(component_configs);
@@ -111,8 +110,9 @@ void InitDeviceModelDb::execute_init_sql(const bool delete_db_if_exists) {
     open_connection();
 }
 
-std::vector<std::filesystem::path>
-InitDeviceModelDb::get_component_config_from_directory(const std::filesystem::path& directory) {
+namespace {
+
+std::vector<std::filesystem::path> get_component_config_from_directory(const std::filesystem::path& directory) {
     std::vector<std::filesystem::path> component_config_files;
     for (const auto& p : std::filesystem::directory_iterator(directory)) {
         if (p.path().extension() == ".json") {
@@ -123,8 +123,57 @@ InitDeviceModelDb::get_component_config_from_directory(const std::filesystem::pa
     return component_config_files;
 }
 
+///
+/// \brief Get all component properties (variables) from the given (component) json.
+/// \param component_properties The json component properties
+/// \return A vector with all Variables belonging to this component.
+///
+std::vector<DeviceModelVariable> get_all_component_properties(const json& component_properties) {
+    std::vector<DeviceModelVariable> variables;
+    variables.reserve(component_properties.size());
+    for (const auto& variable : component_properties.items()) {
+        DeviceModelVariable v = variable.value();
+        const std::string variable_key_name = variable.key();
+
+        variables.push_back(v);
+    }
+
+    return variables;
+}
+
+///
+/// \brief Read component config from given files.
+/// \param components_config_path   The paths to the component config files.
+/// \return A map holding the components with its variables, characteristics and attributes.
+///
 std::map<ComponentKey, std::vector<DeviceModelVariable>>
-InitDeviceModelDb::get_all_component_configs(const std::filesystem::path& directory) {
+read_component_config(const std::vector<std::filesystem::path>& components_config_path) {
+    std::map<ComponentKey, std::vector<DeviceModelVariable>> components;
+    for (const auto& path : components_config_path) {
+        std::ifstream config_file(path);
+        try {
+            json data = json::parse(config_file);
+            ComponentKey p = data;
+            if (data.contains("properties")) {
+                std::vector<DeviceModelVariable> variables = get_all_component_properties(data.at("properties"));
+                components.insert({p, variables});
+            } else {
+                EVLOG_warning << "Component " << data.at("name") << " does not contain any properties";
+                continue;
+            }
+        } catch (const json::parse_error& e) {
+            EVLOG_error << "Error while parsing config file: " << path;
+            throw;
+        }
+    }
+
+    return components;
+}
+
+} // namespace
+
+std::map<ComponentKey, std::vector<DeviceModelVariable>>
+get_all_component_configs(const std::filesystem::path& directory) {
 
     const auto standardized_dir = directory / STANDARDIZED_COMPONENT_CONFIG_DIR;
     const auto custom_dir = directory / CUSTOM_COMPONENT_CONFIG_DIR;
@@ -214,43 +263,6 @@ void InitDeviceModelDb::insert_component(const ComponentKey& component_key,
         // Add variable
         insert_variable(variable, static_cast<uint64_t>(component_id));
     }
-}
-
-std::map<ComponentKey, std::vector<DeviceModelVariable>>
-InitDeviceModelDb::read_component_config(const std::vector<std::filesystem::path>& components_config_path) {
-    std::map<ComponentKey, std::vector<DeviceModelVariable>> components;
-    for (const auto& path : components_config_path) {
-        std::ifstream config_file(path);
-        try {
-            json data = json::parse(config_file);
-            ComponentKey p = data;
-            if (data.contains("properties")) {
-                std::vector<DeviceModelVariable> variables = get_all_component_properties(data.at("properties"));
-                components.insert({p, variables});
-            } else {
-                EVLOG_warning << "Component " << data.at("name") << " does not contain any properties";
-                continue;
-            }
-        } catch (const json::parse_error& e) {
-            EVLOG_error << "Error while parsing config file: " << path;
-            throw;
-        }
-    }
-
-    return components;
-}
-
-std::vector<DeviceModelVariable> InitDeviceModelDb::get_all_component_properties(const json& component_properties) {
-    std::vector<DeviceModelVariable> variables;
-
-    for (const auto& variable : component_properties.items()) {
-        DeviceModelVariable v = variable.value();
-        const std::string variable_key_name = variable.key();
-
-        variables.push_back(v);
-    }
-
-    return variables;
 }
 
 void InitDeviceModelDb::insert_variable_characteristics(const VariableCharacteristics& characteristics,

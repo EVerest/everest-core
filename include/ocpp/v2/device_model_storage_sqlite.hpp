@@ -23,6 +23,8 @@ private:
 
     int get_variable_id(const Component& component_id, const Variable& variable_id);
 
+    void initialize_connection(const fs::path& db_path);
+
 public:
     /// \brief Opens SQLite connection at given \p db_path
     ///
@@ -31,11 +33,22 @@ public:
     /// \param db_path              Path to database
     /// \param migration_files_path Path to the migration files to initialize the database (only needs to be set if
     ///                             `init_db` is true)
-    /// \param config_path          Path to the device model config (only needs to be set if `init_db` is true)
-    /// \param init_db              True to initialize the database
+    /// \param config_path          Path to the device model config used to initialize the database
     ///
-    explicit DeviceModelStorageSqlite(const fs::path& db_path, const std::filesystem::path& migration_files_path = "",
-                                      const std::filesystem::path& config_path = "", const bool init_db = false);
+    explicit DeviceModelStorageSqlite(const fs::path& db_path, const std::filesystem::path& migration_files_path,
+                                      const std::filesystem::path& config_path);
+
+    /// \brief Opens SQLite connection at given \p db_path
+    ///
+    /// \param db_path              Path to database
+    /// \param migration_files_path Path to the migration files to initialize the database
+    ///
+    DeviceModelStorageSqlite(const fs::path& db_path, const fs::path& migration_files_path);
+
+    /// \brief Opens SQLite connection at given \p db_path
+    ///
+    /// \param db_path Path to database
+    DeviceModelStorageSqlite(const fs::path& db_path);
 
     ~DeviceModelStorageSqlite() = default;
 

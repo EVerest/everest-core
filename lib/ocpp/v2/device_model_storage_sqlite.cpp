@@ -22,23 +22,32 @@ extern void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>&
                                      std::vector<VariableMonitoringMeta>& monitors);
 
 DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path, const fs::path& migration_files_path,
-                                                   const fs::path& config_path, const bool init_db) {
-    if (init_db) {
-        if (db_path.empty() || migration_files_path.empty() || config_path.empty()) {
-            EVLOG_AND_THROW(DeviceModelError("Can not initialize device model storage: one of the paths is empty."));
-        }
-        InitDeviceModelDb init_device_model_db(db_path, migration_files_path);
-        init_device_model_db.initialize_database(config_path, false);
+                                                   const fs::path& config_path) {
+    if (db_path.empty() || migration_files_path.empty() || config_path.empty()) {
+        EVLOG_AND_THROW(DeviceModelError("Can not initialize device model storage: one of the paths is empty."));
     }
+    const auto component_configs = get_all_component_configs(config_path);
+    InitDeviceModelDb init_device_model_db(db_path, migration_files_path);
+    init_device_model_db.initialize_database(component_configs, false);
 
+    initialize_connection(db_path);
+}
+
+DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path, const fs::path& migration_files_path) {
+    InitDeviceModelDb init_device_model_db(db_path, migration_files_path);
+    initialize_connection(db_path);
+}
+
+DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path) {
+    initialize_connection(db_path);
+}
+
+void DeviceModelStorageSqlite::initialize_connection(const fs::path& db_path) {
     db = std::make_unique<Connection>(db_path);
-
     if (!db->open_connection()) {
-        EVLOG_AND_THROW(
-            std::runtime_error("Could not open device model database at provided path: " + db_path.string()));
-    } else {
-        EVLOG_info << "Established connection to device model database successfully: " << db_path;
+        EVLOG_AND_THROW(std::runtime_error("Could not open device model database at: " + db_path.string()));
     }
+    EVLOG_info << "Established connection to device model database: " << db_path;
 }
 
 int DeviceModelStorageSqlite::get_component_id(const Component& component_id) {

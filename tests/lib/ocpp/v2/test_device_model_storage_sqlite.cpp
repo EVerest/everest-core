@@ -27,7 +27,7 @@ public:
 
 /// \brief Tests check_integrity does not raise error for valid database
 TEST_F(DeviceModelStorageSQLiteTest, test_check_integrity_valid) {
-    DeviceModelStorageSqlite dm(DATABASE_PATH, "", "", false);
+    DeviceModelStorageSqlite dm(DATABASE_PATH);
 
     EXPECT_NO_THROW(dm.check_integrity());
 }
@@ -38,7 +38,7 @@ TEST_F(DeviceModelStorageSQLiteTest, test_check_integrity_invalid) {
     device_model_test_helper.remove_variable_from_db("DisplayMessageCtrlr", std::nullopt, std::nullopt, std::nullopt,
                                                      "NumberOfDisplayMessages", std::nullopt);
 
-    DeviceModelStorageSqlite dm(DATABASE_PATH, "", "", false);
+    DeviceModelStorageSqlite dm(DATABASE_PATH);
 
     EXPECT_NO_THROW(dm.check_integrity());
 }
