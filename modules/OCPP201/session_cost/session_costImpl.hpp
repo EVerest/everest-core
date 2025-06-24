@@ -25,8 +25,7 @@ class session_costImpl : public session_costImplBase {
 public:
     session_costImpl() = delete;
     session_costImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<OCPP201>& mod, Conf& config) :
-        session_costImplBase(ev, "session_cost"), mod(mod), config(config) {
-    }
+        session_costImplBase(ev, "session_cost"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

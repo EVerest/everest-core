@@ -10,7 +10,7 @@ ComposedDeviceModelStorage::ComposedDeviceModelStorage() {
 }
 
 bool ComposedDeviceModelStorage::register_device_model_storage(
-    std::string device_model_storage_id, std::unique_ptr<ocpp::v2::DeviceModelStorageInterface> device_model_storage) {
+    std::string device_model_storage_id, std::shared_ptr<ocpp::v2::DeviceModelStorageInterface> device_model_storage) {
     if (this->device_model_storages.find(device_model_storage_id) != this->device_model_storages.end()) {
         return false;
     }
@@ -33,7 +33,7 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
         }
     }
 
-    this->device_model_storages[device_model_storage_id] = std::move(device_model_storage);
+    this->device_model_storages[device_model_storage_id] = device_model_storage;
     return true;
 }
 
