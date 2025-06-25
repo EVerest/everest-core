@@ -53,7 +53,7 @@ public:
             listener(native_value);
         {% elif 'array_type' in var %}
             {% if 'array_type_contains_enum' in var %}
-            std::vector<{{ arg.array_type }}> typed_value;
+            std::vector<{{ var.array_type }}> typed_value;
             for (auto& entry : value) {
                 typed_value.push_back({{ string_to_enum(var.array_type) }}(entry));
             }
