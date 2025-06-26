@@ -6,6 +6,7 @@
 #include <everest/database/exceptions.hpp>
 #include <everest/database/sqlite/connection.hpp>
 #include <tests/helpers.hpp>
+#include <utils/config/settings.hpp>
 #include <utils/config/storage_sqlite.hpp>
 #include <utils/yaml_loader.hpp>
 

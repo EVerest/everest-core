@@ -5,6 +5,7 @@
 #include <everest/database/sqlite/schema_updater.hpp>
 #include <everest/logging.hpp>
 
+#include <utils/config/settings.hpp>
 #include <utils/config/storage_sqlite.hpp>
 #include <utils/date.hpp>
 

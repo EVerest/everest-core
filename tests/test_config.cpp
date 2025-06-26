@@ -56,6 +56,12 @@ SCENARIO("Check ManagerSettings Constructor", "[!throws]") {
                             Everest::BootException);
         }
     }
+    GIVEN("A non-exsiting database file with ConfigurationBootMode::DatabaseInit") {
+        THEN("It should not throw and create the file") {
+            CHECK_NOTHROW(Everest::ManagerSettings(bin_dir + "valid_config/", bin_dir + "valid_config/config.yaml",
+                                                   "valid_config/non_existing.db"));
+        }
+    }
 }
 SCENARIO("Check ManagerConfig Constructor", "[!throws]") {
     auto bin_dir = Everest::tests::get_bin_dir().string() + "/";
@@ -202,6 +208,29 @@ SCENARIO("Check ManagerConfig Constructor", "[!throws]") {
             Everest::ManagerSettings(bin_dir + "valid_complete_config/", bin_dir + "valid_complete_config/config.json");
         THEN("It should not throw at all") {
             CHECK_NOTHROW(Everest::ManagerConfig(ms));
+        }
+    }
+    GIVEN("ManagerSettings are instantiated two times - first with fallback to init from config file, second with "
+          "database") {
+        auto db_path = bin_dir + "valid_config/everest.db";
+
+        // Clean up before test
+        if (fs::exists(db_path)) {
+            fs::remove(db_path);
+        }
+        auto ms = Everest::ManagerSettings(bin_dir + "valid_config/", bin_dir + "valid_config/config.yaml", db_path);
+        CHECK(ms.storage->contains_valid_config() == false);
+        THEN("In the first intstantiation the database is not initialized") {
+            CHECK_NOTHROW(Everest::ManagerConfig(ms));
+
+            THEN("In the second instantiation the database is initialized and valid") {
+                ms = Everest::ManagerSettings(bin_dir + "valid_config/", bin_dir + "valid_config/config.yaml", db_path);
+                CHECK(ms.storage->contains_valid_config() == true);
+                CHECK_NOTHROW(Everest::ManagerConfig(ms));
+            }
+            THEN("It should be possible to construct the ManagerSettings with a database path") {
+                CHECK_NOTHROW(Everest::ManagerSettings(bin_dir + "valid_config/", db_path, Everest::DatabaseTag{}));
+            }
         }
     }
 }

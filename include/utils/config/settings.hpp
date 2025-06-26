@@ -9,6 +9,7 @@
 #include <nlohmann/json.hpp>
 
 #include <utils/config/mqtt_settings.hpp>
+#include <utils/config/storage_sqlite.hpp>
 #include <utils/config/types.hpp>
 
 namespace Everest {
@@ -48,6 +49,7 @@ struct DatabaseTag {};
 /// \brief Settings needed by the manager to load and validate a config
 struct ManagerSettings {
     fs::path configs_dir;          ///< Directory that contains EVerest configs
+    fs::path db_dir;               ///< Directory that contains the database
     fs::path schemas_dir;          ///< Directory that contains schemas for config, manifest, interfaces, etc.
     fs::path interfaces_dir;       ///< Directory that contains interface definitions
     fs::path types_dir;            ///< Directory that contains type definitions
@@ -65,7 +67,8 @@ struct ManagerSettings {
 
     MQTTSettings mqtt_settings;       ///< MQTT connection settings
     RuntimeSettings runtime_settings; ///< Runtime settings needed to successfully run modules
-    ConfigBootMode boot_mode;
+    ConfigBootMode boot_mode;         ///< Source of the config, can be YamlFile, Database or DatabaseInit
+    std::unique_ptr<everest::config::SqliteStorage> storage; ///< Sqlite Storage for settings and module configs
 
     ManagerSettings() = default;
 
@@ -78,7 +81,7 @@ struct ManagerSettings {
     ManagerSettings(const std::string& prefix, const std::string& db, DatabaseTag);
 
     /// \brief Constructor that initializes the ManagerSettings with the given prefix, config file and database path.
-    /// Boot Source is set to DatabaseFallbackYaml.
+    /// Boot Source is set to DatabaseInit.
     ManagerSettings(const std::string& prefix, const std::string& config, const std::string& db);
 
     /// \brief Initializes the ManagerSettings with the given settings and prefix.

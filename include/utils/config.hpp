@@ -224,6 +224,8 @@ private:
     Validators validators;
     std::unique_ptr<nlohmann::json_schema::json_validator> draft7_validator;
 
+    nlohmann::json apply_user_config_and_defaults();
+
     ///
     /// \brief loads and validates the manifest of the \p module_config
     void load_and_validate_manifest(ModuleConfig& module_config);

@@ -8,8 +8,11 @@
 
 #include <nlohmann/json.hpp>
 
-#include <utils/config/settings.hpp>
 #include <utils/config/storage_types.hpp>
+
+namespace Everest {
+struct ManagerSettings;
+}
 
 namespace everest::config {
 

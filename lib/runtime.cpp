@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <framework/runtime.hpp>
+#include <utils/config/storage_sqlite.hpp>
 #include <utils/error.hpp>
 #include <utils/error/error_factory.hpp>
 #include <utils/error/error_json.hpp>
@@ -35,11 +36,7 @@ void populate_module_info_path_from_runtime_settings(ModuleInfo& mi, const Runti
 }
 
 ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_) {
-    // if prefix or config is empty, we assume they have not been set!
-    // if they have been set, check their validity, otherwise bail out!
-
     this->boot_mode = ConfigBootMode::YamlFile;
-
     init_prefix_and_data_dir(prefix_);
     init_config_file(config_);
     const auto settings = everest::config::parse_settings(config.value("settings", json::object()));
@@ -53,13 +50,52 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
 ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& db_, DatabaseTag) {
     this->boot_mode = ConfigBootMode::Database;
     init_prefix_and_data_dir(prefix_);
-    throw BootException("Database boot source is not supported in this version of EVerest");
+
+    db_dir = assert_file(db_, "User provided database");
+
+    const auto migrations_dir = this->runtime_settings.data_dir / "migrations";
+    this->storage = std::make_unique<everest::config::SqliteStorage>(db_dir, migrations_dir);
+
+    if (!this->storage->contains_valid_config()) {
+        throw BootException("Database not initialized or valid");
+    }
+
+    EVLOG_info << "Booting and parsing configuration from database: " << db_dir;
+    const auto settings_response = this->storage->get_settings();
+    if (settings_response.status != everest::config::GenericResponseStatus::OK or
+        !settings_response.settings.has_value()) {
+        throw BootException("Failed to load settings from database");
+    }
+    const auto settings = settings_response.settings.value();
+    init_settings(settings);
+    this->storage->write_settings(*this);
 }
 
 ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_, const std::string& db_) {
     this->boot_mode = ConfigBootMode::DatabaseInit;
     init_prefix_and_data_dir(prefix_);
-    throw BootException("Database fallback YAML boot source is not supported in this version of EVerest");
+    init_config_file(config_);
+
+    const auto migrations_dir = this->runtime_settings.data_dir / "migrations";
+    this->storage = std::make_unique<everest::config::SqliteStorage>(fs::path(db_), migrations_dir);
+
+    everest::config::Settings settings;
+    if (this->storage->contains_valid_config()) {
+        EVLOG_info << "Booting and parsing configuration from database: " << db_dir;
+        const auto settings_response = this->storage->get_settings();
+        if (settings_response.status != everest::config::GenericResponseStatus::OK or
+            !settings_response.settings.has_value()) {
+            throw BootException("Failed to load settings from database");
+        }
+        settings = settings_response.settings.value();
+    } else {
+        EVLOG_info << "Database not initialized or valid, falling back to YAML config file: " << config_;
+        this->storage->wipe();
+        settings = everest::config::parse_settings(config.value("settings", json::object()));
+    }
+
+    init_settings(settings);
+    this->storage->write_settings(*this);
 }
 
 void ManagerSettings::init_settings(const everest::config::Settings& settings) {
@@ -67,8 +103,13 @@ void ManagerSettings::init_settings(const everest::config::Settings& settings) {
         throw std::runtime_error(
             "Prefix must be set before initializing the settings. Please call init_prefix_and_data_dir() first.");
     }
+    if (this->runtime_settings.data_dir.empty()) {
+        throw std::runtime_error("Data directory must be set before initializing the settings. Please call "
+                                 "init_prefix_and_data_dir() first.");
+    }
 
     const auto prefix = this->runtime_settings.prefix;
+    const auto data_dir = this->runtime_settings.data_dir;
     fs::path etc_dir;
     {
         // etc directory
@@ -79,13 +120,6 @@ void ManagerSettings::init_settings(const everest::config::Settings& settings) {
             etc_dir = fs::path("/") / default_etc_dir;
         }
         etc_dir = assert_dir(etc_dir.string(), "Default etc directory");
-    }
-
-    fs::path data_dir;
-    {
-        // share directory
-        data_dir =
-            assert_dir((prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE).string(), "Default share directory");
     }
 
     if (settings.configs_dir.has_value()) {
