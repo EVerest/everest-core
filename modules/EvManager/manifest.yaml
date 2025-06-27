@@ -24,6 +24,10 @@ config:
       Simulation commands, e.g. sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
     type: string
     default: ""
+  ac_nominal_voltage:
+    description: Nominal AC voltage between phase and neutral in Volt
+    type: number
+    default: 230
   dc_max_current_limit:
     description: Maximum current allowed by the EV
     type: integer
@@ -84,6 +88,10 @@ config:
     description: Amount of energy requested for charging session to be delivered before departure time in kWh
     type: integer
     default: 0
+  soc:
+    description: SoC at start of a simulated charging process
+    type: integer
+    default: 30
   keep_cross_boot_plugin_state:
     description: Keep plugin state across boot (use for simulation only).
     type: boolean
@@ -92,6 +100,9 @@ provides:
   main:
     interface: car_simulator
     description: This implements the car simulator
+  ev_manager:
+    interface: ev_manager
+    description: Implementation of the ev manager to provide additional information such as detailed EV info
 requires:
   ev_board_support:
     interface: ev_board_support
