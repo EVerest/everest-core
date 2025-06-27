@@ -34,6 +34,7 @@ const std::unordered_map<std::string, std::pair<ocpp::v16::ChargePointErrorCode,
     {"evse_manager/MREC4OverCurrentFailure", {ocpp::v16::ChargePointErrorCode::OverCurrentFailure, "CX004"}},
     {"ac_rcd/MREC2GroundFailure", {ocpp::v16::ChargePointErrorCode::GroundFailure, "CX002"}},
     {"evse_manager/MREC22ResistanceFault", {ocpp::v16::ChargePointErrorCode::OtherError, "CX022"}},
+    {"evse_manager/MREC11CableCheckFault", {ocpp::v16::ChargePointErrorCode::OtherError, "CX011"}},
 };
 
 // TODO: add other ChargePointErrorCode mappings
