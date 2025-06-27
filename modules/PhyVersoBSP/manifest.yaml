@@ -133,13 +133,25 @@ config:
     type: integer
     default: 23
   conn1_motor_lock_type:
-    description: Connector 1 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
+    description: >
+      Connector 1 motor lock type; 
+        -1 == no Lock
+         1 == Hella Style time-based lock, 
+         2 == Valeo potentiometer feedback based; 
+
+      If charging port has a socket and is AC charging, it will need a lock specified
     type: integer
-    default: 1
+    default: -1
   conn2_motor_lock_type:
-    description: Connector 2 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
+    description: >
+      Connector 2 motor lock type; 
+        -1 == no Lock
+         1 == Hella Style time-based lock, 
+         2 == Valeo potentiometer feedback based; 
+
+      If charging port has a socket and is AC charging, it will need a lock specified
     type: integer
-    default: 1
+    default: -1
   conn1_gpio_stop_button_enabled:
     description: Set to true to enable external charging stop button for connector 1 on a GPIO connected to the SOM
     type: boolean
@@ -206,10 +218,10 @@ provides:
     description: provides the board support interface to low level control the proximity and control pilots, relais and motor lock
   rcd_1:
     interface: ac_rcd
-    description: RCD interface of the onboard RCD
+    description: RCD interface for an external RDC-MD
   rcd_2:
     interface: ac_rcd
-    description: RCD interface of the onboard RCD
+    description: RCD interface of the onboard RDC-MD
   connector_lock_1:
     interface: connector_lock
     description: Lock interface

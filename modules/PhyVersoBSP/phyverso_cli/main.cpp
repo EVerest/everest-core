@@ -165,6 +165,12 @@ int main(int argc, char* argv[]) {
             case LockState_UNLOCKED:
                 printf(">> Connector %i: Lock State Unlocked\n", connector);
                 break;
+            case LockState_LOCKING:
+                printf(">> Connector %i: Lock State Locking\n", connector);
+                break;
+            case LockState_UNLOCKING:
+                printf(">> Connector %i: Lock State Unlocking\n", connector);
+                break;
             }
         });
 

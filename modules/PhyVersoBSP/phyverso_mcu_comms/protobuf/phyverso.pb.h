@@ -36,7 +36,9 @@ typedef enum _PpState {
 typedef enum _LockState {
     LockState_UNDEFINED = 0,
     LockState_UNLOCKED = 1,
-    LockState_LOCKED = 2
+    LockState_LOCKED = 2,
+    LockState_LOCKING = 3,
+    LockState_UNLOCKING = 4
 } LockState;
 
 typedef enum _CoilType {
@@ -69,7 +71,9 @@ typedef enum _ConfigHardwareRevision {
 typedef enum _MotorLockType {
     MotorLockType_MOTOR_LOCK_UNKNOWN = 0,
     MotorLockType_MOTOR_LOCK_HELLA = 1,
-    MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC = 2
+    MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC = 2,
+    /* add additional locks here */
+    MotorLockType_MOTOR_LOCK_NONE = -1
 } MotorLockType;
 
 /* Struct definitions */
@@ -115,7 +119,8 @@ typedef struct _BootConfigRequest { /* TODO */
 } BootConfigRequest;
 
 typedef struct _ConfigMotorLockType {
-    MotorLockType type;
+    MotorLockType type; /* additional lock specific options could be added here later
+ will still keep this in place even if it only holds the type enum at the moment */
 } ConfigMotorLockType;
 
 typedef struct _ChargePortConfig {
@@ -124,14 +129,12 @@ typedef struct _ChargePortConfig {
     GpioPull feedback_pull;
     bool has_lock;
     ConfigMotorLockType lock;
+    bool has_socket;
 } ChargePortConfig;
 
 typedef struct _BootConfigResponse {
     ConfigHardwareRevision hw_rev;
-    bool has_chargeport_config_1;
-    ChargePortConfig chargeport_config_1;
-    bool has_chargeport_config_2;
-    ChargePortConfig chargeport_config_2;
+    ChargePortConfig chargeport_config[2];
 } BootConfigResponse;
 
 typedef struct _Temperature {
@@ -216,8 +219,8 @@ extern "C" {
 #define _PpState_ARRAYSIZE ((PpState)(PpState_STATE_FAULT+1))
 
 #define _LockState_MIN LockState_UNDEFINED
-#define _LockState_MAX LockState_LOCKED
-#define _LockState_ARRAYSIZE ((LockState)(LockState_LOCKED+1))
+#define _LockState_MAX LockState_UNLOCKING
+#define _LockState_ARRAYSIZE ((LockState)(LockState_UNLOCKING+1))
 
 #define _CoilType_MIN CoilType_COIL_UNKNOWN
 #define _CoilType_MAX CoilType_COIL_DC3
@@ -236,8 +239,8 @@ extern "C" {
 #define _ConfigHardwareRevision_ARRAYSIZE ((ConfigHardwareRevision)(ConfigHardwareRevision_HW_REV_B+1))
 
 #define _MotorLockType_MIN MotorLockType_MOTOR_LOCK_UNKNOWN
-#define _MotorLockType_MAX MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC
-#define _MotorLockType_ARRAYSIZE ((MotorLockType)(MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC+1))
+#define _MotorLockType_MAX MotorLockType_MOTOR_LOCK_NONE
+#define _MotorLockType_ARRAYSIZE ((MotorLockType)(MotorLockType_MOTOR_LOCK_NONE+1))
 
 
 #define McuToEverest_payload_reset_ENUMTYPE ResetReason
@@ -272,8 +275,8 @@ extern "C" {
 #define FanState_init_default                    {0, 0, 0, 0}
 #define CoilState_init_default                   {_CoilType_MIN, 0}
 #define BootConfigRequest_init_default           {0}
-#define BootConfigResponse_init_default          {_ConfigHardwareRevision_MIN, false, ChargePortConfig_init_default, false, ChargePortConfig_init_default}
-#define ChargePortConfig_init_default            {_ChargePortType_MIN, 0, _GpioPull_MIN, false, ConfigMotorLockType_init_default}
+#define BootConfigResponse_init_default          {_ConfigHardwareRevision_MIN, {ChargePortConfig_init_default, ChargePortConfig_init_default}}
+#define ChargePortConfig_init_default            {_ChargePortType_MIN, 0, _GpioPull_MIN, false, ConfigMotorLockType_init_default, 0}
 #define ConfigMotorLockType_init_default         {_MotorLockType_MIN}
 #define Temperature_init_default                 {0, {0, 0, 0, 0, 0, 0}}
 #define OpaqueData_init_default                  {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
@@ -286,8 +289,8 @@ extern "C" {
 #define FanState_init_zero                       {0, 0, 0, 0}
 #define CoilState_init_zero                      {_CoilType_MIN, 0}
 #define BootConfigRequest_init_zero              {0}
-#define BootConfigResponse_init_zero             {_ConfigHardwareRevision_MIN, false, ChargePortConfig_init_zero, false, ChargePortConfig_init_zero}
-#define ChargePortConfig_init_zero               {_ChargePortType_MIN, 0, _GpioPull_MIN, false, ConfigMotorLockType_init_zero}
+#define BootConfigResponse_init_zero             {_ConfigHardwareRevision_MIN, {ChargePortConfig_init_zero, ChargePortConfig_init_zero}}
+#define ChargePortConfig_init_zero               {_ChargePortType_MIN, 0, _GpioPull_MIN, false, ConfigMotorLockType_init_zero, 0}
 #define ConfigMotorLockType_init_zero            {_MotorLockType_MIN}
 #define Temperature_init_zero                    {0, {0, 0, 0, 0, 0, 0}}
 #define OpaqueData_init_zero                     {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
@@ -321,9 +324,9 @@ extern "C" {
 #define ChargePortConfig_feedback_active_low_tag 2
 #define ChargePortConfig_feedback_pull_tag       3
 #define ChargePortConfig_lock_tag                4
+#define ChargePortConfig_has_socket_tag          5
 #define BootConfigResponse_hw_rev_tag            1
-#define BootConfigResponse_chargeport_config_1_tag 4
-#define BootConfigResponse_chargeport_config_2_tag 5
+#define BootConfigResponse_chargeport_config_tag 6
 #define Temperature_temp_tag                     1
 #define McuToEverest_keep_alive_tag              1
 #define McuToEverest_reset_tag                   2
@@ -447,18 +450,17 @@ X(a, STATIC,   SINGULAR, BOOL,     coil_state,        2)
 
 #define BootConfigResponse_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UENUM,    hw_rev,            1) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  chargeport_config_1,   4) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  chargeport_config_2,   5)
+X(a, STATIC,   FIXARRAY, MESSAGE,  chargeport_config,   6)
 #define BootConfigResponse_CALLBACK NULL
 #define BootConfigResponse_DEFAULT NULL
-#define BootConfigResponse_chargeport_config_1_MSGTYPE ChargePortConfig
-#define BootConfigResponse_chargeport_config_2_MSGTYPE ChargePortConfig
+#define BootConfigResponse_chargeport_config_MSGTYPE ChargePortConfig
 
 #define ChargePortConfig_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UENUM,    type,              1) \
 X(a, STATIC,   SINGULAR, BOOL,     feedback_active_low,   2) \
 X(a, STATIC,   SINGULAR, UENUM,    feedback_pull,     3) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  lock,              4)
+X(a, STATIC,   OPTIONAL, MESSAGE,  lock,              4) \
+X(a, STATIC,   SINGULAR, BOOL,     has_socket,        5)
 #define ChargePortConfig_CALLBACK NULL
 #define ChargePortConfig_DEFAULT NULL
 #define ChargePortConfig_lock_MSGTYPE ConfigMotorLockType
@@ -521,10 +523,10 @@ extern const pb_msgdesc_t RcdCommand_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define BootConfigRequest_size                   0
-#define BootConfigResponse_size                  26
-#define ChargePortConfig_size                    10
+#define BootConfigResponse_size                  32
+#define ChargePortConfig_size                    13
 #define CoilState_size                           4
-#define ConfigMotorLockType_size                 2
+#define ConfigMotorLockType_size                 3
 #define ErrorFlags_size                          18
 #define EverestToMcu_size                        85
 #define FanState_size                            15

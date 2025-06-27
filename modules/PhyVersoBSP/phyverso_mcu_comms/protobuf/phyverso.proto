@@ -97,6 +97,8 @@ enum LockState {
   UNDEFINED = 0;
   UNLOCKED = 1;
   LOCKED = 2;
+  LOCKING = 3;
+  UNLOCKING = 4;
 }
 
 message CoilState {
@@ -119,8 +121,7 @@ message BootConfigRequest {
 
 message BootConfigResponse {
   ConfigHardwareRevision hw_rev = 1;
-  ChargePortConfig chargeport_config_1 = 4;
-  ChargePortConfig chargeport_config_2 = 5;
+  repeated ChargePortConfig chargeport_config = 6;
 }
 
 message ChargePortConfig {
@@ -128,6 +129,7 @@ message ChargePortConfig {
   bool feedback_active_low = 2;
   GpioPull feedback_pull = 3;
   ConfigMotorLockType lock = 4;
+  bool has_socket = 5;
 }
 
 enum ChargePortType {
@@ -144,6 +146,8 @@ enum GpioPull {
 
 message ConfigMotorLockType {
   MotorLockType type = 1;
+  // additional lock specific options could be added here later
+  // will still keep this in place even if it only holds the type enum at the moment
 }
 
 enum ConfigHardwareRevision {
@@ -156,6 +160,8 @@ enum MotorLockType {
   MOTOR_LOCK_UNKNOWN = 0;
   MOTOR_LOCK_HELLA = 1;
   MOTOR_LOCK_DEBUG_VALEO_HVAC = 2;
+  // add additional locks here
+  MOTOR_LOCK_NONE = -1;
 }
 
 message Temperature {
