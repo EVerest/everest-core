@@ -225,6 +225,7 @@ the side effects that can be caused by errors raised by a requirement.
 
 This module subscribes to all errors of the following requirements:
 
+* evse_manager
 * evse_board_support
 * connector_lock
 * ac_rcd
@@ -238,6 +239,14 @@ this will interrupt the charging session.
 
 Almost all errors that are reported from the requirements of this module cause the EvseManager to become Inoperative until the error is cleared.
 The following sections provide an overview of the errors that do **not** cause the EvseManager to become Inoperative.
+
+evse_manager
+-------------
+
+* evse_manager/Inoperative
+* evse_manager/MREC22ResistanceFault
+* evse_manager/MREC11CableCheckFault
+
 
 evse_board_support
 ------------------
@@ -268,6 +277,8 @@ power_supply_DC
 
 powermeter
 ----------
+
+Powermeter errors cause the EvseManager to become Inoperative, if fail_on_powermeter_errors is configured to true. If it is configured to false, errors from the powermeter will not cause the EvseManager to become Inoperative.
 
 * powermeter/CommunicationFault
 

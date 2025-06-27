@@ -367,6 +367,8 @@ void EvseManager::ready() {
                     if (charger->get_current_state() == Charger::EvseState::Charging and
                         not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
                         charger->set_hlc_error();
+                        error_handling->raise_isolation_resistance_fault(
+                            fmt::format("Isolation resistance too low during charging: {} Ohm", m.resistance_F_Ohm));
                         r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
                     }
                     isolation_measurement = m;
@@ -1684,6 +1686,7 @@ void EvseManager::cable_check() {
 
             if (not result) {
                 EVLOG_error << "CableCheck: IMD Self test failed";
+                error_handling->raise_cable_check_fault("IMD self test failed during cable check");
                 fail_cable_check();
                 return;
             }
@@ -1718,6 +1721,8 @@ void EvseManager::cable_check() {
             // Refer to IEC 61851-23 (2023) 6.3.1.105 and CC.4.1.2 / CC.4.1.4
             if (not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
                 imd_stop();
+                error_handling->raise_isolation_resistance_fault(
+                    fmt::format("Isolation resistance too low: {} Ohm", m.resistance_F_Ohm));
                 fail_cable_check();
                 return;
             }
