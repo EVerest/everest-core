@@ -17,3 +17,5 @@ errors:
     description: Charging is not possible. Usually caused by another error from one of the requirements.
   - name: MREC22ResistanceFault
     description: An Isolation Monitoring Device tripped due to low resistance to the chassis during active charging.
+  - name: MREC11CableCheckFault
+    description: Cable check failed. Isolation monitor self test failed before charging.

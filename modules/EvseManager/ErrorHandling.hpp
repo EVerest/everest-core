@@ -77,6 +77,9 @@ public:
     void raise_isolation_resistance_fault(const std::string& description);
     void clear_isolation_resistance_fault();
 
+    void raise_cable_check_fault(const std::string& description);
+    void clear_cable_check_fault();
+
 protected:
     void raise_inoperative_error(const Everest::error::Error& caused_by);
 

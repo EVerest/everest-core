@@ -1635,6 +1635,7 @@ void EvseManager::cable_check() {
 
             if (not result) {
                 EVLOG_error << "CableCheck: IMD Self test failed";
+                error_handling->raise_cable_check_fault("IMD self test failed during cable check");
                 fail_cable_check();
                 return;
             }
