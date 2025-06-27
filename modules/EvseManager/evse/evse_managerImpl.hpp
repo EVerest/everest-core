@@ -50,6 +50,8 @@ protected:
     virtual bool handle_external_ready_to_start_charging() override;
     virtual void handle_set_plug_and_charge_configuration(
         types::evse_manager::PlugAndChargeConfiguration& plug_and_charge_configuration) override;
+    virtual types::evse_manager::UpdateAllowedEnergyTransferModesResult handle_update_allowed_energy_transfer_modes(
+        std::vector<types::iso15118::EnergyTransferMode>& allowed_energy_transfer_modes) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
