@@ -133,7 +133,7 @@ types:
       - DcWeldingDetectionRes
       - UnknownMessage
   SaeJ2847BidiMode:
-    description: Bidi mode for sae j2847_2 
+    description: Bidi mode for sae j2847_2
     type: string
     enum:
       - None
@@ -499,7 +499,7 @@ types:
       iso15118_schema_version:
         description: Schema Version used for CertificateReq message between EV and Charger
         type: string
-        maxLength: 50 
+        maxLength: 50
       certificate_action:
         description: Type of the certificate request
         type: string
@@ -538,21 +538,6 @@ types:
         description: This contains the responder URL
         type: string
         maxLength: 512
-  SupportedEnergyMode:
-    description: Supported energy mode and if the mode supports bidirectional
-    type: object
-    additionalProperties: false
-    required:
-      - energy_transfer_mode
-      - bidirectional
-    properties:
-      energy_transfer_mode:
-        description: The energy mode supported by the SECC 
-        type: string
-        $ref: /iso15118#/EnergyTransferMode
-      bidirectional:
-        description: Set true if the powersupply (AC or DC) supports bidi mode
-        type: boolean
   DisplayParameters:
     description: Parameters that may be displayed on the EVSE
     type: object

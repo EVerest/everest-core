@@ -274,6 +274,14 @@ to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageRe
 ocpp::v2::ClearDisplayMessageResponse
 to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response);
 
+/// \brief Converst a given ocpp::v2::EnergyTransferModeEnum \p to a types::iso15118::EnergyTransferMode
+types::iso15118::EnergyTransferMode
+to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& allowed_energy_transfer_mode);
+
+/// \brief Converst a given std::vector<ocpp::v2::EnergyTransferModeEnum> \p to a
+/// std::vector<types::iso15118::EnergyTransferMode>
+std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_transfer_modes(
+    const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes);
 } // namespace conversions
 } // namespace module
 
