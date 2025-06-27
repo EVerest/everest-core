@@ -154,6 +154,11 @@ void YetiSimulator::init() {
                            const auto error = p_rcd->error_factory->create_error(
                                error_definition->type, error_definition->sub_type, error_definition->message,
                                error_definition->severity);
+                       } else if (error_definition->error_target == ErrorTarget::Powermeter) {
+                           const auto error = p_powermeter->error_factory->create_error(
+                               error_definition->type, error_definition->sub_type, error_definition->message,
+                               error_definition->severity);
+                           forward_error(p_powermeter, error, raise);
                        } else {
                            EVLOG_error << "No known ErrorTarget";
                        }
