@@ -373,6 +373,17 @@
         "className": ""
     },
     {
+        "id": "c61999446e2e0400",
+        "type": "ui_group",
+        "name": "Powermeter errors",
+        "tab": "d3ada9fa4cf6ac53",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
         "id": "c8955752ad17f297",
         "type": "mqtt in",
         "z": "9aafbf849d4d6e12",
@@ -3325,6 +3336,87 @@
         "wires": [
             [
                 "36bc757cecd5777c"
+            ]
+        ]
+    },
+    {
+        "id": "e17f0c84ed298eab",
+        "type": "change",
+        "z": "cb7609df6138407d",
+        "name": "Insert Connector number",
+        "rules": [
+            {
+                "t": "change",
+                "p": "topic",
+                "pt": "msg",
+                "from": "#",
+                "fromt": "str",
+                "to": "connector_number",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 690,
+        "y": 1300,
+        "wires": [
+            [
+                "8ff9765278a8f1a2"
+            ]
+        ]
+    },
+    {
+        "id": "8ff9765278a8f1a2",
+        "type": "mqtt out",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "topic": "",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "fc8686af.48d178",
+        "x": 890,
+        "y": 1300,
+        "wires": []
+    },
+    {
+        "id": "d478d2aec1bfc809",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "CommunicationFault",
+        "tooltip": "",
+        "group": "c61999446e2e0400",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"powermeter/CommunicationFault\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"powermeter/CommunicationFault\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 200,
+        "y": 1300,
+        "wires": [
+            [
+                "e17f0c84ed298eab"
             ]
         ]
     }
