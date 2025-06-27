@@ -11,7 +11,7 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../..")))
 from everest.testing.ocpp_utils.fixtures import *
-from ocpp.v201.enums import (CertificateSigningUseType)
+from ocpp.v201.enums import (CertificateSigningUseEnumType)
 from ocpp.v201 import call as call201
 from ocpp.v16.enums import ChargePointErrorCode, ChargePointStatus, ConfigurationStatus
 from ocpp.v16 import call
@@ -30,7 +30,7 @@ from everest_test_utils import *
 
 
 def validate_authorize_req(
-    authorize_req: call201.AuthorizePayload, contains_contract, contains_ocsp
+    authorize_req: call201.Authorize, contains_contract, contains_ocsp
 ):
     return (authorize_req.certificate != None) == contains_contract and (
         authorize_req.iso15118_certificate_hash_data != None
@@ -38,7 +38,7 @@ def validate_authorize_req(
 
 
 @pytest.mark.skip(
-   "Plug and charge tests do currently interfere when they are run in parallel with other tests"
+    "Plug and charge tests do currently interfere when they are run in parallel with other tests"
 )
 class TestPlugAndCharge:
 
@@ -57,7 +57,8 @@ class TestPlugAndCharge:
         Test for contract installation on the vehicle and succeeding authorization and charging process
         """
 
-        setattr(charge_point_v16, "on_data_transfer", on_data_transfer_accept_authorize)
+        setattr(charge_point_v16, "on_data_transfer",
+                on_data_transfer_accept_authorize)
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -69,7 +70,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "DataTransfer",
-            call.DataTransferPayload(
+            call.DataTransfer(
                 vendor_id="org.openchargealliance.iso15118pnc",
                 message_id="Get15118EVCertificate",
                 data=None,
@@ -78,7 +79,7 @@ class TestPlugAndCharge:
         )
 
         # expect authorize.req
-        r: call.DataTransferPayload = call.DataTransferPayload(
+        r: call.DataTransfer = call.DataTransfer(
             **await wait_for_and_validate(
                 test_utility,
                 charge_point_v16,
@@ -90,7 +91,7 @@ class TestPlugAndCharge:
             )
         )
 
-        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+        authorize_req: call201.Authorize = call201.Authorize(
             **camel_to_snake_case(json.loads(r.data))
         )
         assert validate_authorize_req(authorize_req, False, True)
@@ -100,7 +101,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StartTransaction",
-            call.StartTransactionPayload(
+            call.StartTransaction(
                 1, test_config.authorization_info.emaid, 0, ""
             ),
             validate_standard_start_transaction,
@@ -111,7 +112,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.charging
             ),
         )
@@ -124,7 +125,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.available
             ),
         )
@@ -142,7 +143,8 @@ class TestPlugAndCharge:
         Test for contract installation on the vehicle and succeeding authorization request that is rejected by CSMS
         """
 
-        setattr(charge_point_v16, "on_data_transfer", on_data_transfer_reject_authorize)
+        setattr(charge_point_v16, "on_data_transfer",
+                on_data_transfer_reject_authorize)
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -154,7 +156,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "DataTransfer",
-            call.DataTransferPayload(
+            call.DataTransfer(
                 vendor_id="org.openchargealliance.iso15118pnc",
                 message_id="Get15118EVCertificate",
                 data=None,
@@ -184,7 +186,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.available
             ),
         )
@@ -225,16 +227,18 @@ class TestPlugAndCharge:
         )
 
         # expect not found
-        assert json.loads(data_transfer_response.data) == {"status": "Accepted"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "Accepted"}
 
-        setattr(charge_point_v16, "on_data_transfer", on_data_transfer_accept_authorize)
+        setattr(charge_point_v16, "on_data_transfer",
+                on_data_transfer_accept_authorize)
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
 
         test_controller.plug_in_ac_iso()
         # expect authorize.req
-        r: call.DataTransferPayload = call.DataTransferPayload(
+        r: call.DataTransfer = call.DataTransfer(
             **await wait_for_and_validate(
                 test_utility,
                 charge_point_v16,
@@ -246,7 +250,7 @@ class TestPlugAndCharge:
             )
         )
 
-        authorize_req: call201.AuthorizePayload = call201.AuthorizePayload(
+        authorize_req: call201.Authorize = call201.Authorize(
             **camel_to_snake_case(json.loads(r.data))
         )
         assert validate_authorize_req(authorize_req, True, False)
@@ -256,7 +260,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StartTransaction",
-            call.StartTransactionPayload(
+            call.StartTransaction(
                 1, test_config.authorization_info.emaid, 0, ""
             ),
             validate_standard_start_transaction,
@@ -267,7 +271,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.charging
             ),
         )
@@ -280,7 +284,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.available
             ),
         )
@@ -321,9 +325,11 @@ class TestPlugAndCharge:
         )
 
         # expect not found
-        assert json.loads(data_transfer_response.data) == {"status": "Accepted"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "Accepted"}
 
-        setattr(charge_point_v16, "on_data_transfer", on_data_transfer_accept_authorize)
+        setattr(charge_point_v16, "on_data_transfer",
+                on_data_transfer_accept_authorize)
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -341,7 +347,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.available
             ),
         )
@@ -374,7 +380,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StartTransaction",
-            call.StartTransactionPayload(
+            call.StartTransaction(
                 1, test_config.authorization_info.valid_id_tag_1, 0, ""
             ),
             validate_standard_start_transaction,
@@ -385,7 +391,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.charging
             ),
         )
@@ -399,7 +405,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.available
             ),
         )
@@ -429,7 +435,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StartTransaction",
-            call.StartTransactionPayload(1, None, 0, ""),
+            call.StartTransaction(1, None, 0, ""),
             validate_standard_start_transaction,
         )
 
@@ -441,7 +447,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.charging
             ),
         )
@@ -455,7 +461,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.available
             ),
         )
@@ -474,7 +480,8 @@ class TestPlugAndCharge:
         Charging process should not start, even when a valid RFID is presented.
         """
 
-        setattr(charge_point_v16, "on_data_transfer", on_data_transfer_reject_authorize)
+        setattr(charge_point_v16, "on_data_transfer",
+                on_data_transfer_reject_authorize)
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -489,7 +496,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.preparing
             ),
         )
@@ -518,7 +525,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.available
             ),
         )
@@ -536,14 +543,16 @@ class TestPlugAndCharge:
         """
         Test with invalid certificate chain
         """
-        certificate_signed_req = {"certificateChain": "InvalidCertificateChain"}
+        certificate_signed_req = {
+            "certificateChain": "InvalidCertificateChain"}
         data_transfer_response = await charge_point_v16.data_transfer_req(
             vendor_id="org.openchargealliance.iso15118pnc",
             message_id="CertificateSigned",
             data=json.dumps(certificate_signed_req),
         )
 
-        assert json.loads(data_transfer_response.data) == {"status": "Rejected"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "Rejected"}
         assert data_transfer_response.status == "Accepted"
 
     @pytest.mark.asyncio
@@ -566,7 +575,8 @@ class TestPlugAndCharge:
         )
 
         # expect not found
-        assert json.loads(data_transfer_response.data) == {"status": "NotFound"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "NotFound"}
         assert data_transfer_response.status == "Accepted"
 
         certificate_hash_data["hashAlgorithm"] = "SHA_Invalid"
@@ -596,7 +606,8 @@ class TestPlugAndCharge:
         """
         Test get installed certificate ids. Test with valid and invalid request
         """
-        get_installed_certificate_ids_req = {"certificateType": ["MORootCertificate"]}
+        get_installed_certificate_ids_req = {
+            "certificateType": ["MORootCertificate"]}
         data_transfer_response = await charge_point_v16.data_transfer_req(
             vendor_id="org.openchargealliance.iso15118pnc",
             message_id="GetInstalledCertificateIds",
@@ -645,7 +656,8 @@ class TestPlugAndCharge:
         )
 
         assert data_transfer_response.status == "Accepted"
-        assert json.loads(data_transfer_response.data) == {"status": "NotFound"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "NotFound"}
 
     @pytest.mark.asyncio
     async def test_pnc_install_certificate(
@@ -680,7 +692,8 @@ class TestPlugAndCharge:
         )
 
         assert data_transfer_response.status == "Accepted"
-        assert json.loads(data_transfer_response.data) == {"status": "Accepted"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "Accepted"}
 
         install_certificate_req["certificate"] = "InvalidCertificate"
 
@@ -691,7 +704,8 @@ class TestPlugAndCharge:
         )
 
         assert data_transfer_response.status == "Accepted"
-        assert json.loads(data_transfer_response.data) == {"status": "Rejected"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "Rejected"}
 
     @pytest.mark.asyncio
     async def test_pnc_sign_certificate_and_trigger_message(
@@ -706,20 +720,21 @@ class TestPlugAndCharge:
         )
 
         assert data_transfer_response.status == "Accepted"
-        assert json.loads(data_transfer_response.data) == {"status": "Accepted"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "Accepted"}
 
         csr = await wait_for_and_validate(
             test_utility,
             charge_point_v16,
             "DataTransfer",
-            call.DataTransferPayload(
+            call.DataTransfer(
                 data=json.dumps(
                     remove_nones(
                         snake_to_camel_case(
                             asdict(
-                                call201.SignCertificatePayload(
+                                call201.SignCertificate(
                                     csr="",
-                                    certificate_type=CertificateSigningUseType.v2g_certificate,
+                                    certificate_type=CertificateSigningUseEnumType.v2g_certificate,
                                 )
                             )
                         )
@@ -742,7 +757,8 @@ class TestPlugAndCharge:
             data=json.dumps(certificate_signed_req),
         )
 
-        assert json.loads(data_transfer_response.data) == {"status": "Accepted"}
+        assert json.loads(data_transfer_response.data) == {
+            "status": "Accepted"}
         assert data_transfer_response.status == "Accepted"
 
 
@@ -772,7 +788,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.rejected),
+        call_result.ChangeConfiguration(ConfigurationStatus.rejected),
     )
 
     await charge_point_v16.get_configuration_req(key=["ConnectorEvseIds"])
@@ -780,7 +796,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "GetConfiguration",
-        call_result.GetConfigurationPayload(
+        call_result.GetConfiguration(
             [{"key": "ConnectorEvseIds", "readonly": False, "value": initial_value}]
         ),
     )
@@ -792,7 +808,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.accepted),
+        call_result.ChangeConfiguration(ConfigurationStatus.accepted),
     )
 
     await charge_point_v16.get_configuration_req(key=["ConnectorEvseIds"])
@@ -800,7 +816,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "GetConfiguration",
-        call_result.GetConfigurationPayload(
+        call_result.GetConfiguration(
             [{"key": "ConnectorEvseIds", "readonly": False, "value": new_valid_value}]
         ),
     )
@@ -820,7 +836,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.rejected),
+        call_result.ChangeConfiguration(ConfigurationStatus.rejected),
     )
     test_utility.messages.clear()
 
@@ -832,7 +848,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.rejected),
+        call_result.ChangeConfiguration(ConfigurationStatus.rejected),
     )
     test_utility.messages.clear()
 
@@ -844,7 +860,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.rejected),
+        call_result.ChangeConfiguration(ConfigurationStatus.rejected),
     )
     test_utility.messages.clear()
 
@@ -856,7 +872,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.rejected),
+        call_result.ChangeConfiguration(ConfigurationStatus.rejected),
     )
     test_utility.messages.clear()
 
@@ -868,7 +884,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.rejected),
+        call_result.ChangeConfiguration(ConfigurationStatus.rejected),
     )
 
     # valid values
@@ -886,7 +902,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.accepted),
+        call_result.ChangeConfiguration(ConfigurationStatus.accepted),
     )
     test_utility.messages.clear()
 
@@ -898,7 +914,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.accepted),
+        call_result.ChangeConfiguration(ConfigurationStatus.accepted),
     )
     test_utility.messages.clear()
 
@@ -910,7 +926,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.accepted),
+        call_result.ChangeConfiguration(ConfigurationStatus.accepted),
     )
     test_utility.messages.clear()
 
@@ -926,7 +942,7 @@ async def test_set_connector_evse_ids(
         test_utility,
         charge_point_v16,
         "GetConfiguration",
-        call_result.GetConfigurationPayload(
+        call_result.GetConfiguration(
             [
                 {
                     "key": "ConnectorEvseIds",

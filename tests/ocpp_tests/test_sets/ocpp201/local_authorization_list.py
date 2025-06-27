@@ -11,7 +11,7 @@ from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate,
 from everest.testing.ocpp_utils.fixtures import *
 
 from everest_test_utils import *
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum)
+from ocpp.v201.enums import (IdTokenEnumType as IdTokenTypeEnum)
 from ocpp.v201.enums import *
 from ocpp.v201.datatypes import *
 from ocpp.v201 import call as call201
@@ -34,19 +34,21 @@ async def test_D01_D02(
     id_token_124 = IdTokenType(id_token="124", type=IdTokenTypeEnum.iso14443)
     id_token_125 = IdTokenType(id_token="125", type=IdTokenTypeEnum.iso14443)
 
-    id_token_accepted = IdTokenInfoType(status=AuthorizationStatusType.accepted)
-    id_token_blocked = IdTokenInfoType(status=AuthorizationStatusType.blocked)
+    id_token_accepted = IdTokenInfoType(
+        status=AuthorizationStatusEnumType.accepted)
+    id_token_blocked = IdTokenInfoType(
+        status=AuthorizationStatusEnumType.blocked)
 
     # D02.FR.01
     async def check_list_version(expected_version: int):
-        r: call_result201.GetLocalListVersionPayload = (
+        r: call_result201.GetLocalListVersion = (
             await charge_point_v201.get_local_list_version()
         )
         assert r.version_number == expected_version
 
     # D01.FR.12
     async def check_list_size(expected_size: int):
-        r: call_result201.GetVariablesPayload = (
+        r: call_result201.GetVariables = (
             await charge_point_v201.get_config_variables_req(
                 "LocalAuthListCtrlr", "Entries"
             )
@@ -54,11 +56,11 @@ async def test_D01_D02(
         get_variables_result: GetVariableResultType = GetVariableResultType(
             **r.get_variable_result[0]
         )
-        assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+        assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
         assert get_variables_result.attribute_value == str(expected_size)
 
     # LocalAuthListCtrlr needs to be avaialable
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "LocalAuthListCtrlr", "Available"
         )
@@ -66,11 +68,11 @@ async def test_D01_D02(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     assert get_variables_result.attribute_value == "true"
 
     # Enable local list
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "LocalAuthListCtrlr", "Enabled", "true"
         )
@@ -78,26 +80,26 @@ async def test_D01_D02(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # D02.FR.02 LocalAuthListEnabled is true amd CSMS has not sent any update
     await check_list_version(0)
     await check_list_size(0)
 
     # D01.FR.18 VersionNumber shall be greater than 0 (we fail otherwise)
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
-            version_number=0, update_type=UpdateType.full
+            version_number=0, update_type=UpdateEnumType.full
         )
     )
-    assert r.status == SendLocalListStatusType.failed
+    assert r.status == SendLocalListStatusEnumType.failed
 
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
-            version_number=0, update_type=UpdateType.differential
+            version_number=0, update_type=UpdateEnumType.differential
         )
     )
-    assert r.status == SendLocalListStatusType.failed
+    assert r.status == SendLocalListStatusEnumType.failed
 
     await check_list_version(0)
     await check_list_size(0)
@@ -105,10 +107,10 @@ async def test_D01_D02(
     # D01.FR.01
     # D01.FR.02
     # Add first list version
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=10,
-            update_type=UpdateType.full,
+            update_type=UpdateEnumType.full,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_123, id_token_info=id_token_accepted
@@ -119,26 +121,26 @@ async def test_D01_D02(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(10)
     await check_list_size(2)
 
     # D01.FR.04
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
-            version_number=20, update_type=UpdateType.full
+            version_number=20, update_type=UpdateEnumType.full
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(20)
     await check_list_size(0)
 
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=12,
-            update_type=UpdateType.full,
+            update_type=UpdateEnumType.full,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_123, id_token_info=id_token_accepted
@@ -152,27 +154,27 @@ async def test_D01_D02(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(12)
     await check_list_size(3)
 
     # D01.FR.05
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
-            version_number=15, update_type=UpdateType.differential
+            version_number=15, update_type=UpdateEnumType.differential
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(15)
     await check_list_size(3)
 
     # D01.FR.06
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=25,
-            update_type=UpdateType.full,
+            update_type=UpdateEnumType.full,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_123, id_token_info=id_token_accepted
@@ -186,16 +188,16 @@ async def test_D01_D02(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.failed
+    assert r.status == SendLocalListStatusEnumType.failed
 
     await check_list_version(15)
     await check_list_size(3)
 
-    # idTokenInfo is required when UpdateType is full
-    r: call_result201.SendLocalListPayload = (
+    # idTokenInfo is required when UpdateEnumType is full
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=3,
-            update_type=UpdateType.full,
+            update_type=UpdateEnumType.full,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_123, id_token_info=id_token_accepted
@@ -204,16 +206,16 @@ async def test_D01_D02(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.failed
+    assert r.status == SendLocalListStatusEnumType.failed
 
     await check_list_version(15)
     await check_list_size(3)
 
     # D01.FR.15
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=25,
-            update_type=UpdateType.full,
+            update_type=UpdateEnumType.full,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_123, id_token_info=id_token_accepted
@@ -224,31 +226,32 @@ async def test_D01_D02(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(25)
     await check_list_size(2)
 
     # D01.FR.16 Update
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=26,
-            update_type=UpdateType.differential,
+            update_type=UpdateEnumType.differential,
             local_authorization_list=[
-                AuthorizationData(id_token=id_token_123, id_token_info=id_token_blocked)
+                AuthorizationData(id_token=id_token_123,
+                                  id_token_info=id_token_blocked)
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(26)
     await check_list_size(2)
 
     # D01.FR.16 Add
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=27,
-            update_type=UpdateType.differential,
+            update_type=UpdateEnumType.differential,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_125, id_token_info=id_token_accepted
@@ -256,49 +259,52 @@ async def test_D01_D02(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(27)
     await check_list_size(3)
 
     # D01.FR.17 Remove if empty idTokenInfo
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=28,
-            update_type=UpdateType.differential,
-            local_authorization_list=[AuthorizationData(id_token=id_token_123)],
+            update_type=UpdateEnumType.differential,
+            local_authorization_list=[
+                AuthorizationData(id_token=id_token_123)],
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(28)
     await check_list_size(2)
 
     # D01.FR.19 Smaller or equal version_number should be ignored with status set to VersionMismatch
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=27,
-            update_type=UpdateType.differential,
-            local_authorization_list=[AuthorizationData(id_token=id_token_125)],
+            update_type=UpdateEnumType.differential,
+            local_authorization_list=[
+                AuthorizationData(id_token=id_token_125)],
         )
     )
-    assert r.status == SendLocalListStatusType.version_mismatch
+    assert r.status == SendLocalListStatusEnumType.version_mismatch
 
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=28,
-            update_type=UpdateType.differential,
-            local_authorization_list=[AuthorizationData(id_token=id_token_125)],
+            update_type=UpdateEnumType.differential,
+            local_authorization_list=[
+                AuthorizationData(id_token=id_token_125)],
         )
     )
-    assert r.status == SendLocalListStatusType.version_mismatch
+    assert r.status == SendLocalListStatusEnumType.version_mismatch
 
     await check_list_version(28)
     await check_list_size(2)
 
     # D01.FR.13
     # Disable auth list again to check if version returns to 0
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "LocalAuthListCtrlr", "Enabled", "false"
         )
@@ -306,16 +312,16 @@ async def test_D01_D02(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # D02.FR.03: Always return 0 when LocalAuthListEnabled is false
     await check_list_version(0)
 
     # Disabled so should not be able to send list
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=1,
-            update_type=UpdateType.full,
+            update_type=UpdateEnumType.full,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_123, id_token_info=id_token_accepted
@@ -326,7 +332,7 @@ async def test_D01_D02(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.failed
+    assert r.status == SendLocalListStatusEnumType.failed
 
 
 async def prepare_auth_cache(
@@ -341,15 +347,15 @@ async def prepare_auth_cache(
 
     def get_token_info(token: str):
         if token in accepted_tags:
-            return IdTokenInfoType(status=AuthorizationStatusType.accepted)
+            return IdTokenInfoType(status=AuthorizationStatusEnumType.accepted)
         else:
-            return IdTokenInfoType(status=AuthorizationStatusType.blocked)
+            return IdTokenInfoType(status=AuthorizationStatusEnumType.blocked)
 
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
-        msg = call201.AuthorizePayload(**kwargs)
+        msg = call201.Authorize(**kwargs)
         msg_token = IdTokenType(**msg.id_token)
-        return call_result201.AuthorizePayload(
+        return call_result201.Authorize(
             id_token_info=get_token_info(msg_token.id_token)
         )
 
@@ -380,7 +386,8 @@ async def prepare_auth_cache(
     for tag in rejected_tags:
         test_controller.swipe(tag)
         assert await wait_for_and_validate(
-            test_utility, charge_point_v201, "Authorize", {"idToken": {"idToken": tag}}
+            test_utility, charge_point_v201, "Authorize", {
+                "idToken": {"idToken": tag}}
         )
 
     test_utility.validation_mode = ValidationMode.EASY
@@ -397,7 +404,7 @@ async def test_C13(
 ):
 
     # LocalAuthListCtrlr needs to be avaialable
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "LocalAuthListCtrlr", "Available"
         )
@@ -405,11 +412,11 @@ async def test_C13(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     assert get_variables_result.attribute_value == "true"
 
     # Enable local list
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "LocalAuthListCtrlr", "Enabled", "true"
         )
@@ -417,10 +424,10 @@ async def test_C13(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Set OfflineThreshold
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "OCPPCommCtrlr", "OfflineThreshold", "2"
         )
@@ -428,10 +435,10 @@ async def test_C13(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Disable offline tx for unknown id
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "OfflineTxForUnknownIdEnabled", "false"
         )
@@ -439,23 +446,25 @@ async def test_C13(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     id_token_123 = IdTokenType(id_token="123", type=IdTokenTypeEnum.iso14443)
     id_token_124 = IdTokenType(id_token="124", type=IdTokenTypeEnum.iso14443)
     id_token_125 = IdTokenType(id_token="125", type=IdTokenTypeEnum.iso14443)
 
-    id_token_accepted = IdTokenInfoType(status=AuthorizationStatusType.accepted)
-    id_token_blocked = IdTokenInfoType(status=AuthorizationStatusType.blocked)
+    id_token_accepted = IdTokenInfoType(
+        status=AuthorizationStatusEnumType.accepted)
+    id_token_blocked = IdTokenInfoType(
+        status=AuthorizationStatusEnumType.blocked)
 
     async def check_list_version(expected_version: int):
-        r: call_result201.GetLocalListVersionPayload = (
+        r: call_result201.GetLocalListVersion = (
             await charge_point_v201.get_local_list_version()
         )
         assert r.version_number == expected_version
 
     async def check_list_size(expected_size: int):
-        r: call_result201.GetVariablesPayload = (
+        r: call_result201.GetVariables = (
             await charge_point_v201.get_config_variables_req(
                 "LocalAuthListCtrlr", "Entries"
             )
@@ -463,7 +472,7 @@ async def test_C13(
         get_variables_result: GetVariableResultType = GetVariableResultType(
             **r.get_variable_result[0]
         )
-        assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+        assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
         assert get_variables_result.attribute_value == str(expected_size)
 
     await prepare_auth_cache(
@@ -476,10 +485,10 @@ async def test_C13(
     )
 
     # Add first list version
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=10,
-            update_type=UpdateType.full,
+            update_type=UpdateEnumType.full,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_123, id_token_info=id_token_accepted
@@ -493,7 +502,7 @@ async def test_C13(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(10)
     await check_list_size(3)
@@ -597,7 +606,7 @@ async def test_C13(
     # See errata for case C13.FR.04
 
     # Enable offline tx for unknown id
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "OfflineTxForUnknownIdEnabled", "true"
         )
@@ -605,7 +614,7 @@ async def test_C13(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     logging.info("disconnect the ws connection...")
     test_controller.disconnect_websocket()
@@ -630,7 +639,8 @@ async def test_C13(
         test_utility,
         charge_point_v201,
         "TransactionEvent",
-        {"eventType": "Started", "idToken": {"idToken": "unknown", "type": "ISO14443"}},
+        {"eventType": "Started", "idToken": {
+            "idToken": "unknown", "type": "ISO14443"}},
     )
 
     test_controller.plug_out()
@@ -654,7 +664,7 @@ async def test_C14(
 ):
 
     # LocalAuthListCtrlr needs to be avaialable
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "LocalAuthListCtrlr", "Available"
         )
@@ -662,21 +672,21 @@ async def test_C14(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     assert get_variables_result.attribute_value == "true"
 
     # AuthCacheCtrlr needs to be avaialable
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req("AuthCacheCtrlr", "Available")
     )
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     assert get_variables_result.attribute_value == "true"
 
     # Enable local list
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "LocalAuthListCtrlr", "Enabled", "true"
         )
@@ -684,10 +694,10 @@ async def test_C14(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Enable AuthCacheCtrlr
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "Enabled", "true"
         )
@@ -695,10 +705,10 @@ async def test_C14(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Disable offline tx for unknown id
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "OfflineTxForUnknownIdEnabled", "false"
         )
@@ -706,22 +716,24 @@ async def test_C14(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     id_token_123 = IdTokenType(id_token="123", type=IdTokenTypeEnum.iso14443)
     id_token_124 = IdTokenType(id_token="124", type=IdTokenTypeEnum.iso14443)
 
-    id_token_accepted = IdTokenInfoType(status=AuthorizationStatusType.accepted)
-    id_token_blocked = IdTokenInfoType(status=AuthorizationStatusType.blocked)
+    id_token_accepted = IdTokenInfoType(
+        status=AuthorizationStatusEnumType.accepted)
+    id_token_blocked = IdTokenInfoType(
+        status=AuthorizationStatusEnumType.blocked)
 
     async def check_list_version(expected_version: int):
-        r: call_result201.GetLocalListVersionPayload = (
+        r: call_result201.GetLocalListVersion = (
             await charge_point_v201.get_local_list_version()
         )
         assert r.version_number == expected_version
 
     async def check_list_size(expected_size: int):
-        r: call_result201.GetVariablesPayload = (
+        r: call_result201.GetVariables = (
             await charge_point_v201.get_config_variables_req(
                 "LocalAuthListCtrlr", "Entries"
             )
@@ -729,7 +741,7 @@ async def test_C14(
         get_variables_result: GetVariableResultType = GetVariableResultType(
             **r.get_variable_result[0]
         )
-        assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+        assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
         assert get_variables_result.attribute_value == str(expected_size)
 
     await prepare_auth_cache(
@@ -742,10 +754,10 @@ async def test_C14(
     )
 
     # Add first list version
-    r: call_result201.SendLocalListPayload = (
+    r: call_result201.SendLocalList = (
         await charge_point_v201.send_local_list_req(
             version_number=10,
-            update_type=UpdateType.full,
+            update_type=UpdateEnumType.full,
             local_authorization_list=[
                 AuthorizationData(
                     id_token=id_token_124, id_token_info=id_token_accepted
@@ -756,7 +768,7 @@ async def test_C14(
             ],
         )
     )
-    assert r.status == SendLocalListStatusType.accepted
+    assert r.status == SendLocalListStatusEnumType.accepted
 
     await check_list_version(10)
     await check_list_size(2)
@@ -818,7 +830,7 @@ async def test_C14(
         test_utility,
         charge_point_v201,
         "Authorize",
-        call201.AuthorizePayload(id_token=id_token_123),
+        call201.Authorize(id_token=id_token_123),
     )
 
     assert await wait_for_and_validate(

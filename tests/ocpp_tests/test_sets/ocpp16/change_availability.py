@@ -1,7 +1,7 @@
 import pytest
 
 from ocpp.v16.enums import AvailabilityType, AvailabilityStatus, ReservationStatus, CancelReservationStatus
-from ocpp.v16.call_result import ChangeAvailabilityPayload, ReserveNowPayload, CancelReservationPayload
+from ocpp.v16.call_result import ChangeAvailability, ReserveNow, CancelReservation
 
 from everest.testing.ocpp_utils.charge_point_utils import (
     wait_for_and_validate,
@@ -21,7 +21,7 @@ async def test_change_availability(
     test_utility: TestUtility
 ):
 
-    r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
+    r: ChangeAvailability = await charge_point_v16.change_availability_req(
         type=AvailabilityType.inoperative, connector_id=1
     )
 
@@ -35,7 +35,7 @@ async def test_change_availability(
     )
 
     # verify the same request is accepted and no further StatusNotification.req is sent
-    r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
+    r: ChangeAvailability = await charge_point_v16.change_availability_req(
         type=AvailabilityType.inoperative, connector_id=1
     )
 
@@ -45,7 +45,7 @@ async def test_change_availability(
     test_utility.forbidden_actions.append("StatusNotification")
 
     # verify connector can be set back to operational
-    r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
+    r: ChangeAvailability = await charge_point_v16.change_availability_req(
         type=AvailabilityType.operative, connector_id=1
     )
 
@@ -71,7 +71,7 @@ async def test_change_availability_connector_zero(
     test_utility: TestUtility
 ):
 
-    r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
+    r: ChangeAvailability = await charge_point_v16.change_availability_req(
         type=AvailabilityType.inoperative, connector_id=0
     )
 
@@ -99,7 +99,7 @@ async def test_change_availability_connector_zero(
     )
 
     # verify connector can be set back to operational
-    r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
+    r: ChangeAvailability = await charge_point_v16.change_availability_req(
         type=AvailabilityType.operative, connector_id=0
     )
 
@@ -148,7 +148,7 @@ async def test_change_availability_scheduled_in_preparing(
         {"connectorId": 1, "status": "Preparing", "errorCode": "NoError"},
     )
 
-    r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
+    r: ChangeAvailability = await charge_point_v16.change_availability_req(
         type=AvailabilityType.inoperative, connector_id=0
     )
 
@@ -203,7 +203,7 @@ async def test_change_availability_scheduled_in_transaction(
 
     test_utility.messages.clear()
 
-    r: ChangeAvailabilityPayload = await charge_point_v16.change_availability_req(
+    r: ChangeAvailability = await charge_point_v16.change_availability_req(
         type=AvailabilityType.inoperative, connector_id=1
     )
 
