@@ -543,6 +543,16 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                 generated_class_cpp_fn = Path(messages_source_dir_v21, action + '.cpp')
                 conversions_namespace_prefix = 'ocpp::v2::'
 
+            if action == 'NotifyMonitoringReport':
+                # Exception needed for this specific message since the eventNotificationType
+                # field was marked as required in OCPP 2.1 which breaks schema validation
+                # for OCPP 2.0.1
+                for i, property in enumerate(sorted_types):
+                    if property['name'] == 'VariableMonitoring':
+                        for j, field in enumerate(property['properties']):
+                            if field['name'] == 'eventNotificationType':
+                                sorted_types[i]['properties'][j]['required'] = False
+
             with open(generated_class_hpp_fn, writemode[type_key]) as out:
                 out.write(message_hpp_template.render({
                     'types': sorted_types,

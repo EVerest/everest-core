@@ -24,6 +24,19 @@ VariableMonitorType string_to_variable_monitor_type(const std::string& s) {
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type VariableMonitorType");
 }
 
+EventNotificationEnum variable_monitor_type_to_event_notification_type(const VariableMonitorType& type) {
+    switch (type) {
+    case VariableMonitorType::HardWiredMonitor:
+        return ocpp::v2::EventNotificationEnum::HardWiredMonitor;
+    case VariableMonitorType::PreconfiguredMonitor:
+        return ocpp::v2::EventNotificationEnum::PreconfiguredMonitor;
+    case VariableMonitorType::CustomMonitor:
+        return ocpp::v2::EventNotificationEnum::CustomMonitor;
+    default:
+        throw std::out_of_range("Provided VariableMonitorType could not be converted to EventNotificationType");
+    }
+}
+
 } // namespace conversions
 
 } // namespace ocpp::v2

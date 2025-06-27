@@ -115,9 +115,18 @@ void Diagnostics::notify_customer_information_req(const std::string& data, const
     }
 }
 
-void Diagnostics::notify_monitoring_report_req(const int request_id,
-                                               const std::vector<MonitoringData>& montoring_data) {
+void Diagnostics::notify_monitoring_report_req(const int request_id, std::vector<MonitoringData>& montoring_data) {
     static constexpr int32_t MAXIMUM_VARIABLE_SEND = 10;
+
+    for (auto& element : montoring_data) {
+        for (auto& variable_monitoring : element.variableMonitoring) {
+            // in OCPP2.0.1 the eventNotificationType is optional, but in OCPP2.1 it is mandatory. We have to reset it
+            // in case we are on OCPP2.0.1
+            // if (this->context.ocpp_version == OcppProtocolVersion::v201) {
+            variable_monitoring.eventNotificationType.reset();
+            // }
+        }
+    }
 
     if (montoring_data.size() <= MAXIMUM_VARIABLE_SEND) {
         NotifyMonitoringReportRequest req;

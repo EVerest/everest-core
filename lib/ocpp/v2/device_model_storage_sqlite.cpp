@@ -356,6 +356,9 @@ std::optional<VariableMonitoringMeta> DeviceModelStorageSqlite::set_monitoring_d
     meta.monitor.transaction = data.transaction.value_or(false);
     meta.monitor.type = data.type;
     meta.monitor.value = data.value;
+    // this is a workaround to set the eventNotificationType which became a required property for the
+    // VariableMonitoringType in OCPP2.1
+    meta.monitor.eventNotificationType = conversions::variable_monitor_type_to_event_notification_type(type);
     meta.type = type;
     meta.reference_value = actual_value;
 
@@ -394,6 +397,9 @@ DeviceModelStorageSqlite::get_monitoring_data(const std::vector<MonitoringCriter
 
         VariableMonitorType type = static_cast<VariableMonitorType>(select_stmt->column_int(5));
         auto reference_value = select_stmt->column_text_nullable(6);
+        // this is a workaround to set the eventNotificationType which became a required property for the
+        // VariableMonitoringType in OCPP2.1
+        monitor.eventNotificationType = conversions::variable_monitor_type_to_event_notification_type(type);
 
         monitor_meta.monitor = monitor;
         monitor_meta.reference_value = reference_value;

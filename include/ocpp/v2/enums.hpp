@@ -5,6 +5,7 @@
 #ifndef OCPP_V2_ENUMS_HPP
 #define OCPP_V2_ENUMS_HPP
 
+#include <ocpp/v2/ocpp_enums.hpp>
 #include <string>
 
 namespace ocpp {
@@ -20,6 +21,10 @@ namespace conversions {
 /// \brief Converts the given std::string \p s to VariableMonitorType
 /// \returns a VariableMonitorType from a string representation
 VariableMonitorType string_to_variable_monitor_type(const std::string& s);
+
+/// \brief Converts the given VariableMonitorType \p type to std::string
+/// \returns a string representation of the VariableMonitorType
+EventNotificationEnum variable_monitor_type_to_event_notification_type(const VariableMonitorType& type);
 } // namespace conversions
 
 namespace MonitoringLevelSeverity {

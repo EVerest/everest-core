@@ -4218,9 +4218,11 @@ void to_json(json& j, const VariableMonitoring& k) {
         {"value", k.value},
         {"type", conversions::monitor_enum_to_string(k.type)},
         {"severity", k.severity},
-        {"eventNotificationType", conversions::event_notification_enum_to_string(k.eventNotificationType)},
     };
     // the optional parts of the message
+    if (k.eventNotificationType) {
+        j["eventNotificationType"] = conversions::event_notification_enum_to_string(k.eventNotificationType.value());
+    }
     if (k.customData) {
         j["customData"] = k.customData.value();
     }
@@ -4234,9 +4236,11 @@ void from_json(const json& j, VariableMonitoring& k) {
     k.value = j.at("value");
     k.type = conversions::string_to_monitor_enum(j.at("type"));
     k.severity = j.at("severity");
-    k.eventNotificationType = conversions::string_to_event_notification_enum(j.at("eventNotificationType"));
 
     // the optional parts of the message
+    if (j.contains("eventNotificationType")) {
+        k.eventNotificationType.emplace(conversions::string_to_event_notification_enum(j.at("eventNotificationType")));
+    }
     if (j.contains("customData")) {
         k.customData.emplace(j.at("customData"));
     }

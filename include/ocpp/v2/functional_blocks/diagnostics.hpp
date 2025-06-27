@@ -71,7 +71,7 @@ private: // Members
 private: // Functions
     /* OCPP message requests */
     void notify_customer_information_req(const std::string& data, const int32_t request_id);
-    void notify_monitoring_report_req(const int request_id, const std::vector<MonitoringData>& montoring_data);
+    void notify_monitoring_report_req(const int request_id, std::vector<MonitoringData>& montoring_data);
 
     /* OCPP message handlers */
     void handle_get_log_req(Call<GetLogRequest> call);

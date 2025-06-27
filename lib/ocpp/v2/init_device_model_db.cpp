@@ -1189,6 +1189,7 @@ void from_json(const json& j, VariableMonitoringMeta& c) {
     c.monitor.severity = j.at("severity");
     c.monitor.type = conversions::string_to_monitor_enum(j.at("type"));
     c.monitor.value = j.at("value");
+    c.monitor.eventNotificationType = conversions::string_to_event_notification_enum(j.at("config_type"));
 
     if (j.contains("transaction")) {
         c.monitor.transaction = j.at("transaction");

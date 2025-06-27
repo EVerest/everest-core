@@ -1424,7 +1424,7 @@ struct VariableMonitoring {
     float value;
     MonitorEnum type;
     int32_t severity;
-    EventNotificationEnum eventNotificationType;
+    std::optional<EventNotificationEnum> eventNotificationType;
     std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given VariableMonitoring \p k to a given json object \p j
