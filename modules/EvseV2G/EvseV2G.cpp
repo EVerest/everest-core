@@ -30,6 +30,9 @@ void log_handler(openssl::log_level_t level, const std::string& str) {
 }
 } // namespace
 
+bool service_hpc1_enabled = false;
+
+
 struct v2g_context* v2g_ctx = nullptr;
 
 namespace module {
@@ -65,6 +68,13 @@ void EvseV2G::init() {
                 v2g_ctx->tls_server->suspend();
             }
         });
+
+    if (config.enable_service_hpc1) {
+        dlog(DLOG_LEVEL_INFO, "HPC1 service enabled");
+        service_hpc1_enabled = true;
+    } else {
+        dlog(DLOG_LEVEL_INFO, "HPC1 service disabled");
+    }
 
     invoke_init(*p_charger);
     invoke_init(*p_extensions);

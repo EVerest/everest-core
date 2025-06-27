@@ -13,6 +13,8 @@
 #define PHY_VALUE_VALUE_MIN SHRT_MIN
 #define PHY_VALUE_VALUE_MAX SHRT_MAX
 
+extern bool service_hpc1_enabled;
+
 static const char* selected_energy_transfer_mode_string[] = {
     "AC_single_phase_core", "AC_three_phase_core", "DC_core", "DC_extended", "DC_combo_core", "DC_unique",
 };
