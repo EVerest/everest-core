@@ -177,6 +177,9 @@ private:
 
     /// \brief This function applies given \p composite_schedules for each connected evse_energy_sink
     void set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>& composite_schedules);
+
+    /// \brief This function updates the additionalIdToken of the additionalTokenInfo field with the evcc_id.
+    void update_evcc_id_token(const int& evse_id, const std::string& evcc_id);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
