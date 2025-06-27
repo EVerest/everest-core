@@ -88,6 +88,8 @@ Result SessionSetup::feed(Event ev) {
 
         logf_info("Received session setup with evccid: %s", req->evccid.c_str());
         m_ctx.feedback.evcc_id(req->evccid);
+        m_ctx.ev_info.evcc_id = req->evccid;
+        m_ctx.feedback.ev_information(m_ctx.ev_info);
 
         bool new_session{false};
 

@@ -2,3 +2,4 @@
 .vscode
 /pki
 test/sample_data
+.cache/

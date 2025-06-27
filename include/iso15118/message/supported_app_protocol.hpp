@@ -11,15 +11,21 @@
 
 namespace iso15118::message_20 {
 
-struct SupportedAppProtocolRequest {
-    struct SupportedAppProtocol {
-        std::string protocol_namespace;
-        uint32_t version_number_major;
-        uint32_t version_number_minor;
-        uint8_t schema_id;
-        uint8_t priority;
-    };
+struct SupportedAppProtocol {
+    std::string protocol_namespace;
+    uint32_t version_number_major;
+    uint32_t version_number_minor;
+    uint8_t schema_id;
+    uint8_t priority;
 
+    bool operator==(const iso15118::message_20::SupportedAppProtocol& other) const {
+        return this->protocol_namespace == other.protocol_namespace and this->priority == other.priority and
+               this->schema_id == other.schema_id and this->version_number_major == other.version_number_major and
+               this->version_number_minor == other.version_number_minor;
+    }
+};
+
+struct SupportedAppProtocolRequest {
     std::vector<SupportedAppProtocol> app_protocol;
 };
 

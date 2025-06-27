@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Pionix GmbH and Contributors to EVerest
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 
 #include <iso15118/session/feedback.hpp>
@@ -16,6 +17,7 @@ struct FeedbackResults {
     iso15118::message_20::Type v2g_message;
     std::string evcc_id;
     std::string selected_protocol;
+    iso15118::d20::EVInformation ev_information;
 };
 
 SCENARIO("Feedback Tests") {
@@ -39,6 +41,9 @@ SCENARIO("Feedback Tests") {
     callbacks.evccid = [&feedback_results](const std::string& evcc_id_) { feedback_results.evcc_id = evcc_id_; };
     callbacks.selected_protocol = [&feedback_results](const std::string& protocol) {
         feedback_results.selected_protocol = protocol;
+    };
+    callbacks.ev_information = [&feedback_results](const iso15118::d20::EVInformation& ev_information) {
+        feedback_results.ev_information = ev_information;
     };
 
     const auto feedback = Feedback(callbacks);
@@ -224,5 +229,40 @@ SCENARIO("Feedback Tests") {
         }
     }
 
+    struct SupportedAppProtocol {
+        std::string protocol_namespace;
+        uint32_t version_number_major;
+        uint32_t version_number_minor;
+        uint8_t schema_id;
+        uint8_t priority;
+    };
     // TODO(SL): Missing tests for notify_ev_charging_needs, selected_service_parameters
+    GIVEN("Test ev_information") {
+        iso15118::d20::EVInformation expected{
+            std::vector<iso15118::message_20::SupportedAppProtocol>{{"urn:iso:std:iso:15118:-20:DC", 1, 1, 1, 1}},
+            {"urn:iso:std:iso:15118:-20:DC", 1, 1, 1, 1},
+            "54EA7E40B356",
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt};
+        feedback.ev_information(
+            {std::vector<iso15118::message_20::SupportedAppProtocol>{{"urn:iso:std:iso:15118:-20:DC", 1, 1, 1, 1}},
+             {"urn:iso:std:iso:15118:-20:DC", 1, 1, 1, 1},
+             "54EA7E40B356",
+             std::nullopt,
+             std::nullopt,
+             std::nullopt,
+             std::nullopt});
+
+        THEN("ev_information should be like expected") {
+            REQUIRE(feedback_results.ev_information.ev_supported_app_protocols == expected.ev_supported_app_protocols);
+            REQUIRE(feedback_results.ev_information.selected_app_protocol == expected.selected_app_protocol);
+            REQUIRE(feedback_results.ev_information.evcc_id == expected.evcc_id);
+            REQUIRE(feedback_results.ev_information.ev_tls_leaf_cert == expected.ev_tls_leaf_cert);
+            REQUIRE(feedback_results.ev_information.ev_tls_sub_ca_1_cert == expected.ev_tls_sub_ca_1_cert);
+            REQUIRE(feedback_results.ev_information.ev_tls_sub_ca_2_cert == expected.ev_tls_sub_ca_2_cert);
+            REQUIRE(feedback_results.ev_information.ev_tls_root_cert == expected.ev_tls_root_cert);
+        }
+    }
 }

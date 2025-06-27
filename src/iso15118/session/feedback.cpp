@@ -52,4 +52,8 @@ void Feedback::selected_service_parameters(const d20::SelectedServiceParameters&
     call_if_available(callbacks.selected_service_parameters, services);
 }
 
+void Feedback::ev_information(const d20::EVInformation& ev_information) const {
+    call_if_available(callbacks.ev_information, ev_information);
+}
+
 } // namespace iso15118::session

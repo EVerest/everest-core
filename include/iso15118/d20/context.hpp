@@ -14,6 +14,7 @@
 
 #include "config.hpp"
 #include "control_event.hpp"
+#include "ev_information.hpp"
 #include "ev_session_info.hpp"
 #include "session.hpp"
 
@@ -107,6 +108,7 @@ public:
 
     // Contains the EV received data
     EVSessionInfo session_ev_info;
+    EVInformation ev_info;
 
     std::optional<d20::PauseContext>& pause_ctx;
 
