@@ -134,30 +134,36 @@ void YetiSimulator::init() {
 
     reset_module_state();
 
-    mqtt.subscribe("everest_external/nodered/" + std::to_string(config.connector_id) + "/carsim/error",
-                   [this](const std::string& payload) {
-                       const auto [raise, error_definition] = parse_error_type(payload);
+    mqtt.subscribe(
+        "everest_external/nodered/" + std::to_string(config.connector_id) + "/carsim/error",
+        [this](const std::string& payload) {
+            const auto [raise, error_definition] = parse_error_type(payload);
 
-                       if (not error_definition.has_value()) {
-                           return;
-                       }
-                       if (error_definition->error_target == ErrorTarget::BoardSupport) {
-                           const auto error = p_board_support->error_factory->create_error(
-                               error_definition->type, error_definition->sub_type, error_definition->message,
-                               error_definition->severity);
-                           forward_error(p_board_support, error, raise);
-                       } else if (error_definition->error_target == ErrorTarget::ConnectorLock) {
-                           const auto error = p_connector_lock->error_factory->create_error(
-                               error_definition->type, error_definition->sub_type, error_definition->message,
-                               error_definition->severity);
-                       } else if (error_definition->error_target == ErrorTarget::Rcd) {
-                           const auto error = p_rcd->error_factory->create_error(
-                               error_definition->type, error_definition->sub_type, error_definition->message,
-                               error_definition->severity);
-                       } else {
-                           EVLOG_error << "No known ErrorTarget";
-                       }
-                   });
+            if (not error_definition.has_value()) {
+                return;
+            }
+            if (error_definition->error_target == ErrorTarget::BoardSupport) {
+                const auto error =
+                    p_board_support->error_factory->create_error(error_definition->type, error_definition->sub_type,
+                                                                 error_definition->message, error_definition->severity);
+                forward_error(p_board_support, error, raise);
+            } else if (error_definition->error_target == ErrorTarget::ConnectorLock) {
+                const auto error = p_connector_lock->error_factory->create_error(
+                    error_definition->type, error_definition->sub_type, error_definition->message,
+                    error_definition->severity);
+            } else if (error_definition->error_target == ErrorTarget::Rcd) {
+                const auto error =
+                    p_rcd->error_factory->create_error(error_definition->type, error_definition->sub_type,
+                                                       error_definition->message, error_definition->severity);
+            } else if (error_definition->error_target == ErrorTarget::Powermeter) {
+                const auto error =
+                    p_powermeter->error_factory->create_error(error_definition->type, error_definition->sub_type,
+                                                              error_definition->message, error_definition->severity);
+                forward_error(p_powermeter, error, raise);
+            } else {
+                EVLOG_error << "No known ErrorTarget";
+            }
+        });
 }
 
 void YetiSimulator::ready() {

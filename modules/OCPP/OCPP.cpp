@@ -51,12 +51,19 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
     }
 
     if (error_type == INOPERATIVE_ERROR_TYPE) {
+        auto error_code = ocpp::v16::ChargePointErrorCode::OtherError;
+        // TODO: add other ChargePointErrorCode mappings
+        if (error.message == "powermeter/CommunicationFault") {
+            error_code = ocpp::v16::ChargePointErrorCode::PowerMeterFailure;
+        }
+        // clang-format off
         return ocpp::v16::ErrorInfo{uuid,
-                                    ocpp::v16::ChargePointErrorCode::OtherError,
+                                    error_code,
                                     true,
                                     "caused_by:" + error.message,
                                     error.vendor_id,
                                     error.description};
+        // clang-format on
     }
 
     const auto get_simplified_error_type = [](const std::string& error_type) {
