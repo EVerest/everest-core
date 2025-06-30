@@ -45,6 +45,7 @@ dependencies = [
  "cron",
  "everestrs",
  "everestrs-build",
+ "log",
  "openleadr-client",
  "openleadr-wire",
  "serde",
