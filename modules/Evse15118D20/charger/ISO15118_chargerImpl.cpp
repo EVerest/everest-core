@@ -89,6 +89,52 @@ convert_dynamic_values(const iso15118::message_20::datatypes::BPT_Dynamic_DC_CLR
             convert_from_optional<float>(in.min_v2x_energy_request)};
 }
 
+iso15118::message_20::datatypes::Parameter convert_parameter(const types::iso15118_vas::Parameter& parameter) {
+    iso15118::message_20::datatypes::Parameter out;
+    out.name = parameter.name;
+
+    if (parameter.value.bool_value.has_value()) {
+        out.value = parameter.value.bool_value.value();
+    } else if (parameter.value.int_value.has_value()) {
+        out.value = (int32_t)parameter.value.int_value.value();
+    } else if (parameter.value.short_value.has_value()) {
+        out.value = (int16_t)parameter.value.short_value.value();
+    } else if (parameter.value.byte_value.has_value()) {
+        out.value = (int8_t)parameter.value.byte_value.value();
+    } else if (parameter.value.rational_number.has_value()) {
+        out.value = dt::from_float(parameter.value.rational_number.value());
+    } else if (parameter.value.finite_string.has_value()) {
+        out.value = parameter.value.finite_string.value();
+    } else {
+        EVLOG_AND_THROW(Everest::EverestConfigError("Invalid ParameterValue in convert_parameter"));
+    }
+
+    return out;
+}
+
+iso15118::message_20::datatypes::ParameterSet
+convert_parameter_set(const types::iso15118_vas::ParameterSet& parameter_set) {
+    iso15118::message_20::datatypes::ParameterSet out;
+    out.id = parameter_set.set_id;
+
+    out.parameter.reserve(parameter_set.parameters.size());
+    for (const auto& parameter : parameter_set.parameters) {
+        out.parameter.push_back(convert_parameter(parameter));
+    }
+
+    return out;
+}
+
+std::vector<iso15118::message_20::datatypes::ParameterSet>
+convert_parameter_set_list(const std::vector<types::iso15118_vas::ParameterSet>& parameter_set_list) {
+    std::vector<iso15118::message_20::datatypes::ParameterSet> out;
+    out.reserve(parameter_set_list.size());
+    for (const auto& parameter_set : parameter_set_list) {
+        out.push_back(convert_parameter_set(parameter_set));
+    }
+    return out;
+}
+
 auto fill_mobility_needs_modes_from_config(const module::Conf& module_config) {
 
     std::vector<iso15118::d20::ControlMobilityNeedsModes> mobility_needs_modes{};
@@ -239,6 +285,29 @@ void ISO15118_chargerImpl::init() {
             break;
         }
     });
+
+    supported_vas_services_per_provider.reserve(mod->r_iso15118_vas.size());
+    for (size_t i = 0; i < mod->r_iso15118_vas.size(); i++) {
+        supported_vas_services_per_provider.emplace_back();
+
+        this->mod->r_iso15118_vas[i]->subscribe_offered_vas([this, i](Array array) {
+            std::vector<uint16_t> service_ids;
+            service_ids.reserve(array.size());
+            for (const auto& item : array) {
+                if (item.is_number_unsigned()) {
+                    service_ids.push_back(item.get<uint16_t>());
+                } else {
+                    EVLOG_warning << "Invalid service ID in offered VAS: " << item.dump();
+                }
+            }
+
+            EVLOG_verbose << "Updated Supported VAS services for provider #" << i;
+            supported_vas_services_per_provider[i] = service_ids;
+
+            // report to controller if it exists, also check for duplicate service ids
+            update_supported_vas_services();
+        });
+    }
 }
 
 void ISO15118_chargerImpl::ready() {
@@ -298,11 +367,48 @@ void ISO15118_chargerImpl::ready() {
 
     controller = std::make_unique<iso15118::TbdController>(tbd_config, callbacks, setup_config);
 
+    // if the vas providers report their supported vas services before the controller exists,
+    // we need to update the controller with the supported vas services after instantiation
+    update_supported_vas_services();
+
     try {
         controller->loop();
     } catch (const std::exception& e) {
         EVLOG_error << e.what();
     }
+}
+
+void ISO15118_chargerImpl::update_supported_vas_services() {
+    std::set<uint16_t> vas_service_ids;
+    iso15118::d20::SupportedVASs supported_vas_services;
+
+    for (const auto& provider_services : supported_vas_services_per_provider) {
+        for (const auto& service_id : provider_services) {
+            if (vas_service_ids.find(service_id) != vas_service_ids.end()) {
+                EVLOG_AND_THROW(
+                    Everest::EverestConfigError("Duplicate VAS service ID found: " + std::to_string(service_id)));
+            }
+            vas_service_ids.insert(service_id);
+            supported_vas_services.push_back(service_id);
+        }
+    }
+
+    if (this->controller) {
+        this->controller->update_supported_vas_services(supported_vas_services);
+    } else {
+        EVLOG_verbose << "Controller not initialized, skipping setting supported VAS services.";
+    }
+}
+
+std::optional<size_t> ISO15118_chargerImpl::get_vas_provider_index(uint16_t service_id) const {
+    for (size_t i = 0; i < supported_vas_services_per_provider.size(); i++) {
+        const auto& provider_services = supported_vas_services_per_provider[i];
+        if (std::find(provider_services.begin(), provider_services.end(), service_id) != provider_services.end()) {
+            return i;
+        }
+    }
+
+    return std::nullopt; // Service ID not found in any provider's list
 }
 
 iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() {
@@ -473,6 +579,57 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
     callbacks.evccid = [this](const std::string& evccid) { publish_evcc_id(evccid); };
 
     callbacks.selected_protocol = [this](const std::string& protocol) { publish_selected_protocol(protocol); };
+
+    callbacks.selected_vas_services = [this](const dt::VasSelectedServiceList& selected_services) {
+        // key: vas provider index, value: list of selected services
+        std::map<size_t, std::vector<types::iso15118_vas::SelectedService>> converted_selected_services;
+
+        for (const auto& service : selected_services) {
+            const auto provider_index = get_vas_provider_index(service.service_id);
+            if (not provider_index.has_value()) {
+                EVLOG_warning << "Selected Service ID " << service.service_id
+                              << " is not supported by any VAS provider";
+                continue;
+            }
+
+            types::iso15118_vas::SelectedService converted_service;
+            converted_service.service_id = service.service_id;
+            converted_service.parameter_set_id = service.parameter_set_id;
+
+            converted_selected_services[provider_index.value()].push_back(converted_service);
+        }
+
+        // notify providers about selected services.
+        // Note: If a provider has no selected services, it will not be called
+        for (const auto& [provider_index, services] : converted_selected_services) {
+            if (this->mod->r_iso15118_vas[provider_index]) {
+                this->mod->r_iso15118_vas[provider_index]->call_selected_services(services);
+            } else {
+                EVLOG_warning << "VAS provider with index " << provider_index
+                              << " is not available, skipping selected services.";
+            }
+        }
+    };
+
+    callbacks.get_vas_parameters = [this](uint16_t service_id) -> std::optional<dt::ServiceParameterList> {
+        // Check if the service ID is supported by any of the VAS providers
+        auto provider_index = get_vas_provider_index(service_id);
+        if (!provider_index.has_value()) {
+            // this can only happen if the service ID was removed from the provider after ServiceDiscoveryRes was sent
+            EVLOG_warning << "Service ID " << service_id << " is not supported by any VAS provider";
+            return std::nullopt;
+        }
+
+        const auto& vas_parameters =
+            this->mod->r_iso15118_vas[provider_index.value()]->call_get_service_parameters(service_id);
+        if (vas_parameters.empty()) {
+            EVLOG_warning << "No parameters found for service ID " << service_id << " in provider #"
+                          << provider_index.value();
+            return std::nullopt;
+        }
+
+        return convert_parameter_set_list(vas_parameters);
+    };
 
     return callbacks;
 }

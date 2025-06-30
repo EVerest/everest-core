@@ -31,7 +31,7 @@ class ISO15118_chargerImpl : public ISO15118_chargerImplBase {
 public:
     ISO15118_chargerImpl() = delete;
     ISO15118_chargerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<Evse15118D20>& mod, Conf& config) :
-        ISO15118_chargerImplBase(ev, "charger"), mod(mod), config(config){};
+        ISO15118_chargerImplBase(ev, "charger"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -82,6 +82,11 @@ private:
 
     iso15118::d20::EvseSetupConfig setup_config;
     std::bitset<NUMBER_OF_SETUP_STEPS> setup_steps_done{0};
+
+    std::vector<iso15118::d20::SupportedVASs> supported_vas_services_per_provider;
+
+    void update_supported_vas_services();
+    std::optional<size_t> get_vas_provider_index(uint16_t service_id) const;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

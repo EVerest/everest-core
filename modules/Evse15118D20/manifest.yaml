@@ -73,7 +73,8 @@ requires:
     interface: evse_security
   iso15118_vas:
     interface: ISO15118_vas
-
+    min_connections: 0
+    max_connections: 128
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
