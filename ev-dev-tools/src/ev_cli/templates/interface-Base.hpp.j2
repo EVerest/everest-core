@@ -66,6 +66,17 @@ public:
     {% elif 'enum_type' in var %}
         auto value_string = {{ enum_to_string(var.enum_type) }}(value);
         _ev->publish(_name, "{{ var.name }}", value_string);
+    {% elif 'array_type' in var %}
+        {% if 'array_type_contains_enum' in var %}
+        std::vector<std::string> string_array;
+        string_array.reserve(value.size());
+        for (const auto& entry : value) {
+            string_array.push_back({{ enum_to_string(var.array_type) }}(entry));
+        }
+        _ev->publish(_name, "{{ var.name }}", string_array);
+        {% else %}
+        _ev->publish(_name, "{{ var.name }}", value);
+        {% endif %}
     {% else %}
         _ev->publish(_name, "{{ var.name }}", value);
     {% endif %}
