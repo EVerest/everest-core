@@ -71,6 +71,8 @@ provides:
 requires:
   security:
     interface: evse_security
+  iso15118_vas:
+    interface: ISO15118_vas
 
 enable_external_mqtt: false
 metadata:
