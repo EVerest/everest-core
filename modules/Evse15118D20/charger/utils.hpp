@@ -3,6 +3,7 @@
 #pragma once
 
 #include <generated/types/iso15118.hpp>
+#include <iso15118/d20/ev_information.hpp>
 #include <iso15118/message/type.hpp>
 
 static constexpr auto NUMBER_OF_SETUP_STEPS = 5;
@@ -102,3 +103,8 @@ constexpr types::iso15118::V2gMessageId convert_v2g_message_type(iso15118::messa
 
     return Id::UnknownMessage;
 }
+
+namespace module::charger {
+types::iso15118::AppProtocol convert_app_protocol(const iso15118::message_20::SupportedAppProtocol& app_protocol);
+types::iso15118::EvInformation convert_ev_info(const iso15118::d20::EVInformation& ev_info);
+} // namespace module::charger
