@@ -15,6 +15,7 @@ active_modules:
       supported_ISO15118_2: false
       supported_ISO15118_20_DC: true
       tls_active: true
+      enable_tls_1_3: true
   evse_manager:
     module: EvseManager
     config_module:
@@ -64,7 +65,7 @@ active_modules:
       connector_id: 1
       auto_enable: true
       auto_exec: false
-      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;iso_wait_for_stop 15;iso_wait_v2g_session_stopped;unplug;
+      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;iso_dc_power_on;iso_wait_for_stop 15;iso_wait_v2g_session_stopped;unplug;
       dc_target_current: 20
       dc_target_voltage: 400
     connections:
@@ -144,6 +145,12 @@ active_modules:
       error_history:
         - module_id: error_history
           implementation_id: error_history
+  ev_api:
+    module: EvAPI
+    connections:
+      ev_manager:
+        - implementation_id: ev_manager
+          module_id: ev_manager
   error_history:
     module: ErrorHistory
     config_implementation:

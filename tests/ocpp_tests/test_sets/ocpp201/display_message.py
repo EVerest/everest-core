@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+
 from datetime import timezone
 from unittest.mock import Mock
 
@@ -67,7 +70,7 @@ log = logging.getLogger("ocpp201DisplayMessageTest")
     (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageSupportedStates", "Actual"),
      "Charging,Faulted,Unavailable")
 ]))
-class TestOcpp201CostAndPrice:
+class TestOcpp201DisplayMessage:
     """
     Tests for OCPP 2.0.1 Display Message
     """

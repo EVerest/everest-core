@@ -65,6 +65,8 @@ struct Conf {
     std::string MessageLogPath;
     int MessageQueueResumeDelay;
     std::string RequestCompositeScheduleUnit;
+    int DelayOcppStart;
+    int ResetStopDelay;
 };
 
 class OCPP : public Everest::ModuleBase {
@@ -150,6 +152,8 @@ private:
     void init_evse_subscriptions(); // initialize subscriptions to all EVSEs provided by r_evse_manager
     void init_evse_connector_map();
     void init_evse_maps();
+    void init_module_configuration();
+    void handle_config_key(const ocpp::v16::KeyValue& kv);
     EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
     std::map<int32_t, int32_t>
         connector_evse_index_map; // provides access to r_evse_manager index by using OCPP connector id
@@ -164,6 +168,8 @@ private:
     std::mutex session_event_mutex;
     EventQueue event_queue;
     void process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
+
+    std::string source_ext_limit;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

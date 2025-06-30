@@ -19,6 +19,27 @@ cmds:
         description: The master pass group id
         type: string
         maxLength: 36
+  withdraw_authorization:
+    description: >-
+      Withdraw granted authorization.
+      If only the evse_id is given, the granted authorization for this EVSE will be withdrawn.
+      If only the id_token is given, the granted authorization for every EVSE where this id_token is placed will be
+        withdrawn
+      If both parameters are given, the granted authorization for the given EVSE will be withdrawn, if the placed
+        id_token matches the given id_token
+      If no parameter is given, all granted authorizations for all EVSEs will be removed
+    arguments:
+      request:
+        description: The request
+        type: object
+        $ref: /authorization#/WithdrawAuthorizationRequest
+    result:
+      description: >-
+        Accepted in case requested authorization was removed
+        AuthorizationNotFound in case no match for request was found
+        Rejected in case module could not process the request for other reasons
+      type: string
+      $ref: /authorization#/WithdrawAuthorizationResult
 vars:
   token_validation_status:
     description: Emits all events related to current token validation

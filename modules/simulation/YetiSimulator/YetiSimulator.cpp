@@ -392,9 +392,9 @@ void YetiSimulator::read_from_car() {
 }
 
 void YetiSimulator::simulation_statemachine() {
-
-    if (module_state->last_state not_eq module_state->current_state) {
+    if (module_state->republish_state or module_state->last_state not_eq module_state->current_state) {
         publish_event(module_state->current_state);
+        module_state->republish_state = false;
     }
 
     switch (module_state->current_state) {
@@ -683,9 +683,11 @@ void YetiSimulator::pwm_f() {
 }
 
 void YetiSimulator::reset_powermeter() const {
-    module_state->watt_hr.L1 = 0;
-    module_state->watt_hr.L2 = 0;
-    module_state->watt_hr.L3 = 0;
+    if (config.reset_powermeter_on_session_start) {
+        module_state->watt_hr.L1 = 0;
+        module_state->watt_hr.L2 = 0;
+        module_state->watt_hr.L3 = 0;
+    }
     module_state->powermeter_sim_last_time_stamp = 0;
 }
 

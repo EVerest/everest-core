@@ -9,6 +9,7 @@
  */
 
 #include "Charger.hpp"
+#include <algorithm>
 #include <generated/types/powermeter.hpp>
 #include <math.h>
 #include <string.h>
@@ -65,32 +66,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     hlc_use_5percent_current_session = false;
 
     // create thread for processing errors/error clearings
-    std::thread error_thread([this]() {
-        for (;;) {
-            auto events = this->error_handling_event_queue.wait();
-            if (!events.empty()) {
-                Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_loop);
-                for (auto& event : events) {
-                    switch (event) {
-                    case ErrorHandlingEvents::PreventCharging:
-                        shared_context.error_prevent_charging_flag = true;
-                        break;
-                    case ErrorHandlingEvents::AllErrorsPreventingChargingCleared:
-                        shared_context.error_prevent_charging_flag = false;
-                        break;
-                    case ErrorHandlingEvents::AllErrorCleared:
-                        shared_context.error_prevent_charging_flag = false;
-                        break;
-                    default:
-                        EVLOG_error << "ErrorHandlingEvents invalid value: "
-                                    << static_cast<std::underlying_type_t<ErrorHandlingEvents>>(event);
-                        break;
-                    }
-                }
-            }
-        }
-    });
-    error_thread.detach();
+    error_thread_handle = std::thread(&Charger::error_thread, this);
 
     // Register callbacks for errors/error clearings
     error_handling->signal_error.connect([this](const bool prevent_charging) {
@@ -111,6 +87,9 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
 
 Charger::~Charger() {
     pwm_F();
+    // need to send an event to wake up processing
+    error_handling_event_queue.push(ErrorHandlingEvents::PreventCharging);
+    error_thread_handle.stop();
 }
 
 void Charger::main_thread() {
@@ -136,6 +115,35 @@ void Charger::main_thread() {
             // Run our own state machine update (i.e. run everything that needs
             // to be done on regular intervals independent from events)
             run_state_machine();
+        }
+    }
+}
+
+void Charger::error_thread() {
+    for (;;) {
+        if (error_thread_handle.shouldExit()) {
+            break;
+        }
+        auto events = error_handling_event_queue.wait();
+        if (!events.empty()) {
+            Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_loop);
+            for (auto& event : events) {
+                switch (event) {
+                case ErrorHandlingEvents::PreventCharging:
+                    shared_context.error_prevent_charging_flag = true;
+                    break;
+                case ErrorHandlingEvents::AllErrorsPreventingChargingCleared:
+                    shared_context.error_prevent_charging_flag = false;
+                    break;
+                case ErrorHandlingEvents::AllErrorCleared:
+                    shared_context.error_prevent_charging_flag = false;
+                    break;
+                default:
+                    EVLOG_error << "ErrorHandlingEvents invalid value: "
+                                << static_cast<std::underlying_type_t<ErrorHandlingEvents>>(event);
+                    break;
+                }
+            }
         }
     }
 }
@@ -212,7 +220,14 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 bcb_toggle_reset();
                 shared_context.iec_allow_close_contactor = false;
-                shared_context.hlc_charging_active = false;
+                if (config_context.charge_mode == ChargeMode::AC) {
+                    // For AC, a session may start in BASIC charging mode and switch to HLC mode later on.
+                    // This variable will be set to true once the iso stack calls v2g_setup_finished.
+                    shared_context.hlc_charging_active = false;
+                } else {
+                    // For DC, it is always HLC mode.
+                    shared_context.hlc_charging_active = true;
+                }
                 shared_context.hlc_allow_close_contactor = false;
                 shared_context.max_current_cable = 0;
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
@@ -263,7 +278,8 @@ void Charger::run_state_machine() {
                 if (hlc_use_5percent_current_session) {
                     // FIXME: wait for SLAC to be ready. Teslas are really fast with sending the first slac packet after
                     // enabling PWM.
-                    std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
+                    std::this_thread::sleep_for(
+                        std::chrono::milliseconds(config_context.sleep_before_enabling_pwm_hlc_mode_ms));
                     update_pwm_now(PWM_5_PERCENT);
                     stopwatch.mark("HLC_PWM_5%_ON");
                 }
@@ -712,13 +728,26 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
                 if (shared_context.hlc_charging_active) {
-                    // currentState = EvseState::StoppingCharging;
-                    shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::Local;
-                    // tell HLC stack to stop the session
-                    signal_hlc_stop_charging();
-                    pwm_off();
+                    if (config_context.charge_mode == ChargeMode::DC) {
+                        signal_dc_supply_off();
+                    }
                 } else {
                     pwm_off();
+                }
+            }
+
+            if (shared_context.hlc_charging_active) {
+                if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
+                    // EV wants to terminate session
+                    shared_context.current_state = EvseState::StoppingCharging;
+                    if (shared_context.pwm_running) {
+                        pwm_off();
+                    }
+                } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
+                    // EV wants an actual pause
+                    if (shared_context.pwm_running) {
+                        pwm_off();
+                    }
                 }
             }
             break;
@@ -735,7 +764,7 @@ void Charger::run_state_machine() {
         case EvseState::StoppingCharging:
             if (initialize_state) {
                 bcb_toggle_reset();
-                if (shared_context.transaction_active or shared_context.session_active) {
+                if (shared_context.transaction_active) {
                     signal_simple_event(types::evse_manager::SessionEventEnum::StoppingCharging);
                 }
 
@@ -1061,6 +1090,9 @@ bool Charger::set_max_current(float c, std::chrono::time_point<date::utc_clock> 
 bool Charger::pause_charging() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_pause_charging);
     if (shared_context.current_state == EvseState::Charging) {
+        if (shared_context.hlc_charging_active and shared_context.transaction_active) {
+            signal_hlc_pause_charging();
+        }
         shared_context.legacy_wakeup_done = false;
         shared_context.current_state = EvseState::ChargingPausedEVSE;
         return true;
@@ -1074,8 +1106,9 @@ bool Charger::resume_charging() {
     if (shared_context.hlc_charging_active and shared_context.transaction_active and
         shared_context.current_state == EvseState::ChargingPausedEVSE) {
         shared_context.current_state = EvseState::PrepareCharging;
-        // wake up SLAC as well
-        signal_slac_start();
+        if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
+            signal_slac_start(); // wake up SLAC as well
+        }
         return true;
     } else if (shared_context.transaction_active and shared_context.current_state == EvseState::ChargingPausedEVSE) {
         shared_context.current_state = EvseState::WaitingForEnergy;
@@ -1129,7 +1162,15 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_cancel_transaction);
 
     if (shared_context.transaction_active) {
+
         if (shared_context.hlc_charging_active) {
+
+            if (request.reason == types::evse_manager::StopTransactionReason::EmergencyStop) {
+                signal_hlc_error(types::iso15118::EvseError::Error_EmergencyShutdown);
+            } else if (request.reason == types::evse_manager::StopTransactionReason::PowerLoss) {
+                signal_hlc_error(types::iso15118::EvseError::Error_UtilityInterruptEvent);
+            }
+
             shared_context.current_state = EvseState::StoppingCharging;
             signal_hlc_stop_charging();
         } else {
@@ -1166,7 +1207,7 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
 void Charger::start_session(bool authfirst) {
     shared_context.session_active = true;
     shared_context.authorized = false;
-    shared_context.session_uuid = utils::generate_session_uuid();
+    shared_context.session_uuid = utils::generate_session_id(config_context.session_id_type);
     std::optional<types::authorization::ProvidedIdToken> provided_id_token;
     if (authfirst) {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
@@ -1197,7 +1238,10 @@ bool Charger::start_transaction() {
     req.identification_type = utils::convert_to_ocmf_identification_type(shared_context.id_token.id_token.type);
     req.identification_level = std::nullopt; // TODO: Not yet known to EVerest
     req.identification_data = shared_context.id_token.id_token.value;
-    req.tariff_text = std::nullopt; // TODO: Not yet known to EVerest
+    if (!shared_context.validation_result.tariff_messages.empty()) {
+        // TODO: Use proper langauge and format if multiple messages part of personal_messages
+        req.tariff_text = shared_context.validation_result.tariff_messages.at(0).content;
+    }
 
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);
@@ -1326,7 +1370,8 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
                     float _soft_over_current_tolerance_percent, float _soft_over_current_measurement_noise_A,
                     const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
                     const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms,
-                    const bool fail_on_powermeter_errors, const bool raise_mrec9) {
+                    const bool fail_on_powermeter_errors, const bool raise_mrec9,
+                    const int sleep_before_enabling_pwm_hlc_mode_ms, const utils::SessionIdType session_id_type) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1348,6 +1393,8 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
     config_context.state_F_after_fault_ms = _state_F_after_fault_ms;
     config_context.fail_on_powermeter_errors = fail_on_powermeter_errors;
     config_context.raise_mrec9 = raise_mrec9;
+    config_context.sleep_before_enabling_pwm_hlc_mode_ms = sleep_before_enabling_pwm_hlc_mode_ms;
+    config_context.session_id_type = session_id_type;
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";
@@ -1396,10 +1443,12 @@ std::string Charger::get_session_id() const {
     return shared_context.session_uuid;
 }
 
-void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& token) {
+void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& token,
+                        const types::authorization::ValidationResult& result) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_authorize);
     if (a) {
         shared_context.id_token = token;
+        shared_context.validation_result = result;
         // First user interaction was auth? Then start session already here and not at plug in
         if (not shared_context.session_active) {
             start_session(true);
@@ -1422,8 +1471,8 @@ bool Charger::deauthorize() {
 }
 
 bool Charger::deauthorize_internal() {
-    signal_simple_event(types::evse_manager::SessionEventEnum::Deauthorized);
     if (shared_context.session_active) {
+        signal_simple_event(types::evse_manager::SessionEventEnum::Deauthorized);
         auto s = shared_context.current_state;
 
         if (s == EvseState::Disabled or s == EvseState::Idle or s == EvseState::WaitingForAuthentication) {
@@ -1444,46 +1493,79 @@ bool Charger::deauthorize_internal() {
     return false;
 }
 
+void Charger::enable_disable_initial_state_publish() {
+    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_disable);
+    types::evse_manager::EnableDisableSource source{types::evse_manager::Enable_source::Unspecified,
+                                                    types::evse_manager::Enable_state::Unassigned, 10000};
+
+    // check the startup state and publish it
+    if (shared_context.current_state == EvseState::Disabled) {
+        signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
+        source.enable_state = types::evse_manager::Enable_state::Disable;
+    } else {
+        signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
+        source.enable_state = types::evse_manager::Enable_state::Enable;
+    }
+
+    // ensure the state is in the table
+    enable_disable_source_table_update(source);
+    active_enable_disable_source = source;
+}
+
 bool Charger::enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_disable);
 
-    // insert the new request into the table
-    bool replaced = false;
-    for (auto& entry : enable_disable_source_table) {
-        if (entry.enable_source == source.enable_source) {
-            // replace this entry as it is an update from the same source
-            entry = source;
-            replaced = true;
+    const auto last = active_enable_disable_source;
+
+    // add/update enable_disable_source_table with new source information
+    enable_disable_source_table_update(source);
+
+    // process the table to calculate the current state
+    // updates/recalculates active_enable_disable_source
+    const bool is_enabled = parse_enable_disable_source_table();
+
+    // update state to Idle only when applied to non-zero connector ID
+    // note Disable changes the state regardless of the connnector ID
+    if (connector_id != 0) {
+        shared_context.connector_enabled = is_enabled;
+    }
+
+    if (shared_context.current_state == EvseState::Disabled && shared_context.connector_enabled) {
+        // note this can change state when connector_id = 0 when the previous
+        // state is enabled
+        shared_context.current_state = EvseState::Idle;
+    }
+
+    // check for state change
+    // for this check Unassigned and Enabled are equivalent
+    // previous   current    result
+    // ========   =======    ======
+    // Unassigned Unassigned false
+    // Unassigned Enable     false
+    // Unassigned Disable    true
+    // Enable     Unassigned false
+    // Enable     Enable     false
+    // Enable     Disable    true
+    // Disable    Unassigned true
+    // Disable    Enable     true
+    // Disable    Disable    false
+    //
+    // simplifies to:
+    // (previous == Disable or current == Disable) and (previous != current)
+
+    using namespace types::evse_manager;
+    if ((active_enable_disable_source.enable_state == Enable_state::Disable ||
+         last.enable_state == Enable_state::Disable) &&
+        active_enable_disable_source.enable_state != last.enable_state) {
+        // the state has changed so process events
+        if (is_enabled) {
+            signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
+        } else {
+            shared_context.current_state = EvseState::Disabled;
+            signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
         }
     }
 
-    if (not replaced) {
-        // Add to the table
-        enable_disable_source_table.push_back(source);
-    }
-
-    // Find out if we are actually enabled or disabled at the moment
-    bool is_enabled = parse_enable_disable_source_table();
-
-    if (is_enabled) {
-        if (connector_id not_eq 0) {
-            shared_context.connector_enabled = true;
-        }
-
-        signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
-        if (shared_context.current_state == EvseState::Disabled) {
-            if (shared_context.connector_enabled) {
-                shared_context.current_state = EvseState::Idle;
-            }
-            return true;
-        }
-    } else {
-        if (connector_id not_eq 0) {
-            shared_context.connector_enabled = false;
-        }
-        shared_context.current_state = EvseState::Disabled;
-        signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
-    }
     return is_enabled;
 }
 
@@ -1508,12 +1590,7 @@ bool Charger::parse_enable_disable_source_table() {
     about the state and other sources may decide.
 
     Each call to this command will update an internal table that looks like this:
-
-    | Source       | State         | Priority |
-    | ------------ | ------------- | -------- |
-    | Unspecified  | unassigned    |   10000  |
-    | LocalAPI     | disable       |      42  |
-    | LocalKeyLock | enable        |       0  |
+    void enable_disable_source_table_update(const types::evse_manager::EnableDisableSource& update);
 
     Evaluation will be done based on priorities. 0 is the highest priority, 10000 the lowest, so in this example the
     connector will be enabled regardless of what other sources say. Imagine LocalKeyLock sends a "unassigned, prio 0",
@@ -1569,6 +1646,22 @@ bool Charger::parse_enable_disable_source_table() {
 
     active_enable_disable_source = winning_source;
     return is_enabled;
+}
+
+void Charger::enable_disable_source_table_update(const types::evse_manager::EnableDisableSource& source) {
+    // already locked
+
+    // add/update enable_disable_source_table with new source information
+    const auto enable_source = source.enable_source;
+    const auto fn = [enable_source](const auto& entry) { return entry.enable_source == enable_source; };
+    if (auto it = std::find_if(enable_disable_source_table.begin(), enable_disable_source_table.end(), fn);
+        it == enable_disable_source_table.end()) {
+        // add to table
+        enable_disable_source_table.push_back(source);
+    } else {
+        // update in table
+        *it = source;
+    }
 }
 
 void Charger::set_faulted() {

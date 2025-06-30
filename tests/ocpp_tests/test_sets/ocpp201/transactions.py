@@ -10,13 +10,14 @@ import logging
 
 from everest.testing.core_utils.controller.test_controller_interface import TestController
 
+from ocpp.routing import on, create_route_map
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
 from ocpp.v201.enums import *
 from ocpp.v201.datatypes import *
 from everest.testing.ocpp_utils.fixtures import *
 from everest_test_utils import * # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, SetVariableStatusType, ClearCacheStatusType, ConnectorStatusType)
+from ocpp.v201.enums import (Action, IdTokenType as IdTokenTypeEnum, SetVariableStatusType, ClearCacheStatusType, ConnectorStatusType)
 from validations import validate_status_notification_201
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP201ConfigAdjustment, OCPP201ConfigVariableIdentifier
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
@@ -294,7 +295,8 @@ async def test_cleanup_transaction_events_after_max_attempts_exhausted(
     assert central_system.mock.on_transaction_event.call_count == 1
 
     # return a CALLERROR for the transaction event
-    central_system.mock.on_transaction_event.side_effect = [NotImplementedError()]
+    central_system.mock.on_transaction_event.side_effect = [
+        NotImplementedError()]
 
     await asyncio.sleep(10)
 
@@ -329,7 +331,8 @@ async def test_cleanup_transaction_events_after_max_attempts_exhausted(
     )
 
     test_controller.stop()
-
+    # add a sleep to allow time for reboot
+    await asyncio.sleep(2)
     test_controller.start()
 
     # no attempts on delivering the transaction message should be made
@@ -451,3 +454,138 @@ async def test_two_parallel_transactions(
         "TransactionEvent",
         {"eventType": "Ended", "offline": False},
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.ocpp_version("ocpp2.0.1")
+async def test_id_token_info_updated_in_tx_event(
+    central_system_v201: CentralSystem,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
+    # prepare data for the test
+    evse_id1 = 1
+    connector_id = 1
+
+    evse_id2 = 2
+
+    # make an unknown IdToken
+    id_token = IdTokenType(id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
+
+    log.info(
+        "##################### Transaction with token info updated in transaction event #################"
+    )
+
+    test_controller.start()
+    charge_point_v201 = await central_system_v201.wait_for_chargepoint(
+        wait_for_bootnotification=True
+    )
+
+    # expect StatusNotification with status available
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call201.StatusNotificationPayload(
+            datetime.now().isoformat(),
+            ConnectorStatusType.available,
+            evse_id=evse_id1,
+            connector_id=connector_id,
+        ),
+        validate_status_notification_201,
+    )
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call201.StatusNotificationPayload(
+            datetime.now().isoformat(),
+            ConnectorStatusType.available,
+            evse_id=evse_id2,
+            connector_id=connector_id,
+        ),
+        validate_status_notification_201,
+    )
+
+    @on(Action.TransactionEvent)
+    def on_transaction_event(**kwargs):
+        msg = call201.TransactionEventPayload(**kwargs)
+        if msg.id_token != None:
+            msg_token = IdTokenType(**msg.id_token)
+            return call_result201.TransactionEventPayload(
+                id_token_info=IdTokenInfoType(
+                    status=AuthorizationStatusType.accepted,
+                    group_id_token=IdTokenType(
+                        id_token="123", type=IdTokenTypeEnum.central
+                    ),
+                )
+            )
+        else:
+            return call_result201.TransactionEventPayload()
+
+    setattr(charge_point_v201, "on_transaction_event", on_transaction_event)
+    central_system_v201.chargepoint.route_map = create_route_map(
+        central_system_v201.chargepoint
+    )
+    # swipe id tag to authorize
+    test_controller.swipe(id_token.id_token)
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "Authorize",
+        {},
+    )
+    # start charging session
+    test_controller.plug_in()
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {"eventType": "Started"},
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {"eventType": "Updated"},
+    )
+
+    # charge for 10 seconds
+    await asyncio.sleep(10)
+
+    @on(Action.Authorize)
+    def on_authorize(**kwargs):
+        msg = call201.AuthorizePayload(**kwargs)
+        msg_token = IdTokenType(**msg.id_token)
+        return call_result201.AuthorizePayload(
+            id_token_info=IdTokenInfoType(
+                status=AuthorizationStatusType.accepted,
+                group_id_token=IdTokenType(
+                    id_token="123", type=IdTokenTypeEnum.central
+                ),
+            )
+        )
+    setattr(charge_point_v201, "on_authorize", on_authorize)
+    central_system_v201.chargepoint.route_map = create_route_map(
+        central_system_v201.chargepoint
+    )
+    # swipe id tag to de-authorize
+    id_token = IdTokenType(id_token="8BADF00A", type=IdTokenTypeEnum.iso14443)
+    test_controller.swipe(id_token.id_token)
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "Authorize",
+        {},
+    )
+    # should send a  Transaction event C15.FR.02
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {"eventType": "Ended"},
+    )
+
+    # stop charging session
+    test_controller.plug_out()

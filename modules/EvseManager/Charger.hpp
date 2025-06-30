@@ -106,8 +106,10 @@ public:
                bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
                const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms,
-               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, const bool raise_mrec9);
+               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, const bool raise_mrec9,
+               const int sleep_before_enabling_pwm_hlc_mode_ms, const utils::SessionIdType session_id_type);
 
+    void enable_disable_initial_state_publish();
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
     void set_faulted();
@@ -122,7 +124,8 @@ public:
     std::string get_session_id() const;
 
     // call when in state WaitingForAuthentication
-    void authorize(bool a, const types::authorization::ProvidedIdToken& token);
+    void authorize(bool a, const types::authorization::ProvidedIdToken& token,
+                   const types::authorization::ValidationResult& result);
     bool deauthorize();
 
     bool get_authorized_pnc();
@@ -166,6 +169,8 @@ public:
     sigslot::signal<> signal_slac_start;
 
     sigslot::signal<> signal_hlc_stop_charging;
+    sigslot::signal<> signal_hlc_pause_charging;
+    sigslot::signal<types::iso15118::EvseError> signal_hlc_error;
 
     void process_event(CPEvent event);
 
@@ -251,6 +256,7 @@ private:
     void run_state_machine();
 
     void main_thread();
+    void error_thread();
 
     void graceful_stop_charging();
 
@@ -282,6 +288,7 @@ private:
         std::optional<types::authorization::ProvidedIdToken>
             stop_transaction_id_token; // only set in case transaction was stopped locally
         types::authorization::ProvidedIdToken id_token;
+        types::authorization::ValidationResult validation_result;
         bool authorized;
         // set to true if auth is from PnC, otherwise to false (EIM)
         bool authorized_pnc;
@@ -331,6 +338,10 @@ private:
         bool fail_on_powermeter_errors;
         // Raise MREC9 authorization timeout error
         bool raise_mrec9;
+        // sleep before enabling pwm in hlc mode
+        int sleep_before_enabling_pwm_hlc_mode_ms{1000};
+        // type used to generate session ids
+        utils::SessionIdType session_id_type{utils::SessionIdType::UUID};
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
@@ -379,6 +390,7 @@ private:
 
     // main Charger thread
     Everest::Thread main_thread_handle;
+    Everest::Thread error_thread_handle;
 
     const std::unique_ptr<IECStateMachine>& bsp;
     const std::unique_ptr<ErrorHandling>& error_handling;
@@ -409,7 +421,6 @@ private:
     // Maximum duration of a BCB toggle sequence of 1-3 BCB toggles
     static constexpr auto TT_EVSE_VALD_TOGGLE =
         std::chrono::milliseconds(3500 + 200); // We give 200 msecs tolerance to the norm values (table 3 ISO15118-3)
-    static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::seconds(1);
     static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(100);
     static constexpr float PWM_5_PERCENT = 0.05;
     static constexpr int T_REPLUG_MS = 4000;
@@ -427,6 +438,16 @@ private:
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};
     std::vector<types::evse_manager::EnableDisableSource> enable_disable_source_table;
     bool parse_enable_disable_source_table();
+    void enable_disable_source_table_update(const types::evse_manager::EnableDisableSource& source);
+
+protected:
+    // provide access for unit tests
+    constexpr auto& get_shared_context() {
+        return shared_context;
+    }
+    constexpr const auto& get_enable_disable_source_table() const {
+        return enable_disable_source_table;
+    }
 };
 
 } // namespace module

@@ -265,8 +265,8 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 
             if (timeout_state_c1.reached()) {
                 EVLOG_warning
-                    << "Timeout of 6 seconds reached, EV did not go back to state B after PWM was switch off. "
-                       "Power off under load.";
+                    << "Timeout of 6 seconds reached, EV did not go back to state B after PWM was switched off. "
+                       "Powering off under load.";
                 // We are still in state C, but the 6 seconds timeout has been reached. Now force power off under load.
                 call_allow_power_on_bsp(false);
             }

@@ -17,24 +17,6 @@
 #include <sys/types.h>
 #include <thread>
 
-#ifdef EVEREST_MBED_TLS
-namespace tls {
-int connection_init(struct v2g_context* ctx) {
-    return -1;
-}
-int connection_start_servers(struct v2g_context* ctx) {
-    return -1;
-}
-ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, std::size_t count) {
-    return -1;
-}
-ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::size_t count) {
-    return -1;
-}
-} // namespace tls
-
-#else // EVEREST_MBED_TLS
-
 namespace {
 
 // used when ctx->network_read_timeout_tls is 0
@@ -107,79 +89,6 @@ void server_loop_thread(struct v2g_context* ctx) {
     if (res != tls::Server::state_t::stopped) {
         dlog(DLOG_LEVEL_ERROR, "tls::Server failed to serve");
     }
-}
-
-bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
-    assert(ctx != nullptr);
-    assert(ctx->r_security != nullptr);
-
-    using types::evse_security::CaCertificateType;
-    using types::evse_security::EncodingFormat;
-    using types::evse_security::GetCertificateInfoStatus;
-    using types::evse_security::LeafCertificateType;
-
-    /*
-     * libevse-security checks for an optional password and when one
-     * isn't set is uses an empty string as the password rather than nullptr.
-     * hence private keys are always encrypted.
-     */
-
-    bool bResult{false};
-
-    config.cipher_list = "ECDHE-ECDSA-AES128-SHA256:ECDH-ECDSA-AES128-SHA256";
-    config.ciphersuites = "";     // disable TLS 1.3
-    config.verify_client = false; // contract certificate managed in-band in 15118-2
-
-    // use the existing configured socket
-    // TODO(james-ctc): switch to server socket init code otherwise there
-    //                  may be issues with reinitialisation
-    config.socket = ctx->tls_socket.fd;
-    config.io_timeout_ms = static_cast<std::int32_t>(ctx->network_read_timeout_tls);
-
-    config.tls_key_logging = ctx->tls_key_logging;
-    config.tls_key_logging_path = ctx->tls_key_logging_path;
-    config.host = ctx->if_name;
-
-    // information from libevse-security
-    const auto cert_info =
-        ctx->r_security->call_get_all_valid_certificates_info(LeafCertificateType::V2G, EncodingFormat::PEM, true);
-    if (cert_info.status != GetCertificateInfoStatus::Accepted) {
-        dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Not Accepted");
-    } else {
-        if (!cert_info.info.empty()) {
-            // process all known certificate chains
-            for (const auto& chain : cert_info.info) {
-                const auto cert_path = chain.certificate.value_or("");
-                const auto key_path = chain.key;
-                const auto root_pem = chain.certificate_root.value_or("");
-
-                // workaround (see above libevse-security comment)
-                const auto key_password = chain.password.value_or("");
-
-                auto& ref = config.chains.emplace_back();
-                ref.certificate_chain_file = cert_path.c_str();
-                ref.private_key_file = key_path.c_str();
-                ref.private_key_password = key_password.c_str();
-                ref.trust_anchor_pem = root_pem.c_str();
-
-                if (chain.ocsp) {
-                    for (const auto& ocsp : chain.ocsp.value()) {
-                        const char* file{nullptr};
-                        if (ocsp.ocsp_path) {
-                            file = ocsp.ocsp_path.value().c_str();
-                        }
-                        ref.ocsp_response_files.push_back(file);
-                    }
-                }
-            }
-
-            bResult = true;
-        } else {
-            dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Empty response");
-        }
-    }
-
-    return bResult;
 }
 
 tls::Server::OptionalConfig configure_ssl(struct v2g_context* ctx) {
@@ -280,7 +189,7 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, const s
             conn->tls_connection->wait_for(read_res, default_timeout_ms);
             break;
         case tls::Connection::result_t::timeout:
-            // the MBedTLS code loops on timeout, is_sequence_timeout() is used instead
+            // is_sequence_timeout() is used to manage timeouts. Just loop and wait for more bytes
             break;
         case tls::Connection::result_t::closed:
         default:
@@ -324,7 +233,7 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
             conn->tls_connection->wait_for(write_res, default_timeout_ms);
             break;
         case tls::Connection::result_t::timeout:
-            // the MBedTLS code loops on timeout
+            // is_sequence_timeout() is used to manage timeouts. Just loop and wait for more bytes
             break;
         case tls::Connection::result_t::closed:
         default:
@@ -341,6 +250,77 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
     return (result < 0) ? result : static_cast<ssize_t>(bytes_written);
 }
 
-} // namespace tls
+bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
+    assert(ctx != nullptr);
+    assert(ctx->r_security != nullptr);
 
-#endif // EVEREST_MBED_TLS
+    using types::evse_security::CaCertificateType;
+    using types::evse_security::EncodingFormat;
+    using types::evse_security::GetCertificateInfoStatus;
+    using types::evse_security::LeafCertificateType;
+
+    /*
+     * libevse-security checks for an optional password and when one
+     * isn't set is uses an empty string as the password rather than nullptr.
+     * hence private keys are always encrypted.
+     */
+
+    bool bResult{false};
+
+    config.cipher_list = "ECDHE-ECDSA-AES128-SHA256:ECDH-ECDSA-AES128-SHA256";
+    config.ciphersuites = "";     // disable TLS 1.3
+    config.verify_client = false; // contract certificate managed in-band in 15118-2
+
+    // use the existing configured socket
+    // TODO(james-ctc): switch to server socket init code otherwise there
+    //                  may be issues with reinitialisation
+    config.socket = ctx->tls_socket.fd;
+    config.io_timeout_ms = static_cast<std::int32_t>(ctx->network_read_timeout_tls);
+
+    config.tls_key_logging = ctx->tls_key_logging;
+    config.tls_key_logging_path = ctx->tls_key_logging_path;
+    config.host = ctx->if_name;
+
+    // information from libevse-security
+    const auto cert_info =
+        ctx->r_security->call_get_all_valid_certificates_info(LeafCertificateType::V2G, EncodingFormat::PEM, true);
+    if (cert_info.status != GetCertificateInfoStatus::Accepted) {
+        dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Not Accepted");
+    } else {
+        if (!cert_info.info.empty()) {
+            // process all known certificate chains
+            for (const auto& chain : cert_info.info) {
+                const auto cert_path = chain.certificate.value_or("");
+                const auto key_path = chain.key;
+                const auto root_pem = chain.certificate_root.value_or("");
+
+                // workaround (see above libevse-security comment)
+                const auto key_password = chain.password.value_or("");
+
+                auto& ref = config.chains.emplace_back();
+                ref.certificate_chain_file = cert_path.c_str();
+                ref.private_key_file = key_path.c_str();
+                ref.private_key_password = key_password.c_str();
+                ref.trust_anchor_pem = root_pem.c_str();
+
+                if (chain.ocsp) {
+                    for (const auto& ocsp : chain.ocsp.value()) {
+                        const char* file{nullptr};
+                        if (ocsp.ocsp_path) {
+                            file = ocsp.ocsp_path.value().c_str();
+                        }
+                        ref.ocsp_response_files.push_back(file);
+                    }
+                }
+            }
+
+            bResult = true;
+        } else {
+            dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Empty response");
+        }
+    }
+
+    return bResult;
+}
+
+} // namespace tls

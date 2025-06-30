@@ -82,6 +82,7 @@ struct EVSEContext {
     std::optional<Identifier> identifier = std::nullopt;
     std::vector<Connector> connectors;
     Everest::SteadyTimer timeout_timer;
+    std::atomic<bool> timeout_in_progress{false};
     bool plugged_in;
     bool plug_in_timeout; // indicates no authorization received within connection_timeout. Replug is required for this
                           // EVSE to get authorization and start a transaction

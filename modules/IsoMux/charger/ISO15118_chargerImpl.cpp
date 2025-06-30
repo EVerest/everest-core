@@ -95,6 +95,17 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
+    mod->r_iso2->subscribe_start_pre_charge([this]() {
+        if (not mod->selected_iso20()) {
+            publish_start_pre_charge(nullptr);
+        }
+    });
+    mod->r_iso20->subscribe_start_pre_charge([this]() {
+        if (mod->selected_iso20()) {
+            publish_start_pre_charge(nullptr);
+        }
+    });
+
     mod->r_iso2->subscribe_dc_open_contactor([this]() {
         if (not mod->selected_iso20()) {
             publish_dc_open_contactor(nullptr);
@@ -473,9 +484,12 @@ void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::Setup
 }
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
-                                                bool& supported_certificate_service) {
-    mod->r_iso20->call_session_setup(payment_options, supported_certificate_service);
-    mod->r_iso2->call_session_setup(payment_options, supported_certificate_service);
+                                                bool& supported_certificate_service,
+                                                bool& central_contract_validation_allowed) {
+    mod->r_iso20->call_session_setup(payment_options, supported_certificate_service,
+                                     central_contract_validation_allowed);
+    mod->r_iso2->call_session_setup(payment_options, supported_certificate_service,
+                                    central_contract_validation_allowed);
 }
 
 void ISO15118_chargerImpl::handle_authorization_response(
@@ -522,6 +536,14 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
         mod->r_iso20->call_stop_charging(stop);
     } else {
         mod->r_iso2->call_stop_charging(stop);
+    }
+}
+
+void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_pause_charging(pause);
+    } else {
+        mod->r_iso2->call_pause_charging(pause);
     }
 }
 

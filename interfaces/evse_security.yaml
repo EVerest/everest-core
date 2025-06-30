@@ -49,10 +49,13 @@ cmds:
       certificate_chain:
         description: Leaf certificate or certificate chain that is to be verified
         type: string
-      certificate_type:
+      certificate_types:
         description: Indicates the type of the certificate
-        type: string
-        $ref: /evse_security#/LeafCertificateType
+        type: array
+        items:
+          minimum: 1
+          type: string
+          $ref: /evse_security#/LeafCertificateType
     result:
       description: Result of the verification
       type: string
@@ -223,5 +226,13 @@ cmds:
     result:
       description: True if verification succeeded, false if not
       type: boolean
+vars:
+  certificate_store_update:
+    description: >-
+      Variable that indicates that the certificate store has been updated, i.e. either a certificate has been installed or deleted. 
+      This is used to notify other modules that the certificate store has changed.
+    type: object
+    $ref: /evse_security#/CertificateStoreUpdate
+
 
 

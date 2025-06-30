@@ -3,7 +3,7 @@
 
 import pytest
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 from everest.testing.core_utils.controller.test_controller_interface import (
     TestController,
@@ -12,7 +12,7 @@ from ocpp.v16.datatypes import (
     ChargingRateUnitType,
 )
 
-from ocpp.v16.enums import ChargingProfileStatus, RemoteStartStopStatus
+from ocpp.v16.enums import ChargingProfileStatus, RemoteStartStopStatus, ClearChargingProfileStatus
 
 from ocpp.v16 import call, call_result
 
@@ -22,7 +22,8 @@ from validations import (validate_composite_schedule,
                                validate_standard_start_transaction)
 
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import charge_point_v16
+from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 
 from smart_charging_profiles.absolute_profiles import *
@@ -73,7 +74,7 @@ async def test_absolute_1(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -124,7 +125,7 @@ async def test_absolute_2(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -174,7 +175,7 @@ async def test_absolute_3(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -229,7 +230,7 @@ async def test_absolute_4(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -282,7 +283,7 @@ async def test_absolute_5(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -304,7 +305,7 @@ async def test_absolute_5(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -393,7 +394,7 @@ async def test_absolute_6(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -431,7 +432,7 @@ async def test_absolute_6(
 
     passed_seconds = int(
         (
-            datetime.utcnow()
+            datetime.now(timezone.utc)
             - datetime.fromisoformat(req2.cs_charging_profiles.valid_from)
         ).total_seconds()
     )
@@ -787,7 +788,8 @@ async def test_relative_3(
         test_utility,
         charge_point_v16,
         "RemoteStartTransaction",
-        call_result.RemoteStartTransactionPayload(RemoteStartStopStatus.accepted),
+        call_result.RemoteStartTransactionPayload(
+            RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
     )
 
@@ -807,6 +809,118 @@ async def test_relative_3(
     )
 
     exp = rel_exp_test3()
+
+    # expect correct GetCompositeSchedule.conf
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "GetCompositeSchedule",
+        exp,
+        validate_composite_schedule,
+    )
+
+
+@pytest.mark.asyncio
+async def test_clear_charging_profiles_for_connector_0(
+    test_config,
+    charge_point_v16: ChargePoint16,
+    test_controller: TestController,
+    test_utility: TestUtility,
+    central_system_v16: CentralSystem,
+):
+
+    exp_scp_result = call_result.SetChargingProfilePayload(
+        ChargingProfileStatus.accepted
+    )
+
+    test_controller.plug_in(connector_id=1)
+    await charge_point_v16.remote_start_transaction_req(
+        id_tag=test_config.authorization_info.valid_id_tag_1, connector_id=1
+    )
+    # expect StartTransaction.req
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StartTransaction",
+        call.StartTransactionPayload(
+            1, test_config.authorization_info.valid_id_tag_1, 0, ""
+        ),
+        validate_standard_start_transaction,
+    )
+
+    req1 = abs_req1_test1()
+
+    assert await charge_point_v16.set_charging_profile_req(req1) == exp_scp_result
+
+    await charge_point_v16.get_composite_schedule(
+        call.GetCompositeSchedulePayload(connector_id=1, duration=400)
+    )
+
+    passed_seconds = int(
+        (
+            datetime.now(timezone.utc)
+            - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
+        ).total_seconds()
+    )
+    exp = abs_exp_test1_con0(passed_seconds)
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "GetCompositeSchedule",
+        exp,
+        validate_composite_schedule,
+    )
+
+    req2 = abs_req2_test_con0()
+
+    assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
+
+    await charge_point_v16.get_composite_schedule(
+        call.GetCompositeSchedulePayload(connector_id=1, duration=400)
+    )
+
+    passed_seconds = int(
+        (
+            datetime.now(timezone.utc)
+            - datetime.fromisoformat(req2.cs_charging_profiles.valid_from)
+        ).total_seconds()
+    )
+    exp = abs_exp_test2_con0(passed_seconds)
+    # expect correct GetCompositeSchedule.conf
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "GetCompositeSchedule",
+        exp,
+        validate_composite_schedule,
+    )
+
+    await charge_point_v16.clear_charging_profile_req(id=2)
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ClearChargingProfile",
+        call_result.ClearChargingProfilePayload(
+            ClearChargingProfileStatus.accepted),
+    )
+
+    test_controller.stop()
+    await asyncio.sleep(2)
+    test_controller.start()
+
+    charge_point_v16 = await central_system_v16.wait_for_chargepoint()
+    await charge_point_v16.get_composite_schedule(
+        call.GetCompositeSchedulePayload(connector_id=1, duration=90)
+    )
+
+    passed_seconds = int(
+        (
+            datetime.now(timezone.utc)
+            - datetime.fromisoformat(req1.cs_charging_profiles.valid_from)
+        ).total_seconds()
+    )
+    exp = abs_exp_test3_con0(passed_seconds)
 
     # expect correct GetCompositeSchedule.conf
     assert await wait_for_and_validate(

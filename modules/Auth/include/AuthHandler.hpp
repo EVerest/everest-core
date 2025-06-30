@@ -24,6 +24,20 @@ using namespace types::evse_manager;
 using namespace types::authorization;
 using namespace types::reservation;
 
+namespace types {
+namespace authorization {
+
+inline bool operator<(const IdToken& lhs, const IdToken& rhs) {
+    return lhs.value < rhs.value;
+}
+
+inline bool operator<(const ProvidedIdToken& lhs, const ProvidedIdToken& rhs) {
+    return lhs.id_token < rhs.id_token;
+}
+
+} // namespace authorization
+} // namespace types
+
 namespace module {
 
 enum class TokenHandlingResult {
@@ -32,7 +46,8 @@ enum class TokenHandlingResult {
     REJECTED,
     USED_TO_STOP_TRANSACTION,
     TIMEOUT,
-    NO_CONNECTOR_AVAILABLE
+    NO_CONNECTOR_AVAILABLE,
+    WITHDRAWN
 };
 
 namespace conversions {
@@ -73,6 +88,13 @@ public:
      * @param provided_token
      */
     TokenHandlingResult on_token(const ProvidedIdToken& provided_token);
+
+    /**
+     * @brief Handler for an update to a token validation result. This is mainly used to update if we have a parent id.
+     *
+     * @param validation_result_update
+     */
+    void handle_token_validation_result_update(const ValidationResultUpdate& validation_result_update);
 
     /**
      * @brief Handler for new incoming \p reservation for the given \p connector . Places the reservation if possible.
@@ -216,7 +238,20 @@ public:
     void register_publish_token_validation_status_callback(
         const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback);
 
+    WithdrawAuthorizationResult handle_withdraw_authorization(const WithdrawAuthorizationRequest& request);
+
 private:
+    enum class SelectEvseReturnStatus {
+        EvseSelected,
+        Interrupted,
+        TimeOut
+    };
+
+    struct SelectEvseResult {
+        std::optional<int> evse_id;
+        SelectEvseReturnStatus status;
+    };
+
     SelectionAlgorithm selection_algorithm;
     int connection_timeout;
     std::optional<std::string> master_pass_group_id;
@@ -227,9 +262,12 @@ private:
     std::map<int, std::unique_ptr<EVSEContext>> evses;
 
     std::list<int> plug_in_queue;
-    std::set<std::string> tokens_in_process;
+    std::set<ProvidedIdToken> tokens_in_process;
     std::condition_variable cv;
+    std::condition_variable processing_finished_cv;
     std::mutex event_mutex;
+    std::mutex withdraw_mutex;
+    std::unique_ptr<WithdrawAuthorizationRequest> withdraw_request;
 
     // callbacks
     std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
@@ -248,24 +286,29 @@ private:
 
     std::vector<int> get_referenced_evses(const ProvidedIdToken& provided_token);
     int used_for_transaction(const std::vector<int>& evse_ids, const std::string& id_token);
-    bool is_token_already_in_process(const std::string& id_token, const std::vector<int>& referenced_evses);
+    bool is_token_already_in_process(const ProvidedIdToken& provided_id_token,
+                                     const std::vector<int>& referenced_evses);
     bool any_evse_available(const std::vector<int>& evse_ids);
     bool any_parent_id_present(const std::vector<int>& evse_ids);
     bool equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token);
 
-    TokenHandlingResult handle_token(const ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk);
+    TokenHandlingResult handle_token(ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk);
 
     /**
      * @brief Method selects an evse based on the configured selection algorithm. It might block until an event
      * occurs that can be used to determine an evse.
      *
      * @param selected_evses
-     * @return int
+     * @param id_token          The id token of the request.
+     * @return The status and optional evse id if an evse was selected.
      */
-    int select_evse(const std::vector<int>& selected_evses, std::unique_lock<std::mutex>& lk);
+    SelectEvseResult select_evse(const std::vector<int>& selected_evses, const IdToken& id_token,
+                                 std::unique_lock<std::mutex>& lk);
+    bool is_authorization_withdrawn(const std::vector<int>& selected_evses, const IdToken& id_token);
 
     int get_latest_plugin(const std::vector<int>& evse_ids);
-    void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
+    void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result,
+                     std::unique_lock<std::mutex>& lk);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
                               const AuthorizationType& type);
     void submit_event_for_connector(const int32_t evse_id, const int32_t connector_id,

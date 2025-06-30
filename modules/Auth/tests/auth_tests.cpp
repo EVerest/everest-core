@@ -18,18 +18,6 @@ using ::testing::MockFunction;
 using ::testing::StrictMock;
 
 class kvsIntf;
-
-namespace types {
-namespace authorization {
-
-// Define operator== for types::authorization::IdToken
-bool operator==(const types::authorization::IdToken& lhs, const types::authorization::IdToken& rhs) {
-    return lhs.value == rhs.value;
-}
-
-} // namespace authorization
-} // namespace types
-
 namespace module {
 
 const static std::string VALID_TOKEN_1 = "VALID_RFID_1"; // SAME PARENT_ID
@@ -82,6 +70,9 @@ protected:
     testing::MockFunction<bool(json message)> send_callback_mock;
     StrictMock<MockFunction<void(const ProvidedIdToken& token, TokenValidationStatus status)>>
         mock_publish_token_validation_status_callback;
+    testing::MockFunction<void(const int evse_index, const StopTransactionRequest& request)>
+        mock_stop_transaction_callback;
+    testing::MockFunction<void(const int evse_index)> mock_withdraw_authorization_callback_mock;
 
     void SetUp() override {
         std::vector<int32_t> evse_indices{0, 1};
@@ -105,12 +96,14 @@ protected:
         this->auth_handler->register_withdraw_authorization_callback([this](int32_t evse_index) {
             EVLOG_debug << "DeAuthorize called with evse_index#" << evse_index;
             this->auth_receiver->deauthorize(evse_index);
+            this->mock_withdraw_authorization_callback_mock.Call(evse_index);
         });
         this->auth_handler->register_stop_transaction_callback(
             [this](int32_t evse_index, const StopTransactionRequest& request) {
                 EVLOG_debug << "Stop transaction called with evse_index#" << evse_index << " and reason "
                             << stop_transaction_reason_to_string(request.reason);
                 this->auth_receiver->deauthorize(evse_index);
+                this->mock_stop_transaction_callback.Call(evse_index, request);
             });
 
         this->auth_handler->register_validate_token_callback([](const ProvidedIdToken& provided_token) {
@@ -167,11 +160,12 @@ TEST_F(AuthTest, test_simple_authorization) {
 
     std::vector<int32_t> connectors{1};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+    ProvidedIdToken expected = provided_token;
+    expected.parent_id_token = {PARENT_ID_TOKEN, types::authorization::IdTokenType::ISO14443};
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
-    EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::Accepted));
 
     const auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
@@ -383,7 +377,7 @@ TEST_F(AuthTest, test_authorize_first) {
 
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
 
@@ -444,7 +438,7 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
 
     std::thread t5([this, provided_token, &result5]() { result5 = this->auth_handler->on_token(provided_token); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
     std::thread t6([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     t5.join();
@@ -477,7 +471,7 @@ TEST_F(AuthTest, test_two_id_tokens) {
     std::thread t1([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
     std::thread t2([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
     std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
     std::thread t4([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
@@ -1039,7 +1033,7 @@ TEST_F(AuthTest, test_reservation_with_authorization_global_reservations) {
 
     // this token is not valid for the reservation
     std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
     std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     t2.join();
@@ -1250,7 +1244,7 @@ TEST_F(AuthTest, test_authorization_timeout_and_reswipe) {
 
     std::thread t2([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
 
@@ -1594,6 +1588,313 @@ TEST_F(AuthTest, test_subsequent_valid_tokens) {
     ASSERT_TRUE(result2 == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test if a authorization can be withdrawn if an EV was connected and authorization was granted before
+TEST_F(AuthTest, test_withdraw_authorization) {
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(0)).Times(1);
+    EXPECT_CALL(mock_stop_transaction_callback, Call(_, _)).Times(0);
+
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+
+    types::authorization::WithdrawAuthorizationRequest withdraw_request;
+    withdraw_request.evse_id = 1;
+
+    auto withdraw_result = this->auth_handler->handle_withdraw_authorization(withdraw_request);
+
+    ASSERT_EQ(withdraw_result, WithdrawAuthorizationResult::Accepted);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+
+    SessionEvent deauthorized_event;
+    deauthorized_event.event = SessionEventEnum::Deauthorized;
+    this->auth_handler->handle_session_event(1, deauthorized_event);
+
+    withdraw_result = this->auth_handler->handle_withdraw_authorization(withdraw_request);
+    ASSERT_EQ(withdraw_result, WithdrawAuthorizationResult::AuthorizationNotFound);
+}
+
+/// \brief Test if a authorization can be withdrawn while authorization process is still selecting an EVSE
+TEST_F(AuthTest, test_withdraw_authorization_while_waiting_for_ev_plugin) {
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token1 = get_provided_token(VALID_TOKEN_1, connectors);
+    ProvidedIdToken provided_token2 = get_provided_token(VALID_TOKEN_2, connectors);
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool processing_called1 = false;
+    bool processing_called2 = false;
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Processing))
+        .WillOnce(Invoke([&]() {
+            std::unique_lock<std::mutex> lock(mtx);
+            processing_called1 = true;
+            cv.notify_all(); // Notify that the processing call happened
+        }));
+    ;
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Withdrawn));
+    EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(0)).Times(0);
+    EXPECT_CALL(mock_stop_transaction_callback, Call(_, _)).Times(0);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Processing))
+        .WillOnce(Invoke([&]() {
+            std::unique_lock<std::mutex> lock(mtx);
+            processing_called2 = true;
+            cv.notify_all(); // Notify that the processing call happened
+        }));
+    ;
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Withdrawn));
+    EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(0)).Times(0);
+    EXPECT_CALL(mock_stop_transaction_callback, Call(_, _)).Times(0);
+
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
+
+    std::thread t1([this, provided_token1, &result1]() { result1 = this->auth_handler->on_token(provided_token1); });
+    std::thread t2([this, provided_token2, &result2]() { result2 = this->auth_handler->on_token(provided_token2); });
+
+    WithdrawAuthorizationResult withdraw_authorization_result1;
+    types::authorization::WithdrawAuthorizationRequest withdraw_request1;
+    withdraw_request1.id_token = {VALID_TOKEN_1, types::authorization::IdTokenType::ISO14443};
+
+    WithdrawAuthorizationResult withdraw_authorization_result2;
+    types::authorization::WithdrawAuthorizationRequest withdraw_request2;
+    withdraw_request2.id_token = {VALID_TOKEN_2, types::authorization::IdTokenType::ISO14443};
+
+    // Wait for TokenValidationStatus::Processing to be triggered
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [&]() { return processing_called1 and processing_called2; });
+    }
+
+    std::thread t3([this, withdraw_request1, &withdraw_authorization_result1]() {
+        withdraw_authorization_result1 = this->auth_handler->handle_withdraw_authorization(withdraw_request1);
+    });
+    std::thread t4([this, withdraw_request2, &withdraw_authorization_result2]() {
+        withdraw_authorization_result2 = this->auth_handler->handle_withdraw_authorization(withdraw_request2);
+    });
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+
+    ASSERT_EQ(result1, TokenHandlingResult::WITHDRAWN);
+    ASSERT_EQ(withdraw_authorization_result1, WithdrawAuthorizationResult::Accepted);
+    ASSERT_EQ(result2, TokenHandlingResult::WITHDRAWN);
+    ASSERT_EQ(withdraw_authorization_result2, WithdrawAuthorizationResult::Accepted);
+
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test if a authorization is not withdrawn if the token does not match and the authorization requests ends with
+/// a timeout
+TEST_F(AuthTest, test_withdraw_authorization_while_waiting_for_ev_plugin_timeout) {
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool processing_called = false;
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing))
+        .WillOnce(Invoke([&]() {
+            std::unique_lock<std::mutex> lock(mtx);
+            processing_called = true;
+            cv.notify_all(); // Notify that the processing call happened
+        }));
+    ;
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut));
+    EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(_)).Times(0);
+    EXPECT_CALL(mock_stop_transaction_callback, Call(_, _)).Times(0);
+
+    TokenHandlingResult result;
+    std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
+
+    WithdrawAuthorizationResult withdraw_authorization_result;
+    types::authorization::WithdrawAuthorizationRequest withdraw_request;
+    withdraw_request.id_token = {VALID_TOKEN_2, types::authorization::IdTokenType::ISO14443};
+
+    // Wait for TokenValidationStatus::Processing to be triggered
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [&]() { return processing_called; });
+    }
+
+    std::thread t2([this, withdraw_request, &withdraw_authorization_result]() {
+        withdraw_authorization_result = this->auth_handler->handle_withdraw_authorization(withdraw_request);
+    });
+
+    t1.join();
+    t2.join();
+
+    ASSERT_EQ(result, TokenHandlingResult::TIMEOUT);
+    ASSERT_EQ(withdraw_authorization_result, WithdrawAuthorizationResult::AuthorizationNotFound);
+
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test if a authorization can be withdrawn during an active transaction
+TEST_F(AuthTest, test_withdraw_authorization_during_transaction) {
+    const SessionEvent session_started_event =
+        get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_started_event);
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+
+    EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(_)).Times(0);
+    EXPECT_CALL(mock_stop_transaction_callback, Call(0, _)).Times(1);
+
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+
+    const SessionEvent transaction_started_event = get_transaction_started_event(provided_token);
+    this->auth_handler->handle_session_event(1, transaction_started_event);
+
+    types::authorization::WithdrawAuthorizationRequest withdraw_request;
+    withdraw_request.id_token = {VALID_TOKEN_1, types::authorization::IdTokenType::ISO14443};
+    this->auth_handler->handle_withdraw_authorization(withdraw_request);
+}
+
+/// \brief Test two successive authorization requests and connector selection. The first authorization request targets
+/// only connector1, the second authorization request targets connector1 and connector2. Connector2 should be selected,
+/// since the transaction at connector1 is already running.
+TEST_F(AuthTest, test_two_authorization_plug_events) {
+
+    std::vector<int32_t> connector_1{1};
+    std::vector<int32_t> all_connectors{1, 2};
+
+    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connector_1);
+    ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, all_connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
+
+    TokenHandlingResult result1;
+
+    std::thread t1([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+
+    std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
+
+    t1.join();
+    t2.join();
+
+    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+
+    SessionEvent session_event2 = get_transaction_started_event(provided_token_1);
+    this->auth_handler->handle_session_event(1, session_event2);
+
+    TokenHandlingResult result2;
+    std::thread t3([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+
+    t3.join();
+
+    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
+}
+
+TEST_F(AuthTest, test_token_swipe_race_with_timeout) {
+
+    auto token_entered_promise = std::make_shared<std::promise<void>>();
+    auto timeout_entered_promise = std::make_shared<std::promise<void>>();
+
+    std::shared_future<void> token_entered_future = token_entered_promise->get_future();
+    std::shared_future<void> timeout_entered_future = timeout_entered_promise->get_future();
+
+    std::atomic<bool> token_validation_started{false};
+    std::atomic<bool> timeout_triggered{false};
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    // Plug-in first
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    this->auth_handler->register_validate_token_callback(
+        [token_entered_promise, timeout_entered_future](const ProvidedIdToken& provided_token) {
+            token_entered_promise->set_value();
+            timeout_entered_future.wait();
+
+            ValidationResult result;
+            result.authorization_status = AuthorizationStatus::Accepted;
+            result.parent_id_token = {PARENT_ID_TOKEN, types::authorization::IdTokenType::ISO14443};
+            return std::vector<ValidationResult>{ValidationResult{}, result};
+        });
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Rejected));
+
+    TokenHandlingResult result;
+
+    std::thread token_thread([&]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds((CONNECTION_TIMEOUT * 1000) - 200));
+        result = this->auth_handler->on_token(provided_token);
+    });
+
+    std::thread timeout_simulation_thread([timeout_entered_promise, token_entered_future, &timeout_triggered]() {
+        token_entered_future.wait();
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        timeout_triggered = true;
+        timeout_entered_promise->set_value();
+    });
+
+    token_thread.join();
+    timeout_simulation_thread.join();
+
+    ASSERT_TRUE(timeout_triggered);
+    ASSERT_EQ(result, TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
 }
 
 } // namespace module

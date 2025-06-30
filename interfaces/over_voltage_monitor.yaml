@@ -8,6 +8,10 @@ description: >-
   shutdown was already performed.
   Once an over voltage error was raised, it should only be cleared when the reset_over_voltage_error command is called.
   All other errors should be raised/cleared when they occur/are no longer active immediately.
+  The var voltage_measurement_V should be published in regular intervals, e.g. 1 second. It is not
+  used to compare it with the overvoltage threshold setting in EVerest, that has to be done in the OVM device itself.
+  It will only be used to validate that the OVM and the IMD see the same voltage to ensure they are correctly wired to the same
+  charging port. If it is not available in hardware, do not publish the voltage_measurement_V at all.
 cmds:
   start:
     description: >-
@@ -27,5 +31,9 @@ cmds:
       Resets the detection logic to allow for new charging session after an over voltage error occurred.
       This should clear the over voltage error.
       If monitoring is still active, it should be stopped.
+vars:
+  voltage_measurement_V:
+    description: Measured voltage in V
+    type: number
 errors:
   - reference: /errors/over_voltage_monitor

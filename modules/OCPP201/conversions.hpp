@@ -3,6 +3,7 @@
 #ifndef OCPP_V2_CONVERSIONS_HPP
 #define OCPP_V2_CONVERSIONS_HPP
 
+#include <generated/types/display_message.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/iso15118.hpp>
 #include <generated/types/ocpp.hpp>
@@ -17,6 +18,7 @@
 #include <ocpp/v2/messages/Get15118EVCertificate.hpp>
 #include <ocpp/v2/messages/GetDisplayMessages.hpp>
 #include <ocpp/v2/messages/GetLog.hpp>
+#include <ocpp/v2/messages/NotifyEVChargingNeeds.hpp>
 #include <ocpp/v2/messages/SetDisplayMessage.hpp>
 #include <ocpp/v2/messages/TransactionEvent.hpp>
 #include <ocpp/v2/messages/UpdateFirmware.hpp>
@@ -117,6 +119,11 @@ ocpp::v2::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum 
 ocpp::v2::Get15118EVCertificateRequest
 to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSchema& request);
 
+/// \brief Converts a given types::types::iso15118::ChargingNeeds to
+/// ocpp::v2::NotifyEVChargingNeedsRequest
+ocpp::v2::NotifyEVChargingNeedsRequest
+to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs);
+
 /// \brief Converts a given types::reservation::ReservationResult to ocpp::v2::ReserveNowStatusEnum
 ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
 
@@ -147,6 +154,9 @@ types::ocpp::DataTransferRequest to_everest_data_transfer_request(ocpp::v2::Data
 /// \brief Converts a given ocpp::v2::DataTransferResponse \p status to a types::ocpp::DataTransferResponse.
 types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v2::DataTransferResponse response);
 
+/// \brief Converts a given ocpp::v2::IdTokenInfo \p idTokenInfo to a types::authorization::ValidationResult.
+types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::IdTokenInfo& idTokenInfo);
+
 /// \brief Converts a given ocpp::v2::AuthorizeResponse \p response to a types::authorization::ValidationResult.
 types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::AuthorizeResponse& response);
 
@@ -170,11 +180,11 @@ to_everest_ocpp_transaction_event(const ocpp::v2::TransactionEventRequest& trans
 
 /// \brief Converts a given ocpp::v2::MessageFormat \p message_format to a
 /// types::ocpp::MessageFormat
-types::display_message::MessageFormat to_everest_message_format(const ocpp::v2::MessageFormatEnum& message_format);
+types::text_message::MessageFormat to_everest_message_format(const ocpp::v2::MessageFormatEnum& message_format);
 
 /// \brief Converts a given ocpp::v2::MessageContent \p message_content to a
 /// types::ocpp::MessageContent
-types::display_message::MessageContent to_everest_message_content(const ocpp::v2::MessageContent& message_content);
+types::text_message::MessageContent to_everest_message_content(const ocpp::v2::MessageContent& message_content);
 
 /// \brief Converts a given ocpp::v2::TransactionEventResponse \p transaction_event_response to a
 /// types::ocpp::OcppTransactionEventResponse

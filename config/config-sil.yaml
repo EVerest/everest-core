@@ -10,6 +10,12 @@ active_modules:
         - module_id: error_history
           implementation_id: error_history
     module: API
+  ev_api:
+    connections:
+      ev_manager:
+        - implementation_id: ev_manager
+          module_id: ev_manager
+    module: EvAPI
   error_history:
     module: ErrorHistory
     config_implementation:
@@ -126,7 +132,6 @@ active_modules:
       device: auto
       tls_security: allow
       supported_DIN70121: false
-    connections: {}
     module: EvseV2G
     connections:
       security:

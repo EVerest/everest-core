@@ -13,23 +13,8 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
-#ifdef EVEREST_MBED_TLS
-#include <mbedtls/certs.h>
-#include <mbedtls/config.h>
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/entropy.h>
-#include <mbedtls/ssl.h>
-#include <mbedtls/version.h>
-#include <mbedtls/x509.h>
-#if MBEDTLS_VERSION_MINOR == 2
-#include <mbedtls/net.h>
-#else
-#include <mbedtls/net_sockets.h>
-#endif
-#else
 #include <openssl_util.hpp>
 #include <tls.hpp>
-#endif // EVEREST_MBED_TLS
 
 #include <cbv2g/app_handshake/appHand_Datatypes.h>
 #include <cbv2g/common/exi_basetypes.h>
@@ -194,13 +179,10 @@ struct v2g_context {
     struct event_base* event_base;
     pthread_t event_thread;
 
-    struct event* com_setup_timeout;
-
     const char* if_name;
     struct sockaddr_in6* local_tcp_addr;
     struct sockaddr_in6* local_tls_addr;
 
-    std::string certs_path;
     std::string tls_key_logging_path;
 
     uint32_t network_read_timeout;     /* in milli seconds */
@@ -216,23 +198,10 @@ struct v2g_context {
 
     pthread_t tcp_thread;
 
-#ifdef EVEREST_MBED_TLS
-    mbedtls_ssl_config ssl_config;
-    mbedtls_x509_crt* evseTlsCrt;
-    uint8_t num_of_tls_crt;
-    mbedtls_pk_context* evse_tls_crt_key;
-    mbedtls_x509_crt v2g_root_crt;
-    mbedtls_net_context tls_socket;
-    keylogDebugCtx tls_log_ctx;
-    pthread_t tls_thread;
-
-    mbedtls_x509_crt mop_root_ca_list;
-#else
     struct {
         int fd;
     } tls_socket;
     tls::Server* tls_server;
-#endif // EVEREST_MBED_TLS
 
     bool tls_key_logging;
 
@@ -291,6 +260,7 @@ struct v2g_context {
 
         iso2_paymentOptionType payment_option_list[iso2_paymentOptionType_2_ARRAY_SIZE];
         uint8_t payment_option_list_len;
+        bool central_contract_validation_allowed;
 
         bool cert_install_status;
         std::string cert_install_res_b64_buffer;
@@ -332,19 +302,12 @@ struct v2g_context {
         iso2_paymentOptionType iso_selected_payment_option;
         long long int auth_start_timeout;
         int auth_timeout_eim;
-        int auth_timeout_pnc;                                       // for PnC
-        uint8_t gen_challenge[16];                                  // for PnC
-        bool verify_contract_cert_chain;                            // for PnC
-        types::authorization::CertificateStatus certificate_status; // for PnC
-        bool authorization_rejected;                                // for PnC
-
-#ifdef EVEREST_MBED_TLS
-        // needed by iso_server.cpp
-        // for OpenSSL the key is part of v2g_connection
-        struct {
-            mbedtls_ecdsa_context pubkey;
-        } contract; // for PnC
-#endif              // EVEREST_MBED_TLS
+        int auth_timeout_pnc;                                                   // for PnC
+        uint8_t gen_challenge[16];                                              // for PnC
+        bool verify_contract_cert_chain;                                        // for PnC
+        types::authorization::CertificateStatus certificate_status;             // for PnC
+        bool authorization_rejected;                                            // for PnC
+        std::optional<types::authorization::ProvidedIdToken> provided_id_token; // for PnC
 
         bool renegotiation_required;  /* Is set to true if renegotiation is required. Only relevant for ISO */
         bool is_charging;             /* set to true if ChargeProgress is set to Start */
@@ -389,16 +352,6 @@ struct v2g_connection {
 
     bool is_tls_connection;
 
-#ifdef EVEREST_MBED_TLS
-    union {
-        struct {
-            mbedtls_ssl_config* ssl_config;
-            mbedtls_ssl_context ssl_context;
-            mbedtls_net_context tls_client_fd;
-        } ssl;
-        int socket_fd;
-    } conn;
-#else
     // used for non-TLS connections
     struct {
         int socket_fd;
@@ -406,7 +359,6 @@ struct v2g_connection {
 
     tls::Connection* tls_connection;
     openssl::pkey_ptr* pubkey;
-#endif // EVEREST_MBED_TLS
 
     ssize_t (*read)(struct v2g_connection* conn, unsigned char* buf, std::size_t count);
     ssize_t (*write)(struct v2g_connection* conn, unsigned char* buf, std::size_t count);

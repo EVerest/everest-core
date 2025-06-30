@@ -70,43 +70,6 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/resume_charging", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) { charger->resume_charging(); });
 
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/stop_transaction", mod->config.connector_id),
-                        [this](const std::string& data) {
-                            types::evse_manager::StopTransactionRequest request;
-                            request.reason = types::evse_manager::StopTransactionReason::Local;
-                            mod->charger->cancel_transaction(request);
-                        });
-
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/emergency_stop", mod->config.connector_id),
-                        [this](const std::string& data) {
-                            if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
-                            }
-                            types::evse_manager::StopTransactionRequest request;
-                            request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
-                            mod->charger->cancel_transaction(request);
-                        });
-
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_malfunction", mod->config.connector_id),
-                        [this](const std::string& data) {
-                            if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_Malfunction);
-                            }
-                            types::evse_manager::StopTransactionRequest request;
-                            request.reason = types::evse_manager::StopTransactionReason::Other;
-                            mod->charger->cancel_transaction(request);
-                        });
-
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_utility_int", mod->config.connector_id),
-                        [this](const std::string& data) {
-                            if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_UtilityInterruptEvent);
-                            }
-                            types::evse_manager::StopTransactionRequest request;
-                            request.reason = types::evse_manager::StopTransactionReason::Other;
-                            mod->charger->cancel_transaction(request);
-                        });
-
     // /Interface to Node-RED debug UI
 
     if (mod->r_powermeter_billing().size() > 0) {
@@ -130,7 +93,7 @@ void evse_managerImpl::ready() {
         // external Nodered interface
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/temperature", mod->config.connector_id),
                           telemetry.evse_temperature_C);
-        // /external Nodered interface
+        // external Nodered interface
         publish_telemetry(telemetry);
     });
 
@@ -161,7 +124,8 @@ void evse_managerImpl::ready() {
                     provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
                     provided_token.id_token = {"FREESERVICE", types::authorization::IdTokenType::Local};
                     provided_token.prevalidated = true;
-                    mod->charger->authorize(true, provided_token);
+                    mod->charger->authorize(true, provided_token,
+                                            {types::authorization::AuthorizationStatus::Accepted});
                     mod->charger_was_authorized();
                 });
                 authorize_thread.detach();
@@ -174,7 +138,7 @@ void evse_managerImpl::ready() {
             if (mod->is_reserved()) {
                 session_started.reservation_id = mod->get_reservation_id();
                 if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
-                    this->mod->cancel_reservation(true);
+                    this->mod->cancel_reservation(false);
                 }
             }
 
@@ -207,7 +171,7 @@ void evse_managerImpl::ready() {
         transaction_started.meter_value = mod->get_latest_powermeter_data_billing();
         if (mod->is_reserved()) {
             transaction_started.reservation_id.emplace(mod->get_reservation_id());
-            mod->cancel_reservation(true);
+            mod->cancel_reservation(false); // this allows OCPP1.6 to not move back to available.
         }
 
         transaction_started.id_tag = id_token;
@@ -397,7 +361,7 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
             return;
         }
 
-        this->mod->charger->authorize(true, provided_token);
+        this->mod->charger->authorize(true, provided_token, validation_result);
         mod->charger_was_authorized();
         if (validation_result.reservation_id.has_value()) {
             EVLOG_debug << "Reserve evse manager reservation id for id " << validation_result.reservation_id.value();
@@ -475,6 +439,21 @@ bool evse_managerImpl::handle_force_unlock(int& connector_id) {
     }
     return false;
 };
+
+void evse_managerImpl::handle_set_plug_and_charge_configuration(
+    types::evse_manager::PlugAndChargeConfiguration& plug_and_charge_configuration) {
+    if (plug_and_charge_configuration.pnc_enabled.has_value()) {
+        mod->set_pnc_enabled(plug_and_charge_configuration.pnc_enabled.value());
+    }
+    if (plug_and_charge_configuration.central_contract_validation_allowed.has_value()) {
+        mod->set_central_contract_validation_allowed(
+            plug_and_charge_configuration.central_contract_validation_allowed.value());
+    }
+    if (plug_and_charge_configuration.contract_certificate_installation_enabled.has_value()) {
+        mod->set_contract_certificate_installation_enabled(
+            plug_and_charge_configuration.contract_certificate_installation_enabled.value());
+    }
+}
 
 } // namespace evse
 } // namespace module

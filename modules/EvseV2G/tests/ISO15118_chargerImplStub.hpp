@@ -32,7 +32,7 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
         std::cout << "ISO15118_chargerImplBase::handle_set_charging_parameters called" << std::endl;
     }
     virtual void handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
-                                      bool& supported_certificate_service) {
+                                      bool& supported_certificate_service, bool& central_contract_validation_allowed) {
         std::cout << "ISO15118_chargerImplBase::handle_session_setup called" << std::endl;
     }
     virtual void handle_authorization_response(types::authorization::AuthorizationStatus& authorization_status,
@@ -53,6 +53,9 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
     }
     virtual void handle_stop_charging(bool& stop) {
         std::cout << "ISO15118_chargerImplBase::handle_stop_charging called" << std::endl;
+    }
+    virtual void handle_pause_charging(bool& pause) {
+        std::cout << "ISO15118_chargerImplBase::handle_pause_charging called" << std::endl;
     }
     virtual void handle_update_ac_max_current(double& max_current) {
         std::cout << "ISO15118_chargerImplBase::handle_update_ac_max_current called" << std::endl;

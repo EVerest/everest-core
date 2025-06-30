@@ -141,7 +141,7 @@ types:
       personal_message:
         description: Personal message
         type: object
-        $ref: /display_message#/MessageContent
+        $ref: /text_message#/MessageContent
   DataTransferStatus:
     description: Data Transfer Status enum
     type: string
@@ -508,7 +508,7 @@ types:
       - event_notification_type
     properties:
       component_variable:
-        description: Identifier for which the event occured
+        description: Identifier for which the event occurred
         type: object
         $ref: /ocpp#/ComponentVariable
       event_id:

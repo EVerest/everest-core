@@ -24,7 +24,7 @@ ev_define_dependency(
 
 ev_define_dependency(
     DEPENDENCY_NAME libcurl
-    DEPENDENT_MODULES_LIST LemDCBM400600)
+    DEPENDENT_MODULES_LIST LemDCBM400600 IsabellenhuetteIemDcr)
 
 ev_define_dependency(
     DEPENDENCY_NAME libocpp
@@ -32,16 +32,11 @@ ev_define_dependency(
 
 ev_define_dependency(
     DEPENDENCY_NAME Josev
-    DEPENDENT_MODULES_LIST PyJosev PyEvJosev)
+    DEPENDENT_MODULES_LIST PyEvJosev)
 
 ev_define_dependency(
     DEPENDENCY_NAME libcbv2g
     OUTPUT_VARIABLE_SUFFIX LIBCBV2G
-    DEPENDENT_MODULES_LIST EvseV2G)
-
-ev_define_dependency(
-    DEPENDENCY_NAME ext-mbedtls
-    OUTPUT_VARIABLE_SUFFIX MBEDTLS
     DEPENDENT_MODULES_LIST EvseV2G)
 
 ev_define_dependency(
@@ -50,7 +45,7 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST OCPP OCPP201 EvseSecurity EvseV2G)
 
 ev_define_dependency(
-    DEPENDENCY_NAME sqlite_cpp
+    DEPENDENCY_NAME everest-sqlite
     DEPENDENT_MODULES_LIST ErrorHistory)
 
 ev_define_dependency(

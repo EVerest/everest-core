@@ -2,6 +2,7 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
 
+#include <cmath>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -24,6 +25,9 @@ const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
 const std::string INOPERATIVE_ERROR_TYPE = "evse_manager/Inoperative";
 const std::string SWITCHING_PHASES_REASON = "SwitchingPhases";
+const ocpp::CiString<50> CONNECTION_TIMEOUT_CONFIG_KEY = "ConnectionTimeout";
+const ocpp::CiString<50> ISO15118_PNC_ENABLED_CONFIG_KEY = "ISO15118PnCEnabled";
+const ocpp::CiString<50> CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY = "CentralContractValidationAllowed";
 
 namespace fs = std::filesystem;
 
@@ -47,9 +51,12 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
     }
 
     if (error_type == INOPERATIVE_ERROR_TYPE) {
-        return ocpp::v16::ErrorInfo{uuid,      ocpp::v16::ChargePointErrorCode::OtherError,
-                                    true,      "EVSE is inoperative",
-                                    "EVerest", "caused_by:" + error.message};
+        return ocpp::v16::ErrorInfo{uuid,
+                                    ocpp::v16::ChargePointErrorCode::OtherError,
+                                    true,
+                                    "caused_by:" + error.message,
+                                    error.vendor_id,
+                                    error.description};
     }
 
     const auto get_simplified_error_type = [](const std::string& error_type) {
@@ -125,20 +132,20 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (period.numberPhases.has_value()) {
-                limits_req.ac_max_phase_count = period.numberPhases.value();
+                limits_req.ac_max_phase_count = {period.numberPhases.value(), source_ext_limit};
             }
             if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
-                limits_req.ac_max_current_A = period.limit;
+                limits_req.ac_max_current_A = {period.limit, source_ext_limit};
                 if (schedule.minChargingRate.has_value()) {
-                    limits_req.ac_min_current_A = schedule.minChargingRate.value();
+                    limits_req.ac_min_current_A = {schedule.minChargingRate.value(), source_ext_limit};
                 }
             } else {
-                limits_req.total_power_W = period.limit;
+                limits_req.total_power_W = {period.limit, source_ext_limit};
             }
             schedule_req_entry.limits_to_leaves = limits_req;
             schedule_import.push_back(schedule_req_entry);
         }
-        limits.schedule_import.emplace(schedule_import);
+        limits.schedule_import = schedule_import;
         auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, connector_id);
         evse_sink.call_set_external_limits(limits);
     }
@@ -221,7 +228,9 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         }
         std::optional<ocpp::CiString<20>> id_tag_opt = std::nullopt;
         if (transaction_finished.id_tag.has_value()) {
-            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token.value));
+            // we truncate potentially too large tokens
+            id_tag_opt.emplace(
+                ocpp::CiString<20>(transaction_finished.id_tag.value().id_token.value, ocpp::StringTooLarge::Truncate));
         }
         std::optional<std::string> signed_meter_data;
         if (signed_meter_value.has_value()) {
@@ -277,9 +286,15 @@ void OCPP::init_evse_subscriptions() {
             }
         });
 
-        evse->subscribe_limits([this, evse_id](types::evse_manager::Limits limits) {
-            double max_current = limits.max_current;
-            this->charge_point->on_max_current_offered(evse_id, max_current);
+        evse->subscribe_enforced_limits([this, evse_id](types::energy::EnforcedLimits limits) {
+            if (limits.limits_root_side.total_power_W.has_value()) {
+                int32_t max_power = std::floor(limits.limits_root_side.total_power_W->value);
+                this->charge_point->on_max_power_offered(evse_id, max_power);
+            }
+            if (limits.limits_root_side.ac_max_current_A.has_value()) {
+                int32_t max_current = std::floor(limits.limits_root_side.ac_max_current_A->value);
+                this->charge_point->on_max_current_offered(evse_id, max_current);
+            }
         });
 
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
@@ -355,6 +370,52 @@ void OCPP::init_evse_maps() {
     }
 }
 
+void OCPP::init_module_configuration() {
+    std::vector<ocpp::CiString<50>> keys;
+    ocpp::v16::GetConfigurationRequest req;
+    keys.push_back(CONNECTION_TIMEOUT_CONFIG_KEY);
+    keys.push_back(ISO15118_PNC_ENABLED_CONFIG_KEY);
+    keys.push_back(CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY);
+    req.key = keys;
+    const auto res = this->charge_point->get_configuration_key(req);
+
+    if (!res.configurationKey.has_value()) {
+        return;
+    }
+
+    for (const auto kv : res.configurationKey.value()) {
+        this->handle_config_key(kv);
+    }
+}
+
+void OCPP::handle_config_key(const ocpp::v16::KeyValue& kv) {
+    if (!kv.value.has_value()) {
+        return;
+    }
+
+    const auto set_pnc_config = [this](const types::evse_manager::PlugAndChargeConfiguration& pnc_config) {
+        for (const auto& evse_manager : this->r_evse_manager) {
+            evse_manager->call_set_plug_and_charge_configuration(pnc_config);
+        }
+    };
+
+    if (kv.key == CONNECTION_TIMEOUT_CONFIG_KEY and kv.value.has_value()) {
+        try {
+            this->r_auth->call_set_connection_timeout(std::stoi(kv.value.value().get()));
+        } catch (...) {
+            EVLOG_warning << "Could not set ConnectionTimeout";
+        }
+    } else if (kv.key == ISO15118_PNC_ENABLED_CONFIG_KEY and kv.value.has_value()) {
+        types::evse_manager::PlugAndChargeConfiguration pnc_config;
+        pnc_config.pnc_enabled = ocpp::conversions::string_to_bool(kv.value.value());
+        set_pnc_config(pnc_config);
+    } else if (kv.key == CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY and kv.value.has_value()) {
+        types::evse_manager::PlugAndChargeConfiguration pnc_config;
+        pnc_config.central_contract_validation_allowed = ocpp::conversions::string_to_bool(kv.value.value());
+        set_pnc_config(pnc_config);
+    }
+}
+
 bool OCPP::all_evse_ready() {
     for (auto const& [evse, ready] : this->evse_ready_map) {
         if (!ready) {
@@ -382,10 +443,12 @@ void OCPP::init() {
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
 
+    source_ext_limit = info.id + "/OCPP_set_external_limits";
+
     // ensure all evse_energy_sink(s) that are connected have an evse id mapping
     for (const auto& evse_sink : this->r_evse_energy_sink) {
         if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+            EVLOG_critical << "Please configure an evse mapping in your configuration file for the connected "
                               "r_evse_energy_sink with module_id: "
                            << evse_sink->module_id;
             throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
@@ -518,25 +581,22 @@ void OCPP::ready() {
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_pause_charging();
-        } else {
-            return false;
         }
+        return false;
     });
     this->charge_point->register_resume_charging_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_resume_charging();
-        } else {
-            return false;
         }
+        return false;
     });
     this->charge_point->register_stop_transaction_callback([this](int32_t connector, ocpp::v16::Reason reason) {
         if (this->connector_evse_index_map.count(connector)) {
             types::evse_manager::StopTransactionRequest req;
             req.reason = conversions::to_everest_stop_transaction_reason(reason);
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_stop_transaction(req);
-        } else {
-            return false;
         }
+        return false;
     });
 
     this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
@@ -546,9 +606,8 @@ void OCPP::ready() {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_force_unlock(1)
                        ? ocpp::v16::UnlockStatus::Unlocked
                        : ocpp::v16::UnlockStatus::NotSupported;
-        } else {
-            return ocpp::v16::UnlockStatus::NotSupported;
         }
+        return ocpp::v16::UnlockStatus::NotSupported;
     });
 
     // int32_t reservation_id, CiString<20> auth_token, DateTime expiry_time,
@@ -586,7 +645,8 @@ void OCPP::ready() {
             upload_logs_request.oldest_timestamp.emplace(msg.startTime.value().to_rfc3339());
         }
         if (msg.retries.has_value()) {
-            upload_logs_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            upload_logs_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -594,7 +654,11 @@ void OCPP::ready() {
         const auto upload_logs_response = this->r_system->call_upload_logs(upload_logs_request);
         ocpp::v16::GetLogResponse response;
         if (upload_logs_response.file_name.has_value()) {
-            response.filename.emplace(ocpp::CiString<255>(upload_logs_response.file_name.value()));
+            // we just truncate here since the upload operation could have already been started by the system module and
+            // we cant do much about it, so best we can do is truncate the filename and rather make sure in the system
+            // module that shorter filenames are used
+            response.filename.emplace(
+                ocpp::CiString<255>(upload_logs_response.file_name.value(), ocpp::StringTooLarge::Truncate));
         }
         response.status = conversions::to_ocpp_log_status_enum_type(upload_logs_response.upload_logs_status);
         return response;
@@ -613,7 +677,8 @@ void OCPP::ready() {
             upload_logs_request.oldest_timestamp.emplace(msg.log.oldestTimestamp.value().to_rfc3339());
         }
         if (msg.retries.has_value()) {
-            upload_logs_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            upload_logs_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -623,7 +688,11 @@ void OCPP::ready() {
 
         ocpp::v16::GetLogResponse response;
         if (upload_logs_response.file_name.has_value()) {
-            response.filename.emplace(ocpp::CiString<255>(upload_logs_response.file_name.value()));
+            // we just truncate here since the upload operation could have already been started by the system module and
+            // we cant do much about it, so best we can do is truncate the filename and rather make sure in the system
+            // module that shorter filenames are used
+            response.filename.emplace(
+                ocpp::CiString<255>(upload_logs_response.file_name.value(), ocpp::StringTooLarge::Truncate));
         }
         response.status = conversions::to_ocpp_log_status_enum_type(upload_logs_response.upload_logs_status);
         return response;
@@ -634,7 +703,8 @@ void OCPP::ready() {
         firmware_update_request.request_id = -1;
         firmware_update_request.retrieve_timestamp.emplace(msg.retrieveDate.to_rfc3339());
         if (msg.retries.has_value()) {
-            firmware_update_request.retries.emplace(msg.retries.value());
+            // As defined in OCPP the initial attempt does not count as a retry hence the + 1
+            firmware_update_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             firmware_update_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -654,7 +724,8 @@ void OCPP::ready() {
             firmware_update_request.install_timestamp.emplace(msg.firmware.installDateTime.value());
         }
         if (msg.retries.has_value()) {
-            firmware_update_request.retries.emplace(msg.retries.value());
+            // We add +1 since as defined in OCPP retries does not include the initial attempt
+            firmware_update_request.retries.emplace(msg.retries.value() + 1);
         }
         if (msg.retryInterval.has_value()) {
             firmware_update_request.retry_interval_s.emplace(msg.retryInterval.value());
@@ -692,9 +763,6 @@ void OCPP::ready() {
             provided_token.prevalidated.emplace(prevalidated);
             this->p_auth_provider->publish_provided_token(provided_token);
         });
-
-    this->charge_point->register_set_connection_timeout_callback(
-        [this](int32_t connection_timeout) { this->r_auth->call_set_connection_timeout(connection_timeout); });
 
     this->charge_point->register_disable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
@@ -778,6 +846,11 @@ void OCPP::ready() {
     });
 
     this->charge_point->register_reset_callback([this](ocpp::v16::ResetType type) {
+        // small delay before stopping the charge point to make sure all responses are received
+        std::this_thread::sleep_for(std::chrono::seconds(this->config.ResetStopDelay));
+        // properly stop charge point before stopping all of the software
+        this->charge_point->stop();
+        // If it is a hard reset we can go ahead and forcibly reset directly
         const auto reset_type = conversions::to_everest_reset_type(type);
         this->r_system->call_reset(reset_type, false);
     });
@@ -800,7 +873,7 @@ void OCPP::ready() {
         });
 
     this->charge_point->register_security_event_callback([this](const std::string& type, const std::string& tech_info) {
-        EVLOG_info << "Security Event in OCPP occured: " << type;
+        EVLOG_info << "Security Event in OCPP occurred: " << type;
         types::ocpp::SecurityEvent event;
         event.type = type;
         event.info = tech_info;
@@ -825,6 +898,18 @@ void OCPP::ready() {
             tevent.session_id = session_id;
             tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+            if (id_tag_info.parentIdTag.has_value()) {
+                types::authorization::ValidationResultUpdate result_update;
+                types::authorization::IdToken id_token;
+                id_token.value = id_tag_info.parentIdTag.value();
+                // Default to RFID auth type for parentIdTag since we have no information about it in ocpp1.6
+                id_token.type = types::authorization::IdTokenType::ISO14443;
+                result_update.validation_result.parent_id_token = id_token;
+                result_update.validation_result.authorization_status =
+                    conversions::to_everest_authorization_status(id_tag_info.status);
+                result_update.connector_id = connector;
+                p_auth_validator->publish_validate_result_update(result_update);
+            }
         });
 
     this->charge_point->register_transaction_stopped_callback(
@@ -852,6 +937,15 @@ void OCPP::ready() {
                 ocpp_conversions::create_session_cost(session_cost, number_of_decimals, {});
             ocpp::v16::DataTransferResponse response;
             this->p_session_cost->publish_session_cost(cost);
+            response.status = ocpp::v16::DataTransferStatus::Accepted;
+            return response;
+        });
+
+    this->charge_point->register_tariff_message_callback(
+        [this](const ocpp::TariffMessage& message) -> ocpp::v16::DataTransferResponse {
+            const types::session_cost::TariffMessage m = ocpp_conversions::to_everest_tariff_message(message);
+            this->p_session_cost->publish_tariff_message(m);
+            ocpp::v16::DataTransferResponse response;
             response.status = ocpp::v16::DataTransferStatus::Accepted;
             return response;
         });
@@ -894,17 +988,39 @@ void OCPP::ready() {
         });
     }
 
+    // We must wait for EVSEs to be marked as ready before initializing ocpp since we will potentially update the
+    // operative status of the connectors
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {
         this->evse_ready_cv.wait(lk);
     }
 
-    const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
-    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
+    this->charge_point->register_generic_configuration_key_changed_callback(
+        [this](const ocpp::v16::KeyValue& key_value) { this->handle_config_key(key_value); });
+
+    this->init_module_configuration();
+
+    // we can now call init(), which initializes the charge points state machine. It reads the connector availability
+    // from the internal database and potentially triggers enable/disable callbacks at the evse.
+    if (this->charge_point->init({}, this->resuming_session_ids)) {
         // signal that we're started
         this->started = true;
         EVLOG_info << "OCPP initialized";
+    }
 
+    // this signals to the evses they can now start their internal state machines
+    // signal to the EVSEs that OCPP is initialized
+    for (const auto& evse : this->r_evse_manager) {
+        evse->call_external_ready_to_start_charging();
+    }
+
+    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
+    // plugged in at startup)
+    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
+    const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
+    // we can now start the OCPP connection
+    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
+        EVLOG_info << "OCPP started";
         // process session event queue
         std::scoped_lock lock(this->session_event_mutex);
         for (auto& [evse_id, evse_event_queue] : this->event_queue) {
@@ -930,11 +1046,6 @@ void OCPP::ready() {
                 evse_event_queue.pop();
             }
         }
-    }
-
-    // signal to the EVSEs that OCPP is initialized
-    for (const auto& evse : this->r_evse_manager) {
-        evse->call_external_ready_to_start_charging();
     }
 }
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Pionix GmbH and Contributors to EVerest
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ocpp.v16.enums import GetCompositeScheduleStatus
 from ocpp.v16.datatypes import *
@@ -16,11 +16,11 @@ def comb_req1_test1():
             stack_level=0,
             charging_profile_purpose=ChargingProfilePurposeType.charge_point_max_profile,
             charging_profile_kind=ChargingProfileKindType.absolute,
-            valid_from=datetime.utcnow().isoformat(),
-            valid_to=(datetime.utcnow() + timedelta(days=3)).isoformat(),
+            valid_from=datetime.now(timezone.utc).isoformat(),
+            valid_to=(datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
             charging_schedule=ChargingSchedule(
                 duration=200,
-                start_schedule=datetime.utcnow().isoformat(),
+                start_schedule=datetime.now(timezone.utc).isoformat(),
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
                     ChargingSchedulePeriod(start_period=0, limit=10),  # 6900
@@ -44,11 +44,11 @@ def comb_req2_test1():
             stack_level=0,
             charging_profile_purpose=ChargingProfilePurposeType.tx_default_profile,
             charging_profile_kind=ChargingProfileKindType.absolute,
-            valid_from=datetime.utcnow().isoformat(),
-            valid_to=(datetime.utcnow() + timedelta(days=3)).isoformat(),
+            valid_from=datetime.now(timezone.utc).isoformat(),
+            valid_to=(datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
             charging_schedule=ChargingSchedule(
                 duration=300,
-                start_schedule=datetime.utcnow().isoformat(),
+                start_schedule=datetime.now(timezone.utc).isoformat(),
                 charging_rate_unit=ChargingRateUnitType.watts,
                 charging_schedule_period=[
                     ChargingSchedulePeriod(
@@ -69,11 +69,11 @@ def comb_req2_test1():
 def comb_exp1_test1():
     return call_result.GetCompositeSchedulePayload(
         status=GetCompositeScheduleStatus.accepted,
-        schedule_start=datetime.utcnow().isoformat(),
+        schedule_start=datetime.now(timezone.utc).isoformat(),
         connector_id=1,
         charging_schedule=ChargingSchedule(
             duration=400,
-            start_schedule=datetime.utcnow().isoformat(),
+            start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.watts,
             charging_schedule_period=[
                 ChargingSchedulePeriod(start_period=0, limit=6900, number_phases=3),
@@ -92,11 +92,11 @@ def comb_exp1_test1():
 def comb_exp2_test1():
     return call_result.GetCompositeSchedulePayload(
         status=GetCompositeScheduleStatus.accepted,
-        schedule_start=datetime.utcnow().isoformat(),
+        schedule_start=datetime.now(timezone.utc).isoformat(),
         connector_id=1,
         charging_schedule=ChargingSchedule(
             duration=400,
-            start_schedule=datetime.utcnow().isoformat(),
+            start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
                 ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
@@ -121,7 +121,7 @@ def comb_req1_test2():
             charging_profile_purpose=ChargingProfilePurposeType.charge_point_max_profile,
             charging_profile_kind=ChargingProfileKindType.absolute,
             charging_schedule=ChargingSchedule(
-                start_schedule=datetime.utcnow().isoformat(),
+                start_schedule=datetime.now(timezone.utc).isoformat(),
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
                     ChargingSchedulePeriod(start_period=0, limit=10),
@@ -136,14 +136,14 @@ def comb_req1_test2():
 def comb_exp_test2():
     return call_result.GetCompositeSchedulePayload(
         status=GetCompositeScheduleStatus.accepted,
-        schedule_start=datetime.utcnow().isoformat(),
+        schedule_start=datetime.now(timezone.utc).isoformat(),
         connector_id=0,
         charging_schedule=ChargingSchedule(
             duration=400,
-            start_schedule=datetime.utcnow().isoformat(),
+            start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
+                ChargingSchedulePeriod(start_period=0, limit=10),
                 ChargingSchedulePeriod(start_period=80, limit=20, number_phases=2),
                 ChargingSchedulePeriod(start_period=160, limit=20, number_phases=3),
             ],

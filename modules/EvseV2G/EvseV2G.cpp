@@ -3,11 +3,11 @@
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "EvseV2G.hpp"
 #include "connection/connection.hpp"
+#include "connection/tls_connection.hpp"
 #include "log.hpp"
 #include "sdp.hpp"
 #include <everest/logging.hpp>
 
-#ifndef EVEREST_MBED_TLS
 #include <csignal>
 #include <openssl_util.hpp>
 namespace {
@@ -29,7 +29,6 @@ void log_handler(openssl::log_level_t level, const std::string& str) {
     }
 }
 } // namespace
-#endif // EVEREST_MBED_TLS
 
 struct v2g_context* v2g_ctx = nullptr;
 
@@ -42,11 +41,30 @@ void EvseV2G::init() {
     if (v2g_ctx == nullptr)
         return;
 
-#ifndef EVEREST_MBED_TLS
     (void)openssl::set_log_handler(log_handler);
     tls::Server::configure_signal_handler(SIGUSR1);
     v2g_ctx->tls_server = &tls_server;
-#endif // EVEREST_MBED_TLS
+
+    this->r_security->subscribe_certificate_store_update(
+        [this](const types::evse_security::CertificateStoreUpdate& update) {
+            if (!update.leaf_certificate_type.has_value()) {
+                return;
+            }
+
+            if (update.leaf_certificate_type.value() != types::evse_security::LeafCertificateType::V2G) {
+                return;
+            }
+
+            dlog(DLOG_LEVEL_INFO, "Certificate store update received, reconfiguring TLS server");
+            auto config = std::make_unique<tls::Server::config_t>();
+            if (build_config(*config, v2g_ctx)) {
+                dlog(DLOG_LEVEL_INFO, "Configuration of TLS server successful, updating it");
+                v2g_ctx->tls_server->update(*config);
+            } else {
+                dlog(DLOG_LEVEL_INFO, "Configuration of TLS server failed, suspending it");
+                v2g_ctx->tls_server->suspend();
+            }
+        });
 
     invoke_init(*p_charger);
     invoke_init(*p_extensions);

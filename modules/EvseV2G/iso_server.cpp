@@ -15,18 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef EVEREST_MBED_TLS
-#include "crypto/crypto_mbedtls.hpp"
-using namespace crypto::mbedtls;
-#include <mbedtls/base64.h>
-#include <mbedtls/error.h>
-#include <mbedtls/oid.h> /* To extract the emaid */
-#include <mbedtls/sha256.h>
-#else
 #include "crypto/crypto_openssl.hpp"
 using namespace openssl;
 using namespace crypto::openssl;
-#endif // EVEREST_MBED_TLS
 
 #include "iso_server.hpp"
 #include "log.hpp"
@@ -186,7 +177,7 @@ static void check_iso2_charging_profile_values(iso2_PowerDeliveryReqType* req, i
                              req->ChargingProfile.ProfileEntry.array[ev_idx].ChargingProfileEntryMaxPower.Multiplier)) >
                         (evse_p_max_schedule->PMaxScheduleEntry.array[evse_idx].PMax.Value *
                          pow(10, evse_p_max_schedule->PMaxScheduleEntry.array[evse_idx].PMax.Multiplier))) {
-                        // res->ResponseCode = iso2_responseCodeType_FAILED_ChargingProfileInvalid; // [V2G2-224]
+                        res->ResponseCode = iso2_responseCodeType_FAILED_ChargingProfileInvalid; // [V2G2-224]
                         // [V2G2-225] [V2G2-478]
                         //  setting response code is commented because some EVs do not support schedules correctly
                         dlog(DLOG_LEVEL_WARNING,
@@ -281,9 +272,16 @@ static void publish_iso_authorization_req(struct iso2_AuthorizationReqType const
 static void publish_iso_charge_parameter_discovery_req(
     struct v2g_context* ctx,
     struct iso2_ChargeParameterDiscoveryReqType const* const v2g_charge_parameter_discovery_req) {
+    // Charging needs for OCPP
+    types::iso15118::ChargingNeeds charging_needs;
+
     // V2G values that can be published: DC_EVChargeParameter, MaxEntriesSAScheduleTuple
-    ctx->p_charger->publish_requested_energy_transfer_mode(static_cast<types::iso15118::EnergyTransferMode>(
-        v2g_charge_parameter_discovery_req->RequestedEnergyTransferMode));
+    const auto transfer_mode = static_cast<types::iso15118::EnergyTransferMode>(
+        v2g_charge_parameter_discovery_req->RequestedEnergyTransferMode);
+
+    charging_needs.requested_energy_transfer = transfer_mode;
+
+    ctx->p_charger->publish_requested_energy_transfer_mode(transfer_mode);
     if (v2g_charge_parameter_discovery_req->AC_EVChargeParameter_isUsed == (unsigned int)1) {
         if (v2g_charge_parameter_discovery_req->AC_EVChargeParameter.DepartureTime_isUsed == (unsigned int)1) {
             const char* format = "%Y-%m-%dT%H:%M:%SZ";
@@ -294,18 +292,34 @@ static void publish_iso_charge_parameter_discovery_req(
             std::strftime(buffer, sizeof(buffer), format, std::gmtime(&departure_time));
             ctx->p_charger->publish_departure_time(buffer);
         }
-        ctx->p_charger->publish_ac_eamount(
+
+        // TODO(ioan): calc physical once
+        float ac_eamount =
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Multiplier));
-        ctx->p_charger->publish_ac_ev_max_voltage(
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Multiplier);
+        float ac_ev_max_voltage =
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Multiplier));
-        ctx->p_charger->publish_ac_ev_max_current(
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Multiplier);
+        float ac_ev_max_current =
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Multiplier));
-        ctx->p_charger->publish_ac_ev_min_current(
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Multiplier);
+        float ac_ev_min_current =
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Value,
-                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Multiplier));
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Multiplier);
+
+        ctx->p_charger->publish_ac_eamount(ac_eamount);
+        ctx->p_charger->publish_ac_ev_max_voltage(ac_ev_max_voltage);
+        ctx->p_charger->publish_ac_ev_max_current(ac_ev_max_current);
+        ctx->p_charger->publish_ac_ev_min_current(ac_ev_min_current);
+
+        auto& ac_charging_parameters = charging_needs.ac_charging_parameters.emplace();
+
+        // We do not require to calc a min/max here
+        ac_charging_parameters.energy_amount = ac_eamount;
+        ac_charging_parameters.ev_max_voltage = ac_ev_max_voltage;
+        ac_charging_parameters.ev_max_current = ac_ev_max_current;
+        ac_charging_parameters.ev_min_current = ac_ev_min_current;
+
     } else if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter_isUsed == (unsigned int)1) {
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DepartureTime_isUsed == (unsigned int)1) {
             const char* format = "%Y-%m-%dT%H:%M:%SZ";
@@ -317,21 +331,34 @@ static void publish_iso_charge_parameter_discovery_req(
             ctx->p_charger->publish_departure_time(buffer);
         }
 
+        auto& dc_charging_parameters = charging_needs.dc_charging_parameters.emplace();
+
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity_isUsed == (unsigned int)1) {
             ctx->p_charger->publish_dc_ev_energy_capacity(calc_physical_value(
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Value,
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Multiplier));
+
+            dc_charging_parameters.ev_energy_capacity = calc_physical_value(
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Value,
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Multiplier);
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest_isUsed == (unsigned int)1) {
             ctx->p_charger->publish_dc_ev_energy_request(calc_physical_value(
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Value,
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Multiplier));
+
+            // OCPP2.1 Spec: Relates to: ISO 15118-2: DC_EVChargeParameterType: EVEnergyRequest
+            dc_charging_parameters.energy_amount = calc_physical_value(
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Value,
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Multiplier);
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC_isUsed == (unsigned int)1) {
             ctx->p_charger->publish_dc_full_soc(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC);
+            dc_charging_parameters.full_soc = v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC;
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC_isUsed == (unsigned int)1) {
             ctx->p_charger->publish_dc_bulk_soc(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC);
+            dc_charging_parameters.bulk_soc = v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC;
         }
         float evMaximumCurrentLimit = calc_physical_value(
             v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value,
@@ -347,7 +374,17 @@ static void publish_iso_charge_parameter_discovery_req(
             v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed, evMaximumVoltageLimit,
             (unsigned int)1);
         publish_DcEvStatus(ctx, v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus);
+
+        dc_charging_parameters.ev_max_current = evMaximumCurrentLimit;
+        dc_charging_parameters.ev_max_power = evMaximumPowerLimit;
+        dc_charging_parameters.ev_max_voltage = evMaximumVoltageLimit;
+
+        dc_charging_parameters.state_of_charge =
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus.EVRESSSOC;
     }
+
+    // Publish charging needs
+    ctx->p_extensions->publish_charging_needs(charging_needs);
 }
 
 /*!
@@ -458,28 +495,6 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
     bool rv = true;
     types::iso15118::RequestExiStreamSchema certificate_request;
 
-#ifdef EVEREST_MBED_TLS
-    /* Parse contract leaf certificate */
-    unsigned char* base64Buffer = NULL;
-    size_t olen;
-    mbedtls_base64_encode(NULL, 0, &olen, static_cast<unsigned char*>(AExiBuffer), AExiBufferSize);
-
-    if (MQTT_MAX_PAYLOAD_SIZE < olen) {
-        rv = false;
-        dlog(DLOG_LEVEL_ERROR, "Mqtt payload size exceeded!");
-        goto exit;
-    }
-    base64Buffer = static_cast<unsigned char*>(malloc(olen));
-
-    if ((NULL == base64Buffer) ||
-        (mbedtls_base64_encode(base64Buffer, olen, &olen, static_cast<unsigned char*>(AExiBuffer), AExiBufferSize) !=
-         0)) {
-        rv = false;
-        dlog(DLOG_LEVEL_ERROR, "Unable to encode contract leaf certificate");
-        goto exit;
-    }
-    certificate_request.exi_request = std::string(reinterpret_cast<const char*>(base64Buffer), olen);
-#else
     certificate_request.exi_request = openssl::base64_encode(AExiBuffer, AExiBufferSize);
     if (certificate_request.exi_request.size() > MQTT_MAX_PAYLOAD_SIZE) {
         dlog(DLOG_LEVEL_ERROR, "Mqtt payload size exceeded!");
@@ -489,17 +504,10 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
         dlog(DLOG_LEVEL_ERROR, "Unable to encode contract leaf certificate");
         return false;
     }
-#endif // EVEREST_MBED_TLS
 
     certificate_request.iso15118_schema_version = ISO_15118_2013_MSG_DEF;
     certificate_request.certificate_action = types::iso15118::CertificateActionEnum::Install;
     ctx->p_extensions->publish_iso15118_certificate_request(certificate_request);
-
-#ifdef EVEREST_MBED_TLS
-exit:
-    if (base64Buffer != NULL)
-        free(base64Buffer);
-#endif // EVEREST_MBED_TLS
 
     return rv;
 }
@@ -531,9 +539,6 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     conn->ctx->p_charger->publish_evcc_id(buffer); // publish EVCC ID
 
     dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", std::string(buffer).size() ? buffer : "(zero length provided)");
-
-    /* un-arm a potentially communication setup timeout */
-    stop_timer(&conn->ctx->com_setup_timeout, "session_setup: V2G_COMMUNICATION_SETUP_TIMER", conn->ctx);
 
     /* [V2G2-756]: If the SECC receives a SessionSetupReq including a SessionID value which is not
      * equal to zero (0) and not equal to the SessionID value stored from the preceding V2G
@@ -851,13 +856,8 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
 
         // Parse contract leaf certificate
 
-#ifdef EVEREST_MBED_TLS
-        Certificate_ptr contract_crt;
-        const void* chain{nullptr};
-#else
         certificate_ptr contract_crt{nullptr, nullptr};
         certificate_list chain{};
-#endif // EVEREST_MBED_TLS
 
         if (req->ContractSignatureCertChain.Certificate.bytesLen != 0) {
             err = parse_contract_certificate(contract_crt, req->ContractSignatureCertChain.Certificate.bytes,
@@ -890,16 +890,9 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             goto error_out;
         }
 
-        // Convert the public key in the certificate to a mbed TLS ECDSA public key
-        // This also verifies that it's an ECDSA key and not an RSA key
-
-#ifdef EVEREST_MBED_TLS
-        err = get_public_key(&conn->ctx->session.contract.pubkey, contract_crt.get()->pk);
-#else
         assert(conn->pubkey != nullptr);
         *conn->pubkey = certificate_public_key(contract_crt.get());
         err = (*conn->pubkey == nullptr) ? -1 : 0;
-#endif // EVEREST_MBED_TLS
 
         if (err != 0) {
             memset(res, 0, sizeof(*res));
@@ -910,15 +903,9 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         // Parse contract sub certificates
         if (req->ContractSignatureCertChain.SubCertificates_isUsed == 1) {
             for (int i = 0; i < req->ContractSignatureCertChain.SubCertificates.Certificate.arrayLen; i++) {
-#ifdef EVEREST_MBED_TLS
-                err = load_certificate(contract_crt,
-                                       req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytes,
-                                       req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytesLen);
-#else
                 err =
                     load_certificate(&chain, req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytes,
                                      req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytesLen);
-#endif // EVEREST_MBED_TLS
                 if (err != 0) {
                     res->ResponseCode = iso2_responseCodeType_FAILED_CertChainError;
                     goto error_out;
@@ -944,6 +931,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                                                               mo_root_cert_path.c_str(), conn->ctx->debugMode);
 
             err = -1;
+            bool forward_contract = false;
             switch (vRes) {
             case crypto::verify_result_t::Verified:
                 err = 0;
@@ -952,10 +940,28 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                 res->ResponseCode = iso2_responseCodeType_FAILED_CertificateExpired;
                 break;
             case crypto::verify_result_t::CertificateRevoked:
-                res->ResponseCode = iso2_responseCodeType_FAILED_CertificateRevoked;
+                // forward to csms if central_contract_validation_allowed is true
+                if (conn->ctx->evse_v2g_data.central_contract_validation_allowed) {
+                    forward_contract = true;
+                } else {
+                    res->ResponseCode = iso2_responseCodeType_FAILED_CertificateRevoked;
+                }
                 break;
             case crypto::verify_result_t::NoCertificateAvailable:
-                res->ResponseCode = iso2_responseCodeType_FAILED_NoCertificateAvailable;
+                // forward to csms if central_contract_validation_allowed is true
+                if (conn->ctx->evse_v2g_data.central_contract_validation_allowed) {
+                    forward_contract = true;
+                } else {
+                    res->ResponseCode = iso2_responseCodeType_FAILED_NoCertificateAvailable;
+                }
+                break;
+            case crypto::verify_result_t::CertificateNotAllowed:
+                // forward to csms if central_contract_validation_allowed is true
+                if (conn->ctx->evse_v2g_data.central_contract_validation_allowed) {
+                    forward_contract = true;
+                } else {
+                    res->ResponseCode = iso2_responseCodeType_FAILED_CertificateNotAllowedAtThisEVSE;
+                }
                 break;
             case crypto::verify_result_t::CertChainError:
             default:
@@ -965,18 +971,25 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
 
             if (err == -1) {
                 dlog(DLOG_LEVEL_ERROR, "Validation of the contract certificate failed!");
-                // EVSETimeStamp and GenChallenge are mandatory, GenChallenge has fixed size
-                res->EVSETimeStamp = time(NULL);
-                memset(res->GenChallenge.bytes, 0, GEN_CHALLENGE_SIZE);
-                res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
-                goto error_out;
+                if (!forward_contract) {
+                    dlog(DLOG_LEVEL_ERROR, "Central contract validation is not allowed.");
+                    // EVSETimeStamp and GenChallenge are mandatory, GenChallenge has fixed size
+                    res->EVSETimeStamp = time(NULL);
+                    memset(res->GenChallenge.bytes, 0, GEN_CHALLENGE_SIZE);
+                    res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
+                    goto error_out;
+                } else {
+                    dlog(DLOG_LEVEL_INFO, "Central contract validation is allowed: Forwarding contract");
+                }
+            } else {
+                dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
+
+                // contract chain ocsp data can only be retrieved if the MO root is present and the chain could be
+                // verified
+                const auto ocsp_response =
+                    conn->ctx->r_security->call_get_mo_ocsp_request_data(contract_cert_chain_pem);
+                iso15118_certificate_hash_data = convert_to_certificate_hash_data_info_vector(ocsp_response);
             }
-
-            dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
-
-            // contract chain ocsp data can only be retrieved if the MO root is present and the chain could be verified
-            const auto ocsp_response = conn->ctx->r_security->call_get_mo_ocsp_request_data(contract_cert_chain_pem);
-            iso15118_certificate_hash_data = convert_to_certificate_hash_data_info_vector(ocsp_response);
         }
 
         generate_random_data(&conn->ctx->session.gen_challenge, GEN_CHALLENGE_SIZE);
@@ -990,7 +1003,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         ProvidedIdToken.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
         ProvidedIdToken.iso15118CertificateHashData = iso15118_certificate_hash_data;
         ProvidedIdToken.certificate = contract_cert_chain_pem;
-        conn->ctx->p_charger->publish_require_auth_pnc(ProvidedIdToken);
+        conn->ctx->session.provided_id_token.emplace(ProvidedIdToken);
 
     } else {
         res->ResponseCode = iso2_responseCodeType_FAILED;
@@ -1051,17 +1064,22 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
         iso2_fragment.AuthorizationReq_isUsed = 1u;
         memcpy(&iso2_fragment.AuthorizationReq, req, sizeof(*req));
 
-#ifdef EVEREST_MBED_TLS
-        const bool bSigRes = check_iso2_signature(&conn->exi_in.iso2EXIDocument->V2G_Message.Header.Signature,
-                                                  conn->ctx->session.contract.pubkey, &iso2_fragment);
-#else
         assert(conn->pubkey != nullptr);
         const bool bSigRes = check_iso2_signature(&conn->exi_in.iso2EXIDocument->V2G_Message.Header.Signature,
                                                   conn->pubkey->get(), &iso2_fragment);
-#endif
 
         if (!bSigRes) {
             res->ResponseCode = iso2_responseCodeType_FAILED_SignatureError;
+            goto error_out;
+        }
+        if (conn->ctx->session.provided_id_token.has_value()) {
+            conn->ctx->p_charger->publish_require_auth_pnc(conn->ctx->session.provided_id_token.value());
+            conn->ctx->session.provided_id_token.reset();
+        } else {
+            // this should never happen, since the contract certificate is set in handle_iso_payment_details in case
+            // contract is selected
+            dlog(DLOG_LEVEL_ERROR, "No contract certificate could be retrieved!");
+            res->ResponseCode = iso2_responseCodeType_FAILED;
             goto error_out;
         }
     }
@@ -1078,7 +1096,11 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
             res->ResponseCode = iso2_responseCodeType_FAILED;
         }
     } else if (conn->ctx->session.authorization_rejected == true) {
-        res->ResponseCode = iso2_responseCodeType_FAILED;
+        if (conn->ctx->session.certificate_status == types::authorization::CertificateStatus::CertificateRevoked) {
+            res->ResponseCode = iso2_responseCodeType_FAILED_CertificateRevoked;
+        } else {
+            res->ResponseCode = iso2_responseCodeType_FAILED;
+        }
     }
 
 error_out:
@@ -1295,6 +1317,11 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         if ((unsigned int)1 == req->AC_EVChargeParameter_isUsed) {
             res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
         }
+        if (req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value < 0 ||
+            req->DC_EVChargeParameter.EVMaximumPowerLimit.Value < 0 ||
+            req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value < 0) {
+            res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
+        }
     }
 
     /* Check the current response code and check if no external error has occurred */
@@ -1309,6 +1336,13 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         conn->ctx->state = (iso2_EVSEProcessingType_Finished == res->EVSEProcessing)
                                ? (int)iso_ac_state_id::WAIT_FOR_POWERDELIVERY
                                : (int)iso_ac_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY;
+    }
+
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEChargeParameter.EVSECurrentRegulationTolerance_isUsed = 0;
+        res->DC_EVSEChargeParameter.EVSEEnergyToBeDelivered_isUsed = 0;
+        res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+        res->SAScheduleList_isUsed = 0;
     }
 
     return next_event;
@@ -1435,6 +1469,16 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
     /* Check EV charging profile values [V2G2-478] */
     check_iso2_charging_profile_values(req, res, conn, sa_schedule_tuple_idx);
 
+    const auto last_v2g_msg = conn->ctx->last_v2g_msg;
+
+    /* abort charging session if EV is ready to charge after current demand phase */
+    if ((req->ChargeProgress == iso2_chargeProgressType_Start and
+         (last_v2g_msg == V2G_CURRENT_DEMAND_MSG or last_v2g_msg == V2G_CHARGING_STATUS_MSG)) or
+        (req->ChargeProgress == iso2_chargeProgressType_Renegotiate and
+         (last_v2g_msg != V2G_CURRENT_DEMAND_MSG and last_v2g_msg != V2G_CHARGING_STATUS_MSG))) {
+        res->ResponseCode = iso2_responseCodeType_FAILED; // (/*[V2G2-812]*/
+    }
+
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
 
@@ -1465,13 +1509,13 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
                                ? (int)iso_dc_state_id::WAIT_FOR_CURRENTDEMAND
                                : (int)iso_ac_state_id::WAIT_FOR_CHARGINGSTATUS; // [V2G-590], [V2G2-576]
     } else {
-        /* abort charging session if EV is ready to charge after current demand phase */
-        if (req->ChargeProgress != iso2_chargeProgressType_Stop) {
-            res->ResponseCode = iso2_responseCodeType_FAILED; // (/*[V2G2-812]*/
-        }
         conn->ctx->state = (conn->ctx->is_dc_charger == true)
                                ? (int)iso_dc_state_id::WAIT_FOR_WELDINGDETECTION_SESSIONSTOP
                                : (int)iso_ac_state_id::WAIT_FOR_SESSIONSTOP; // [V2G-601], [V2G2-568]
+    }
+
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
     }
 
     return next_event;
@@ -1632,7 +1676,7 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
         if (rv == EINTR)
             rv = 0; /* restart */
         if (rv == ETIMEDOUT) {
-            dlog(DLOG_LEVEL_ERROR, "CertificateInstallationRes timeout occured");
+            dlog(DLOG_LEVEL_ERROR, "CertificateInstallationRes timeout occurred");
             conn->ctx->intl_emergency_shutdown = true; // [V2G2-918] Initiating emergency shutdown, response code faild
                                                        // will be set in iso_validate_response_code() function
         }
@@ -1641,19 +1685,6 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
 
     if ((conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.empty() == false) &&
         (conn->ctx->evse_v2g_data.cert_install_status == true)) {
-#ifdef EVEREST_MBED_TLS
-        size_t buffer_pos = 0;
-        if ((rv = mbedtls_base64_decode(
-                 conn->buffer + V2GTP_HEADER_LENGTH, DEFAULT_BUFFER_SIZE, &buffer_pos,
-                 reinterpret_cast<unsigned char*>(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.data()),
-                 conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.size())) != 0) {
-            char strerr[256];
-            mbedtls_strerror(rv, strerr, 256);
-            dlog(DLOG_LEVEL_ERROR, "Failed to decode base64 stream (-0x%04x) %s", rv, strerr);
-            goto exit;
-        }
-        conn->stream.byte_pos = buffer_pos;
-#else
         const auto data = openssl::base64_decode(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.data(),
                                                  conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.size());
         if (data.empty() || (data.size() > DEFAULT_BUFFER_SIZE)) {
@@ -1663,7 +1694,6 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
             std::memcpy(conn->buffer + V2GTP_HEADER_LENGTH, data.data(), data.size());
             conn->stream.byte_pos = data.size();
         }
-#endif // EVEREST_MBED_TLS
         nextEvent = V2G_EVENT_SEND_RECV_EXI_MSG;
         res->ResponseCode =
             iso2_responseCodeType_OK; // Is irrelevant but must be valid to serve the internal validation
@@ -1730,6 +1760,10 @@ static enum v2g_event handle_iso_cable_check(struct v2g_connection* conn) {
                            ? (int)iso_dc_state_id::WAIT_FOR_PRECHARGE
                            : (int)iso_dc_state_id::WAIT_FOR_CABLECHECK; // [V2G-584], [V2G-621]
 
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+    }
+
     return next_event;
 }
 
@@ -1763,6 +1797,10 @@ static enum v2g_event handle_iso_pre_charge(struct v2g_connection* conn) {
 
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_PRECHARGE_POWERDELIVERY; // [V2G-587]
+
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+    }
 
     return next_event;
 }
@@ -1901,6 +1939,15 @@ static enum v2g_event handle_iso_current_demand(struct v2g_connection* conn) {
                            ? (int)iso_dc_state_id::WAIT_FOR_METERINGRECEIPT
                            : (int)iso_dc_state_id::WAIT_FOR_CURRENTDEMAND_POWERDELIVERY; // [V2G-795], [V2G-593]
 
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+        res->MeterInfo_isUsed = 0;
+        res->MeterInfo.MeterReading_isUsed = 0;
+        res->EVSEMaximumVoltageLimit_isUsed = 0;
+        res->EVSEMaximumCurrentLimit_isUsed = 0;
+        res->EVSEMaximumPowerLimit_isUsed = 0;
+    }
+
     return next_event;
 }
 
@@ -1936,6 +1983,10 @@ static enum v2g_event handle_iso_welding_detection(struct v2g_connection* conn) 
 
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_WELDINGDETECTION_SESSIONSTOP; // [V2G-597]
+
+    if (res->ResponseCode >= iso2_responseCodeType_FAILED) {
+        res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = 0;
+    }
 
     return next_event;
 }

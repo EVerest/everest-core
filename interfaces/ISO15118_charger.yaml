@@ -52,6 +52,11 @@ cmds:
           The charger supports the certificate installation/update service and has a
           connection to an SA for this purpose
         type: boolean
+      central_contract_validation_allowed:
+        description: >-
+          Indicates if the vehicle contract may be forwarded to and validated by a CSMS in case 
+          local validation was not successful
+        type: boolean
 # Response messages to vars:
   authorization_response:
     description: >-
@@ -107,6 +112,12 @@ cmds:
     arguments:
       stop:
         description: Set to true when to stop, set to false when to continue
+        type: boolean
+  pause_charging:
+    description: Pause the charging process (only in ISO15118-20)
+    arguments:
+      pause:
+        description: Set to true when to pause, set to false when to continue
         type: boolean
 # Update physical values
   update_ac_max_current:

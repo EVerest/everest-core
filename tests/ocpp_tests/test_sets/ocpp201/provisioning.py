@@ -3,7 +3,7 @@
 
 import pytest
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 import traceback
 # fmt: off
@@ -719,7 +719,7 @@ async def test_cold_boot_pending_01(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result201.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatusType.accepted,
         )
@@ -771,7 +771,7 @@ async def test_cold_boot_rejected_01(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result201.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatusType.accepted,
         )
@@ -1232,7 +1232,7 @@ async def test_B04(
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):
         return call_result201.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
+            current_time=datetime.now(timezone.utc).isoformat(),
             interval=3,
             status=RegistrationStatusType.accepted,
         )

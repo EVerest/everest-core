@@ -1,6 +1,8 @@
 {
-  "description": "Tests two external limits for one EVSE",
-  "start_time": "2024-12-17T13:00:00.000Z",
+  "description": "Tests one external limit for one EVSE",
+  "start_times": [
+    "2024-12-17T13:00:00.000Z"
+  ],
   "config": {
     "nominal_ac_voltage": 230.0,
     "update_interval": 1,
@@ -29,13 +31,28 @@
                 "schedule_export": [
                   {
                     "limits_to_leaves": {
-                      "ac_max_current_A": 0.0
+                      "ac_max_current_A": {
+                        "value": 0.0,
+                        "source": "EVSE1_leave"
+                      }
                     },
                     "limits_to_root": {
-                      "ac_max_current_A": 16.0,
-                      "ac_max_phase_count": 3,
-                      "ac_min_current_A": 0.0,
-                      "ac_min_phase_count": 1,
+                      "ac_max_current_A": {
+                        "value": 16.0,
+                        "source": "EVSE1_root"
+                      },
+                      "ac_max_phase_count": {
+                        "value": 3,
+                        "source": "EVSE1_phase"
+                      },
+                      "ac_min_current_A": {
+                        "value": 0.0,
+                        "source": "EVSE1_mincurrent"
+                      },
+                      "ac_min_phase_count": {
+                        "value": 1,
+                        "source": "EVSE1_minphase"
+                      },
                       "ac_number_of_active_phases": 3,
                       "ac_supports_changing_phases_during_charging": true
                     },
@@ -45,19 +62,35 @@
                 "schedule_import": [
                   {
                     "limits_to_leaves": {
-                      "ac_max_current_A": 32.0
+                      "ac_max_current_A": {
+                        "value": 32.0,
+                        "source": "EVSE1_leave"
+                      }
                     },
                     "limits_to_root": {
-                      "ac_max_current_A": 32.0,
-                      "ac_max_phase_count": 3,
-                      "ac_min_current_A": 6.0,
-                      "ac_min_phase_count": 1,
+                      "ac_max_current_A": {
+                        "value": 32.0,
+                        "source": "EVSE1_root"
+                      },
+                      "ac_max_phase_count": {
+                        "value": 3,
+                        "source": "EVSE1_phase"
+                      },
+                      "ac_min_current_A": {
+                        "value": 6.0,
+                        "source": "EVSE1_mincurrent"
+                      },
+                      "ac_min_phase_count": {
+                        "value": 1,
+                        "source": "EVSE1_minphase"
+                      },
                       "ac_number_of_active_phases": 3,
                       "ac_supports_changing_phases_during_charging": true
                     },
                     "timestamp": "2024-12-17T13:08:36.479Z"
                   }
                 ],
+                "schedule_setpoints": [],
                 "uuid": "evse1"
               }
             ],
@@ -65,11 +98,20 @@
             "schedule_export": [
               {
                 "limits_to_leaves": {
-                  "ac_max_current_A": 0.0
+                  "ac_max_current_A": {
+                    "value": 16.0,
+                    "source": "external_limit_1_leave"
+                  }
                 },
                 "limits_to_root": {
-                  "ac_max_current_A": 16.0,
-                  "ac_max_phase_count": 3
+                  "ac_max_current_A": {
+                    "value": 16.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
                 },
                 "timestamp": "2024-12-17T13:08:36.479Z"
               }
@@ -77,15 +119,25 @@
             "schedule_import": [
               {
                 "limits_to_leaves": {
-                  "ac_max_current_A": 14.0
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_leave"
+                  }
                 },
                 "limits_to_root": {
-                  "ac_max_current_A": 18.0,
-                  "ac_max_phase_count": 3
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
                 },
                 "timestamp": "2024-12-17T13:08:36.479Z"
               }
             ],
+            "schedule_setpoints": [],
             "uuid": "external_limit_1"
           }
         ],
@@ -93,11 +145,20 @@
         "schedule_export": [
           {
             "limits_to_leaves": {
-              "ac_max_current_A": 0.0
+              "ac_max_current_A": {
+                "value": 16.0,
+                "source": "external_limit_2_leave"
+              }
             },
             "limits_to_root": {
-              "ac_max_current_A": 16.0,
-              "ac_max_phase_count": 3
+              "ac_max_current_A": {
+                "value": 16.0,
+                "source": "external_limit_2_root"
+              },
+              "ac_max_phase_count": {
+                "value": 3,
+                "source": "external_limit_2_phase"
+              }
             },
             "timestamp": "2024-12-17T13:08:36.479Z"
           }
@@ -105,27 +166,46 @@
         "schedule_import": [
           {
             "limits_to_leaves": {
-              "ac_max_current_A": 18.0
+              "ac_max_current_A": {
+                "value": 31.0,
+                "source": "external_limit_2_leave"
+              }
             },
             "limits_to_root": {
-              "ac_max_current_A": 18.0,
-              "ac_max_phase_count": 3
+              "ac_max_current_A": {
+                "value": 32.0,
+                "source": "external_limit_2_root"
+              },
+              "ac_max_phase_count": {
+                "value": 3,
+                "source": "external_limit_2_phase"
+              }
             },
             "timestamp": "2024-12-17T13:08:36.479Z"
           }
         ],
-        "uuid": "external_limit_2"
+        "schedule_setpoints": [],
+        "uuid": "external_limit_1"
       }
     ],
     "node_type": "Generic",
     "schedule_export": [
       {
         "limits_to_leaves": {
-          "ac_max_current_A": 0.0
+          "ac_max_current_A": {
+            "value": 16.0,
+            "source": "grid_connection_leave"
+          }
         },
         "limits_to_root": {
-          "ac_max_current_A": 16.0,
-          "ac_max_phase_count": 3
+          "ac_max_current_A": {
+            "value": 16.0,
+            "source": "grid_connection_root"
+          },
+          "ac_max_phase_count": {
+            "value": 3,
+            "source": "grid_connection_phase"
+          }
         },
         "timestamp": "2024-12-17T13:08:36.479Z"
       }
@@ -133,41 +213,71 @@
     "schedule_import": [
       {
         "limits_to_leaves": {
-          "ac_max_current_A": 32.0
+          "ac_max_current_A": {
+            "value": 32.0,
+            "source": "grid_connection_leave"
+          }
         },
         "limits_to_root": {
-          "ac_max_current_A": 32.0,
-          "ac_max_phase_count": 3
+          "ac_max_current_A": {
+            "value": 32.0,
+            "source": "grid_connection_root"
+          },
+          "ac_max_phase_count": {
+            "value": 3,
+            "source": "grid_connection_phase"
+          }
         },
         "timestamp": "2024-12-17T13:08:36.479Z"
       }
     ],
+    "schedule_setpoints": [],
     "uuid": "grid_connection"
   },
-  "expected_result": [
-    {
-      "limits_root_side": {
-        "ac_max_current_A": 14.0,
-        "ac_max_phase_count": 3
-      },
-      "schedule": [
-        {
-          "limits_to_root": {
-            "ac_max_current_A": 14.0,
-            "ac_max_phase_count": 3
+  "expected_results": [
+    [
+      {
+        "limits_root_side": {
+          "ac_max_current_A": {
+            "source": "external_limit_2_leave",
+            "value": 31.0
           },
-          "timestamp": "2024-12-17T13:00:00.000Z"
+          "ac_max_phase_count": {
+            "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+            "value": 3
+          }
         },
-        {
-          "limits_to_root": {
-            "ac_max_current_A": 14.0,
-            "ac_max_phase_count": 3
+        "schedule": [
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "external_limit_2_leave",
+                "value": 31.0
+              },
+              "ac_max_phase_count": {
+                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "value": 3
+              }
+            },
+            "timestamp": "2024-12-17T13:00:00.000Z"
           },
-          "timestamp": "2024-12-17T13:08:36.479Z"
-        }
-      ],
-      "uuid": "evse1",
-      "valid_until": "2024-12-17T13:00:10.000Z"
-    }
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "external_limit_2_leave",
+                "value": 31.0
+              },
+              "ac_max_phase_count": {
+                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "value": 3
+              }
+            },
+            "timestamp": "2024-12-17T13:08:36.479Z"
+          }
+        ],
+        "uuid": "evse1",
+        "valid_until": "2024-12-17T13:00:10.000Z"
+      }
+    ]
   ]
 }

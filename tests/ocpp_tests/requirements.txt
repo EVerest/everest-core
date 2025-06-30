@@ -2,7 +2,7 @@ pytest
 ocpp
 python-dateutil
 pytest-asyncio
-paho-mqtt==1.6.1
+paho-mqtt==2.1.0
 pyftpdlib==2.0.1
 websockets==13.1
 pyOpenSSL

@@ -98,6 +98,7 @@ async def _env(
         _add_pm_command_mock(
             evse_manager, "external_ready_to_start_charging", True, skip_implementation
         )
+        _add_pm_command_mock(evse_manager, "set_plug_and_charge_configuration", True, skip_implementation)
     _add_pm_command_mock(
         "security", "get_leaf_expiry_days_count", 42, skip_implementation
     )
@@ -160,6 +161,7 @@ async def _env(
         skip_implementation,
     )
     _add_pm_command_mock("auth", "set_connection_timeout", None, skip_implementation)
+    _add_pm_command_mock("auth", "withdraw_authorization", "Accepted", skip_implementation)
     _add_pm_command_mock("auth", "set_master_pass_group_id", None, skip_implementation)
     _add_pm_command_mock(
         "reservation", "cancel_reservation", "Accepted", skip_implementation
@@ -270,9 +272,34 @@ class TestOCPP16GenericInterfaceIntegration:
                 type="SecurityLogWasCleared",
             ),
         )
+
+        string_too_long = "WAYTOOLONG"*255
+        res = await _env.probe_module.call_command(
+            "ocpp",
+            "security_event",
+            {
+                "event": {
+                    "type": string_too_long,
+                    "info": string_too_long,
+                    "critical": True,
+                    "timestamp": "2024-01-01T12:00:00",
+                }
+            },
+        )
+        await wait_for_mock_called(
+            _env.csms_mock.on_security_event_notification,
+            mock_call(
+                # truncated to 255 characters
+                tech_info=string_too_long[0:255],
+                timestamp=ANY,
+                # truncated to 50 characters
+                type=string_too_long[0:50],
+            ),
+        )
+
         assert (
-            len(_env.csms_mock.on_security_event_notification.mock_calls) == 2
-        )  # we expect 2 because of the StartupOfTheDevice
+            len(_env.csms_mock.on_security_event_notification.mock_calls) == 3
+        )  # we expect 3 because of the StartupOfTheDevice, SecurityLogWasCleared, StringTooLong
 
     @pytest.mark.ocpp_config_adaptions(
         GenericOCPP16ConfigAdjustment(
@@ -529,8 +556,7 @@ class TestOCPP16GenericInterfaceIntegration:
                             "charging_rate_unit": "A",
                             "charging_schedule_period": [
                                 {
-                                    "limit": 48,
-                                    "number_phases": 3,
+                                    "limit": 64,
                                     "stack_level": 0,
                                     "start_period": 0,
                                 }
@@ -544,7 +570,6 @@ class TestOCPP16GenericInterfaceIntegration:
                             "charging_schedule_period": [
                                 {
                                     "limit": 32,
-                                    "number_phases": 3,
                                     "stack_level": 1,
                                     "start_period": 0,
                                 }
@@ -558,7 +583,6 @@ class TestOCPP16GenericInterfaceIntegration:
                             "charging_schedule_period": [
                                 {
                                     "limit": 32,
-                                    "number_phases": 3,
                                     "stack_level": 1,
                                     "start_period": 0,
                                 }

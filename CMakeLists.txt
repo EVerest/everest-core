@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2025.2.0
+    VERSION 2025.5.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -9,6 +9,10 @@ project(everest-core
 find_package(everest-cmake 0.5
     COMPONENTS bundling
     PATHS ../everest-cmake
+    NO_DEFAULT_PATH
+)
+find_package(everest-cmake 0.5
+    COMPONENTS bundling
 )
 
 if (NOT everest-cmake_FOUND)

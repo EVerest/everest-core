@@ -492,7 +492,13 @@ ocpp::v2::LogStatusEnum to_ocpp_log_status_enum(types::system::UploadLogsStatus 
 ocpp::v2::GetLogResponse to_ocpp_get_log_response(const types::system::UploadLogsResponse& response) {
     ocpp::v2::GetLogResponse _response;
     _response.status = to_ocpp_log_status_enum(response.upload_logs_status);
-    _response.filename = response.file_name;
+
+    if (response.file_name.has_value()) {
+        // we just truncate here since the upload operation could have already been started by the system module and
+        // we cant do much about it, so best we can do is truncate the filename and rather make sure in the system
+        // module that shorter filenames are used
+        _response.filename = ocpp::CiString<255>(response.file_name.value(), ocpp::StringTooLarge::Truncate);
+    }
     return _response;
 }
 
@@ -801,6 +807,68 @@ to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSch
     return _request;
 }
 
+ocpp::v2::EnergyTransferModeEnum to_ocpp_energy_transfer_mode(const types::iso15118::EnergyTransferMode transfer_mode) {
+    switch (transfer_mode) {
+    case types::iso15118::EnergyTransferMode::AC_single_phase_core:
+        return ocpp::v2::EnergyTransferModeEnum::AC_single_phase;
+    case types::iso15118::EnergyTransferMode::AC_two_phase:
+        return ocpp::v2::EnergyTransferModeEnum::AC_two_phase;
+    case types::iso15118::EnergyTransferMode::AC_three_phase_core:
+        return ocpp::v2::EnergyTransferModeEnum::AC_three_phase;
+    case types::iso15118::EnergyTransferMode::DC:
+    case types::iso15118::EnergyTransferMode::DC_core:
+    case types::iso15118::EnergyTransferMode::DC_extended:
+    case types::iso15118::EnergyTransferMode::DC_combo_core:
+    case types::iso15118::EnergyTransferMode::DC_unique:
+        return ocpp::v2::EnergyTransferModeEnum::DC;
+
+    case types::iso15118::EnergyTransferMode::AC_BPT:
+    case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+    case types::iso15118::EnergyTransferMode::AC_DER:
+    case types::iso15118::EnergyTransferMode::DC_BPT:
+    case types::iso15118::EnergyTransferMode::DC_ACDP:
+    case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+    case types::iso15118::EnergyTransferMode::WPT:
+        throw std::out_of_range("Could not convert EnergyTransferModeEnum: OCPP does not know this type");
+    }
+
+    throw std::out_of_range("Could not convert EnergyTransferMode");
+}
+
+ocpp::v2::NotifyEVChargingNeedsRequest
+to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs) {
+    // The evseId is calculated outside of this function in the required OCPP201 module
+    ocpp::v2::NotifyEVChargingNeedsRequest _request;
+    ocpp::v2::ChargingNeeds& _charging_needs = _request.chargingNeeds;
+
+    _charging_needs.requestedEnergyTransfer = to_ocpp_energy_transfer_mode(charging_needs.requested_energy_transfer);
+
+    // TODO(ioan): add v2x params
+    if (charging_needs.ac_charging_parameters.has_value()) {
+        const auto& ac = charging_needs.ac_charging_parameters.value();
+        auto& ac_charging_parameters = _charging_needs.acChargingParameters.emplace();
+
+        ac_charging_parameters.energyAmount = ac.energy_amount;
+        ac_charging_parameters.evMinCurrent = ac.ev_min_current;
+        ac_charging_parameters.evMaxCurrent = ac.ev_max_current;
+        ac_charging_parameters.evMaxVoltage = ac.ev_max_voltage;
+    } else if (charging_needs.dc_charging_parameters.has_value()) {
+        const auto& dc = charging_needs.dc_charging_parameters.value();
+        auto& dc_charging_parameters = _charging_needs.dcChargingParameters.emplace();
+
+        dc_charging_parameters.evMaxCurrent = dc.ev_max_current;
+        dc_charging_parameters.evMaxVoltage = dc.ev_max_voltage;
+        dc_charging_parameters.energyAmount = dc.energy_amount;
+        dc_charging_parameters.evMaxPower = dc.ev_max_power;
+        dc_charging_parameters.stateOfCharge = dc.state_of_charge;
+        dc_charging_parameters.evEnergyCapacity = dc.ev_energy_capacity;
+        dc_charging_parameters.fullSoC = dc.full_soc;
+        dc_charging_parameters.bulkSoC = dc.bulk_soc;
+    }
+
+    return _request;
+}
+
 ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {
     switch (result) {
     case types::reservation::ReservationResult::Accepted:
@@ -928,46 +996,44 @@ types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v2::Da
     return everest_response;
 }
 
-types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::AuthorizeResponse& response) {
+types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::IdTokenInfo& idTokenInfo) {
     types::authorization::ValidationResult validation_result;
 
-    validation_result.authorization_status = to_everest_authorization_status(response.idTokenInfo.status);
-    if (response.idTokenInfo.cacheExpiryDateTime.has_value()) {
-        validation_result.expiry_time.emplace(response.idTokenInfo.cacheExpiryDateTime.value().to_rfc3339());
+    validation_result.authorization_status = to_everest_authorization_status(idTokenInfo.status);
+    if (idTokenInfo.cacheExpiryDateTime.has_value()) {
+        validation_result.expiry_time.emplace(idTokenInfo.cacheExpiryDateTime.value().to_rfc3339());
     }
-    if (response.idTokenInfo.groupIdToken.has_value()) {
-        validation_result.parent_id_token = to_everest_id_token(response.idTokenInfo.groupIdToken.value());
-    }
-
-    if (response.idTokenInfo.personalMessage.has_value()) {
-        validation_result.reason = types::authorization::TokenValidationStatusMessage();
-        validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
-        const types::display_message::MessageContent content =
-            to_everest_message_content(response.idTokenInfo.personalMessage.value());
-        validation_result.reason->messages->push_back(content);
+    if (idTokenInfo.groupIdToken.has_value()) {
+        validation_result.parent_id_token = to_everest_id_token(idTokenInfo.groupIdToken.value());
     }
 
-    if (response.idTokenInfo.customData.has_value() && response.idTokenInfo.customData.value().contains("vendorId") &&
-        response.idTokenInfo.customData.value().at("vendorId").get<std::string>() ==
-            "org.openchargealliance.multilanguage" &&
-        response.idTokenInfo.customData.value().contains("personalMessageExtra")) {
-        if (!validation_result.reason->messages.has_value()) {
-            validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
-        }
+    if (idTokenInfo.personalMessage.has_value()) {
+        const types::text_message::MessageContent content =
+            to_everest_message_content(idTokenInfo.personalMessage.value());
+        validation_result.tariff_messages.push_back(content);
+    }
 
-        const json& multi_language_personal_messages =
-            response.idTokenInfo.customData.value().at("personalMessageExtra");
+    if (idTokenInfo.customData.has_value() && idTokenInfo.customData.value().contains("vendorId") &&
+        idTokenInfo.customData.value().at("vendorId").get<std::string>() == "org.openchargealliance.multilanguage" &&
+        idTokenInfo.customData.value().contains("personalMessageExtra")) {
+        const json& multi_language_personal_messages = idTokenInfo.customData.value().at("personalMessageExtra");
         for (const auto& messages : multi_language_personal_messages.items()) {
-            const types::display_message::MessageContent content = messages.value();
-            validation_result.reason->messages->push_back(content);
+            const types::text_message::MessageContent content = messages.value();
+            validation_result.tariff_messages.push_back(content);
         }
     }
+
+    if (idTokenInfo.evseId.has_value()) {
+        validation_result.evse_ids = idTokenInfo.evseId.value();
+    }
+    return validation_result;
+}
+
+types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::AuthorizeResponse& response) {
+    types::authorization::ValidationResult validation_result = to_everest_validation_result(response.idTokenInfo);
 
     if (response.certificateStatus.has_value()) {
         validation_result.certificate_status.emplace(to_everest_certificate_status(response.certificateStatus.value()));
-    }
-    if (response.idTokenInfo.evseId.has_value()) {
-        validation_result.evse_ids = response.idTokenInfo.evseId.value();
     }
     return validation_result;
 }
@@ -1053,24 +1119,24 @@ to_everest_ocpp_transaction_event(const ocpp::v2::TransactionEventRequest& trans
     return ocpp_transaction_event;
 }
 
-types::display_message::MessageFormat to_everest_message_format(const ocpp::v2::MessageFormatEnum& message_format) {
+types::text_message::MessageFormat to_everest_message_format(const ocpp::v2::MessageFormatEnum& message_format) {
     switch (message_format) {
     case ocpp::v2::MessageFormatEnum::ASCII:
-        return types::display_message::MessageFormat::ASCII;
+        return types::text_message::MessageFormat::ASCII;
     case ocpp::v2::MessageFormatEnum::HTML:
-        return types::display_message::MessageFormat::HTML;
+        return types::text_message::MessageFormat::HTML;
     case ocpp::v2::MessageFormatEnum::URI:
-        return types::display_message::MessageFormat::URI;
+        return types::text_message::MessageFormat::URI;
     case ocpp::v2::MessageFormatEnum::UTF8:
-        return types::display_message::MessageFormat::UTF8;
+        return types::text_message::MessageFormat::UTF8;
     case ocpp::v2::MessageFormatEnum::QRCODE:
-        return types::display_message::MessageFormat::QRCODE;
+        return types::text_message::MessageFormat::QRCODE;
     }
-    throw std::out_of_range("Could not convert ocpp::v2::MessageFormatEnum to types::ocpp::MessageFormat");
+    throw std::out_of_range("Could not convert ocpp::v2::MessageFormatEnum to types::text_message::MessageFormat");
 }
 
-types::display_message::MessageContent to_everest_message_content(const ocpp::v2::MessageContent& message_content) {
-    types::display_message::MessageContent everest_message_content;
+types::text_message::MessageContent to_everest_message_content(const ocpp::v2::MessageContent& message_content) {
+    types::text_message::MessageContent everest_message_content;
     everest_message_content.format = to_everest_message_format(message_content.format);
     everest_message_content.content = message_content.content;
     everest_message_content.language = message_content.language;

@@ -68,6 +68,7 @@ EnergyManagerImpl::EnergyManagerImpl(
     const EnergyManagerConfig& config,
     const std::function<void(const std::vector<types::energy::EnforcedLimits>& limits)>& enforced_limits_callback) :
     config(config), enforced_limits_callback(enforced_limits_callback) {
+    this->energy_flow_request.node_type = types::energy::NodeType::Undefined;
 }
 
 void EnergyManagerImpl::start() {
@@ -207,8 +208,8 @@ std::vector<types::energy::EnforcedLimits> EnergyManagerImpl::run_optimizer(type
 
             optimized_values.push_back(l);
 
-            if (globals.debug && l.limits_root_side.has_value()) {
-                EVLOG_info << "Sending enforced limits (import) to :" << l.uuid << " " << l.limits_root_side.value();
+            if (globals.debug) {
+                EVLOG_info << "Sending enforced limits (import) to :" << l.uuid << " " << l.limits_root_side;
             }
         }
     }

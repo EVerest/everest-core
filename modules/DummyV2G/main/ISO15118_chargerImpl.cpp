@@ -24,7 +24,8 @@ void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::Setup
 }
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
-                                                bool& supported_certificate_service) {
+                                                bool& supported_certificate_service,
+                                                bool& central_contract_validation_allowed) {
     // your code for cmd session_setup goes here
 }
 
@@ -52,6 +53,10 @@ void ISO15118_chargerImpl::handle_receipt_is_required(bool& receipt_required) {
 
 void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     // your code for cmd stop_charging goes here
+}
+
+void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
+    // your code for cmd pause_charging goes here
 }
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {

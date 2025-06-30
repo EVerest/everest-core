@@ -3,6 +3,7 @@
 #ifndef OCPP_V16_CONVERSIONS_HPP
 #define OCPP_V16_CONVERSIONS_HPP
 
+#include <generated/types/display_message.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/iso15118.hpp>
 #include <generated/types/ocpp.hpp>
@@ -17,6 +18,7 @@
 #include <ocpp/v16/messages/LogStatusNotification.hpp>
 #include <ocpp/v16/messages/ReserveNow.hpp>
 #include <ocpp/v16/messages/StopTransaction.hpp>
+#include <ocpp/v16/types.hpp>
 #include <ocpp/v2/messages/DeleteCertificate.hpp>
 #include <ocpp/v2/messages/Get15118EVCertificate.hpp>
 

@@ -4,16 +4,35 @@
 #ifndef _EVSEMANAGER_UTILS_H_
 #define _EVSEMANAGER_UTILS_H_
 
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <everest/staging/helpers/helpers.hpp>
 #include <generated/types/powermeter.hpp>
 
 namespace module {
 namespace utils {
 
-inline std::string generate_session_uuid() {
-    return boost::uuids::to_string(boost::uuids::random_generator()());
+enum class SessionIdType {
+    UUID,
+    UUID_BASE64,
+    SHORT_BASE64
+};
+
+inline SessionIdType get_session_id_type_from_string(const std::string& type) {
+    if (type == "UUID_BASE64") {
+        return SessionIdType::UUID_BASE64;
+    } else if (type == "SHORT_BASE64") {
+        return SessionIdType::SHORT_BASE64;
+    }
+    // Default to UUID if the type is unknown
+    return SessionIdType::UUID;
+}
+
+inline std::string generate_session_id(SessionIdType type = SessionIdType::UUID) {
+    if (type == SessionIdType::SHORT_BASE64) {
+        return everest::staging::helpers::get_base64_id();
+    } else if (type == SessionIdType::UUID_BASE64) {
+        return everest::staging::helpers::get_base64_uuid();
+    }
+    return everest::staging::helpers::get_uuid();
 }
 
 inline types::powermeter::OCMFIdentificationType

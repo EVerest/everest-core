@@ -24,6 +24,11 @@ void Auth::init() {
             t.detach();
         });
     }
+    for (const auto& token_validator : this->r_token_validator) {
+        token_validator->subscribe_validate_result_update([this](ValidationResultUpdate validation_result_update) {
+            this->auth_handler->handle_token_validation_result_update(validation_result_update);
+        });
+    }
 }
 
 void Auth::ready() {
@@ -144,6 +149,10 @@ void Auth::set_connection_timeout(int& connection_timeout) {
 
 void Auth::set_master_pass_group_id(const std::string& master_pass_group_id) {
     this->auth_handler->set_master_pass_group_id(master_pass_group_id);
+}
+
+WithdrawAuthorizationResult Auth::handle_withdraw_authorization(const WithdrawAuthorizationRequest& request) {
+    return this->auth_handler->handle_withdraw_authorization(request);
 }
 
 } // namespace module

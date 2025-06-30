@@ -44,7 +44,7 @@ protected:
                                    types::evse_security::LeafCertificateType& certificate_type) override;
     virtual types::evse_security::CertificateValidationResult
     handle_verify_certificate(std::string& certificate_chain,
-                              types::evse_security::LeafCertificateType& certificate_type) override;
+                              std::vector<types::evse_security::LeafCertificateType>& certificate_types) override;
     virtual types::evse_security::GetInstalledCertificatesResult
     handle_get_installed_certificates(std::vector<types::evse_security::CertificateType>& certificate_types) override;
     virtual types::evse_security::OCSPRequestDataList handle_get_v2g_ocsp_request_data() override;
