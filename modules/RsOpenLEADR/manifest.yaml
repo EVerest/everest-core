@@ -1,0 +1,36 @@
+description: OpenADR 3.0 integration module using openleadr-rs
+config:
+  openadr_vtn_url:
+    description: URL of the OpenADR 3.0 VTN
+    type: string
+  openadr_vtn_client_id:
+    description: Client ID for OAuth authentication to the OpenADR 3.0 VTN
+    type: string
+  openadr_vtn_client_secret:
+    description: Client secret for OAuth authentication to the OpenADR 3.0 VTN
+    type: string
+  openadr_vtn_program_id:
+    description: Id of the OpenADR 3.0 program to retrieve events from
+    type: string
+  openadr_vtn_event_target_type:
+    description: Target type of the OpenADR 3.0 events to retrieve
+    type: string
+  openadr_vtn_event_target_values:
+    description: Target values of the OpenADR 3.0 events to retrieve
+    type: string
+  openadr_vtn_retrieve_schedule:
+    description: Cron style expression for retrieval of OpenADR 3.0 schedules
+    type: string
+    default: "0 0 14 * * *"
+provides:
+  main:
+    description: OpenADR 3.0 integration
+    interface: empty
+requires:
+  limits_iface:
+    interface: external_energy_limits
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Ruben Nijveld
+enable_external_mqtt: false
