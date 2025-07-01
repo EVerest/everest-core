@@ -141,11 +141,13 @@ class TypeParser:
     @classmethod
     def load_type_definition(cls, type_path: Path):
         """Load a type definition from the provided path and check its last modification time."""
-        type_def = helpers.load_validated_type_def(type_path, TypeParser.validators['type'])
+        if type_path not in TypeParser.validated_type_defs:
+            TypeParser.validated_type_defs[type_path] = helpers.load_validated_type_def(
+                type_path, TypeParser.validators['type'])
 
         last_mtime = type_path.stat().st_mtime
 
-        return type_def, last_mtime
+        return TypeParser.validated_type_defs[type_path], last_mtime
 
     @classmethod
     def generate_type_info(cls, type_with_namespace, all_types) -> Tuple:
