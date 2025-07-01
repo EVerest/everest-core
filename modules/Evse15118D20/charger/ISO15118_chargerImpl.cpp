@@ -106,7 +106,8 @@ iso15118::message_20::datatypes::Parameter convert_parameter(const types::iso151
     } else if (parameter.value.finite_string.has_value()) {
         out.value = parameter.value.finite_string.value();
     } else {
-        EVLOG_AND_THROW(Everest::EverestConfigError("Invalid ParameterValue in convert_parameter"));
+        throw std::invalid_argument("Invalid ParameterValue in convert_parameter: " + parameter.name +
+                                    " has no value set");
     }
 
     return out;
@@ -287,12 +288,14 @@ void ISO15118_chargerImpl::init() {
     });
 
     supported_vas_services_per_provider.reserve(mod->r_iso15118_vas.size());
+
     for (size_t i = 0; i < mod->r_iso15118_vas.size(); i++) {
         supported_vas_services_per_provider.emplace_back();
 
         this->mod->r_iso15118_vas[i]->subscribe_offered_vas([this, i](Array array) {
             std::vector<uint16_t> service_ids;
             service_ids.reserve(array.size());
+
             for (const auto& item : array) {
                 if (item.is_number_unsigned()) {
                     service_ids.push_back(item.get<uint16_t>());
@@ -581,8 +584,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
     callbacks.selected_protocol = [this](const std::string& protocol) { publish_selected_protocol(protocol); };
 
     callbacks.selected_vas_services = [this](const dt::VasSelectedServiceList& selected_services) {
-        // key: vas provider index, value: list of selected services
-        std::map<size_t, std::vector<types::iso15118_vas::SelectedService>> converted_selected_services;
+        // Group selected services by VAS provider index
+        std::map<size_t, std::vector<types::iso15118_vas::SelectedService>> services_by_provider;
 
         for (const auto& service : selected_services) {
             const auto provider_index = get_vas_provider_index(service.service_id);
@@ -596,39 +599,38 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             converted_service.service_id = service.service_id;
             converted_service.parameter_set_id = service.parameter_set_id;
 
-            converted_selected_services[provider_index.value()].push_back(converted_service);
+            services_by_provider[*provider_index].push_back(converted_service);
         }
 
-        // notify providers about selected services.
-        // Note: If a provider has no selected services, it will not be called
-        for (const auto& [provider_index, services] : converted_selected_services) {
-            if (this->mod->r_iso15118_vas[provider_index]) {
-                this->mod->r_iso15118_vas[provider_index]->call_selected_services(services);
-            } else {
-                EVLOG_warning << "VAS provider with index " << provider_index
-                              << " is not available, skipping selected services.";
-            }
+        // Notify providers about their selected services
+        for (const auto& [provider_index, services] : services_by_provider) {
+            mod->r_iso15118_vas[provider_index]->call_selected_services(services);
         }
     };
 
     callbacks.get_vas_parameters = [this](uint16_t service_id) -> std::optional<dt::ServiceParameterList> {
-        // Check if the service ID is supported by any of the VAS providers
-        auto provider_index = get_vas_provider_index(service_id);
-        if (!provider_index.has_value()) {
-            // this can only happen if the service ID was removed from the provider after ServiceDiscoveryRes was sent
+        const auto provider_index = get_vas_provider_index(service_id);
+        if (not provider_index.has_value()) {
+            // note: this can only happen if the service ID was removed from the provider after ServiceDiscoveryRes
+            // was sent
             EVLOG_warning << "Service ID " << service_id << " is not supported by any VAS provider";
             return std::nullopt;
         }
 
-        const auto& vas_parameters =
-            this->mod->r_iso15118_vas[provider_index.value()]->call_get_service_parameters(service_id);
+        const auto vas_parameters = mod->r_iso15118_vas[*provider_index]->call_get_service_parameters(service_id);
+
         if (vas_parameters.empty()) {
-            EVLOG_warning << "No parameters found for service ID " << service_id << " in provider #"
-                          << provider_index.value();
+            EVLOG_warning << "No parameters found for service ID " << service_id << " in provider #" << *provider_index;
             return std::nullopt;
         }
 
-        return convert_parameter_set_list(vas_parameters);
+        try {
+            return convert_parameter_set_list(vas_parameters);
+        } catch (const std::exception& e) {
+            EVLOG_error << "Failed to convert VAS parameters for service ID " << service_id << " from provider #"
+                        << *provider_index << ": " << e.what();
+            return std::nullopt;
+        }
     };
 
     return callbacks;
