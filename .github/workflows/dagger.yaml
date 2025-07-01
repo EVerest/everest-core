@@ -1,0 +1,23 @@
+name: Dagger Build, Lint and Test
+on:
+  pull_request: {}
+  push:
+
+jobs:
+    dagger:
+        name: Dagger Build, Lint and Test
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                fetch-depth: 0
+                path: ${{ github.workspace }}/source
+            - name: Setup Dagger
+              uses: dagger/dagger-for-github@v8
+              with:
+                version: latest
+                workdir: ${{ github.workspace }}/source
+                module: .
+                call: |
+                    build-cmake-gcc
