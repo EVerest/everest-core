@@ -14,7 +14,7 @@ jobs:
                 fetch-depth: 0
                 path: ${{ github.workspace }}/source
             - name: Setup Dagger
-              uses: dagger/dagger-for-github@8
+              uses: dagger/dagger-for-github@8.0.0
               with:
                 version: latest
                 workdir: ${{ github.workspace }}/source
