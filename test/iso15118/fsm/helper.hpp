@@ -2,6 +2,7 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <array>
 #include <iostream>
 #include <optional>
 
@@ -21,7 +22,8 @@ using namespace iso15118;
 
 class FsmStateHelper {
 public:
-    FsmStateHelper(const d20::SessionConfig& config, std::optional<d20::PauseContext>& pause_ctx_) :
+    FsmStateHelper(const d20::SessionConfig& config, std::optional<d20::PauseContext>& pause_ctx_,
+                   const session::feedback::Callbacks& callbacks) :
         log(this), ctx(callbacks, log, config, pause_ctx_, active_control_event, msg_exch) {
 
         session::logging::set_session_log_callback([](std::size_t, const session::logging::Event& event) {
@@ -39,22 +41,17 @@ public:
 
     d20::Context& get_context();
 
-    template <typename RequestType>
-    void handle_request(io::v2gtp::PayloadType payload_type, const RequestType& request) {
-        // Note: return value is not used here
-        message_20::serialize_helper(request, output_stream_view);
-
-        msg_exch.set_request(std::make_unique<message_20::Variant>(payload_type, output_stream_view));
+    template <typename RequestType> void handle_request(const RequestType& request) {
+        msg_exch.set_request(std::make_unique<message_20::Variant>(request));
     }
 
 private:
-    uint8_t output_buffer[1024];
-    io::StreamOutputView output_stream_view{output_buffer, sizeof(output_buffer)};
+    std::array<uint8_t, 1024> output_buffer{};
+    io::StreamOutputView output_stream_view{output_buffer.data(), output_buffer.size()};
 
     d20::MessageExchange msg_exch{output_stream_view};
     std::optional<d20::ControlEvent> active_control_event;
 
-    session::feedback::Callbacks callbacks;
     session::SessionLogger log;
 
     d20::Context ctx;

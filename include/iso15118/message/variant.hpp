@@ -20,6 +20,14 @@ class Variant {
 public:
     using CustomDeleter = void (*)(void*);
     Variant(io::v2gtp::PayloadType, const io::StreamInputView&);
+    template <typename MessageType> Variant(const MessageType& in) {
+        static_assert(TypeTrait<MessageType>::type != Type::None, "Unhandled type!");
+
+        data = new MessageType;
+        *static_cast<MessageType*>(data) = in;
+        custom_deleter = [](void* ptr) { delete static_cast<MessageType*>(ptr); };
+        type = message_20::TypeTrait<MessageType>::type;
+    }
     ~Variant();
 
     Type get_type() const;

@@ -28,7 +28,9 @@ SCENARIO("ISO15118-20 state transitions") {
 
     std::optional<d20::PauseContext> pause_ctx{std::nullopt};
 
-    auto state_helper = FsmStateHelper(d20::SessionConfig(evse_setup), pause_ctx);
+    const session::feedback::Callbacks callbacks{};
+
+    auto state_helper = FsmStateHelper(d20::SessionConfig(evse_setup), pause_ctx, callbacks);
     auto ctx = state_helper.get_context();
 
     fsm::v2::FSM<d20::StateBase> fsm{ctx.create_state<d20::state::SupportedAppProtocol>()};
@@ -41,9 +43,17 @@ SCENARIO("ISO15118-20 state transitions") {
     ap.version_number_major = 2;
     ap.version_number_minor = 11;
 
-    state_helper.handle_request(io::v2gtp::PayloadType::SAP, req);
+    state_helper.handle_request(req);
     const auto result = fsm.feed(d20::Event::V2GTP_MESSAGE);
 
     REQUIRE(result.transitioned() == false);
     REQUIRE(fsm.get_current_state_id() == d20::StateID::SupportedAppProtocol);
+
+    const auto response_message = ctx.get_response<message_20::SupportedAppProtocolResponse>();
+    REQUIRE(response_message.has_value());
+
+    const auto& supported_app_res = response_message.value();
+
+    REQUIRE(supported_app_res.response_code ==
+            message_20::SupportedAppProtocolResponse::ResponseCode::Failed_NoNegotiation);
 }

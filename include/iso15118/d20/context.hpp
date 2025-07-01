@@ -2,6 +2,7 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <any>
 #include <memory>
 #include <optional>
 #include <string>
@@ -36,6 +37,19 @@ public:
         response_available = true;
         payload_type = message_20::PayloadTypeTrait<MessageType>::type;
         response_type = message_20::TypeTrait<MessageType>::type;
+        response_message = msg;
+    }
+
+    template <typename Msg> std::optional<Msg> get_response() {
+        static_assert(message_20::TypeTrait<Msg>::type != message_20::Type::None, "Unhandled type!");
+        if (message_20::TypeTrait<Msg>::type != response_type) {
+            return std::nullopt;
+        }
+        try {
+            return std::any_cast<Msg>(response_message);
+        } catch (const std::bad_any_cast& ex) {
+            return std::nullopt;
+        }
     }
 
     std::tuple<bool, size_t, io::v2gtp::PayloadType, message_20::Type> check_and_clear_response();
@@ -50,6 +64,7 @@ private:
     bool response_available{false};
     io::v2gtp::PayloadType payload_type;
     message_20::Type response_type;
+    std::any response_message;
 };
 
 std::unique_ptr<MessageExchange> create_message_exchange(uint8_t* buf, const size_t len);
@@ -72,6 +87,10 @@ public:
 
     template <typename MessageType> void respond(const MessageType& msg) {
         message_exchange.set_response(msg);
+    }
+
+    template <typename Msg> std::optional<Msg> get_response() {
+        return message_exchange.get_response<Msg>();
     }
 
     const auto& get_control_event() {

@@ -29,7 +29,9 @@ SCENARIO("ISO15118-20 session setup state transitions") {
 
     std::optional<d20::PauseContext> pause_ctx{std::nullopt};
 
-    auto state_helper = FsmStateHelper(d20::SessionConfig(evse_setup), pause_ctx);
+    const session::feedback::Callbacks callbacks{};
+
+    auto state_helper = FsmStateHelper(d20::SessionConfig(evse_setup), pause_ctx, callbacks);
     auto ctx = state_helper.get_context();
 
     const auto session_id = std::array<uint8_t, 8>{0x10, 0x34, 0xAB, 0x7A, 0x01, 0xF3, 0x95, 0x02};
@@ -52,14 +54,20 @@ SCENARIO("ISO15118-20 session setup state transitions") {
         const auto header_req = message_20::Header{{0, 0, 0, 0, 0, 0, 0, 0}, 1691411798};
         const auto req = message_20::SessionSetupRequest{header_req, "WMIV1234567890ABCDEX"};
 
-        state_helper.handle_request(io::v2gtp::PayloadType::Part20Main, req);
+        state_helper.handle_request(req);
         const auto result = fsm.feed(d20::Event::V2GTP_MESSAGE);
 
         THEN("Check state transition") {
             REQUIRE(result.transitioned() == true);
             REQUIRE(fsm.get_current_state_id() == d20::StateID::AuthorizationSetup);
             REQUIRE(ctx.session.get_id() != std::array<uint8_t, 8>{0});
-            // Todo Check res -> session_id, response_code
+
+            const auto response_message = ctx.get_response<message_20::SessionSetupResponse>();
+            REQUIRE(response_message.has_value());
+
+            const auto& session_setup_res = response_message.value();
+            REQUIRE(session_setup_res.response_code == dt::ResponseCode::OK_NewSessionEstablished);
+            REQUIRE(session_setup_res.evseid == evse_id);
         }
     }
 
@@ -75,14 +83,20 @@ SCENARIO("ISO15118-20 session setup state transitions") {
         const auto header_req = message_20::Header{session_id, 1691411798};
         const auto req = message_20::SessionSetupRequest{header_req, "WMIV1234567890ABCDEX"};
 
-        state_helper.handle_request(io::v2gtp::PayloadType::Part20Main, req);
+        state_helper.handle_request(req);
         const auto result = fsm.feed(d20::Event::V2GTP_MESSAGE);
 
         THEN("Check state transition") {
             REQUIRE(result.transitioned() == true);
             REQUIRE(fsm.get_current_state_id() == d20::StateID::DC_ChargeParameterDiscovery);
             REQUIRE(ctx.session.get_id() == session_id);
-            // Todo Check res -> session_id, response_code
+
+            const auto response_message = ctx.get_response<message_20::SessionSetupResponse>();
+            REQUIRE(response_message.has_value());
+
+            const auto& session_setup_res = response_message.value();
+            REQUIRE(session_setup_res.response_code == dt::ResponseCode::OK_OldSessionJoined);
+            REQUIRE(session_setup_res.evseid == evse_id);
         }
 
         pause_ctx.reset();
@@ -100,7 +114,7 @@ SCENARIO("ISO15118-20 session setup state transitions") {
         const auto header_req = message_20::Header{{0x10, 0x34, 0xAB, 0x7B, 0x01, 0xF3, 0x95, 0x02}, 1691411798};
         const auto req = message_20::SessionSetupRequest{header_req, "WMIV1234567890ABCDEX"};
 
-        state_helper.handle_request(io::v2gtp::PayloadType::Part20Main, req);
+        state_helper.handle_request(req);
         const auto result = fsm.feed(d20::Event::V2GTP_MESSAGE);
 
         THEN("Check state transition") {
@@ -108,7 +122,13 @@ SCENARIO("ISO15118-20 session setup state transitions") {
             REQUIRE(fsm.get_current_state_id() == d20::StateID::AuthorizationSetup);
             REQUIRE(ctx.session.get_id() != session_id);
             REQUIRE(ctx.session.get_id() != std::array<uint8_t, 8>{0});
-            // Todo Check res -> session_id, response_code
+
+            const auto response_message = ctx.get_response<message_20::SessionSetupResponse>();
+            REQUIRE(response_message.has_value());
+
+            const auto& session_setup_res = response_message.value();
+            REQUIRE(session_setup_res.response_code == dt::ResponseCode::OK_NewSessionEstablished);
+            REQUIRE(session_setup_res.evseid == evse_id);
         }
 
         pause_ctx.reset();
@@ -120,7 +140,7 @@ SCENARIO("ISO15118-20 session setup state transitions") {
         const auto header_req = message_20::Header{session_id, 1691411798};
         const auto req = message_20::SessionSetupRequest{header_req, "WMIV1234567890ABCDEX"};
 
-        state_helper.handle_request(io::v2gtp::PayloadType::Part20Main, req);
+        state_helper.handle_request(req);
         const auto result = fsm.feed(d20::Event::V2GTP_MESSAGE);
 
         THEN("Check state transition") {
@@ -128,7 +148,13 @@ SCENARIO("ISO15118-20 session setup state transitions") {
             REQUIRE(fsm.get_current_state_id() == d20::StateID::AuthorizationSetup);
             REQUIRE(ctx.session.get_id() != session_id);
             REQUIRE(ctx.session.get_id() != std::array<uint8_t, 8>{0});
-            // Todo Check res -> session_id, response_code
+
+            const auto response_message = ctx.get_response<message_20::SessionSetupResponse>();
+            REQUIRE(response_message.has_value());
+
+            const auto& session_setup_res = response_message.value();
+            REQUIRE(session_setup_res.response_code == dt::ResponseCode::OK_NewSessionEstablished);
+            REQUIRE(session_setup_res.evseid == evse_id);
         }
 
         pause_ctx.reset();
@@ -146,7 +172,7 @@ SCENARIO("ISO15118-20 session setup state transitions") {
         const auto header_req = message_20::Header{session_id, 1691411798};
         const auto req = message_20::SessionSetupRequest{header_req, "WMIV1234567890ABCDEX"};
 
-        state_helper.handle_request(io::v2gtp::PayloadType::Part20Main, req);
+        state_helper.handle_request(req);
         const auto result = fsm.feed(d20::Event::V2GTP_MESSAGE);
 
         THEN("Check state transition") {
@@ -154,7 +180,13 @@ SCENARIO("ISO15118-20 session setup state transitions") {
             REQUIRE(fsm.get_current_state_id() == d20::StateID::AuthorizationSetup);
             REQUIRE(ctx.session.get_id() != session_id);
             REQUIRE(ctx.session.get_id() != std::array<uint8_t, 8>{0});
-            // Todo Check res -> session_id, response_code
+
+            const auto response_message = ctx.get_response<message_20::SessionSetupResponse>();
+            REQUIRE(response_message.has_value());
+
+            const auto& session_setup_res = response_message.value();
+            REQUIRE(session_setup_res.response_code == dt::ResponseCode::OK_NewSessionEstablished);
+            REQUIRE(session_setup_res.evseid == evse_id);
         }
 
         pause_ctx.reset();
