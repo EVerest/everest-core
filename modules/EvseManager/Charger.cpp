@@ -998,7 +998,7 @@ void Charger::update_pwm_now(float dc) {
     session_log.evse(
         false,
         fmt::format(
-            "Set PWM On ({}%) took {} ms", dc * 100.,
+            "Set PWM On ({:.1f}%) took {} ms", dc * 100.,
             (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)).count()));
     internal_context.last_pwm_update = std::chrono::steady_clock::now();
     internal_context.pwm_F_active = false;
