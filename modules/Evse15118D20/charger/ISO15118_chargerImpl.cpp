@@ -382,16 +382,17 @@ void ISO15118_chargerImpl::ready() {
 }
 
 void ISO15118_chargerImpl::update_supported_vas_services() {
-    std::set<uint16_t> vas_service_ids;
     iso15118::d20::SupportedVASs supported_vas_services;
 
     for (const auto& provider_services : supported_vas_services_per_provider) {
         for (const auto& service_id : provider_services) {
-            if (vas_service_ids.find(service_id) != vas_service_ids.end()) {
+            // Check for duplicate service IDs across all providers
+            if (std::find(supported_vas_services.begin(), supported_vas_services.end(), service_id) !=
+                supported_vas_services.end()) {
                 EVLOG_AND_THROW(
                     Everest::EverestConfigError("Duplicate VAS service ID found: " + std::to_string(service_id)));
             }
-            vas_service_ids.insert(service_id);
+
             supported_vas_services.push_back(service_id);
         }
     }
