@@ -292,24 +292,21 @@ void ISO15118_chargerImpl::init() {
     for (size_t i = 0; i < mod->r_iso15118_vas.size(); i++) {
         supported_vas_services_per_provider.emplace_back();
 
-        this->mod->r_iso15118_vas[i]->subscribe_offered_vas([this, i](Array array) {
-            std::vector<uint16_t> service_ids;
-            service_ids.reserve(array.size());
+        this->mod->r_iso15118_vas[i]->subscribe_offered_vas(
+            [this, i](types::iso15118_vas::OfferedServices offered_services) {
+                std::vector<uint16_t> service_ids;
 
-            for (const auto& item : array) {
-                if (item.is_number_unsigned()) {
-                    service_ids.push_back(item.get<uint16_t>());
-                } else {
-                    EVLOG_warning << "Invalid service ID in offered VAS: " << item.dump();
+                service_ids.reserve(offered_services.service_ids.size());
+                for (const auto& item : offered_services.service_ids) {
+                    service_ids.push_back(item);
                 }
-            }
 
-            EVLOG_verbose << "Updated Supported VAS services for provider #" << i;
-            supported_vas_services_per_provider[i] = service_ids;
+                EVLOG_verbose << "Updated Supported VAS services for provider #" << i;
+                supported_vas_services_per_provider[i] = service_ids;
 
-            // report to controller if it exists, also check for duplicate service ids
-            update_supported_vas_services();
-        });
+                // report to controller if it exists, also check for duplicate service ids
+                update_supported_vas_services();
+            });
     }
 }
 

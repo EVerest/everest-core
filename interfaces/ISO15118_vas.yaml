@@ -2,10 +2,8 @@ description: Custom VAS provider for ISO 15118
 vars:
   offered_vas:
     description: List of offered VAS Service IDs
-    type: array
-    items:
-      type: integer
-      description: Service ID
+    type: object
+    $ref: /iso15118_vas#/OfferedServices
 cmds:
   get_service_parameters:
     description: >-
