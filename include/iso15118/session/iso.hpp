@@ -21,6 +21,8 @@
 #include <iso15118/session/feedback.hpp>
 #include <iso15118/session/logger.hpp>
 
+#include <iso15118/d20/timeout.hpp>
+
 namespace iso15118 {
 
 struct SessionState {
@@ -65,6 +67,8 @@ private:
     fsm::v2::FSM<d20::StateBase> fsm;
 
     TimePoint next_session_event;
+
+    d20::Timeouts timeouts;
 
     void handle_connection_event(io::ConnectionEvent event);
 };

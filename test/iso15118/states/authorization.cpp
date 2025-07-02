@@ -22,7 +22,7 @@ SCENARIO("Authorization state handling") {
         req.selected_authorization_service = dt::Authorization::EIM;
         req.authorization_mode.emplace<dt::EIM_ASReqAuthorizationMode>();
 
-        const auto res = d20::state::handle_request(req, d20::Session(), AuthStatus::Pending);
+        const auto res = d20::state::handle_request(req, d20::Session(), AuthStatus::Pending, false);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
             REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
@@ -42,7 +42,7 @@ SCENARIO("Authorization state handling") {
         req.selected_authorization_service = dt::Authorization::EIM;
         req.authorization_mode.emplace<dt::EIM_ASReqAuthorizationMode>();
 
-        const auto res = d20::state::handle_request(req, session, AuthStatus::Pending);
+        const auto res = d20::state::handle_request(req, session, AuthStatus::Pending, false);
 
         THEN("ResponseCode: FAILED_UnknownSession, EvseProcessing: Finished") {
             REQUIRE(res.response_code == dt::ResponseCode::WARNING_AuthorizationSelectionInvalid);
@@ -64,7 +64,7 @@ SCENARIO("Authorization state handling") {
         req.selected_authorization_service = dt::Authorization::EIM;
         req.authorization_mode.emplace<dt::EIM_ASReqAuthorizationMode>();
 
-        const auto res = d20::state::handle_request(req, session, AuthStatus::Rejected);
+        const auto res = d20::state::handle_request(req, session, AuthStatus::Rejected, false);
 
         THEN("ResponseCode: WARNING_EIMAuthorizationFailure, EvseProcessing: Finished") {
             REQUIRE(res.response_code == dt::ResponseCode::WARNING_EIMAuthorizationFailure);
@@ -84,7 +84,7 @@ SCENARIO("Authorization state handling") {
         req.selected_authorization_service = dt::Authorization::EIM;
         req.authorization_mode.emplace<dt::EIM_ASReqAuthorizationMode>();
 
-        const auto res = d20::state::handle_request(req, session, AuthStatus::Pending);
+        const auto res = d20::state::handle_request(req, session, AuthStatus::Pending, false);
 
         THEN("ResponseCode: Ok, EvseProcessing: Ongoing") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
@@ -104,13 +104,15 @@ SCENARIO("Authorization state handling") {
         req.selected_authorization_service = dt::Authorization::EIM;
         req.authorization_mode.emplace<dt::EIM_ASReqAuthorizationMode>();
 
-        const auto res = d20::state::handle_request(req, session, AuthStatus::Accepted);
+        const auto res = d20::state::handle_request(req, session, AuthStatus::Accepted, false);
 
         THEN("ResponseCode: Ok, EvseProcessing: Finished") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
             REQUIRE(res.evse_processing == dt::Processing::Finished);
         }
     }
+
+    // GIVEN("Bad Case - Ongoing timeout reached") {}
 
     // PnC test cases
 

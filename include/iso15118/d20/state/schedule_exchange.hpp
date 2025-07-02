@@ -20,6 +20,8 @@ struct ScheduleExchange : public StateBase {
 
 private:
     UpdateDynamicModeParameters dynamic_parameters;
+    bool first_req_msg{true};
+    bool timeout_ongoing_reached{false};
 };
 
 } // namespace iso15118::d20::state

@@ -59,12 +59,17 @@ namespace dt = message_20::datatypes;
 
 message_20::ScheduleExchangeResponse handle_request(const message_20::ScheduleExchangeRequest& req,
                                                     const d20::Session& session, const dt::RationalNumber& max_power,
-                                                    const UpdateDynamicModeParameters& dynamic_parameters) {
+                                                    const UpdateDynamicModeParameters& dynamic_parameters,
+                                                    bool timeout_reached) {
 
     message_20::ScheduleExchangeResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
         return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
+    }
+
+    if (timeout_reached) {
+        return response_with_code(res, dt::ResponseCode::FAILED);
     }
 
     const auto selected_services = session.get_selected_services();
@@ -118,6 +123,14 @@ Result ScheduleExchange::feed(Event ev) {
         return {};
     }
 
+    if (ev == Event::TIMEOUT) {
+        const auto timeout = m_ctx.get_active_timeout();
+        if (timeout and *timeout == d20::TimeoutType::ONGOING) {
+            timeout_ongoing_reached = true;
+        }
+        return {};
+    }
+
     if (ev != Event::V2GTP_MESSAGE) {
         return {};
     }
@@ -125,6 +138,11 @@ Result ScheduleExchange::feed(Event ev) {
     const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::ScheduleExchangeRequest>()) {
+
+        if (first_req_msg) {
+            m_ctx.start_timeout(d20::TimeoutType::ONGOING, TIMEOUT_ONGOING);
+            first_req_msg = false;
+        }
 
         dt::RationalNumber max_charge_power = {0, 0};
 
@@ -156,7 +174,8 @@ Result ScheduleExchange::feed(Event ev) {
             selected_energy_service, ac_connector, selected_services.selected_control_mode,
             selected_services.selected_mobility_needs_mode, evse_limits, ev_limits, control_mode);
 
-        const auto res = handle_request(*req, m_ctx.session, max_charge_power, dynamic_parameters);
+        const auto res =
+            handle_request(*req, m_ctx.session, max_charge_power, dynamic_parameters, timeout_ongoing_reached);
 
         m_ctx.respond(res);
 
@@ -168,6 +187,8 @@ Result ScheduleExchange::feed(Event ev) {
         if (res.processing == dt::Processing::Ongoing) {
             return {};
         }
+
+        m_ctx.stop_timeout(d20::TimeoutType::ONGOING);
 
         return m_ctx.create_state<DC_CableCheck>();
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {

@@ -27,7 +27,8 @@ SCENARIO("Schedule Exchange state handling") {
 
         dt::RationalNumber max_power = {0, 0};
 
-        const auto res = d20::state::handle_request(req, d20::Session(), max_power, d20::UpdateDynamicModeParameters());
+        const auto res =
+            d20::state::handle_request(req, d20::Session(), max_power, d20::UpdateDynamicModeParameters(), false);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
             REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
@@ -55,7 +56,7 @@ SCENARIO("Schedule Exchange state handling") {
 
         dt::RationalNumber max_power = {0, 0};
 
-        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters());
+        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters(), false);
 
         THEN("ResponseCode: FAILED, mandatory fields should be set") {
             REQUIRE(res.response_code == dt::ResponseCode::FAILED);
@@ -83,7 +84,7 @@ SCENARIO("Schedule Exchange state handling") {
 
         dt::RationalNumber max_power = {22, 3};
 
-        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters());
+        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters(), false);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
@@ -116,7 +117,7 @@ SCENARIO("Schedule Exchange state handling") {
 
         dt::RationalNumber max_power = {22, 3};
 
-        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters());
+        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters(), false);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
@@ -141,7 +142,7 @@ SCENARIO("Schedule Exchange state handling") {
 
         dt::RationalNumber max_power = {22, 3};
 
-        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters());
+        const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters(), false);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);

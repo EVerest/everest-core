@@ -125,7 +125,7 @@ Session::Session(std::unique_ptr<io::IConnection> connection_, d20::SessionConfi
                  const session::feedback::Callbacks& callbacks, std::optional<d20::PauseContext>& pause_ctx) :
     connection(std::move(connection_)),
     log(this),
-    ctx(callbacks, log, std::move(session_config), pause_ctx, active_control_event, message_exchange),
+    ctx(callbacks, log, std::move(session_config), pause_ctx, active_control_event, message_exchange, timeouts),
     fsm(ctx.create_state<d20::state::SupportedAppProtocol>()) {
 
     next_session_event = offset_time_point_by_ms(get_current_time_point(), SESSION_IDLE_TIMEOUT_MS);
@@ -166,8 +166,29 @@ TimePoint const& Session::poll() {
             ctx.session_config.supported_energy_transfer_services = *control_data;
         }
 
+        // TODO(sl): Save UpdateDynamicModeParameters, AcTargetPower,
+
         [[maybe_unused]] const auto res = fsm.feed(d20::Event::CONTROL_MESSAGE);
         // FIXME (aw): check result!
+    }
+
+    const auto timeouts_reached = timeouts.check();
+
+    if (timeouts_reached.has_value()) {
+        const auto& reached = timeouts_reached.value();
+
+        for (const auto& timeout : reached) {
+            if (timeout == d20::TimeoutType::SEQUENCE) {
+                logf_error("Sequence Timeout 40secs is reached. Stopping the session");
+                ctx.session_stopped = true;
+                break;
+            } else {
+                ctx.set_active_timeout(timeout);
+
+                [[maybe_unused]] const auto res = fsm.feed(d20::Event::TIMEOUT);
+                timeouts.reset_timeout(timeout);
+            }
+        }
     }
 
     // check for complete sdp packet
@@ -180,6 +201,12 @@ TimePoint const& Session::poll() {
         packet = {}; // reset the packet
 
         const auto request_msg_type = ctx.peek_request_type();
+
+        // There is no sequence timer before SupportedAppProtocol
+        if (request_msg_type != message_20::Type::SupportedAppProtocolReq) {
+            timeouts.stop_timeout(d20::TimeoutType::SEQUENCE);
+        }
+
         ctx.feedback.v2g_message(request_msg_type);
 
         [[maybe_unused]] const auto res = fsm.feed(d20::Event::V2GTP_MESSAGE);
@@ -192,21 +219,25 @@ TimePoint const& Session::poll() {
         const auto response_size = setup_response_header(response_buffer, payload_type, payload_size);
         connection->write(response_buffer, response_size);
 
+        timeouts.start_timeout(d20::TimeoutType::SEQUENCE, d20::TIMEOUT_SEQUENCE);
+
         // FIXME (aw): this is hacky ...
         log.exi(static_cast<uint16_t>(payload_type), response_buffer + io::SdpPacket::V2GTP_HEADER_SIZE, payload_size,
                 session::logging::ExiMessageDirection::TO_EV);
 
         ctx.feedback.v2g_message(response_type);
+    }
 
-        if (ctx.session_stopped or ctx.session_paused) {
-            // Wait for 5 seconds [V2G20-1643]
-            std::this_thread::sleep_for(std::chrono::seconds(5));
-            connection->close();
+    if (ctx.session_stopped or ctx.session_paused) {
+        // TODO(SL): Does this also apply when a timeout is triggered? Or should the TCP/TLS connection be terminated
+        // directly?
+        // Wait for 5 seconds [V2G20-1643]
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        connection->close();
 
-            const auto signal = (ctx.session_paused) ? session::feedback::Signal::DLINK_PAUSE
-                                                     : session::feedback::Signal::DLINK_TERMINATE;
-            ctx.feedback.signal(signal);
-        }
+        const auto signal =
+            (ctx.session_paused) ? session::feedback::Signal::DLINK_PAUSE : session::feedback::Signal::DLINK_TERMINATE;
+        ctx.feedback.signal(signal);
     }
 
     // FIXME (aw): proper timeout handling!

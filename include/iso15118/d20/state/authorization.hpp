@@ -16,6 +16,8 @@ public:
 
 private:
     message_20::datatypes::AuthStatus authorization_status{message_20::datatypes::AuthStatus::Pending};
+    bool first_req_msg{true};
+    bool timeout_ongoing_reached{false};
 };
 
 } // namespace iso15118::d20::state

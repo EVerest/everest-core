@@ -1,3 +1,4 @@
+add_subdirectory(d20)
 add_subdirectory(fsm)
 add_subdirectory(io)
 add_subdirectory(session)

@@ -4,6 +4,7 @@
 
 #include <iso15118/d20/state/authorization.hpp>
 #include <iso15118/d20/state/service_discovery.hpp>
+#include <iso15118/d20/timeout.hpp>
 
 #include <iso15118/detail/d20/context_helper.hpp>
 #include <iso15118/detail/d20/state/authorization.hpp>
@@ -24,12 +25,16 @@ static bool find_auth_service_in_offered_services(const dt::Authorization& req_s
 
 message_20::AuthorizationResponse handle_request(const message_20::AuthorizationRequest& req,
                                                  const d20::Session& session,
-                                                 const dt::AuthStatus& authorization_status) {
+                                                 const dt::AuthStatus& authorization_status, bool timeout_reached) {
 
     message_20::AuthorizationResponse res = message_20::AuthorizationResponse();
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
         return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
+    }
+
+    if (timeout_reached) {
+        return response_with_code(res, dt::ResponseCode::FAILED);
     }
 
     // [V2G20-2209] Check if authorization service was offered in authorization_setup res
@@ -93,6 +98,14 @@ Result Authorization::feed(Event ev) {
         return {};
     }
 
+    if (ev == Event::TIMEOUT) {
+        const auto timeout = m_ctx.get_active_timeout();
+        if (timeout and *timeout == d20::TimeoutType::ONGOING) {
+            timeout_ongoing_reached = true;
+        }
+        return {};
+    }
+
     if (ev != Event::V2GTP_MESSAGE) {
         return {};
     }
@@ -100,7 +113,14 @@ Result Authorization::feed(Event ev) {
     const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::AuthorizationRequest>()) {
-        const auto res = handle_request(*req, m_ctx.session, authorization_status);
+
+        if (first_req_msg) {
+            // TODO(SL): Check if ExternalPayment or Contract is active
+            m_ctx.start_timeout(d20::TimeoutType::ONGOING, TIMEOUT_EIM_ONGOING);
+            first_req_msg = false;
+        }
+
+        const auto res = handle_request(*req, m_ctx.session, authorization_status, timeout_ongoing_reached);
 
         m_ctx.respond(res);
 
@@ -111,6 +131,7 @@ Result Authorization::feed(Event ev) {
 
         if (authorization_status == AuthStatus::Accepted) {
             authorization_status = AuthStatus::Pending; // reset
+            m_ctx.stop_timeout(d20::TimeoutType::ONGOING);
             return m_ctx.create_state<ServiceDiscovery>();
         } else {
             return {};

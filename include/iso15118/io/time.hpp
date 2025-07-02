@@ -28,4 +28,23 @@ inline int32_t get_timeout_ms_until(const TimePoint& until, int32_t max_timeout_
     }
 }
 
+class Timeout {
+public:
+    explicit Timeout(uint32_t timeout_ms) {
+        timeout_point = get_current_time_point() + std::chrono::milliseconds(timeout_ms);
+    };
+    ~Timeout() = default;
+
+    bool is_reached() {
+        return get_current_time_point() >= timeout_point;
+    }
+
+    TimePoint get_timeout_point() const {
+        return timeout_point;
+    }
+
+private:
+    TimePoint timeout_point{};
+};
+
 } // namespace iso15118

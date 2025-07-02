@@ -9,6 +9,7 @@ namespace iso15118::d20::state {
 
 message_20::AuthorizationResponse handle_request(const message_20::AuthorizationRequest& req,
                                                  const d20::Session& session,
-                                                 const message_20::datatypes::AuthStatus& authorization_status);
+                                                 const message_20::datatypes::AuthStatus& authorization_status,
+                                                 bool timeout_reached);
 
 } // namespace iso15118::d20::state
