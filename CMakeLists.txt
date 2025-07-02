@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(iso15118
-    VERSION 0.5.1
+    VERSION 0.6
     DESCRIPTION "iso15118 library suite"
 	LANGUAGES CXX C
 )
 
 find_package(everest-cmake 0.5
     PATHS ../everest-cmake
+    NO_DEFAULT_PATH
 )
 
 find_package(OpenSSL 3 REQUIRED)
@@ -18,7 +19,7 @@ if (NOT everest-cmake_FOUND)
     FetchContent_Declare(
         everest-cmake
         GIT_REPOSITORY https://github.com/EVerest/everest-cmake.git
-        GIT_TAG        v0.5.1
+        GIT_TAG        v0.5.3
     )
     FetchContent_MakeAvailable(everest-cmake)
     set(everest-cmake_DIR "${everest-cmake_SOURCE_DIR}")
