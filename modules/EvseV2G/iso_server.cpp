@@ -1324,8 +1324,9 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         }
 
         constexpr auto physical_value_to_float = [](const iso2_PhysicalValueType& pv) {
-            return pv.Value * pow(10, pv.Multiplier);
+            return calc_physical_value(pv.Value, pv.Multiplier);
         };
+
         const auto ev_maximum_current_limit = physical_value_to_float(req->DC_EVChargeParameter.EVMaximumCurrentLimit);
         const auto ev_maximum_voltage_limit = physical_value_to_float(req->DC_EVChargeParameter.EVMaximumVoltageLimit);
         const auto evse_minimum_current_limit =
