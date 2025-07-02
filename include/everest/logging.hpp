@@ -28,8 +28,15 @@ enum severity_level {
     critical,
 };
 
+/// \brief Initialize a completely silenced logger
+void init();
+
+/// \brief Initialize logger using the config pointed to by \p logconf
 void init(const std::string& logconf);
+
+/// \brief Initialize logger using the config pointed to by \p logconf additionally setting the \p process_name
 void init(const std::string& logconf, std::string process_name);
+
 void update_process_name(std::string process_name);
 std::string trace();
 } // namespace Logging
