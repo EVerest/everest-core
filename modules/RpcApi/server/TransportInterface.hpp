@@ -13,6 +13,7 @@
 #include <memory>
 #include <boost/uuid/uuid.hpp>
 
+// FIXME migrate to everest::staging::helpers::get_uuid() as introduced in everest-core 2025.5.0
 namespace std {
     template <>
     struct hash<boost::uuids::uuid> {
