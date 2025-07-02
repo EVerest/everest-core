@@ -113,6 +113,7 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& 
 
 WebSocketServer::~WebSocketServer() {
     stop_server();
+    delete[] m_iface;
 }
 
 bool WebSocketServer::running() const {
