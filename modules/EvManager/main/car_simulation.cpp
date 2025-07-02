@@ -6,6 +6,8 @@
 
 #include <everest/logging.hpp>
 
+constexpr double MS_FACTOR = (1.0 / 60.0 / 60.0 / 1000.0);
+
 void CarSimulation::state_machine() {
     using types::ev_board_support::EvCpState;
 
@@ -30,6 +32,7 @@ void CarSimulation::state_machine() {
         if (state_has_changed) {
             r_ev_board_support->call_set_cp_state(EvCpState::B);
             r_ev_board_support->call_allow_power_on(false);
+            simulate_soc();
         }
         break;
     case SimState::CHARGING_REGULATED:
@@ -92,7 +95,58 @@ void CarSimulation::state_machine() {
         sim_data.state = SimState::UNPLUGGED;
         break;
     }
+
+    if (not state_has_changed and
+        (sim_data.state == SimState::CHARGING_REGULATED or sim_data.state == SimState::CHARGING_FIXED or
+         sim_data.state == SimState::ISO_CHARGING_REGULATED)) {
+        simulate_soc();
+    }
+    timepoint_last_update = std::chrono::steady_clock::now();
 };
+
+void CarSimulation::simulate_soc() {
+    const double ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - timepoint_last_update)
+            .count();
+    const double factor = MS_FACTOR * ms;
+    double power = 0.0;
+    types::evse_manager::EVInfo ev_info;
+    switch (charge_mode) {
+    case ChargeMode::None:
+        // nothing to do
+        break;
+    case ChargeMode::AC:
+        power = charge_current_a * config.ac_nominal_voltage;
+        ev_info.target_current = charge_current_a;
+        ev_info.target_voltage = 0;
+        break;
+    case ChargeMode::ACThreePhase:
+        power = charge_current_a * config.ac_nominal_voltage * 3.0;
+        ev_info.target_current = charge_current_a;
+        ev_info.target_voltage = 0;
+        break;
+    case ChargeMode::DC:
+        power = config.dc_target_current * config.dc_target_voltage;
+        ev_info.target_current = config.dc_target_current;
+        ev_info.target_voltage = config.dc_target_voltage;
+        break;
+    }
+
+    if (sim_data.battery_charge_wh > sim_data.battery_capacity_wh) {
+        sim_data.battery_charge_wh = sim_data.battery_capacity_wh;
+    } else {
+        sim_data.battery_charge_wh += power * factor;
+    }
+
+    ev_info.soc = (sim_data.battery_charge_wh / sim_data.battery_capacity_wh) * 100.0;
+    if (ev_info.soc > 100.0) {
+        ev_info.soc = 100.0;
+    }
+    ev_info.battery_capacity = sim_data.battery_capacity_wh;
+    ev_info.battery_full_soc = 100;
+
+    p_ev_manager->publish_ev_info(ev_info);
+}
 
 bool CarSimulation::sleep(const CmdArguments& arguments, size_t loop_interval_ms) {
     if (not sim_data.sleep_ticks_left.has_value()) {
@@ -121,22 +175,28 @@ bool CarSimulation::iso_wait_pwm_is_running(const CmdArguments& arguments) {
 }
 
 bool CarSimulation::draw_power_regulated(const CmdArguments& arguments) {
-    r_ev_board_support->call_set_ac_max_current(std::stod(arguments[0]));
+    charge_current_a = std::stod(arguments[0]);
+    r_ev_board_support->call_set_ac_max_current(charge_current_a);
     if (arguments[1] == constants::THREE_PHASES) {
         r_ev_board_support->call_set_three_phases(true);
+        charge_mode = ChargeMode::ACThreePhase;
     } else {
         r_ev_board_support->call_set_three_phases(false);
+        charge_mode = ChargeMode::AC;
     }
     sim_data.state = SimState::CHARGING_REGULATED;
     return true;
 }
 
 bool CarSimulation::draw_power_fixed(const CmdArguments& arguments) {
-    r_ev_board_support->call_set_ac_max_current(std::stod(arguments[0]));
+    charge_current_a = std::stod(arguments[0]);
+    r_ev_board_support->call_set_ac_max_current(charge_current_a);
     if (arguments[1] == constants::THREE_PHASES) {
         r_ev_board_support->call_set_three_phases(true);
+        charge_mode = ChargeMode::ACThreePhase;
     } else {
         r_ev_board_support->call_set_three_phases(false);
+        charge_mode = ChargeMode::AC;
     }
     sim_data.state = SimState::CHARGING_FIXED;
     return true;
@@ -149,6 +209,7 @@ bool CarSimulation::pause(const CmdArguments& arguments) {
 
 bool CarSimulation::unplug(const CmdArguments& arguments) {
     sim_data.state = SimState::UNPLUGGED;
+    charge_mode = ChargeMode::None;
     return true;
 }
 
@@ -200,6 +261,7 @@ bool CarSimulation::iso_dc_power_on(const CmdArguments& arguments) {
     if (sim_data.dc_power_on) {
         sim_data.state = SimState::ISO_CHARGING_REGULATED;
         r_ev_board_support->call_allow_power_on(true);
+        charge_mode = ChargeMode::DC;
         return true;
     }
     return false;
@@ -218,15 +280,24 @@ bool CarSimulation::iso_start_v2g_session(const CmdArguments& arguments, bool th
     if (energy_mode == constants::AC) {
         sim_data.energy_mode = EnergyMode::AC;
         if (three_phases == false) {
+<<<<<<< HEAD
             r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_single_phase_core, departure_time,
                                          e_amount);
         } else {
             r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_three_phase_core, departure_time,
                                          e_amount);
+=======
+            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_single_phase_core);
+            charge_mode = ChargeMode::AC;
+        } else {
+            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_three_phase_core);
+            charge_mode = ChargeMode::ACThreePhase;
+>>>>>>> upstream/main
         }
     } else if (energy_mode == constants::DC) {
         r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::DC_extended, departure_time, e_amount);
         sim_data.energy_mode = EnergyMode::DC;
+        charge_mode = ChargeMode::DC;
     } else {
         return false;
     }
@@ -234,11 +305,14 @@ bool CarSimulation::iso_start_v2g_session(const CmdArguments& arguments, bool th
 }
 
 bool CarSimulation::iso_draw_power_regulated(const CmdArguments& arguments) {
-    r_ev_board_support->call_set_ac_max_current(std::stod(arguments[0]));
+    charge_current_a = std::stod(arguments[0]);
+    r_ev_board_support->call_set_ac_max_current(charge_current_a);
     if (arguments[1] == constants::THREE_PHASES) {
         r_ev_board_support->call_set_three_phases(true);
+        charge_mode = ChargeMode::ACThreePhase;
     } else {
         r_ev_board_support->call_set_three_phases(false);
+        charge_mode = ChargeMode::AC;
     }
     sim_data.state = SimState::ISO_CHARGING_REGULATED;
     return true;
@@ -248,6 +322,7 @@ bool CarSimulation::iso_stop_charging(const CmdArguments& arguments) {
     r_ev[0]->call_stop_charging();
     r_ev_board_support->call_allow_power_on(false);
     sim_data.state = SimState::PLUGGED_IN;
+    charge_mode = ChargeMode::None;
     return true;
 }
 

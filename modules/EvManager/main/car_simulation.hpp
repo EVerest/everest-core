@@ -5,8 +5,10 @@
 
 #include "simulation_data.hpp"
 
+#include "../EvManager.hpp"
 #include <generated/interfaces/ISO15118_ev/Interface.hpp>
 #include <generated/interfaces/ev_board_support/Interface.hpp>
+#include <generated/interfaces/ev_manager/Implementation.hpp>
 #include <generated/interfaces/ev_slac/Interface.hpp>
 #include <generated/types/ev_board_support.hpp>
 
@@ -16,12 +18,21 @@ class CarSimulation {
 public:
     CarSimulation(const std::unique_ptr<ev_board_supportIntf>& r_ev_board_support_,
                   const std::vector<std::unique_ptr<ISO15118_evIntf>>& r_ev_,
-                  const std::vector<std::unique_ptr<ev_slacIntf>>& r_slac_) :
-        r_ev_board_support(r_ev_board_support_), r_ev(r_ev_), r_slac(r_slac_){};
+                  const std::vector<std::unique_ptr<ev_slacIntf>>& r_slac_,
+                  const std::unique_ptr<ev_managerImplBase>& p_ev_manager_, const module::Conf& config_) :
+        r_ev_board_support(r_ev_board_support_),
+        r_ev(r_ev_),
+        r_slac(r_slac_),
+        p_ev_manager(p_ev_manager_),
+        config(config_),
+        timepoint_last_update(std::chrono::steady_clock::now()){};
     ~CarSimulation() = default;
 
     void reset() {
         sim_data = SimulationData();
+        sim_data.battery_capacity_wh = config.dc_energy_capacity;
+        double soc = config.soc;
+        sim_data.battery_charge_wh = config.dc_energy_capacity * (soc / 100.0);
     }
 
     const SimState& get_state() const {
@@ -106,8 +117,21 @@ public:
 
 private:
     SimulationData sim_data;
+    const module::Conf& config;
+    std::chrono::time_point<std::chrono::steady_clock> timepoint_last_update;
+    double charge_current_a{0};
+
+    enum class ChargeMode {
+        None,
+        AC,
+        ACThreePhase,
+        DC,
+    } charge_mode{ChargeMode::None};
 
     const std::unique_ptr<ev_board_supportIntf>& r_ev_board_support;
     const std::vector<std::unique_ptr<ISO15118_evIntf>>& r_ev;
     const std::vector<std::unique_ptr<ev_slacIntf>>& r_slac;
+    const std::unique_ptr<ev_managerImplBase>& p_ev_manager;
+
+    void simulate_soc();
 };

@@ -11,8 +11,8 @@ namespace module::device_model {
 
 using ComponentVariableSourceMap = std::map<ocpp::v2::Component, std::map<ocpp::v2::Variable, std::string>>;
 class ComposedDeviceModelStorage : public ocpp::v2::DeviceModelStorageInterface {
-private: // Members
-    std::map<std::string, std::unique_ptr<ocpp::v2::DeviceModelStorageInterface>>
+private:
+    std::map<std::string, std::shared_ptr<ocpp::v2::DeviceModelStorageInterface>>
         device_model_storages; // key is identifier for the device model storage
     ComponentVariableSourceMap component_variable_source_map;
 
@@ -25,7 +25,7 @@ public:
     /// \param  device_model_storage The device model storage to register.
     /// \return True if the device model storage name is not yet registered, false otherwise.
     bool register_device_model_storage(std::string device_model_storage_id,
-                                       std::unique_ptr<ocpp::v2::DeviceModelStorageInterface> device_model_storage);
+                                       std::shared_ptr<ocpp::v2::DeviceModelStorageInterface> device_model_storage);
     virtual ~ComposedDeviceModelStorage() override = default;
     virtual ocpp::v2::DeviceModelMap get_device_model() override;
     virtual std::optional<ocpp::v2::VariableAttribute>
@@ -49,14 +49,13 @@ public:
     virtual int32_t clear_custom_variable_monitors() override;
     virtual void check_integrity() override;
 
-private: // Functions
-         ///
-         /// \brief Get variable source of given variable.
-         /// \param component    Component the variable belongs to.
-         /// \param variable     The variable to get the source from.
-         /// \return The variable source. Defaults to 'OCPP'.
-         /// \throws DeviceModelError    When source is something else than 'OCPP' (not implemented yet)
-         ///
+private:
+    ///
+    /// \brief Get variable source of given variable.
+    /// \param component    Component the variable belongs to.
+    /// \param variable     The variable to get the source from.
+    /// \return The variable source. Defaults to 'OCPP'.
+    ///
     std::string get_variable_source(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable);
 };
 } // namespace module::device_model

@@ -109,6 +109,7 @@ struct Conf {
     bool central_contract_validation_allowed;
     bool contract_certificate_installation_enabled;
     bool inoperative_error_use_vendor_id;
+    std::string session_id_type;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -259,15 +260,6 @@ public:
         // energy, so it is enough to set the powersupply_capabilities here.
         // FIXME: this is not implemented yet: enforce_limits uses the enforced limits to tell HLC, but capabilities
         // limits are not yet included in request.
-
-        // Inform charger about new max limits
-        types::iso15118::DcEvseMaximumLimits evse_max_limits;
-        evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
-        evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
-        evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_export_voltage_V;
-        if (charger) {
-            charger->inform_new_evse_max_hlc_limits(evse_max_limits);
-        }
     }
     std::atomic_int ac_nr_phases_active{0};
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

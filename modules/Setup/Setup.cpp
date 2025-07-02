@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #include "Setup.hpp"
-#include "RunApplication.hpp"
 
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <locale>
 
+#include <everest/staging/run_application/run_application.hpp>
+
 #include <fmt/core.h>
+
+using namespace everest::staging::run_application;
 
 namespace module {
 

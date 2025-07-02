@@ -10,7 +10,7 @@ ComposedDeviceModelStorage::ComposedDeviceModelStorage() {
 }
 
 bool ComposedDeviceModelStorage::register_device_model_storage(
-    std::string device_model_storage_id, std::unique_ptr<ocpp::v2::DeviceModelStorageInterface> device_model_storage) {
+    std::string device_model_storage_id, std::shared_ptr<ocpp::v2::DeviceModelStorageInterface> device_model_storage) {
     if (this->device_model_storages.find(device_model_storage_id) != this->device_model_storages.end()) {
         return false;
     }
@@ -19,13 +19,21 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
     // store the sources of each variable to be able to lookup requests to the device model storage
     for (const auto& [component, variable_map] : device_model_map) {
         for (const auto& [variable, variable_meta] : variable_map) {
+            // check if component variable source is already exist in the map
+            if (this->component_variable_source_map.find(component) != this->component_variable_source_map.end() &&
+                this->component_variable_source_map.at(component).find(variable) !=
+                    this->component_variable_source_map.at(component).end()) {
+                EVLOG_warning << "Component variable source already exists for component: " << component.name
+                              << ", variable: " << variable.name << ". Fix your device model configuration.";
+            }
+
             // Note: Source should not be optional, should be changed in libocpp
             this->component_variable_source_map[component][variable] =
                 variable_meta.source.value_or(VARIABLE_SOURCE_OCPP);
         }
     }
 
-    this->device_model_storages[device_model_storage_id] = std::move(device_model_storage);
+    this->device_model_storages[device_model_storage_id] = device_model_storage;
     return true;
 }
 
