@@ -89,8 +89,8 @@ convert_dynamic_values(const iso15118::message_20::datatypes::BPT_Dynamic_DC_CLR
             convert_from_optional<float>(in.min_v2x_energy_request)};
 }
 
-iso15118::message_20::datatypes::Parameter convert_parameter(const types::iso15118_vas::Parameter& parameter) {
-    iso15118::message_20::datatypes::Parameter out;
+dt::Parameter convert_parameter(const types::iso15118_vas::Parameter& parameter) {
+    dt::Parameter out;
     out.name = parameter.name;
 
     if (parameter.value.bool_value.has_value()) {
@@ -113,9 +113,8 @@ iso15118::message_20::datatypes::Parameter convert_parameter(const types::iso151
     return out;
 }
 
-iso15118::message_20::datatypes::ParameterSet
-convert_parameter_set(const types::iso15118_vas::ParameterSet& parameter_set) {
-    iso15118::message_20::datatypes::ParameterSet out;
+dt::ParameterSet convert_parameter_set(const types::iso15118_vas::ParameterSet& parameter_set) {
+    dt::ParameterSet out;
     out.id = parameter_set.set_id;
 
     out.parameter.reserve(parameter_set.parameters.size());
@@ -126,9 +125,9 @@ convert_parameter_set(const types::iso15118_vas::ParameterSet& parameter_set) {
     return out;
 }
 
-std::vector<iso15118::message_20::datatypes::ParameterSet>
+std::vector<dt::ParameterSet>
 convert_parameter_set_list(const std::vector<types::iso15118_vas::ParameterSet>& parameter_set_list) {
-    std::vector<iso15118::message_20::datatypes::ParameterSet> out;
+    std::vector<dt::ParameterSet> out;
     out.reserve(parameter_set_list.size());
     for (const auto& parameter_set : parameter_set_list) {
         out.push_back(convert_parameter_set(parameter_set));
@@ -386,8 +385,9 @@ void ISO15118_chargerImpl::update_supported_vas_services() {
             // Check for duplicate service IDs across all providers
             if (std::find(supported_vas_services.begin(), supported_vas_services.end(), service_id) !=
                 supported_vas_services.end()) {
-                EVLOG_AND_THROW(
-                    Everest::EverestConfigError("Duplicate VAS service ID found: " + std::to_string(service_id)));
+                EVLOG_error << "Duplicate VAS service ID found: " << std::to_string(service_id)
+                            << ". Skipping this service.";
+                continue;
             }
 
             supported_vas_services.push_back(service_id);
