@@ -162,23 +162,52 @@ void DeviceModel::check_required_variables() {
         this->get_value<std::string>(ControllerComponentVariables::SupportedOcppVersions));
 
     if (supported_versions.empty()) {
-        throw DeviceModelError("Could not find supported ocpp versions in the InternalCtrlr.");
+        throw DeviceModelError("Could not find supported OCPP versions in the InternalCtrlr.");
     }
 
+    std::vector<std::string> missing_var_errors;
+
+    // Check global required variables
     for (const auto& required_variable : required_variables) {
-        check_required_variable(required_variable, supported_versions);
+        try {
+            check_required_variable(required_variable, supported_versions);
+        } catch (const std::exception& e) {
+            std::stringstream ss;
+            ss << required_variable.component.name << "/"
+               << (required_variable.variable.has_value() ? required_variable.variable.value().name : "<unnamed>")
+               << ": " << e.what();
+            missing_var_errors.push_back(ss.str());
+        }
     }
 
+    // Check controller-specific required variables (if controller is available)
     for (const auto& available_required : required_component_available_variables) {
         std::optional<bool> available = this->get_optional_value<bool>(available_required.first);
         if (!available.value_or(false)) {
-            // Component not available, skip required checks.
             continue;
         }
 
         for (const auto& required_variable : available_required.second) {
-            check_required_variable(required_variable, supported_versions);
+            try {
+                check_required_variable(required_variable, supported_versions);
+            } catch (const std::exception& e) {
+                std::stringstream ss;
+                ss << required_variable.component.name << "/"
+                   << (required_variable.variable.has_value() ? required_variable.variable.value().name : "<unnamed>")
+                   << ": " << e.what();
+                missing_var_errors.push_back(ss.str());
+            }
         }
+    }
+
+    // Throw collective error if any variables are missing
+    if (!missing_var_errors.empty()) {
+        std::ostringstream oss;
+        oss << "Missing required variables:\n";
+        for (const auto& err : missing_var_errors) {
+            oss << " - " << err << "\n";
+        }
+        throw DeviceModelError(oss.str());
     }
 }
 
