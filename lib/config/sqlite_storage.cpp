@@ -49,6 +49,12 @@ SqliteStorage::SqliteStorage(const fs::path& db_path, const std::filesystem::pat
     SchemaUpdater updater{db.get()};
 
     if (!updater.apply_migration_files(migration_files_path, TARGET_MIGRATION_FILE_VERSION)) {
+        if (db_path.parent_path().empty()) {
+            EVLOG_error
+                << "Could not apply migrations for database at provided path: \"" << db_path.string()
+                << "\" likely because the database path is just a filename. You MUST provide a full path to the "
+                   "database.";
+        }
         throw MigrationException("SQL migration failed");
     }
 

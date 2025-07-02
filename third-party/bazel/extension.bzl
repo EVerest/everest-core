@@ -7,9 +7,9 @@ def _deps_impl(module_ctx):
     maybe(
         http_archive,
         name = "com_github_everest_liblog",
-        url = "https://github.com/EVerest/liblog/archive/763a56a4bf194e7cf1cab7446e993c376ce933fa.tar.gz",
-        sha256 = "6d1f4238f8984cbe0dea9d7bc2c3771ca803387b5215a2b42df0c850bd561770",
-        strip_prefix = "liblog-763a56a4bf194e7cf1cab7446e993c376ce933fa",
+        url = "https://github.com/EVerest/liblog/archive/08ff519b647beaa51f8f25ab04b88c079ca253a7.tar.gz",
+        sha256 = "32c5e419e63bffd094dcdf13adf9da7db1942029d575e7ace7559a434da967f5",
+        strip_prefix = "liblog-08ff519b647beaa51f8f25ab04b88c079ca253a7",
         build_file = "@everest-framework//third-party/bazel:BUILD.liblog.bazel",
     )
 

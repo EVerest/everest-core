@@ -81,7 +81,7 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
 
     everest::config::Settings settings;
     if (this->storage->contains_valid_config()) {
-        EVLOG_info << "Booting and parsing configuration from database: " << db_dir;
+        EVLOG_info << "Booting and parsing configuration from database: " << db_;
         const auto settings_response = this->storage->get_settings();
         if (settings_response.status != everest::config::GenericResponseStatus::OK or
             !settings_response.settings.has_value()) {

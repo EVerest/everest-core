@@ -903,6 +903,11 @@ int main(int argc, char* argv[]) {
     po::variables_map vm;
 
     try {
+        const auto default_logging_cfg =
+            defaults::PREFIX / fs::path(defaults::SYSCONF_DIR) / defaults::NAMESPACE / defaults::LOGGING_CONFIG_NAME;
+        if (fs::exists(default_logging_cfg)) {
+            Logging::init(default_logging_cfg.string());
+        }
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
 
