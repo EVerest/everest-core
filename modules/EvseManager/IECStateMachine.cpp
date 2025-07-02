@@ -425,7 +425,7 @@ void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reas
 }
 
 // Private member function used to actually call the BSP driver's allow_power_on and to publish the event
-// to via the EvseManager interface.
+// to the evse_manager interface.
 // No need to lock mutex as this will be called from state machine or locked context only
 void IECStateMachine::notify_allow_power_on(bool value) {
     if (not value) {
