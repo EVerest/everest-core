@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
-#include <filesystem>
+#include <cstdlib>
 #include <thread>
 
 #include <fmt/format.h>
@@ -16,13 +16,8 @@
 
 using json = nlohmann::json;
 
-int main([[maybe_unused]] int argc, char* argv[]) {
-
-    if (strcmp(argv[0], MAGIC_CONTROLLER_ARG0)) {
-        fmt::print(stderr, "This binary does not yet support to be started manually\n");
-        return EXIT_FAILURE;
-    }
-
+namespace {
+int run_controller() {
     auto socket_fd = STDIN_FILENO;
 
     const auto message = Everest::controller_ipc::receive_message(socket_fd);
@@ -38,7 +33,7 @@ int main([[maybe_unused]] int argc, char* argv[]) {
 
     EVLOG_debug << "everest controller process started ...";
 
-    CommandApi::Config config{
+    const CommandApi::Config config{
         config_params.at("module_dir"),
         config_params.at("interface_dir"),
         config_params.at("configs_dir"),
@@ -47,7 +42,7 @@ int main([[maybe_unused]] int argc, char* argv[]) {
 
     RPC rpc(socket_fd, config);
     Server backend;
-    int controller_port = config_params.at("controller_port").get<int>();
+    const int controller_port = config_params.at("controller_port").get<int>();
 
     // FIXME (aw): don't use hard-coded path!
     std::thread(
@@ -60,4 +55,19 @@ int main([[maybe_unused]] int argc, char* argv[]) {
     }
 
     return 0;
+}
+} // namespace
+
+int main([[maybe_unused]] int argc, char* argv[]) {
+    const auto argv0 = *argv;
+    if (strcmp(argv0, MAGIC_CONTROLLER_ARG0) != 0) {
+        fmt::print(stderr, "This binary does not yet support to be started manually\n");
+        return EXIT_FAILURE;
+    }
+
+    try {
+        return run_controller();
+    } catch (...) {
+        return EXIT_FAILURE;
+    }
 }

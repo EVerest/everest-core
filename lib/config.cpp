@@ -2,10 +2,9 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <algorithm>
 #include <cstddef>
-#include <fstream>
 #include <list>
+#include <regex>
 #include <set>
-#include <sstream>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -25,13 +24,6 @@ namespace Everest {
 using json = nlohmann::json;
 using json_uri = nlohmann::json_uri;
 using json_validator = nlohmann::json_schema::json_validator;
-
-static json draft07 = R"(
-{
-    "$ref": "http://json-schema.org/draft-07/schema#"
-}
-
-)"_json;
 
 struct ParsedConfigMap {
     std::vector<ConfigurationParameter> parsed_config_parameters;
@@ -58,6 +50,8 @@ void format_checker(const std::string& format, const std::string& value) {
             EVTHROW(std::invalid_argument("URI does not contain :// - invalid"));
         }
     } else if (format == "uri-reference") {
+        /// \brief Allowed format of a type URI, which are of a format like this /type_file_name#/TypeName
+        const static std::regex type_uri_regex{R"(^((?:\/[a-zA-Z0-9\-\_]+)+#\/[a-zA-Z0-9\-\_]+)$)"};
         if (!std::regex_match(value, type_uri_regex)) {
             EVTHROW(std::invalid_argument("Type URI is malformed."));
         }
@@ -117,8 +111,7 @@ SchemaValidation load_schemas(const fs::path& schemas_dir) {
 }
 
 json get_serialized_module_config(const std::string& module_id, const ModuleConfigurations& module_configurations) {
-    const auto module_config = module_configurations.at(module_id);
-    const auto module_name = module_config.module_name;
+    const auto& module_config = module_configurations.at(module_id);
     json serialized_mod_config = json::object();
     serialized_mod_config["module_config"] = module_config; // implicit conversion to json
     serialized_mod_config["mappings"] = json::object();
@@ -137,7 +130,8 @@ json get_serialized_module_config(const std::string& module_id, const ModuleConf
     return serialized_mod_config;
 }
 
-static void validate_config_schema(const json& config_map_schema) {
+namespace {
+void validate_config_schema(const json& config_map_schema) {
     // iterate over every config entry
     json_validator validator(loader, format_checker);
     for (const auto& config_item : config_map_schema.items()) {
@@ -167,8 +161,8 @@ static void validate_config_schema(const json& config_map_schema) {
 ///         - a set of unknown configuration keys not present in the schema.
 /// \throws ConfigParseException if a required configuration entry is missing, type validation
 ///         fails against the schema or an unsupported data type is encountered in the schema.
-static ParsedConfigMap parse_config_map(const json& config_map_schema,
-                                        const std::vector<ConfigurationParameter> configuration_parameters) {
+ParsedConfigMap parse_config_map(const json& config_map_schema,
+                                 const std::vector<ConfigurationParameter>& configuration_parameters) {
     std::vector<ConfigurationParameter> patched_config_parameters; // this is going to be returned
     std::map<std::string, ConfigurationParameter> config_parameter_map;
     std::set<std::string> config_map_keys;
@@ -261,8 +255,8 @@ static ParsedConfigMap parse_config_map(const json& config_map_schema,
     return {patched_config_parameters, unknown_config_entries};
 }
 
-static auto get_provides_for_probe_module(const std::string& probe_module_id,
-                                          const ModuleConfigurations& module_configs, const json& manifests) {
+auto get_provides_for_probe_module(const std::string& probe_module_id, const ModuleConfigurations& module_configs,
+                                   const json& manifests) {
     auto provides = json::object();
 
     for (const auto& [module_id, module_config] : module_configs) {
@@ -307,8 +301,8 @@ static auto get_provides_for_probe_module(const std::string& probe_module_id,
     return provides;
 }
 
-static auto get_requirements_for_probe_module(const std::string& probe_module_id,
-                                              const ModuleConfigurations& module_configs, const json& manifests) {
+auto get_requirements_for_probe_module(const std::string& probe_module_id, const ModuleConfigurations& module_configs,
+                                       const json& manifests) {
     ModuleConfig probe_module_config;
     for (const auto& [module_id, module_config] : module_configs) {
         if (module_config.module_id == probe_module_id) {
@@ -363,8 +357,8 @@ static auto get_requirements_for_probe_module(const std::string& probe_module_id
     return requirements;
 }
 
-static void setup_probe_module_manifest(const std::string& probe_module_id, const ModuleConfigurations& module_configs,
-                                        json& manifests) {
+void setup_probe_module_manifest(const std::string& probe_module_id, const ModuleConfigurations& module_configs,
+                                 json& manifests) {
     // setup basic information
     auto& manifest = manifests["ProbeModule"];
     manifest = {
@@ -415,7 +409,7 @@ ImplementationInfo extract_implementation_info(const std::unordered_map<std::str
     return info;
 }
 
-std::string create_printable_identifier(const ImplementationInfo& info, const std::string& module_id,
+std::string create_printable_identifier(const ImplementationInfo& info, const std::string& /*module_id*/,
                                         const std::string& impl_id) {
     BOOST_LOG_FUNCTION();
 
@@ -426,6 +420,7 @@ std::string create_printable_identifier(const ImplementationInfo& info, const st
     }
     return fmt::format("{}->{}:{}", module_string, info.impl_id, info.impl_intf);
 }
+} // namespace
 
 // ConfigBase
 
@@ -523,7 +518,6 @@ std::vector<Fulfillment> ConfigBase::resolve_requirement(const std::string& modu
 
     // check for connections for this requirement
     const auto& module_config = this->module_configs.at(module_id);
-    const auto module_name = module_config.module_name;
     if (module_config.connections.find(requirement_id) == module_config.connections.end()) {
         return {}; // return an empty array if our config does not contain any connections for this
                    // requirement id
@@ -834,7 +828,7 @@ std::list<json> ManagerConfig::resolve_error_ref(const std::string& reference) {
     const auto result = err_ref.find("#/");
     std::string err_namespace;
     std::string err_name;
-    bool is_error_list;
+    bool is_error_list = false;
     if (result == std::string::npos) {
         err_namespace = err_ref;
         err_name = "";
@@ -1122,6 +1116,12 @@ ManagerConfig::ManagerConfig(const ManagerSettings& ms) : ConfigBase(ms.mqtt_set
     this->validators = std::move(schema_validation.validators);
     this->error_map = error::ErrorTypeMap(this->ms.errors_dir);
     this->draft7_validator = std::make_unique<json_validator>(loader, format_checker);
+    const static json draft07 = R"(
+        {
+            "$ref": "http://json-schema.org/draft-07/schema#"
+        }
+        
+        )"_json;
     this->draft7_validator->set_root_schema(draft07);
 
     ModuleConfigurations module_configs;
@@ -1233,8 +1233,8 @@ Config::Config(const MQTTSettings& mqtt_settings, const json& serialized_config)
     if (serialized_config.contains("mappings") and !serialized_config.at("mappings").is_null()) {
         auto mapping_json = serialized_config.at("mappings");
         for (auto mapping = mapping_json.begin(); mapping != mapping_json.end(); ++mapping) {
-            auto mapping_name = mapping.key();
-            auto mapping_value = mapping.value();
+            const auto& mapping_name = mapping.key();
+            const auto& mapping_value = mapping.value();
             if (!mapping_value.is_null()) {
                 this->tier_mappings.emplace(mapping_name, mapping_value.get<ModuleTierMappings>());
             }
@@ -1284,7 +1284,6 @@ ModuleConfigs Config::get_module_configs(const std::string& module_id) const {
 
     // FIXME (aw): throw exception if module_id does not exist
     if (contains(module_id)) {
-        const auto module_type = this->module_config.module_name;
         for (const auto& [impl_id, config_parameters] : this->module_config.configuration_parameters) {
             ConfigMap processed_conf_map;
             for (const auto& config_parameter : config_parameters) {

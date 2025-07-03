@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#include <utility>
 
 #include <utils/error/error_factory.hpp>
-
 #include <utils/error/error_type_map.hpp>
 
 namespace Everest {
@@ -30,13 +30,13 @@ ErrorFactory::ErrorFactory(std::shared_ptr<ErrorTypeMap> error_type_map_,
                            std::optional<ErrorType> default_type_, std::optional<ErrorSubType> default_sub_type_,
                            std::optional<std::string> default_message_, std::optional<std::string> default_vendor_id_) :
     error_type_map(error_type_map_),
-    default_origin(default_origin_),
+    default_origin(std::move(default_origin_)),
     default_severity(default_severity_),
     default_state(default_state_),
-    default_type(default_type_),
-    default_sub_type(default_sub_type_),
-    default_message(default_message_),
-    default_vendor_id(default_vendor_id_) {
+    default_type(std::move(default_type_)),
+    default_sub_type(std::move(default_sub_type_)),
+    default_message(std::move(default_message_)),
+    default_vendor_id(std::move(default_vendor_id_)) {
 }
 
 Error ErrorFactory::create_error() const {
@@ -146,7 +146,7 @@ Error ErrorFactory::create_error(const ErrorType& type, const ErrorSubType& sub_
     return error;
 }
 
-void ErrorFactory::set_default_origin(ImplementationIdentifier origin) {
+void ErrorFactory::set_default_origin(const ImplementationIdentifier& origin) {
     default_origin = origin;
 }
 
@@ -158,19 +158,19 @@ void ErrorFactory::set_default_state(State state) {
     default_state = state;
 }
 
-void ErrorFactory::set_default_type(ErrorType type) {
+void ErrorFactory::set_default_type(const ErrorType& type) {
     default_type = type;
 }
 
-void ErrorFactory::set_default_sub_type(ErrorSubType sub_type) {
+void ErrorFactory::set_default_sub_type(const ErrorSubType& sub_type) {
     default_sub_type = sub_type;
 }
 
-void ErrorFactory::set_default_message(std::string message) {
+void ErrorFactory::set_default_message(const std::string& message) {
     default_message = message;
 }
 
-void ErrorFactory::set_default_vendor_id(std::string vendor_id) {
+void ErrorFactory::set_default_vendor_id(const std::string& vendor_id) {
     default_vendor_id = vendor_id;
 }
 

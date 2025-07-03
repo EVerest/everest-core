@@ -40,7 +40,7 @@ private:
     std::mutex queue_ctrl_mutex;
     MessageCallback message_callback;
     std::condition_variable cv;
-    bool running;
+    bool running = true;
 
 public:
     /// \brief Creates a message queue with the provided \p message_callback
@@ -63,7 +63,7 @@ private:
     std::mutex handler_ctrl_mutex;
     std::mutex handler_list_mutex;
     std::condition_variable cv;
-    bool running;
+    bool running = true;
 
 public:
     /// \brief Creates the message handler

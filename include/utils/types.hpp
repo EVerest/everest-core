@@ -80,8 +80,8 @@ struct ModuleInfo {
     std::string license;
     std::string id;
     Paths paths;
-    bool telemetry_enabled;
-    bool global_errors_enabled;
+    bool telemetry_enabled = false;
+    bool global_errors_enabled = false;
     std::optional<Mapping> mapping;
 };
 

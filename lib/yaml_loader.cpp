@@ -13,7 +13,8 @@
 #include <everest/logging.hpp>
 #include <utils/helpers.hpp>
 
-static void yaml_error_handler(const char* msg, std::size_t len, ryml::Location loc, void*) {
+namespace {
+void yaml_error_handler(const char* msg, std::size_t len, ryml::Location loc, void*) {
     std::stringstream error_msg;
     error_msg << "YAML parsing error: ";
 
@@ -34,6 +35,7 @@ static void yaml_error_handler(const char* msg, std::size_t len, ryml::Location 
 
     throw std::runtime_error(error_msg.str());
 }
+} // namespace
 
 struct RymlCallbackInitializer {
     RymlCallbackInitializer() {
@@ -41,7 +43,9 @@ struct RymlCallbackInitializer {
     }
 };
 
-static nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::NodeRef& ryml_node) {
+namespace {
+// NOLINTNEXTLINE(misc-no-recursion): recursive parsing preferred for simplicity
+nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::NodeRef& ryml_node) {
     if (ryml_node.is_map()) {
         // handle object
         auto object = nlohmann::ordered_json::object();
@@ -80,7 +84,7 @@ static nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::NodeRef& ryml
     }
 }
 
-static std::string load_yaml_content(std::filesystem::path path) {
+std::string load_yaml_content(std::filesystem::path path) {
     namespace fs = std::filesystem;
 
     if (path.extension().string() == ".json") {
@@ -109,12 +113,13 @@ static std::string load_yaml_content(std::filesystem::path path) {
     // failed to find yaml and json
     throw std::runtime_error(fmt::format("File '{}.(yaml|json)' does not exist", path.stem().string()));
 }
+} // namespace
 
 namespace Everest {
 
 nlohmann::ordered_json load_yaml(const std::filesystem::path& path) {
     // FIXME (aw): using the static here this isn't a perfect solution
-    static RymlCallbackInitializer ryml_callback_initializer;
+    const static RymlCallbackInitializer ryml_callback_initializer;
 
     const auto content = load_yaml_content(path);
     // FIXME (aw): using parse_in_place would be faster but that will need the file as a whole char buffer

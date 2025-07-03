@@ -14,11 +14,15 @@ using namespace everest::db;
 using namespace everest::db::sqlite;
 
 namespace everest::config {
-
-const std::string DEFAULT_MODULE_IMPLEMENTATION_ID = "!module";
+namespace {
+const std::string& default_module_implementation_id() {
+    static const std::string DEFAULT_MODULE_IMPLEMENTATION_ID = "!module";
+    return DEFAULT_MODULE_IMPLEMENTATION_ID;
+}
+} // namespace
 
 /// \brief Helper for accessing the column indices of the SETTING table
-enum SettingColumnIndex {
+enum class SettingColumnIndex : int {
     COL_ID = 0,
     COL_PREFIX,
     COL_CONFIG_FILE,
@@ -42,6 +46,41 @@ enum SettingColumnIndex {
     COL_VALIDATE_SCHEMA,
     COL_RUN_AS_USER,
 };
+
+/// \brief Helper for accessing the column indices of the CONFIGURATION table
+enum class ConfigurationColumnIndex {
+    COL_MODULE_ID = 1,
+    COL_PARAMETER_NAME,
+    COL_VALUE,
+    COL_MUTABILITY_ID,
+    COL_DATATYPE_ID,
+    COL_UNIT,
+    COL_MODULE_IMPLEMENTATION_ID,
+};
+
+/// \brief Helper for accessing the column indices of the CONFIGURATION table of a specific MODULE_ID
+enum class ConfigurationColumnModuleIdIndex {
+    COL_PARAMETER_NAME = 0,
+    COL_VALUE,
+    COL_MODULE_IMPLEMENTATION_ID,
+    COL_MUTABILITY_ID,
+    COL_DATATYPE_ID,
+    COL_UNIT,
+};
+
+namespace {
+int to_int(SettingColumnIndex setting_column_index) {
+    return static_cast<int>(setting_column_index);
+}
+
+int to_int(ConfigurationColumnIndex configuration_column_index) {
+    return static_cast<int>(configuration_column_index);
+}
+
+int to_int(ConfigurationColumnModuleIdIndex configuration_column_module_id_index) {
+    return static_cast<int>(configuration_column_module_id_index);
+}
+} // namespace
 
 SqliteStorage::SqliteStorage(const fs::path& db_path, const std::filesystem::path& migration_files_path) {
     db = std::make_unique<Connection>(db_path);
@@ -98,7 +137,7 @@ GenericResponseStatus SqliteStorage::write_module_configs(const ModuleConfigurat
 
             if (module.mapping.module.has_value()) {
                 const auto& map = module.mapping.module.value();
-                if (this->write_module_tier_mapping(module_id, DEFAULT_MODULE_IMPLEMENTATION_ID, map.evse,
+                if (this->write_module_tier_mapping(module_id, default_module_implementation_id(), map.evse,
                                                     map.connector) != GenericResponseStatus::OK) {
                     EVLOG_error << "Failed to write module tier mapping for module: " << module_id;
                     return GenericResponseStatus::Failed;
@@ -198,34 +237,35 @@ GetSettingsResponse SqliteStorage::get_settings() {
     }
 
     Settings settings;
-    const auto id = stmt->column_int(COL_ID); // ID is required and always present
+    [[maybe_unused]] const auto id =
+        stmt->column_int(to_int(SettingColumnIndex::COL_ID)); // ID is required and always present
 
     // text
-    settings.prefix = stmt->column_text(COL_PREFIX);
-    settings.config_file = stmt->column_text(COL_CONFIG_FILE);
-    settings.configs_dir = stmt->column_text(COL_CONFIGS_DIR);
-    settings.schemas_dir = stmt->column_text(COL_SCHEMAS_DIR);
-    settings.modules_dir = stmt->column_text(COL_MODULES_DIR);
-    settings.interfaces_dir = stmt->column_text(COL_INTERFACES_DIR);
-    settings.types_dir = stmt->column_text(COL_TYPES_DIR);
-    settings.errors_dir = stmt->column_text(COL_ERRORS_DIR);
-    settings.www_dir = stmt->column_text(COL_WWW_DIR);
-    settings.logging_config_file = stmt->column_text(COL_LOGGING_CONFIG_FILE);
-    settings.mqtt_broker_socket_path = stmt->column_text(COL_MQTT_BROKER_SOCKET_PATH);
-    settings.mqtt_broker_host = stmt->column_text(COL_MQTT_BROKER_HOST);
-    settings.mqtt_everest_prefix = stmt->column_text(COL_MQTT_EVEREST_PREFIX);
-    settings.mqtt_external_prefix = stmt->column_text(COL_MQTT_EXTERNAL_PREFIX);
-    settings.telemetry_prefix = stmt->column_text(COL_TELEMETRY_PREFIX);
-    settings.run_as_user = stmt->column_text(COL_RUN_AS_USER);
+    settings.prefix = stmt->column_text(to_int(SettingColumnIndex::COL_PREFIX));
+    settings.config_file = stmt->column_text(to_int(SettingColumnIndex::COL_CONFIG_FILE));
+    settings.configs_dir = stmt->column_text(to_int(SettingColumnIndex::COL_CONFIGS_DIR));
+    settings.schemas_dir = stmt->column_text(to_int(SettingColumnIndex::COL_SCHEMAS_DIR));
+    settings.modules_dir = stmt->column_text(to_int(SettingColumnIndex::COL_MODULES_DIR));
+    settings.interfaces_dir = stmt->column_text(to_int(SettingColumnIndex::COL_INTERFACES_DIR));
+    settings.types_dir = stmt->column_text(to_int(SettingColumnIndex::COL_TYPES_DIR));
+    settings.errors_dir = stmt->column_text(to_int(SettingColumnIndex::COL_ERRORS_DIR));
+    settings.www_dir = stmt->column_text(to_int(SettingColumnIndex::COL_WWW_DIR));
+    settings.logging_config_file = stmt->column_text(to_int(SettingColumnIndex::COL_LOGGING_CONFIG_FILE));
+    settings.mqtt_broker_socket_path = stmt->column_text(to_int(SettingColumnIndex::COL_MQTT_BROKER_SOCKET_PATH));
+    settings.mqtt_broker_host = stmt->column_text(to_int(SettingColumnIndex::COL_MQTT_BROKER_HOST));
+    settings.mqtt_everest_prefix = stmt->column_text(to_int(SettingColumnIndex::COL_MQTT_EVEREST_PREFIX));
+    settings.mqtt_external_prefix = stmt->column_text(to_int(SettingColumnIndex::COL_MQTT_EXTERNAL_PREFIX));
+    settings.telemetry_prefix = stmt->column_text(to_int(SettingColumnIndex::COL_TELEMETRY_PREFIX));
+    settings.run_as_user = stmt->column_text(to_int(SettingColumnIndex::COL_RUN_AS_USER));
 
     // integer
-    settings.controller_port = stmt->column_int(COL_CONTROLLER_PORT);
-    settings.controller_rpc_timeout_ms = stmt->column_int(COL_CONTROLLER_RPC_TIMEOUT_MS);
-    settings.mqtt_broker_port = stmt->column_int(COL_MQTT_BROKER_PORT);
+    settings.controller_port = stmt->column_int(to_int(SettingColumnIndex::COL_CONTROLLER_PORT));
+    settings.controller_rpc_timeout_ms = stmt->column_int(to_int(SettingColumnIndex::COL_CONTROLLER_RPC_TIMEOUT_MS));
+    settings.mqtt_broker_port = stmt->column_int(to_int(SettingColumnIndex::COL_MQTT_BROKER_PORT));
 
     // boolean
-    settings.telemetry_enabled = stmt->column_int(COL_TELEMETRY_ENABLED) != 0;
-    settings.validate_schema = stmt->column_int(COL_VALIDATE_SCHEMA) != 0;
+    settings.telemetry_enabled = stmt->column_int(to_int(SettingColumnIndex::COL_TELEMETRY_ENABLED)) != 0;
+    settings.validate_schema = stmt->column_int(to_int(SettingColumnIndex::COL_VALIDATE_SCHEMA)) != 0;
 
     return GetSettingsResponse{GenericResponseStatus::OK, settings};
 }
@@ -278,13 +318,17 @@ GetModuleConfigurationResponse SqliteStorage::get_module_config(const std::strin
 
         while (stmt->step() == SQLITE_ROW) {
             ConfigurationParameter configuration_parameter;
-            configuration_parameter.name = stmt->column_text(0);
-            const auto value_str = stmt->column_text(1);
-            auto implementation_id = stmt->column_text(2);
+            configuration_parameter.name =
+                stmt->column_text(to_int(ConfigurationColumnModuleIdIndex::COL_PARAMETER_NAME));
+            const auto value_str = stmt->column_text(to_int(ConfigurationColumnModuleIdIndex::COL_VALUE));
+            auto implementation_id =
+                stmt->column_text(to_int(ConfigurationColumnModuleIdIndex::COL_MODULE_IMPLEMENTATION_ID));
             ConfigurationParameterCharacteristics characteristics;
-            characteristics.mutability = static_cast<Mutability>(stmt->column_int(3));
-            characteristics.datatype = static_cast<Datatype>(stmt->column_int(4));
-            characteristics.unit = stmt->column_text_nullable(5);
+            characteristics.mutability =
+                static_cast<Mutability>(stmt->column_int(to_int(ConfigurationColumnModuleIdIndex::COL_MUTABILITY_ID)));
+            characteristics.datatype =
+                static_cast<Datatype>(stmt->column_int(to_int(ConfigurationColumnModuleIdIndex::COL_DATATYPE_ID)));
+            characteristics.unit = stmt->column_text_nullable(to_int(ConfigurationColumnModuleIdIndex::COL_UNIT));
             configuration_parameter.characteristics = characteristics;
             configuration_parameter.value = parse_config_value(characteristics.datatype, value_str);
 
@@ -316,7 +360,7 @@ SqliteStorage::get_configuration_parameter(const ConfigurationParameterIdentifie
         stmt->bind_text("@config_param_name", identifier.configuration_parameter_name);
         stmt->bind_text("@module_implementation_id", identifier.module_implementation_id.has_value()
                                                          ? identifier.module_implementation_id.value()
-                                                         : DEFAULT_MODULE_IMPLEMENTATION_ID);
+                                                         : default_module_implementation_id());
 
         const auto status = stmt->step();
 
@@ -361,21 +405,23 @@ SqliteStorage::write_configuration_parameter(const ConfigurationParameterIdentif
                                          "(?, ?, ?, ?, ?, ?, ?);";
 
         auto stmt = this->db->new_statement(insert_query);
-        stmt->bind_text(1, identifier.module_id);
-        stmt->bind_text(2, identifier.configuration_parameter_name);
-        stmt->bind_text(3, value);
-        stmt->bind_int(4, static_cast<int>(characteristics.mutability));
-        stmt->bind_int(5, static_cast<int>(characteristics.datatype));
+        stmt->bind_text(to_int(ConfigurationColumnIndex::COL_MODULE_ID), identifier.module_id);
+        stmt->bind_text(to_int(ConfigurationColumnIndex::COL_PARAMETER_NAME), identifier.configuration_parameter_name);
+        stmt->bind_text(to_int(ConfigurationColumnIndex::COL_VALUE), value);
+        stmt->bind_int(to_int(ConfigurationColumnIndex::COL_MUTABILITY_ID),
+                       static_cast<int>(characteristics.mutability));
+        stmt->bind_int(to_int(ConfigurationColumnIndex::COL_DATATYPE_ID), static_cast<int>(characteristics.datatype));
         if (characteristics.unit.has_value()) {
-            stmt->bind_text(6, characteristics.unit.value());
+            stmt->bind_text(to_int(ConfigurationColumnIndex::COL_UNIT), characteristics.unit.value());
         } else {
-            stmt->bind_null(6);
+            stmt->bind_null(to_int(ConfigurationColumnIndex::COL_UNIT));
         }
 
         if (identifier.module_implementation_id.has_value()) {
-            stmt->bind_text(7, identifier.module_implementation_id.value());
+            stmt->bind_text(to_int(ConfigurationColumnIndex::COL_MODULE_IMPLEMENTATION_ID),
+                            identifier.module_implementation_id.value());
         } else {
-            stmt->bind_null(7);
+            stmt->bind_null(to_int(ConfigurationColumnIndex::COL_MODULE_IMPLEMENTATION_ID));
         }
 
         if (stmt->step() != SQLITE_DONE) {
@@ -437,7 +483,7 @@ GetSetResponseStatus SqliteStorage::update_configuration_parameter(const Configu
         stmt->bind_text("@module_id", identifier.module_id);
         stmt->bind_text("@parameter_name", identifier.configuration_parameter_name);
         stmt->bind_text("@module_implementation_id",
-                        identifier.module_implementation_id.value_or(DEFAULT_MODULE_IMPLEMENTATION_ID));
+                        identifier.module_implementation_id.value_or(default_module_implementation_id()));
 
         if (stmt->step() != SQLITE_DONE) {
             return GetSetResponseStatus::Failed;
@@ -574,64 +620,66 @@ GenericResponseStatus SqliteStorage::write_settings(const Everest::ManagerSettin
     auto stmt = this->db->new_statement(sql);
 
     // ID is always 0
-    stmt->bind_int(COL_ID + 1, 0);
+    stmt->bind_int(to_int(SettingColumnIndex::COL_ID) + 1, 0);
 
-    auto bind_text_opt = [&](int index, const std::optional<std::string>& opt) {
+    auto bind_text_opt = [&](SettingColumnIndex index, int offset, const std::optional<std::string>& opt) {
         if (opt.has_value()) {
-            stmt->bind_text(index, opt.value(), SQLiteString::Transient);
+            stmt->bind_text(to_int(index) + offset, opt.value(), SQLiteString::Transient);
         } else {
-            stmt->bind_null(index);
+            stmt->bind_null(to_int(index) + offset);
         }
     };
 
-    auto bind_path_opt = [&](int index, const std::optional<fs::path>& opt) {
+    auto bind_path_opt = [&](SettingColumnIndex index, int offset, const std::optional<fs::path>& opt) {
         if (opt.has_value()) {
-            stmt->bind_text(index, opt.value().string(), SQLiteString::Transient);
+            stmt->bind_text(to_int(index) + offset, opt.value().string(), SQLiteString::Transient);
         } else {
-            stmt->bind_null(index);
+            stmt->bind_null(to_int(index) + offset);
         }
     };
 
-    auto bind_int_opt = [&](int index, const std::optional<int>& opt) {
+    auto bind_int_opt = [&](SettingColumnIndex index, int offset, const std::optional<int>& opt) {
         if (opt.has_value()) {
-            stmt->bind_int(index, opt.value());
+            stmt->bind_int(to_int(index) + offset, opt.value());
         } else {
-            stmt->bind_null(index);
+            stmt->bind_null(to_int(index) + offset);
         }
     };
 
-    auto bind_bool_opt = [&](int index, const std::optional<bool>& opt) {
+    auto bind_bool_opt = [&](SettingColumnIndex index, int offset, const std::optional<bool>& opt) {
         if (opt) {
-            stmt->bind_int(index, opt.value() ? 1 : 0);
+            stmt->bind_int(to_int(index) + offset, opt.value() ? 1 : 0);
         } else {
-            stmt->bind_null(index);
+            stmt->bind_null(to_int(index) + offset);
         }
     };
 
-    bind_path_opt(COL_PREFIX + 1, manager_settings.runtime_settings.prefix);
-    bind_path_opt(COL_CONFIG_FILE + 1, manager_settings.config_file);
-    bind_path_opt(COL_CONFIGS_DIR + 1, manager_settings.configs_dir);
-    bind_path_opt(COL_SCHEMAS_DIR + 1, manager_settings.schemas_dir);
-    bind_path_opt(COL_MODULES_DIR + 1, manager_settings.runtime_settings.modules_dir);
-    bind_path_opt(COL_INTERFACES_DIR + 1, manager_settings.interfaces_dir);
-    bind_path_opt(COL_TYPES_DIR + 1, manager_settings.types_dir);
-    bind_path_opt(COL_ERRORS_DIR + 1, manager_settings.errors_dir);
-    bind_path_opt(COL_WWW_DIR + 1, manager_settings.www_dir);
-    bind_path_opt(COL_LOGGING_CONFIG_FILE + 1, manager_settings.runtime_settings.logging_config_file);
+    bind_path_opt(SettingColumnIndex::COL_PREFIX, 1, manager_settings.runtime_settings.prefix);
+    bind_path_opt(SettingColumnIndex::COL_CONFIG_FILE, 1, manager_settings.config_file);
+    bind_path_opt(SettingColumnIndex::COL_CONFIGS_DIR, 1, manager_settings.configs_dir);
+    bind_path_opt(SettingColumnIndex::COL_SCHEMAS_DIR, 1, manager_settings.schemas_dir);
+    bind_path_opt(SettingColumnIndex::COL_MODULES_DIR, 1, manager_settings.runtime_settings.modules_dir);
+    bind_path_opt(SettingColumnIndex::COL_INTERFACES_DIR, 1, manager_settings.interfaces_dir);
+    bind_path_opt(SettingColumnIndex::COL_TYPES_DIR, 1, manager_settings.types_dir);
+    bind_path_opt(SettingColumnIndex::COL_ERRORS_DIR, 1, manager_settings.errors_dir);
+    bind_path_opt(SettingColumnIndex::COL_WWW_DIR, 1, manager_settings.www_dir);
+    bind_path_opt(SettingColumnIndex::COL_LOGGING_CONFIG_FILE, 1,
+                  manager_settings.runtime_settings.logging_config_file);
 
-    bind_int_opt(COL_CONTROLLER_PORT + 1, manager_settings.controller_port);
-    bind_int_opt(COL_CONTROLLER_RPC_TIMEOUT_MS + 1, manager_settings.controller_rpc_timeout_ms);
+    bind_int_opt(SettingColumnIndex::COL_CONTROLLER_PORT, 1, manager_settings.controller_port);
+    bind_int_opt(SettingColumnIndex::COL_CONTROLLER_RPC_TIMEOUT_MS, 1, manager_settings.controller_rpc_timeout_ms);
 
-    bind_text_opt(COL_MQTT_BROKER_SOCKET_PATH + 1, manager_settings.mqtt_settings.broker_socket_path);
-    bind_text_opt(COL_MQTT_BROKER_HOST + 1, manager_settings.mqtt_settings.broker_host);
-    bind_int_opt(COL_MQTT_BROKER_PORT + 1, manager_settings.mqtt_settings.broker_port);
-    bind_text_opt(COL_MQTT_EVEREST_PREFIX + 1, manager_settings.mqtt_settings.everest_prefix);
-    bind_text_opt(COL_MQTT_EXTERNAL_PREFIX + 1, manager_settings.mqtt_settings.external_prefix);
-    bind_text_opt(COL_TELEMETRY_PREFIX + 1, manager_settings.runtime_settings.telemetry_prefix);
+    bind_text_opt(SettingColumnIndex::COL_MQTT_BROKER_SOCKET_PATH, 1,
+                  manager_settings.mqtt_settings.broker_socket_path);
+    bind_text_opt(SettingColumnIndex::COL_MQTT_BROKER_HOST, 1, manager_settings.mqtt_settings.broker_host);
+    bind_int_opt(SettingColumnIndex::COL_MQTT_BROKER_PORT, 1, manager_settings.mqtt_settings.broker_port);
+    bind_text_opt(SettingColumnIndex::COL_MQTT_EVEREST_PREFIX, 1, manager_settings.mqtt_settings.everest_prefix);
+    bind_text_opt(SettingColumnIndex::COL_MQTT_EXTERNAL_PREFIX, 1, manager_settings.mqtt_settings.external_prefix);
+    bind_text_opt(SettingColumnIndex::COL_TELEMETRY_PREFIX, 1, manager_settings.runtime_settings.telemetry_prefix);
 
-    bind_bool_opt(COL_TELEMETRY_ENABLED + 1, manager_settings.runtime_settings.telemetry_enabled);
-    bind_bool_opt(COL_VALIDATE_SCHEMA + 1, manager_settings.runtime_settings.validate_schema);
-    bind_text_opt(COL_RUN_AS_USER + 1, manager_settings.run_as_user);
+    bind_bool_opt(SettingColumnIndex::COL_TELEMETRY_ENABLED, 1, manager_settings.runtime_settings.telemetry_enabled);
+    bind_bool_opt(SettingColumnIndex::COL_VALIDATE_SCHEMA, 1, manager_settings.runtime_settings.validate_schema);
+    bind_text_opt(SettingColumnIndex::COL_RUN_AS_USER, 1, manager_settings.run_as_user);
 
     if (stmt->step() != SQLITE_DONE) {
         return GenericResponseStatus::Failed;
@@ -710,7 +758,7 @@ GetModuleTierMappingsResponse SqliteStorage::get_module_tier_mappings(const std:
         if (stmt->column_type(2) != SQLITE_NULL) {
             mapping.connector = stmt->column_int(2);
         }
-        if (implementation_id == DEFAULT_MODULE_IMPLEMENTATION_ID) {
+        if (implementation_id == default_module_implementation_id()) {
             module_tier_mappings.module = mapping;
         } else {
             module_tier_mappings.implementations[implementation_id] = mapping;

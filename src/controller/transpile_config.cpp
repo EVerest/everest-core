@@ -7,7 +7,9 @@
 
 #include "transpile_config.hpp"
 
-static void clear_quote_flags(ryml::NodeRef& root) {
+namespace {
+// NOLINTNEXTLINE(misc-no-recursion)
+void clear_quote_flags(ryml::NodeRef& root) {
     if (root.has_key()) {
         // Remove quotes from key
         root.tree()->_rem_flags(root.id(), ryml::KEYQUO);
@@ -22,8 +24,9 @@ static void clear_quote_flags(ryml::NodeRef& root) {
         clear_quote_flags(child);
     }
 }
+} // namespace
 
-c4::yml::Tree transpile_config(nlohmann::json config_json) {
+c4::yml::Tree transpile_config(const nlohmann::json& config_json) {
     const auto json_serialized = config_json.dump();
     auto ryml_deserialized = ryml::parse_in_arena(ryml::to_csubstr(json_serialized));
     auto root = ryml_deserialized.rootref();

@@ -3,13 +3,17 @@
 #include "ipc.hpp"
 
 #include <cerrno>
+#include <iterator>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <system_error>
 #include <unistd.h>
 
 // FIXME (aw): this needs be done better!
-static char raw_message_buffer[16 * 1024];
+namespace {
+constexpr auto raw_message_buffer_size = 16 * std::size_t{1024};
+std::array<char, raw_message_buffer_size> raw_message_buffer;
+} // namespace
 
 namespace Everest {
 namespace controller_ipc {
@@ -28,23 +32,24 @@ void set_read_timeout(int fd, int timeout_in_ms) {
 
 void send_message(int fd, const nlohmann::json& msg) {
     auto raw = nlohmann::json::to_bson(msg);
-    unsigned char* p = raw.data();
+    auto raw_it = raw.begin();
     size_t already_sent = 0;
 
     while (already_sent < raw.size()) {
-        ssize_t c = write(fd, &p[already_sent], raw.size() - already_sent);
+        const ssize_t c = write(fd, &(*raw_it), raw.size() - already_sent);
 
         if (c == -1) {
             throw std::system_error(errno, std::system_category(), "Error while sending message");
         }
 
         already_sent += c;
+        std::advance(raw_it, c);
     }
 }
 
 // FIXME (aw): recv should be buffered and memory is not that costly here!
 Message receive_message(int fd) {
-    auto retval = read(fd, raw_message_buffer, sizeof(raw_message_buffer));
+    auto retval = read(fd, raw_message_buffer.data(), raw_message_buffer.size());
 
     if (retval == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -56,7 +61,8 @@ Message receive_message(int fd) {
 
     const auto& msg_size = retval;
 
-    return {MESSAGE_RETURN_STATUS::OK, nlohmann::json::from_bson(raw_message_buffer, raw_message_buffer + msg_size)};
+    return {MESSAGE_RETURN_STATUS::OK,
+            nlohmann::json::from_bson(raw_message_buffer.begin(), raw_message_buffer.begin() + msg_size)};
 }
 
 } // namespace controller_ipc

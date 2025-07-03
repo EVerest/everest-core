@@ -32,7 +32,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
             if (!fs::is_directory(item)) {
                 continue;
             }
-            const auto module_path = item.path();
+            const auto& module_path = item.path();
             const auto module_name = module_path.filename().string();
 
             // fetch the manifest

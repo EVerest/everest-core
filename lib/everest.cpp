@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <string_view>
 
 #include <boost/any.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -37,7 +38,8 @@ using json_uri = nlohmann::json_uri;
 using json_validator = nlohmann::json_schema::json_validator;
 
 const auto remote_cmd_res_timeout_seconds = 300;
-const std::array<std::string, 3> TELEMETRY_RESERVED_KEYS = {{"connector_id"}};
+const std::array<std::string_view, 3> TELEMETRY_RESERVED_KEYS = {{"connector_id"}};
+constexpr auto ensure_ready_timeout_ms = 100;
 
 Everest::Everest(std::string module_id_, const Config& config_, bool validate_data_with_schema,
                  std::shared_ptr<MQTTAbstraction> mqtt_abstraction, const std::string& telemetry_prefix,
@@ -396,7 +398,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     // wait for result future
     const std::chrono::time_point<std::chrono::steady_clock> res_wait =
         std::chrono::steady_clock::now() + this->remote_cmd_res_timeout;
-    std::future_status res_future_status;
+    std::future_status res_future_status = std::future_status::deferred;
     do {
         res_future_status = res_future.wait_until(res_wait);
     } while (res_future_status == std::future_status::deferred);
@@ -764,7 +766,7 @@ void Everest::ensure_ready() const {
     /// When calling this we actually expect that `ready_processed` is true.
     while (!ready_processed) { // In C++20 we might mark it as [[unlikely]]
         EVLOG_warning << "Module has not processed `ready` yet.";
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(ensure_ready_timeout_ms));
     }
 }
 

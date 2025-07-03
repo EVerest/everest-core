@@ -45,7 +45,7 @@ template <> constexpr inline bool is_type_compatible<nlohmann::json::object_t>(n
     return json_type == nlohmann::json::value_t::object;
 }
 
-template <typename T> bool json_to_variant_impl(T& to, const nlohmann::json& from) noexcept {
+template <typename T> bool json_to_variant_impl(T& /*to*/, const nlohmann::json& /*from*/) noexcept {
     return false;
 }
 

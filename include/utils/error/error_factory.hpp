@@ -35,13 +35,13 @@ public:
     Error create_error(const ErrorType& type, const ErrorSubType& sub_type, const std::string& message,
                        const Severity severity, const State state) const;
 
-    void set_default_origin(ImplementationIdentifier origin);
+    void set_default_origin(const ImplementationIdentifier& origin);
     void set_default_severity(Severity severity);
     void set_default_state(State state);
-    void set_default_type(ErrorType type);
-    void set_default_sub_type(ErrorSubType sub_type);
-    void set_default_message(std::string message);
-    void set_default_vendor_id(std::string vendor_id);
+    void set_default_type(const ErrorType& type);
+    void set_default_sub_type(const ErrorSubType& sub_type);
+    void set_default_message(const std::string& message);
+    void set_default_vendor_id(const std::string& vendor_id);
 
 private:
     const std::shared_ptr<ErrorTypeMap> error_type_map;

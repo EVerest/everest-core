@@ -13,7 +13,7 @@ namespace Everest {
 namespace error {
 
 void ErrorDatabaseMap::add_error(ErrorPtr error) {
-    std::lock_guard<std::mutex> lock(this->errors_mutex);
+    const std::lock_guard<std::mutex> lock(this->errors_mutex);
     if (this->errors.find(error->uuid) != this->errors.end()) {
         std::stringstream ss;
         ss << "Error with handle " << error->uuid.to_string() << " already exists in ErrorDatabaseMap." << std::endl;
@@ -25,7 +25,7 @@ void ErrorDatabaseMap::add_error(ErrorPtr error) {
 }
 
 std::list<ErrorPtr> ErrorDatabaseMap::get_errors(const std::list<ErrorFilter>& filters) const {
-    std::lock_guard<std::mutex> lock(this->errors_mutex);
+    const std::lock_guard<std::mutex> lock(this->errors_mutex);
     return this->get_errors_no_mutex(filters);
 }
 
@@ -92,7 +92,7 @@ std::list<ErrorPtr> ErrorDatabaseMap::get_errors_no_mutex(const std::list<ErrorF
 }
 
 std::list<ErrorPtr> ErrorDatabaseMap::edit_errors(const std::list<ErrorFilter>& filters, EditErrorFunc edit_func) {
-    std::lock_guard<std::mutex> lock(this->errors_mutex);
+    const std::lock_guard<std::mutex> lock(this->errors_mutex);
     std::list<ErrorPtr> result = this->get_errors_no_mutex(filters);
     for (const ErrorPtr& error : result) {
         edit_func(error);
@@ -102,7 +102,7 @@ std::list<ErrorPtr> ErrorDatabaseMap::edit_errors(const std::list<ErrorFilter>& 
 
 std::list<ErrorPtr> ErrorDatabaseMap::remove_errors(const std::list<ErrorFilter>& filters) {
     BOOST_LOG_FUNCTION();
-    EditErrorFunc remove_func = [this](const ErrorPtr& error) { this->errors.erase(error->uuid); };
+    const EditErrorFunc remove_func = [this](const ErrorPtr& error) { this->errors.erase(error->uuid); };
     return this->edit_errors(filters, remove_func);
 }
 

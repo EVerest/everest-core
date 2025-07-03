@@ -35,8 +35,9 @@ void populate_module_info_path_from_runtime_settings(ModuleInfo& mi, const Runti
     mi.paths.share = rs.data_dir / defaults::MODULES_DIR / mi.name;
 }
 
-ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_) {
-    this->boot_mode = ConfigBootMode::YamlFile;
+ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_) :
+    boot_mode(ConfigBootMode::YamlFile) { // NOLINT(cppcoreguidelines-use-default-member-init): already default
+                                          // initialized, but repeated for clarity
     init_prefix_and_data_dir(prefix_);
     init_config_file(config_);
     const auto settings = everest::config::parse_settings(config.value("settings", json::object()));
@@ -47,8 +48,9 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     init_settings(settings);
 }
 
-ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& db_, DatabaseTag) {
-    this->boot_mode = ConfigBootMode::Database;
+ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& db_, DatabaseTag) :
+    boot_mode(ConfigBootMode::Database) {
+
     init_prefix_and_data_dir(prefix_);
 
     db_dir = assert_file(db_, "User provided database");
@@ -71,8 +73,9 @@ ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& 
     this->storage->write_settings(*this);
 }
 
-ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_, const std::string& db_) {
-    this->boot_mode = ConfigBootMode::DatabaseInit;
+ManagerSettings::ManagerSettings(const std::string& prefix_, const std::string& config_, const std::string& db_) :
+    boot_mode(ConfigBootMode::DatabaseInit) {
+
     init_prefix_and_data_dir(prefix_);
     init_config_file(config_);
 
@@ -417,6 +420,7 @@ ModuleCallbacks::ModuleCallbacks(
     register_module_adapter(register_module_adapter), everest_register(everest_register), init(init), ready(ready) {
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays): pass-through of argc and argv from main()
 ModuleLoader::ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks, VersionInformation version_information) :
     runtime_settings(nullptr), callbacks(std::move(callbacks)), version_information(std::move(version_information)) {
     try {
@@ -607,6 +611,7 @@ int ModuleLoader::initialize() {
     return 0;
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays): pass-through of argc and argv from main()
 bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
     po::options_description desc("EVerest");
     desc.add_options()("version", "Print version and exit");
@@ -626,9 +631,9 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-
+    std::string argv0;
     if (argc > 0) {
-        const std::string argv0 = argv[0];
+        argv0 = *argv;
         if (not argv0.empty()) {
             this->application_name = fs::path(argv0).stem().string();
         }
@@ -640,7 +645,7 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
     }
 
     if (vm.count("version") != 0) {
-        std::cout << argv[0] << " (" << this->version_information.project_name << " "
+        std::cout << argv0 << " (" << this->version_information.project_name << " "
                   << this->version_information.project_version << " " << this->version_information.git_version << ")"
                   << std::endl;
         return false;
@@ -747,7 +752,7 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
         this->logging_config_file = assert_file(default_logging_config_file, "Default logging config");
     }
 
-    this->original_process_name = argv[0];
+    this->original_process_name = argv0;
 
     if (vm.count("module") != 0) {
         this->module_id = vm["module"].as<std::string>();

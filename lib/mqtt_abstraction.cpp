@@ -7,6 +7,7 @@
 
 namespace Everest {
 
+namespace {
 std::unique_ptr<MQTTAbstractionImpl> create_mqtt_client(const MQTTSettings& mqtt_settings) {
     if (mqtt_settings.uses_socket()) {
         return std::make_unique<MQTTAbstractionImpl>(mqtt_settings.broker_socket_path, mqtt_settings.everest_prefix,
@@ -17,6 +18,7 @@ std::unique_ptr<MQTTAbstractionImpl> create_mqtt_client(const MQTTSettings& mqtt
                                                      mqtt_settings.everest_prefix, mqtt_settings.external_prefix);
     }
 }
+} // namespace
 
 MQTTAbstraction::MQTTAbstraction(const MQTTSettings& mqtt_settings) :
     everest_prefix(mqtt_settings.everest_prefix),

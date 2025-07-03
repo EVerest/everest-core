@@ -20,9 +20,10 @@ bool Thread::shouldExit() {
     return exit_signal;
 }
 
-void Thread::operator=(std::thread&& t) {
+Thread& Thread::operator=(std::thread&& t) {
     stop();
     handle = std::move(t);
+    return *this;
 }
 
 } // namespace Everest

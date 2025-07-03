@@ -29,10 +29,10 @@ struct RuntimeSettings {
     fs::path etc_dir;     ///< Directory that contains configs, certificates
     fs::path data_dir;    ///< Directory for general data, definitions for EVerest interfaces, types, errors an schemas
     fs::path modules_dir; ///< Directory that contains EVerest modules
-    fs::path logging_config_file; ///< Path to the logging configuration file
-    std::string telemetry_prefix; ///< MQTT prefix for telemetry
-    bool telemetry_enabled;       ///< If telemetry is enabled
-    bool validate_schema;         ///< If schema validation for all var publishes and cmd calls is enabled
+    fs::path logging_config_file;   ///< Path to the logging configuration file
+    std::string telemetry_prefix;   ///< MQTT prefix for telemetry
+    bool telemetry_enabled = false; ///< If telemetry is enabled
+    bool validate_schema = false;   ///< If schema validation for all var publishes and cmd calls is enabled
 };
 
 RuntimeSettings create_runtime_settings(const fs::path& prefix, const fs::path& etc_dir, const fs::path& data_dir,
@@ -48,16 +48,16 @@ struct DatabaseTag {};
 
 /// \brief Settings needed by the manager to load and validate a config
 struct ManagerSettings {
-    fs::path configs_dir;          ///< Directory that contains EVerest configs
-    fs::path db_dir;               ///< Directory that contains the database
-    fs::path schemas_dir;          ///< Directory that contains schemas for config, manifest, interfaces, etc.
-    fs::path interfaces_dir;       ///< Directory that contains interface definitions
-    fs::path types_dir;            ///< Directory that contains type definitions
-    fs::path errors_dir;           ///< Directory that contains error definitions
-    fs::path config_file;          ///< Path to the loaded config file
-    fs::path www_dir;              ///< Directory that contains the everest-admin-panel
-    int controller_port;           ///< Websocket port of the controller
-    int controller_rpc_timeout_ms; ///< RPC timeout for controller commands
+    fs::path configs_dir;              ///< Directory that contains EVerest configs
+    fs::path db_dir;                   ///< Directory that contains the database
+    fs::path schemas_dir;              ///< Directory that contains schemas for config, manifest, interfaces, etc.
+    fs::path interfaces_dir;           ///< Directory that contains interface definitions
+    fs::path types_dir;                ///< Directory that contains type definitions
+    fs::path errors_dir;               ///< Directory that contains error definitions
+    fs::path config_file;              ///< Path to the loaded config file
+    fs::path www_dir;                  ///< Directory that contains the everest-admin-panel
+    int controller_port = 0;           ///< Websocket port of the controller
+    int controller_rpc_timeout_ms = 0; ///< RPC timeout for controller commands
 
     std::string run_as_user; ///< Username under which EVerest should run
 
@@ -67,7 +67,8 @@ struct ManagerSettings {
 
     MQTTSettings mqtt_settings;       ///< MQTT connection settings
     RuntimeSettings runtime_settings; ///< Runtime settings needed to successfully run modules
-    ConfigBootMode boot_mode;         ///< Source of the config, can be YamlFile, Database or DatabaseInit
+    ConfigBootMode boot_mode =
+        ConfigBootMode::YamlFile; ///< Source of the config, can be YamlFile, Database or DatabaseInit
     std::unique_ptr<everest::config::SqliteStorage> storage; ///< Sqlite Storage for settings and module configs
 
     ManagerSettings() = default;

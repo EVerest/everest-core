@@ -231,7 +231,7 @@ json MQTTAbstractionImpl::get(const std::string& topic, QOS qos) {
     std::promise<json> res_promise;
     std::future<json> res_future = res_promise.get_future();
 
-    const auto res_handler = [this, &res_promise](const std::string& topic, json data) {
+    const auto res_handler = [this, &res_promise](const std::string& /*topic*/, json data) {
         res_promise.set_value(std::move(data));
     };
 
@@ -242,7 +242,7 @@ json MQTTAbstractionImpl::get(const std::string& topic, QOS qos) {
     // wait for result future
     const std::chrono::time_point<std::chrono::steady_clock> res_wait =
         std::chrono::steady_clock::now() + std::chrono::milliseconds(mqtt_get_timeout_ms);
-    std::future_status res_future_status;
+    std::future_status res_future_status = std::future_status::deferred;
     do {
         res_future_status = res_future.wait_until(res_wait);
     } while (res_future_status == std::future_status::deferred);
@@ -272,12 +272,11 @@ std::shared_future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
         try {
             while (this->mqtt_is_connected) {
 
-                eventfd_t eventfd_buffer;
-                const int nfds = 3;
-                struct pollfd pollfds[nfds] = {{this->mqtt_socket_fd, POLLIN, 0},
-                                               {this->event_fd, POLLIN, 0},
-                                               {this->disconnect_event_fd, POLLIN, 0}};
-                auto retval = ::poll(pollfds, nfds, mqtt_poll_timeout_ms);
+                eventfd_t eventfd_buffer; // NOLINT(cppcoreguidelines-init-variables) initialized by eventfd_read
+                std::array<struct pollfd, 3> pollfds = {{{this->mqtt_socket_fd, POLLIN, 0},
+                                                         {this->event_fd, POLLIN, 0},
+                                                         {this->disconnect_event_fd, POLLIN, 0}}};
+                auto retval = ::poll(pollfds.data(), pollfds.size(), mqtt_poll_timeout_ms);
 
                 if (retval >= 0) {
                     // data available to send (the notifier writes, we should be ready to read)
@@ -524,7 +523,7 @@ bool MQTTAbstractionImpl::connectBroker(std::string& socket_path) {
     }
 
     // Initialize the address structure
-    struct sockaddr_un addr;
+    struct sockaddr_un addr; // NOLINT(cppcoreguidelines-pro-type-member-init): initialized with memset
     memset(&addr, 0, sizeof(struct sockaddr_un));
     addr.sun_family = AF_UNIX;
     if (socket_path.size() > (sizeof(addr.sun_path) - 1)) {
@@ -533,9 +532,11 @@ bool MQTTAbstractionImpl::connectBroker(std::string& socket_path) {
         return false;
     }
     // no need to set the terminating null due to memset
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
     std::strncpy(addr.sun_path, socket_path.c_str(), sizeof(addr.sun_path) - 1);
 
     // make non-blocking
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg): We have no good alternative to fcntl
     auto retval = fcntl(mqtt_socket_fd, F_SETFL,
                         fcntl(mqtt_socket_fd, F_GETFL) | O_NONBLOCK); // NOLINT: We have no good alternative to fcntl
     if (retval != 0) {
@@ -544,7 +545,8 @@ bool MQTTAbstractionImpl::connectBroker(std::string& socket_path) {
         return false;
     }
 
-    // conect the socket
+    // connect the socket
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): we have no good alterative to reinterpret_cast here
     if (::connect(mqtt_socket_fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(struct sockaddr_un)) == -1) {
         EVLOG_error << fmt::format("Failed to connect to unix domain socket: {}", socket_path);
         close(mqtt_socket_fd);
@@ -558,8 +560,8 @@ bool MQTTAbstractionImpl::connectBroker(std::string& socket_path) {
         return false;
     }
 
-    mqtt_init(&this->mqtt_client, mqtt_socket_fd, static_cast<uint8_t*>(this->sendbuf), sizeof(this->sendbuf),
-              static_cast<uint8_t*>(this->recvbuf), sizeof(this->recvbuf), MQTTAbstractionImpl::publish_callback);
+    mqtt_init(&this->mqtt_client, mqtt_socket_fd, this->sendbuf.data(), sizeof(this->sendbuf), this->recvbuf.data(),
+              sizeof(this->recvbuf), MQTTAbstractionImpl::publish_callback);
     const uint8_t connect_flags = MQTT_CONNECT_CLEAN_SESSION;
     /* Send connection request to the broker. */
     if (mqtt_connect(&this->mqtt_client, nullptr, nullptr, nullptr, 0, nullptr, nullptr, connect_flags,
@@ -600,8 +602,8 @@ bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {
     int enable = 1;
     setsockopt(mqtt_socket_fd, IPPROTO_TCP, TCP_NODELAY, &enable, sizeof(enable));
 
-    mqtt_init(&this->mqtt_client, mqtt_socket_fd, static_cast<uint8_t*>(this->sendbuf), sizeof(this->sendbuf),
-              static_cast<uint8_t*>(this->recvbuf), sizeof(this->recvbuf), MQTTAbstractionImpl::publish_callback);
+    mqtt_init(&this->mqtt_client, mqtt_socket_fd, this->sendbuf.data(), sizeof(this->sendbuf), this->recvbuf.data(),
+              sizeof(this->recvbuf), MQTTAbstractionImpl::publish_callback);
     const uint8_t connect_flags = MQTT_CONNECT_CLEAN_SESSION;
     /* Send connection request to the broker. */
     if (mqtt_connect(&this->mqtt_client, nullptr, nullptr, nullptr, 0, nullptr, nullptr, connect_flags,

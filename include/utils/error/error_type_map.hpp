@@ -28,13 +28,13 @@ public:
     /// \brief Constructor that loads error types from a directory.
     /// \param error_types_dir The directory to load the error types from.
     ///
-    explicit ErrorTypeMap(std::filesystem::path error_types_dir);
+    explicit ErrorTypeMap(const std::filesystem::path& error_types_dir);
 
     ///
     /// \brief Loads error types from a directory.
     /// \param error_types_dir The directory to load the error types from.
     ///
-    void load_error_types(std::filesystem::path error_types_dir);
+    void load_error_types(const std::filesystem::path& error_types_dir);
 
     ///
     /// \brief Loads error types from a given map

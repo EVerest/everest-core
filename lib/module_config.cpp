@@ -24,7 +24,7 @@ json get_module_config(std::shared_ptr<MQTTAbstraction> mqtt, const std::string&
     std::promise<json> res_promise;
     std::future<json> res_future = res_promise.get_future();
 
-    const auto res_handler = [module_id, &res_promise](const std::string& topic, json data) {
+    const auto res_handler = [module_id, &res_promise](const std::string& /*topic*/, json data) {
         EVLOG_verbose << fmt::format("Incoming config for {}", module_id);
 
         res_promise.set_value(std::move(data));
@@ -41,7 +41,7 @@ json get_module_config(std::shared_ptr<MQTTAbstraction> mqtt, const std::string&
     // wait for result future
     const std::chrono::time_point<std::chrono::steady_clock> res_wait =
         std::chrono::steady_clock::now() + std::chrono::milliseconds(mqtt_get_config_timeout_ms);
-    std::future_status res_future_status;
+    std::future_status res_future_status = std::future_status::deferred;
     do {
         res_future_status = res_future.wait_until(res_wait);
     } while (res_future_status == std::future_status::deferred);
@@ -84,7 +84,7 @@ json get_module_config(std::shared_ptr<MQTTAbstraction> mqtt, const std::string&
     const auto settings = mqtt->get(settings_topic, QOS::QOS2);
     result["settings"] = settings;
 
-    bool validate_schema = settings.value("validate_schema", json(false)).get<bool>();
+    const auto validate_schema = settings.value("validate_schema", json(false)).get<bool>();
     if (validate_schema) {
         const auto schemas_topic = fmt::format("{}schemas", everest_prefix);
         const auto schemas = mqtt->get(schemas_topic, QOS::QOS2);
@@ -95,7 +95,6 @@ json get_module_config(std::shared_ptr<MQTTAbstraction> mqtt, const std::string&
     const auto module_names = mqtt->get(module_names_topic, QOS::QOS2);
     result["module_names"] = module_names;
 
-    const auto manifests_topic = fmt::format("{}manifests", everest_prefix);
     auto manifests = json::object();
     for (const auto& module_name : module_names) {
         auto manifest_topic = fmt::format("{}manifests/{}", everest_prefix, module_name.get<std::string>());

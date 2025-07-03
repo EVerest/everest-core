@@ -25,7 +25,7 @@ enum class GetSetResponseStatus {
 struct ModuleData {
     std::string module_id;
     std::string module_name;
-    bool standalone;
+    bool standalone = false;
     std::optional<std::string> capabilities;
 };
 

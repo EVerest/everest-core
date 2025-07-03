@@ -137,8 +137,8 @@ private:
     std::string mqtt_everest_prefix;
     std::string mqtt_external_prefix;
     struct mqtt_client mqtt_client;
-    uint8_t sendbuf[MQTT_BUF_SIZE];
-    uint8_t recvbuf[MQTT_BUF_SIZE];
+    std::array<uint8_t, MQTT_BUF_SIZE> sendbuf;
+    std::array<uint8_t, MQTT_BUF_SIZE> recvbuf;
 
     static int open_nb_socket(const char* addr, const char* port);
     bool connectBroker(std::string& socket_path);

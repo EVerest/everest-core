@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
+#include <utils/helpers.hpp>
 #include <utils/serial.hpp>
 
 #include <errno.h>
@@ -153,7 +154,7 @@ void Serial::cobsDecodeByte(uint8_t byte) {
                 printf("cobsDecode: Received nothing\n");
             } else {
                 // set back decode with one, as it gets post-incremented
-                handlePacket(msg, decode - 1 - msg);
+                handlePacket(msg, helpers::clamp_to<int>(decode - 1 - msg));
             }
             cobsDecodeReset();
             return; // need to return here, because of block--

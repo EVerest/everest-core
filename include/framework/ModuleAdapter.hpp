@@ -55,19 +55,15 @@ private:
 
 class ModuleBase {
 public:
-    ModuleBase(const ModuleInfo& info) : info(info){};
+    ModuleBase(const ModuleInfo& info);
     virtual ~ModuleBase() = default;
 
     const ModuleInfo& info;
 
 protected:
-    void invoke_init(ImplementationBase& impl) {
-        impl.init();
-    }
+    void invoke_init(ImplementationBase& impl);
 
-    void invoke_ready(ImplementationBase& impl) {
-        impl.ready();
-    }
+    void invoke_ready(ImplementationBase& impl);
 };
 
 namespace error {
@@ -112,57 +108,30 @@ struct ModuleAdapter {
     TelemetryPublishFunc telemetry_publish;
     GetMappingFunc get_mapping;
 
-    void check_complete() {
-        // FIXME (aw): I should throw if some of my handlers are not set
-        return;
-    }
+    void check_complete();
 
-    void gather_cmds(ImplementationBase& impl) {
-        impl._gather_cmds(registered_commands);
-    }
+    void gather_cmds(ImplementationBase& impl);
 };
 
 class MqttProvider {
 public:
-    MqttProvider(ModuleAdapter& ev) : ev(ev){};
+    MqttProvider(ModuleAdapter& ev);
 
-    void publish(const std::string& topic, const std::string& data) {
-        ev.ext_mqtt_publish(topic, data);
-    }
+    void publish(const std::string& topic, const std::string& data);
 
-    void publish(const std::string& topic, const char* data) {
-        ev.ext_mqtt_publish(topic, std::string(data));
-    }
+    void publish(const std::string& topic, const char* data);
 
-    void publish(const std::string& topic, bool data) {
-        if (data) {
-            ev.ext_mqtt_publish(topic, "true");
-        } else {
-            ev.ext_mqtt_publish(topic, "false");
-        }
-    }
+    void publish(const std::string& topic, bool data);
 
-    void publish(const std::string& topic, int data) {
-        ev.ext_mqtt_publish(topic, std::to_string(data));
-    }
+    void publish(const std::string& topic, int data);
 
-    void publish(const std::string& topic, double data, int precision) {
-        std::stringstream stream;
-        stream << std::fixed << std::setprecision(precision) << data;
-        ev.ext_mqtt_publish(topic, stream.str());
-    }
+    void publish(const std::string& topic, double data, int precision);
 
-    void publish(const std::string& topic, double data) {
-        this->publish(topic, data, 5);
-    }
+    void publish(const std::string& topic, double data);
 
-    UnsubscribeToken subscribe(const std::string& topic, StringHandler handler) const {
-        return ev.ext_mqtt_subscribe(topic, std::move(handler));
-    }
+    UnsubscribeToken subscribe(const std::string& topic, StringHandler handler) const;
 
-    UnsubscribeToken subscribe(const std::string& topic, StringPairHandler handler) const {
-        return ev.ext_mqtt_subscribe_pair(topic, std::move(handler));
-    }
+    UnsubscribeToken subscribe(const std::string& topic, StringPairHandler handler) const;
 
 private:
     ModuleAdapter& ev;
@@ -170,16 +139,12 @@ private:
 
 class TelemetryProvider {
 public:
-    TelemetryProvider(ModuleAdapter& ev) : ev(ev){};
+    TelemetryProvider(ModuleAdapter& ev);
 
     void publish(const std::string& category, const std::string& subcategory, const std::string& type,
-                 const TelemetryMap& telemetry) {
-        ev.telemetry_publish(category, subcategory, type, telemetry);
-    }
+                 const TelemetryMap& telemetry);
 
-    void publish(const std::string& category, const std::string& subcategory, const TelemetryMap& telemetry) {
-        publish(category, subcategory, subcategory, telemetry);
-    }
+    void publish(const std::string& category, const std::string& subcategory, const TelemetryMap& telemetry);
 
 private:
     ModuleAdapter& ev;

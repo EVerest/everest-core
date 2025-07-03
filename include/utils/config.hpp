@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <list>
 #include <optional>
-#include <regex>
 #include <set>
 #include <string>
 #include <tuple>
@@ -54,11 +53,6 @@ struct SchemaValidation {
     Schemas schemas;
     Validators validators;
 };
-
-///
-/// \brief Allowed format of a type URI, which are of a format like this /type_file_name#/TypeName
-///
-const static std::regex type_uri_regex{R"(^((?:\/[a-zA-Z0-9\-\_]+)+#\/[a-zA-Z0-9\-\_]+)$)"};
 
 struct ImplementationInfo {
     std::string module_id;

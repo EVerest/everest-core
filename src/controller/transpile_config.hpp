@@ -7,4 +7,4 @@
 #include <ryml.hpp>
 #include <ryml_std.hpp>
 
-c4::yml::Tree transpile_config(nlohmann::json config_json);
+c4::yml::Tree transpile_config(const nlohmann::json& config_json);

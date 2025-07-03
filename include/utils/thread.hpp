@@ -15,7 +15,7 @@ public:
     void stop();
 
     bool shouldExit();
-    void operator=(std::thread&&);
+    Thread& operator=(std::thread&&);
 
 private:
     std::thread handle;

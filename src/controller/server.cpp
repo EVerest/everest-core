@@ -86,6 +86,7 @@ WebsocketSession::Output WebsocketSession::pop_output() {
 
 class Server::Impl {
 public:
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init): info initialized via memset
     Impl() {
         memset(&info, 0, sizeof(info));
     }
@@ -212,16 +213,16 @@ void Server::Impl::run(const Server::IncomingMessageHandler& handler, const std:
     }
     this->message_in_handler = handler;
 
-    static struct lws_protocols protocols[] = {
+    static std::array<lws_protocols, 3> protocols = {{
         {"http", lws_callback_http_dummy, 0, 0, 0, NULL, 0},
         {"everest-controller", Server::Impl::callback, sizeof(WebsocketSession), 1024, 0, this, 0},
         LWS_PROTOCOL_LIST_TERM,
-    };
+    }};
 
     mount.origin = html_origin.c_str();
     info.port = port;
     info.mounts = &mount;
-    info.protocols = protocols;
+    info.protocols = protocols.data();
     info.pvo = &pvo;
 
     lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE, [](int level, const char* line) {
@@ -236,7 +237,7 @@ void Server::Impl::run(const Server::IncomingMessageHandler& handler, const std:
     EVLOG_info << fmt::format("Launching controller service on port {}\n", info.port);
 
     {
-        std::lock_guard<std::mutex> lck(context_mtx);
+        const std::lock_guard<std::mutex> lck(context_mtx);
         context = lws_create_context(&info);
     }
 
@@ -245,7 +246,7 @@ void Server::Impl::run(const Server::IncomingMessageHandler& handler, const std:
 
     // FIXME (aw): check for errors and log them somehow ...
     {
-        std::lock_guard<std::mutex> lck(context_mtx);
+        const std::lock_guard<std::mutex> lck(context_mtx);
         lws_context_destroy(context);
         context = nullptr;
     }

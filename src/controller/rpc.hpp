@@ -32,7 +32,8 @@ private:
     std::chrono::milliseconds rpc_timeout;
 
     // FIXME (aw): what type of cafe?
-    std::mt19937 rng{0xcafe};
+    // NOLINTNEXTLINE(cert-msc51-cpp, cert-msc32-c): used as keys in ipc_calls, no strict randomness requirement
+    std::mt19937 rng{0xcafe}; // NOLINT(cppcoreguidelines-avoid-magic-numbers): why not have a bit of magic in life?
     std::unordered_map<std::mt19937::result_type, std::promise<nlohmann::json>> ipc_calls{};
     std::mutex ipc_mutex{};
 };

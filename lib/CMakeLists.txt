@@ -33,6 +33,7 @@ target_sources(framework
         formatter.cpp
         filesystem.cpp
         message_queue.cpp
+        module_adapter.cpp
         module_config.cpp
         mqtt_abstraction.cpp
         mqtt_abstraction_impl.cpp

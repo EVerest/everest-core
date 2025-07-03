@@ -162,13 +162,13 @@ struct ConfigurationParameter {
 };
 /// \brief Struct that contains the configuration of an EVerest module
 struct ModuleConfig {
-    bool standalone;
+    bool standalone = false;
     std::string module_name;
     std::string module_id;
     std::optional<std::string> capabilities;
     ModuleConfigurationParameters configuration_parameters; // contains: config_module and config_implementations
                                                             // as well as the upcoming "config" key
-    bool telemetry_enabled;
+    bool telemetry_enabled = false;
     std::optional<TelemetryConfig> telemetry_config;
     ModuleConnections connections;
     ModuleTierMappings mapping;

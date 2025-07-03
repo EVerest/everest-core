@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #include "system_unix.hpp"
 
@@ -17,6 +17,8 @@
 
 #include <fmt/core.h>
 
+#include <utils/helpers.hpp>
+
 namespace Everest::system {
 
 const auto PARENT_DIED_SIGNAL = SIGTERM;
@@ -30,8 +32,8 @@ struct GetPasswdEntryResult {
     }
 
     std::string error;
-    uid_t uid;
-    gid_t gid;
+    uid_t uid{};
+    gid_t gid{};
     std::vector<gid_t> groups;
 
     operator bool() const {
@@ -39,7 +41,8 @@ struct GetPasswdEntryResult {
     }
 };
 
-static GetPasswdEntryResult get_passwd_entry(const std::string& user_name) {
+namespace {
+GetPasswdEntryResult get_passwd_entry(const std::string& user_name) {
     // Assuming that a user does not have more than 50 groups
     constexpr int max_supplementary_groups = 50;
 
@@ -51,15 +54,17 @@ static GetPasswdEntryResult get_passwd_entry(const std::string& user_name) {
 
     // get supplementary groups for this user
     int max_ngroups = max_supplementary_groups;
-    gid_t groups[max_supplementary_groups];
+    std::array<gid_t, max_supplementary_groups> groups{};
 
-    int ngroups = getgrouplist(user_name.c_str(), entry->pw_gid, groups, &max_ngroups);
+    const int ngroups = getgrouplist(user_name.c_str(), entry->pw_gid, groups.data(), &max_ngroups);
     if (ngroups < 0) {
         return GetPasswdEntryResult("Could not get supplementary groups for user name: " + user_name);
     }
 
-    return GetPasswdEntryResult(entry->pw_uid, entry->pw_gid, std::vector<gid_t>(groups, groups + ngroups));
+    return GetPasswdEntryResult(entry->pw_uid, entry->pw_gid,
+                                std::vector<gid_t>(groups.begin(), groups.begin() + ngroups));
 }
+} // namespace
 
 bool keep_caps() {
     return (0 == cap_set_secbits(SECBIT_KEEP_CAPS));
@@ -80,7 +85,8 @@ std::string set_caps(const std::vector<std::string>& capabilities) {
     }
 
     auto cap_ctx = cap_get_proc();
-    if (cap_set_flag(cap_ctx, CAP_INHERITABLE, capability_values.size(), capability_values.data(), CAP_SET) != 0) {
+    if (cap_set_flag(cap_ctx, CAP_INHERITABLE, Everest::helpers::clamp_to<int>(capability_values.size()),
+                     capability_values.data(), CAP_SET) != 0) {
         return "Failed to add capability flags to CAP_INHERITABLE";
     }
 
@@ -188,9 +194,9 @@ std::string set_user_and_capabilities(const std::string& run_as_user, const std:
 }
 
 SubProcess SubProcess::create(const std::string& run_as_user, const std::vector<std::string>& capabilities) {
-    int pipefd[2];
+    std::array<int, 2> pipefd{};
 
-    if (pipe2(pipefd, O_CLOEXEC | O_DIRECT)) {
+    if (pipe2(pipefd.data(), O_CLOEXEC | O_DIRECT)) {
         throw std::runtime_error(fmt::format("Syscall pipe2() failed ({}), exiting", strerror(errno)));
     }
 

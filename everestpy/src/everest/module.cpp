@@ -72,7 +72,7 @@ ModuleSetup Module::say_hello() {
 json Module::call_command(const Fulfillment& fulfillment, const std::string& cmd_name, json args) {
     // FIXME (aw): we're releasing the GIL here, because the mqtt thread will want to aquire it when calling the
     // callbacks
-    pybind11::gil_scoped_release release;
+    const pybind11::gil_scoped_release release;
     const auto& result = handle->call_cmd(fulfillment.requirement, cmd_name, std::move(args));
     return result;
 }
