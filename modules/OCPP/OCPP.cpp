@@ -38,25 +38,39 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
     const auto error_type = error.type;
     const auto uuid = error.uuid.uuid;
 
-    auto it = std::find_if(MREC_ERROR_MAP.begin(), MREC_ERROR_MAP.end(),
-                           [&](const auto& entry) { return error_type.find(entry.first) != std::string::npos; });
+    auto mrec_it = std::find_if(MREC_ERROR_MAP.begin(), MREC_ERROR_MAP.end(),
+                                [&](const auto& entry) { return error_type.find(entry.first) != std::string::npos; });
 
     // is MREC error
-    if (it != MREC_ERROR_MAP.end()) {
+    if (mrec_it != MREC_ERROR_MAP.end()) {
         // lambda to create MREC error info
         auto make_mrec_error_info = [&](ocpp::v16::ChargePointErrorCode code, const std::string& vendor_error_code) {
             return ocpp::v16::ErrorInfo{uuid, code, false, std::nullopt, CHARGE_X_MREC_VENDOR_ID, vendor_error_code};
         };
-        return make_mrec_error_info(it->second.first, it->second.second);
+        return make_mrec_error_info(mrec_it->second.first, mrec_it->second.second);
+    }
+
+    auto ocpp_it = std::find_if(OCPP_ERROR_MAP.begin(), OCPP_ERROR_MAP.end(),
+                                [&](const auto& entry) { return error_type.find(entry.first) != std::string::npos; });
+
+    // is OCPP error
+    if (ocpp_it != OCPP_ERROR_MAP.end()) {
+        // lambda to create OCPP error info
+        auto make_ocpp_error_info = [&](ocpp::v16::ChargePointErrorCode code) {
+            return ocpp::v16::ErrorInfo{uuid, code, false, std::nullopt};
+        };
+        return make_ocpp_error_info(ocpp_it->second);
     }
 
     if (error_type == INOPERATIVE_ERROR_TYPE) {
+        // clang-format off
         return ocpp::v16::ErrorInfo{uuid,
                                     ocpp::v16::ChargePointErrorCode::OtherError,
                                     true,
                                     "caused_by:" + error.message,
                                     error.vendor_id,
                                     error.description};
+        // clang-format on
     }
 
     const auto get_simplified_error_type = [](const std::string& error_type) {
