@@ -22,7 +22,7 @@ cmds:
   selected_services:
     description: >-
       Callback to notify the VAS provider which services and parameter sets were selected by the EV.
-      It is called upon receiving ServiceSelectionReq.
+      It is called upon receiving ServiceSelectionReq and called only once per Request.
     arguments:
       selected_services:
         description: List of selected services and their parameter set IDs
