@@ -54,12 +54,14 @@ protected:
     std::function<void(ConnectionFailedReason)> connection_failed_callback;
     std::shared_ptr<boost::asio::steady_timer> reconnect_timer;
     std::unique_ptr<Everest::SteadyTimer> ping_timer;
+    std::atomic_bool ping_cleared;
+    std::int32_t ping_elapsed_s;
+    std::int32_t pong_elapsed_s;
     std::mutex reconnect_mutex;
     std::mutex connection_mutex;
     std::atomic_int reconnect_backoff_ms;
     std::atomic_int connection_attempts;
     std::atomic_bool shutting_down;
-    std::atomic_bool reconnecting;
 
     /// \brief Indicates if the required callbacks are registered
     /// \returns true if the websocket is properly initialized
@@ -131,8 +133,9 @@ public:
     /// \returns true if the message was sent successfully
     virtual bool send(const std::string& message) = 0;
 
-    /// \brief starts a timer that sends a websocket ping at the given \p interval_s
-    void set_websocket_ping_interval(int32_t interval_s);
+    /// \brief starts a timer that sends a websocket ping at the given \p ping_interval_s and
+    /// waits for a pong response in \p pong_timeout_s
+    void set_websocket_ping_interval(int32_t ping_interval_s, int32_t pong_timeout_s);
 
     /// \brief set the \p authorization_key of the connection_options
     void set_authorization_key(const std::string& authorization_key);

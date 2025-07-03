@@ -1893,9 +1893,12 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
                         this->configuration->getTransactionMessageRetryInterval());
                 } else if (call.msg.key == "WebsocketPingInterval") {
                     auto websocket_ping_interval_option = this->configuration->getWebsocketPingInterval();
+
                     if (websocket_ping_interval_option.has_value()) {
                         auto websocket_ping_interval = websocket_ping_interval_option.value();
-                        this->websocket->set_websocket_ping_interval(websocket_ping_interval);
+                        auto websocket_pong_timeout = this->configuration->getWebsocketPongTimeout();
+
+                        this->websocket->set_websocket_ping_interval(websocket_ping_interval, websocket_pong_timeout);
                     }
                 } else if (call.msg.key == "ISO15118PnCEnabled") {
                     if (ocpp::conversions::string_to_bool(call.msg.value.get())) {

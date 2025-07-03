@@ -14,9 +14,11 @@ WebsocketBase::WebsocketBase() :
     message_callback(nullptr),
     reconnect_timer(nullptr),
     connection_attempts(1),
+    ping_cleared(true),
+    ping_elapsed_s(0),
+    pong_elapsed_s(0),
     reconnect_backoff_ms(0),
-    shutting_down(false),
-    reconnecting(false) {
+    shutting_down(false) {
 
     set_connection_options_base(connection_options);
 
@@ -159,14 +161,56 @@ void WebsocketBase::cancel_reconnect_timer() {
     this->reconnect_timer = nullptr;
 }
 
-void WebsocketBase::set_websocket_ping_interval(int32_t interval_s) {
+void WebsocketBase::set_websocket_ping_interval(int32_t ping_interval_s, int32_t pong_timeout_s) {
+    static constexpr int32_t PING_TIMER_INTERVAL = 1;
+
     if (this->ping_timer) {
         this->ping_timer->stop();
     }
-    if (interval_s > 0) {
-        this->ping_timer->interval([this]() { this->ping(); }, std::chrono::seconds(interval_s));
+
+    if (ping_interval_s > 0) {
+        EVLOG_debug << "Started a ping interval of: " << ping_interval_s
+                    << " s with a pong timeout of: " << pong_timeout_s << " s";
+
+        this->ping_timer->interval(
+            [this]() {
+                if (false == ping_cleared.load()) { // We have a ping to which we require a response
+                    pong_elapsed_s += PING_TIMER_INTERVAL;
+
+                    // We have waited more than we should for the pong response
+                    if (pong_elapsed_s > this->connection_options.pong_timeout_s) {
+                        on_pong_timeout("Pong not received from server!");
+
+                        // Always clear ping value on a fail
+                        ping_cleared.store(true);
+
+                        // Reset the elapsed time
+                        ping_elapsed_s = pong_elapsed_s = 0;
+
+                        // Clear the ping timer
+                        if (this->ping_timer) {
+                            this->ping_timer->stop();
+                        }
+                    }
+                } else { // We need to see if we have to send the ping
+                    ping_elapsed_s += PING_TIMER_INTERVAL;
+
+                    if (ping_elapsed_s > this->connection_options.ping_interval_s) {
+                        // Set the ping flag before sending it out
+                        ping_cleared.store(false);
+                        this->ping();
+
+                        // Reset the elapsed time
+                        ping_elapsed_s = pong_elapsed_s = 0;
+                    }
+                }
+            },
+            // Tick each second to see if we reached a timeout
+            std::chrono::seconds(PING_TIMER_INTERVAL));
     }
-    this->connection_options.ping_interval_s = interval_s;
+
+    this->connection_options.ping_interval_s = ping_interval_s;
+    this->connection_options.pong_timeout_s = pong_timeout_s;
 }
 
 void WebsocketBase::set_authorization_key(const std::string& authorization_key) {
@@ -174,11 +218,9 @@ void WebsocketBase::set_authorization_key(const std::string& authorization_key) 
 }
 
 void WebsocketBase::on_pong_timeout(std::string msg) {
-    if (!this->reconnecting) {
-        EVLOG_info << "Reconnecting because of a pong timeout after " << this->connection_options.pong_timeout_s << "s";
-        this->reconnecting = true;
-        this->close(WebsocketCloseReason::GoingAway, "Pong timeout");
-    }
+    EVLOG_info << "Reconnecting because of a pong timeout after " << this->connection_options.pong_timeout_s << "s"
+               << " and with reason: " << msg;
+    reconnect(1000);
 }
 
 } // namespace ocpp
