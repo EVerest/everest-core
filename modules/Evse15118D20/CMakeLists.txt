@@ -11,6 +11,7 @@ ev_setup_cpp_module()
 target_sources(${MODULE_NAME}
     PRIVATE
         charger/session_logger.cpp
+        charger/utils.cpp
 )
 
 target_link_libraries(${MODULE_NAME}

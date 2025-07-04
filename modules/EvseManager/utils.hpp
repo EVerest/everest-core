@@ -5,7 +5,9 @@
 #define _EVSEMANAGER_UTILS_H_
 
 #include <everest/staging/helpers/helpers.hpp>
+#include <generated/types/evse_manager.hpp>
 #include <generated/types/powermeter.hpp>
+#include <vector>
 
 namespace module {
 namespace utils {

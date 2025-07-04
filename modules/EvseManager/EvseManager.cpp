@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "EvseManager.hpp"
 
+#include <algorithm>
 #include <fmt/color.h>
 #include <fmt/core.h>
 
@@ -9,6 +10,7 @@
 #include "SessionLog.hpp"
 #include "Timeout.hpp"
 #include "scoped_lock_timeout.hpp"
+#include "utils.hpp"
 
 using namespace std::literals::chrono_literals;
 
@@ -114,8 +116,17 @@ void EvseManager::init() {
     if (hlc_enabled) {
         if (config.charge_mode == "DC") {
             // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
-            r_powersupply_DC[0]->subscribe_capabilities(
-                [this](const auto& caps) { update_powersupply_capabilities(caps); });
+            r_powersupply_DC[0]->subscribe_capabilities([this](const auto& caps) {
+                update_powersupply_capabilities(caps);
+                const bool dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+                bool dc_bpt_was_updated = false;
+                if (caps.bidirectional) {
+                    dc_bpt_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
+                }
+                if (dc_was_updated || dc_bpt_was_updated) {
+                    this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
+                }
+            });
         }
     }
 
@@ -151,6 +162,16 @@ void EvseManager::init() {
         if (config.charge_mode == "AC") {
             EVLOG_debug << fmt::format("Max AC hardware capabilities: {}A/{}ph", hw_capabilities.max_current_A_import,
                                        hw_capabilities.max_phase_count_import);
+            const bool ac_1_was_updated =
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_single_phase_core);
+            bool ac_3_was_updated = false;
+            if (c.max_phase_count_import == 3) {
+                ac_3_was_updated =
+                    update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core);
+            }
+            if (ac_1_was_updated || ac_3_was_updated) {
+                this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
+            }
         }
     });
 
@@ -159,7 +180,7 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp, config.lock_connector_in_state_b));
+    bsp = std::make_unique<IECStateMachine>(r_bsp, config.lock_connector_in_state_b);
 
     if (config.hack_simplified_mode_limit_10A) {
         bsp->set_ev_simplified_mode_evse_limit(true);
@@ -168,10 +189,10 @@ void EvseManager::ready() {
     // we provide the powermeter interface to the ErrorHandling only if we need to react to powermeter errors
     // otherwise we provide an empty vector of pointers to the powermeter interface
     const std::vector<std::unique_ptr<powermeterIntf>> empty;
-    error_handling = std::unique_ptr<ErrorHandling>(
-        new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC,
-                          config.fail_on_powermeter_errors ? r_powermeter_billing() : empty, r_over_voltage_monitor,
-                          config.inoperative_error_use_vendor_id));
+    error_handling =
+        std::make_unique<ErrorHandling>(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC,
+                                        config.fail_on_powermeter_errors ? r_powermeter_billing() : empty,
+                                        r_over_voltage_monitor, config.inoperative_error_use_vendor_id);
 
     if (not config.lock_connector_in_state_b) {
         EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
@@ -207,7 +228,7 @@ void EvseManager::ready() {
         if (pnc_enabled) {
             payment_options.push_back(types::iso15118::PaymentOption::Contract);
         }
-        if (config.payment_enable_eim == false and pnc_enabled == false) {
+        if (!config.payment_enable_eim and !pnc_enabled) {
             EVLOG_warning << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
             payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
         }
@@ -270,15 +291,18 @@ void EvseManager::ready() {
             r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
             transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_three_phase_core);
+            update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core);
 
         } else if (config.charge_mode == "DC") {
             transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
+            update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
 
             const auto caps = get_powersupply_capabilities();
             update_powersupply_capabilities(caps);
 
             if (caps.bidirectional) {
                 transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
             }
 
             // Set present measurements on HLC to sane defaults
@@ -1080,6 +1104,8 @@ void EvseManager::ready_to_start_charging() {
     }
     charger_ready = true;
 
+    this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
+
     timepoint_ready_for_charging = std::chrono::steady_clock::now();
     charger->run();
 
@@ -1392,6 +1418,19 @@ void EvseManager::set_central_contract_validation_allowed(const bool value) {
 
 void EvseManager::set_contract_certificate_installation_enabled(const bool value) {
     contract_certificate_installation_enabled = value;
+}
+
+bool EvseManager::update_supported_energy_transfers(const types::iso15118::EnergyTransferMode& energy_transfer) {
+    std::scoped_lock lock(supported_energy_transfers_mutex);
+    bool was_updated = supported_energy_transfers.end() ==
+                       std::find_if(supported_energy_transfers.begin(), supported_energy_transfers.end(),
+                                    [energy_transfer](const auto& supported_energy_transfer) {
+                                        return energy_transfer == supported_energy_transfer;
+                                    });
+    if (was_updated) {
+        supported_energy_transfers.push_back(energy_transfer);
+    }
+    return was_updated;
 }
 
 void EvseManager::log_v2g_message(types::iso15118::V2gMessages v2g_messages) {
