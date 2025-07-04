@@ -42,6 +42,11 @@ provides:
   meter:
     description: Implementation of the driver functionality
     interface: powermeter
+  lcd_display:
+    description: >-
+        Implementation of the LCD display functionality, can set up to 2 display messages (8 & 4 chars long)
+        For allowed charactes, check the datasheet
+    interface: display_message
 requires:
   modbus:
     interface: serial_communication_hub

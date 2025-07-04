@@ -65,6 +65,12 @@ use utils::{
 /// Public key prefix for transparency software, defined under 6.5.14.
 const PUBLIC_KEY_PREFIX: &str = "3059301306072A8648CE3D020106082A8648CE3D03010703420004";
 
+/// LCD custom string register address (start address for 4 registers: 47063-47066)
+const LCD_CUSTOM_STRING_REGISTER: u16 = 7063;
+/// LCD custom string label egister address (start address for 2 registers: 47067-47068)
+const LCD_CUSTOM_STRING_LABEL_REGISTER: u16 = 7067;
+const LCD_PARAMETERS_REGISTER: u16 = 7062;
+
 /// The charging state from register 7000, defined at table 6.
 #[derive(PartialEq, Debug)]
 enum IskraMaterState {
@@ -837,6 +843,148 @@ impl ReadyState {
             }
         }
     }
+
+    /// Write custom string to LCD display registers
+    ///
+    /// Generic function to write strings to either the main LCD register or label register.
+    /// Non-printable values are replaced with empty space by the meter.
+    /// Also sets bit 3 in the LCD parameters register (47062) to enable custom string display.
+    ///
+    /// # Arguments
+    /// * `custom_string` - The string to display on the LCD
+    /// * `register_address` - The starting register address (47063 for main, 47067 for label)
+    /// * `max_chars` - Maximum number of characters (8 for main, 4 for label)
+    /// * `num_registers` - Number of registers to write (4 for main, 2 for label)
+    fn write_lcd_register(
+        &self,
+        custom_string: &str,
+        register_address: u16,
+        max_chars: usize,
+        num_registers: usize,
+    ) -> Result<()> {
+        // Truncate to maximum characters
+        let truncated_string = if custom_string.len() > max_chars {
+            &custom_string[..max_chars]
+        } else {
+            custom_string
+        };
+
+        log::info!(
+            "Writing LCD string: '{}' to registers starting at {}",
+            truncated_string,
+            register_address
+        );
+
+        // Convert string to register values using the existing utility
+        let data = string_to_vec(truncated_string);
+
+        // Ensure we have exactly the required number of registers
+        let mut register_data = vec![0u16; num_registers];
+        for (i, &value) in data.iter().take(num_registers).enumerate() {
+            register_data[i] = value;
+        }
+
+        // Read the LCD parameters register and set bit 3 to 1
+        let current_params = self.read_holding_registers_fixed::<1>(LCD_PARAMETERS_REGISTER)?[0];
+        let new_params = current_params | (1 << 3); // Set bit 3 to 1
+
+        log::info!(
+            "Setting LCD parameters register bit 3: 0x{:04X} -> 0x{:04X}",
+            current_params,
+            new_params
+        );
+
+        self.write_single_register(LCD_PARAMETERS_REGISTER, new_params)?;
+
+        // Write to the specified registers
+        self.write_multiple_registers(register_address, &register_data)?;
+
+        log::info!(
+            "Successfully wrote LCD string to registers {}",
+            register_address
+        );
+        Ok(())
+    }
+
+    /// Write custom string to LCD display on the meter
+    ///
+    /// Writes up to 8 bytes to the LCD custom string registers (47063-47066).
+    /// Non-printable values are replaced with empty space by the meter.
+    /// Also sets bit 3 in the LCD parameters register (47062) to enable custom string display.
+    ///
+    /// # Arguments
+    /// * `custom_string` - The string to display on the LCD (max 8 characters)
+    fn write_lcd_custom_string(&self, custom_string: &str) -> Result<()> {
+        self.write_lcd_register(custom_string, LCD_CUSTOM_STRING_REGISTER, 8, 4)
+    }
+
+    /// Write custom string label to LCD display on the meter
+    ///
+    /// Writes up to 4 bytes to the LCD custom string label registers (47067-47068).
+    /// Non-printable values are replaced with empty space by the meter.
+    ///
+    /// # Arguments
+    /// * `custom_string_label` - The label string to display on the LCD (max 4 characters)
+    fn write_lcd_custom_string_label(&self, custom_string_label: &str) -> Result<()> {
+        self.write_lcd_register(custom_string_label, LCD_CUSTOM_STRING_LABEL_REGISTER, 4, 2)
+    }
+
+    /// Clear custom string from LCD display by clearing bit 3 in parameters register
+    ///
+    /// Clears bit 3 in the LCD parameters register (47062) to disable custom string display
+    /// and also clears the string data in registers 47063-47066 and 47067-47068.
+    fn clear_lcd_custom_string(&self) -> Result<()> {
+        log::info!("Clearing LCD custom string display");
+
+        // Read the LCD parameters register and clear bit 3
+        let current_params = self.read_holding_registers_fixed::<1>(LCD_PARAMETERS_REGISTER)?[0];
+        let new_params = current_params & !(1 << 3); // Clear bit 3 to 0
+
+        log::info!(
+            "Clearing LCD parameters register bit 3: 0x{:04X} -> 0x{:04X}",
+            current_params,
+            new_params
+        );
+
+        self.write_single_register(LCD_PARAMETERS_REGISTER, new_params)?;
+
+        // Clear the string data in registers 47063-47066 (custom string)
+        let register_data = vec![0u16; 4]; // 4 registers with all zeros (empty string)
+        self.write_multiple_registers(LCD_CUSTOM_STRING_REGISTER, &register_data)?;
+
+        // Clear the string data in registers 47067-47068 (custom string label)
+        let label_register_data = vec![0u16; 2]; // 2 registers with all zeros (empty label)
+        self.write_multiple_registers(LCD_CUSTOM_STRING_LABEL_REGISTER, &label_register_data)?;
+
+        log::info!("Successfully cleared LCD custom string display and data");
+        Ok(())
+    }
+
+    /// Read custom string from LCD display registers
+    ///
+    /// Reads 8 bytes from the LCD custom string registers (47063-47066) and
+    /// 4 bytes from the LCD custom string label registers (47067-47068).
+    ///
+    /// # Returns
+    /// * A tuple containing (custom_string, custom_string_label)
+    fn read_lcd_custom_string(&self) -> Result<(String, String)> {
+        log::info!("Reading LCD custom string from registers 47063-47066 and 47067-47068");
+
+        // Read 4 registers (8 bytes) from address 47063 (custom string)
+        let string_registers = self.read_holding_registers(LCD_CUSTOM_STRING_REGISTER, 4)?;
+        let custom_string = to_8_string(&string_registers)?;
+
+        // Read 2 registers (4 bytes) from address 47067 (custom string label)
+        let label_registers = self.read_holding_registers(LCD_CUSTOM_STRING_LABEL_REGISTER, 2)?;
+        let custom_string_label = to_8_string(&label_registers)?;
+
+        log::info!(
+            "Read LCD custom string: '{}' and label: '{}' from registers",
+            custom_string,
+            custom_string_label
+        );
+        Ok((custom_string, custom_string_label))
+    }
 }
 
 /// The state machine of this module.
@@ -917,6 +1065,223 @@ impl generated::OnReadySubscriber for IskraMeter {
 
 impl generated::SerialCommunicationHubClientSubscriber for IskraMeter {}
 
+impl generated::DisplayMessageServiceSubscriber for IskraMeter {
+    fn clear_display_message(
+        &self,
+        _context: &generated::Context,
+        _request: generated::types::display_message::ClearDisplayMessageRequest,
+    ) -> everestrs::Result<generated::types::display_message::ClearDisplayMessageResponse> {
+        let lock = self
+            .state_machine
+            .lock()
+            .map_err(|_| ::everestrs::Error::InvalidArgument("Internal error"))?;
+
+        let StateMachine::ReadyState(ready_state) = &*lock else {
+            return Err(::everestrs::Error::InvalidArgument("Not initialized"));
+        };
+
+        // Clear the LCD display by clearing bit 3 in parameters register
+        let res = ready_state.clear_lcd_custom_string();
+
+        match res {
+            Ok(()) => Ok(
+                generated::types::display_message::ClearDisplayMessageResponse {
+                    status: generated::types::display_message::ClearMessageResponseEnum::Accepted,
+                    status_info: None,
+                },
+            ),
+            Err(e) => {
+                log::error!("Failed to clear display message {:?}", e);
+                Ok(
+                    generated::types::display_message::ClearDisplayMessageResponse {
+                        status:
+                            generated::types::display_message::ClearMessageResponseEnum::Unknown,
+                        status_info: None,
+                    },
+                )
+            }
+        }
+    }
+
+    fn get_display_messages(
+        &self,
+        _context: &generated::Context,
+        _request: generated::types::display_message::GetDisplayMessageRequest,
+    ) -> everestrs::Result<generated::types::display_message::GetDisplayMessageResponse> {
+        let lock = self
+            .state_machine
+            .lock()
+            .map_err(|_| ::everestrs::Error::InvalidArgument("Internal error"))?;
+
+        let StateMachine::ReadyState(ready_state) = &*lock else {
+            return Err(::everestrs::Error::InvalidArgument("Not initialized"));
+        };
+
+        // Try to get the current LCD messages
+        match ready_state.read_lcd_custom_string() {
+            Ok((custom_string, custom_string_label)) => {
+                let mut messages = Vec::new();
+
+                // Add main LCD message if not empty
+                if !custom_string.is_empty() {
+                    let main_display_message = generated::types::display_message::DisplayMessage {
+                        id: Some(0),
+                        message: generated::types::text_message::MessageContent {
+                            format: Some(generated::types::text_message::MessageFormat::ASCII),
+                            language: None,
+                            content: custom_string,
+                        },
+                        priority: Some(
+                            generated::types::display_message::MessagePriorityEnum::NormalCycle,
+                        ),
+                        state: Some(generated::types::display_message::MessageStateEnum::Idle),
+                        identifier_id: None,
+                        identifier_type: None,
+                        qr_code: None,
+                        timestamp_from: None,
+                        timestamp_to: None,
+                    };
+                    messages.push(main_display_message);
+                }
+
+                // Add label message if not empty
+                if !custom_string_label.is_empty() {
+                    let label_display_message = generated::types::display_message::DisplayMessage {
+                        id: Some(1),
+                        message: generated::types::text_message::MessageContent {
+                            format: Some(generated::types::text_message::MessageFormat::ASCII),
+                            language: None,
+                            content: custom_string_label,
+                        },
+                        priority: Some(
+                            generated::types::display_message::MessagePriorityEnum::NormalCycle,
+                        ),
+                        state: Some(generated::types::display_message::MessageStateEnum::Idle),
+                        identifier_id: None,
+                        identifier_type: None,
+                        qr_code: None,
+                        timestamp_from: None,
+                        timestamp_to: None,
+                    };
+                    messages.push(label_display_message);
+                }
+
+                Ok(
+                    generated::types::display_message::GetDisplayMessageResponse {
+                        status_info: None,
+                        messages: if messages.is_empty() {
+                            None
+                        } else {
+                            Some(messages)
+                        },
+                    },
+                )
+            }
+            Err(e) => {
+                log::error!("Failed to get display message {:?}", e);
+                Ok(
+                    generated::types::display_message::GetDisplayMessageResponse {
+                        status_info: None,
+                        messages: None,
+                    },
+                )
+            }
+        }
+    }
+
+    fn set_display_message(
+        &self,
+        _context: &generated::Context,
+        request: Vec<generated::types::display_message::DisplayMessage>,
+    ) -> everestrs::Result<generated::types::display_message::SetDisplayMessageResponse> {
+        let lock = self
+            .state_machine
+            .lock()
+            .map_err(|_| ::everestrs::Error::InvalidArgument("Internal error"))?;
+
+        let StateMachine::ReadyState(ready_state) = &*lock else {
+            return Err(::everestrs::Error::InvalidArgument("Not initialized"));
+        };
+
+        if request.is_empty() {
+            // No messages provided, clear both displays
+            let res = ready_state.clear_lcd_custom_string();
+
+            match res {
+                Ok(()) => Ok(
+                    generated::types::display_message::SetDisplayMessageResponse {
+                        status:
+                            generated::types::display_message::DisplayMessageStatusEnum::Accepted,
+                        status_info: None,
+                    },
+                ),
+                Err(e) => {
+                    log::error!("Failed to clear display message {:?}", e);
+                    Ok(generated::types::display_message::SetDisplayMessageResponse {
+                        status: generated::types::display_message::DisplayMessageStatusEnum::Rejected,
+                        status_info: None,
+                    })
+                }
+            }
+        } else {
+            // Find messages by ID
+            let main_message = request.iter().find(|msg| msg.id == Some(0));
+            let label_message = request.iter().find(|msg| msg.id == Some(1));
+
+            // Handle main message (ID 0)
+            let res1 = if let Some(msg) = main_message {
+                ready_state.write_lcd_custom_string(&msg.message.content)
+            } else {
+                // No main message, clear it
+                ready_state.write_lcd_custom_string("")
+            };
+
+            // Handle label message (ID 1)
+            let res2 = if let Some(msg) = label_message {
+                ready_state.write_lcd_custom_string_label(&msg.message.content)
+            } else {
+                // No label message, clear it
+                ready_state.write_lcd_custom_string_label("")
+            };
+
+            match (res1, res2) {
+                (Ok(()), Ok(())) => Ok(
+                    generated::types::display_message::SetDisplayMessageResponse {
+                        status:
+                            generated::types::display_message::DisplayMessageStatusEnum::Accepted,
+                        status_info: None,
+                    },
+                ),
+                (Err(e1), Err(e2)) => {
+                    log::error!(
+                        "Failed to set both display messages: main={:?}, label={:?}",
+                        e1,
+                        e2
+                    );
+                    Ok(generated::types::display_message::SetDisplayMessageResponse {
+                        status: generated::types::display_message::DisplayMessageStatusEnum::Rejected,
+                        status_info: None,
+                    })
+                }
+                (Err(e), Ok(())) => {
+                    log::error!("Failed to set main display message {:?}", e);
+                    Ok(generated::types::display_message::SetDisplayMessageResponse {
+                        status: generated::types::display_message::DisplayMessageStatusEnum::Rejected,
+                        status_info: None,
+                    })
+                }
+                (Ok(()), Err(e)) => {
+                    log::error!("Failed to set label display message {:?}", e);
+                    Ok(generated::types::display_message::SetDisplayMessageResponse {
+                        status: generated::types::display_message::DisplayMessageStatusEnum::Rejected,
+                        status_info: None,
+                    })
+                }
+            }
+        }
+    }
+}
+
 impl generated::PowermeterServiceSubscriber for IskraMeter {
     fn start_transaction(
         &self,
@@ -979,7 +1344,7 @@ fn main() {
         communication_errors_threshold: config.communication_errors_threshold as usize,
     });
 
-    let _module = Module::new(class.clone(), class.clone(), class.clone());
+    let _module = Module::new(class.clone(), class.clone(), class.clone(), class.clone());
 
     loop {
         std::thread::sleep(std::time::Duration::from_secs(1));
@@ -1340,5 +1705,298 @@ mod tests {
             identification_level: None,
             tariff_text: None,
         });
+    }
+
+    #[test]
+    fn ready_state__read_lcd_custom_string() {
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+
+        // Test reading both main string and label string from registers
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_CUSTOM_STRING_REGISTER as i64), eq(4), eq(1234))
+            .times(1)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![
+                        u16::from_be_bytes([b'H', b'e']).into(),
+                        u16::from_be_bytes([b'l', b'l']).into(),
+                        u16::from_be_bytes([b'o', b' ']).into(),
+                        0,
+                    ]),
+                })
+            });
+
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_CUSTOM_STRING_LABEL_REGISTER as i64), eq(2), eq(1234))
+            .times(1)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![
+                        u16::from_be_bytes([b'T', b'e']).into(),
+                        u16::from_be_bytes([b's', b't']).into(),
+                    ]),
+                })
+            });
+
+        let ready_state = make_ready_state(mock);
+        let res = ready_state.read_lcd_custom_string().unwrap();
+        assert_eq!(res, ("Hello \0\0".to_string(), "Test".to_string()));
+    }
+
+    #[test]
+    fn ready_state__write_lcd_custom_string() {
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        use mockall::Sequence;
+        let mut seq = Sequence::new();
+
+        // Test writing a short string to main LCD register
+        // First expect read of LCD parameters register
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![0x0000]), // Current value without bit 3 set
+                })
+            });
+
+        // Then expect write of LCD parameters register with bit 3 set
+        mock.expect_modbus_write_single_register()
+            .with(eq(0x0008), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0008 = bit 3 set
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Finally expect write of custom string registers
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_REGISTER as i64 && *id == 1234 && data.data.len() == 4
+                // "Hello" = [0x4865, 0x6C6C, 0x6F00, 0x0000] in big-endian format
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        let ready_state = make_ready_state(mock);
+        let res = ready_state.write_lcd_custom_string("Hello");
+        assert!(res.is_ok());
+
+        // Test writing a long string (should be truncated to 8 characters)
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        let mut seq = Sequence::new();
+
+        // First expect read of LCD parameters register
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![0x0010]), // Some other bits set
+                })
+            });
+
+        // Then expect write of LCD parameters register with bit 3 set
+        mock.expect_modbus_write_single_register()
+            .with(eq(0x0018), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0010 | 0x0008 = 0x0018
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Finally expect write of custom string registers with truncated data
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_REGISTER as i64 && *id == 1234 && data.data.len() == 4
+                // "VeryLong" (truncated to 8 chars) data
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        let ready_state = make_ready_state(mock);
+        let res = ready_state.write_lcd_custom_string("VeryLongStringThatShouldBeTruncated");
+        assert!(res.is_ok());
+
+        // Test writing an empty string
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        let mut seq = Sequence::new();
+
+        // First expect read of LCD parameters register
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![0x0000]),
+                })
+            });
+
+        // Then expect write of LCD parameters register with bit 3 set
+        mock.expect_modbus_write_single_register()
+            .with(eq(0x0008), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Finally expect write of custom string registers with empty data (all zeros)
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_REGISTER as i64
+                    && *id == 1234
+                    && data.data.len() == 4
+                    && data.data.iter().all(|&x| x == 0) // All zeros for empty string
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        let ready_state = make_ready_state(mock);
+        let res = ready_state.write_lcd_custom_string("");
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn ready_state__write_lcd_custom_string_label() {
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        use mockall::Sequence;
+        let mut seq = Sequence::new();
+
+        // Test writing a label string to registers
+        // First expect read of LCD parameters register
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![0x0000]), // Current value without bit 3 set
+                })
+            });
+
+        // Then expect write of LCD parameters register with bit 3 set
+        mock.expect_modbus_write_single_register()
+            .with(eq(0x0008), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0008 = bit 3 set
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Finally expect write of label string registers
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
+                    && *id == 1234
+                    && data.data.len() == 2
+                // "Test" = [0x5465, 0x7374] in big-endian format
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        let ready_state = make_ready_state(mock);
+        let res = ready_state.write_lcd_custom_string_label("Test");
+        assert!(res.is_ok());
+
+        // Test writing a long label string (should be truncated to 4 characters)
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        let mut seq = Sequence::new();
+
+        // First expect read of LCD parameters register
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![0x0010]), // Some other bits set
+                })
+            });
+
+        // Then expect write of LCD parameters register with bit 3 set
+        mock.expect_modbus_write_single_register()
+            .with(eq(0x0018), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0010 | 0x0008 = 0x0018
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Finally expect write of label string registers with truncated data
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
+                    && *id == 1234
+                    && data.data.len() == 2
+                // "Long" (truncated from "LongLabel") data
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        let ready_state = make_ready_state(mock);
+        let res = ready_state.write_lcd_custom_string_label("LongLabel");
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn ready_state__clear_lcd_custom_string() {
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        use mockall::Sequence;
+        let mut seq = Sequence::new();
+
+        // Test clearing LCD custom string
+
+        // First expect read of LCD parameters register
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![0x0018]), // Current value with bit 3 set and other bits
+                })
+            });
+
+        // Then expect write of LCD parameters register with bit 3 cleared
+        mock.expect_modbus_write_single_register()
+            .with(eq(0x0010), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0018 & !0x0008 = 0x0010
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Then expect write of empty string to custom string registers (main)
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_REGISTER as i64
+                    && *id == 1234
+                    && data.data.len() == 4
+                    && data.data.iter().all(|&x| x == 0) // All zeros (empty string)
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Finally expect write of empty string to custom string label registers
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
+                    && *id == 1234
+                    && data.data.len() == 2
+                    && data.data.iter().all(|&x| x == 0) // All zeros (empty label)
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        let ready_state = make_ready_state(mock);
+        let res = ready_state.clear_lcd_custom_string();
+        assert!(res.is_ok());
     }
 }
