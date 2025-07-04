@@ -21,7 +21,7 @@ from everest.testing.core_utils.common import OCPPVersion
 from everest.testing.core_utils._configuration.everest_environment_setup import EverestEnvironmentOCPPConfiguration
 from everest.testing.core_utils.controller.everest_test_controller import EverestTestController
 from everest.testing.ocpp_utils.central_system import CentralSystem, LocalCentralSystem, inject_csms_v201_mock, inject_csms_v16_mock, \
-    determine_ssl_context
+    determine_ssl_context, inject_csms_v21_mock
 from everest.testing.ocpp_utils.charge_point_utils import TestUtility, OcppTestConfiguration
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
@@ -40,7 +40,8 @@ def ocpp_version(request) -> OCPPVersion:
 def ocpp_config(request, central_system: CentralSystem, test_config: OcppTestConfiguration, ocpp_version: OCPPVersion):
     ocpp_config_marker = request.node.get_closest_marker("ocpp_config")
 
-    ocpp_configuration_strategies_marker = request.node.get_closest_marker("ocpp_config_adaptions")
+    ocpp_configuration_strategies_marker = request.node.get_closest_marker(
+        "ocpp_config_adaptions")
     ocpp_configuration_strategies = []
     if ocpp_configuration_strategies_marker:
         for v in ocpp_configuration_strategies_marker.args:
@@ -52,7 +53,8 @@ def ocpp_config(request, central_system: CentralSystem, test_config: OcppTestCon
         central_system_port=central_system.port,
         central_system_host="127.0.0.1",
         ocpp_version=ocpp_version,
-        template_ocpp_config=Path(ocpp_config_marker.args[0]) if ocpp_config_marker else None,
+        template_ocpp_config=Path(
+            ocpp_config_marker.args[0]) if ocpp_config_marker else None,
         device_model_component_config_path=Path(f"{request.config.getoption('--everest-prefix')}/share/everest/modules/OCPP201/component_config"),
         configuration_strategies=ocpp_configuration_strategies
     )
@@ -66,7 +68,8 @@ async def central_system(request, ocpp_version: OCPPVersion, test_config):
 
     ssl_context = determine_ssl_context(request, test_config)
 
-    central_system_marker = request.node.get_closest_marker('custom_central_system')
+    central_system_marker = request.node.get_closest_marker(
+        'custom_central_system')
 
     if central_system_marker:
         assert isinstance(central_system_marker.args[0], CentralSystem)
@@ -78,8 +81,10 @@ async def central_system(request, ocpp_version: OCPPVersion, test_config):
     if request.node.get_closest_marker('inject_csms_mock'):
         if ocpp_version == OCPPVersion.ocpp201:
             mock = inject_csms_v201_mock(cs)
-        else:
+        elif ocpp_version == OCPPVersion.ocpp16:
             mock = inject_csms_v16_mock(cs)
+        else:
+            mock = inject_csms_v21_mock(cs)
         cs.mock = mock
 
     async with cs.start(ssl_context):
@@ -110,7 +115,7 @@ def test_config():
 
 class FtpThread(Thread):
     def __init__(self, directory, port, test_config: OcppTestConfiguration, ftp_socket,
-                 group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None):
+                 group=None, target=None, name=None, args=..., kwargs=None, *, daemon=None):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         self.directory = directory
         self.port = port
@@ -139,7 +144,8 @@ class FtpThread(Thread):
                         os.path.join(self.directory, "firmware_update.pnx.base64"))
 
         authorizer = DummyAuthorizer()
-        authorizer.add_user(getpass.getuser(), "12345", self.directory, perm="elradfmwMT")
+        authorizer.add_user(getpass.getuser(), "12345",
+                            self.directory, perm="elradfmwMT")
 
         handler = FTPHandler
         handler.authorizer = authorizer
@@ -162,7 +168,8 @@ def ftp_server(test_config: OcppTestConfiguration):
     ftp_socket.bind(address)
     port = ftp_socket.getsockname()[1]
 
-    ftp_thread = FtpThread(directory=d, port=port, test_config=test_config, ftp_socket=ftp_socket)
+    ftp_thread = FtpThread(directory=d, port=port,
+                           test_config=test_config, ftp_socket=ftp_socket)
     ftp_thread.daemon = True
     ftp_thread.start()
 
@@ -186,6 +193,12 @@ async def central_system_v201(central_system):
 
 
 @pytest_asyncio.fixture
+async def central_system_v21(central_system):
+    """ Note: This is only for backwards compatibility; use central_system directly! """
+    yield central_system
+
+
+@pytest_asyncio.fixture
 async def charge_point_v16(charge_point):
     """ Note: This is only for backwards compatibility; use charge_point directly! """
     yield charge_point
@@ -193,6 +206,12 @@ async def charge_point_v16(charge_point):
 
 @pytest_asyncio.fixture
 async def charge_point_v201(charge_point):
+    """ Note: This is only for backwards compatibility; use charge_point directly! """
+    yield charge_point
+
+
+@pytest_asyncio.fixture
+async def charge_point_v21(charge_point):
     """ Note: This is only for backwards compatibility; use charge_point directly! """
     yield charge_point
 

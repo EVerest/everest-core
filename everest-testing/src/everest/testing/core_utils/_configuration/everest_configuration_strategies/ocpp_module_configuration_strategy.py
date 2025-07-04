@@ -6,10 +6,10 @@ from everest.testing.core_utils.common import OCPPVersion
 from everest.testing.core_utils._configuration.everest_configuration_strategies.everest_configuration_strategy import EverestConfigAdjustmentStrategy
 
 
-
 @dataclass
 class OCPPModuleConfigurationBase:
     MessageLogPath: str
+
 
 @dataclass
 class OCPPModulePaths16(OCPPModuleConfigurationBase):
@@ -17,8 +17,9 @@ class OCPPModulePaths16(OCPPModuleConfigurationBase):
     UserConfigPath: str
     DatabasePath: str
 
+
 @dataclass
-class OCPPModulePaths201(OCPPModuleConfigurationBase):
+class OCPPModulePaths2X(OCPPModuleConfigurationBase):
     DeviceModelConfigPath: str
     CoreDatabasePath: str
     DeviceModelDatabasePath: str
@@ -29,8 +30,7 @@ class OCPPModuleConfigurationStrategy(EverestConfigAdjustmentStrategy):
 
     """
 
-
-    def __init__(self, ocpp_paths: Union[OCPPModulePaths16, OCPPModulePaths201],
+    def __init__(self, ocpp_paths: Union[OCPPModulePaths16, OCPPModulePaths2X],
                  ocpp_module_id: str,
                  ocpp_version: OCPPVersion):
         self._ocpp_paths = ocpp_paths
@@ -60,7 +60,6 @@ class OCPPModuleConfigurationStrategy(EverestConfigAdjustmentStrategy):
             "active_modules"], "OCPP Module is missing from EVerest config"
         ocpp_module = everest_config["active_modules"][self._ocpp_module_id]["module"]
         assert (ocpp_module == "OCPP" and self._ocpp_version == OCPPVersion.ocpp16) or (
-                ocpp_module == "OCPP201" and self._ocpp_version == OCPPVersion.ocpp201), \
+            ocpp_module == "OCPP201" and (self._ocpp_version == OCPPVersion.ocpp201 or
+                                          self._ocpp_version == OCPPVersion.ocpp21)), \
             f"Invalid OCCP Module {ocpp_module} for provided OCCP version {self._ocpp_version}"
-
-

@@ -6,10 +6,10 @@ import logging
 from datetime import datetime, timezone
 
 from ocpp.routing import on
-from ocpp.v201 import ChargePoint as cp
-from ocpp.v201 import call, call_result
-from ocpp.v201.datatypes import IdTokenInfoType, SetVariableDataType, GetVariableDataType, ComponentType, VariableType
-from ocpp.v201.enums import (
+from ocpp.v21 import ChargePoint as cp
+from ocpp.v21 import call, call_result
+from ocpp.v21.datatypes import IdTokenInfoType, SetVariableDataType, GetVariableDataType, ComponentType, VariableType
+from ocpp.v21.enums import (
     Action,
     RegistrationStatusEnumType,
     AuthorizationStatusEnumType,
@@ -24,8 +24,8 @@ from everest.testing.ocpp_utils.charge_point_utils import MessageHistory
 logging.basicConfig(level=logging.DEBUG)
 
 
-class ChargePoint201(cp):
-    """Wrapper for the OCPP2.0.1 chargepoint websocket client. Implementes the communication
+class ChargePoint21(cp):
+    """Wrapper for the OCPP2.1 chargepoint websocket client. Implementes the communication
      of messages sent from CSMS to chargepoint.
     """
 
@@ -159,7 +159,7 @@ class ChargePoint201(cp):
     def on_sign_certificate(self, **kwargs):
         return call_result.SignCertificate(status=GenericStatusEnumType.accepted)
 
-    @on(Action.get_15118_ev_certificate)
+    @on(Action.get15118_ev_certificate)
     def on_get_15118_ev_certificate(self, **kwargs):
         return call_result.Get15118EVCertificate(status=GenericStatusEnumType.accepted,
                                                  exi_response="")

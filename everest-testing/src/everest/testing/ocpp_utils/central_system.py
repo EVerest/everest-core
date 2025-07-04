@@ -21,9 +21,11 @@ from ocpp.charge_point import ChargePoint
 
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
+from everest.testing.ocpp_utils.charge_point_v21 import ChargePoint21
 
 
 logging.basicConfig(level=logging.debug)
+
 
 class CentralSystem:
     """Base central system used for tests to connect
@@ -33,26 +35,28 @@ class CentralSystem:
         self.name = "CentralSystem"
         self.port = port
         self.chargepoint_id = chargepoint_id
-        self.ocpp_version = ocpp_version        
-    
+        self.ocpp_version = ocpp_version
+
     @abstractmethod
     async def on_connect(self, websocket):
-        logging.error("'CentralSystem' did not implement 'on_connect'!")        
+        logging.error("'CentralSystem' did not implement 'on_connect'!")
 
     @abstractmethod
     async def wait_for_chargepoint(self, timeout=30, wait_for_bootnotification=True):
-        logging.error("'CentralSystem' did not implement 'wait_for_chargepoint'!")
+        logging.error(
+            "'CentralSystem' did not implement 'wait_for_chargepoint'!")
         return None
 
     @abstractmethod
     async def start(self, ssl_context=None):
-        logging.error("'CentralSystem' did not implement 'start'!")        
+        logging.error("'CentralSystem' did not implement 'start'!")
+
 
 class LocalCentralSystem(CentralSystem):
     """Wrapper for CSMS websocket server. Holds a reference to a single connected chargepoint
     """
 
-    def __init__(self,  chargepoint_id, ocpp_version, port: Optional[int] = None):        
+    def __init__(self,  chargepoint_id, ocpp_version, port: Optional[int] = None):
         super().__init__(chargepoint_id, ocpp_version, port)
         self.name = "LocalCentralSystem"
         self.ws_server = None
@@ -90,8 +94,10 @@ class LocalCentralSystem(CentralSystem):
 
             if self.ocpp_version == 'ocpp1.6':
                 cp = ChargePoint16(chargepoint_id, websocket)
-            else:
+            elif self.ocpp_version == 'ocpp2.0.1':
                 cp = ChargePoint201(chargepoint_id, websocket)
+            else:
+                cp = ChargePoint21(chargepoint_id, websocket)
             self.chargepoint = cp
             self.chargepoint.pipe = True
             for override in self.function_overrides:
@@ -105,7 +111,7 @@ class LocalCentralSystem(CentralSystem):
                 f"Connection on invalid path {chargepoint_id} received. Check the configuration of the ChargePointId.")
             return await websocket.close()
 
-    async def wait_for_chargepoint(self, timeout=30, wait_for_bootnotification=True) -> Union[ChargePoint16, ChargePoint201]:
+    async def wait_for_chargepoint(self, timeout=30, wait_for_bootnotification=True) -> Union[ChargePoint16, ChargePoint201, ChargePoint21]:
         """Waits for the chargepoint to connect to the CSMS
 
         Args:
@@ -113,7 +119,7 @@ class LocalCentralSystem(CentralSystem):
             wait_for_bootnotification (bool, optional): Indiciates if this method should wait until the chargepoint sends a BootNotification. Defaults to True.
 
         Returns:
-            ChargePoint: reference to ChargePoint16 or ChargePoint201
+            ChargePoint: reference to ChargePoint16, ChargePoint201 or ChargePoint21
         """
         try:
             logging.debug("Waiting for chargepoint to connect")
@@ -121,7 +127,8 @@ class LocalCentralSystem(CentralSystem):
             logging.debug("Chargepoint connected!")
             self.chargepoint_set_event.clear()
         except asyncio.exceptions.TimeoutError:
-            raise asyncio.exceptions.TimeoutError("Timeout while waiting for the chargepoint to connect.")
+            raise asyncio.exceptions.TimeoutError(
+                "Timeout while waiting for the chargepoint to connect.")
 
         if wait_for_bootnotification:
             t_timeout = time.time() + timeout
@@ -132,7 +139,8 @@ class LocalCentralSystem(CentralSystem):
                 received_boot_notification = "BootNotification" in raw_message
 
             if not received_boot_notification:
-                raise asyncio.exceptions.TimeoutError("Timeout while waiting for BootNotification.")
+                raise asyncio.exceptions.TimeoutError(
+                    "Timeout while waiting for BootNotification.")
 
         await asyncio.sleep(1)
         return self.chargepoint
@@ -157,6 +165,44 @@ class LocalCentralSystem(CentralSystem):
 
         self.ws_server.close()
         await self.ws_server.wait_closed()
+
+
+def inject_csms_v21_mock(cs: CentralSystem) -> Mock:
+    """ Given a not yet started CentralSystem, add mock overrides for _any_ action handler.
+
+    If not touched, those will simply proxy any request.
+
+    However, they allow later change of the CSMS return values:
+
+    Example:
+
+    @inject_csms_mock
+    async def test_foo(central_system_v201: CentralSystem):
+        central_system_v21.mock.on_get_15118_ev_certificate.side_effect = [
+                call_result21.Get15118EVCertificatePayload(status=response_status,
+                                                            exi_response=exi_response)]
+    """
+
+    def catch_mock(mock, method_name, method):
+        method_mock = getattr(mock, method_name)
+
+        @on(method._on_action)
+        @wraps(method)
+        def _method(*args, **kwargs):
+            mock_res = method_mock(*args, **kwargs)
+            if method_mock.side_effect:
+                return mock_res
+            return method(cs.chargepoint, *args, **kwargs)
+
+        return _method
+
+    mock = Mock(spec=ChargePoint21)
+    charge_point_action_handlers = {
+        k: v for k, v in ChargePoint21.__dict__.items() if hasattr(v, "_on_action")}
+    for action_name, action_method in charge_point_action_handlers.items():
+        cs.function_overrides.append(
+            (action_name, catch_mock(mock, action_name, action_method)))
+    return mock
 
 
 def inject_csms_v201_mock(cs: CentralSystem) -> Mock:
@@ -189,9 +235,11 @@ def inject_csms_v201_mock(cs: CentralSystem) -> Mock:
         return _method
 
     mock = Mock(spec=ChargePoint201)
-    charge_point_action_handlers = {k: v for k, v in ChargePoint201.__dict__.items() if hasattr(v, "_on_action")}
+    charge_point_action_handlers = {
+        k: v for k, v in ChargePoint201.__dict__.items() if hasattr(v, "_on_action")}
     for action_name, action_method in charge_point_action_handlers.items():
-        cs.function_overrides.append((action_name, catch_mock(mock, action_name, action_method)))
+        cs.function_overrides.append(
+            (action_name, catch_mock(mock, action_name, action_method)))
     return mock
 
 
@@ -225,9 +273,11 @@ def inject_csms_v16_mock(cs: CentralSystem) -> Mock:
         return _method
 
     mock = Mock(spec=ChargePoint16)
-    charge_point_action_handlers = {k: v for k, v in ChargePoint16.__dict__.items() if hasattr(v, "_on_action")}
+    charge_point_action_handlers = {
+        k: v for k, v in ChargePoint16.__dict__.items() if hasattr(v, "_on_action")}
     for action_name, action_method in charge_point_action_handlers.items():
-        cs.function_overrides.append((action_name, catch_mock(mock, action_name, action_method)))
+        cs.function_overrides.append(
+            (action_name, catch_mock(mock, action_name, action_method)))
     return mock
 
 
@@ -251,7 +301,8 @@ def determine_ssl_context(request: FixtureRequest, test_config: OcppTestConfigur
         if csms_tls_marker.args:
             csms_tls_enabled = csms_tls_marker.args[0]
         else:
-            csms_tls_enabled = True  # provided marker always enabled tls if not explicitly set to False
+            # provided marker always enabled tls if not explicitly set to False
+            csms_tls_enabled = True
         marker_kwargs = csms_tls_marker.kwargs
         if "certificate" in marker_kwargs:
             csms_tls_cert = marker_kwargs["certificate"]

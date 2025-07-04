@@ -28,7 +28,8 @@ from ocpp.routing import on
 # for OCPP1.6 PnC whitepaper:
 from ocpp.v201 import call_result as call_result201
 from ocpp.v201.datatypes import IdTokenInfoType
-from ocpp.v201.enums import (AuthorizationStatusType, GenericStatusType, GetCertificateStatusType)
+from ocpp.v201.enums import (
+    AuthorizationStatusEnumType, GenericStatusEnumType, GetCertificateStatusEnumType)
 
 from everest.testing.ocpp_utils.charge_point_utils import MessageHistory, create_cert
 
@@ -92,216 +93,216 @@ class ChargePoint16(cp):
             await self.message_event.wait()
         return self.pipeline.pop(0)
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification(
         self, charge_point_vendor: str, charge_point_model: str, **kwargs
     ):
         logging.debug("Received a BootNotification")
         # connecting to mqtt server
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=1440,
             status=RegistrationStatus.accepted,
         )
 
-    @on(Action.Heartbeat)
+    @on(Action.heartbeat)
     def on_heartbeat(self, **kwargs):
-        return call_result.HeartbeatPayload(current_time=datetime.now(timezone.utc).isoformat())
+        return call_result.Heartbeat(current_time=datetime.now(timezone.utc).isoformat())
 
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(self, **kwargs):
         id_tag_info = IdTagInfo(status=AuthorizationStatus.accepted)
-        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        return call_result.Authorize(id_tag_info=id_tag_info)
 
-    @on(Action.MeterValues)
+    @on(Action.meter_values)
     def on_meter_values(self, **kwargs):
-        return call_result.MeterValuesPayload()
+        return call_result.MeterValues()
 
-    @on(Action.StatusNotification)
+    @on(Action.status_notification)
     def on_status_notification(self, **kwargs):
-        return call_result.StatusNotificationPayload()
+        return call_result.StatusNotification()
 
-    @on(Action.StartTransaction)
+    @on(Action.start_transaction)
     def on_start_transaction(self, **kwargs):
         id_tag_info = IdTagInfo(status=AuthorizationStatus.accepted)
-        return call_result.StartTransactionPayload(transaction_id=1, id_tag_info=id_tag_info)
+        return call_result.StartTransaction(transaction_id=1, id_tag_info=id_tag_info)
 
-    @on(Action.StopTransaction)
+    @on(Action.stop_transaction)
     def on_stop_transaction(self, **kwargs):
-        return call_result.StopTransactionPayload()
+        return call_result.StopTransaction()
 
-    @on(Action.DiagnosticsStatusNotification)
+    @on(Action.diagnostics_status_notification)
     def on_diagnostics_status_notification(self, **kwargs):
-        return call_result.DiagnosticsStatusNotificationPayload()
+        return call_result.DiagnosticsStatusNotification()
 
-    @on(Action.SignCertificate)
+    @on(Action.sign_certificate)
     def on_sign_certificate(self, **kwargs):
         self.csr = kwargs['csr']
-        return call_result.SignCertificatePayload(GenericStatus.accepted)
+        return call_result.SignCertificate(GenericStatus.accepted)
 
-    @on(Action.SecurityEventNotification)
+    @on(Action.security_event_notification)
     def on_security_event_notification(self, **kwargs):
-        return call_result.SecurityEventNotificationPayload()
+        return call_result.SecurityEventNotification()
 
-    @on(Action.SignedFirmwareStatusNotification)
+    @on(Action.signed_firmware_status_notification)
     def on_signed_update_firmware_status_notificaion(self, **kwargs):
-        return call_result.SignedFirmwareStatusNotificationPayload()
+        return call_result.SignedFirmwareStatusNotification()
 
-    @on(Action.LogStatusNotification)
+    @on(Action.log_status_notification)
     def on_log_status_notification(self, **kwargs):
-        return call_result.LogStatusNotificationPayload()
+        return call_result.LogStatusNotification()
 
-    @on(Action.FirmwareStatusNotification)
+    @on(Action.firmware_status_notification)
     def on_firmware_status_notification(self, **kwargs):
-        return call_result.FirmwareStatusNotificationPayload()
+        return call_result.FirmwareStatusNotification()
 
-    @on(Action.DataTransfer)
+    @on(Action.data_transfer)
     def on_data_transfer(self, **kwargs):
-        req = call.DataTransferPayload(**kwargs)
+        req = call.DataTransfer(**kwargs)
         if req.vendor_id == 'org.openchargealliance.iso15118pnc':
             if (req.message_id == "Authorize"):
-                response = call_result201.AuthorizePayload(
+                response = call_result201.Authorize(
                     id_token_info=IdTokenInfoType(
-                        status=AuthorizationStatusType.accepted
+                        status=AuthorizationStatusEnumType.accepted
                     )
                 )
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.accepted,
                     data=json.dumps(remove_nones(
                         snake_to_camel_case(asdict(response))))
                 )
             # Should not be part of DataTransfer.req from CP->CSMS
             elif (req.message_id == "CertificateSigned"):
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.unknown_message_id,
                     data="Please implement me"
                 )
             # Should not be part of DataTransfer.req from CP->CSMS
             elif req.message_id == "DeleteCertificate":
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.unknown_message_id,
                     data="Please implement me"
                 )
             elif req.message_id == "Get15118EVCertificate":
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.unknown_message_id,
                     data="Please implement me"
                 )
             elif req.message_id == "GetCertificateStatus":
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.accepted,
                     data=json.dumps(remove_nones(snake_to_camel_case(asdict(
-                        call_result201.GetCertificateStatusPayload(
-                            status=GetCertificateStatusType.accepted,
+                        call_result201.GetCertificateStatus(
+                            status=GetCertificateStatusEnumType.accepted,
                             ocsp_result="anwfdiefnwenfinfinef"
                         )
                     ))))
                 )
             # Should not be part of DataTransfer.req from CP->CSMS
             elif req.message_id == "InstallCertificate":
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.unknown_message_id,
                     data="Please implement me"
                 )
             elif req.message_id == "SignCertificate":
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.accepted,
                     data=json.dumps(asdict(
-                        call_result201.SignCertificatePayload(
-                            status=GenericStatusType.accepted
+                        call_result201.SignCertificate(
+                            status=GenericStatusEnumType.accepted
                         )
                     ))
                 )
             # Should not be part of DataTransfer.req from CP->CSMS
             elif req.message_id == "TriggerMessage":
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.unknown_message_id,
                     data="Please implement me"
                 )
             else:
-                return call_result.DataTransferPayload(
+                return call_result.DataTransfer(
                     status=DataTransferStatus.unknown_message_id,
                     data="Please implement me"
                 )
         else:
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.unknown_vendor_id,
                 data="Please implement me"
             )
 
     async def get_configuration_req(self, **kwargs):
-        payload = call.GetConfigurationPayload(**kwargs)
+        payload = call.GetConfiguration(**kwargs)
         return await self.call(payload)
 
     async def change_configuration_req(self, **kwargs):
-        payload = call.ChangeConfigurationPayload(**kwargs)
+        payload = call.ChangeConfiguration(**kwargs)
         return await self.call(payload)
 
     async def clear_cache_req(self, **kwargs):
-        payload = call.ClearCachePayload()
+        payload = call.ClearCache()
         return await self.call(payload)
 
     async def remote_start_transaction_req(self, **kwargs):
-        payload = call.RemoteStartTransactionPayload(**kwargs)
+        payload = call.RemoteStartTransaction(**kwargs)
         return await self.call(payload)
 
     async def remote_stop_transaction_req(self, **kwargs):
-        payload = call.RemoteStopTransactionPayload(**kwargs)
+        payload = call.RemoteStopTransaction(**kwargs)
         return await self.call(payload)
 
     async def unlock_connector_req(self, **kwargs):
-        payload = call.UnlockConnectorPayload(**kwargs)
+        payload = call.UnlockConnector(**kwargs)
         return await self.call(payload)
 
     async def change_availability_req(self, **kwargs):
-        payload = call.ChangeAvailabilityPayload(**kwargs)
+        payload = call.ChangeAvailability(**kwargs)
         return await self.call(payload)
 
     async def reset_req(self, **kwargs):
-        payload = call.ResetPayload(**kwargs)
+        payload = call.Reset(**kwargs)
         return await self.call(payload)
 
     async def get_local_list_version_req(self, **kwargs):
-        payload = call.GetLocalListVersionPayload()
+        payload = call.GetLocalListVersion()
         return await self.call(payload)
 
     async def send_local_list_req(self, **kwargs):
-        payload = call.SendLocalListPayload(**kwargs)
+        payload = call.SendLocalList(**kwargs)
         return await self.call(payload)
 
     async def reserve_now_req(self, **kwargs):
-        payload = call.ReserveNowPayload(**kwargs)
+        payload = call.ReserveNow(**kwargs)
         return await self.call(payload)
 
     async def cancel_reservation_req(self, **kwargs):
-        payload = call.CancelReservationPayload(**kwargs)
+        payload = call.CancelReservation(**kwargs)
         return await self.call(payload)
 
     async def trigger_message_req(self, **kwargs):
-        payload = call.TriggerMessagePayload(**kwargs)
+        payload = call.TriggerMessage(**kwargs)
         return await self.call(payload)
 
-    async def set_charging_profile_req(self, payload: call.SetChargingProfilePayload):
+    async def set_charging_profile_req(self, payload: call.SetChargingProfile):
         logging.info(payload)
         return await self.call(payload)
 
-    async def get_composite_schedule(self, payload: call.GetCompositeSchedulePayload) -> call_result.GetCompositeSchedulePayload:
+    async def get_composite_schedule(self, payload: call.GetCompositeSchedule) -> call_result.GetCompositeSchedule:
         return await self.call(payload)
 
-    async def get_composite_schedule_req(self, **kwargs) -> call_result.GetCompositeSchedulePayload:
-        payload = call.GetCompositeSchedulePayload(**kwargs)
+    async def get_composite_schedule_req(self, **kwargs) -> call_result.GetCompositeSchedule:
+        payload = call.GetCompositeSchedule(**kwargs)
         return await self.call(payload)
 
     async def clear_charging_profile_req(self, **kwargs):
-        payload = call.ClearChargingProfilePayload(**kwargs)
+        payload = call.ClearChargingProfile(**kwargs)
         return await self.call(payload)
 
     async def data_transfer_req(self, **kwargs):
-        payload = call.DataTransferPayload(**kwargs)
+        payload = call.DataTransfer(**kwargs)
         return await self.call(payload)
 
     async def extended_trigger_message_req(self, **kwargs):
-        payload = call.ExtendedTriggerMessagePayload(**kwargs)
+        payload = call.ExtendedTriggerMessage(**kwargs)
         return await self.call(payload)
 
     async def certificate_signed_req(self, **kwargs):
@@ -320,38 +321,38 @@ class ChargePoint16(cp):
             cert = create_cert(serial_no, not_before,
                                not_after, ca_cert, csr, ca_private_key)
 
-            payload = call.CertificateSignedPayload(
+            payload = call.CertificateSigned(
                 certificate_chain=cert.decode())
             return await self.call(payload)
         else:
-            payload = call.CertificateSignedPayload(
+            payload = call.CertificateSigned(
                 certificate_chain=kwargs['certificate_chain'])
             return await self.call(payload)
 
     async def install_certificate_req(self, **kwargs):
-        payload = call.InstallCertificatePayload(**kwargs)
+        payload = call.InstallCertificate(**kwargs)
         return await self.call(payload)
 
     async def get_installed_certificate_ids_req(self, **kwargs):
-        payload = call.GetInstalledCertificateIdsPayload(**kwargs)
+        payload = call.GetInstalledCertificateIds(**kwargs)
         return await self.call(payload)
 
     async def delete_certificate_req(self, **kwargs):
-        payload = call.DeleteCertificatePayload(**kwargs)
+        payload = call.DeleteCertificate(**kwargs)
         return await self.call(payload)
 
     async def get_log_req(self, **kwargs):
-        payload = call.GetLogPayload(**kwargs)
+        payload = call.GetLog(**kwargs)
         return await self.call(payload)
 
     async def signed_update_firmware_req(self, **kwargs):
-        payload = call.SignedUpdateFirmwarePayload(**kwargs)
+        payload = call.SignedUpdateFirmware(**kwargs)
         return await self.call(payload)
 
     async def get_diagnostics_req(self, **kwargs):
-        payload = call.GetDiagnosticsPayload(**kwargs)
+        payload = call.GetDiagnostics(**kwargs)
         return await self.call(payload)
 
     async def update_firmware_req(self, **kwargs):
-        payload = call.UpdateFirmwarePayload(**kwargs)
+        payload = call.UpdateFirmware(**kwargs)
         return await self.call(payload)
