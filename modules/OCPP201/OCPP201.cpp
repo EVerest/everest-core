@@ -418,6 +418,11 @@ void OCPP201::init() {
                 [this, evse_id](const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
                     this->evse_hardware_capabilities_map[evse_id] = hw_capabilities;
                 });
+        this->r_evse_manager.at(evse_id - 1)
+            ->subscribe_supported_energy_transfer_modes(
+                [this](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+                    // TODO(mlitre): Update device model
+                });
     }
 }
 
@@ -789,7 +794,8 @@ void OCPP201::ready() {
                 try {
                     currency = types::money::string_to_currency_code(currency_code.value());
                 } catch (const std::out_of_range& e) {
-                    // If conversion fails, we just don't add the currency code. But we want to see it in the logging.
+                    // If conversion fails, we just don't add the currency code. But we want to see it in the
+                    // logging.
                     EVLOG_error << e.what();
                 }
             }
@@ -1004,7 +1010,6 @@ void OCPP201::ready() {
             if (ev_info.soc.has_value()) {
                 this->evse_soc_map[evse_id] = ev_info.soc;
             }
-            // TODO(mlitre): Update ConnectedEVVehicleId DeviceModel
             if (ev_info.evcc_id.has_value()) {
                 update_evcc_id_token(evse_id, ev_info.evcc_id.value());
             }
@@ -1025,7 +1030,7 @@ void OCPP201::ready() {
     }
 
     int32_t extensions_id = 0;
-    for (auto& extension : this->r_extensions_15118) {
+    for (const auto& extension : this->r_extensions_15118) {
         extension->subscribe_iso15118_certificate_request(
             [this, extensions_id](const types::iso15118::RequestExiStreamSchema& certificate_request) {
                 auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
@@ -1059,6 +1064,16 @@ void OCPP201::ready() {
             } else {
                 EVLOG_warning << "ISO15118 Extension interface mapping not set! Not sending 'ChargingNeeds'!";
             }
+        });
+
+        extension->subscribe_service_renegotiation_supported(
+            [this, extensions_id](bool service_renegotiation_supported) {
+                // TODO(mlitre): Update device model
+            });
+
+        extension->subscribe_ev_info([this, extensions_id](const types::iso15118::EvInformation& ev_info) {
+            // TODO(mlitre): Update device model
+            update_evcc_id_token(extensions_id, ev_info.evcc_id);
         });
 
         extensions_id++;
@@ -1114,8 +1129,8 @@ void OCPP201::ready() {
         evse->call_external_ready_to_start_charging();
     }
 
-    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
-    // plugged in at startup)
+    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might
+    // be plugged in at startup)
     std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
     // start OCPP connection
     this->charge_point->connect_websocket();
@@ -1196,8 +1211,8 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         break;
     }
 
-    // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not yet
-    // been authorized by the CSMS
+    // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not
+    // yet been authorized by the CSMS
     const auto authorized_id_token = get_authorized_id_token(session_event);
     if (authorized_id_token.has_value()) {
         this->charge_point->on_authorized(evse_id, connector_id, authorized_id_token.value());
@@ -1323,8 +1338,9 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
         return;
     }
 
-    // at this point we dont know if the TransactionStarted event was triggered because of an Authorization or EV Plug
-    // in event. We assume cable has been plugged in first and then authorized and update if other order was applied
+    // at this point we dont know if the TransactionStarted event was triggered because of an Authorization or EV
+    // Plug in event. We assume cable has been plugged in first and then authorized and update if other order was
+    // applied
     auto tx_event = TxEvent::AUTHORIZED;
     auto trigger_reason = ocpp::v2::TriggerReasonEnum::Authorized;
     const auto transaction_started = session_event.transaction_started.value();
@@ -1407,8 +1423,8 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
                                                           ocpp::v2::TriggerReasonEnum::StopAuthorized);
         }
     } else {
-        // TODO(piet): If StopTxOnEVSideDisconnect is false, authorization shall still be present. This cannot only be
-        // handled within this module, but probably also within EvseManager and Auth
+        // TODO(piet): If StopTxOnEVSideDisconnect is false, authorization shall still be present. This cannot only
+        // be handled within this module, but probably also within EvseManager and Auth
 
         // authorization is always withdrawn in case of TransactionFinished, so in case we haven't updated the
         // transaction handler yet, we have to do it
@@ -1550,6 +1566,7 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>
 }
 
 void OCPP201::update_evcc_id_token(const int& evse_id, const std::string& evcc_id) {
+    // TODO(mlitre): Update ConnectedEVVehicleId DeviceModel
     auto tx_data = this->transaction_handler->get_transaction_data(evse_id);
     if (tx_data == nullptr) {
         return;

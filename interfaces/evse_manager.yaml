@@ -191,5 +191,13 @@ vars:
     description: >-
       Contains the selected protocol used for charging for informative purposes
     type: string
+  supported_energy_transfer_modes:
+    description: >-
+      Contains the list of supported energy transfers e.g. AC mono/tri, DC, DC_BPT, etc.
+    type: array
+    items:
+      type: object
+      $ref: /iso15118#/EnergyTransferMode
+    minItems: 1
 errors:
   - reference: /errors/evse_manager
