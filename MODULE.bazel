@@ -11,7 +11,7 @@ bazel_dep(name = "everest-framework", version = "0.21.1")
 git_override(module_name="everest-framework", commit="8031136e5c31a345044e187a68de70b4dcae2912", remote="https://github.com/EVerest/everest-framework")
 
 bazel_dep(name = "everest-utils", version = "0.5.2")
-git_override(module_name="everest-utils", commit="a03ebb35c35f4b21f0b1604b9f46451feb187ec6", remote="https://github.com/EVerest/everest-utils")
+git_override(module_name="everest-utils", commit="824abc6293f1d130f6166a7765319102cd7d7d92", remote="https://github.com/EVerest/everest-utils")
 
 bazel_dep(name = "bazel_features", version = "1.21.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")

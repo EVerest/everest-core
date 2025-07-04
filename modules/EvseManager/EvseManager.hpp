@@ -376,6 +376,9 @@ private:
 
     types::power_supply_DC::ChargingPhase last_power_supply_DC_charging_phase{
         types::power_supply_DC::ChargingPhase::Other};
+    std::mutex supported_energy_transfers_mutex;
+    std::vector<types::iso15118::EnergyTransferMode> supported_energy_transfers;
+    bool update_supported_energy_transfers(const types::iso15118::EnergyTransferMode& energy_transfer);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
