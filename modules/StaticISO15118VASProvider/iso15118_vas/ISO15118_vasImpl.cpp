@@ -125,13 +125,14 @@ void ISO15118_vasImpl::init() {
 }
 
 void ISO15118_vasImpl::ready() {
-    json::array_t service_ids;
+    types::iso15118_vas::OfferedServices offered_services;
 
+    offered_services.service_ids.reserve(value_added_services.size());
     for (const auto& [service_id, parameter_sets] : value_added_services) {
-        service_ids.push_back(service_id);
+        offered_services.service_ids.push_back(service_id);
     }
 
-    publish_offered_vas(service_ids);
+    publish_offered_vas(offered_services);
 }
 
 std::vector<types::iso15118_vas::ParameterSet> ISO15118_vasImpl::handle_get_service_parameters(int& service_id) {
