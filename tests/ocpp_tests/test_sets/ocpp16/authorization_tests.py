@@ -50,13 +50,13 @@ async def test_authorize_parent_id_1(
 ):
     # authorize.conf with parent id tag
 
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
             parent_id_tag=test_config.authorization_info.parent_id_tag,
         )
-        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        return call_result.Authorize(id_tag_info=id_tag_info)
 
     setattr(charge_point_v16, "on_authorize", on_authorize)
     charge_point_v16.route_map = create_route_map(charge_point_v16)
@@ -73,7 +73,7 @@ async def test_authorize_parent_id_1(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_2),
+        call.Authorize(test_config.authorization_info.valid_id_tag_2),
     )
 
     # expect StartTransaction.req
@@ -81,7 +81,7 @@ async def test_authorize_parent_id_1(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_2, 0, ""
         ),
         validate_standard_start_transaction,
@@ -92,7 +92,7 @@ async def test_authorize_parent_id_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -108,7 +108,7 @@ async def test_authorize_parent_id_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
         ),
     )
@@ -118,7 +118,7 @@ async def test_authorize_parent_id_1(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -129,7 +129,7 @@ async def test_authorize_parent_id_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -143,10 +143,10 @@ async def test_authorize_invalid(
     test_controller: TestController,
 ):
     # authorize.conf with parent id tag
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         id_tag_info = IdTagInfo(status=AuthorizationStatus.invalid)
-        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        return call_result.Authorize(id_tag_info=id_tag_info)
 
     setattr(charge_point_v16, "on_authorize", on_authorize)
     charge_point_v16.route_map = create_route_map(charge_point_v16)
@@ -163,7 +163,7 @@ async def test_authorize_invalid(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.preparing
         ),
     )
@@ -174,7 +174,7 @@ async def test_authorize_invalid(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.invalid_id_tag),
+        call.Authorize(test_config.authorization_info.invalid_id_tag),
     )
 
     test_utility.messages.clear()
@@ -183,7 +183,7 @@ async def test_authorize_invalid(
     test_utility.forbidden_actions.append("StartTransaction")
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
+        test_utility, charge_point_v16, "Heartbeat", call.Heartbeat()
     )
 
 
@@ -196,13 +196,13 @@ async def test_parent_id_tag_reservation_1(
 ):
 
     # authorize.conf with parent id tag
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
             parent_id_tag=test_config.authorization_info.parent_id_tag,
         )
-        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        return call_result.Authorize(id_tag_info=id_tag_info)
 
     setattr(charge_point_v16, "on_authorize", on_authorize)
     charge_point_v16.route_map = create_route_map(charge_point_v16)
@@ -226,7 +226,7 @@ async def test_parent_id_tag_reservation_1(
         test_utility,
         charge_point_v16,
         "ReserveNow",
-        call_result.ReserveNowPayload(ReservationStatus.accepted),
+        call_result.ReserveNow(ReservationStatus.accepted),
     )
 
     # expect StatusNotification.req with status reserved
@@ -234,7 +234,7 @@ async def test_parent_id_tag_reservation_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.reserved
         ),
     )
@@ -247,7 +247,7 @@ async def test_parent_id_tag_reservation_1(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_2),
+        call.Authorize(test_config.authorization_info.valid_id_tag_2),
     )
 
     # expect StartTransaction.req
@@ -255,7 +255,7 @@ async def test_parent_id_tag_reservation_1(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_2, 0, ""
         ),
         validate_standard_start_transaction,
@@ -266,7 +266,7 @@ async def test_parent_id_tag_reservation_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -282,7 +282,7 @@ async def test_parent_id_tag_reservation_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
         ),
     )
@@ -292,7 +292,7 @@ async def test_parent_id_tag_reservation_1(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -303,7 +303,7 @@ async def test_parent_id_tag_reservation_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -317,13 +317,13 @@ async def test_parent_id_tag_reservation_2(
     test_controller: TestController,
 ):
     # authorize.conf with parent id tag
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
             parent_id_tag=test_config.authorization_info.parent_id_tag,
         )
-        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        return call_result.Authorize(id_tag_info=id_tag_info)
 
     setattr(charge_point_v16, "on_authorize", on_authorize)
     charge_point_v16.route_map = create_route_map(charge_point_v16)
@@ -347,7 +347,7 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "ReserveNow",
-        call_result.ReserveNowPayload(ReservationStatus.accepted),
+        call_result.ReserveNow(ReservationStatus.accepted),
     )
 
     # expect StatusNotification.req with status reserved
@@ -355,7 +355,7 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.reserved
         ),
     )
@@ -367,7 +367,8 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "RemoteStartTransaction",
-        call_result.RemoteStartTransactionPayload(RemoteStartStopStatus.accepted),
+        call_result.RemoteStartTransaction(
+            RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
     )
 
@@ -376,7 +377,7 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_2),
+        call.Authorize(test_config.authorization_info.valid_id_tag_2),
     )
 
     test_controller.plug_in()
@@ -386,7 +387,7 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_2, 0, ""
         ),
         validate_standard_start_transaction,
@@ -397,7 +398,7 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -413,7 +414,7 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
         ),
     )
@@ -423,7 +424,7 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -434,7 +435,7 @@ async def test_parent_id_tag_reservation_2(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -468,7 +469,7 @@ async def test_parent_id_tag_reservation_3(
         test_utility,
         charge_point_v16,
         "ReserveNow",
-        call_result.ReserveNowPayload(ReservationStatus.accepted),
+        call_result.ReserveNow(ReservationStatus.accepted),
     )
 
     # expect StatusNotification.req with status reserved
@@ -476,7 +477,7 @@ async def test_parent_id_tag_reservation_3(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.reserved
         ),
     )
@@ -510,14 +511,14 @@ async def test_parent_id_tag_reservation_3(
         test_utility,
         charge_point_v16,
         "TriggerMessage",
-        call_result.TriggerMessagePayload(TriggerMessageStatus.accepted),
+        call_result.TriggerMessage(TriggerMessageStatus.accepted),
     )
     # expect StatusNotification.req with status available
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.reserved
         ),
     )
@@ -531,21 +532,21 @@ async def test_authorization_cache_entry_1(
     test_utility: TestUtility,
     test_controller: TestController,
 ):
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
             parent_id_tag=test_config.authorization_info.parent_id_tag,
         )
-        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        return call_result.Authorize(id_tag_info=id_tag_info)
 
-    @on(Action.StartTransaction)
+    @on(Action.start_transaction)
     def on_start_transaction(**kwargs):
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
             parent_id_tag=test_config.authorization_info.valid_id_tag_1,
         )
-        return call_result.StartTransactionPayload(
+        return call_result.StartTransaction(
             transaction_id=1, id_tag_info=id_tag_info
         )
 
@@ -567,7 +568,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "GetConfiguration",
-        call_result.GetConfigurationPayload(
+        call_result.GetConfiguration(
             [{"key": "LocalAuthListEnabled", "readonly": False, "value": "true"}]
         ),
     )
@@ -580,7 +581,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1),
+        call.Authorize(test_config.authorization_info.valid_id_tag_1),
     )
 
     # expect StartTransaction.req
@@ -588,7 +589,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -599,7 +600,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -615,7 +616,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
         ),
     )
@@ -625,7 +626,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -637,7 +638,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -650,7 +651,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_2),
+        call.Authorize(test_config.authorization_info.valid_id_tag_2),
     )
 
     # expect StartTransaction.req
@@ -658,7 +659,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_2, 0, ""
         ),
         validate_standard_start_transaction,
@@ -669,7 +670,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -685,7 +686,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
         ),
     )
@@ -695,7 +696,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -706,7 +707,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -742,14 +743,14 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "TriggerMessage",
-        call_result.TriggerMessagePayload(TriggerMessageStatus.accepted),
+        call_result.TriggerMessage(TriggerMessageStatus.accepted),
     )
     # expect StatusNotification.req with status available
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -763,7 +764,7 @@ async def test_authorization_cache_entry_1(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -776,15 +777,15 @@ async def test_authorization_cache_entry_2(
     test_utility: TestUtility,
     test_controller: TestController,
 ):
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         id_tag_info = IdTagInfo(status=AuthorizationStatus.accepted)
-        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        return call_result.Authorize(id_tag_info=id_tag_info)
 
-    @on(Action.StartTransaction)
+    @on(Action.start_transaction)
     def on_start_transaction(**kwargs):
         id_tag_info = IdTagInfo(status=AuthorizationStatus.accepted)
-        return call_result.StartTransactionPayload(
+        return call_result.StartTransaction(
             transaction_id=1, id_tag_info=id_tag_info
         )
 
@@ -806,7 +807,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "GetConfiguration",
-        call_result.GetConfigurationPayload(
+        call_result.GetConfiguration(
             [{"key": "LocalAuthListEnabled", "readonly": False, "value": "true"}]
         ),
     )
@@ -819,7 +820,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1),
+        call.Authorize(test_config.authorization_info.valid_id_tag_1),
     )
 
     # expect StartTransaction.req
@@ -827,7 +828,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -838,7 +839,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -854,7 +855,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
         ),
     )
@@ -864,7 +865,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -875,7 +876,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -892,7 +893,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -903,7 +904,7 @@ async def test_authorization_cache_entry_2(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -917,22 +918,22 @@ async def test_authorization_cache_entry_3(
     test_utility: TestUtility,
     test_controller: TestController,
 ):
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         # accepted but expires just now
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
             expiry_date=datetime.now(timezone.utc).isoformat(),
         )
-        return call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        return call_result.Authorize(id_tag_info=id_tag_info)
 
-    @on(Action.StartTransaction)
+    @on(Action.start_transaction)
     def on_start_transaction(**kwargs):
         id_tag_info = IdTagInfo(
             status=AuthorizationStatus.accepted,
             expiry_date=datetime.now(timezone.utc).isoformat(),
         )
-        return call_result.StartTransactionPayload(
+        return call_result.StartTransaction(
             transaction_id=1, id_tag_info=id_tag_info
         )
 
@@ -954,7 +955,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "GetConfiguration",
-        call_result.GetConfigurationPayload(
+        call_result.GetConfiguration(
             [{"key": "LocalAuthListEnabled", "readonly": False, "value": "true"}]
         ),
     )
@@ -967,7 +968,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1),
+        call.Authorize(test_config.authorization_info.valid_id_tag_1),
     )
 
     # expect StartTransaction.req
@@ -975,7 +976,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -986,7 +987,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -1002,7 +1003,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
         ),
     )
@@ -1012,7 +1013,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -1023,7 +1024,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -1039,7 +1040,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1),
+        call.Authorize(test_config.authorization_info.valid_id_tag_1),
     )
 
     # expect StartTransaction.req
@@ -1047,7 +1048,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -1058,7 +1059,7 @@ async def test_authorization_cache_entry_3(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -1083,7 +1084,7 @@ async def test_swipe_on_finishing(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -1101,7 +1102,7 @@ async def test_swipe_on_finishing(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.finishing
         ),
     )
@@ -1111,7 +1112,7 @@ async def test_swipe_on_finishing(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.local),
+        call.StopTransaction(0, "", 1, Reason.local),
         validate_standard_stop_transaction,
     )
 
@@ -1127,7 +1128,7 @@ async def test_swipe_on_finishing(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -1151,7 +1152,8 @@ async def test_remote_start_transaction_no_connector(
         test_utility,
         charge_point_v16,
         "RemoteStartTransaction",
-        call_result.RemoteStartTransactionPayload(RemoteStartStopStatus.accepted),
+        call_result.RemoteStartTransaction(
+            RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
     )
 
@@ -1162,7 +1164,7 @@ async def test_remote_start_transaction_no_connector(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -1173,7 +1175,7 @@ async def test_remote_start_transaction_no_connector(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -1189,7 +1191,8 @@ async def test_remote_start_transaction_no_connector(
         test_utility,
         charge_point_v16,
         "RemoteStartTransaction",
-        call_result.RemoteStartTransactionPayload(RemoteStartStopStatus.accepted),
+        call_result.RemoteStartTransaction(
+            RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
     )
 
@@ -1200,7 +1203,7 @@ async def test_remote_start_transaction_no_connector(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             2, test_config.authorization_info.valid_id_tag_2, 0, ""
         ),
         validate_standard_start_transaction,
@@ -1225,7 +1228,8 @@ async def test_remote_start_transaction_single_connector(
         test_utility,
         charge_point_v16,
         "RemoteStartTransaction",
-        call_result.RemoteStartTransactionPayload(RemoteStartStopStatus.accepted),
+        call_result.RemoteStartTransaction(
+            RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
     )
 
@@ -1240,7 +1244,7 @@ async def test_remote_start_transaction_single_connector(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             2, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -1251,7 +1255,7 @@ async def test_remote_start_transaction_single_connector(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             2, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -1275,7 +1279,8 @@ async def test_double_remote_start_transaction(
         test_utility,
         charge_point_v16,
         "RemoteStartTransaction",
-        call_result.RemoteStartTransactionPayload(RemoteStartStopStatus.accepted),
+        call_result.RemoteStartTransaction(
+            RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
     )
 
@@ -1286,7 +1291,7 @@ async def test_double_remote_start_transaction(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -1297,7 +1302,7 @@ async def test_double_remote_start_transaction(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -1313,7 +1318,8 @@ async def test_double_remote_start_transaction(
         test_utility,
         charge_point_v16,
         "RemoteStartTransaction",
-        call_result.RemoteStartTransactionPayload(RemoteStartStopStatus.accepted),
+        call_result.RemoteStartTransaction(
+            RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
     )
 
@@ -1324,7 +1330,7 @@ async def test_double_remote_start_transaction(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             2, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -1357,7 +1363,7 @@ async def test_send_local_lost_large_token(
         async with charge_point_v16._call_lock:
             await charge_point_v16._send(json_data)
 
-    payload = call.SendLocalListPayload(
+    payload = call.SendLocalList(
         list_version=1,
         update_type=UpdateType.differential,
         local_authorization_list=[
@@ -1375,7 +1381,7 @@ async def test_send_local_lost_large_token(
 
     call_msg = Call(
         unique_id=str(charge_point_v16._unique_id_generator()),
-        action=payload.__class__.__name__[:-7],
+        action=payload.__class__.__name__,
         payload=remove_nones(camel_case_payload),
     )
 

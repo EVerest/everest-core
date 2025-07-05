@@ -10,15 +10,17 @@ from unittest.mock import Mock, call as mock_call
 
 from everest.testing.ocpp_utils.central_system import CentralSystem
 
-from ocpp.v201.enums import GetInstalledCertificateStatusType, GetCertificateIdUseType
+from ocpp.v201.enums import GetInstalledCertificateStatusEnumType, GetCertificateIdUseEnumType
 
 from ocpp.v201 import call as call201
 
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
-    GenericOCPP201ConfigAdjustment,
+    GenericOCPP2XConfigAdjustment,
+    OCPP2XConfigVariableIdentifier
 )
 
-from test_sets.everest_test_utils import *  # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
+# Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
+from test_sets.everest_test_utils import *
 from everest.testing.ocpp_utils.charge_point_utils import (
     wait_for_and_validate,
     TestUtility,
@@ -101,7 +103,8 @@ class CertificateHashDataChainEntry:
     def from_dict(data: Dict):
         return CertificateHashDataChainEntry(
             certificate_type=data["certificate_type"],
-            certificate_hash_data=CertificateHashData(**data["certificate_hash_data"]),
+            certificate_hash_data=CertificateHashData(
+                **data["certificate_hash_data"]),
             child_certificate_hash_data=[
                 CertificateHashData(**d)
                 for d in data.get("child_certificate_hash_data", [])
@@ -160,10 +163,10 @@ class TestIso15118CertificateManagementOcppIntegration:
         ],
     )
     @pytest.mark.ocpp_config_adaptions(
-        GenericOCPP201ConfigAdjustment(
+        GenericOCPP2XConfigAdjustment(
             [
                 (
-                    OCPP201ConfigVariableIdentifier(
+                    OCPP2XConfigVariableIdentifier(
                         "ISO15118Ctrlr",
                         "ContractCertificateInstallationEnabled",
                         "Actual",
@@ -195,7 +198,8 @@ class TestIso15118CertificateManagementOcppIntegration:
         """
 
         mock_cmd_set_get_certificate_response = {}
-        mock_cmd_set_get_certificate_response["ProbeModuleIso15118Extensions"] = Mock()
+        mock_cmd_set_get_certificate_response["ProbeModuleIso15118Extensions"] = Mock(
+        )
         mock_cmd_set_get_certificate_response["ProbeModuleIso15118Extensions"].return_value = None
         probe_module.implement_command(
             "ProbeModuleIso15118Extensions",
@@ -210,13 +214,12 @@ class TestIso15118CertificateManagementOcppIntegration:
         probe_module.publish_variable("ProbeModuleConnectorB", "ready", True)
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
-
         # Setup ChargePoint response
 
         exi_response = f"mock exi response for ProbeModuleIso15118Extensions"
 
         central_system.mock.on_get_15118_ev_certificate.side_effect = [
-            call_result201.Get15118EVCertificatePayload(
+            call_result201.Get15118EVCertificate(
                 status=response_status, exi_response=exi_response
             )
         ]
@@ -241,7 +244,7 @@ class TestIso15118CertificateManagementOcppIntegration:
         )
 
         # Verify: CSMS is called correctly
-        expected_cp_request = call201.Get15118EVCertificatePayload(
+        expected_cp_request = call201.Get15118EVCertificate(
             iso15118_schema_version=mock_iso15118_schema_version,
             exi_request=mock_certificate_installation_req,
             action=action,
@@ -279,7 +282,8 @@ class TestIso15118CertificateManagementOcppIntegration:
     # ************************************************************************************************
 
     @pytest.mark.parametrize(
-        "skip_implementation", [{"ProbeModuleSecurity": ["get_installed_certificates"]}]
+        "skip_implementation", [
+            {"ProbeModuleSecurity": ["get_installed_certificates"]}]
     )
     @pytest.mark.asyncio
     async def test_m3_get_installed_certificates(
@@ -355,17 +359,17 @@ class TestIso15118CertificateManagementOcppIntegration:
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
         # Act: request certs
-        ocpplib_result: call_result201.GetInstalledCertificateIdsPayload = (
+        ocpplib_result: call_result201.GetInstalledCertificateIds = (
             await chargepoint_with_pm.get_installed_certificate_ids_req(
                 certificate_type=[
-                    GetCertificateIdUseType.csms_root_certificate,
-                    GetCertificateIdUseType.v2g_certificate_chain,
+                    GetCertificateIdUseEnumType.csms_root_certificate,
+                    GetCertificateIdUseEnumType.v2g_certificate_chain,
                 ]
             )
         )
 
         # Verfiy
-        assert ocpplib_result == call_result201.GetInstalledCertificateIdsPayload(
+        assert ocpplib_result == call_result201.GetInstalledCertificateIds(
             status="Accepted",
             certificate_hash_data_chain=[
                 mock_certificate_hash_data_chain_data["CSMSRootCertificate"],
@@ -374,12 +378,14 @@ class TestIso15118CertificateManagementOcppIntegration:
         )
         assert security_module_mock.mock_calls == [
             mock_call(
-                {"certificate_types": ["CSMSRootCertificate", "V2GCertificateChain"]}
+                {"certificate_types": [
+                    "CSMSRootCertificate", "V2GCertificateChain"]}
             )
         ]
 
     @pytest.mark.parametrize(
-        "skip_implementation", [{"ProbeModuleSecurity": ["get_installed_certificates"]}]
+        "skip_implementation", [
+            {"ProbeModuleSecurity": ["get_installed_certificates"]}]
     )
     async def test_m3_get_installed_certificates_not_found(
         self, central_system: CentralSystem, probe_module: ProbeModule
@@ -412,22 +418,23 @@ class TestIso15118CertificateManagementOcppIntegration:
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
         # Act: request certs
-        ocpplib_result: call_result201.GetInstalledCertificateIdsPayload = (
+        ocpplib_result: call_result201.GetInstalledCertificateIds = (
             await chargepoint_with_pm.get_installed_certificate_ids_req(
                 certificate_type=[
-                    GetCertificateIdUseType.csms_root_certificate,
-                    GetCertificateIdUseType.v2g_certificate_chain,
+                    GetCertificateIdUseEnumType.csms_root_certificate,
+                    GetCertificateIdUseEnumType.v2g_certificate_chain,
                 ]
             )
         )
 
         # Verfiy
-        assert ocpplib_result == call_result201.GetInstalledCertificateIdsPayload(
+        assert ocpplib_result == call_result201.GetInstalledCertificateIds(
             status="NotFound", certificate_hash_data_chain=None
         )
         assert security_module_mock.mock_calls == [
             mock_call(
-                {"certificate_types": ["CSMSRootCertificate", "V2GCertificateChain"]}
+                {"certificate_types": [
+                    "CSMSRootCertificate", "V2GCertificateChain"]}
             )
         ]
 
@@ -436,7 +443,8 @@ class TestIso15118CertificateManagementOcppIntegration:
     # ************************************************************************************************
 
     @pytest.mark.parametrize(
-        "skip_implementation", [{"ProbeModuleSecurity": ["delete_certificate"]}]
+        "skip_implementation", [
+            {"ProbeModuleSecurity": ["delete_certificate"]}]
     )
     @pytest.mark.parametrize("response_status", ["Accepted", "Failed", "NotFound"])
     async def test_m4_delete(
@@ -484,7 +492,7 @@ class TestIso15118CertificateManagementOcppIntegration:
             test_utility,
             chargepoint_with_pm,
             "DeleteCertificate",
-            call_result201.DeleteCertificatePayload(response_status),
+            call_result201.DeleteCertificate(response_status),
         )
         assert security_module_mock.mock_calls == [
             mock_call({"certificate_hash_data": cert_hash_data})
@@ -495,7 +503,8 @@ class TestIso15118CertificateManagementOcppIntegration:
     # ************************************************************************************************
 
     @pytest.mark.parametrize(
-        "skip_implementation", [{"ProbeModuleSecurity": ["install_ca_certificate"]}]
+        "skip_implementation", [
+            {"ProbeModuleSecurity": ["install_ca_certificate"]}]
     )
     @pytest.mark.parametrize(
         "evse_security_response_status, chargepoint_response_status",
@@ -544,12 +553,13 @@ class TestIso15118CertificateManagementOcppIntegration:
             test_utility,
             chargepoint_with_pm,
             "InstallCertificate",
-            call_result201.InstallCertificatePayload(chargepoint_response_status),
+            call_result201.InstallCertificate(chargepoint_response_status),
         )
 
         assert security_module_mock.mock_calls == [
             mock_call(
-                {"certificate": request["certificate"], "certificate_type": "CSMS"}
+                {"certificate": request["certificate"],
+                    "certificate_type": "CSMS"}
             )
         ]
 
@@ -574,22 +584,22 @@ class TestIso15118CertificateManagementE2E:
         [
             (
                 "CSMSRootCertificate",
-                GetCertificateIdUseType.csms_root_certificate,
+                GetCertificateIdUseEnumType.csms_root_certificate,
                 "csms/CSMS_ROOT_CA.pem",
             ),
             (
                 "ManufacturerRootCertificate",
-                GetCertificateIdUseType.manufacturer_root_certificate,
+                GetCertificateIdUseEnumType.manufacturer_root_certificate,
                 "mf/MF_ROOT_CA.pem",
             ),
             (
                 "V2GRootCertificate",
-                GetCertificateIdUseType.v2g_root_certificate,
+                GetCertificateIdUseEnumType.v2g_root_certificate,
                 "v2g/V2G_ROOT_CA.pem",
             ),
             (
                 "MORootCertificate",
-                GetCertificateIdUseType.mo_root_certificate,
+                GetCertificateIdUseEnumType.mo_root_certificate,
                 "mo/MO_ROOT_CA.pem",
             ),
         ],
@@ -604,14 +614,14 @@ class TestIso15118CertificateManagementE2E:
     ):
         search_path = test_config.certificate_info.csms_root_ca.parent.parent
 
-        result: call_result201.GetInstalledCertificateIdsPayload = (
+        result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
                 certificate_type=[use_type]
             )
         )
 
-        assert result == call_result201.GetInstalledCertificateIdsPayload(
-            status=GetInstalledCertificateStatusType.accepted,
+        assert result == call_result201.GetInstalledCertificateIds(
+            status=GetInstalledCertificateStatusEnumType.accepted,
             certificate_hash_data_chain=[
                 {
                     "certificate_hash_data": CertificateHashDataGenerator.get_hash_data(
@@ -630,7 +640,7 @@ class TestIso15118CertificateManagementE2E:
         """
         search_path = test_config.certificate_info.csms_root_ca.parent.parent
 
-        result: call_result201.GetInstalledCertificateIdsPayload = (
+        result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req()
         )
         assert result.status == "Accepted"
@@ -647,22 +657,22 @@ class TestIso15118CertificateManagementE2E:
             for certificate_type, use_type, certificate_file in [
                 (
                     "CSMSRootCertificate",
-                    GetCertificateIdUseType.csms_root_certificate,
+                    GetCertificateIdUseEnumType.csms_root_certificate,
                     "csms/CSMS_ROOT_CA.pem",
                 ),
                 (
                     "ManufacturerRootCertificate",
-                    GetCertificateIdUseType.manufacturer_root_certificate,
+                    GetCertificateIdUseEnumType.manufacturer_root_certificate,
                     "mf/MF_ROOT_CA.pem",
                 ),
                 (
                     "MORootCertificate",
-                    GetCertificateIdUseType.mo_root_certificate,
+                    GetCertificateIdUseEnumType.mo_root_certificate,
                     "mo/MO_ROOT_CA.pem",
                 ),
                 (
                     "V2GRootCertificate",
-                    GetCertificateIdUseType.v2g_root_certificate,
+                    GetCertificateIdUseEnumType.v2g_root_certificate,
                     "v2g/V2G_ROOT_CA.pem",
                 ),
             ]
@@ -693,12 +703,13 @@ class TestIso15118CertificateManagementE2E:
         ):
             f.unlink()
 
-        result: call_result201.GetInstalledCertificateIdsPayload = (
+        result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
-                certificate_type=[GetCertificateIdUseType.mo_root_certificate]
+                certificate_type=[
+                    GetCertificateIdUseEnumType.mo_root_certificate]
             )
         )
-        assert result == call_result201.GetInstalledCertificateIdsPayload(
+        assert result == call_result201.GetInstalledCertificateIds(
             status="NotFound"
         )
 
@@ -743,17 +754,17 @@ class TestIso15118CertificateManagementE2E:
         """
 
         # Prepare: Expected hash data
-        use_type = GetCertificateIdUseType.v2g_certificate_chain
+        use_type = GetCertificateIdUseEnumType.v2g_certificate_chain
 
         # Act
-        result: call_result201.GetInstalledCertificateIdsPayload = (
+        result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
                 certificate_type=[use_type]
             )
         )
 
         # Verify
-        assert result.status == GetInstalledCertificateStatusType.accepted
+        assert result.status == GetInstalledCertificateStatusEnumType.accepted
 
         resulting_chain = CertificateHashDataChain.from_list(
             result.certificate_hash_data_chain
@@ -770,22 +781,22 @@ class TestIso15118CertificateManagementE2E:
         [
             (
                 "CSMSRootCertificate",
-                GetCertificateIdUseType.csms_root_certificate,
+                GetCertificateIdUseEnumType.csms_root_certificate,
                 "csms/CSMS_ROOT_CA.pem",
             ),
             (
                 "ManufacturerRootCertificate",
-                GetCertificateIdUseType.manufacturer_root_certificate,
+                GetCertificateIdUseEnumType.manufacturer_root_certificate,
                 "mf/MF_ROOT_CA.pem",
             ),
             (
                 "V2GRootCertificate",
-                GetCertificateIdUseType.v2g_root_certificate,
+                GetCertificateIdUseEnumType.v2g_root_certificate,
                 "v2g/V2G_ROOT_CA.pem",
             ),
             (
                 "MORootCertificate",
-                GetCertificateIdUseType.mo_root_certificate,
+                GetCertificateIdUseEnumType.mo_root_certificate,
                 "mo/MO_ROOT_CA.pem",
             ),
         ],
@@ -806,21 +817,21 @@ class TestIso15118CertificateManagementE2E:
             certificate_path=certificate_search_path / certificate_file
         )
 
-        deletion_result: call_result201.GetInstalledCertificateIdsPayload = (
+        deletion_result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.delete_certificate_req(
                 certificate_hash_data=certificate_for_deletion_hash_data
             )
         )
 
-        assert deletion_result.status == GetInstalledCertificateStatusType.accepted
+        assert deletion_result.status == GetInstalledCertificateStatusEnumType.accepted
 
-        verification_result: call_result201.GetInstalledCertificateIdsPayload = (
+        verification_result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
                 certificate_type=[use_type]
             )
         )
 
-        assert verification_result.status == GetInstalledCertificateStatusType.notFound
+        assert verification_result.status == GetInstalledCertificateStatusEnumType.notFound
 
     async def test_m4_reject_deletion_of_charging_station_certificate(
         self, test_config, charge_point_v201
@@ -845,7 +856,7 @@ class TestIso15118CertificateManagementE2E:
             certificate_path=cso_certificate, issuer_certificate_path=issuer_certificate
         )
 
-        deletion_result: call_result201.GetInstalledCertificateIdsPayload = (
+        deletion_result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.delete_certificate_req(
                 certificate_hash_data=certificate_for_deletion_hash_data
             )
@@ -876,7 +887,7 @@ class TestIso15118CertificateManagementE2E:
             certificate_path=cso_certificate, issuer_certificate_path=issuer_certificate
         )
 
-        deletion_result: call_result201.GetInstalledCertificateIdsPayload = (
+        deletion_result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.delete_certificate_req(
                 certificate_hash_data=certificate_for_deletion_hash_data
             )
@@ -887,13 +898,13 @@ class TestIso15118CertificateManagementE2E:
     @pytest.mark.parametrize(
         "certificate_type, ocpp_certificate_type",
         [
-            ("CSMSRootCertificate", GetCertificateIdUseType.csms_root_certificate),
+            ("CSMSRootCertificate", GetCertificateIdUseEnumType.csms_root_certificate),
             (
                 "ManufacturerRootCertificate",
-                GetCertificateIdUseType.manufacturer_root_certificate,
+                GetCertificateIdUseEnumType.manufacturer_root_certificate,
             ),
-            ("V2GRootCertificate", GetCertificateIdUseType.v2g_root_certificate),
-            ("MORootCertificate", GetCertificateIdUseType.mo_root_certificate),
+            ("V2GRootCertificate", GetCertificateIdUseEnumType.v2g_root_certificate),
+            ("MORootCertificate", GetCertificateIdUseEnumType.mo_root_certificate),
         ],
     )
     async def test_m5_install_ca_certificate(
@@ -908,7 +919,7 @@ class TestIso15118CertificateManagementE2E:
             example_certificate["certificate_hash_data"],
         )
 
-        certificates_before: call_result201.GetInstalledCertificateIdsPayload = (
+        certificates_before: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
                 certificate_type=[ocpp_certificate_type]
             )
@@ -917,15 +928,15 @@ class TestIso15118CertificateManagementE2E:
         logging.info(
             f"Installing certificate (serial: {cert_hash_data['serial_number']}) as {ocpp_certificate_type}"
         )
-        res: call_result201.InstallCertificatePayload = (
+        res: call_result201.InstallCertificate = (
             await charge_point_v201.install_certificate_req(
                 certificate_type=ocpp_certificate_type, certificate=certificate
             )
         )
 
-        assert res == call_result201.InstallCertificatePayload(status="Accepted")
+        assert res == call_result201.InstallCertificate(status="Accepted")
 
-        verification_result: call_result201.GetInstalledCertificateIdsPayload = (
+        verification_result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
                 certificate_type=[ocpp_certificate_type]
             )
@@ -971,25 +982,25 @@ Pjw/OEvVm/QqKQQDc2q2ZIs8RsvbpeNZD84mJT706EqID3s=
 
         expired_certificate = cert
 
-        res: call_result201.InstallCertificatePayload = (
+        res: call_result201.InstallCertificate = (
             await charge_point_v201.install_certificate_req(
-                certificate_type=GetCertificateIdUseType.csms_root_certificate,
+                certificate_type=GetCertificateIdUseEnumType.csms_root_certificate,
                 certificate=expired_certificate,
             )
         )
 
-        assert res == call_result201.InstallCertificatePayload(status="Rejected")
+        assert res == call_result201.InstallCertificate(status="Rejected")
 
     @pytest.mark.parametrize(
         "certificate_type, ocpp_certificate_type",
         [
-            ("CSMSRootCertificate", GetCertificateIdUseType.csms_root_certificate),
+            ("CSMSRootCertificate", GetCertificateIdUseEnumType.csms_root_certificate),
             (
                 "ManufacturerRootCertificate",
-                GetCertificateIdUseType.manufacturer_root_certificate,
+                GetCertificateIdUseEnumType.manufacturer_root_certificate,
             ),
-            ("V2GRootCertificate", GetCertificateIdUseType.v2g_root_certificate),
-            ("MORootCertificate", GetCertificateIdUseType.mo_root_certificate),
+            ("V2GRootCertificate", GetCertificateIdUseEnumType.v2g_root_certificate),
+            ("MORootCertificate", GetCertificateIdUseEnumType.mo_root_certificate),
         ],
     )
     async def test_m4_delete_installed_certificates(
@@ -1005,23 +1016,23 @@ Pjw/OEvVm/QqKQQDc2q2ZIs8RsvbpeNZD84mJT706EqID3s=
             example_certificate["certificate_hash_data"],
         )
 
-        certificates_before: call_result201.GetInstalledCertificateIdsPayload = (
+        certificates_before: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
                 certificate_type=[ocpp_certificate_type]
             )
         )
-        assert certificates_before.status == GetInstalledCertificateStatusType.accepted
+        assert certificates_before.status == GetInstalledCertificateStatusEnumType.accepted
 
-        installation_result: call_result201.InstallCertificatePayload = (
+        installation_result: call_result201.InstallCertificate = (
             await charge_point_v201.install_certificate_req(
                 certificate_type=ocpp_certificate_type, certificate=certificate
             )
         )
-        assert installation_result == call_result201.InstallCertificatePayload(
+        assert installation_result == call_result201.InstallCertificate(
             status="Accepted"
         )
 
-        certificates_after_install: call_result201.GetInstalledCertificateIdsPayload = (
+        certificates_after_install: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
                 certificate_type=[ocpp_certificate_type]
             )
@@ -1032,15 +1043,15 @@ Pjw/OEvVm/QqKQQDc2q2ZIs8RsvbpeNZD84mJT706EqID3s=
             for c in certificates_after_install.certificate_hash_data_chain
         ]
 
-        deletion_result: call_result201.GetInstalledCertificateIdsPayload = (
+        deletion_result: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.delete_certificate_req(
                 certificate_hash_data=cert_hash_data
             )
         )
 
-        assert deletion_result.status == GetInstalledCertificateStatusType.accepted
+        assert deletion_result.status == GetInstalledCertificateStatusEnumType.accepted
 
-        certificates_after_delete: call_result201.GetInstalledCertificateIdsPayload = (
+        certificates_after_delete: call_result201.GetInstalledCertificateIds = (
             await charge_point_v201.get_installed_certificate_ids_req(
                 certificate_type=[ocpp_certificate_type]
             )
@@ -1048,7 +1059,7 @@ Pjw/OEvVm/QqKQQDc2q2ZIs8RsvbpeNZD84mJT706EqID3s=
 
         assert (
             certificates_after_delete.status
-            == GetInstalledCertificateStatusType.accepted
+            == GetInstalledCertificateStatusEnumType.accepted
         )
         assert (
             certificates_before.certificate_hash_data_chain

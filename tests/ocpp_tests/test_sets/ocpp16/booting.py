@@ -48,7 +48,7 @@ async def test_stop_pending_transactions(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -59,7 +59,7 @@ async def test_stop_pending_transactions(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.charging
         ),
     )
@@ -85,7 +85,7 @@ async def test_stop_pending_transactions(
         test_utility,
         charge_point_v16,
         "StopTransaction",
-        call.StopTransactionPayload(0, "", 1, Reason.power_loss),
+        call.StopTransaction(0, "", 1, Reason.power_loss),
         validate_standard_stop_transaction,
     )
 
@@ -100,19 +100,20 @@ async def test_change_authorization_key_in_pending(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    logging.info("######### test_change_authorization_key_in_pending #########")
+    logging.info(
+        "######### test_change_authorization_key_in_pending #########")
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_pending(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.pending,
         )
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
@@ -140,7 +141,8 @@ async def test_change_authorization_key_in_pending(
     await central_system_v16.wait_for_chargepoint(wait_for_bootnotification=False)
     charge_point_v16 = central_system_v16.chargepoint
 
-    setattr(charge_point_v16, "on_boot_notification", on_boot_notification_accepted)
+    setattr(charge_point_v16, "on_boot_notification",
+            on_boot_notification_accepted)
     central_system_v16.chargepoint.route_map = create_route_map(
         central_system_v16.chargepoint
     )
@@ -149,7 +151,7 @@ async def test_change_authorization_key_in_pending(
         test_utility,
         charge_point_v16,
         "BootNotification",
-        call.BootNotificationPayload(
+        call.BootNotification(
             test_config.charge_point_info.charge_point_model,
             charge_box_serial_number=test_config.charge_point_info.charge_point_id,
             charge_point_vendor=test_config.charge_point_info.charge_point_vendor,
@@ -163,13 +165,13 @@ async def test_change_authorization_key_in_pending(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
+        test_utility, charge_point_v16, "Heartbeat", call.Heartbeat()
     )
 
 
@@ -183,11 +185,12 @@ async def test_remote_start_stop_in_pending(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    logging.info("######### test_change_authorization_key_in_pending #########")
+    logging.info(
+        "######### test_change_authorization_key_in_pending #########")
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_pending(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.pending,
@@ -203,12 +206,14 @@ async def test_remote_start_stop_in_pending(
 
     await charge_point_v16.remote_start_transaction_req(id_tag="DEADBEEF")
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "RemoteStartTransaction", {"status": "Rejected"}
+        test_utility, charge_point_v16, "RemoteStartTransaction", {
+            "status": "Rejected"}
     )
 
     await charge_point_v16.remote_stop_transaction_req(transaction_id=20)
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "RemoteStopTransaction", {"status": "Rejected"}
+        test_utility, charge_point_v16, "RemoteStopTransaction", {
+            "status": "Rejected"}
     )
 
 
@@ -221,17 +226,17 @@ async def test_boot_notification_rejected(
 ):
     logging.info("######### test_boot_notification_rejected #########")
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_rejected(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.rejected,
         )
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
@@ -245,7 +250,8 @@ async def test_boot_notification_rejected(
     charge_point_v16: ChargePoint16 = await central_system_v16.wait_for_chargepoint()
     charge_point_v16.pipe = True
 
-    setattr(charge_point_v16, "on_boot_notification", on_boot_notification_accepted)
+    setattr(charge_point_v16, "on_boot_notification",
+            on_boot_notification_accepted)
     central_system_v16.chargepoint.route_map = create_route_map(
         central_system_v16.chargepoint
     )
@@ -254,7 +260,7 @@ async def test_boot_notification_rejected(
         test_utility,
         charge_point_v16,
         "BootNotification",
-        call.BootNotificationPayload(
+        call.BootNotification(
             test_config.charge_point_info.charge_point_model,
             charge_box_serial_number=test_config.charge_point_info.charge_point_id,
             charge_point_vendor=test_config.charge_point_info.charge_point_vendor,
@@ -268,13 +274,13 @@ async def test_boot_notification_rejected(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
+        test_utility, charge_point_v16, "Heartbeat", call.Heartbeat()
     )
 
 
@@ -287,22 +293,24 @@ async def test_boot_notification_callerror(
 ):
     logging.info("######### test_boot_notification_callerror #########")
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
         )
 
     # Provoke a CALLERROR as a response to a BootNotification.req
-    central_system_v16.function_overrides.append(("on_boot_notification", None))
+    central_system_v16.function_overrides.append(
+        ("on_boot_notification", None))
 
     test_controller.start()
     charge_point_v16: ChargePoint16 = await central_system_v16.wait_for_chargepoint()
     charge_point_v16.pipe = True
 
-    setattr(charge_point_v16, "on_boot_notification", on_boot_notification_accepted)
+    setattr(charge_point_v16, "on_boot_notification",
+            on_boot_notification_accepted)
     central_system_v16.chargepoint.route_map = create_route_map(
         central_system_v16.chargepoint
     )
@@ -311,7 +319,7 @@ async def test_boot_notification_callerror(
         test_utility,
         charge_point_v16,
         "BootNotification",
-        call.BootNotificationPayload(
+        call.BootNotification(
             test_config.charge_point_info.charge_point_model,
             charge_box_serial_number=test_config.charge_point_info.charge_point_id,
             charge_point_vendor=test_config.charge_point_info.charge_point_vendor,
@@ -326,13 +334,13 @@ async def test_boot_notification_callerror(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
+        test_utility, charge_point_v16, "Heartbeat", call.Heartbeat()
     )
 
 
@@ -349,7 +357,8 @@ async def test_boot_notification_no_response(
         return
 
     # do not respond at all
-    central_system_v16.function_overrides.append(("route_message", route_message))
+    central_system_v16.function_overrides.append(
+        ("route_message", route_message))
 
     test_controller.start()
     charge_point_v16: ChargePoint16 = await central_system_v16.wait_for_chargepoint()
@@ -360,7 +369,7 @@ async def test_boot_notification_no_response(
         test_utility,
         charge_point_v16,
         "BootNotification",
-        call.BootNotificationPayload(
+        call.BootNotification(
             test_config.charge_point_info.charge_point_model,
             charge_box_serial_number=test_config.charge_point_info.charge_point_id,
             charge_point_vendor=test_config.charge_point_info.charge_point_vendor,
@@ -379,7 +388,8 @@ async def test_boot_notification_no_response(
 @pytest.mark.asyncio
 @pytest.mark.csms_tls
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP16ConfigAdjustment([("Internal", "VerifyCsmsCommonName", False)])
+    GenericOCPP16ConfigAdjustment(
+        [("Internal", "VerifyCsmsCommonName", False)])
 )
 async def test_initiate_message_in_pending(
     test_config: OcppTestConfiguration,
@@ -389,17 +399,17 @@ async def test_initiate_message_in_pending(
 ):
     logging.info("######### test_initiate_message_in_pending #########")
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_pending(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.pending,
         )
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
@@ -424,7 +434,7 @@ async def test_initiate_message_in_pending(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -437,7 +447,7 @@ async def test_initiate_message_in_pending(
         test_utility,
         charge_point_v16,
         "BootNotification",
-        call.BootNotificationPayload(
+        call.BootNotification(
             test_config.charge_point_info.charge_point_model,
             charge_box_serial_number=test_config.charge_point_info.charge_point_id,
             charge_point_vendor=test_config.charge_point_info.charge_point_vendor,
@@ -451,7 +461,7 @@ async def test_initiate_message_in_pending(
         requested_message=MessageTrigger.heartbeat
     )
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
+        test_utility, charge_point_v16, "Heartbeat", call.Heartbeat()
     )
 
     test_utility.messages.clear()
@@ -462,7 +472,7 @@ async def test_initiate_message_in_pending(
         test_utility,
         charge_point_v16,
         "DiagnosticsStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.idle),
+        call.DiagnosticsStatusNotification(DiagnosticsStatus.idle),
     )
 
     test_utility.messages.clear()
@@ -473,7 +483,7 @@ async def test_initiate_message_in_pending(
         test_utility,
         charge_point_v16,
         "FirmwareStatusNotification",
-        call.FirmwareStatusNotificationPayload(FirmwareStatus.idle),
+        call.FirmwareStatusNotification(FirmwareStatus.idle),
     )
 
     test_utility.messages.clear()
@@ -484,7 +494,7 @@ async def test_initiate_message_in_pending(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
@@ -497,14 +507,15 @@ async def test_initiate_message_in_pending(
         test_utility,
         charge_point_v16,
         "ExtendedTriggerMessage",
-        call_result.ExtendedTriggerMessagePayload(TriggerMessageStatus.accepted),
+        call_result.ExtendedTriggerMessage(TriggerMessageStatus.accepted),
     )
 
     assert await wait_for_and_validate(
         test_utility, charge_point_v16, "SignCertificate", {}
     )
 
-    setattr(charge_point_v16, "on_boot_notification", on_boot_notification_accepted)
+    setattr(charge_point_v16, "on_boot_notification",
+            on_boot_notification_accepted)
     central_system_v16.chargepoint.route_map = create_route_map(
         central_system_v16.chargepoint
     )
@@ -513,7 +524,7 @@ async def test_initiate_message_in_pending(
         test_utility,
         charge_point_v16,
         "BootNotification",
-        call.BootNotificationPayload(
+        call.BootNotification(
             test_config.charge_point_info.charge_point_model,
             charge_box_serial_number=test_config.charge_point_info.charge_point_id,
             charge_point_vendor=test_config.charge_point_info.charge_point_vendor,
@@ -535,13 +546,13 @@ async def test_initiate_message_in_pending(
         test_utility,
         charge_point_v16,
         "StatusNotification",
-        call.StatusNotificationPayload(
+        call.StatusNotification(
             1, ChargePointErrorCode.no_error, ChargePointStatus.available
         ),
     )
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
+        test_utility, charge_point_v16, "Heartbeat", call.Heartbeat()
     )
 
 
@@ -552,9 +563,9 @@ async def test_boot_notification_rejected_and_call_by_csms(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_rejected(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatus.rejected,
