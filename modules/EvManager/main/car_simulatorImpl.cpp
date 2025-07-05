@@ -200,8 +200,22 @@ void car_simulatorImpl::register_all_commands() {
         command_registry->register_command("iso_dc_power_on", 0, [this](const CmdArguments& arguments) {
             return this->car_simulation->iso_dc_power_on(arguments);
         });
-        command_registry->register_command("iso_start_v2g_session", 1, [this](const CmdArguments& arguments) {
-            return this->car_simulation->iso_start_v2g_session(arguments, mod->config.three_phases);
+        command_registry->register_command("iso_start_v2g_session", 3, [this](const CmdArguments& arguments) {
+            auto departure_time = std::stoi(arguments[1]);
+            auto e_amount = std::stoi(arguments[2]);
+            EVLOG_debug << "Before ladder departure time is " << departure_time << " and eamount is " << e_amount;
+            if (departure_time < 0) {
+                EVLOG_debug << "Using default departure time from config";
+                departure_time = mod->config.departure_time;
+            }
+            if (e_amount < 0) {
+                EVLOG_debug << "Using default eamount from config";
+                e_amount = mod->config.e_amount;
+            }
+            EVLOG_debug << "After ladder departure time is " << departure_time << " and eamount is " << e_amount;
+
+            CmdArguments args{arguments[0], std::to_string(departure_time), std::to_string(e_amount)};
+            return this->car_simulation->iso_start_v2g_session(args, mod->config.three_phases);
         });
         command_registry->register_command("iso_stop_charging", 0, [this](const CmdArguments& arguments) {
             return this->car_simulation->iso_stop_charging(arguments);
