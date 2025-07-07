@@ -37,9 +37,7 @@ def validate_authorize_req(
     ) == contains_ocsp
 
 
-@pytest.mark.skip(
-    "Plug and charge tests do currently interfere when they are run in parallel with other tests"
-)
+@pytest.mark.xdist_group(name="ISO15118")
 class TestPlugAndCharge:
 
     @pytest.mark.asyncio

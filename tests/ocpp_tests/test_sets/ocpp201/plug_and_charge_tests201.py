@@ -30,9 +30,6 @@ def validate_authorize_req(
     ) == contains_ocsp
 
 
-@pytest.mark.skip(
-    "Plug and charge tests do currently interfere when they are run in parallel with other tests"
-)
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.everest_core_config(
     get_everest_config_path_str("everest-config-ocpp201-sil-dc-d2.yaml")
@@ -51,6 +48,7 @@ def validate_authorize_req(
         ]
     )
 )
+@pytest.mark.xdist_group(name="ISO15118")
 class TestPlugAndCharge:
 
     @pytest.mark.asyncio
