@@ -523,18 +523,15 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
 static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     struct iso2_SessionSetupReqType* req = &conn->exi_in.iso2EXIDocument->V2G_Message.Body.SessionSetupReq;
     struct iso2_SessionSetupResType* res = &conn->exi_out.iso2EXIDocument->V2G_Message.Body.SessionSetupRes;
-    char buffer[iso2_evccIDType_BYTES_SIZE * 3 - 1 + 1]; /* format: (%02x:) * n - (1x ':') + (1x NULL) */
-    int i;
+    char buffer[iso2_evccIDType_BYTES_SIZE * 3 - 1 + 1] = {'\0'}; /* format: (%02x:) * n - (1x ':') + (1x NULL) */
     enum v2g_event next_event = V2G_EVENT_NO_EVENT;
 
     /* format EVCC ID */
-    for (i = 0; i < req->EVCCID.bytesLen; i++) {
-        sprintf(&buffer[i * 3], "%02" PRIX8 ":", req->EVCCID.bytes[i]);
+    for (std::size_t i = 0; i < req->EVCCID.bytesLen; i++) {
+        if (i > 0)
+            buffer[i * 3 - 1] = ':';
+        snprintf(&buffer[i * 3], std::size(buffer) - i * 3, "%02" PRIX8, req->EVCCID.bytes[i]);
     }
-    if (i)
-        buffer[i * 3 - 1] = '\0';
-    else
-        buffer[0] = '\0';
 
     conn->ctx->p_charger->publish_evcc_id(buffer); // publish EVCC ID
 
