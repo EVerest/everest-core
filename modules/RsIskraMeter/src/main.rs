@@ -47,6 +47,11 @@ use chrono::{Local, Offset, Utc};
 use everestrs::serde as everest_serde;
 use everestrs::serde_json as everest_serde_json;
 use generated::errors::powermeter::{Error, PowermeterError};
+use generated::types::display_message::{
+    ClearDisplayMessageRequest, ClearDisplayMessageResponse, ClearMessageResponseEnum,
+    DisplayMessage, DisplayMessageStatusEnum, GetDisplayMessageRequest, GetDisplayMessageResponse,
+    MessagePriorityEnum, MessageStateEnum, SetDisplayMessageResponse,
+};
 use generated::types::powermeter::{
     Powermeter, TransactionRequestStatus, TransactionStartResponse, TransactionStopResponse,
 };
@@ -401,6 +406,37 @@ mod retry {
             }
         }
         anyhow::bail!("Retry failed - timeout after {duration:?}");
+    }
+}
+
+/// Text type for LCD display
+#[derive(Debug, Clone, Copy)]
+enum TextType {
+    Main,
+    Label,
+}
+
+/// Parameters for LCD text display
+struct TextParameter {
+    address: u16,
+    max_chars: usize,
+    num_registers: usize,
+}
+
+impl From<TextType> for TextParameter {
+    fn from(value: TextType) -> Self {
+        match value {
+            TextType::Main => TextParameter {
+                address: LCD_CUSTOM_STRING_REGISTER,
+                max_chars: 8,
+                num_registers: 4,
+            },
+            TextType::Label => TextParameter {
+                address: LCD_CUSTOM_STRING_LABEL_REGISTER,
+                max_chars: 4,
+                num_registers: 2,
+            },
+        }
     }
 }
 
@@ -820,43 +856,38 @@ impl ReadyState {
         }
     }
 
-    /// Write custom string to LCD display registers
+    /// Write text to LCD display registers
     ///
-    /// Generic function to write strings to either the main LCD register or label register.
+    /// Generic function to write strings to LCD display registers.
     /// Non-printable values are replaced with empty space by the meter.
     /// Also sets bit 3 in the LCD parameters register (47062) to enable custom string display.
     ///
     /// # Arguments
-    /// * `custom_string` - The string to display on the LCD
-    /// * `register_address` - The starting register address (47063 for main, 47067 for label)
-    /// * `max_chars` - Maximum number of characters (8 for main, 4 for label)
-    /// * `num_registers` - Number of registers to write (4 for main, 2 for label)
-    fn write_lcd_register(
-        &self,
-        custom_string: &str,
-        register_address: u16,
-        max_chars: usize,
-        num_registers: usize,
-    ) -> Result<()> {
+    /// * `text` - The string to display on the LCD
+    /// * `text_type` - The type of text (Main or Label)
+    fn write_lcd_text(&self, text: &str, text_type: TextType) -> Result<()> {
+        let params = TextParameter::from(text_type);
+
         // Truncate to maximum characters
-        let truncated_string = if custom_string.len() > max_chars {
-            &custom_string[..max_chars]
+        let truncated_text = if text.len() > params.max_chars {
+            &text[..params.max_chars]
         } else {
-            custom_string
+            text
         };
 
         log::info!(
-            "Writing LCD string: '{}' to registers starting at {}",
-            truncated_string,
-            register_address
+            "Writing LCD {:?} text: '{}' to registers starting at {}",
+            text_type,
+            truncated_text,
+            params.address
         );
 
         // Convert string to register values using the existing utility
-        let data = string_to_vec(truncated_string);
+        let data = string_to_vec(truncated_text);
 
         // Ensure we have exactly the required number of registers
-        let mut register_data = vec![0u16; num_registers];
-        for (i, &value) in data.iter().take(num_registers).enumerate() {
+        let mut register_data = vec![0u16; params.num_registers];
+        for (i, &value) in data.iter().take(params.num_registers).enumerate() {
             register_data[i] = value;
         }
 
@@ -873,36 +904,14 @@ impl ReadyState {
         self.write_single_register(LCD_PARAMETERS_REGISTER, new_params)?;
 
         // Write to the specified registers
-        self.write_multiple_registers(register_address, &register_data)?;
+        self.write_multiple_registers(params.address, &register_data)?;
 
         log::info!(
-            "Successfully wrote LCD string to registers {}",
-            register_address
+            "Successfully wrote LCD {:?} text to registers {}",
+            text_type,
+            params.address
         );
         Ok(())
-    }
-
-    /// Write custom string to LCD display on the meter
-    ///
-    /// Writes up to 8 bytes to the LCD custom string registers (47063-47066).
-    /// Non-printable values are replaced with empty space by the meter.
-    /// Also sets bit 3 in the LCD parameters register (47062) to enable custom string display.
-    ///
-    /// # Arguments
-    /// * `custom_string` - The string to display on the LCD (max 8 characters)
-    fn write_lcd_custom_string(&self, custom_string: &str) -> Result<()> {
-        self.write_lcd_register(custom_string, LCD_CUSTOM_STRING_REGISTER, 8, 4)
-    }
-
-    /// Write custom string label to LCD display on the meter
-    ///
-    /// Writes up to 4 bytes to the LCD custom string label registers (47067-47068).
-    /// Non-printable values are replaced with empty space by the meter.
-    ///
-    /// # Arguments
-    /// * `custom_string_label` - The label string to display on the LCD (max 4 characters)
-    fn write_lcd_custom_string_label(&self, custom_string_label: &str) -> Result<()> {
-        self.write_lcd_register(custom_string_label, LCD_CUSTOM_STRING_LABEL_REGISTER, 4, 2)
     }
 
     /// Clear custom string from LCD display by clearing bit 3 in parameters register
@@ -925,12 +934,16 @@ impl ReadyState {
         self.write_single_register(LCD_PARAMETERS_REGISTER, new_params)?;
 
         // Clear the string data in registers 47063-47066 (custom string)
-        let register_data = vec![0u16; 4]; // 4 registers with all zeros (empty string)
-        self.write_multiple_registers(LCD_CUSTOM_STRING_REGISTER, &register_data)?;
+        let main_params = TextParameter::from(TextType::Main);
+
+        let register_data = vec![0u16; main_params.num_registers];
+        self.write_multiple_registers(main_params.address, &register_data)?;
 
         // Clear the string data in registers 47067-47068 (custom string label)
-        let label_register_data = vec![0u16; 2]; // 2 registers with all zeros (empty label)
-        self.write_multiple_registers(LCD_CUSTOM_STRING_LABEL_REGISTER, &label_register_data)?;
+        let label_params = TextParameter::from(TextType::Label);
+
+        let label_register_data = vec![0u16; label_params.num_registers]; // 2 registers with all zeros (empty label)
+        self.write_multiple_registers(label_params.address, &label_register_data)?;
 
         log::info!("Successfully cleared LCD custom string display and data");
         Ok(())
@@ -944,14 +957,18 @@ impl ReadyState {
     /// # Returns
     /// * A tuple containing (custom_string, custom_string_label)
     fn read_lcd_custom_string(&self) -> Result<(String, String)> {
-        log::info!("Reading LCD custom string from registers 47063-47066 and 47067-47068");
+        log::debug!("Reading LCD custom string from registers 47063-47066 and 47067-47068");
 
-        // Read 4 registers (8 bytes) from address 47063 (custom string)
-        let string_registers = self.read_holding_registers(LCD_CUSTOM_STRING_REGISTER, 4)?;
+        // Read main text
+        let main_params = TextParameter::from(TextType::Main);
+        let string_registers =
+            self.read_holding_registers(main_params.address, main_params.num_registers as u16)?;
         let custom_string = to_8_string(&string_registers)?;
 
-        // Read 2 registers (4 bytes) from address 47067 (custom string label)
-        let label_registers = self.read_holding_registers(LCD_CUSTOM_STRING_LABEL_REGISTER, 2)?;
+        // Read label text
+        let label_params = TextParameter::from(TextType::Label);
+        let label_registers =
+            self.read_holding_registers(label_params.address, label_params.num_registers as u16)?;
         let custom_string_label = to_8_string(&label_registers)?;
 
         log::info!(
@@ -1045,8 +1062,8 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
     fn clear_display_message(
         &self,
         _context: &generated::Context,
-        _request: generated::types::display_message::ClearDisplayMessageRequest,
-    ) -> everestrs::Result<generated::types::display_message::ClearDisplayMessageResponse> {
+        _request: ClearDisplayMessageRequest,
+    ) -> everestrs::Result<ClearDisplayMessageResponse> {
         let lock = self
             .state_machine
             .lock()
@@ -1060,21 +1077,16 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
         let res = ready_state.clear_lcd_custom_string();
 
         match res {
-            Ok(()) => Ok(
-                generated::types::display_message::ClearDisplayMessageResponse {
-                    status: generated::types::display_message::ClearMessageResponseEnum::Accepted,
-                    status_info: None,
-                },
-            ),
+            Ok(()) => Ok(ClearDisplayMessageResponse {
+                status: ClearMessageResponseEnum::Accepted,
+                status_info: None,
+            }),
             Err(e) => {
                 log::error!("Failed to clear display message {:?}", e);
-                Ok(
-                    generated::types::display_message::ClearDisplayMessageResponse {
-                        status:
-                            generated::types::display_message::ClearMessageResponseEnum::Unknown,
-                        status_info: None,
-                    },
-                )
+                Ok(ClearDisplayMessageResponse {
+                    status: ClearMessageResponseEnum::Unknown,
+                    status_info: None,
+                })
             }
         }
     }
@@ -1082,8 +1094,8 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
     fn get_display_messages(
         &self,
         _context: &generated::Context,
-        _request: generated::types::display_message::GetDisplayMessageRequest,
-    ) -> everestrs::Result<generated::types::display_message::GetDisplayMessageResponse> {
+        _request: GetDisplayMessageRequest,
+    ) -> everestrs::Result<GetDisplayMessageResponse> {
         let lock = self
             .state_machine
             .lock()
@@ -1100,17 +1112,15 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
 
                 // Add main LCD message if not empty
                 if !custom_string.is_empty() {
-                    let main_display_message = generated::types::display_message::DisplayMessage {
+                    let main_display_message = DisplayMessage {
                         id: Some(0),
                         message: generated::types::text_message::MessageContent {
                             format: Some(generated::types::text_message::MessageFormat::ASCII),
                             language: None,
                             content: custom_string,
                         },
-                        priority: Some(
-                            generated::types::display_message::MessagePriorityEnum::NormalCycle,
-                        ),
-                        state: Some(generated::types::display_message::MessageStateEnum::Idle),
+                        priority: Some(MessagePriorityEnum::NormalCycle),
+                        state: Some(MessageStateEnum::Idle),
                         identifier_id: None,
                         identifier_type: None,
                         qr_code: None,
@@ -1122,17 +1132,15 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
 
                 // Add label message if not empty
                 if !custom_string_label.is_empty() {
-                    let label_display_message = generated::types::display_message::DisplayMessage {
+                    let label_display_message = DisplayMessage {
                         id: Some(1),
                         message: generated::types::text_message::MessageContent {
                             format: Some(generated::types::text_message::MessageFormat::ASCII),
                             language: None,
                             content: custom_string_label,
                         },
-                        priority: Some(
-                            generated::types::display_message::MessagePriorityEnum::NormalCycle,
-                        ),
-                        state: Some(generated::types::display_message::MessageStateEnum::Idle),
+                        priority: Some(MessagePriorityEnum::NormalCycle),
+                        state: Some(MessageStateEnum::Idle),
                         identifier_id: None,
                         identifier_type: None,
                         qr_code: None,
@@ -1142,25 +1150,21 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
                     messages.push(label_display_message);
                 }
 
-                Ok(
-                    generated::types::display_message::GetDisplayMessageResponse {
-                        status_info: None,
-                        messages: if messages.is_empty() {
-                            None
-                        } else {
-                            Some(messages)
-                        },
+                Ok(GetDisplayMessageResponse {
+                    status_info: None,
+                    messages: if messages.is_empty() {
+                        None
+                    } else {
+                        Some(messages)
                     },
-                )
+                })
             }
             Err(e) => {
                 log::error!("Failed to get display message {:?}", e);
-                Ok(
-                    generated::types::display_message::GetDisplayMessageResponse {
-                        status_info: None,
-                        messages: None,
-                    },
-                )
+                Ok(GetDisplayMessageResponse {
+                    status_info: None,
+                    messages: None,
+                })
             }
         }
     }
@@ -1168,8 +1172,8 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
     fn set_display_message(
         &self,
         _context: &generated::Context,
-        request: Vec<generated::types::display_message::DisplayMessage>,
-    ) -> everestrs::Result<generated::types::display_message::SetDisplayMessageResponse> {
+        request: Vec<DisplayMessage>,
+    ) -> everestrs::Result<SetDisplayMessageResponse> {
         let lock = self
             .state_machine
             .lock()
@@ -1184,17 +1188,14 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
             let res = ready_state.clear_lcd_custom_string();
 
             match res {
-                Ok(()) => Ok(
-                    generated::types::display_message::SetDisplayMessageResponse {
-                        status:
-                            generated::types::display_message::DisplayMessageStatusEnum::Accepted,
-                        status_info: None,
-                    },
-                ),
+                Ok(()) => Ok(SetDisplayMessageResponse {
+                    status: DisplayMessageStatusEnum::Accepted,
+                    status_info: None,
+                }),
                 Err(e) => {
                     log::error!("Failed to clear display message {:?}", e);
-                    Ok(generated::types::display_message::SetDisplayMessageResponse {
-                        status: generated::types::display_message::DisplayMessageStatusEnum::Rejected,
+                    Ok(SetDisplayMessageResponse {
+                        status: DisplayMessageStatusEnum::Rejected,
                         status_info: None,
                     })
                 }
@@ -1206,50 +1207,47 @@ impl generated::DisplayMessageServiceSubscriber for IskraMeter {
 
             // Handle main message (ID 0)
             let res1 = if let Some(msg) = main_message {
-                ready_state.write_lcd_custom_string(&msg.message.content)
+                ready_state.write_lcd_text(&msg.message.content, TextType::Main)
             } else {
                 // No main message, clear it
-                ready_state.write_lcd_custom_string("")
+                ready_state.write_lcd_text("", TextType::Main)
             };
 
             // Handle label message (ID 1)
             let res2 = if let Some(msg) = label_message {
-                ready_state.write_lcd_custom_string_label(&msg.message.content)
+                ready_state.write_lcd_text(&msg.message.content, TextType::Label)
             } else {
                 // No label message, clear it
-                ready_state.write_lcd_custom_string_label("")
+                ready_state.write_lcd_text("", TextType::Label)
             };
 
             match (res1, res2) {
-                (Ok(()), Ok(())) => Ok(
-                    generated::types::display_message::SetDisplayMessageResponse {
-                        status:
-                            generated::types::display_message::DisplayMessageStatusEnum::Accepted,
-                        status_info: None,
-                    },
-                ),
+                (Ok(()), Ok(())) => Ok(SetDisplayMessageResponse {
+                    status: DisplayMessageStatusEnum::Accepted,
+                    status_info: None,
+                }),
                 (Err(e1), Err(e2)) => {
                     log::error!(
                         "Failed to set both display messages: main={:?}, label={:?}",
                         e1,
                         e2
                     );
-                    Ok(generated::types::display_message::SetDisplayMessageResponse {
-                        status: generated::types::display_message::DisplayMessageStatusEnum::Rejected,
+                    Ok(SetDisplayMessageResponse {
+                        status: DisplayMessageStatusEnum::Rejected,
                         status_info: None,
                     })
                 }
                 (Err(e), Ok(())) => {
                     log::error!("Failed to set main display message {:?}", e);
-                    Ok(generated::types::display_message::SetDisplayMessageResponse {
-                        status: generated::types::display_message::DisplayMessageStatusEnum::Rejected,
+                    Ok(SetDisplayMessageResponse {
+                        status: DisplayMessageStatusEnum::Rejected,
                         status_info: None,
                     })
                 }
                 (Ok(()), Err(e)) => {
                     log::error!("Failed to set label display message {:?}", e);
-                    Ok(generated::types::display_message::SetDisplayMessageResponse {
-                        status: generated::types::display_message::DisplayMessageStatusEnum::Rejected,
+                    Ok(SetDisplayMessageResponse {
+                        status: DisplayMessageStatusEnum::Rejected,
                         status_info: None,
                     })
                 }
@@ -1756,7 +1754,7 @@ mod tests {
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_custom_string("Hello");
+        let res = ready_state.write_lcd_text("Hello", TextType::Main);
         assert!(res.is_ok());
 
         // Test writing a long string (should be truncated to 8 characters)
@@ -1793,7 +1791,7 @@ mod tests {
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_custom_string("VeryLongStringThatShouldBeTruncated");
+        let res = ready_state.write_lcd_text("VeryLongStringThatShouldBeTruncated", TextType::Main);
         assert!(res.is_ok());
 
         // Test writing an empty string
@@ -1832,7 +1830,8 @@ mod tests {
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_custom_string("");
+        let res = ready_state.write_lcd_text("", TextType::Main);
+
         assert!(res.is_ok());
     }
 
@@ -1875,7 +1874,7 @@ mod tests {
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_custom_string_label("Test");
+        let res = ready_state.write_lcd_text("Test", TextType::Label);
         assert!(res.is_ok());
 
         // Test writing a long label string (should be truncated to 4 characters)
@@ -1914,7 +1913,7 @@ mod tests {
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_custom_string_label("LongLabel");
+        let res = ready_state.write_lcd_text("LongLabel", TextType::Label);
         assert!(res.is_ok());
     }
 
