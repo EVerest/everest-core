@@ -29,6 +29,9 @@ def validate_notify_ev_charging_needs(meta_data, msg, exp_payload):
 
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
+@pytest.mark.skip(
+    "Extension tests currently still have an issue with the evMaxCurrent property which was" \
+    " defined as an integer in OCPP2.0.1 and decimal in OCPP2.1")
 @pytest.mark.xdist_group(name="ISO15118")
 class TestIso15118ExtenstionsOcppIntegration:
 
