@@ -132,6 +132,13 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_
                                  const int16_t* parameter_set_id = NULL, uint8_t parameter_set_id_len = 0);
 
 /*!
+ * \brief check_and_remove_service_in_list This function removes a service list item from the service list.
+ * \param v2g_ctx is a pointer of type \c v2g_context
+ * \param service_id is the service which shall be provided by the EVSE in the service list.
+ */
+void check_and_remove_service_in_list(struct v2g_context* v2g_ctx, uint16_t service_id);
+
+/*!
  * \brief configure_parameter_set This function configures the parameter-set structure of a specific service ID.
  * \param v2g_ctx is a pointer of type \c v2g_context
  * \param parameterSetId is the parameter-set-ID which belongs to the service ID.

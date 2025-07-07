@@ -155,7 +155,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     }
     ctx->meter_info.meter_info_is_used = false;
 
-    ctx->evse_v2g_data.evse_service_list_len = (uint16_t)0;
+    ctx->evse_v2g_data.evse_service_list.clear();
     memset(&ctx->evse_v2g_data.service_parameter_list, 0,
            sizeof(struct iso2_ServiceParameterListType) * iso2_ServiceType_8_ARRAY_SIZE);
 
@@ -195,12 +195,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
         ctx->evse_v2g_data.payment_option_list_len = (uint8_t)1; // One option must be set
 
-        ctx->evse_v2g_data.evse_service_list[0].FreeService = (int)0;
-        ctx->evse_v2g_data.evse_service_list[0].ServiceID =
-            4; // 4 (UseCaseInformation) A list containing information on all other services than charging services. The
-               // EVCC and the SECC shall use the ServiceIDs in the range from 1 to 4 as defined in this
-        // ctx->evse_v2g_data.evse_service_list[0].ServiceCategory Not needed at the moment, because it is a fixed value
-        // in din and iso
+        ctx->evse_v2g_data.evse_service_list.reserve(iso2_ServiceType_8_ARRAY_SIZE);
     }
 
     init_physical_value(&ctx->evse_v2g_data.evse_present_voltage, iso2_unitSymbolType_V);
@@ -462,26 +457,21 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_
     uint8_t write_idx = 0;
     bool service_found = false;
 
-    /* Try to find service in service list */
-    for (uint8_t idx = 0; idx < v2g_ctx->evse_v2g_data.evse_service_list_len; idx++) {
-        if (v2g_ctx->evse_v2g_data.evse_service_list[idx].ServiceID == evse_service.ServiceID) {
-            write_idx = idx;
+    for (const auto& service : v2g_ctx->evse_v2g_data.evse_service_list) {
+        if (service.ServiceID == evse_service.ServiceID) {
             service_found = true;
             break;
         }
+        write_idx++;
     }
 
-    if (service_found == false && (v2g_ctx->evse_v2g_data.evse_service_list_len < iso2_ServiceType_8_ARRAY_SIZE)) {
-        write_idx = v2g_ctx->evse_v2g_data.evse_service_list_len;
-        v2g_ctx->evse_v2g_data.evse_service_list_len++;
-    } else if (v2g_ctx->evse_v2g_data.evse_service_list_len == iso2_ServiceType_8_ARRAY_SIZE) {
+    if (service_found == false and (v2g_ctx->evse_v2g_data.evse_service_list.size() < iso2_ServiceType_8_ARRAY_SIZE)) {
+        v2g_ctx->evse_v2g_data.evse_service_list.push_back(evse_service);
+    } else if (v2g_ctx->evse_v2g_data.evse_service_list.size() == iso2_ServiceType_8_ARRAY_SIZE) {
         dlog(DLOG_LEVEL_ERROR, "Maximum service list size reached. Unable to add service ID %u",
              evse_service.ServiceID);
         return false;
     }
-
-    // Write service to the service list
-    v2g_ctx->evse_v2g_data.evse_service_list[write_idx] = evse_service;
 
     // Configure parameter-set-id if requiered
     for (uint8_t idx = 0; idx < parameter_set_id_len; idx++) {
@@ -490,6 +480,20 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_
     }
 
     return true;
+}
+
+void check_and_remove_service_in_list(struct v2g_context* v2g_ctx, uint16_t service_id) {
+
+    size_t id{0};
+    auto service_found{false};
+
+    for (auto service_it = v2g_ctx->evse_v2g_data.evse_service_list.begin();
+         service_it != v2g_ctx->evse_v2g_data.evse_service_list.end(); ++service_it) {
+        if (service_it->ServiceID == service_id) {
+            service_it = v2g_ctx->evse_v2g_data.evse_service_list.erase(service_it);
+            break;
+        }
+    }
 }
 
 void configure_parameter_set(struct iso2_ServiceParameterListType* parameterSetList, int16_t parameterSetId,
