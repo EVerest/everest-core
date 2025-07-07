@@ -1,11 +1,4 @@
 active_modules:
-  iso15118_car:
-    module: PyEvJosev
-    config_module:
-      supported_DIN70121: false
-      supported_ISO15118_2: true
-      supported_ISO15118_20_AC: false
-      supported_ISO15118_20_DC: false
   connector_1:
     module: EvseManager
     mapping:
@@ -33,8 +26,6 @@ active_modules:
     module: YetiSimulator
     config_module:
       connector_id: 1
-  slac:
-    module: SlacSimulator
   car_simulator:
     module: EvManager
     config_module:
@@ -46,12 +37,6 @@ active_modules:
       ev_board_support:
         - module_id: yeti_driver
           implementation_id: ev_board_support
-      ev:
-        - module_id: iso15118_car
-          implementation_id: ev
-      slac:
-        - module_id: slac
-          implementation_id: ev
   ocpp:
     module: OCPP
     config_module:
