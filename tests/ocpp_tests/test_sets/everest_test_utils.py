@@ -269,29 +269,29 @@ def certificate_signed_response(csr: crypto.X509Req):
 
 
 def on_data_transfer(accept_pnc_authorize, **kwargs):
-    req = call.DataTransferPayload(**kwargs)
+    req = call.DataTransfer(**kwargs)
     if req.vendor_id == "org.openchargealliance.iso15118pnc":
         if req.message_id == "Authorize":
             if accept_pnc_authorize:
                 status = AuthorizationStatusEnumType.accepted
             else:
                 status = AuthorizationStatusEnumType.invalid
-            response = call_result201.AuthorizePayload(
+            response = call_result201.Authorize(
                 id_token_info=IdTokenInfoType(status=status)
             )
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.accepted,
                 data=json.dumps(remove_nones(
                     snake_to_camel_case(asdict(response)))),
             )
         # Should not be part of DataTransfer.req from CP->CSMS
         elif req.message_id == "CertificateSigned":
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         # Should not be part of DataTransfer.req from CP->CSMS
         elif req.message_id == "DeleteCertificate":
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         elif req.message_id == "Get15118EVCertificate":
@@ -300,13 +300,13 @@ def on_data_transfer(accept_pnc_authorize, **kwargs):
             generator: EXIGenerator = EXIGenerator(certs_path)
             exi_request = json.loads(kwargs["data"])["exiRequest"]
             namespace = json.loads(kwargs["data"])["iso15118SchemaVersion"]
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.accepted,
                 data=json.dumps(
                     remove_nones(
                         snake_to_camel_case(
                             asdict(
-                                call_result201.Get15118EVCertificatePayload(
+                                call_result201.Get15118EVCertificate(
                                     status=Iso15118EVCertificateStatusEnumType.accepted,
                                     exi_response=generator.generate_certificate_installation_res(
                                         exi_request, namespace
@@ -318,13 +318,13 @@ def on_data_transfer(accept_pnc_authorize, **kwargs):
                 ),
             )
         elif req.message_id == "GetCertificateStatus":
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.accepted,
                 data=json.dumps(
                     remove_nones(
                         snake_to_camel_case(
                             asdict(
-                                call_result201.GetCertificateStatusPayload(
+                                call_result201.GetCertificateStatus(
                                     status=GetCertificateStatusEnumType.accepted,
                                     ocsp_result="anwfdiefnwenfinfinef",
                                 )
@@ -335,15 +335,15 @@ def on_data_transfer(accept_pnc_authorize, **kwargs):
             )
         # Should not be part of DataTransfer.req from CP->CSMS
         elif req.message_id == "InstallCertificate":
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         elif req.message_id == "SignCertificate":
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.accepted,
                 data=json.dumps(
                     asdict(
-                        call_result201.SignCertificatePayload(
+                        call_result201.SignCertificate(
                             status=GenericStatusEnumType.accepted
                         )
                     )
@@ -351,15 +351,15 @@ def on_data_transfer(accept_pnc_authorize, **kwargs):
             )
         # Should not be part of DataTransfer.req from CP->CSMS
         elif req.message_id == "TriggerMessage":
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         else:
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
     else:
-        return call_result.DataTransferPayload(
+        return call_result.DataTransfer(
             status=DataTransferStatus.unknown_vendor_id, data="Please implement me"
         )
 
@@ -378,9 +378,9 @@ def on_data_transfer_reject_authorize(**kwargs):
 def on_get_15118_ev_certificate(**kwargs):
     certs_path: str = Path(__file__).parent.resolve() / "everest-aux/certs/"
     generator: EXIGenerator = EXIGenerator(certs_path)
-    payload = call201.Get15118EVCertificatePayload(**kwargs)
+    payload = call201.Get15118EVCertificate(**kwargs)
 
-    return call_result201.Get15118EVCertificatePayload(
+    return call_result201.Get15118EVCertificate(
         status=GenericStatusEnumType.accepted,
         exi_response=generator.generate_certificate_installation_res(
             payload.exi_request, payload.iso15118_schema_version
