@@ -2,33 +2,43 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #include <iso15118/d20/state/supported_app_protocol.hpp>
 
+#include <map>
 #include <optional>
-#include <tuple>
 
 #include <iso15118/d20/state/session_setup.hpp>
 
 #include <iso15118/message/supported_app_protocol.hpp>
 
 #include <iso15118/detail/d20/context_helper.hpp>
+#include <iso15118/detail/helper.hpp>
 
 namespace iso15118::d20::state {
 
-std::tuple<message_20::SupportedAppProtocolResponse, std::optional<message_20::SupportedAppProtocol>>
-handle_request(const message_20::SupportedAppProtocolRequest& req) {
+constexpr auto ISO20_DC_NAMESPACE = "urn:iso:std:iso:15118:-20:DC";
+
+using ResponseCode = message_20::SupportedAppProtocolResponse::ResponseCode;
+
+message_20::SupportedAppProtocolResponse handle_request(const message_20::SupportedAppProtocolRequest& req,
+                                                        const std::optional<std::string>& custom_protocol_namespace) {
     message_20::SupportedAppProtocolResponse res;
-    std::optional<message_20::SupportedAppProtocol> selected_protocol{std::nullopt};
+
+    std::map<uint8_t, uint8_t> ev_supported_protocols{}; // key: priority, value: schema_id
 
     for (const auto& protocol : req.app_protocol) {
-        if (protocol.protocol_namespace.compare("urn:iso:std:iso:15118:-20:DC") == 0) {
-            res.schema_id = protocol.schema_id;
-            return {response_with_code(
-                        res, message_20::SupportedAppProtocolResponse::ResponseCode::OK_SuccessfulNegotiation),
-                    protocol};
+        if (protocol.protocol_namespace.compare(ISO20_DC_NAMESPACE) == 0) {
+            ev_supported_protocols[protocol.priority] = protocol.schema_id;
+        }
+        if (protocol.protocol_namespace.compare(custom_protocol_namespace.value_or("")) == 0) {
+            ev_supported_protocols[protocol.priority] = protocol.schema_id;
         }
     }
 
-    return {response_with_code(res, message_20::SupportedAppProtocolResponse::ResponseCode::Failed_NoNegotiation),
-            selected_protocol};
+    if (ev_supported_protocols.empty()) {
+        return response_with_code(res, ResponseCode::Failed_NoNegotiation);
+    }
+
+    res.schema_id = ev_supported_protocols.begin()->second; // [V2G20-167] Highest Prio: 1, Lowest Prio: 20
+    return response_with_code(res, ResponseCode::OK_SuccessfulNegotiation);
 }
 
 void SupportedAppProtocol::enter() {
@@ -44,23 +54,32 @@ Result SupportedAppProtocol::feed(Event ev) {
 
     if (const auto req = variant->get_if<message_20::SupportedAppProtocolRequest>()) {
 
-        const auto [res, selected_protocol] = handle_request(*req);
+        const auto res = handle_request(*req, m_ctx.session_config.custom_protocol);
         m_ctx.respond(res);
         m_ctx.ev_info.ev_supported_app_protocols = req->app_protocol;
 
-        if (selected_protocol.has_value()) {
-            std::string selected_protocol_string{""};
-            if (selected_protocol->protocol_namespace.compare("urn:iso:std:iso:15118:-20:DC") == 0) {
-                selected_protocol_string = "ISO15118-20:DC";
-            }
-            m_ctx.ev_info.selected_app_protocol = selected_protocol.value();
-            m_ctx.feedback.selected_protocol(selected_protocol_string);
-            return m_ctx.create_state<SessionSetup>();
+        if (res.response_code == ResponseCode::Failed_NoNegotiation) {
+            m_ctx.log("unsupported app protocol: [%s]",
+                      req->app_protocol.size() ? req->app_protocol[0].protocol_namespace.c_str() : "unknown");
+            return {};
         }
 
-        m_ctx.log("unsupported app protocol: [%s]",
-                  req->app_protocol.size() ? req->app_protocol[0].protocol_namespace.c_str() : "unknown");
-        return {};
+        for (const auto& protocol : req->app_protocol) {
+            if (protocol.schema_id == res.schema_id) {
+                m_ctx.ev_info.selected_app_protocol = protocol;
+
+                if (protocol.protocol_namespace.compare(ISO20_DC_NAMESPACE) == 0) {
+                    m_ctx.feedback.selected_protocol("ISO15118-20:DC");
+                } else if (protocol.protocol_namespace.compare(m_ctx.session_config.custom_protocol.value_or("")) ==
+                           0) {
+                    m_ctx.feedback.selected_protocol(m_ctx.session_config.custom_protocol.value());
+                    logf_warning(
+                        "EV and EVSE have agreed on a custom protocol namespace. Problems or aborts can occur in the "
+                        "following states!");
+                }
+            }
+        }
+        return m_ctx.create_state<SessionSetup>();
     } else {
         m_ctx.log("expected SupportedAppProtocolReq! But code type id: %d", variant->get_type());
 

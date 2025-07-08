@@ -24,6 +24,7 @@ struct EvseSetupConfig {
     bool enable_certificate_install_service;
     d20::DcTransferLimits dc_limits;
     std::vector<ControlMobilityNeedsModes> control_mobility_modes;
+    std::optional<std::string> custom_protocol{std::nullopt};
 };
 
 // This should only have EVSE information
@@ -50,6 +51,8 @@ struct SessionConfig {
     DcTransferLimits dc_limits;
 
     std::vector<ControlMobilityNeedsModes> supported_control_mobility_modes;
+
+    std::optional<std::string> custom_protocol{std::nullopt};
 };
 
 } // namespace iso15118::d20
