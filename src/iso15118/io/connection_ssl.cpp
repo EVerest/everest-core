@@ -234,6 +234,10 @@ SSL_CTX* init_ssl(const config::SSLConfig& ssl_config) {
                                                  ? SSL_CTX_set_min_proto_version(ctx, TLS1_3_VERSION)
                                                  : SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
 
+    if (ssl_config.enforce_tls_1_3) {
+        SSL_CTX_clear_options(ctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+    }
+
     if (result_set_min_proto_version == 0) {
         log_and_raise_openssl_error("Failed in SSL_CTX_set_min_proto_version()");
     }
