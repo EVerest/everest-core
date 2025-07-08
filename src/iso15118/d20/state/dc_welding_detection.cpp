@@ -5,6 +5,7 @@
 
 #include <iso15118/detail/d20/context_helper.hpp>
 #include <iso15118/detail/d20/state/dc_welding_detection.hpp>
+#include <iso15118/detail/d20/state/session_stop.hpp>
 #include <iso15118/detail/helper.hpp>
 
 namespace iso15118::d20::state {
@@ -63,6 +64,33 @@ Result DC_WeldingDetection::feed(Event ev) {
         }
 
         return m_ctx.create_state<SessionStop>();
+
+    } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
+        const auto res = handle_request(*req, m_ctx.session);
+
+        if (req->ev_termination_code.has_value()) {
+            logf_info("EV termination code: %s", req->ev_termination_code.value().c_str());
+        }
+        if (req->ev_termination_explanation.has_value()) {
+            logf_info("EV Termination explanation: %s", req->ev_termination_explanation.value().c_str());
+        }
+
+        m_ctx.respond(res);
+
+        // Todo(sl): Tell the reason why the charger is stopping. Shutdown, Error, etc.
+        if (req->charging_session == message_20::datatypes::ChargingSession::Pause) {
+            m_ctx.session_paused = true;
+            if (not m_ctx.pause_ctx.has_value()) {
+                logf_error("Pause the session but pause_ctx has no value");
+                return {};
+            }
+            m_ctx.pause_ctx->selected_service_parameters = m_ctx.session.get_selected_services();
+        } else if (req->charging_session == message_20::datatypes::ChargingSession::Terminate) {
+            m_ctx.session_stopped = true;
+            m_ctx.pause_ctx.reset();
+        }
+
+        return {};
     } else {
         m_ctx.log("expected DC_WeldingDetection! But code type id: %d", variant->get_type());
 
