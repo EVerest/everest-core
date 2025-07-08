@@ -132,5 +132,8 @@ class PyEVJosevModule():
     def _handler_enable_sae_j2847_v2g_v2h(self, args):
         self._es.SAEJ2847_V2H_V2G_Active = True
 
+    def _handler_enable_service_hpc1(self, args):
+        self._es.ServiceHPC1_Active = True
+
 py_ev_josev = PyEVJosevModule()
 py_ev_josev.start_evcc_handler()
