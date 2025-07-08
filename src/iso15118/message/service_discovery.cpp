@@ -45,7 +45,7 @@ template <> void convert(const struct iso20_ServiceDiscoveryResType& in, Service
         for (auto i = 0; i < in.VASList.Service.arrayLen; i++) {
             const auto& service = in.VASList.Service.array[i];
             auto& out_service = out.vas_list->emplace_back();
-            cb_convert_enum(service.ServiceID, out_service.service_id);
+            out_service.service_id = service.ServiceID;
             out_service.free_service = service.FreeService;
         }
     }
@@ -84,7 +84,7 @@ template <> void convert(const ServiceDiscoveryResponse& in, iso20_ServiceDiscov
         index = 0;
         for (const auto& service : *in.vas_list) {
             auto& out_service = out.VASList.Service.array[index++];
-            cb_convert_enum(service.service_id, out_service.ServiceID);
+            out_service.ServiceID = service.service_id;
             out_service.FreeService = service.free_service;
         }
         out.VASList.Service.arrayLen = in.vas_list.value().size();

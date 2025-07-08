@@ -12,14 +12,16 @@ SCENARIO("Service detail state handling") {
 
     const auto evse_id = std::string("everest se");
     const std::vector<dt::ServiceCategory> supported_energy_services = {dt::ServiceCategory::DC};
+    const std::vector<uint16_t> vas_services{};
     const auto cert_install{false};
     const std::vector<dt::Authorization> auth_services = {dt::Authorization::EIM};
     const d20::DcTransferLimits dc_limits;
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
         {dt::ControlMode::Scheduled, dt::MobilityNeedsMode::ProvidedByEvcc}};
 
-    const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
-                                          dc_limits, control_mobility_modes};
+    const d20::EvseSetupConfig evse_setup{
+        evse_id,   supported_energy_services, auth_services, vas_services, cert_install,
+        dc_limits, control_mobility_modes};
 
     GIVEN("Bad Case - Unknown session") {
 
@@ -28,25 +30,17 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::DC;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::DC);
 
         session = d20::Session();
         const auto session_config = d20::SessionConfig(evse_setup);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
             REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
-            REQUIRE(res.service == dt::ServiceCategory::DC);
-            REQUIRE(res.service_parameter_list.size() == 1);
-            auto& parameter = res.service_parameter_list[0];
-            REQUIRE(parameter.id == 0);
-            REQUIRE(parameter.parameter.size() == 4);
-            REQUIRE(parameter.parameter[0].name == "Connector");
-            REQUIRE(std::holds_alternative<int32_t>(parameter.parameter[0].value));
-
-            const auto& connector = std::get<int32_t>(parameter.parameter[0].value);
-            REQUIRE(static_cast<dt::DcConnector>(connector) == dt::DcConnector::Core);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::DC));
+            REQUIRE(res.service_parameter_list.size() == 0);
         }
     }
 
@@ -58,24 +52,16 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::AC;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::AC);
 
         const auto session_config = d20::SessionConfig(evse_setup);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: FAILED_ServiceIDInvalid, mandatory fields should be set") {
             REQUIRE(res.response_code == dt::ResponseCode::FAILED_ServiceIDInvalid);
-            REQUIRE(res.service == dt::ServiceCategory::DC);
-            REQUIRE(res.service_parameter_list.size() == 1);
-            auto& parameter = res.service_parameter_list[0];
-            REQUIRE(parameter.id == 0);
-            REQUIRE(parameter.parameter.size() == 4);
-            REQUIRE(parameter.parameter[0].name == "Connector");
-            REQUIRE(std::holds_alternative<int32_t>(parameter.parameter[0].value));
-
-            const auto& connector = std::get<int32_t>(parameter.parameter[0].value);
-            REQUIRE(static_cast<dt::DcConnector>(connector) == dt::DcConnector::Core);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::DC));
+            REQUIRE(res.service_parameter_list.size() == 0);
         }
     }
 
@@ -89,13 +75,13 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::DC;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::DC);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
-            REQUIRE(res.service == dt::ServiceCategory::DC);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::DC));
             REQUIRE(res.service_parameter_list.size() == 1);
             auto& parameters = res.service_parameter_list[0];
             REQUIRE(parameters.id == 0);
@@ -129,13 +115,13 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::DC_BPT;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::DC_BPT);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
-            REQUIRE(res.service == dt::ServiceCategory::DC_BPT);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::DC_BPT));
             REQUIRE(res.service_parameter_list.size() == 1);
             auto& parameters = res.service_parameter_list[0];
             REQUIRE(parameters.id == 0);
@@ -191,13 +177,13 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::DC;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::DC);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
-            REQUIRE(res.service == dt::ServiceCategory::DC);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::DC));
             REQUIRE(res.service_parameter_list.size() == 2);
             auto& parameters_0 = res.service_parameter_list[0];
             REQUIRE(parameters_0.id == 0);
@@ -253,13 +239,13 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::DC;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::DC);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
-            REQUIRE(res.service == dt::ServiceCategory::DC);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::DC));
             REQUIRE(res.service_parameter_list.size() == 1);
             auto& parameters = res.service_parameter_list[0];
             REQUIRE(parameters.id == 0);
@@ -287,7 +273,7 @@ SCENARIO("Service detail state handling") {
     GIVEN("Good case - Internet service") {
         d20::Session session = d20::Session();
         session.offered_services.energy_services = {dt::ServiceCategory::DC};
-        session.offered_services.vas_services = {dt::ServiceCategory::Internet};
+        session.offered_services.vas_services = {message_20::to_underlying_value(dt::ServiceCategory::Internet)};
 
         auto session_config = d20::SessionConfig(evse_setup);
         session_config.internet_parameter_list = {{dt::Protocol::Http, dt::Port::Port80}};
@@ -295,13 +281,13 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::Internet;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::Internet);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
-            REQUIRE(res.service == dt::ServiceCategory::Internet);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::Internet));
             REQUIRE(res.service_parameter_list.size() == 1);
             auto& parameters = res.service_parameter_list[0];
             REQUIRE(parameters.id == 3);
@@ -321,7 +307,7 @@ SCENARIO("Service detail state handling") {
     GIVEN("Good case - Parking status service") {
         d20::Session session = d20::Session();
         session.offered_services.energy_services = {dt::ServiceCategory::DC};
-        session.offered_services.vas_services = {dt::ServiceCategory::ParkingStatus};
+        session.offered_services.vas_services = {message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus)};
 
         auto session_config = d20::SessionConfig(evse_setup);
         session_config.parking_parameter_list = {
@@ -330,13 +316,13 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::ParkingStatus;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
-            REQUIRE(res.service == dt::ServiceCategory::ParkingStatus);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus));
             REQUIRE(res.service_parameter_list.size() == 1);
             auto& parameters = res.service_parameter_list[0];
             REQUIRE(parameters.id == 0);
@@ -350,6 +336,44 @@ SCENARIO("Service detail state handling") {
             REQUIRE(parameters.parameter[1].name == "ParkingStatusType");
             REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[1].value));
             REQUIRE(std::get<int32_t>(parameters.parameter[1].value) == 4);
+        }
+    }
+
+    GIVEN("Good Case - Custom VAS service") {
+        d20::Session session = d20::Session();
+        session.offered_services.energy_services = {dt::ServiceCategory::DC};
+        session.offered_services.vas_services = {4599};
+
+        auto session_config = d20::SessionConfig(evse_setup);
+
+        message_20::ServiceDetailRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.service = 4599;
+
+        auto custom_vas_parameters = dt::ServiceParameterList{};
+        auto& parameter_set = custom_vas_parameters.emplace_back();
+        parameter_set.id = 0;
+        parameter_set.parameter.push_back({"Service1", 40});
+        parameter_set.parameter.push_back({"Service2", "house"});
+
+        const auto res = d20::state::handle_request(req, session, session_config, custom_vas_parameters);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.service == 4599);
+            REQUIRE(res.service_parameter_list.size() == 1);
+            auto& parameters = res.service_parameter_list[0];
+            REQUIRE(parameters.id == 0);
+            REQUIRE(parameters.parameter.size() == 2);
+
+            REQUIRE(parameters.parameter[0].name == "Service1");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[0].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[0].value) == 40);
+
+            REQUIRE(parameters.parameter[1].name == "Service2");
+            REQUIRE(std::holds_alternative<std::string>(parameters.parameter[1].value));
+            REQUIRE(std::get<std::string>(parameters.parameter[1].value) == "house");
         }
     }
 
@@ -369,13 +393,13 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::MCS;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::MCS);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
-            REQUIRE(res.service == dt::ServiceCategory::MCS);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::MCS));
             REQUIRE(res.service_parameter_list.size() == 1);
             auto& parameters = res.service_parameter_list[0];
             REQUIRE(parameters.id == 0);
@@ -409,13 +433,13 @@ SCENARIO("Service detail state handling") {
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.service = dt::ServiceCategory::MCS_BPT;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::MCS_BPT);
 
-        const auto res = d20::state::handle_request(req, session, session_config);
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == dt::ResponseCode::OK);
-            REQUIRE(res.service == dt::ServiceCategory::MCS_BPT);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::MCS_BPT));
             REQUIRE(res.service_parameter_list.size() == 1);
             auto& parameters = res.service_parameter_list[0];
             REQUIRE(parameters.id == 0);

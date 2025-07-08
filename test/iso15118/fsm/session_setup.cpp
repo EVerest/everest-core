@@ -19,13 +19,15 @@ SCENARIO("ISO15118-20 session setup state transitions") {
     const auto evse_id = std::string("everest se");
     const std::vector<dt::ServiceCategory> supported_energy_services = {dt::ServiceCategory::DC};
     const auto cert_install{false};
+    const std::vector<uint16_t> vas_services{};
     const std::vector<dt::Authorization> auth_services = {dt::Authorization::EIM};
     const d20::DcTransferLimits dc_limits;
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
         {dt::ControlMode::Scheduled, dt::MobilityNeedsMode::ProvidedByEvcc}};
 
-    const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
-                                          dc_limits, control_mobility_modes};
+    const d20::EvseSetupConfig evse_setup{
+        evse_id,   supported_energy_services, auth_services, vas_services, cert_install,
+        dc_limits, control_mobility_modes};
 
     std::optional<d20::PauseContext> pause_ctx{std::nullopt};
 

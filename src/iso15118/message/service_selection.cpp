@@ -24,7 +24,7 @@ template <> void convert(const struct iso20_ServiceSelectionReqType& in, Service
             const auto& item_in = in.SelectedVASList.SelectedService.array[i];
             auto& item_out = vas_list_out.emplace_back();
 
-            cb_convert_enum(item_in.ServiceID, item_out.service_id);
+            item_out.service_id = item_in.ServiceID;
             item_out.parameter_set_id = item_in.ParameterSetID;
         }
     }
@@ -49,7 +49,7 @@ template <> void convert(const ServiceSelectionRequest& in, iso20_ServiceSelecti
         for (size_t i = 0; i < in.selected_vas_list->size(); i++) {
             const auto& item_in = in.selected_vas_list->at(i);
             auto& item_out = out.SelectedVASList.SelectedService.array[i];
-            cb_convert_enum(item_in.service_id, item_out.ServiceID);
+            item_out.ServiceID = item_in.service_id;
             item_out.ParameterSetID = item_in.parameter_set_id;
         }
     } else {

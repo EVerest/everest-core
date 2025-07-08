@@ -9,6 +9,7 @@
 namespace iso15118::d20::state {
 
 message_20::ServiceDetailResponse handle_request(const message_20::ServiceDetailRequest& req, d20::Session& session,
-                                                 const d20::SessionConfig& config);
+                                                 const d20::SessionConfig& config,
+                                                 const std::optional<dt::ServiceParameterList>& custom_vas_parameters);
 
 } // namespace iso15118::d20::state

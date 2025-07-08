@@ -12,6 +12,10 @@ namespace iso15118::message_20 {
 
 template <typename InType, typename OutType> void convert(const InType&, OutType&);
 
+template <typename T> constexpr auto to_underlying_value(T t) {
+    return static_cast<std::underlying_type_t<T>>(t);
+}
+
 namespace datatypes {
 
 using PercentValue = uint8_t;    // [0 - 100]

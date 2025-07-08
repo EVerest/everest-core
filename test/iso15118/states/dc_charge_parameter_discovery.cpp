@@ -20,12 +20,14 @@ SCENARIO("DC charge parameter discovery state handling") {
     const std::vector<dt::ServiceCategory> supported_energy_services = {dt::ServiceCategory::DC};
     const auto cert_install{false};
     const std::vector<dt::Authorization> auth_services = {dt::Authorization::EIM};
+    const std::vector<uint16_t> vas_services{};
     const d20::DcTransferLimits dc_limits;
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
         {dt::ControlMode::Scheduled, dt::MobilityNeedsMode::ProvidedByEvcc}};
 
-    const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
-                                          dc_limits, control_mobility_modes};
+    const d20::EvseSetupConfig evse_setup{
+        evse_id,   supported_energy_services, auth_services, vas_services, cert_install,
+        dc_limits, control_mobility_modes};
 
     GIVEN("Bad Case - Unknown session") {
 

@@ -164,6 +164,8 @@ TimePoint const& Session::poll() {
             ctx.session_config.dc_limits = *control_data;
         } else if (const auto control_data = ctx.get_control_event<d20::EnergyServices>()) {
             ctx.session_config.supported_energy_transfer_services = *control_data;
+        } else if (const auto control_data = ctx.get_control_event<d20::SupportedVASs>()) {
+            ctx.session_config.supported_vas_services = *control_data;
         }
 
         // TODO(sl): Save UpdateDynamicModeParameters, AcTargetPower,

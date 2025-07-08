@@ -29,6 +29,7 @@ SCENARIO("DC charge loop state handling") {
                                                                         dt::ServiceCategory::DC_BPT};
     const auto cert_install{false};
     const std::vector<dt::Authorization> auth_services = {dt::Authorization::EIM};
+    const std::vector<uint16_t> vas_services{};
 
     d20::DcTransferLimits dc_limits;
     dc_limits.charge_limits.power.max = {22, 3};
@@ -45,8 +46,9 @@ SCENARIO("DC charge loop state handling") {
         {dt::ControlMode::Dynamic, dt::MobilityNeedsMode::ProvidedByEvcc},
         {dt::ControlMode::Dynamic, dt::MobilityNeedsMode::ProvidedBySecc}};
 
-    const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
-                                          dc_limits, control_mobility_modes};
+    const d20::EvseSetupConfig evse_setup{
+        evse_id,   supported_energy_services, auth_services, vas_services, cert_install,
+        dc_limits, control_mobility_modes};
 
     GIVEN("Bad case - Unknown session") {
 

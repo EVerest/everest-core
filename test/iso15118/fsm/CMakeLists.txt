@@ -15,6 +15,7 @@ function(create_fsm_test_target NAME)
 endfunction()
 
 create_fsm_test_target(session_setup)
+create_fsm_test_target(service_detail)
 
 add_executable(test_d20_transitions d20_transitions.cpp)
 

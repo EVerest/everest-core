@@ -109,6 +109,7 @@ SessionConfig::SessionConfig(EvseSetupConfig config) :
     cert_install_service(config.enable_certificate_install_service),
     authorization_services(std::move(config.authorization_services)),
     supported_energy_transfer_services(std::move(config.supported_energy_services)),
+    supported_vas_services(std::move(config.supported_vas_services)),
     dc_limits(std::move(config.dc_limits)),
     supported_control_mobility_modes(std::move(config.control_mobility_modes)) {
 

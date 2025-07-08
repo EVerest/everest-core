@@ -22,7 +22,7 @@ static bool find_service_id(const std::vector<uint16_t>& req_service_ids, const 
 message_20::ServiceDiscoveryResponse handle_request(const message_20::ServiceDiscoveryRequest& req,
                                                     d20::Session& session,
                                                     const std::vector<dt::ServiceCategory>& energy_services,
-                                                    const std::vector<dt::ServiceCategory>& vas_services) {
+                                                    const std::vector<uint16_t>& vas_services) {
 
     message_20::ServiceDiscoveryResponse res;
 
@@ -38,17 +38,17 @@ message_20::ServiceDiscoveryResponse handle_request(const message_20::ServiceDis
     res.energy_transfer_service_list.clear();
 
     std::vector<dt::Service> energy_services_list;
-    std::vector<dt::Service> vas_services_list;
+    std::vector<dt::VasService> vas_services_list;
 
     // EV supported service ID's
     if (req.supported_service_ids.has_value() == true) {
         for (auto& energy_service : energy_services) {
-            if (find_service_id(req.supported_service_ids.value(), static_cast<uint16_t>(energy_service))) {
+            if (find_service_id(req.supported_service_ids.value(), message_20::to_underlying_value(energy_service))) {
                 energy_services_list.push_back({energy_service, false});
             }
         }
         for (auto& vas_service : vas_services) {
-            if (find_service_id(req.supported_service_ids.value(), static_cast<uint16_t>(vas_service))) {
+            if (find_service_id(req.supported_service_ids.value(), vas_service)) {
                 vas_services_list.push_back({vas_service, false});
             }
         }
@@ -67,7 +67,7 @@ message_20::ServiceDiscoveryResponse handle_request(const message_20::ServiceDis
         session.offered_services.energy_services.push_back(conf_energy_service.service_id);
     }
 
-    if (vas_services_list.empty() == false) {
+    if (not vas_services_list.empty()) {
         auto& vas_service_list = res.vas_list.emplace();
         vas_service_list.reserve(vas_services_list.size());
         for (auto& conf_vas_service : vas_services_list) {

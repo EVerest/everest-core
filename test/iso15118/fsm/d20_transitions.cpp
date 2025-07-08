@@ -17,14 +17,16 @@ SCENARIO("ISO15118-20 state transitions") {
     const auto evse_id = std::string("everest se");
     const std::vector<message_20::datatypes::ServiceCategory> supported_energy_services = {
         message_20::datatypes::ServiceCategory::DC};
+    const std::vector<uint16_t> vas_services{};
     const auto cert_install{false};
     const std::vector<message_20::datatypes::Authorization> auth_services = {message_20::datatypes::Authorization::EIM};
     const d20::DcTransferLimits dc_limits;
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
         {message_20::datatypes::ControlMode::Scheduled, message_20::datatypes::MobilityNeedsMode::ProvidedByEvcc}};
 
-    const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
-                                          dc_limits, control_mobility_modes};
+    const d20::EvseSetupConfig evse_setup{
+        evse_id,   supported_energy_services, auth_services, vas_services, cert_install,
+        dc_limits, control_mobility_modes};
 
     std::optional<d20::PauseContext> pause_ctx{std::nullopt};
 

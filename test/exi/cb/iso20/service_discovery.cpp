@@ -110,7 +110,7 @@ SCENARIO("Se/Deserialize service_discovery messages") {
         res.service_renegotiation_supported = false;
         res.energy_transfer_service_list = {{message_20::datatypes::ServiceCategory::DC, false},
                                             {message_20::datatypes::ServiceCategory::DC_BPT, false}};
-        res.vas_list = {{message_20::datatypes::ServiceCategory::Internet, true}};
+        res.vas_list = {{message_20::to_underlying_value(message_20::datatypes::ServiceCategory::Internet), true}};
 
         std::vector<uint8_t> expected = {0x80, 0x80, 0x04, 0x1e, 0xa6, 0x5f, 0xc9, 0x9b, 0xa7, 0x6c, 0x4d, 0x8c, 0x2b,
                                          0xfe, 0x1b, 0x60, 0x62, 0x00, 0x00, 0x02, 0x00, 0x01, 0x80, 0x40, 0x82, 0x22};
@@ -174,7 +174,8 @@ SCENARIO("Se/Deserialize service_discovery messages") {
             REQUIRE(msg.energy_transfer_service_list[1].service_id == message_20::datatypes::ServiceCategory::DC_BPT);
             REQUIRE(msg.energy_transfer_service_list[1].free_service == false);
             REQUIRE(msg.vas_list.value().size() == 1);
-            REQUIRE(msg.vas_list.value()[0].service_id == message_20::datatypes::ServiceCategory::Internet);
+            REQUIRE(msg.vas_list.value()[0].service_id ==
+                    message_20::to_underlying_value(message_20::datatypes::ServiceCategory::Internet));
             REQUIRE(msg.vas_list.value()[0].free_service == true);
         }
     }

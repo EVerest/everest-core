@@ -11,27 +11,6 @@
 namespace iso15118::message_20 {
 
 namespace datatypes {
-// default
-ParameterSet::ParameterSet() {
-    id = 0;
-    parameter.push_back({
-        "Connector",                            // name
-        static_cast<int32_t>(DcConnector::Core) // value
-    });
-    parameter.push_back({
-        "ControlMode",                               // name
-        static_cast<int32_t>(ControlMode::Scheduled) // value
-    });
-    parameter.push_back({
-        "MobilityNeedsMode",                                    // name
-        static_cast<int32_t>(MobilityNeedsMode::ProvidedByEvcc) // value
-    });
-    parameter.push_back({
-        "Pricing",                               // name
-        static_cast<int32_t>(Pricing::NoPricing) // value
-    });
-}
-
 ParameterSet::ParameterSet(uint16_t _id, const DcParameterList& list) {
     id = _id;
     // Connector
@@ -172,14 +151,14 @@ ParameterSet::ParameterSet(uint16_t _id, const ParkingParameterList& list) {
 
 template <> void convert(const struct iso20_ServiceDetailReqType& in, ServiceDetailRequest& out) {
     convert(in.Header, out.header);
-    out.service = static_cast<datatypes::ServiceCategory>(in.ServiceID);
+    out.service = in.ServiceID;
 }
 
 template <> void convert(const struct iso20_ServiceDetailResType& in, ServiceDetailResponse& out) {
 
     cb_convert_enum(in.ResponseCode, out.response_code);
 
-    cb_convert_enum(in.ServiceID, out.service);
+    out.service = in.ServiceID;
     out.service_parameter_list.clear();
     for (uint8_t i = 0; i < in.ServiceParameterList.ParameterSet.arrayLen; i++) {
         const auto& in_parameter_set = in.ServiceParameterList.ParameterSet.array[i];
@@ -217,7 +196,7 @@ template <> void convert(const struct iso20_ServiceDetailResType& in, ServiceDet
 template <> void convert(const ServiceDetailRequest& in, iso20_ServiceDetailReqType& out) {
     init_iso20_ServiceDetailReqType(&out);
 
-    cb_convert_enum(in.service, out.ServiceID);
+    out.ServiceID = in.service;
 
     convert(in.header, out.Header);
 }
@@ -261,7 +240,7 @@ template <> void convert(const ServiceDetailResponse& in, iso20_ServiceDetailRes
 
     cb_convert_enum(in.response_code, out.ResponseCode);
 
-    cb_convert_enum(in.service, out.ServiceID);
+    out.ServiceID = in.service;
 
     uint8_t index = 0;
     for (auto const& in_parameter_set : in.service_parameter_list) {

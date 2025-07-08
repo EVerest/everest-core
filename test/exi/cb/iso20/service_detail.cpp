@@ -28,7 +28,7 @@ SCENARIO("Se/Deserialize service_detail messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x04, 0xEB, 0xFF, 0x2C, 0x94, 0x59, 0xDB, 0x42});
             REQUIRE(header.timestamp == 1692009443);
 
-            REQUIRE(msg.service == message_20::datatypes::ServiceCategory::AC_BPT);
+            REQUIRE(msg.service == message_20::to_underlying_value(message_20::datatypes::ServiceCategory::AC_BPT));
         }
     }
 
@@ -37,7 +37,7 @@ SCENARIO("Se/Deserialize service_detail messages") {
         message_20::ServiceDetailRequest req;
 
         req.header = message_20::Header{{0x04, 0xEB, 0xFF, 0x2C, 0x94, 0x59, 0xDB, 0x42}, 1692009443};
-        req.service = message_20::datatypes::ServiceCategory::AC_BPT;
+        req.service = message_20::to_underlying_value(message_20::datatypes::ServiceCategory::AC_BPT);
 
         std::vector<uint8_t> expected = {0x80, 0x74, 0x04, 0x02, 0x75, 0xff, 0x96, 0x4a, 0x2c, 0xed,
                                          0xa1, 0x0e, 0x38, 0x7e, 0x8a, 0x60, 0x62, 0x02, 0x80};
@@ -53,7 +53,7 @@ SCENARIO("Se/Deserialize service_detail messages") {
 
         res.header = message_20::Header{{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B}, 1725456323};
         res.response_code = message_20::datatypes::ResponseCode::OK;
-        res.service = message_20::datatypes::ServiceCategory::DC;
+        res.service = message_20::to_underlying_value(message_20::datatypes::ServiceCategory::DC);
 
         const auto list = message_20::datatypes::DcParameterList{
             message_20::datatypes::DcConnector::Extended, message_20::datatypes::ControlMode::Scheduled,
@@ -95,7 +95,7 @@ SCENARIO("Se/Deserialize service_detail messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B});
             REQUIRE(header.timestamp == 1725456323);
 
-            REQUIRE(msg.service == message_20::datatypes::ServiceCategory::DC);
+            REQUIRE(msg.service == message_20::to_underlying_value(message_20::datatypes::ServiceCategory::DC));
             REQUIRE(msg.response_code == message_20::datatypes::ResponseCode::OK);
             REQUIRE(msg.service_parameter_list.size() == 1);
             REQUIRE(msg.service_parameter_list[0].id == 0);

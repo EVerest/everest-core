@@ -21,7 +21,7 @@ struct ParameterSet {
     uint16_t id;
     std::vector<Parameter> parameter;
 
-    ParameterSet();
+    ParameterSet() = default;
     ParameterSet(uint16_t _id, const DcParameterList& list);
     ParameterSet(uint16_t _id, const DcBptParameterList& list);
     ParameterSet(uint16_t _id, const McsParameterList& list);
@@ -36,14 +36,14 @@ using ServiceParameterList = std::vector<ParameterSet>; // Max: 32
 
 struct ServiceDetailRequest {
     Header header;
-    datatypes::ServiceCategory service;
+    uint16_t service;
 };
 
 struct ServiceDetailResponse {
     Header header;
     datatypes::ResponseCode response_code;
-    datatypes::ServiceCategory service{datatypes::ServiceCategory::DC};
-    datatypes::ServiceParameterList service_parameter_list = {datatypes::ParameterSet()};
+    uint16_t service{to_underlying_value(datatypes::ServiceCategory::DC)};
+    datatypes::ServiceParameterList service_parameter_list{};
 };
 
 } // namespace iso15118::message_20

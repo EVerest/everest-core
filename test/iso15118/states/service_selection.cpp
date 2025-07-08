@@ -171,7 +171,7 @@ SCENARIO("Service selection state handling") {
             dt::Pricing::NoPricing,
         };
 
-        session.offered_services.vas_services = {dt::ServiceCategory::Internet};
+        session.offered_services.vas_services = {message_20::to_underlying_value(dt::ServiceCategory::Internet)};
         session.offered_services.internet_parameter_list[0] = {
             dt::Protocol::Http,
             dt::Port::Port80,
@@ -183,7 +183,7 @@ SCENARIO("Service selection state handling") {
         req.selected_energy_transfer_service.service_id = dt::ServiceCategory::DC;
         req.selected_energy_transfer_service.parameter_set_id = 0;
 
-        req.selected_vas_list = {{dt::ServiceCategory::ParkingStatus, 0}};
+        req.selected_vas_list = {{message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus), 0}};
 
         const auto res = d20::state::handle_request(req, session);
 
@@ -203,7 +203,7 @@ SCENARIO("Service selection state handling") {
             dt::Pricing::NoPricing,
         };
 
-        session.offered_services.vas_services = {dt::ServiceCategory::Internet};
+        session.offered_services.vas_services = {message_20::to_underlying_value(dt::ServiceCategory::Internet)};
         session.offered_services.internet_parameter_list[0] = {
             dt::Protocol::Http,
             dt::Port::Port80,
@@ -215,7 +215,7 @@ SCENARIO("Service selection state handling") {
         req.selected_energy_transfer_service.service_id = dt::ServiceCategory::DC;
         req.selected_energy_transfer_service.parameter_set_id = 0;
 
-        req.selected_vas_list = {{dt::ServiceCategory::Internet, 1}};
+        req.selected_vas_list = {{message_20::to_underlying_value(dt::ServiceCategory::Internet), 1}};
 
         const auto res = d20::state::handle_request(req, session);
 
@@ -235,7 +235,8 @@ SCENARIO("Service selection state handling") {
             dt::Pricing::NoPricing,
         };
 
-        session.offered_services.vas_services = {dt::ServiceCategory::Internet, dt::ServiceCategory::ParkingStatus};
+        session.offered_services.vas_services = {message_20::to_underlying_value(dt::ServiceCategory::Internet),
+                                                 message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus)};
         session.offered_services.internet_parameter_list[0] = {
             dt::Protocol::Http,
             dt::Port::Port80,
@@ -252,7 +253,8 @@ SCENARIO("Service selection state handling") {
         req.selected_energy_transfer_service.service_id = dt::ServiceCategory::DC;
         req.selected_energy_transfer_service.parameter_set_id = 0;
 
-        req.selected_vas_list = {{dt::ServiceCategory::Internet, 0}, {dt::ServiceCategory::ParkingStatus, 0}};
+        req.selected_vas_list = {{message_20::to_underlying_value(dt::ServiceCategory::Internet), 0},
+                                 {message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus), 0}};
 
         const auto res = d20::state::handle_request(req, session);
 
@@ -321,6 +323,37 @@ SCENARIO("Service selection state handling") {
             const auto bpt_channel = selected_services.selected_bpt_channel.has_value() and
                                      selected_services.selected_bpt_channel.value() == dt::BptChannel::Unified;
             REQUIRE(bpt_channel == true);
+        }
+    }
+
+    GIVEN("Good case - DC & Custom VAS") {
+        d20::Session session = d20::Session();
+
+        session.offered_services.energy_services = {dt::ServiceCategory::DC};
+        session.offered_services.dc_parameter_list[0] = {
+            dt::DcConnector::Extended,
+            dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc,
+            dt::Pricing::NoPricing,
+        };
+
+        session.offered_services.vas_services = {4599};
+        session.offered_services.custom_vas_list[4599] = {0, 2};
+
+        message_20::ServiceSelectionRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.selected_energy_transfer_service.service_id = dt::ServiceCategory::DC;
+        req.selected_energy_transfer_service.parameter_set_id = 0;
+
+        req.selected_vas_list = {
+            {4599, 0},
+        };
+
+        const auto res = d20::state::handle_request(req, session);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
         }
     }
 

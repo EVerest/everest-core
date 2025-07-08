@@ -102,6 +102,15 @@ void TbdController::update_energy_modes(const std::vector<message_20::datatypes:
     }
 }
 
+void TbdController::update_supported_vas_services(const d20::SupportedVASs& vas_services) {
+
+    evse_setup.supported_vas_services = vas_services;
+
+    if (session) {
+        session->push_control_event(vas_services);
+    }
+}
+
 void TbdController::handle_sdp_server_input() {
     auto request = sdp_server->get_peer_request();
 

@@ -18,6 +18,12 @@ struct Service {
 };
 using ServiceList = std::vector<Service>; // max: 8
 
+struct VasService {
+    uint16_t service_id;
+    bool free_service;
+};
+using VasServiceList = std::vector<VasService>;
+
 } // namespace datatypes
 
 struct ServiceDiscoveryRequest {
@@ -34,7 +40,7 @@ struct ServiceDiscoveryResponse {
         datatypes::ServiceCategory::AC, // service_id
         false                           // free_service
     }};
-    std::optional<datatypes::ServiceList> vas_list;
+    std::optional<datatypes::VasServiceList> vas_list;
 };
 
 } // namespace iso15118::message_20

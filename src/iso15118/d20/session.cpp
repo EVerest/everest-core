@@ -90,7 +90,7 @@ Session::Session(OfferedServices services_) : offered_services(services_) {
 
 Session::~Session() = default;
 
-bool Session::find_parameter_set_id(const dt::ServiceCategory service, int16_t id) {
+bool Session::find_energy_parameter_set_id(const dt::ServiceCategory service, int16_t id) {
 
     switch (service) {
     case dt::ServiceCategory::DC:
@@ -117,22 +117,47 @@ bool Session::find_parameter_set_id(const dt::ServiceCategory service, int16_t i
             return true;
         }
         break;
-    case dt::ServiceCategory::Internet:
+    case dt::ServiceCategory::AC:
+        [[fallthrough]];
+    case dt::ServiceCategory::WPT:
+        [[fallthrough]];
+    case dt::ServiceCategory::DC_ACDP:
+        [[fallthrough]];
+    case dt::ServiceCategory::AC_BPT:
+        [[fallthrough]];
+    case dt::ServiceCategory::DC_ACDP_BPT:
+        [[fallthrough]];
+    case dt::ServiceCategory::AC_DER:
+        [[fallthrough]];
+    default:
+        logf_warning("Service %u is not supported yet", message_20::to_underlying_value(service));
+        break;
+    }
+
+    return false;
+}
+
+bool Session::find_vas_parameter_set_id(const uint16_t vas_service, int16_t id) {
+    if (vas_service == message_20::to_underlying_value(dt::ServiceCategory::Internet)) {
         if (this->offered_services.internet_parameter_list.find(id) !=
             this->offered_services.internet_parameter_list.end()) {
             return true;
         }
-        break;
-
-    case dt::ServiceCategory::ParkingStatus:
+    } else if (vas_service == message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus)) {
         if (this->offered_services.parking_parameter_list.find(id) !=
             this->offered_services.parking_parameter_list.end()) {
             return true;
         }
-
-    default:
-        // Todo(sl): logf AC, WPT, ACDP is not supported
-        break;
+    } else {
+        logf_info("Find parameter_set_id from service: %u", vas_service);
+        if (this->offered_services.custom_vas_list.find(vas_service) != this->offered_services.custom_vas_list.end()) {
+            const auto custom_vas_parameter_set_ids = this->offered_services.custom_vas_list.at(vas_service);
+            for (auto offered_id : custom_vas_parameter_set_ids) {
+                if (offered_id == id) {
+                    return true;
+                }
+            }
+        }
     }
 
     return false;
@@ -142,7 +167,6 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
 
     switch (service) {
     case dt::ServiceCategory::DC:
-
         if (this->offered_services.dc_parameter_list.find(id) != this->offered_services.dc_parameter_list.end()) {
             auto& parameters = this->offered_services.dc_parameter_list.at(id);
             this->selected_services =
@@ -156,7 +180,6 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
             // Todo(sl): Should be not the case -> Raise Error?
         }
         break;
-
     case dt::ServiceCategory::DC_BPT:
         if (this->offered_services.dc_bpt_parameter_list.find(id) !=
             this->offered_services.dc_bpt_parameter_list.end()) {
@@ -172,7 +195,6 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
             // Todo(sl): Should be not the case -> Raise Error?
         }
         break;
-
     case dt::ServiceCategory::MCS:
         if (this->offered_services.mcs_parameter_list.find(id) != this->offered_services.mcs_parameter_list.end()) {
             auto& parameters = this->offered_services.mcs_parameter_list.at(id);
@@ -203,9 +225,27 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
             // Todo(sl): Should be not the case -> Raise Error?
         }
         break;
+    case dt::ServiceCategory::AC:
+        [[fallthrough]];
+    case dt::ServiceCategory::WPT:
+        [[fallthrough]];
+    case dt::ServiceCategory::DC_ACDP:
+        [[fallthrough]];
+    case dt::ServiceCategory::AC_BPT:
+        [[fallthrough]];
+    case dt::ServiceCategory::DC_ACDP_BPT:
+        [[fallthrough]];
+    case dt::ServiceCategory::AC_DER:
+        [[fallthrough]];
+    default:
+        logf_warning("Service %u is not supported yet", message_20::to_underlying_value(service));
+        break;
+    }
+}
 
-    case dt::ServiceCategory::Internet:
+void Session::selected_service_parameters(const uint16_t vas_service, const uint16_t id) {
 
+    if (vas_service == message_20::to_underlying_value(dt::ServiceCategory::Internet)) {
         if (this->offered_services.internet_parameter_list.find(id) !=
             this->offered_services.internet_parameter_list.end()) {
             this->selected_vas_services.vas_services.push_back(dt::ServiceCategory::Internet);
@@ -213,10 +253,7 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
             this->selected_vas_services.internet_port = parameters.port;
             this->selected_vas_services.internet_protocol = parameters.protocol;
         }
-        break;
-
-    case dt::ServiceCategory::ParkingStatus:
-
+    } else if (vas_service == message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus)) {
         if (this->offered_services.parking_parameter_list.find(id) !=
             this->offered_services.parking_parameter_list.end()) {
             this->selected_vas_services.vas_services.push_back(dt::ServiceCategory::ParkingStatus);
@@ -224,11 +261,8 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
             this->selected_vas_services.parking_intended_service = parameters.intended_service;
             this->selected_vas_services.parking_status = parameters.parking_status;
         }
-        break;
-
-    default:
-        // Todo(sl): logf AC, WPT, ACDP is not supported
-        break;
+    } else {
+        logf_info("Right now not selecting anything for custom vas service");
     }
 }
 

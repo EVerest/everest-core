@@ -16,14 +16,19 @@ struct SelectedService {
     uint16_t parameter_set_id;
 };
 
-using SelectedServiceList = std::vector<SelectedService>; // Max: 16
+struct VasSelectedService {
+    uint16_t service_id;
+    uint16_t parameter_set_id;
+};
+
+using VasSelectedServiceList = std::vector<VasSelectedService>; // Max: 16
 
 } // namespace datatypes
 
 struct ServiceSelectionRequest {
     Header header;
     datatypes::SelectedService selected_energy_transfer_service;
-    std::optional<datatypes::SelectedServiceList> selected_vas_list;
+    std::optional<datatypes::VasSelectedServiceList> selected_vas_list;
 };
 
 struct ServiceSelectionResponse {

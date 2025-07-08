@@ -97,7 +97,8 @@ SCENARIO("Service discovery state handling") {
 
         std::vector<dt::ServiceCategory> supported_energy_transfer_services = {dt::ServiceCategory::DC,
                                                                                dt::ServiceCategory::DC_BPT};
-        std::vector<dt::ServiceCategory> supported_vas_services = {dt::ServiceCategory::ParkingStatus};
+        std::vector<uint16_t> supported_vas_services = {
+            message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus)};
 
         const auto res =
             d20::state::handle_request(req, session, supported_energy_transfer_services, supported_vas_services);
@@ -114,7 +115,8 @@ SCENARIO("Service discovery state handling") {
                      res.energy_transfer_service_list[1].service_id == dt::ServiceCategory::DC_BPT));
             REQUIRE(res.vas_list.has_value() == true);
             REQUIRE(res.vas_list.value()[0].free_service == false);
-            REQUIRE(res.vas_list.value()[0].service_id == dt::ServiceCategory::ParkingStatus);
+            REQUIRE(res.vas_list.value()[0].service_id ==
+                    message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus));
         }
     }
 
@@ -132,7 +134,8 @@ SCENARIO("Service discovery state handling") {
 
         std::vector<dt::ServiceCategory> supported_energy_transfer_services = {dt::ServiceCategory::DC,
                                                                                dt::ServiceCategory::DC_BPT};
-        std::vector<dt::ServiceCategory> supported_vas_services = {dt::ServiceCategory::ParkingStatus};
+        std::vector<uint16_t> supported_vas_services = {
+            message_20::to_underlying_value(dt::ServiceCategory::ParkingStatus)};
 
         const auto res =
             d20::state::handle_request(req, session, supported_energy_transfer_services, supported_vas_services);
