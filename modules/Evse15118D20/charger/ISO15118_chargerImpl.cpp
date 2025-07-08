@@ -296,6 +296,10 @@ void ISO15118_chargerImpl::ready() {
 
     setup_config.control_mobility_modes = fill_mobility_needs_modes_from_config(mod->config);
 
+    if (not mod->config.custom_protocol_namespace.empty()) {
+        setup_config.custom_protocol.emplace(mod->config.custom_protocol_namespace);
+    }
+
     controller = std::make_unique<iso15118::TbdController>(tbd_config, callbacks, setup_config);
 
     try {
