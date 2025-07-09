@@ -58,6 +58,10 @@ config:
     description: The EVSE should support scheduled mode
     type: boolean
     default: false
+  custom_protocol_namespace:
+    description: Providing a custom protocol namespace.
+    type: string
+    default: ""
 provides:
   charger:
     interface: ISO15118_charger
