@@ -32,6 +32,7 @@ target_link_libraries(${MODULE_NAME}
 target_sources(${MODULE_NAME}
     PRIVATE
         "data/GenericInfoStore.cpp"
+        "data/SessionInfo.cpp"
         "helpers/Conversions.cpp"
         "rpc/RpcHandler.cpp"
         "rpc/notifications/Evse.cpp"
