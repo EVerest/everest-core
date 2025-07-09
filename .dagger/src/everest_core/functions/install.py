@@ -17,7 +17,6 @@ async def install(
     container: dagger.Container,
     source_dir: dagger.Directory,
     source_path: str,
-    build_dir: dagger.Directory,
     build_path: str,
     dist_path: str,
     workdir_path: str,
@@ -33,8 +32,6 @@ async def install(
         The source directory containing the CMakeLists.txt and other source files.
     source_path: str
         The path inside the container of the source directory.
-    build_dir: dagger.Directory
-        The build directory where the artifacts are built.
     build_path: str
         The path inside the container of the build directory.
     dist_path: str
@@ -49,15 +46,19 @@ async def install(
         An object containing the container, exit code, and the distribution directory.
     """
 
+    build_dir_exists = await (
+        container
+        .with_exec(["test", "-d", build_path], expect=dagger.ReturnType.ANY)
+        .exit_code()
+    ) == 0
+    if not build_dir_exists:
+        raise RuntimeError(f"Build directory {build_path} does not exist. Please build the project first.")
+
     container = await (
         container
         .with_mounted_directory(
             source_path,
             source_dir,
-        )
-        .with_mounted_directory(
-            build_path,
-            build_dir,
         )
         .with_workdir(workdir_path)
         .with_exec(

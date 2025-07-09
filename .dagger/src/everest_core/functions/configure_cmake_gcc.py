@@ -8,25 +8,56 @@ from ..helpers.shared_container_actions import setup_cpm_cache
 @object_type
 class ConfigureResult(BaseResultType):
     """Result of the configure operation"""
-    build_dir: Annotated[dagger.Directory, dagger.Doc("Directory where the build files are located")] = dagger.field()
+    pass
 
 async def configure_cmake_gcc(
-    container: Annotated[dagger.Container, dagger.Doc("Container to run the operation")],
-    source_dir: Annotated[dagger.Directory, dagger.Doc("Source directory for the CMake project")],
-    cache_path: Annotated[str, dagger.Doc("Path to the cache directory")],
-    source_path: Annotated[str, dagger.Doc("Source path for the CMake project")],
-    build_path: Annotated[str, dagger.Doc("Build directory path for the CMake project")],
-    workdir_path: Annotated[str, dagger.Doc("Working directory path for container")],
-    dist_path: Annotated[str, dagger.Doc("Path to the distribution directory")],
-    wheels_path: Annotated[str, dagger.Doc("Path to the wheels directory")],
+    container: dagger.Container,
+    source_dir: dagger.Directory,
+    source_path: str,
+    cache_dir: dagger.Directory | None,
+    cache_path: str,
+    build_path: str,
+    workdir_path: str,
+    dist_path: str,
+    wheels_path: str,
 ) -> ConfigureResult:
-    """Configure CMake with GCC in the given container"""
+    """
+    Configure CMake with GCC in the given container
+    Parameters
+    ----------
+    container : dagger.Container
+        Container to run the operation.
+    source_dir : dagger.Directory
+        Source directory for the CMake project.
+    source_path : str
+        The path inside the container to the source directory.
+    cache_dir : dagger.Directory | None
+        Optional cache directory for the CMake project.
+    cache_path : str
+        The path inside the container to the cache directory.
+    build_path : str
+        The path inside the container to the build directory.
+    workdir_path : str
+        The path inside the container to the working directory.
+    dist_path : str
+        The path inside the container to the distribution directory.
+    wheels_path : str
+        The path inside the container to the wheels directory.
+
+    Returns
+    -------
+    ConfigureResult
+        An object containing the container, exit code, and build directory after configuration.
+    """
+
+    # Retrieve the cpm cache directory from the cache directory if provided
+    cpm_cache_dir = cache_dir.directory("./CPM") if cache_dir else None
 
     container = setup_cpm_cache(
         container=container,
-        path=cache_path,
+        path=f"{cache_path}/CPM",
         volume="everest_cpm_cache",
-        source=source_dir,
+        source=cpm_cache_dir,
     )
 
     container = await (
@@ -41,8 +72,8 @@ async def configure_cmake_gcc(
         .with_exec(
             [
                     "cmake",
-                    "-B", f"{build_path}",
-                    "-S", f"{source_path}",
+                    "-B", build_path,
+                    "-S", source_path,
                     "-G", "Ninja",
                     "-D", "EVC_ENABLE_CCACHE=ON",
                     "-D", "ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF",
@@ -58,7 +89,6 @@ async def configure_cmake_gcc(
     result = ConfigureResult(
         container=container,
         exit_code=await container.exit_code(),
-        build_dir=await container.directory(build_path)
     )
 
     return result

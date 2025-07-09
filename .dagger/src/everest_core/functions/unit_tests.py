@@ -21,7 +21,6 @@ async def unit_tests(
     container: dagger.Container,
     source_dir: dagger.Directory,
     source_path: str,
-    build_dir: dagger.Directory,
     build_path: str,
     workdir_path: str,
 ) -> UnitTestsResult:
@@ -37,9 +36,6 @@ async def unit_tests(
         The source directory containing the CMake project.
     source_path : str
         The path inside the container to the source directory.
-    build_dir : dagger.Directory
-        The build directory where the CMake build files are located.
-        Should already be built.
     build_path : str
         The path inside the container to the build directory.
         Should be the same as for building
@@ -54,15 +50,19 @@ async def unit_tests(
         and the last test log file.
     """
     
+    build_dir_exists = await (
+        container
+        .with_exec(["test", "-d", build_path], expect=dagger.ReturnType.ANY)
+        .exit_code()
+    ) == 0
+    if not build_dir_exists:
+        raise RuntimeError(f"Build directory {build_path} does not exist. Please build the project first.")
+    
     container = await (
         container
         .with_mounted_directory(
             source_path,
             source_dir,
-        )
-        .with_mounted_directory(
-            build_path,
-            build_dir,
         )
         .with_workdir(workdir_path)
         .with_exec(

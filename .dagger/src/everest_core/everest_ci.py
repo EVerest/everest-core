@@ -35,7 +35,7 @@ class EverestCI:
 
         cmd_args = [
             "/usr/bin/run-clang-format",
-            "/source",
+            "/workspace/source",
         ]
 
         extensions_list = extensions.split(",")
@@ -50,7 +50,7 @@ class EverestCI:
         for ex in exclude_list:
             cmd_args.extend([
                 "--exclude",
-                f"/source/{ ex }",
+                f"/workspace/source/{ ex }",
             ])
         
         cmd_args.extend([

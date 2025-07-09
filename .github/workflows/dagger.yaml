@@ -8,16 +8,30 @@ jobs:
         name: Dagger Build, Lint and Test
         runs-on: ubuntu-24.04
         steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+            - name: Restore Cache
+              id: cache-restore
+              uses: actions/cache/restore@v4
               with:
-                fetch-depth: 0
-                path: ${{ github.workspace }}/source
+                path: |
+                  ${{ github.workspace }}/cache
+                restore-keys: |
+                  cache-${{ github.repository }}
+            - name: Initialize empty cache if necessary
+              if: steps.cache-restore.outputs.cache-hit != 'true'
+              run: |
+                mkdir -p ${{ github.workspace }}/cache/ccache
+                mkdir -p ${{ github.workspace }}/cache/CPM
             - name: Setup Dagger
               uses: dagger/dagger-for-github@8.0.0
               with:
                 version: latest
-                workdir: ${{ github.workspace }}/source
-                module: .
+                workdir: ${{ github.workspace }}
+                module: github.com/${{ github.repository}}@${{ github.ref }}
                 call: |
                     build-cmake-gcc
+            - name: Save Cache
+              if: ${{ github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@v4
+              with:
+                path: ${{ github.workspace }}/cache
+                key: cache-${{ github.repository }}
