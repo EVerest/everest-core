@@ -96,6 +96,7 @@ inline constexpr auto MQTT_EXTERNAL_PREFIX = "";
 inline constexpr auto TELEMETRY_PREFIX = "everest-telemetry";
 inline constexpr auto TELEMETRY_ENABLED = false;
 inline constexpr auto VALIDATE_SCHEMA = false;
+inline constexpr auto FORWARD_EXCEPTIONS = false;
 
 } // namespace defaults
 

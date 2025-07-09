@@ -132,8 +132,26 @@ NLOHMANN_JSON_NAMESPACE_END
 #define EVCALLBACK(function) [](auto&& PH1) { function(std::forward<decltype(PH1)>(PH1)); }
 
 namespace Everest {
-struct BootException : public std::runtime_error {
-    using std::runtime_error::runtime_error;
+
+/// \brief Events than can happen related to commands
+enum class CmdEvent {
+    MessageParsingFailed,   ///< Parsing of the message to the command handler has failed
+    SchemaValidationFailed, ///< Schema validation of arguments or result has failed
+    HandlerException,       ///< An exception was thrown during handling of the command in user code
+    Timeout,  ///< A timeout happened when calling the command (eg. when the callee doesn't respond to the caller)
+    Shutdown, ///< EVerest is shutting down during a command call
+    NotReady  ///< EVerest / the callee is not yet ready but received a command call already from another module
+};
+
+struct CmdResultError {
+    CmdEvent event;
+    std::string msg;
+    std::exception_ptr ex;
+};
+
+struct CmdResult {
+    std::optional<json> result;
+    std::optional<CmdResultError> error;
 };
 } // namespace Everest
 

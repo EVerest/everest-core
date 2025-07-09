@@ -6,6 +6,7 @@
 #include <everest/exceptions.hpp>
 #include <everest/logging.hpp>
 
+#include <utils/exceptions.hpp>
 #include <utils/filesystem.hpp>
 
 namespace Everest {

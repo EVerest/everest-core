@@ -14,7 +14,7 @@ Module::create_everest_instance(const std::string& module_id, const Everest::Con
                                 const Everest::RuntimeSettings& rs,
                                 std::shared_ptr<Everest::MQTTAbstraction> mqtt_abstraction) {
     return std::make_unique<Everest::Everest>(module_id, config, rs.validate_schema, mqtt_abstraction,
-                                              rs.telemetry_prefix, rs.telemetry_enabled);
+                                              rs.telemetry_prefix, rs.telemetry_enabled, rs.forward_exceptions);
 }
 
 Module::Module(const RuntimeSession& session) : Module(get_variable_from_env("EV_MODULE"), session) {

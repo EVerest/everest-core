@@ -646,6 +646,9 @@ int boot(const po::variables_map& vm) {
     if (not ms.run_as_user.empty()) {
         EVLOG_info << "EVerest will run as system user: " << ms.run_as_user;
     }
+    if (ms.runtime_settings.forward_exceptions) {
+        EVLOG_info << "Catching and forwarding command exceptions to callers";
+    }
 
 #ifdef ENABLE_ADMIN_PANEL
     auto controller_handle = start_controller(ms);

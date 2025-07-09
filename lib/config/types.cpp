@@ -106,6 +106,9 @@ Settings parse_settings(const json& settings_json) {
     if (auto it = settings_json.find("run_as_user"); it != settings_json.end()) {
         settings.run_as_user = it->get<std::string>();
     }
+    if (auto it = settings_json.find("forward_exceptions"); it != settings_json.end()) {
+        settings.forward_exceptions = it->get<bool>();
+    }
     return settings;
 }
 

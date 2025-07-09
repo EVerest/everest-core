@@ -108,9 +108,9 @@ Module::Module(const std::string& module_id, const std::string& prefix, const Ev
 
     config_ = std::make_shared<Everest::Config>(mqtt_settings, result);
 
-    handle_ =
-        std::make_unique<Everest::Everest>(this->module_id_, *this->config_, this->rs_->validate_schema,
-                                           mqtt_abstraction, this->rs_->telemetry_prefix, this->rs_->telemetry_enabled);
+    handle_ = std::make_unique<Everest::Everest>(this->module_id_, *this->config_, this->rs_->validate_schema,
+                                                 mqtt_abstraction, this->rs_->telemetry_prefix,
+                                                 this->rs_->telemetry_enabled, this->rs_->forward_exceptions);
 
     // Not needed but done to be congruent with the other bindings.
     handle_->spawn_main_loop_thread();

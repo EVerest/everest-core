@@ -3,6 +3,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <tests/helpers.hpp>
+#include <utils/exceptions.hpp>
 #include <utils/filesystem.hpp>
 
 namespace fs = std::filesystem;

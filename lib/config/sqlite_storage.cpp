@@ -45,6 +45,7 @@ enum class SettingColumnIndex : int {
     COL_TELEMETRY_ENABLED,
     COL_VALIDATE_SCHEMA,
     COL_RUN_AS_USER,
+    COL_FORWARD_EXCEPTIONS,
 };
 
 /// \brief Helper for accessing the column indices of the CONFIGURATION table
@@ -266,6 +267,7 @@ GetSettingsResponse SqliteStorage::get_settings() {
     // boolean
     settings.telemetry_enabled = stmt->column_int(to_int(SettingColumnIndex::COL_TELEMETRY_ENABLED)) != 0;
     settings.validate_schema = stmt->column_int(to_int(SettingColumnIndex::COL_VALIDATE_SCHEMA)) != 0;
+    settings.forward_exceptions = stmt->column_int(to_int(SettingColumnIndex::COL_FORWARD_EXCEPTIONS)) != 0;
 
     return GetSettingsResponse{GenericResponseStatus::OK, settings};
 }
@@ -595,7 +597,8 @@ GenericResponseStatus SqliteStorage::write_settings(const Everest::ManagerSettin
                                      "TELEMETRY_PREFIX",
                                      "TELEMETRY_ENABLED",
                                      "VALIDATE_SCHEMA",
-                                     "RUN_AS_USER"};
+                                     "RUN_AS_USER",
+                                     "FORWARD_EXCEPTIONS"};
 
     std::string sql = "INSERT INTO SETTING (";
     for (size_t i = 0; i < keys.size(); ++i) {
@@ -680,6 +683,7 @@ GenericResponseStatus SqliteStorage::write_settings(const Everest::ManagerSettin
     bind_bool_opt(SettingColumnIndex::COL_TELEMETRY_ENABLED, 1, manager_settings.runtime_settings.telemetry_enabled);
     bind_bool_opt(SettingColumnIndex::COL_VALIDATE_SCHEMA, 1, manager_settings.runtime_settings.validate_schema);
     bind_text_opt(SettingColumnIndex::COL_RUN_AS_USER, 1, manager_settings.run_as_user);
+    bind_bool_opt(SettingColumnIndex::COL_FORWARD_EXCEPTIONS, 1, manager_settings.runtime_settings.forward_exceptions);
 
     if (stmt->step() != SQLITE_DONE) {
         return GenericResponseStatus::Failed;

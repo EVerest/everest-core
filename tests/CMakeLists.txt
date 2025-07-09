@@ -15,6 +15,7 @@ target_include_directories(${TEST_TARGET_NAME} PRIVATE
 target_sources(${TEST_TARGET_NAME} PRIVATE
     test_config.cpp
     test_config_sqlite.cpp
+    test_conversions.cpp
     test_filesystem_helpers.cpp
     helpers.cpp
 )

@@ -67,6 +67,8 @@ properties:
         type: boolean
       run_as_user:
         type: string
+      forward_exceptions:
+        type: boolean
     additionalProperties: false
   active_modules:
     type: object

@@ -334,8 +334,15 @@ void ManagerSettings::init_settings(const everest::config::Settings& settings) {
         validate_schema = defaults::VALIDATE_SCHEMA;
     }
 
+    bool forward_exceptions = defaults::FORWARD_EXCEPTIONS;
+    if (settings.forward_exceptions.has_value()) {
+        forward_exceptions = settings.forward_exceptions.value();
+    } else {
+        forward_exceptions = defaults::FORWARD_EXCEPTIONS;
+    }
+
     populate_runtime_settings(this->runtime_settings, prefix, etc_dir, data_dir, modules_dir, logging_config_file,
-                              telemetry_prefix, telemetry_enabled, validate_schema);
+                              telemetry_prefix, telemetry_enabled, validate_schema, forward_exceptions);
 }
 
 void ManagerSettings::init_prefix_and_data_dir(const std::string& prefix_) {
@@ -488,7 +495,7 @@ int ModuleLoader::initialize() {
         Logging::update_process_name(module_identifier);
 
         auto everest = Everest(this->module_id, config, rs->validate_schema, this->mqtt, rs->telemetry_prefix,
-                               rs->telemetry_enabled);
+                               rs->telemetry_enabled, rs->forward_exceptions);
 
         // module import
         EVLOG_debug << fmt::format("Initializing module {}...", module_identifier);

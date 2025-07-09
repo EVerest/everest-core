@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_CONVERSIONS_HPP
 #define UTILS_CONVERSIONS_HPP
 
@@ -74,6 +74,14 @@ template <typename... Ts> static std::variant<Ts...> json_to_variant(const nlohm
 template <typename T> nlohmann::json variant_to_json(T variant) {
     return std::visit([](auto&& arg) -> nlohmann::json { return arg; }, variant);
 }
+
+namespace conversions {
+std::string cmd_event_to_string(CmdEvent cmd_event);
+CmdEvent string_to_cmd_event(const std::string& cmd_event_string);
+} // namespace conversions
+
+void to_json(nlohmann::json& j, const CmdResultError& e);
+void from_json(const nlohmann::json& j, CmdResultError& e);
 
 } // namespace Everest
 

@@ -43,7 +43,7 @@ constexpr auto ensure_ready_timeout_ms = 100;
 
 Everest::Everest(std::string module_id_, const Config& config_, bool validate_data_with_schema,
                  std::shared_ptr<MQTTAbstraction> mqtt_abstraction, const std::string& telemetry_prefix,
-                 bool telemetry_enabled) :
+                 bool telemetry_enabled, bool forward_exceptions) :
     mqtt_abstraction(mqtt_abstraction),
     config(config_),
     module_id(std::move(module_id_)),
@@ -54,7 +54,8 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
     mqtt_everest_prefix(mqtt_abstraction->get_everest_prefix()),
     mqtt_external_prefix(mqtt_abstraction->get_external_prefix()),
     telemetry_prefix(telemetry_prefix),
-    telemetry_enabled(telemetry_enabled) {
+    telemetry_enabled(telemetry_enabled),
+    forward_exceptions(forward_exceptions) {
     BOOST_LOG_FUNCTION();
 
     EVLOG_debug << "Initializing EVerest framework...";
@@ -363,8 +364,8 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 
     const std::string call_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-    std::promise<json> res_promise;
-    std::future<json> res_future = res_promise.get_future();
+    std::promise<CmdResult> res_promise;
+    std::future<CmdResult> res_future = res_promise.get_future();
 
     const auto res_handler = [this, &res_promise, call_id, connection, cmd_name, return_type](const std::string&,
                                                                                               json data) {
@@ -374,11 +375,19 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             return;
         }
 
-        EVLOG_verbose << fmt::format(
-            "Incoming res {} for {}->{}()", data_id,
-            this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name);
+        if (data.contains("error")) {
+            EVLOG_error << fmt::format(
+                "{}: {} during command call: {}->{}()", data.at("error").at("event").get<std::string>(),
+                data.at("error").at("msg"),
+                this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name);
+            res_promise.set_value(CmdResult{std::nullopt, data.at("error")});
+        } else {
+            EVLOG_verbose << fmt::format(
+                "Incoming res {} for {}->{}()", data_id,
+                this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name);
 
-        res_promise.set_value(std::move(data["retval"]));
+            res_promise.set_value(CmdResult{std::move(data["retval"]), std::nullopt});
+        }
     };
 
     const auto cmd_topic =
@@ -403,18 +412,45 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
         res_future_status = res_future.wait_until(res_wait);
     } while (res_future_status == std::future_status::deferred);
 
-    json result;
+    CmdResult result;
     if (res_future_status == std::future_status::timeout) {
-        EVLOG_AND_THROW(EverestTimeoutError(fmt::format(
-            "Timeout while waiting for result of {}->{}()",
-            this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name)));
+        result.error = CmdResultError{
+            CmdEvent::Timeout,
+            fmt::format("Timeout while waiting for result of {}->{}()",
+                        this->config.printable_identifier(connection.module_id, connection.implementation_id),
+                        cmd_name)};
     }
     if (res_future_status == std::future_status::ready) {
         result = res_future.get();
     }
     this->mqtt_abstraction->unregister_handler(cmd_topic, res_token);
 
-    return result;
+    if (result.error.has_value()) {
+        const auto& error = result.error.value();
+        const auto error_message = fmt::format("{}", error.msg);
+        switch (error.event) {
+        case CmdEvent::MessageParsingFailed:
+            throw MessageParsingError(error_message);
+        case CmdEvent::SchemaValidationFailed:
+            throw SchemaValidationError(error_message);
+        case CmdEvent::HandlerException:
+            throw HandlerException(error_message);
+        case CmdEvent::Timeout:
+            throw CmdTimeout(error_message);
+        case CmdEvent::Shutdown:
+            throw Shutdown(error_message);
+        case CmdEvent::NotReady:
+            throw NotReady(error_message);
+        default:
+            throw CmdError(fmt::format("{}: {}", conversions::cmd_event_to_string(error.event), error.msg));
+        }
+    }
+
+    if (not result.result.has_value()) {
+        throw CmdError("Command did not return result");
+    }
+
+    return result.result.value();
 }
 
 void Everest::publish_var(const std::string& impl_id, const std::string& var_name, json value) {
@@ -838,6 +874,14 @@ void Everest::provide_cmd(const std::string& impl_id, const std::string& cmd_nam
                                      this->config.printable_identifier(this->module_id, impl_id), cmd_name,
                                      fmt::join(arg_names, ","));
 
+        json res_data = json({});
+        try {
+            res_data["id"] = data.at("id");
+        } catch (const json::exception& e) {
+            throw CmdError("Command did not contain id");
+        }
+        std::optional<CmdResultError> error;
+
         // check data and ignore it if not matching (publishing it should have
         // been prohibited already)
         if (this->validate_data_with_schema) {
@@ -857,19 +901,31 @@ void Everest::provide_cmd(const std::string& impl_id, const std::string& cmd_nam
             } catch (const std::exception& e) {
                 EVLOG_warning << fmt::format("Ignoring incoming cmd '{}' because not matching manifest schema: {}",
                                              cmd_name, e.what());
-                return;
+                error = CmdResultError{CmdEvent::SchemaValidationFailed, e.what()};
             }
         }
 
         // publish results
-        json res_data = json({});
-        res_data["id"] = data.at("id");
 
         // call real cmd handler
-        res_data["retval"] = handler(data.at("args"));
+        try {
+            if (not error.has_value()) {
+                res_data["retval"] = handler(data.at("args"));
+            }
+        } catch (const std::exception& e) {
+            EVLOG_error << fmt::format("Exception during handling of: {}->{}({}): {}",
+                                       this->config.printable_identifier(this->module_id, impl_id), cmd_name,
+                                       fmt::join(arg_names, ","), e.what());
+            error = CmdResultError{CmdEvent::HandlerException, e.what(), std::current_exception()};
+        } catch (...) {
+            EVLOG_error << fmt::format("Unknown exception during handling of: {}->{}({})",
+                                       this->config.printable_identifier(this->module_id, impl_id), cmd_name,
+                                       fmt::join(arg_names, ","));
+            error = CmdResultError{CmdEvent::HandlerException, "Unknown exception", std::current_exception()};
+        }
 
-        // check retval agains manifest
-        if (this->validate_data_with_schema) {
+        // check retval against manifest
+        if (not error.has_value() && this->validate_data_with_schema) {
             try {
                 // only use validator on non-null return types
                 if (!(res_data.at("retval").is_null() &&
@@ -885,16 +941,30 @@ void Everest::provide_cmd(const std::string& impl_id, const std::string& cmd_nam
                 EVLOG_warning << fmt::format("Ignoring return value of cmd '{}' because the validation of the result "
                                              "failed: {}\ndefinition: {}\ndata: {}",
                                              cmd_name, e.what(), cmd_definition, res_data);
-                return;
+                error = CmdResultError{CmdEvent::SchemaValidationFailed, e.what()};
             }
         }
 
-        EVLOG_verbose << fmt::format("RETVAL: {}", res_data["retval"].dump());
         res_data["origin"] = this->module_id;
+        if (error.has_value()) {
+            res_data["error"] = error.value();
+        }
 
         const json res_publish_data = json::object({{"name", cmd_name}, {"type", "result"}, {"data", res_data}});
 
         this->mqtt_abstraction->publish(cmd_topic, res_publish_data);
+
+        // re-throw exception caught in handler
+        if (error.has_value()) {
+            auto err = error.value();
+            if (err.event == CmdEvent::HandlerException and not this->forward_exceptions) {
+                if (err.ex) {
+                    std::rethrow_exception(err.ex);
+                } else {
+                    throw std::runtime_error("Unknown exception during cmd handling");
+                }
+            }
+        }
     };
 
     const auto typed_handler =

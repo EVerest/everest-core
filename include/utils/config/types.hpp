@@ -142,6 +142,7 @@ struct Settings {
     std::optional<bool> telemetry_enabled;
     std::optional<bool> validate_schema;
     std::optional<std::string> run_as_user;
+    std::optional<bool> forward_exceptions;
 };
 
 /// \brief Struct that contains the characteristics of a configuration parameter including its datatype, mutability and
