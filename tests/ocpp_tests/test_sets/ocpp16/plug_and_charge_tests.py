@@ -37,11 +37,11 @@ def validate_authorize_req(
     ) == contains_ocsp
 
 
+@pytest.mark.xdist_group(name="ISO15118")
 class TestPlugAndCharge:
 
     @pytest.mark.asyncio
     @pytest.mark.source_certs_dir(Path(__file__).parent.parent / "everest-aux/certs")
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_installation_and_authorization_01(
         self,
         request,
@@ -129,7 +129,6 @@ class TestPlugAndCharge:
         )
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_installation_and_authorization_02(
         self,
         request,
@@ -192,7 +191,6 @@ class TestPlugAndCharge:
 
     @pytest.mark.asyncio
     @pytest.mark.source_certs_dir(Path(__file__).parent.parent / "everest-aux/certs")
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_installation_and_authorization_03(
         self,
         request,
@@ -291,7 +289,6 @@ class TestPlugAndCharge:
 
     @pytest.mark.asyncio
     @pytest.mark.source_certs_dir(Path(__file__).parent.parent / "everest-aux/certs")
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_installation_and_authorization_04(
         self,
         request,
@@ -354,7 +351,6 @@ class TestPlugAndCharge:
         )
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_eim_01(
         self,
         test_config,
@@ -416,7 +412,6 @@ class TestPlugAndCharge:
     @pytest.mark.everest_core_config(
         get_everest_config_path_str("everest-config-sil-iso no-tls.yaml")
     )
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_eim_02(
         self,
         charge_point_v16: ChargePoint16,
@@ -470,7 +465,6 @@ class TestPlugAndCharge:
         )
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_reject(
         self,
         test_config,
@@ -535,17 +529,14 @@ class TestPlugAndCharge:
         )
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_eim_and_autocharge(self, charge_point_v16: ChargePoint16):
         pass
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_eim_only(self, charge_point_v16: ChargePoint16):
         pass
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_certificate_signed_01(self, charge_point_v16: ChargePoint16):
         """
         Test with invalid certificate chain
@@ -563,7 +554,6 @@ class TestPlugAndCharge:
         assert data_transfer_response.status == "Accepted"
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_delete_certificate(self, charge_point_v16: ChargePoint16):
         """
         Test delete certificate. Test with valid and invalid CertificateHashData
@@ -599,18 +589,15 @@ class TestPlugAndCharge:
         assert data_transfer_response.status == "Rejected"
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_get_15118_ev_certificate(self):
         pass
 
     @pytest.mark.asyncio
     @pytest.mark.skip("Test does nothing yet")
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_get_certificate_status(self, charge_point_v16: ChargePoint16):
         await asyncio.sleep(30)
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_get_installed_certificate_ids(
         self, charge_point_v16: ChargePoint16
     ):
@@ -653,7 +640,6 @@ class TestPlugAndCharge:
 
     @pytest.mark.asyncio
     @pytest.mark.source_certs_dir(Path(__file__).parent.parent / "everest-aux")
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_get_installed_certificate_ids_empty_not_found(
         self, charge_point_v16: ChargePoint16
     ):
@@ -672,7 +658,6 @@ class TestPlugAndCharge:
             "status": "NotFound"}
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_install_certificate(
         self, request, charge_point_v16: ChargePoint16
     ):
@@ -721,7 +706,6 @@ class TestPlugAndCharge:
             "status": "Rejected"}
 
     @pytest.mark.asyncio
-    @pytest.mark.xdist_group(name="ISO15118")
     async def test_pnc_sign_certificate_and_trigger_message(
         self, test_utility, charge_point_v16: ChargePoint16
     ):
