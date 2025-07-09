@@ -36,6 +36,7 @@ struct Conf {
     bool supported_dynamic_mode;
     bool supported_mobility_needs_mode_provided_by_secc;
     bool supported_scheduled_mode;
+    std::string custom_protocol_namespace;
 };
 
 class Evse15118D20 : public Everest::ModuleBase {
