@@ -48,11 +48,11 @@ def validate_authorize_req(
         ]
     )
 )
-@pytest.mark.xdist_group(name="ISO15118")
 class TestPlugAndCharge:
 
     @pytest.mark.asyncio
     @pytest.mark.source_certs_dir(Path(__file__).parent.parent / "everest-aux/certs")
+    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_installation_and_authorization_01(
         self,
         request,
@@ -113,6 +113,7 @@ class TestPlugAndCharge:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_installation_and_authorization_02(
         self,
         request,
@@ -195,6 +196,7 @@ class TestPlugAndCharge:
             ]
         )
     )
+    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_installation_and_authorization_03(
         self,
         request,
@@ -301,6 +303,7 @@ class TestPlugAndCharge:
             ]
         )
     )
+    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_installation_and_authorization_04(
         self,
         request,
@@ -397,6 +400,7 @@ class TestPlugAndCharge:
         )
     )
     @pytest.mark.asyncio
+    @pytest.mark.xdist_group(name="ISO15118")
     async def test_contract_revoked(
         self,
         request,
@@ -530,6 +534,7 @@ class TestPlugAndCharge:
             ]
         )
     )
+    @pytest.mark.xdist_group(name="ISO15118")
     async def test_no_tls_after_secc_leaf_deleted(
         self,
         central_system: CentralSystem,
