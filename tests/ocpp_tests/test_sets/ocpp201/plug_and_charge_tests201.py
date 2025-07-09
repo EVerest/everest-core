@@ -9,7 +9,7 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../..")))
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import test_utility, central_system, CentralSystem
 from ocpp.v201.enums import DeleteCertificateStatusEnumType, AuthorizeCertificateStatusEnumType
 from ocpp.v201 import call as call201
 from ocpp.routing import create_route_map
