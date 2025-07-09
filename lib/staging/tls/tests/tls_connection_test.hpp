@@ -182,7 +182,7 @@ protected:
         ref1.trust_anchor_file = "alt_server_root_cert.pem";
         ref1.ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
         // server_config.verify_locations_file = "client_root_cert.pem";
-        server_config.host = "localhost";
+        server_config.host = "127.0.0.1";
         server_config.service = "8444";
         server_config.ipv6_only = false;
         server_config.verify_client = false;
@@ -231,7 +231,7 @@ protected:
         client.reset();
         // localhost works in some cases but not in the CI pipeline for IPv6
         // use ip6-localhost
-        auto connection = client.connect("localhost", "8444", false, 1000);
+        auto connection = client.connect("127.0.0.1", "8444", false, 1000);
         if (handler == nullptr) {
             if (connection) {
                 if (connection->connect() == tls::Connection::result_t::success) {
@@ -301,7 +301,7 @@ protected:
         // ref1.private_key_file = "alt_server_priv.pem";
         // ref1.trust_anchor_file = "alt_server_root_cert.pem";
         // ref1.ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
-        server_config.host = "localhost";
+        server_config.host = "127.0.0.1";
         server_config.service = "8444";
         server_config.ipv6_only = false;
         server_config.verify_client = false;
