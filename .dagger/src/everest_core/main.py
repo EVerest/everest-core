@@ -1,6 +1,8 @@
+import asyncio
 import dagger
 from dagger import dag, function, object_type
 from typing import Annotated
+
 from .everest_ci import EverestCI, BaseResultType
 
 from .functions.build_kit import build_kit as BuildKit
@@ -9,7 +11,9 @@ from .functions.configure_cmake_gcc import configure_cmake_gcc as ConfigureCmake
 from .functions.build_cmake_gcc import build_cmake_gcc as BuildCmakeGcc, BuildResult
 from .functions.unit_tests import unit_tests as UnitTests, UnitTestsResult
 from .functions.install import install as Install, InstallResult
-import asyncio
+from .functions.integration_tests import integration_tests as IntegrationTests, IntegrationTestsResult
+from .functions.ocpp_tests import ocpp_tests as OcppTests, OcppTestsResult
+
 @object_type
 class EverestCore:
     """Functions that compose multiple EverestCoreFunctions and EverestCI functions in workflows"""
@@ -168,45 +172,6 @@ class EverestCore:
         wheels_dir: Annotated[dagger.Directory, dagger.Doc("Directory containing the built wheels")] = dagger.field()
 
     @function
-    async def build_wheels(
-        self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the build wheels in, typically the build-kit image")] = None,
-    ) -> BuildWheelsResult:
-        """Build the wheels for the installed artifacts"""
-
-        # LTODO check if build_dir exists
-
-        if container is None:
-            res = await self.configure_cmake_gcc()
-            if res.exit_code != 0:
-                raise RuntimeError(f"Failed to configure CMake: {res.exit_code}")
-            container = res.container
-
-        container = await (
-            container
-            .with_mounted_directory(self.source_path, self.source_dir)
-            .with_workdir(self.workdir_path)
-            .with_exec(
-                [
-                    "cmake",
-                    "--build", self.build_path,
-                    "--target",
-                        "everestpy_install_wheel",
-                        "everest-testing_install_wheel",
-                        "iso15118_install_wheel",
-                ],
-                expect=dagger.ReturnType.ANY
-            )
-        )
-
-        result = self.BuildWheelsResult(
-            container=container,
-            wheels_dir=container.directory(self.wheels_path),
-            exit_code=await container.exit_code(),
-        )
-        return result
-
-    @function
     def mqtt_server(self) -> dagger.Service:
         """Start and return mqtt server as a service"""
 
@@ -230,12 +195,6 @@ class EverestCore:
 
         return service
 
-    @object_type
-    class IntegrationTestsResult(BaseResultType):
-        """Result of the integration tests"""
-        result_xml: Annotated[dagger.File, dagger.Doc("File containing the result of the integration tests in JUnit XML format")] = dagger.field()
-        report_html: Annotated[dagger.File, dagger.Doc("File containing the report of the integration tests in HTML format")] = dagger.field()
-
     @function
     async def integration_tests(
         self,
@@ -249,83 +208,19 @@ class EverestCore:
                 raise RuntimeError(f"Failed to install: {res.exit_code}")
             container = res.container
 
-        # Mount source directory
-        container = await (
-            container
-            .with_mounted_directory(f"{self.workdir_path}/{self.source_path}", self.source_dir)
-        )
+        mqtt_server = self.mqtt_server()
 
-        # Set venv from build directory
-        container = await (
-            container
-            .with_env_variable("VIRTUAL_VENV", f"{self.workdir_path}/{self.build_path}/venv")
-            .with_env_variable("PATH", "$VIRTUAL_VENV/bin:$PATH", expand=True)
-        )
-
-        # Install python packages generated from the build
-        container = await (
-            container
-            .with_exec(
-                [
-                    "cmake",
-                    "--build", f"{self.workdir_path}/{self.build_path}",
-                    "--target",
-                        "everestpy_pip_install_dist",
-                        "everest-testing_pip_install_dist",
-                ],
-                expect=dagger.ReturnType.ANY
-            )
-        )
-        if (await container.exit_code()) != 0:
-            raise RuntimeError("Failed to install Python packages from the build process")
-
-        # Set service binding for the MQTT server
-        container = await (
-            container
-            .with_service_binding("mqtt-server", self.mqtt_server())
-            .with_env_variable("MQTT_SERVER_ADDRESS", "mqtt-server")
-        )
-
-
-        # Set workdir
-        container = await (
-            container
-            .with_workdir(f"{self.workdir_path}/{self.source_path}/tests")
-        )
-
-        # Run the integration tests
-        container = await (
-            container
-            .with_exec(
-                [
-                    "ls", "-al"
-                ]
-            )
-            .with_exec(
-                [
-                    "bash", "-c",
-                    " ".join([
-                        "python3", "-m", "pytest",
-                        "-rA",
-                        "--junitxml", f"{ self.workdir_path }/{self.artifacts_path}/integration-tests.xml",
-                        "--html", f"{ self.workdir_path }/{self.artifacts_path}/integration-tests.html",
-                        "--self-contained-html",
-                        "core_tests/*",
-                        "framework_tests/*",
-                        "--everest-prefix", f"{self.workdir_path}/{self.dist_path}",
-                    ])
-                ],
-                expect=dagger.ReturnType.ANY,
-            )
-        )
-
-        result = self.IntegrationTestsResult(
+        return await IntegrationTests(
             container=container,
-            exit_code=await container.exit_code(),
-            result_xml=container.file(f"{ self.workdir_path }/{self.artifacts_path}/integration-tests.xml"),
-            report_html=container.file(f"{ self.workdir_path }/{self.artifacts_path}/integration-tests.html"),
+            source_dir=self.source_dir,
+            source_path=self.source_path,
+            build_path=self.build_path,
+            artifacts_path=self.artifacts_path,
+            dist_path=self.dist_path,
+            workdir_path=self.workdir_path,
+            mqtt_server=mqtt_server,
         )
-        return result
+
 
     @object_type
     class OcppTestsResult(IntegrationTestsResult):
@@ -342,121 +237,20 @@ class EverestCore:
             if res.exit_code != 0:
                 raise RuntimeError(f"Failed to install: {res.exit_code}")
             container = res.container
-        
-        # Mount source directory
-        container = await (
-            container
-            .with_mounted_directory(f"{self.workdir_path}/{self.source_path}", self.source_dir)
-        )
 
+        mqtt_server = self.mqtt_server()
 
-        # Set venv from build directory
-        container = await (
-            container
-            .with_env_variable("VIRTUAL_VENV", f"{self.workdir_path}/{self.build_path}/venv")
-            .with_env_variable("PATH", "$VIRTUAL_VENV/bin:$PATH", expand=True)
-        )
-
-        # Install python packages generated from the build
-        container = await (
-            container
-            .with_exec(
-                [
-                    "cmake",
-                    "--build", f"{self.workdir_path}/{self.build_path}",
-                    "--target",
-                        "everestpy_pip_install_dist",
-                        "everest-testing_pip_install_dist",
-                        "iso15118_pip_install_dist",
-                ],
-            )
-        )
-        
-        # Install requirements.txt from occp tests
-        container = await (
-            container
-            .with_exec(
-                [
-                    "pip",
-                    "install",
-                    "--break-system-packages",
-                    "-r", f"{self.workdir_path}/{self.source_path}/tests/ocpp_tests/requirements.txt",
-                ]
-            )
-        )
-
-        # Execute install_certs.sh and install_configs.sh
-        container = await (
-            container
-            .with_workdir(f"{self.workdir_path}/{self.source_path}/tests/ocpp_tests/test_sets/everest-aux")
-            .with_exec(
-                [
-                    "bash", "-c",
-                    " ".join([
-                        "./install_certs.sh",
-                        f"{self.workdir_path}/{self.dist_path}",
-                    ])
-                ]
-            )
-            .with_exec(
-                [
-                    "bash", "-c",
-                    " ".join([
-                        "./install_configs.sh",
-                        f"{self.workdir_path}/{self.dist_path}",
-                    ])
-                ]
-            )
-        )
-
-        # Set service binding for the MQTT server
-        container = await (
-            container
-            .with_service_binding("mqtt-server", self.mqtt_server())
-            .with_env_variable("MQTT_SERVER_ADDRESS", "mqtt-server")
-        )
-
-        # Set workdir for OCPP tests
-        container = await (
-            container
-            .with_workdir(f"{self.workdir_path}/{self.source_path}/tests")
-        )
-
-        # Run the OCPP tests
-        parallel_tests = await container.with_exec(["nproc"]).stdout()
-        parallel_tests = int(parallel_tests.strip())
-        container = await (
-            container
-            .with_exec(
-                [
-                    "bash", "-c",
-                    " ".join([
-                        "python3", "-m", "pytest",
-                        "-rA",
-                        "-d", "--tx", f"\"{parallel_tests}\"*popen//python=python3",
-                        "--max-worker-restart=0",
-                        "--timeout=300",
-                        "--junitxml", f"{ self.workdir_path }/{self.artifacts_path}/ocpp-tests.xml",
-                        "--html", f"{ self.workdir_path }/{self.artifacts_path}/ocpp-tests.html",
-                        "--self-contained-html",
-                        "ocpp_tests/test_sets/ocpp16/*.py",
-                        "ocpp_tests/test_sets/ocpp201/*.py",
-                        "--everest-prefix", f"{self.workdir_path}/{self.dist_path}",
-                    ])
-                ],
-                expect=dagger.ReturnType.ANY,
-            )
-        )
-
-        result = self.OcppTestsResult(
+        return await OcppTests(
             container=container,
-            exit_code=await container.exit_code(),
-            result_xml=container.file(f"{ self.workdir_path }/{self.artifacts_path}/ocpp-tests.xml"),
-            report_html=container.file(f"{ self.workdir_path }/{self.artifacts_path}/ocpp-tests.html"),
+            source_dir=self.source_dir,
+            source_path=self.source_path,
+            build_path=self.build_path,
+            artifacts_path=self.artifacts_path,
+            dist_path=self.dist_path,
+            workdir_path=self.workdir_path,
+            mqtt_server=mqtt_server,
         )
 
-        return result
-    
     @object_type
     class PullRequestResult():
         container: dagger.Container = dagger.field()
@@ -491,7 +285,26 @@ class EverestCore:
             )
         unit_tests_task = asyncio.create_task(unit_tests_task_fn())
 
-        # LTODO more tasks
+        async def install_task_fn() -> InstallResult:
+            res_build = await build_task
+            return await self.install(
+                container=res_build.container,
+            )
+        install_task = asyncio.create_task(install_task_fn())
+
+        async def integration_tests_task_fn() -> IntegrationTestsResult:
+            res_install = await install_task
+            return await self.integration_tests(
+                container=res_install.container,
+            )
+        integration_tests_task = asyncio.create_task(integration_tests_task_fn())
+
+        async def ocpp_tests_task_fn() -> OcppTestsResult:
+            res_install = await install_task
+            return await self.ocpp_tests(
+                container=res_install.container,
+            )
+        ocpp_tests_task = asyncio.create_task(ocpp_tests_task_fn())
 
         exit_code = 0
         build_kit_res = await build_kit_task
@@ -524,6 +337,24 @@ class EverestCore:
         else:
             print("❌ Unit tests failed")
             exit_code = unit_tests_res.exit_code
+        install_res = await install_task
+        if install_res.exit_code == 0:
+            print("✅ Installation succeeded")
+        else:
+            print("❌ Installation failed")
+            exit_code = install_res.exit_code
+        integration_tests_res = await integration_tests_task
+        if integration_tests_res.exit_code == 0:
+            print("✅ Integration tests passed")
+        else:
+            print("❌ Integration tests failed")
+            exit_code = integration_tests_res.exit_code
+        ocpp_tests_res = await ocpp_tests_task
+        if ocpp_tests_res.exit_code == 0:
+            print("✅ OCPP tests passed")
+        else:
+            print("❌ OCPP tests failed")
+            exit_code = ocpp_tests_res.exit_code
 
         result = self.PullRequestResult(
             container=unit_tests_res.container,

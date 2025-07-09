@@ -25,7 +25,7 @@ jobs:
                 version: 0.18.12
                 workdir: ${{ github.workspace }}
                 module: github.com/${{ github.repository}}@${{ github.ref }}
-                call: build-cmake-gcc
+                call: pull-request
             - name: Save Cache
               if: ${{ github.ref == 'refs/heads/main' }}
               uses: actions/cache/save@v4
