@@ -73,3 +73,15 @@ types:
       parameter_set_id:
         description: Parameter Set ID
         type: integer
+  OfferedServices:
+    description: List of offered VAS Service IDs
+    type: object
+    required:
+      - service_ids
+    properties:
+      service_ids:
+        description: List of offered VAS Service IDs
+        type: array
+        items:
+          type: integer
+          description: Service ID
