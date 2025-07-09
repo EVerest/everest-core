@@ -4,6 +4,7 @@
 #define DATASTORE_HPP
 
 #include "GenericInfoStore.hpp"
+#include "SessionInfo.hpp"
 
 namespace data {
 
@@ -282,6 +283,7 @@ struct DataStoreEvse {
     EVSEStatusStore evsestatus;
     MeterDataStore meterdata;
     HardwareCapabilitiesStore hardwarecapabilities;
+    SessionInfoStore sessioninfo;
 };
 
 // This is the main data store for the charger. A charger can have multiple EVSEs, each with multiple connectors.

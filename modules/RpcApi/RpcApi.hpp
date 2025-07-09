@@ -86,6 +86,7 @@ private:
     std::unique_ptr<rpc::RpcHandler> m_rpc_handler;
     std::unique_ptr<request_interface::RequestHandlerInterface> m_request_handler;
 
+    void check_evse_session_event(data::DataStoreEvse& evse_data, const types::evse_manager::SessionEvent& session_event);
     void subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager, data::DataStoreEvse& evse_data);
     void meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter, data::MeterDataStore& meter_data);
     void hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,

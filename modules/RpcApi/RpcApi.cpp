@@ -40,6 +40,48 @@ void RpcApi::ready() {
     invoke_ready(*p_main);
 }
 
+void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data, const types::evse_manager::SessionEvent& session_event) {
+    evse_data.sessioninfo.update_state(session_event);
+
+    if (session_event.source.has_value()) {
+        const auto source = session_event.source.value();
+        evse_data.sessioninfo.set_enable_disable_source(
+            types::evse_manager::enable_source_to_string(source.enable_source),
+            types::evse_manager::enable_state_to_string(source.enable_state), source.enable_priority);
+    }
+
+    if (session_event.event == types::evse_manager::SessionEventEnum::TransactionStarted) {
+        if (session_event.transaction_started.has_value()) {
+            auto transaction_started = session_event.transaction_started.value();
+            auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
+            evse_data.sessioninfo.set_start_energy_import_wh(energy_Wh_import);
+
+            if (transaction_started.meter_value.energy_Wh_export.has_value()) {
+                auto energy_Wh_export = transaction_started.meter_value.energy_Wh_export.value().total;
+                evse_data.sessioninfo.set_start_energy_export_wh(energy_Wh_export);
+            } else {
+                evse_data.sessioninfo.start_energy_export_wh_was_set = false;
+            }
+        }
+    } else if (session_event.event == types::evse_manager::SessionEventEnum::TransactionFinished) {
+        if (session_event.transaction_finished.has_value()) {
+            auto transaction_finished = session_event.transaction_finished.value();
+            auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
+            evse_data.sessioninfo.set_end_energy_import_wh(energy_Wh_import);
+
+            if (transaction_finished.meter_value.energy_Wh_export.has_value()) {
+                auto energy_Wh_export = transaction_finished.meter_value.energy_Wh_export.value().total;
+                evse_data.sessioninfo.set_end_energy_export_wh(energy_Wh_export);
+            } else {
+                evse_data.sessioninfo.end_energy_export_wh_was_set = false;
+            }
+        }
+        evse_data.evsestatus.set_charged_energy_wh(evse_data.sessioninfo.get_charged_energy_wh()); 
+        evse_data.evsestatus.set_discharged_energy_wh(evse_data.sessioninfo.get_discharged_energy_wh());
+        evse_data.evsestatus.set_charging_duration_s(evse_data.sessioninfo.get_charging_duration_s().count());
+    }
+}
+
 void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager,
                                     data::DataStoreEvse& evse_data) {
     evse_manager->subscribe_powermeter([this, &evse_data](const types::powermeter::Powermeter& powermeter) {
@@ -49,12 +91,12 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
         // there is only one connector supported currently
         this->hwcaps_var_to_datastore(hwcaps, evse_data.hardwarecapabilities);
-        });
+    });
     evse_manager->subscribe_evse_id(
         [this, &evse_data](const std::string& evse_id) {
             // set the EVSE id in the data store
             evse_data.evseinfo.set_id(evse_id);
-        });
+    });
     //TODO: get bidi charging support info from interface
     evse_data.evseinfo.set_bidi_charging(false);
 
@@ -63,8 +105,9 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             // store the session info in the data store
             types::json_rpc_api::EVSEStateEnum evse_state =
             types::json_rpc_api::evse_manager_session_event_to_evse_state(session_event);
+            check_evse_session_event(evse_data, session_event);
             evse_data.evsestatus.set_state(evse_state);
-        });
+    });
 }
 
 void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
