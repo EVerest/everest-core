@@ -1,7 +1,6 @@
 name: Dagger Build, Lint and Test
 on:
   pull_request: {}
-  push:
 
 jobs:
     dagger:
@@ -23,11 +22,10 @@ jobs:
             - name: Setup Dagger
               uses: dagger/dagger-for-github@8.0.0
               with:
-                version: latest
+                version: 0.18.12
                 workdir: ${{ github.workspace }}
                 module: github.com/${{ github.repository}}@${{ github.ref }}
-                call: |
-                    build-cmake-gcc
+                call: build-cmake-gcc
             - name: Save Cache
               if: ${{ github.ref == 'refs/heads/main' }}
               uses: actions/cache/save@v4
