@@ -24,9 +24,12 @@ endif()
 
 target_link_libraries(${MODULE_NAME}
     PRIVATE
-        websockets_shared
-        json-rpc-cxx
+        date::date
+        date::date-tz
         everest::external_energy_limits
+        json-rpc-cxx
+        nlohmann_json::nlohmann_json
+        websockets_shared
 )
 
 target_sources(${MODULE_NAME}
