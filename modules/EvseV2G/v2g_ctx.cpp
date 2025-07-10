@@ -482,7 +482,7 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_
     return true;
 }
 
-void remove_service_from_service_list_if_exsits(struct v2g_context* v2g_ctx, uint16_t service_id) {
+void remove_service_from_service_list_if_exists(struct v2g_context* v2g_ctx, uint16_t service_id) {
     auto& service_list = v2g_ctx->evse_v2g_data.evse_service_list;
     service_list.erase(std::remove_if(service_list.begin(), service_list.end(),
                                       [service_id](const auto service) { return service.ServiceID == service_id; }),
