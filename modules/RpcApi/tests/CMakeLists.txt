@@ -1,6 +1,7 @@
 set(TEST_TARGET_NAME ${PROJECT_NAME}_rpcapi_tests)
 
 set(TEST_SOURCES
+    ${PROJECT_SOURCE_DIR}/modules/RpcApi/data/SessionInfo.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/RpcHandler.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/notifications/Evse.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp
@@ -40,10 +41,12 @@ target_include_directories(${TEST_TARGET_NAME}
 target_link_libraries(${TEST_TARGET_NAME}
     PRIVATE
         GTest::gtest_main
+        date::date
+        date::date-tz
         everest::log
-        websockets_shared
         json-rpc-cxx
         nlohmann_json::nlohmann_json
+        websockets_shared
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
