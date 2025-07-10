@@ -9,8 +9,8 @@
 #define SESSIONINFO_HPP
 
 // headers for required interface implementations
-#include <generated/interfaces/evse_manager/Interface.hpp>
-#include <generated/interfaces/uk_random_delay/Interface.hpp>
+#include <generated/types/evse_manager.hpp>
+#include <generated/types/uk_random_delay.hpp>
 
 // insert your custom include headers here
 #include <mutex>
