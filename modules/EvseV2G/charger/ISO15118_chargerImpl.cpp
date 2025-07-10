@@ -184,7 +184,10 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
         }
     }
 
-    if (supported_certificate_service) {
+    const auto pnc_enabled = ((v2g_ctx->evse_v2g_data.payment_option_list[0] == iso2_paymentOptionType_Contract) or
+                              (v2g_ctx->evse_v2g_data.payment_option_list[1] == iso2_paymentOptionType_Contract));
+
+    if (pnc_enabled and supported_certificate_service) {
         // For setting "Certificate" in ServiceList in ServiceDiscoveryRes
         struct iso2_ServiceType cert_service;
 
@@ -205,6 +208,8 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
 
         add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id,
                                     sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
+    } else {
+        remove_service_from_service_list_if_exists(v2g_ctx, V2G_SERVICE_ID_CERTIFICATE);
     }
 
     v2g_ctx->evse_v2g_data.central_contract_validation_allowed = central_contract_validation_allowed;
