@@ -482,18 +482,11 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_
     return true;
 }
 
-void check_and_remove_service_in_list(struct v2g_context* v2g_ctx, uint16_t service_id) {
-
-    size_t id{0};
-    auto service_found{false};
-
-    for (auto service_it = v2g_ctx->evse_v2g_data.evse_service_list.begin();
-         service_it != v2g_ctx->evse_v2g_data.evse_service_list.end(); ++service_it) {
-        if (service_it->ServiceID == service_id) {
-            service_it = v2g_ctx->evse_v2g_data.evse_service_list.erase(service_it);
-            break;
-        }
-    }
+void remove_service_from_service_list_if_exsits(struct v2g_context* v2g_ctx, uint16_t service_id) {
+    auto& service_list = v2g_ctx->evse_v2g_data.evse_service_list;
+    service_list.erase(std::remove_if(service_list.begin(), service_list.end(),
+                                      [service_id](const auto service) { return service.ServiceID == service_id; }),
+                       service_list.end());
 }
 
 void configure_parameter_set(struct iso2_ServiceParameterListType* parameterSetList, int16_t parameterSetId,
