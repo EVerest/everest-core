@@ -2,7 +2,6 @@
 # Copyright Pionix GmbH and Contributors to EVerest
 
 import pytest
-import asyncio
 from datetime import datetime, timezone
 
 import traceback
