@@ -335,6 +335,7 @@ struct v2g_context {
     } ev_v2g_data;
 
     bool hlc_pause_active;
+    bool service_hpc1_enabled;
 };
 
 enum mqtt_dlink_action {
