@@ -220,7 +220,7 @@ void WebsocketBase::set_authorization_key(const std::string& authorization_key) 
 void WebsocketBase::on_pong_timeout(std::string msg) {
     EVLOG_info << "Reconnecting because of a pong timeout after " << this->connection_options.pong_timeout_s << "s"
                << " and with reason: " << msg;
-    reconnect(1000);
+    this->close(WebsocketCloseReason::ServiceRestart, "Pong timeout"); // application code will handle the reconnect
 }
 
 } // namespace ocpp

@@ -1538,6 +1538,11 @@ void WebsocketLibwebsockets::on_conn_close(ConnectionData* conn_data) {
 
     this->m_is_connected = false;
 
+    // pong timeout should not trigger when we are not connected
+    if (this->ping_timer) {
+        this->ping_timer->stop();
+    }
+
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
         this->reconnect_timer_tpm.stop();
@@ -1576,6 +1581,11 @@ void WebsocketLibwebsockets::on_conn_fail(ConnectionData* conn_data) {
                 EVLOG_error << "Disconnected callback not registered!";
             }
         });
+    }
+
+    // pong timeout should not trigger when we are not connected
+    if (this->ping_timer) {
+        this->ping_timer->stop();
     }
 
     this->m_is_connected = false;
