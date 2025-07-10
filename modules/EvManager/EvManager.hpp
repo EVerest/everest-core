@@ -47,7 +47,12 @@ struct Conf {
     int dc_discharge_v2g_minimal_soc;
     double max_current;
     bool three_phases;
+<<<<<<< HEAD
+    int departure_time;
+    int e_amount;
+=======
     int soc;
+>>>>>>> upstream/main
     bool keep_cross_boot_plugin_state;
 };
 
