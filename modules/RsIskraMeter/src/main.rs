@@ -419,7 +419,6 @@ enum TextType {
 /// Parameters for LCD text display
 struct TextParameter {
     address: u16,
-    max_chars: usize,
     num_registers: usize,
 }
 
@@ -428,12 +427,10 @@ impl From<TextType> for TextParameter {
         match value {
             TextType::Main => TextParameter {
                 address: LCD_CUSTOM_STRING_REGISTER,
-                max_chars: 8,
                 num_registers: 4,
             },
             TextType::Label => TextParameter {
                 address: LCD_CUSTOM_STRING_LABEL_REGISTER,
-                max_chars: 4,
                 num_registers: 2,
             },
         }
@@ -892,34 +889,22 @@ impl ReadyState {
     fn write_lcd_text(&self, text: &str, text_type: TextType) -> Result<()> {
         let params = TextParameter::from(text_type);
 
-        // Truncate to maximum characters
-        let truncated_text = if text.len() > params.max_chars {
-            &text[..params.max_chars]
-        } else {
-            text
-        };
-
         log::info!(
             "Writing LCD {:?} text: '{}' to registers starting at {}",
             text_type,
-            truncated_text,
+            text,
             params.address
         );
 
-        // Convert string to register values using the existing utility
-        let data = string_to_vec(truncated_text);
+        // Convert string to register values
+        let mut data = string_to_vec(text);
+        data.resize(params.num_registers, 0u16);
 
-        // Ensure we have exactly the required number of registers
-        let mut register_data = vec![0u16; params.num_registers];
-        for (i, &value) in data.iter().take(params.num_registers).enumerate() {
-            register_data[i] = value;
-        }
-
-        // Read the LCD parameters register and set bit 3 to 1
+        // Read the LCD parameters register and set bit 3 to 1 to enable custom string display in rotation
         let current_params = self.read_holding_registers_fixed::<1>(LCD_PARAMETERS_REGISTER)?[0];
         let new_params = current_params | (1 << 3); // Set bit 3 to 1
 
-        log::info!(
+        log::debug!(
             "Setting LCD parameters register bit 3: 0x{:04X} -> 0x{:04X}",
             current_params,
             new_params
@@ -928,7 +913,7 @@ impl ReadyState {
         self.write_single_register(LCD_PARAMETERS_REGISTER, new_params)?;
 
         // Write to the specified registers
-        self.write_multiple_registers(params.address, &register_data)?;
+        self.write_multiple_registers(params.address, &data)?;
 
         log::info!(
             "Successfully wrote LCD {:?} text to registers {}",
@@ -949,7 +934,7 @@ impl ReadyState {
         let current_params = self.read_holding_registers_fixed::<1>(LCD_PARAMETERS_REGISTER)?[0];
         let new_params = current_params & !(1 << 3); // Clear bit 3 to 0
 
-        log::info!(
+        log::debug!(
             "Clearing LCD parameters register bit 3: 0x{:04X} -> 0x{:04X}",
             current_params,
             new_params
