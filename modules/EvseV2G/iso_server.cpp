@@ -624,8 +624,7 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     // Checking of the payment options
     if ((!conn->is_tls_connection) &&
         ((conn->ctx->evse_v2g_data.payment_option_list[0] == iso2_paymentOptionType_Contract) ||
-         (conn->ctx->evse_v2g_data.payment_option_list[1] == iso2_paymentOptionType_Contract)) &&
-        (false == conn->ctx->debugMode)) {
+         (conn->ctx->evse_v2g_data.payment_option_list[1] == iso2_paymentOptionType_Contract))) {
         conn->ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
         conn->ctx->evse_v2g_data.payment_option_list_len = 1;
         dlog(DLOG_LEVEL_WARNING,
@@ -639,7 +638,7 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     /* Find requested scope id within evse service list */
     if (req->ServiceScope_isUsed) {
         /* Check if ServiceScope is in evse ServiceList */
-        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list_len; idx++) {
+        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list.size(); idx++) {
             if ((conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope_isUsed == (unsigned int)1) &&
                 (strcmp(conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope.characters,
                         req->ServiceScope.characters) == 0)) {
@@ -652,9 +651,9 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     /*  The SECC always returns all supported services for all scopes if no specific ServiceScope has been
         indicated in request message. */
     if (scope_idx == (int8_t)-1) {
-        memcpy(res->ServiceList.Service.array, conn->ctx->evse_v2g_data.evse_service_list,
-               sizeof(struct iso2_ServiceType) * conn->ctx->evse_v2g_data.evse_service_list_len);
-        res->ServiceList.Service.arrayLen = conn->ctx->evse_v2g_data.evse_service_list_len;
+        std::copy(conn->ctx->evse_v2g_data.evse_service_list.begin(), conn->ctx->evse_v2g_data.evse_service_list.end(),
+                  res->ServiceList.Service.array);
+        res->ServiceList.Service.arrayLen = conn->ctx->evse_v2g_data.evse_service_list.size();
     } else {
         /* Offer only the requested ServiceScope entry */
         res->ServiceList.Service.array[0] = conn->ctx->evse_v2g_data.evse_service_list[scope_idx];
@@ -662,7 +661,7 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     }
 
     res->ServiceList_isUsed =
-        ((uint16_t)0 < conn->ctx->evse_v2g_data.evse_service_list_len) ? (unsigned int)1 : (unsigned int)0;
+        ((uint16_t)0 < conn->ctx->evse_v2g_data.evse_service_list.size()) ? (unsigned int)1 : (unsigned int)0;
 
     /* Check the current response code and check if no external error has occurred */
     nextEvent = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
@@ -695,7 +694,7 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
     bool service_id_found = false;
 
-    for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list_len; idx++) {
+    for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list.size(); idx++) {
 
         if (req->ServiceID == conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceID) {
             service_id_found = true;
@@ -779,7 +778,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
         else {
             bool entry_found = false;
             for (uint8_t ci_idx = 0;
-                 (ci_idx < conn->ctx->evse_v2g_data.evse_service_list_len) && (entry_found == false); ci_idx++) {
+                 (ci_idx < conn->ctx->evse_v2g_data.evse_service_list.size()) && (entry_found == false); ci_idx++) {
 
                 if (req->SelectedServiceList.SelectedService.array[req_idx].ServiceID ==
                     conn->ctx->evse_v2g_data.evse_service_list[ci_idx].ServiceID) {
