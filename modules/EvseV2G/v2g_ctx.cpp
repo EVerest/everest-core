@@ -213,13 +213,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
         ctx->evse_v2g_data.payment_option_list_len = (uint8_t)1; // One option must be set
 
-        ctx->evse_v2g_data.evse_service_list.push_back({});
-        ctx->evse_v2g_data.evse_service_list[0].FreeService = (int)0;
-        ctx->evse_v2g_data.evse_service_list[0].ServiceID =
-            4; // 4 (UseCaseInformation) A list containing information on all other services than charging services. The
-               // EVCC and the SECC shall use the ServiceIDs in the range from 1 to 4 as defined in this
-        // ctx->evse_v2g_data.evse_service_list[0].ServiceCategory Not needed at the moment, because it is a fixed value
-        // in din and iso
+        ctx->evse_v2g_data.evse_service_list.clear();
+        ctx->evse_v2g_data.evse_service_list.reserve(iso2_ServiceType_8_ARRAY_SIZE);
     }
 
     init_physical_value(&ctx->evse_v2g_data.evse_present_voltage, iso2_unitSymbolType_V);

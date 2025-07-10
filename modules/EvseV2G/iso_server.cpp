@@ -619,8 +619,7 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     // Checking of the payment options
     if ((!conn->is_tls_connection) &&
         ((conn->ctx->evse_v2g_data.payment_option_list[0] == iso2_paymentOptionType_Contract) ||
-         (conn->ctx->evse_v2g_data.payment_option_list[1] == iso2_paymentOptionType_Contract)) &&
-        (false == conn->ctx->debugMode)) {
+         (conn->ctx->evse_v2g_data.payment_option_list[1] == iso2_paymentOptionType_Contract))) {
         conn->ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
         conn->ctx->evse_v2g_data.payment_option_list_len = 1;
         dlog(DLOG_LEVEL_WARNING,

@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <vector>
 
 #ifdef EVEREST_MBED_TLS
 #include <mbedtls/certs.h>
