@@ -242,7 +242,7 @@ It will actually call the following command on everest_api/evse_manager/cmd/enab
 If any arbitrary payload is published to this topic charging will be paused by the EVSE.
 
 ### everest_api/evse_manager/cmd/resume_charging
-If any arbitrary payload is published to this topic charging will be paused by the EVSE.
+If any arbitrary payload is published to this topic charging will be resumed by the EVSE.
 
 ### everest_api/evse_manager/cmd/set_limit_amps
 Command to set an amps limit for this EVSE that will be considered within the EnergyManager. This does not automatically imply that this limit will be set by the EVSE because the energymanagement might consider limitations from other sources, too. The payload can be a positive or negative number.
