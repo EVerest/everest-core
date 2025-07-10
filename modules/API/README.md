@@ -242,7 +242,7 @@ It will actually call the following command on everest_api/evse_manager/cmd/enab
 If any arbitrary payload is published to this topic charging will be paused by the EVSE.
 
 ### everest_api/evse_manager/cmd/resume_charging
-If any arbitrary payload is published to this topic charging will be paused by the EVSE.
+If any arbitrary payload is published to this topic charging will be resumed by the EVSE.
 
 ### everest_api/evse_manager/cmd/stop_charging
 If any arbitrary payload is published to this topic charging will be stopped by the EVSE.
