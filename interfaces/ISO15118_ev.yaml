@@ -37,22 +37,22 @@ cmds:
   enable_sae_j2847_v2g_v2h:
     description: Enable the SAE J2847 2 V2H V2G
 vars:
-  V2G_Session_Finished:
+  v2g_session_finished:
     description: The v2g session between the charger and the car is finished
     type: 'null'
-  AC_EVPowerReady:
+  ev_power_ready:
     description: The car is ready for power (HLC)
     type: boolean
-  AC_EVSEMaxCurrent:
+  ac_evse_max_current:
     description: EVSE max current per phase
     type: number
     minimum: 0
     maximum: 400
-  AC_StopFromCharger:
-    description: The charger wants to stop the charging process
-    type: 'null'
-  DC_PowerOn:
+  dc_power_on:
     description: The ev wants to close the dc contactors
+    type: 'null'
+  stop_from_charger:
+    description: The charger wants to stop the charging process
     type: 'null'
   pause_from_charger:
     description: The charger wants to pause the session (only d20)
