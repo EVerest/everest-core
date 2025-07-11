@@ -11,15 +11,16 @@
 
 #include <ocpp/v2/device_model_storage_interface.hpp>
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
+#include <utils/config_service.hpp>
 
 namespace module::device_model {
-
 class EverestDeviceModelStorage : public ocpp::v2::DeviceModelStorageInterface {
 public:
     EverestDeviceModelStorage(
         const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager,
         const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map,
-        const std::filesystem::path& db_path, const std::filesystem::path& migration_files_path);
+        const std::filesystem::path& db_path, const std::filesystem::path& migration_files_path,
+        std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client);
     virtual ~EverestDeviceModelStorage() override = default;
     virtual ocpp::v2::DeviceModelMap get_device_model() override;
     virtual std::optional<ocpp::v2::VariableAttribute>
@@ -50,10 +51,15 @@ private:
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager;
     std::mutex device_model_mutex;
     std::unique_ptr<ocpp::v2::DeviceModelStorageSqlite> device_model_storage;
+    std::set<ocpp::v2::ComponentVariable> stored_in_everest_config_service;
+    std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client;
+    std::map<Everest::config::ModuleIdType, everest::config::ModuleConfigurationParameters> module_configs;
+    std::map<std::string, ModuleTierMappings> mappings;
 
     void init_hw_capabilities(
         const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map);
     void update_hw_capabilities(const ocpp::v2::Component& evse_component,
                                 const types::evse_board_support::HardwareCapabilities& hw_capabilities);
+    void init_everest_config();
 };
 } // namespace module::device_model

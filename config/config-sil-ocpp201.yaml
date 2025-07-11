@@ -149,6 +149,16 @@ active_modules:
       reservation:
         - module_id: auth
           implementation_id: reservation
+    access:
+      config:
+        allow_global_read: true
+        allow_global_write: false
+        allow_set_read_only: false
+        modules:
+          auth:
+            allow_read: true
+            allow_write: true
+            allow_set_read_only: true
   persistent_store:
     module: PersistentStore
   evse_security:
