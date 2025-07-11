@@ -98,9 +98,13 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& 
     m_info.port = port;
     if (iface != "") {
         // create a persistent copy
-        m_iface = new char[iface.size() + 1];
-        memcpy(m_iface, iface.c_str(), iface.size() + 1);
-        m_info.iface = m_iface;
+        char* iface_ptr = new char[iface.size() + 1];
+        std::strcpy(iface_ptr, iface.c_str());
+        m_iface = std::shared_ptr<char>(iface_ptr, [](char* ptr) {
+            delete[] ptr; // custom deleter to free the char array
+        });
+
+        m_info.iface = m_iface.get();
     }
     m_lws_protocols[0] = { "EVerestRpcApi", callback_ws, PER_SESSION_DATA_SIZE, 0 };
     m_lws_protocols[1] = LWS_PROTOCOL_LIST_TERM;
@@ -113,7 +117,6 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& 
 
 WebSocketServer::~WebSocketServer() {
     stop_server();
-    delete[] m_iface;
 }
 
 bool WebSocketServer::running() const {

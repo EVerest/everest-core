@@ -34,7 +34,7 @@ public:
 private:
     // Members
     bool m_ssl_enabled;
-    char* m_iface;
+    std::shared_ptr<char> m_iface;
     struct lws_context_creation_info m_info {};
     struct lws_protocols m_lws_protocols[2];
     std::atomic<bool> m_running{false};
