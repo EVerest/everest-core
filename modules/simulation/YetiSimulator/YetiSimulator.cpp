@@ -184,83 +184,92 @@ void YetiSimulator::ready() {
 }
 
 void YetiSimulator::run_telemetry_slow() const {
-    const auto current_iso_time_string = util::get_current_iso_time_string();
 
-    auto& p_p_c_v = module_state->telemetry_data.power_path_controller_version;
-    p_p_c_v.timestamp = current_iso_time_string;
+    while (true) {
+        const auto current_iso_time_string = util::get_current_iso_time_string();
 
-    telemetry.publish("livedata", "power_path_controller_version",
-                      {{"timestamp", p_p_c_v.timestamp},
-                       {"type", p_p_c_v.type},
-                       {"hardware_version", p_p_c_v.hardware_version},
-                       {"software_version", p_p_c_v.software_version},
-                       {"date_manufactured", p_p_c_v.date_manufactured},
-                       {"operating_time_h", p_p_c_v.operating_time_h},
-                       {"operating_time_warning", p_p_c_v.operating_time_h_warning},
-                       {"operating_time_error", p_p_c_v.operating_time_h_error},
-                       {"error", p_p_c_v.error}});
+        auto& p_p_c_v = module_state->telemetry_data.power_path_controller_version;
+        p_p_c_v.timestamp = current_iso_time_string;
+
+        telemetry.publish("livedata", "power_path_controller_version",
+                          {{"timestamp", p_p_c_v.timestamp},
+                           {"type", p_p_c_v.type},
+                           {"hardware_version", p_p_c_v.hardware_version},
+                           {"software_version", p_p_c_v.software_version},
+                           {"date_manufactured", p_p_c_v.date_manufactured},
+                           {"operating_time_h", p_p_c_v.operating_time_h},
+                           {"operating_time_warning", p_p_c_v.operating_time_h_warning},
+                           {"operating_time_error", p_p_c_v.operating_time_h_error},
+                           {"error", p_p_c_v.error}});
+
+        std::this_thread::sleep_for(std::chrono::milliseconds{15000});                  
+    }
 }
 
 void YetiSimulator::run_telemetry_fast() const {
-    const auto current_iso_time_string = util::get_current_iso_time_string();
-    auto& p_p_c = module_state->telemetry_data.power_path_controller;
-    p_p_c.timestamp = current_iso_time_string;
-    p_p_c.cp_voltage_high = module_state->pwm_voltage_hi;
-    p_p_c.cp_voltage_low = module_state->pwm_voltage_lo;
-    p_p_c.cp_pwm_duty_cycle = module_state->pwm_duty_cycle * 100.0;
-    p_p_c.cp_state = state_to_string(*module_state);
 
-    p_p_c.temperature_controller = module_state->powermeter_data.tempL1;
-    p_p_c.temperature_car_connector = module_state->powermeter_data.tempL1 * 2.0;
-    p_p_c.watchdog_reset_count = 0;
-    p_p_c.error = false;
+    while (true) {
+        const auto current_iso_time_string = util::get_current_iso_time_string();
+        auto& p_p_c = module_state->telemetry_data.power_path_controller;
+        p_p_c.timestamp = current_iso_time_string;
+        p_p_c.cp_voltage_high = module_state->pwm_voltage_hi;
+        p_p_c.cp_voltage_low = module_state->pwm_voltage_lo;
+        p_p_c.cp_pwm_duty_cycle = module_state->pwm_duty_cycle * 100.0;
+        p_p_c.cp_state = state_to_string(*module_state);
 
-    auto& p_s = module_state->telemetry_data.power_switch;
-    p_s.timestamp = current_iso_time_string;
-    p_s.is_on = module_state->relais_on;
-    p_s.time_to_switch_on_ms = 110;
-    p_s.time_to_switch_off_ms = 100;
-    p_s.temperature_C = 20;
-    p_s.error = false;
-    p_s.error_over_current = false;
+        p_p_c.temperature_controller = module_state->powermeter_data.tempL1;
+        p_p_c.temperature_car_connector = module_state->powermeter_data.tempL1 * 2.0;
+        p_p_c.watchdog_reset_count = 0;
+        p_p_c.error = false;
 
-    auto& rcd = module_state->telemetry_data.rcd;
-    rcd.timestamp = current_iso_time_string;
-    rcd.current_mA = module_state->simulation_data.rcd_current;
+        auto& p_s = module_state->telemetry_data.power_switch;
+        p_s.timestamp = current_iso_time_string;
+        p_s.is_on = module_state->relais_on;
+        p_s.time_to_switch_on_ms = 110;
+        p_s.time_to_switch_off_ms = 100;
+        p_s.temperature_C = 20;
+        p_s.error = false;
+        p_s.error_over_current = false;
 
-    telemetry.publish("livedata", "power_path_controller",
-                      {{"timestamp", p_p_c.timestamp},
-                       {"type", p_p_c.type},
-                       {"cp_voltage_high", p_p_c.cp_voltage_high},
-                       {"cp_voltage_low", p_p_c.cp_voltage_low},
-                       {"cp_pwm_duty_cycle", p_p_c.cp_pwm_duty_cycle},
-                       {"cp_state", p_p_c.cp_state},
-                       {"pp_ohm", p_p_c.pp_ohm},
-                       {"supply_voltage_12V", p_p_c.supply_voltage_12V},
-                       {"supply_voltage_minus_12V", p_p_c.supply_voltage_minus_12V},
-                       {"temperature_controller", p_p_c.temperature_controller},
-                       {"temperature_car_connector", p_p_c.temperature_car_connector},
-                       {"watchdog_reset_count", p_p_c.watchdog_reset_count},
-                       {"error", p_p_c.error}});
-    telemetry.publish("livedata", "power_switch",
-                      {{"timestamp", p_s.timestamp},
-                       {"type", p_s.type},
-                       {"switching_count", p_s.switching_count},
-                       {"switching_count_warning", p_s.switching_count_warning},
-                       {"switching_count_error", p_s.switching_count_error},
-                       {"is_on", p_s.is_on},
-                       {"time_to_switch_on_ms", p_s.time_to_switch_on_ms},
-                       {"time_to_switch_off_ms", p_s.time_to_switch_off_ms},
-                       {"temperature_C", p_s.temperature_C},
-                       {"error", p_s.error},
-                       {"error_over_current", p_s.error_over_current}});
-    telemetry.publish("livedata", "rcd",
-                      {{"timestamp", rcd.timestamp},
-                       {"type", rcd.type},
-                       {"enabled", rcd.enabled},
-                       {"current_mA", rcd.current_mA},
-                       {"triggered", rcd.triggered},
-                       {"error", rcd.error}});
+        auto& rcd = module_state->telemetry_data.rcd;
+        rcd.timestamp = current_iso_time_string;
+        rcd.current_mA = module_state->simulation_data.rcd_current;
+
+        telemetry.publish("livedata", "power_path_controller",
+                          {{"timestamp", p_p_c.timestamp},
+                           {"type", p_p_c.type},
+                           {"cp_voltage_high", p_p_c.cp_voltage_high},
+                           {"cp_voltage_low", p_p_c.cp_voltage_low},
+                           {"cp_pwm_duty_cycle", p_p_c.cp_pwm_duty_cycle},
+                           {"cp_state", p_p_c.cp_state},
+                           {"pp_ohm", p_p_c.pp_ohm},
+                           {"supply_voltage_12V", p_p_c.supply_voltage_12V},
+                           {"supply_voltage_minus_12V", p_p_c.supply_voltage_minus_12V},
+                           {"temperature_controller", p_p_c.temperature_controller},
+                           {"temperature_car_connector", p_p_c.temperature_car_connector},
+                           {"watchdog_reset_count", p_p_c.watchdog_reset_count},
+                           {"error", p_p_c.error}});
+        telemetry.publish("livedata", "power_switch",
+                          {{"timestamp", p_s.timestamp},
+                           {"type", p_s.type},
+                           {"switching_count", p_s.switching_count},
+                           {"switching_count_warning", p_s.switching_count_warning},
+                           {"switching_count_error", p_s.switching_count_error},
+                           {"is_on", p_s.is_on},
+                           {"time_to_switch_on_ms", p_s.time_to_switch_on_ms},
+                           {"time_to_switch_off_ms", p_s.time_to_switch_off_ms},
+                           {"temperature_C", p_s.temperature_C},
+                           {"error", p_s.error},
+                           {"error_over_current", p_s.error_over_current}});
+        telemetry.publish("livedata", "rcd",
+                          {{"timestamp", rcd.timestamp},
+                           {"type", rcd.type},
+                           {"enabled", rcd.enabled},
+                           {"current_mA", rcd.current_mA},
+                           {"triggered", rcd.triggered},
+                           {"error", rcd.error}});
+        std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+    }
 }
 
 [[noreturn]] void YetiSimulator::run_simulation(const int sleep_time_ms) {

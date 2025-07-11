@@ -101,7 +101,6 @@ def patch_josev_config(josev_config: EVCCConfig, everest_config: dict) -> None:
         josev_config.supported_energy_services = load_requested_energy_services(
             everest_config['supported_d20_energy_services'].split(',')
         )
-        print(everest_config['supported_d20_energy_services'].split(','))
     else:
         josev_config.supported_energy_services = load_requested_energy_services(
              ['DC']
