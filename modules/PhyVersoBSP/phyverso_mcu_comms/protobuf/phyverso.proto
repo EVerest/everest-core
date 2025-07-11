@@ -54,6 +54,9 @@ message ErrorFlags {
   bool ventilation_not_available = 4;
   bool connector_lock_failed = 5;
   bool cp_signal_fault = 6;
+  bool heartbeat_timeout = 7;
+  bool coil_feedback_diverges = 8;
+  bool pp_signal_fault = 9;
 }
 
 enum ResetReason {
@@ -66,6 +69,7 @@ message KeepAlive {
   uint32 hw_type = 2;
   uint32 hw_revision = 3;
   string sw_version_string = 6;
+  bool configuration_done = 7;
 }
 
 message Telemetry {
@@ -93,6 +97,8 @@ enum LockState {
   UNDEFINED = 0;
   UNLOCKED = 1;
   LOCKED = 2;
+  LOCKING = 3;
+  UNLOCKING = 4;
 }
 
 message CoilState {
@@ -115,12 +121,33 @@ message BootConfigRequest {
 
 message BootConfigResponse {
   ConfigHardwareRevision hw_rev = 1;
-  ConfigMotorLockType lock_1 = 2;
-  ConfigMotorLockType lock_2 = 3;
+  repeated ChargePortConfig chargeport_config = 6;
+}
+
+message ChargePortConfig {
+  ChargePortType type = 1;
+  bool feedback_active_low = 2;
+  GpioPull feedback_pull = 3;
+  ConfigMotorLockType lock = 4;
+  bool has_socket = 5;
+}
+
+enum ChargePortType {
+  DISABLED = 0;
+  AC = 1;
+  DC = 2;
+}
+
+enum GpioPull {
+  NONE = 0;
+  UP = 1;
+  DOWN = 2;
 }
 
 message ConfigMotorLockType {
   MotorLockType type = 1;
+  // additional lock specific options could be added here later
+  // will still keep this in place even if it only holds the type enum at the moment
 }
 
 enum ConfigHardwareRevision {
@@ -131,8 +158,10 @@ enum ConfigHardwareRevision {
 
 enum MotorLockType {
   MOTOR_LOCK_UNKNOWN = 0;
-  MOTOR_LOCK_QWELLO = 1;
+  MOTOR_LOCK_HELLA = 1;
   MOTOR_LOCK_DEBUG_VALEO_HVAC = 2;
+  // add additional locks here
+  MOTOR_LOCK_NONE = -1;
 }
 
 message Temperature {
