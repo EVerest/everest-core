@@ -1302,7 +1302,15 @@ void ChargePointImpl::message_callback(const std::string& message) {
         return;
     } catch (const json::exception& e) {
         EVLOG_error << "JSON exception during reception of message: " << e.what();
-        this->message_dispatcher->dispatch_call_error(CallError(MessageId("-1"), "GenericError", e.what(), json({})));
+        std::string error_message;
+        try {
+            error_message = json(e.what()).dump();
+        } catch (const json::exception& ex) {
+            error_message = "JSON exception during reception of message: ";
+            error_message += ex.what();
+        }
+        this->message_dispatcher->dispatch_call_error(
+            CallError(MessageId("-1"), "GenericError", error_message, json({})));
         return;
     } catch (const std::runtime_error& e) {
         EVLOG_error << "runtime_error during reception of message: " << e.what();

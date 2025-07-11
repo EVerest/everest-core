@@ -837,16 +837,22 @@ void ChargePoint::message_callback(const std::string& message) {
     } catch (const json::exception& e) {
         this->logging->central_system("Unknown", message);
         EVLOG_error << "JSON exception during reception of message: " << e.what();
+        std::string error_message;
+        try {
+            error_message = json(e.what()).dump();
+        } catch (const json::exception& ex) {
+            error_message = "JSON exception during reception of message: ";
+            error_message += ex.what();
+        }
         this->message_dispatcher->dispatch_call_error(
-            CallError(MessageId("-1"), "RpcFrameworkError", e.what(), json({})));
+            CallError(MessageId("-1"), "RpcFrameworkError", error_message, json({})));
         const auto& security_event = ocpp::security_events::INVALIDMESSAGES;
         this->security->security_event_notification_req(CiString<50>(security_event, StringTooLarge::Truncate),
-                                                        CiString<255>(message, StringTooLarge::Truncate), true,
-                                                        utils::is_critical(security_event));
+                                                        error_message, true, utils::is_critical(security_event));
         return;
     } catch (const StringConversionException& e) {
         this->logging->central_system("Unknown", message);
-        EVLOG_error << "JSON exception during reception of message: " << e.what();
+        EVLOG_error << "StringConversionException during reception of message: " << e.what();
         this->message_dispatcher->dispatch_call_error(
             CallError(MessageId("-1"), "RpcFrameworkError", e.what(), json({})));
         const auto& security_event = ocpp::security_events::INVALIDMESSAGES;
