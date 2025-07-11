@@ -73,6 +73,10 @@ public:
     nlohmann::json get(const std::string& topic, QOS qos);
 
     ///
+    /// \copydoc MQTTAbstractionImpl::get(const MQTTRequest&)
+    nlohmann::json get(const MQTTRequest& request);
+
+    ///
     /// \brief Get MQTT topic prefix for the "everest" topic
     const std::string& get_everest_prefix() const;
 

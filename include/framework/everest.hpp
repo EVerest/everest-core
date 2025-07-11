@@ -15,6 +15,7 @@
 #include <everest/exceptions.hpp>
 
 #include <utils/config.hpp>
+#include <utils/config_service.hpp>
 #include <utils/error.hpp>
 #include <utils/exceptions.hpp>
 #include <utils/mqtt_abstraction.hpp>
@@ -125,6 +126,10 @@ public:
     std::shared_ptr<error::ErrorStateMonitor> get_global_error_state_monitor() const;
 
     ///
+    /// \brief Return the config service client
+    std::shared_ptr<config::ConfigServiceClient> get_config_service_client() const;
+
+    ///
     /// \brief publishes the given \p data on the given \p topic
     ///
     void external_mqtt_publish(const std::string& topic, const std::string& data);
@@ -211,6 +216,7 @@ private:
     std::map<Requirement, std::shared_ptr<error::ErrorStateMonitor>> req_error_state_monitors; // one per requirement
     std::shared_ptr<error::ErrorManagerReqGlobal> global_error_manager;   // nullptr if not enabled in manifest
     std::shared_ptr<error::ErrorStateMonitor> global_error_state_monitor; // nullptr if not enabled in manifest
+    std::shared_ptr<config::ConfigServiceClient> config_service_client;
     std::map<std::string, std::set<std::string>> registered_cmds;
     std::atomic<bool> ready_received;
     std::atomic<bool> ready_processed;

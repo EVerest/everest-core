@@ -286,6 +286,7 @@ std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbstractio
     const auto number_of_modules = module_configurations.size();
     EVLOG_info << "Starting " << number_of_modules << " modules";
 
+    // TODO: move this into its own functions / class? ConfigService?
     const auto interface_definitions = config.get_interface_definitions();
     std::vector<std::string> interface_names;
     for (auto& interface_definition : interface_definitions.items()) {
@@ -340,26 +341,19 @@ std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbstractio
             EVLOG_info << fmt::format("Ignoring module: {}", module_id);
             continue;
         }
-        const auto serialized_mod_config = get_serialized_module_config(module_id, module_configurations);
 
         // FIXME (aw): implicitely adding ModuleReadyInfo and setting its ready member
         auto module_it = modules_ready.emplace(module_id, ModuleReadyInfo{false, nullptr, nullptr}).first;
-
-        const std::string config_topic = fmt::format("{}/config", config.mqtt_module_prefix(module_id));
-        const Handler module_get_config_handler = [module_id, config_topic, serialized_mod_config,
-                                                   &mqtt_abstraction](const std::string&, const nlohmann::json&) {
-            mqtt_abstraction.publish(config_topic, serialized_mod_config.dump(), QOS::QOS2);
-        };
-
-        const std::string get_config_topic = fmt::format("{}/get_config", config.mqtt_module_prefix(module_id));
-        module_it->second.get_config_token = std::make_shared<TypedHandler>(
-            HandlerType::ExternalMQTT, std::make_shared<Handler>(module_get_config_handler));
-        mqtt_abstraction.register_handler(get_config_topic, module_it->second.get_config_token, QOS::QOS2);
 
         std::vector<std::string> capabilities;
         const auto& module_capabilities = module_configurations.at(module_id).capabilities;
         if (module_capabilities.has_value()) {
             capabilities.push_back(module_capabilities.value());
+        }
+
+        if (not capabilities.empty()) {
+            EVLOG_info << fmt::format("Module {} wants to aquire the following capabilities: {}", module_name,
+                                      fmt::join(capabilities.begin(), capabilities.end(), " "));
         }
 
         const Handler module_ready_handler = [module_id, &mqtt_abstraction, &config, standalone_modules,
@@ -679,9 +673,9 @@ int boot(const po::variables_map& vm) {
     const bool retain_topics = (vm.count("retain-topics") != 0);
 
     const auto start_time = std::chrono::system_clock::now();
-    std::unique_ptr<ManagerConfig> config;
+    std::shared_ptr<ManagerConfig> config; // TODO: maybe this can stay unique when we re-work start_modules()
     try {
-        config = std::make_unique<ManagerConfig>(ms);
+        config = std::make_shared<ManagerConfig>(ms);
     } catch (EverestInternalError& e) {
         EVLOG_error << fmt::format("Failed to load and validate config!\n{}", boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
@@ -767,6 +761,8 @@ int boot(const po::variables_map& vm) {
     }
 
     mqtt_abstraction.spawn_main_loop_thread();
+
+    auto config_service = std::make_unique<config::ConfigService>(mqtt_abstraction, config);
 
     auto module_handles =
         start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, ms, status_fifo, retain_topics);

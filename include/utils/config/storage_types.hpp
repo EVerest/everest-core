@@ -54,6 +54,16 @@ struct GetModuleTierMappingsResponse {
     ModuleTierMappings module_tier_mappings;
 };
 
+struct GetConfigAccessResponse {
+    GenericResponseStatus status = GenericResponseStatus::Failed;
+    std::optional<ConfigAccess> config_access;
+};
+
+struct GetModuleConfigAccessResponse {
+    GenericResponseStatus status = GenericResponseStatus::Failed;
+    std::map<std::string, everest::config::ModuleConfigAccess> module_config_access;
+};
+
 struct GetModuleConfigurationResponse {
     GenericResponseStatus status = GenericResponseStatus::Failed;
     std::optional<ModuleConfig> config;
@@ -68,6 +78,8 @@ struct ConfigurationParameterIdentifier {
     std::string module_id;
     std::string configuration_parameter_name;
     std::optional<std::string> module_implementation_id;
+
+    bool operator<(const ConfigurationParameterIdentifier& rhs) const;
 };
 
 } // namespace everest::config

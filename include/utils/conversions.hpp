@@ -72,7 +72,16 @@ template <typename... Ts> static std::variant<Ts...> json_to_variant(const nlohm
 }
 
 template <typename T> nlohmann::json variant_to_json(T variant) {
-    return std::visit([](auto&& arg) -> nlohmann::json { return arg; }, variant);
+    return std::visit(
+        [](auto&& arg) -> nlohmann::json {
+            using U = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<std::monostate, U>) { // FIXME: do we really want this?
+                return nlohmann::json(nullptr);
+            } else {
+                return arg;
+            }
+        },
+        variant);
 }
 
 namespace conversions {

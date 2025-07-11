@@ -552,6 +552,8 @@ int ModuleLoader::initialize() {
             return everest.get_global_error_state_monitor();
         };
 
+        module_adapter.get_config_service_client = [&everest]() { return everest.get_config_service_client(); };
+
         // NOLINTNEXTLINE(modernize-avoid-bind): prefer bind here for readability
         module_adapter.ext_mqtt_publish =
             std::bind(&Everest::Everest::external_mqtt_publish, &everest, std::placeholders::_1, std::placeholders::_2);

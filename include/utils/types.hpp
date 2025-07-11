@@ -132,6 +132,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #define EVCALLBACK(function) [](auto&& PH1) { function(std::forward<decltype(PH1)>(PH1)); }
 
 namespace Everest {
+inline constexpr int mqtt_get_config_timeout_ms = 5000;
 
 /// \brief Events than can happen related to commands
 enum class CmdEvent {
@@ -152,6 +153,14 @@ struct CmdResultError {
 struct CmdResult {
     std::optional<json> result;
     std::optional<CmdResultError> error;
+};
+
+struct MQTTRequest {
+    std::string response_topic;
+    QOS qos = QOS::QOS2;
+    std::chrono::milliseconds timeout = std::chrono::milliseconds(mqtt_get_config_timeout_ms);
+    std::optional<std::string> request_topic;
+    std::optional<std::string> request_data;
 };
 } // namespace Everest
 

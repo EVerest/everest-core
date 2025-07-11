@@ -69,6 +69,8 @@ pub struct ConfigEntry {
     pub description: Option<String>,
     #[serde(flatten)]
     pub value: ConfigEnum,
+    #[serde(default = "MutabilityEnum::default")]
+    pub mutability: MutabilityEnum,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -78,4 +80,15 @@ pub enum ConfigEnum {
     String(StringOptions),
     Integer(IntegerOptions),
     Number(NumberOptions),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub enum MutabilityEnum {
+    ReadOnly,
+    ReadWrite,
+    WriteOnly,
+}
+
+impl MutabilityEnum {
+    fn default() -> Self { MutabilityEnum::ReadOnly }
 }

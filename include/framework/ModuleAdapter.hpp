@@ -90,6 +90,7 @@ struct ModuleAdapter {
     using TelemetryPublishFunc =
         std::function<void(const std::string&, const std::string&, const std::string&, const TelemetryMap&)>;
     using GetMappingFunc = std::function<std::optional<ModuleTierMappings>()>;
+    using GetConfigServiceClientFunc = std::function<std::shared_ptr<config::ConfigServiceClient>()>;
 
     CallFunc call;
     PublishFunc publish;
@@ -107,6 +108,7 @@ struct ModuleAdapter {
     std::vector<cmd> registered_commands;
     TelemetryPublishFunc telemetry_publish;
     GetMappingFunc get_mapping;
+    GetConfigServiceClientFunc get_config_service_client;
 
     void check_complete();
 

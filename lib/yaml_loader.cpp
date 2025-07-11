@@ -127,4 +127,11 @@ nlohmann::ordered_json load_yaml(const std::filesystem::path& path) {
     return ryml_to_nlohmann_json(tree.rootref());
 }
 
+void save_yaml(const nlohmann::ordered_json& data, const std::filesystem::path& path) {
+    // FIXME: saving yaml seems to be quite complicated, but we should be able to just emit json here...
+    std::ofstream ofs(path.c_str());
+    ofs << data << std::endl;
+    ofs.close();
+}
+
 } // namespace Everest

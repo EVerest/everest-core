@@ -20,6 +20,13 @@ $defs:
           description:
             type: string
             minLength: 2
+          mutability:
+            type: string
+            enum:
+              - ReadOnly
+              - ReadWrite
+              - WriteOnly
+            default: ReadOnly
         additionalProperties: true
     additionalProperties: false
     default: {}

@@ -89,6 +89,10 @@ public:
     nlohmann::json get(const std::string& topic, QOS qos);
 
     ///
+    /// \brief subscribe to the topic defind in the \p request and wait for a result
+    nlohmann::json get(const MQTTRequest& request);
+
+    ///
     /// \brief Spawn a thread running the mqtt main loop
     /// \returns a future, which will be fulfilled on thread termination
     std::shared_future<void> spawn_main_loop_thread();

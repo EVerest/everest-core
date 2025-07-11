@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+#include "utils/config/storage.hpp"
+#include "utils/config/types.hpp"
 #include <everest/compile_time_settings.hpp>
 #include <everest/database/exceptions.hpp>
 #include <everest/database/sqlite/schema_updater.hpp>
@@ -177,6 +179,10 @@ GenericResponseStatus SqliteStorage::write_module_configs(const ModuleConfigurat
                     }
                 }
             }
+
+            if (this->write_access(module_id, module.access) != GenericResponseStatus::OK) {
+                EVLOG_error << "Failed to write module access for module: " << module_id;
+            }
         }
 
         transaction->commit();
@@ -298,6 +304,13 @@ GetModuleConfigurationResponse SqliteStorage::get_module_config(const std::strin
     }
     const auto module_tier_mappings = module_tier_mappings_response.module_tier_mappings;
 
+    const auto config_access_response = this->get_config_access(module_id);
+    if (config_access_response.status == GenericResponseStatus::Failed) {
+        response.status = GenericResponseStatus::Failed;
+        return response;
+    }
+    const auto config_access = config_access_response.config_access;
+
     try {
 
         const std::string sql =
@@ -317,6 +330,7 @@ GetModuleConfigurationResponse SqliteStorage::get_module_config(const std::strin
             module_config.connections[fulfillment.requirement.id].push_back(fulfillment);
         }
         module_config.mapping = module_tier_mappings;
+        module_config.access.config = config_access;
 
         while (stmt->step() == SQLITE_ROW) {
             ConfigurationParameter configuration_parameter;
@@ -573,6 +587,59 @@ GenericResponseStatus SqliteStorage::write_module_tier_mapping(const std::string
     return GenericResponseStatus::OK;
 }
 
+GenericResponseStatus SqliteStorage::write_access(const std::string& module_id, const Access& access) {
+    if (access.config.has_value()) {
+        return write_config_access(module_id, access.config.value());
+    }
+    return GenericResponseStatus::OK;
+}
+GenericResponseStatus SqliteStorage::write_config_access(const std::string& module_id,
+                                                         const ConfigAccess& config_access) {
+    // write global config access to db
+    const std::string sql = "INSERT OR REPLACE INTO CONFIG_ACCESS (MODULE_ID, ALLOW_GLOBAL_READ, ALLOW_GLOBAL_WRITE, "
+                            "ALLOW_SET_READ_ONLY) VALUES (?,?,?,?)";
+
+    auto stmt = this->db->new_statement(sql);
+
+    stmt->bind_text(1, module_id);
+    stmt->bind_int(2, config_access.allow_global_read ? 1 : 0);
+    stmt->bind_int(3, config_access.allow_global_write ? 1 : 0);
+    stmt->bind_int(4, config_access.allow_set_read_only ? 1 : 0);
+
+    if (stmt->step() != SQLITE_DONE) {
+        return GenericResponseStatus::Failed;
+    }
+
+    // write individual module config access to db
+    for (const auto& [other_module_id, module_config_access] : config_access.modules) {
+        const auto result = write_module_config_access(module_id, other_module_id, module_config_access);
+        if (result != GenericResponseStatus::OK) {
+            return GenericResponseStatus::Failed;
+        }
+    }
+
+    return GenericResponseStatus::OK;
+}
+GenericResponseStatus SqliteStorage::write_module_config_access(const std::string& module_id,
+                                                                const std::string& other_module_id,
+                                                                const ModuleConfigAccess& module_config_access) {
+    const std::string sql = "INSERT OR REPLACE INTO MODULE_CONFIG_ACCESS (MODULE_ID, OTHER_MODULE_ID, "
+                            "ALLOW_READ, ALLOW_WRITE, ALLOW_SET_READ_ONLY) VALUES (?,?,?,?,?)";
+
+    auto stmt = this->db->new_statement(sql);
+
+    stmt->bind_text(1, module_id);
+    stmt->bind_text(2, other_module_id);
+    stmt->bind_int(3, module_config_access.allow_read ? 1 : 0);
+    stmt->bind_int(4, module_config_access.allow_write ? 1 : 0);
+    stmt->bind_int(5, module_config_access.allow_set_read_only ? 1 : 0);
+
+    if (stmt->step() != SQLITE_DONE) {
+        return GenericResponseStatus::Failed;
+    }
+    return GenericResponseStatus::OK;
+}
+
 GenericResponseStatus SqliteStorage::write_settings(const Everest::ManagerSettings& manager_settings) {
     auto transaction = this->db->begin_transaction();
 
@@ -771,6 +838,57 @@ GetModuleTierMappingsResponse SqliteStorage::get_module_tier_mappings(const std:
 
     response.module_tier_mappings = module_tier_mappings;
     response.status = GenericResponseStatus::OK;
+    return response;
+}
+
+GetModuleConfigAccessResponse SqliteStorage::get_module_config_access(const std::string& module_id) {
+    GetModuleConfigAccessResponse response;
+    const std::string sql = "SELECT OTHER_MODULE_ID, ALLOW_SET_READ_ONLY FROM MODULE_CONFIG_ACCESS "
+                            "WHERE MODULE_ID = @module_id";
+
+    auto stmt = this->db->new_statement(sql);
+    stmt->bind_text("@module_id", module_id);
+
+    std::map<std::string, everest::config::ModuleConfigAccess> module_config_access;
+    while (stmt->step() == SQLITE_ROW) {
+        const auto other_module_id = stmt->column_text(0);
+        const auto allow_set_read_only = stmt->column_int(1) != 0;
+        module_config_access[other_module_id].allow_set_read_only = allow_set_read_only;
+    }
+
+    response.module_config_access = module_config_access;
+    response.status = GenericResponseStatus::OK;
+    return response;
+}
+
+GetConfigAccessResponse SqliteStorage::get_config_access(const std::string& module_id) {
+    GetConfigAccessResponse response;
+
+    const std::string sql =
+        "SELECT ALLOW_GLOBAL_READ, ALLOW_SET_READ_ONLY FROM CONFIG_ACCESS WHERE MODULE_ID = @module_id";
+
+    auto stmt = this->db->new_statement(sql);
+    stmt->bind_text("@module_id", module_id);
+
+    const auto status = stmt->step();
+
+    if (status == SQLITE_DONE) {
+        response.status = GenericResponseStatus::OK;
+        return response;
+    }
+
+    if (status == SQLITE_ROW) {
+        ConfigAccess config_access;
+        config_access.allow_global_read = stmt->column_int(0) != 0;
+        config_access.allow_set_read_only = stmt->column_int(1) != 0;
+        const auto module_config_access = get_module_config_access(module_id);
+        if (module_config_access.status == GenericResponseStatus::OK) {
+            config_access.modules = module_config_access.module_config_access;
+        }
+        response.config_access = config_access;
+        response.status = GenericResponseStatus::OK;
+    }
+
     return response;
 }
 

@@ -14,6 +14,7 @@
 
 #include <framework/runtime.hpp>
 #include <utils/config.hpp>
+#include <utils/config/storage.hpp>
 #include <utils/config/types.hpp>
 #include <utils/formatter.hpp>
 #include <utils/yaml_loader.hpp>
@@ -230,7 +231,7 @@ ParsedConfigMap parse_config_map(const json& config_map_schema,
         ConfigurationParameter config_param;
         config_param.name = config_entry_name;
         config_param.characteristics.datatype = string_to_datatype(config_entry.at("type"));
-        config_param.characteristics.mutability = Mutability::ReadOnly;
+        config_param.characteristics.mutability = string_to_mutability(config_entry.at("mutability"));
         // TODO: add unit
         switch (config_param.characteristics.datatype) {
         case Datatype::String:
@@ -447,7 +448,7 @@ std::string ConfigBase::mqtt_prefix(const std::string& module_id, const std::str
     return fmt::format("{}modules/{}/impl/{}", this->mqtt_settings.everest_prefix, module_id, impl_id);
 }
 
-std::string ConfigBase::mqtt_module_prefix(const std::string& module_id) {
+std::string ConfigBase::mqtt_module_prefix(const std::string& module_id) const {
     BOOST_LOG_FUNCTION();
 
     return fmt::format("{}modules/{}", this->mqtt_settings.everest_prefix, module_id);
@@ -498,7 +499,7 @@ const json& ConfigBase::get_types() const {
     return this->types;
 }
 
-std::unordered_map<std::string, std::string> ConfigBase::get_module_names() {
+std::unordered_map<std::string, std::string> ConfigBase::get_module_names() const {
     return this->module_names;
 }
 
@@ -1201,11 +1202,11 @@ json ManagerConfig::apply_user_config_and_defaults() {
     // TODO(kai): introduce a parameter that can overwrite the location of the user config?
     // TODO(kai): or should we introduce a "meta-config" that references all configs that should be merged here?
     const auto user_config_path = config_path.parent_path() / "user-config" / config_path.filename();
+    this->user_config_storage = std::make_unique<everest::config::UserConfigStorage>(user_config_path);
     if (fs::exists(user_config_path)) {
         EVLOG_info << fmt::format("Loading user-config file at: {}", fs::canonical(user_config_path).string());
-        auto user_config = load_yaml(user_config_path);
         EVLOG_debug << "Augmenting main config with user-config entries";
-        complete_config.merge_patch(user_config);
+        complete_config.merge_patch(this->user_config_storage->get_user_config());
     } else {
         EVLOG_verbose << "No user-config provided.";
     }
@@ -1250,6 +1251,103 @@ Config::Config(const MQTTSettings& mqtt_settings, const json& serialized_config)
 
     // create error type map from interface definitions
     this->populate_error_map();
+}
+
+namespace {
+everest::config::ConfigurationParameterCharacteristics
+get_characteristics(const std::string& name,
+                    const std::vector<everest::config::ConfigurationParameter>& configuration_parameters) {
+    for (const auto& configuration_parameter : configuration_parameters) {
+        if (configuration_parameter.name == name) {
+            return configuration_parameter.characteristics;
+        }
+    }
+    throw std::out_of_range("oops");
+}
+} // namespace
+
+everest::config::SetConfigStatus
+ManagerConfig::set_config_value(const everest::config::ConfigurationParameterIdentifier& identifier,
+                                const everest::config::ConfigEntry& value) {
+    try {
+        const auto& module_config = this->module_configs.at(identifier.module_id);
+        const auto& configuration_parameters =
+            module_config.configuration_parameters.at(identifier.module_implementation_id.value_or("!module"));
+        const auto& characteristics =
+            get_characteristics(identifier.configuration_parameter_name, configuration_parameters);
+
+        switch (this->ms.boot_mode) {
+        case ConfigBootMode::YamlFile: {
+            const auto write_response = this->user_config_storage->write_configuration_parameter(
+                identifier, characteristics, everest::config::config_entry_to_string(value));
+            if (write_response == GetSetResponseStatus::OK) {
+                return everest::config::SetConfigStatus::RebootRequired;
+            }
+            break;
+        }
+        case ConfigBootMode::Database:
+        case ConfigBootMode::DatabaseInit:
+            const auto& cached_value_it = this->database_get_config_parameter_response_cache.find(identifier);
+            const auto cached_value = this->ms.storage->get_configuration_parameter(identifier);
+            const auto write_response = this->ms.storage->write_configuration_parameter(
+                identifier, characteristics, everest::config::config_entry_to_string(value));
+            if (write_response == GetSetResponseStatus::OK) {
+                if (cached_value_it == this->database_get_config_parameter_response_cache.end()) {
+                    // cache initial config value in case it is only valid after a reboot
+                    this->database_get_config_parameter_response_cache[identifier] = cached_value;
+                }
+                return everest::config::SetConfigStatus::RebootRequired;
+            }
+            return everest::config::SetConfigStatus::Rejected;
+        }
+    } catch (const std::exception& e) {
+        return everest::config::SetConfigStatus::Rejected;
+    }
+
+    return everest::config::SetConfigStatus::Rejected;
+}
+
+everest::config::GetConfigurationParameterResponse
+ManagerConfig::get_config_value(const everest::config::ConfigurationParameterIdentifier& identifier) {
+    everest::config::GetConfigurationParameterResponse response;
+    response.status = GetSetResponseStatus::Failed;
+
+    try {
+        switch (this->ms.boot_mode) {
+        case ConfigBootMode::YamlFile: {
+            const auto& module_config = this->module_configs.at(identifier.module_id);
+            const auto& configuration_parameters =
+                module_config.configuration_parameters.at(identifier.module_implementation_id.value_or("!module"));
+            for (const auto& configuration_parameter : configuration_parameters) {
+                if (configuration_parameter.name == identifier.configuration_parameter_name) {
+                    response.status = GetSetResponseStatus::OK;
+                    response.configuration_parameter = configuration_parameter;
+                    break;
+                }
+            }
+            if (response.status != GetSetResponseStatus::OK) {
+                response.status = GetSetResponseStatus::NotFound;
+            }
+            break;
+        }
+        case ConfigBootMode::Database:
+        case ConfigBootMode::DatabaseInit: {
+            // ensure that we do not return database values that are only valid after a reboot
+            const auto& cached_value_it = this->database_get_config_parameter_response_cache.find(identifier);
+            if (cached_value_it != this->database_get_config_parameter_response_cache.end()) {
+                return cached_value_it->second;
+            }
+            response = this->ms.storage->get_configuration_parameter(identifier);
+            break;
+        }
+        }
+    } catch (const std::exception& e) {
+        everest::config::GetConfigurationParameterResponse failed_response;
+        failed_response.status = GetSetResponseStatus::Failed;
+        return failed_response;
+    }
+
+    return response;
 }
 
 error::ErrorTypeMap Config::get_error_map() const {

@@ -58,6 +58,9 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
     forward_exceptions(forward_exceptions) {
     BOOST_LOG_FUNCTION();
 
+    this->config_service_client = std::make_shared<config::ConfigServiceClient>(mqtt_abstraction, this->module_id,
+                                                                                this->config.get_module_names());
+
     EVLOG_debug << "Initializing EVerest framework...";
 
     this->module_name = this->config.get_module_config().module_name;
@@ -666,6 +669,10 @@ std::shared_ptr<error::ErrorStateMonitor> Everest::get_global_error_state_monito
         EVLOG_warning << "This module has no global_error_state_monitor, returning nullptr";
     }
     return this->global_error_state_monitor;
+}
+
+std::shared_ptr<config::ConfigServiceClient> Everest::get_config_service_client() const {
+    return this->config_service_client;
 }
 
 void Everest::subscribe_global_all_errors(const error::ErrorCallback& raise_callback,

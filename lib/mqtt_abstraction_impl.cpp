@@ -260,6 +260,49 @@ json MQTTAbstractionImpl::get(const std::string& topic, QOS qos) {
     return result;
 }
 
+json MQTTAbstractionImpl::get(const MQTTRequest& request) {
+    BOOST_LOG_FUNCTION();
+    std::promise<json> res_promise;
+    std::future<json> res_future = res_promise.get_future();
+
+    const auto res_handler = [&res_promise](const std::string& /*topic*/, json response) {
+        res_promise.set_value(std::move(response));
+    };
+
+    // FIXME: use configurable HandlerType?
+    const std::shared_ptr<TypedHandler> res_token =
+        std::make_shared<TypedHandler>(HandlerType::GetConfig, std::make_shared<Handler>(res_handler));
+    this->register_handler(request.response_topic, res_token, request.qos);
+    if (request.request_topic.has_value()) {
+        std::string req_data;
+        if (request.request_data.has_value()) {
+            req_data = request.request_data.value();
+        }
+        this->publish(request.request_topic.value(), req_data, request.qos);
+    }
+    // wait for result future
+    const std::chrono::time_point<std::chrono::steady_clock> res_wait =
+        std::chrono::steady_clock::now() + request.timeout;
+    std::future_status res_future_status = std::future_status::deferred;
+    do {
+        res_future_status = res_future.wait_until(res_wait);
+    } while (res_future_status == std::future_status::deferred);
+
+    json result;
+    if (res_future_status == std::future_status::timeout) {
+        this->unregister_handler(request.response_topic, res_token);
+        EVLOG_AND_THROW(
+            EverestTimeoutError(fmt::format("Timeout while waiting for result of get({})", request.response_topic)));
+    }
+    if (res_future_status == std::future_status::ready) {
+        result = res_future.get();
+    }
+
+    this->unregister_handler(request.response_topic, res_token);
+
+    return result;
+}
+
 void MQTTAbstractionImpl::notify_write_data() {
     // FIXME (aw): error handling
     eventfd_write(this->event_fd, 1);

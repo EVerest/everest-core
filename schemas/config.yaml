@@ -187,6 +187,44 @@ properties:
             default: {}
             # don't allow arbitrary additional properties
             additionalProperties: false
+          access:
+            description: >-
+              Access control settings for this specific module
+            type: object
+            properties:
+              config:
+                description: >-
+                  Fine grained control about configuration access to other modules
+                type: object
+                properties:
+                  allow_global_read:
+                    description: Allow global read access to config items
+                    type: boolean
+                  allow_global_write:
+                    description: Allow global write access to config items
+                    type: boolean
+                  allow_set_read_only:
+                    description: Allow setting of readonly config items, will need a restart
+                    type: boolean
+                  modules:
+                    description: Module access settings
+                    type: object
+                    patternProperties:
+                      # reference to module id
+                      ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+                        type: object
+                        properties:
+                          allow_read:
+                            description: Allow read access to config items
+                            type: boolean
+                          allow_write:
+                            description: Allow write access to config items
+                            type: boolean
+                          allow_set_read_only:
+                            description: Allow setting of a readonly config items, will need a restart
+                            type: boolean
+                additionalProperties: false
+            additionalProperties: false
         # don't allow arbitrary additional properties
         additionalProperties: false
     # add empty config dict if not already present

@@ -15,7 +15,9 @@
 
 #include <utils/config/mqtt_settings.hpp>
 #include <utils/config/settings.hpp>
+#include <utils/config/storage_userconfig.hpp>
 #include <utils/config_cache.hpp>
+
 #include <utils/error.hpp>
 #include <utils/error/error_type_map.hpp>
 #include <utils/module_config.hpp>
@@ -143,7 +145,7 @@ public:
     ///
     /// \brief turns the given \p module_id into a mqtt prefix
     ///
-    std::string mqtt_module_prefix(const std::string& module_id);
+    std::string mqtt_module_prefix(const std::string& module_id) const;
 
     ///
     /// \returns a json object that contains the main config
@@ -183,7 +185,7 @@ public:
 
     ///
     /// \return the cached mapping of module ids to module names
-    std::unordered_map<std::string, std::string> get_module_names();
+    std::unordered_map<std::string, std::string> get_module_names() const;
 
     ///
     /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
@@ -217,6 +219,9 @@ private:
     const ManagerSettings& ms;
     Validators validators;
     std::unique_ptr<nlohmann::json_schema::json_validator> draft7_validator;
+    std::unique_ptr<everest::config::UserConfigStorage> user_config_storage;
+    std::map<everest::config::ConfigurationParameterIdentifier, everest::config::GetConfigurationParameterResponse>
+        database_get_config_parameter_response_cache;
 
     nlohmann::json apply_user_config_and_defaults();
 
@@ -288,6 +293,17 @@ public:
     ///
     /// \brief Create a ManagerConfig from the provided ManagerSettings \p ms
     explicit ManagerConfig(const ManagerSettings& ms);
+
+    /// \brief Sets the config \p value associated with the \p identifier
+    /// \returns if the setting of the value was successful or not
+    everest::config::SetConfigStatus
+    set_config_value(const everest::config::ConfigurationParameterIdentifier& identifier,
+                     const everest::config::ConfigEntry& value);
+
+    /// \brief Gets the configuration parameter associated with the \p identifier
+    /// \returns a result containing the configuration item or an error
+    everest::config::GetConfigurationParameterResponse
+    get_config_value(const everest::config::ConfigurationParameterIdentifier& identifier);
 };
 
 ///

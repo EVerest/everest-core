@@ -18,6 +18,9 @@ bool operator<(const Requirement& lhs, const Requirement& rhs) {
 }
 
 namespace everest::config {
+std::string config_entry_to_string(const everest::config::ConfigEntry& entry) {
+    return std::visit(VisitConfigEntry{}, entry);
+}
 
 bool ConfigurationParameter::validate_type() const {
     return std::visit(
@@ -159,31 +162,6 @@ ModuleConfigurationParameters parse_config_parameters(const json& config_json) {
     return config_maps;
 }
 
-ModuleTierMappings parse_mapping(const json& mapping_json) {
-    ModuleTierMappings mapping_config;
-
-    if (mapping_json.contains("module") && mapping_json["module"].contains("evse")) {
-        Mapping module_mapping(mapping_json["module"]["evse"].get<int32_t>());
-        if (mapping_json["module"].contains("connector")) {
-            module_mapping.connector = mapping_json["module"]["connector"].get<int32_t>();
-        }
-        mapping_config.module = module_mapping;
-    }
-
-    if (mapping_json.contains("implementations")) {
-        for (auto impl = mapping_json["implementations"].begin(); impl != mapping_json["implementations"].end();
-             ++impl) {
-            Mapping impl_mapping(impl.value().at("evse").get<int32_t>());
-            if (impl.value().contains("connector")) {
-                impl_mapping.connector = impl.value().at("connector").get<int32_t>();
-            }
-            mapping_config.implementations[impl.key()] = impl_mapping;
-        }
-    }
-
-    return mapping_config;
-}
-
 ModuleConnections parse_connections(const json& connections_json) {
     ModuleConnections connections;
 
@@ -235,11 +213,40 @@ ModuleConfig parse_module_config(const std::string& module_id, const json& modul
         module_config.telemetry_config = module_json.at("telemetry").get<TelemetryConfig>();
     }
 
+    if (module_json.contains("access")) {
+        module_config.access = module_json.at("access").get<Access>();
+    }
+
     module_config.configuration_parameters = parse_config_parameters(module_json);
 
     return module_config;
 }
 } // namespace
+
+ModuleTierMappings parse_mapping(const json& mapping_json) {
+    ModuleTierMappings mapping_config;
+
+    if (mapping_json.contains("module") && mapping_json["module"].contains("evse")) {
+        Mapping module_mapping(mapping_json["module"]["evse"].get<int32_t>());
+        if (mapping_json["module"].contains("connector")) {
+            module_mapping.connector = mapping_json["module"]["connector"].get<int32_t>();
+        }
+        mapping_config.module = module_mapping;
+    }
+
+    if (mapping_json.contains("implementations")) {
+        for (auto impl = mapping_json["implementations"].begin(); impl != mapping_json["implementations"].end();
+             ++impl) {
+            Mapping impl_mapping(impl.value().at("evse").get<int32_t>());
+            if (impl.value().contains("connector")) {
+                impl_mapping.connector = impl.value().at("connector").get<int32_t>();
+            }
+            mapping_config.implementations[impl.key()] = impl_mapping;
+        }
+    }
+
+    return mapping_config;
+}
 
 ConfigEntry parse_config_value(Datatype datatype, const std::string& value_str) {
     try {
@@ -329,6 +336,61 @@ std::string mutability_to_string(const Mutability mutability) {
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
+void adl_serializer<everest::config::ModuleConfigAccess>::to_json(nlohmann::json& j,
+                                                                  const everest::config::ModuleConfigAccess& m) {
+    j["allow_read"] = m.allow_read;
+    j["allow_write"] = m.allow_write;
+    j["allow_set_read_only"] = m.allow_set_read_only;
+}
+
+void adl_serializer<everest::config::ModuleConfigAccess>::from_json(const nlohmann::json& j,
+                                                                    everest::config::ModuleConfigAccess& m) {
+    if (j.contains("allow_read")) {
+        m.allow_read = j.at("allow_read").get<bool>();
+    }
+    if (j.contains("allow_write")) {
+        m.allow_write = j.at("allow_write").get<bool>();
+    }
+    if (j.contains("allow_set_read_only")) {
+        m.allow_set_read_only = j.at("allow_set_read_only").get<bool>();
+    }
+}
+
+void adl_serializer<everest::config::ConfigAccess>::to_json(nlohmann::json& j, const everest::config::ConfigAccess& c) {
+    j["allow_global_read"] = c.allow_global_read;
+    j["allow_global_write"] = c.allow_global_write;
+    j["allow_set_read_only"] = c.allow_set_read_only;
+    j["modules"] = c.modules;
+}
+
+void adl_serializer<everest::config::ConfigAccess>::from_json(const nlohmann::json& j,
+                                                              everest::config::ConfigAccess& c) {
+    if (j.contains("allow_global_read")) {
+        c.allow_global_read = j.at("allow_global_read").get<bool>();
+    }
+    if (j.contains("allow_global_write")) {
+        c.allow_global_write = j.at("allow_global_write").get<bool>();
+    }
+    if (j.contains("allow_set_read_only")) {
+        c.allow_set_read_only = j.at("allow_set_read_only").get<bool>();
+    }
+    if (j.contains("modules")) {
+        c.modules = j.at("modules").get<std::map<std::string, everest::config::ModuleConfigAccess>>();
+    }
+}
+
+void adl_serializer<everest::config::Access>::to_json(nlohmann::json& j, const everest::config::Access& a) {
+    if (a.config.has_value()) {
+        j["config"] = a.config.value();
+    }
+}
+
+void adl_serializer<everest::config::Access>::from_json(const nlohmann::json& j, everest::config::Access& a) {
+    if (j.contains("config")) {
+        a.config = j.at("config").get<everest::config::ConfigAccess>();
+    }
+}
+
 void adl_serializer<everest::config::ConfigurationParameterCharacteristics>::to_json(
     nlohmann::json& j, const everest::config::ConfigurationParameterCharacteristics& c) {
     j["datatype"] = datatype_to_string(c.datatype);
@@ -395,6 +457,7 @@ void adl_serializer<everest::config::ModuleConfig>::to_json(nlohmann::json& j, c
     j["telemetry_enabled"] = m.telemetry_enabled;
     j["connections"] = m.connections;
     j["mapping"] = m.mapping;
+    j["access"] = m.access;
 }
 
 void adl_serializer<everest::config::ModuleConfig>::from_json(const nlohmann::json& j,
@@ -412,6 +475,9 @@ void adl_serializer<everest::config::ModuleConfig>::from_json(const nlohmann::js
     m.telemetry_enabled = j.at("telemetry_enabled").get<bool>();
     m.connections = j.at("connections").get<everest::config::ModuleConnections>();
     m.mapping = j.at("mapping").get<ModuleTierMappings>();
+    if (j.contains("access")) {
+        m.access = j.at("access").get<everest::config::Access>();
+    }
 }
 
 NLOHMANN_JSON_NAMESPACE_END

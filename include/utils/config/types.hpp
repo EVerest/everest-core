@@ -106,6 +106,23 @@ using ModuleConnections = std::map<RequirementId, std::vector<Fulfillment>>;
 using ModuleConfigurations = std::map<ModuleId, ModuleConfig>;
 using ModuleConfigurationParameters = std::map<ImplementationIdentifier, std::vector<ConfigurationParameter>>;
 
+struct VisitConfigEntry {
+    std::string operator()(const std::string& value) const {
+        return value;
+    };
+    std::string operator()(bool value) const {
+        return value ? "true" : "false";
+    };
+    std::string operator()(int value) const {
+        return std::to_string(value);
+    };
+    std::string operator()(double value) const {
+        return std::to_string(value);
+    };
+};
+
+std::string config_entry_to_string(const everest::config::ConfigEntry& entry);
+
 enum class Mutability {
     ReadOnly,
     ReadWrite,
@@ -161,6 +178,32 @@ struct ConfigurationParameter {
 
     bool validate_type() const;
 };
+
+/// \brief Access control information to an individual module config
+struct ModuleConfigAccess {
+    bool allow_read = false;  ///< Allow read access to config items
+    bool allow_write = false; ///< Allow write access to config items
+
+    bool allow_set_read_only = false; ///< If ReadOnly config items can be treated as ReadWrite (this typically requires
+                                      ///< a reboot to have an effect)
+};
+
+/// \brief
+struct ConfigAccess {
+    bool allow_global_read = false;   ///< Allow this module to read the config items of all other modules
+    bool allow_global_write = false;  ///< Allow this module to write the config items of all other modules
+    bool allow_set_read_only = false; ///< If ReadOnly config items can be treated as ReadWrite (this typically requires
+                                      ///< a reboot to have an effect)
+    std::map<std::string, everest::config::ModuleConfigAccess>
+        modules; ///< Individual access to other modules config. The key represents the other modules module_id
+                 ///< and the value the associated access rights
+};
+
+/// \brief Access control information for a particular module
+struct Access {
+    std::optional<ConfigAccess> config; ///< Access control to other modules configuration items
+};
+
 /// \brief Struct that contains the configuration of an EVerest module
 struct ModuleConfig {
     bool standalone = false;
@@ -173,6 +216,13 @@ struct ModuleConfig {
     std::optional<TelemetryConfig> telemetry_config;
     ModuleConnections connections;
     ModuleTierMappings mapping;
+    Access access;
+};
+
+enum class SetConfigStatus {
+    Accepted,
+    Rejected,
+    RebootRequired
 };
 
 ConfigEntry parse_config_value(Datatype datatype, const std::string& value_str);
@@ -184,6 +234,8 @@ std::string datatype_to_string(const Datatype datatype);
 
 Mutability string_to_mutability(const std::string& str);
 std::string mutability_to_string(const Mutability mutability);
+
+ModuleTierMappings parse_mapping(const nlohmann::json& mapping_json);
 
 } // namespace everest::config
 
@@ -207,6 +259,21 @@ template <> struct adl_serializer<everest::config::ConfigEntry> {
 template <> struct adl_serializer<everest::config::ConfigurationParameter> {
     static void to_json(nlohmann::json& j, const everest::config::ConfigurationParameter& p);
     static void from_json(const nlohmann::json& j, everest::config::ConfigurationParameter& p);
+};
+
+template <> struct adl_serializer<everest::config::ModuleConfigAccess> {
+    static void to_json(nlohmann::json& j, const everest::config::ModuleConfigAccess& m);
+    static void from_json(const nlohmann::json& j, everest::config::ModuleConfigAccess& m);
+};
+
+template <> struct adl_serializer<everest::config::ConfigAccess> {
+    static void to_json(nlohmann::json& j, const everest::config::ConfigAccess& c);
+    static void from_json(const nlohmann::json& j, everest::config::ConfigAccess& c);
+};
+
+template <> struct adl_serializer<everest::config::Access> {
+    static void to_json(nlohmann::json& j, const everest::config::Access& c);
+    static void from_json(const nlohmann::json& j, everest::config::Access& c);
 };
 
 NLOHMANN_JSON_NAMESPACE_END

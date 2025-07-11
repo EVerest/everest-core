@@ -83,6 +83,11 @@ json MQTTAbstraction::get(const std::string& topic, QOS qos) {
     return mqtt_abstraction->get(topic, qos);
 }
 
+json MQTTAbstraction::get(const MQTTRequest& request) {
+    BOOST_LOG_FUNCTION();
+    return mqtt_abstraction->get(request);
+}
+
 const std::string& MQTTAbstraction::get_everest_prefix() const {
     BOOST_LOG_FUNCTION();
     return everest_prefix;
