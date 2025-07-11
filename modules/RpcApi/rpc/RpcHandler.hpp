@@ -130,7 +130,7 @@ private:
     methods::ChargePoint m_methods_chargepoint;
     methods::Evse m_methods_evse;
     ClientConnector m_conn;
-    notifications::Evse* m_notifications_evse;
+    std::unique_ptr<notifications::Evse> m_notifications_evse;
 };
 } // namespace rpc
 
