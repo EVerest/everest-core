@@ -30,6 +30,8 @@ void subscribe_global_all_errors(
 std::shared_ptr<Everest::error::ErrorStateMonitor> get_global_error_state_monitor();
 {% endif %}
 
+std::shared_ptr<Everest::config::ConfigServiceClient> get_config_service_client();
+
 } // namespace module
 
 #endif // {{ info.hpp_guard }}

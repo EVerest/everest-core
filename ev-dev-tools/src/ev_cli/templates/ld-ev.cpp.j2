@@ -57,6 +57,11 @@ std::shared_ptr<Everest::error::ErrorStateMonitor> get_global_error_state_monito
 }
 
 {% endif %}
+
+std::shared_ptr<Everest::config::ConfigServiceClient> get_config_service_client() {
+    return adapter.get_config_service_client();
+}
+
 void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG_debug << "init() called on module {{ info.name }}";
 
