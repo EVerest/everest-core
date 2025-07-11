@@ -77,6 +77,16 @@ async def test_invalid_payloads(
         test_utility, charge_point_v201, "RpcFrameworkError"
     )
 
+    # a malformed CALL should trigger a RpcFrameworkError CALLERROR
+    call_msg = b"\xd8\x00\x00\x00"
+
+    async with charge_point_v201._call_lock:
+        await charge_point_v201._send(call_msg)
+
+    assert await wait_for_callerror_and_validate(
+        test_utility, charge_point_v201, "RpcFrameworkError"
+    )
+
     # a invalid payload should trigger a FormationViolation CALLERROR
     call_msg = Call(
         unique_id=str(charge_point_v201._unique_id_generator()),

@@ -403,3 +403,25 @@ async def test_too_long_payload_field(
     assert await wait_for_callerror_and_validate(
         test_utility, charge_point_v16, "FormationViolation"
     )
+
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-sil-ocpp.yaml")
+)
+@pytest.mark.asyncio
+async def test_invalid_encoding_in_payload(
+    test_config,
+    charge_point_v16: ChargePoint16,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
+    logging.info("######### test_invalid_encoding_in_payload #########")
+
+    # a malformed CALL should trigger a RpcFrameworkError CALLERROR
+    call_msg = b"\xd8\x00\x00\x00"
+
+    async with charge_point_v16._call_lock:
+        await charge_point_v16._send(call_msg)
+
+    assert await wait_for_callerror_and_validate(
+        test_utility, charge_point_v16, "GenericError"
+    )
