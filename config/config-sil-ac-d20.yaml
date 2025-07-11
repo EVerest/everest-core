@@ -15,6 +15,7 @@ active_modules:
       supported_ISO15118_2: false
       supported_ISO15118_20_DC: false
       supported_ISO15118_20_AC: true
+      supported_d20_energy_services: "AC, AC_BPT"
       tls_active: true
       enable_tls_1_3: true
   evse_manager:
@@ -31,7 +32,7 @@ active_modules:
       has_ventilation: true
       max_current_import_A: 32
       max_current_export_A: 32
-      payment_enable_contract: true
+      payment_enable_contract: false
       payment_enable_eim: true
       session_logging: true
       session_logging_path: /tmp/everest-logs
@@ -72,7 +73,7 @@ active_modules:
       connector_id: 1
       auto_enable: true
       auto_exec: false
-      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session AC;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;iso_wait_for_stop 60;iso_wait_v2g_session_stopped;unplug
+      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session AC;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;iso_wait_for_stop 20;iso_wait_v2g_session_stopped;unplug
       dc_target_current: 20
       dc_target_voltage: 400
     connections:
