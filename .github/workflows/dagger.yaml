@@ -16,7 +16,7 @@ jobs:
                   ${{ github.workspace }}/cache
             - name: Check cache
               run: |
-                tree ${{ github.workspace }}/cache -L2
+                tree -L 2 ${{ github.workspace }}/cache
             - name: Initialize empty cache if necessary
               if: steps.cache-restore.outputs.cache-hit != 'true'
               run: |
