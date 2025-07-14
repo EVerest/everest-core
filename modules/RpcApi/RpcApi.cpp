@@ -63,6 +63,7 @@ void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data, const type
                 evse_data.sessioninfo.start_energy_export_wh_was_set = false;
             }
         }
+        evse_data.evsestatus.set_charging_allowed(true);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::TransactionFinished) {
         if (session_event.transaction_finished.has_value()) {
             auto transaction_finished = session_event.transaction_finished.value();
@@ -79,6 +80,7 @@ void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data, const type
         evse_data.evsestatus.set_charged_energy_wh(evse_data.sessioninfo.get_charged_energy_wh()); 
         evse_data.evsestatus.set_discharged_energy_wh(evse_data.sessioninfo.get_discharged_energy_wh());
         evse_data.evsestatus.set_charging_duration_s(evse_data.sessioninfo.get_charging_duration_s().count());
+        evse_data.evsestatus.set_charging_allowed(false);
     }
 }
 
