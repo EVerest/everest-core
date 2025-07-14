@@ -15,7 +15,7 @@ nlohmann_json_schema_validator:
     ]
 liblog:
   git: https://github.com/EVerest/liblog.git
-  git_tag: v0.2.2
+  git_tag: v0.3.0
   options: ["BUILD_EXAMPLES OFF"]
 libtimer:
   git: https://github.com/EVerest/libtimer.git
@@ -27,7 +27,7 @@ date:
   options: ["BUILD_TZ_LIB ON", "HAS_REMOTE_API 0", "USE_AUTOLOAD 0", "USE_SYSTEM_TZ_DB ON"]
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: 3b1231392c9f93e1a1375e4691cb20b83cc63a9b
+  git_tag: v0.9.7
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
   git_tag: v4.3.3
