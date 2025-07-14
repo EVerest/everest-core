@@ -1728,8 +1728,13 @@ float Charger::get_max_current_internal() {
     auto maxc = shared_context.max_current;
 
     if (connector_type == types::evse_board_support::Connector_type::IEC62196Type2Socket and
-        shared_context.max_current_cable < maxc and shared_context.current_state not_eq EvseState::Idle) {
-        maxc = shared_context.max_current_cable;
+        shared_context.current_state not_eq EvseState::Idle) {
+        // todo(moe): fix negative current limits
+        if (maxc > shared_context.max_current_cable) {
+            maxc = shared_context.max_current_cable;
+        } else if (maxc < -shared_context.max_current_cable) {
+            maxc = -shared_context.max_current_cable;
+        }
     }
 
     return maxc;

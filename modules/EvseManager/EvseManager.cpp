@@ -900,7 +900,8 @@ void EvseManager::ready() {
     charger->signal_max_current.connect([this](float ampere) {
         // The charger changed the max current setting. Forward to HLC
         if (hlc_enabled) {
-            r_hlc[0]->call_update_ac_max_current(ampere); // ISO-2
+            // todo(moe): check; should this be abs or not
+            r_hlc[0]->call_update_ac_max_current(fabs(ampere)); // ISO-2
 
             if (selected_d20_energy_service.has_value() and
                 (selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC or
