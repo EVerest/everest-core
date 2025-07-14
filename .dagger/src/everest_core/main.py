@@ -278,15 +278,15 @@ class EverestCore:
 
         async with asyncio.TaskGroup() as tg:
             build_kit_task = tg.create_task(self.build_kit())
-            async def artifacts_build_kit_task_fn():
-                nonlocal build_kit_task, artifacts, artifacts_mutex
-                res_build_kit = await build_kit_task
-                async with artifacts_mutex:
-                    artifacts = artifacts.with_file(
-                        "build-kit-image.tar.gz",
-                        await res_build_kit.container.as_tarball(),
-                    )
-            tg.create_task(artifacts_build_kit_task_fn())
+            # async def artifacts_build_kit_task_fn():
+            #     nonlocal build_kit_task, artifacts, artifacts_mutex
+            #     res_build_kit = await build_kit_task
+            #     async with artifacts_mutex:
+            #         artifacts = artifacts.with_file(
+            #             "build-kit-image.tar.gz",
+            #             await res_build_kit.container.as_tarball(),
+            #         )
+            # tg.create_task(artifacts_build_kit_task_fn())
 
             async def lint_task_fn() -> EverestCI.ClangFormatResult:
                 nonlocal build_kit_task
