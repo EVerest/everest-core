@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(everest-sqlite VERSION 0.1.1
+project(everest-sqlite VERSION 0.1.2
         DESCRIPTION "SQLite wrapper for EVerest"
         LANGUAGES CXX C
 )
@@ -71,6 +71,8 @@ if (EVEREST_SQLITE_INSTALL)
         EXPORT everest_sqlite-targets
         ADDITIONAL_CONTENT
             "find_dependency(everest-log)"
+            "find_dependency(SQLite3)"
+            "include($\{CMAKE_CURRENT_LIST_DIR\}/cmake/CollectMigrationFiles.cmake)"
     )
 endif()
 
