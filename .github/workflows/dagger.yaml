@@ -12,24 +12,22 @@ jobs:
               uses: actions/cache/restore@v4
               with:
                 key: cache-${{ github.repository }}
-                path: |
-                  ${{ github.workspace }}/cache
-            - name: Check cache
-              run: |
-                mkdir -p ${{ github.workspace }}/cache
-                tree -L 2 ${{ github.workspace }}/cache
+                path: ${{ github.workspace }}/outputs/cache
             - name: Initialize empty cache if necessary
               if: steps.cache-restore.outputs.cache-hit != 'true'
               run: |
-                mkdir -p ${{ github.workspace }}/cache/ccache
-                mkdir -p ${{ github.workspace }}/cache/CPM
+                mkdir -p ${{ github.workspace }}/outputs/cache/ccache
+                mkdir -p ${{ github.workspace }}/outputs/cache/CPM
+            - name: Check cache
+              run: |
+                tree -L 2 ${{ github.workspace }}/outputs/cache
             - name: Setup Dagger
               uses: dagger/dagger-for-github@8.0.0
               with:
                 version: 0.18.12
                 workdir: ${{ github.workspace }}
                 module: github.com/${{ github.repository}}@${{ github.ref }}
-                call: --cache-dir ${{ github.workspace }}/cache pull-request outputs export --path outputs
+                call: --cache-dir ${{ github.workspace }}/outputs/cache pull-request outputs export --path outputs
             - name: Save Cache
               uses: actions/cache/save@v4
               with:
