@@ -108,19 +108,23 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     });
     evse_manager->subscribe_evse_id(
         [this, &evse_data](const std::string& evse_id) {
-            // set the EVSE id in the data store
-            evse_data.evseinfo.set_id(evse_id);
+        // set the EVSE id in the data store
+        evse_data.evseinfo.set_id(evse_id);
     });
     //TODO: get bidi charging support info from interface
     evse_data.evseinfo.set_bidi_charging(false);
 
     evse_manager->subscribe_session_event(
         [this, &evse_data](types::evse_manager::SessionEvent session_event) {
-            // store the session info in the data store
-            types::json_rpc_api::EVSEStateEnum evse_state =
-            types::json_rpc_api::evse_manager_session_event_to_evse_state(session_event);
-            check_evse_session_event(evse_data, session_event);
-            evse_data.evsestatus.set_state(evse_state);
+        // store the session info in the data store
+        types::json_rpc_api::EVSEStateEnum evse_state =
+        types::json_rpc_api::evse_manager_session_event_to_evse_state(session_event);
+        check_evse_session_event(evse_data, session_event);
+        evse_data.evsestatus.set_state(evse_state);
+    });
+    evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
+        auto var_selected_protocol = types::json_rpc_api::evse_manager_protocol_to_charge_protocol(selected_protocol);
+        evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
     });
 }
 
