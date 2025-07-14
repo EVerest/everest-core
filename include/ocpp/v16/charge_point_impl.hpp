@@ -10,6 +10,7 @@
 #include <iostream>
 #include <mutex>
 #include <ocpp/common/support_older_cpp_versions.hpp>
+#include <optional>
 #include <set>
 
 #include <everest/timer.hpp>
@@ -417,6 +418,19 @@ public:
 
     ~ChargePointImpl() {
     }
+
+    /// \brief Allow to update the ChargePoint core information which will be sent in BootNotification.req
+    void update_chargepoint_information(const std::string& vendor, const std::string& model,
+                                        const std::optional<std::string>& serialnumber,
+                                        const std::optional<std::string>& chargebox_serialnumber,
+                                        const std::optional<std::string>& firmware_version);
+
+    /// \brief Allow to update the ChargePoint modem information
+    void update_modem_information(const std::optional<std::string>& iccid, const std::optional<std::string>& imsi);
+
+    /// \brief Allow to update the ChargePoint meter information
+    void update_meter_information(const std::optional<std::string>& meter_serialnumber,
+                                  const std::optional<std::string>& meter_type);
 
     /// \brief Initializes the ChargePoint and all of it's connectors, the state machine and message queue. This method
     /// should be called if a more granular start of the process is necessary. Notably if it is necessary for the state

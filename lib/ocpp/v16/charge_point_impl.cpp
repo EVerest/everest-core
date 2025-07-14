@@ -1090,6 +1090,24 @@ void ChargePointImpl::reset_pricing_triggers(const int32_t connector_number) {
     }
 }
 
+void ChargePointImpl::update_chargepoint_information(const std::string& vendor, const std::string& model,
+                                                     const std::optional<std::string>& serialnumber,
+                                                     const std::optional<std::string>& chargebox_serialnumber,
+                                                     const std::optional<std::string>& firmware_version) {
+    this->configuration->setChargepointInformation(vendor, model, serialnumber, chargebox_serialnumber,
+                                                   firmware_version);
+}
+
+void ChargePointImpl::update_modem_information(const std::optional<std::string>& iccid,
+                                               const std::optional<std::string>& imsi) {
+    this->configuration->setChargepointModemInformation(iccid, imsi);
+}
+
+void ChargePointImpl::update_meter_information(const std::optional<std::string>& meter_serialnumber,
+                                               const std::optional<std::string>& meter_type) {
+    this->configuration->setChargepointMeterInformation(meter_serialnumber, meter_type);
+}
+
 bool ChargePointImpl::init(const std::map<int, ChargePointStatus>& connector_status_map,
                            const std::set<std::string>& resuming_session_ids) {
     // push transaction messages including SecurityEventNotification.req onto the message queue
