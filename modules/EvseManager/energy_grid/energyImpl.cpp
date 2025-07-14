@@ -393,10 +393,12 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             // todo(moe): rename a to something more meaningful
             float a = value.limits_root_side.total_power_W.value().value / mod->config.ac_nominal_voltage /
                       mod->ac_nr_phases_active;
-            // todo(moe): is `a` negative when discharging?
-            // if (a < limit) {
-            //     limit = a;
-            // }
+            // todo(moe): verify
+            if (limit > 0 and limit > a) {
+                limit = a;
+            } else if (limit < 0 and limit < a) {
+                limit = a;
+            }
         }
 
         auto enforced_limit = limit;
