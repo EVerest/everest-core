@@ -98,7 +98,6 @@ public:
 
     // external input to charger: update max_current and new validUntil
     bool set_max_current(float ampere, std::chrono::time_point<date::utc_clock> validUntil);
-    float get_max_current();
 
     sigslot::signal<float> signal_max_current;
 
@@ -293,7 +292,7 @@ private:
         // set to true if auth is from PnC, otherwise to false (EIM)
         bool authorized_pnc;
         bool matching_started;
-        float max_current;
+        float max_current; // positive value means charging EV, negative means discharging EV
         std::chrono::time_point<date::utc_clock> max_current_valid_until;
         float max_current_cable{0.};
         bool transaction_active;

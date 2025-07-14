@@ -15,7 +15,7 @@ active_modules:
       supported_ISO15118_2: false
       supported_ISO15118_20_DC: false
       supported_ISO15118_20_AC: true
-      supported_d20_energy_services: "AC, AC_BPT"
+      supported_d20_energy_services: "AC_BPT, AC"
       tls_active: true
       enable_tls_1_3: true
   evse_manager:
@@ -25,6 +25,7 @@ active_modules:
       ac_hlc_enabled: true
       ac_hlc_use_5percent: false
       ac_nominal_voltage: 230
+      supported_iso_ac_bpt: true
       charge_mode: AC
       connector_id: 1
       ev_receipt_required: false

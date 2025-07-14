@@ -273,12 +273,15 @@ void EvseManager::ready() {
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
             r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-            constexpr auto support_bidi = false;
-
             // FIXME: we cannot change this during run time at the moment. Refactor ISO interface to exclude transfer
             // modes from setup
             // transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
-            transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, support_bidi});
+            // note: support AC in any case; support for BPT is optional
+            transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, false});
+
+            if (config.supported_iso_ac_bpt) {
+                transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, true});
+            }
 
             types::iso15118::AcEvseMaximumPower ac_maximum_power;
             const float max_charge_power_per_phase = config.ac_nominal_voltage * hw_capabilities.max_current_A_import;
@@ -515,15 +518,6 @@ void EvseManager::ready() {
                 }
             });
 
-            r_hlc[0]->subscribe_selected_service_parameters(
-                [this](types::iso15118::SelectedServiceParameters parameters) {
-                    selected_d20_energy_service.emplace(parameters.energy_transfer);
-
-                    session_log.car(
-                        true, fmt::format("EV selected service: {}",
-                                          types::iso15118::service_category_to_string(parameters.energy_transfer)));
-                });
-
             // Car requests DC contactor open. We don't actually open but switch off DC supply.
             // opening will be done by Charger on C->B CP event.
             r_hlc[0]->subscribe_dc_open_contactor([this] {
@@ -671,6 +665,13 @@ void EvseManager::ready() {
             EVLOG_error << "Unsupported charging mode.";
             exit(255);
         }
+
+        r_hlc[0]->subscribe_selected_service_parameters([this](types::iso15118::SelectedServiceParameters parameters) {
+            selected_d20_energy_service.emplace(parameters.energy_transfer);
+
+            session_log.car(true, fmt::format("EV selected service: {}",
+                                              types::iso15118::service_category_to_string(parameters.energy_transfer)));
+        });
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
@@ -863,6 +864,13 @@ void EvseManager::ready() {
 
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
                          p.energy_Wh_import.total / 1000.);
+
+            if (p.energy_Wh_export.has_value()) {
+                mqtt.publish(
+                    fmt::format("everest_external/nodered/{}/powermeter/totalExportKWattHr", config.connector_id),
+                    p.energy_Wh_export.value().total / 1000.);
+            }
+
             json j;
             to_json(j, p);
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id), j.dump());
@@ -900,11 +908,13 @@ void EvseManager::ready() {
     charger->signal_max_current.connect([this](float ampere) {
         // The charger changed the max current setting. Forward to HLC
         if (hlc_enabled) {
-            r_hlc[0]->call_update_ac_max_current(ampere); // ISO-2
+            if (not selected_d20_energy_service.has_value() and ampere >= 0.0) {
+                r_hlc[0]->call_update_ac_max_current(ampere); // ISO-2
+                return;
+            }
 
-            if (selected_d20_energy_service.has_value() and
-                (selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC or
-                 selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT)) {
+            if (selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC or
+                selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT) {
                 const auto power = get_latest_powermeter_data_billing();
                 if (not power.voltage_V.has_value()) {
                     return;
@@ -2001,9 +2011,27 @@ types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
     if (external_local_energy_limits.schedule_import.empty() and external_local_energy_limits.schedule_export.empty()) {
         if (config.charge_mode == "AC") {
             // by default we import energy
-            update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import);
+            // update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import);
+            types::energy::ScheduleReqEntry e;
+            e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+
+            e.limits_to_leaves.ac_max_current_A = {get_hw_capabilities().max_current_A_import,
+                                                   info.id + "update_max_current_limit"};
+            active_local_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+            e.limits_to_leaves.ac_max_current_A = {get_hw_capabilities().max_current_A_export,
+                                                   info.id + "update_max_current_limit"};
+            active_local_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+
         } else {
-            update_max_watt_limit(active_local_limits, get_powersupply_capabilities().max_export_power_W);
+            // update_max_watt_limit(active_local_limits, get_powersupply_capabilities().max_export_power_W);
+            types::energy::ScheduleReqEntry e;
+            e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+            e.limits_to_leaves.total_power_W = {get_powersupply_capabilities().max_export_power_W,
+                                                info.id + "update_max_watt_limit"};
+            active_local_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+            e.limits_to_leaves.total_power_W = {get_powersupply_capabilities().max_import_power_W.value_or(0.0f),
+                                                info.id + "update_max_watt_limit"};
+            active_local_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
         }
     } else {
         // apply external limits if they are lower
@@ -2036,6 +2064,11 @@ void EvseManager::apply_new_target_voltage_current() {
     if (latest_target_voltage > 0) {
         powersupply_DC_set(latest_target_voltage, latest_target_current);
     }
+}
+
+bool EvseManager::session_is_iso_d20_ac_bpt() {
+    return selected_d20_energy_service.has_value() &&
+           selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT;
 }
 
 } // namespace module

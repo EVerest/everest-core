@@ -67,6 +67,7 @@ struct Conf {
     double max_current_import_A;
     double max_current_export_A;
     std::string charge_mode;
+    bool supported_iso_ac_bpt;
     bool ac_hlc_enabled;
     bool ac_hlc_use_5percent;
     bool ac_enforce_hlc;
@@ -231,6 +232,8 @@ public:
     std::chrono::time_point<date::utc_clock> random_delay_start_time;
     std::atomic<std::chrono::seconds> random_delay_max_duration;
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
+
+    bool session_is_iso_d20_ac_bpt();
 
     types::power_supply_DC::Capabilities get_powersupply_capabilities() {
         std::scoped_lock lock(powersupply_capabilities_mutex);
