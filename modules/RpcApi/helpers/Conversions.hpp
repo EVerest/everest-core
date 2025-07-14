@@ -9,6 +9,7 @@
 namespace types {
 namespace json_rpc_api {
     EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::SessionEvent state);
+    ChargeProtocolEnum evse_manager_protocol_to_charge_protocol(std::string protocol);
 } // namespace json_rpc_api
 } // namespace types
 
