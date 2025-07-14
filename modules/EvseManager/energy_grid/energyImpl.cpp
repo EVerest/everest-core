@@ -390,11 +390,13 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
                               value.limits_root_side.total_power_W.value().value);
 
+            // todo(moe): rename a to something more meaningful
             float a = value.limits_root_side.total_power_W.value().value / mod->config.ac_nominal_voltage /
                       mod->ac_nr_phases_active;
-            if (a < limit) {
-                limit = a;
-            }
+            // todo(moe): is `a` negative when discharging?
+            // if (a < limit) {
+            //     limit = a;
+            // }
         }
 
         auto enforced_limit = limit;
@@ -426,6 +428,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 limit_when_random_delay_started = last_enforced_limit;
             }
 
+            // todo(moe): check if negative enforced_limits works with random delay code
             // If a delay is running, replace the current limit with the stored value
             if (mod->random_delay_running) {
                 // use limit from the time point when the random delay started
@@ -465,7 +468,8 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             // export
             // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
             // this needs to be fixed in transition to -20 AC bidirectional.
-            mod->charger->set_max_current(0, Everest::Date::from_rfc3339(value.valid_until));
+            // todo(moe): check cases for non -20 AC_BPT
+            mod->charger->set_max_current(limit, Everest::Date::from_rfc3339(value.valid_until));
         }
 
         if (limit > 1e-5 || limit < -1e-5)
