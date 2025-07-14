@@ -233,6 +233,7 @@ void EvseManager::ready() {
         });
 
         r_hlc[0]->subscribe_dlink_terminate([this] {
+            selected_d20_energy_service.reset();
             session_log.evse(true, "D-LINK_TERMINATE.req");
             charger->dlink_terminate();
             r_slac[0]->call_dlink_terminate();
@@ -278,6 +279,32 @@ void EvseManager::ready() {
             // modes from setup
             // transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
             transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, support_bidi});
+
+            types::iso15118::AcEvseMaximumPower ac_maximum_power;
+            const float max_charge_power_per_phase = config.ac_nominal_voltage * hw_capabilities.max_current_A_import;
+            const float max_discharge_power_per_phase =
+                config.ac_nominal_voltage * hw_capabilities.max_current_A_export;
+
+            ac_maximum_power.charge_power.total = max_charge_power_per_phase * hw_capabilities.max_phase_count_import;
+            // TODO(SL): Check max_phase_count_import and setting ac_maximum_power.L1, .L2 and .L3
+            ac_maximum_power.discharge_power.emplace(
+                types::units::Power{max_discharge_power_per_phase * hw_capabilities.max_phase_count_export});
+            // TODO(SL): Check max_phase_count_import and setting ac_maximum_power.L1, .L2 and .L3
+            r_hlc[0]->call_update_ac_maximum_limits(ac_maximum_power);
+
+            types::iso15118::AcEvseMinimumPower ac_minimum_power;
+            const float min_charge_power_per_phase = config.ac_nominal_voltage * hw_capabilities.min_current_A_import;
+            const float min_discharge_power_per_phase =
+                config.ac_nominal_voltage * hw_capabilities.min_current_A_export;
+            ac_minimum_power.charge_power.total = min_charge_power_per_phase * hw_capabilities.max_phase_count_import;
+            // TODO(SL): Check max_phase_count_import and setting ac_minimum_power.L1, .L2 and .L3
+            ac_minimum_power.discharge_power.emplace(
+                types::units::Power{min_discharge_power_per_phase * hw_capabilities.max_phase_count_export});
+            // TODO(SL): Check max_phase_count_import and setting ac_minimum_power.L1, .L2 and .L3
+            r_hlc[0]->call_update_ac_minimum_limits(ac_minimum_power);
+
+            r_hlc[0]->call_update_ac_parameters(
+                {50, std::nullopt, std::nullopt}); // TODO(sl): Getting nominal frequency
 
         } else if (config.charge_mode == "DC") {
             transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, false});
@@ -487,6 +514,15 @@ void EvseManager::ready() {
                     }
                 }
             });
+
+            r_hlc[0]->subscribe_selected_service_parameters(
+                [this](types::iso15118::SelectedServiceParameters parameters) {
+                    selected_d20_energy_service.emplace(parameters.energy_transfer);
+
+                    session_log.car(
+                        true, fmt::format("EV selected service: {}",
+                                          types::iso15118::service_category_to_string(parameters.energy_transfer)));
+                });
 
             // Car requests DC contactor open. We don't actually open but switch off DC supply.
             // opening will be done by Charger on C->B CP event.
@@ -792,6 +828,11 @@ void EvseManager::ready() {
             // Inform HLC about the power meter data
             if (hlc_enabled) {
                 r_hlc[0]->call_update_meter_info(p);
+
+                if (p.power_W) {
+                    r_hlc[0]->call_update_ac_present_power(
+                        p.power_W.value()); // TODO(SL): Check if this is a problem with dc
+                }
             }
 
             // Store local cache
@@ -859,7 +900,39 @@ void EvseManager::ready() {
     charger->signal_max_current.connect([this](float ampere) {
         // The charger changed the max current setting. Forward to HLC
         if (hlc_enabled) {
-            r_hlc[0]->call_update_ac_max_current(ampere);
+            r_hlc[0]->call_update_ac_max_current(ampere); // ISO-2
+
+            if (selected_d20_energy_service.has_value() and
+                (selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC or
+                 selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT)) {
+                const auto power = get_latest_powermeter_data_billing();
+                if (not power.voltage_V.has_value()) {
+                    return;
+                }
+                const auto voltage_V = power.voltage_V.value();
+
+                types::units::Power target_power{0};
+
+                if (voltage_V.L1.has_value()) {
+                    const auto power = ampere * voltage_V.L1.value();
+                    target_power.total += power;
+                    target_power.L1 = power;
+                }
+                if (voltage_V.L2.has_value()) {
+                    const auto power = ampere * voltage_V.L2.value();
+                    target_power.total += power;
+                    target_power.L2 = power;
+                }
+                if (voltage_V.L3.has_value()) {
+                    const auto power = ampere * voltage_V.L3.value();
+                    target_power.total += power;
+                    target_power.L3 = power;
+                }
+
+                // TODO(SL): Adding target frequency
+                // TODO(SL): Adding reactive power
+                r_hlc[0]->call_update_ac_target_values({target_power});
+            }
         }
     });
 

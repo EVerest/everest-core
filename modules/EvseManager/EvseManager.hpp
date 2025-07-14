@@ -367,6 +367,8 @@ private:
     std::condition_variable powermeter_cv;
     bool initial_powermeter_value_received{false};
 
+    std::optional<types::iso15118::ServiceCategory> selected_d20_energy_service{std::nullopt};
+
     std::atomic<types::power_supply_DC::ChargingPhase> power_supply_DC_charging_phase{
         types::power_supply_DC::ChargingPhase::Other};
 
