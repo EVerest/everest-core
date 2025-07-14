@@ -299,11 +299,13 @@ bool RpcApi::check_evse_mapping() {
                         connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
                     }
                     evse_data->evseinfo.set_available_connector(connector);
+                    evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
                 }
             } else {
                 connector.id = 1;
                 connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown;
                 evse_data->evseinfo.set_available_connector(connector);
+                evse_data->evsestatus.set_active_connector_id(connector.id);
                 EVLOG_error << "Please configure an evse mapping to your configuration file for the connected ";
                 return false;
             }
