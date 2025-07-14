@@ -129,10 +129,10 @@ cmds:
         minimum: 0
         maximum: 400
   update_ac_parameters:
-    description: TODO(SL). Call at least once during start up
+    description: Update the d20 initial ac parameters. Call at least once during start up
     arguments:
       ac_parameters:
-        description: TODO(SL)
+        description: Ac parameters the EVSE is setting
         type: object
         $ref: /iso15118#/AcParameters
   update_ac_maximum_limits:
@@ -391,3 +391,7 @@ vars:
   meter_info_requested:
     description: The EV requested meter infos from the EVSE
     type: "null"
+  selected_service_parameters:
+    description: From the EV selected service parameters
+    type: object
+    $ref: /iso15118#/SelectedServiceParameters

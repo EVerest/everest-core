@@ -233,6 +233,7 @@ void EvseManager::ready() {
         });
 
         r_hlc[0]->subscribe_dlink_terminate([this] {
+            selected_d20_energy_service.reset();
             session_log.evse(true, "D-LINK_TERMINATE.req");
             charger->dlink_terminate();
             r_slac[0]->call_dlink_terminate();
@@ -513,6 +514,15 @@ void EvseManager::ready() {
                     }
                 }
             });
+
+            r_hlc[0]->subscribe_selected_service_parameters(
+                [this](types::iso15118::SelectedServiceParameters parameters) {
+                    selected_d20_energy_service.emplace(parameters.energy_transfer);
+
+                    session_log.car(
+                        true, fmt::format("EV selected service: {}",
+                                          types::iso15118::service_category_to_string(parameters.energy_transfer)));
+                });
 
             // Car requests DC contactor open. We don't actually open but switch off DC supply.
             // opening will be done by Charger on C->B CP event.
@@ -892,33 +902,37 @@ void EvseManager::ready() {
         if (hlc_enabled) {
             r_hlc[0]->call_update_ac_max_current(ampere); // ISO-2
 
-            const auto power = get_latest_powermeter_data_billing();
-            if (not power.voltage_V.has_value()) {
-                return;
-            }
-            const auto voltage_V = power.voltage_V.value();
+            if (selected_d20_energy_service.has_value() and
+                (selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC or
+                 selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT)) {
+                const auto power = get_latest_powermeter_data_billing();
+                if (not power.voltage_V.has_value()) {
+                    return;
+                }
+                const auto voltage_V = power.voltage_V.value();
 
-            types::units::Power target_power{0};
+                types::units::Power target_power{0};
 
-            if (voltage_V.L1.has_value()) {
-                const auto power = ampere * voltage_V.L1.value();
-                target_power.total += power;
-                target_power.L1 = power;
-            }
-            if (voltage_V.L2.has_value()) {
-                const auto power = ampere * voltage_V.L2.value();
-                target_power.total += power;
-                target_power.L2 = power;
-            }
-            if (voltage_V.L3.has_value()) {
-                const auto power = ampere * voltage_V.L3.value();
-                target_power.total += power;
-                target_power.L3 = power;
-            }
+                if (voltage_V.L1.has_value()) {
+                    const auto power = ampere * voltage_V.L1.value();
+                    target_power.total += power;
+                    target_power.L1 = power;
+                }
+                if (voltage_V.L2.has_value()) {
+                    const auto power = ampere * voltage_V.L2.value();
+                    target_power.total += power;
+                    target_power.L2 = power;
+                }
+                if (voltage_V.L3.has_value()) {
+                    const auto power = ampere * voltage_V.L3.value();
+                    target_power.total += power;
+                    target_power.L3 = power;
+                }
 
-            // TODO(SL): Adding target frequency
-            // TODO(SL): Adding reactive power
-            r_hlc[0]->call_update_ac_target_values({target_power});
+                // TODO(SL): Adding target frequency
+                // TODO(SL): Adding reactive power
+                r_hlc[0]->call_update_ac_target_values({target_power});
+            }
         }
     });
 

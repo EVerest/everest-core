@@ -623,7 +623,7 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         // if (const auto* ac_transfer_mode = std::get_if<dt::AC_CPDReqEnergyTransferMode>(limits)) {
 
         // } else if (const auto* ac_bpt_transfer_mode = std::get_if<dt::BPT_AC_CPDReqEnergyTransferMode>(limits)) {
-            
+
         // }
     };
 
@@ -698,6 +698,75 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
     callbacks.evccid = [this](const std::string& evccid) { publish_evcc_id(evccid); };
 
     callbacks.selected_protocol = [this](const std::string& protocol) { publish_selected_protocol(protocol); };
+
+    callbacks.selected_service_parameters = [this](const iso15118::d20::SelectedServiceParameters& parameters) {
+        types::iso15118::SelectedServiceParameters selected_parameters{};
+
+        if (parameters.selected_energy_service == dt::ServiceCategory::AC) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::AC;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::DC) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::DC;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::WPT) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::WPT;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::DC_ACDP) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::DC_ACDP;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::AC_BPT) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::AC_BPT;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::DC_BPT) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::DC_BPT;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::DC_ACDP_BPT) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::DC_ACDP_BPT;
+        } else {
+            EVLOG_critical << "Energy service is apperantly no energy service!";
+        }
+
+        if (const auto* ac_connector = std::get_if<dt::AcConnector>(&parameters.selected_connector)) {
+            if (*ac_connector == dt::AcConnector::SinglePhase) {
+                selected_parameters.connector = types::iso15118::Connector::SinglePhase;
+            } else {
+                selected_parameters.connector = types::iso15118::Connector::ThreePhase;
+            }
+        } else if (const auto* dc_connector = std::get_if<dt::DcConnector>(&parameters.selected_connector)) {
+            if (*dc_connector == dt::DcConnector::Core) {
+                selected_parameters.connector = types::iso15118::Connector::Core;
+            } else if (*dc_connector == dt::DcConnector::Extended) {
+                selected_parameters.connector = types::iso15118::Connector::Extended;
+            } else if (*dc_connector == dt::DcConnector::Dual2) {
+                selected_parameters.connector = types::iso15118::Connector::Dual2;
+            } else {
+                selected_parameters.connector = types::iso15118::Connector::Dual4;
+            }
+        }
+
+        if (parameters.selected_control_mode == dt::ControlMode::Scheduled) {
+            selected_parameters.control_mode = types::iso15118::ControlMode::ScheduledControl;
+        } else {
+            selected_parameters.control_mode = types::iso15118::ControlMode::DynamicControl;
+        }
+        if (parameters.selected_mobility_needs_mode == dt::MobilityNeedsMode::ProvidedByEvcc) {
+            selected_parameters.mobility_needs_mode = types::iso15118::MobilityNeedsMode::EVCC;
+        } else {
+            selected_parameters.mobility_needs_mode = types::iso15118::MobilityNeedsMode::EVCC_SECC;
+        }
+        selected_parameters.pricing = static_cast<types::iso15118::Pricing>(parameters.selected_pricing);
+
+        if (parameters.selected_bpt_channel.has_value()) {
+            if (parameters.selected_bpt_channel.value() == dt::BptChannel::Unified) {
+                selected_parameters.bpt_channel = types::iso15118::BptChannel::Unified;
+            } else {
+                selected_parameters.bpt_channel = types::iso15118::BptChannel::Separated;
+            }
+        }
+        if (parameters.selected_generator_mode.has_value()) {
+            if (parameters.selected_generator_mode.value() == dt::GeneratorMode::GridFollowing) {
+                selected_parameters.generator_mode = types::iso15118::GeneratorMode::GridFollowing;
+            } else {
+                selected_parameters.generator_mode = types::iso15118::GeneratorMode::GridForming;
+            }
+        }
+
+        publish_selected_service_parameters(selected_parameters);
+    };
 
     callbacks.selected_vas_services = [this](const dt::VasSelectedServiceList& selected_services) {
         // Group selected services by VAS provider index

@@ -701,6 +701,29 @@ types:
       - VoltWatt
       - WattPF
       - WattVar
+  ServiceCategory:
+    description: Different service (energy and VAS) in ISO15118-20
+    type: string
+    enum:
+      - AC
+      - DC
+      - WPT
+      - DC_ACDP
+      - AC_BPT
+      - DC_BPT
+      - DC_ACDP_BPT
+      - Internet
+      - ParkingStatus
+  Connector:
+    description: Different AC and DC connector
+    type: string
+    enum:
+      - SinglePhase
+      - ThreePhase
+      - Core
+      - Extended
+      - Dual2
+      - Dual4
   ControlMode:
     description: >-
       (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When
@@ -740,6 +763,27 @@ types:
     enum:
       - EVCC
       - EVCC_SECC
+  Pricing:
+    description: >-
+      Providing information about which pricing structure will be used in the offered
+      schedules.
+    type: string
+    enum:
+      - NoPricing
+      - AbsolutePricing
+      - PriceLevels
+  BptChannel:
+    description: Type of installed power transfer channel
+    type: string
+    enum:
+      - Unified
+      - Separated
+  GeneratorMode:
+    description: Power converter behavior.
+    type: string
+    enum:
+      - GridFollowing
+      - GridForming
   V2XChargingParameters:
     description: >-
       Charging parameters for ISO 15118-20, also supporting V2X charging/discharging.
@@ -1460,73 +1504,114 @@ types:
           DepartureTime
         type: string
   AcParameters:
-    description: TODO
+    description: Ac parameters the EVSE is setting
     type: object
     additionalProperties: false
     required:
       - nominal_frequency
     properties:
       nominal_frequency:
-        description: TODO
+        description: Nominal frequency supported by the EVSE
         type: number
         minimum: 0
       max_power_asymmetry:
-        description: TODO
+        description: Maximum asymmetric power
         type: number
         minimum: 0
       power_ramp_limitation:
-        description: TODO
+        description: Limitation of the power variation in %/min
         type: number
         minimum: 0
   AcEvseMaximumPower:
-    description: TODO
+    description: Maximum ac power values (charge and discharge) the EVSE can deliver
     type: object
     additionalProperties: false
     required:
       - charge_power
     properties:
       charge_power:
-        description: TODO
+        description: Maxium ac power the EVSE can deliver
         type: object
         $ref: /units#/Power
       discharge_power:
-        description: TODO
+        description: Maxium ac discharge power the EVSE can deliver
         type: object
         $ref: /units#/Power
   AcEvseMinimumPower:
-    description: TODO
+    description: Minimum ac power values (charge and discharge) the EVSE can deliver
     type: object
     additionalProperties: false
     required:
       - charge_power
     properties:
       charge_power:
-        description: TODO
+        description: Minimum ac power the EVSE can deliver
         type: object
         $ref: /units#/Power
       discharge_power:
-        description: TODO
+        description: Minimum ac discharge power the EVSE can deliver
         type: object
         $ref: /units#/Power
   AcTargetValues:
-    description: TODO
+    description: Target ac values requested by the EVSE
     type: object
     additionalProperties: false
     required:
       - target_active_power
     properties:
       target_active_power:
-        description: TODO
+        description: Target active power requested by the EVSE
         type: object
         $ref: /units#/Power
       target_reactive_power:
-        description: TODO
+        description: Target reactive power requested by the EVSE
         type: object
         $ref: /units#/ReactivePower
       target_frequency:
-        description: TODO
+        description: Target frequency requested by the EVSE
         type: number
         minimum: 0
+  SelectedServiceParameters:
+    description: >-
+      The selected service parameters selected from the EV in the ServiceSelectionReq message.
+      Only for ISO15118-20.
+    type: object
+    additionalProperties: false
+    required:
+      - energy_transfer
+      - connector
+      - control_mode
+      - mobility_needs_mode
+      - pricing
+    properties:
+      energy_transfer:
+        description: The selected energy mode by the EV
+        type: string
+        $ref: /iso15118#/ServiceCategory
+      connector:
+        description: The selected connector by the EV
+        type: string
+        $ref: /iso15118#/Connector
+      control_mode:
+        description: The selected control mode by the EV
+        type: string
+        $ref: /iso15118#/ControlMode
+      mobility_needs_mode:
+        description: The selected mobility needs mode by the EV
+        type: string
+        $ref: /iso15118#/MobilityNeedsMode
+      pricing:
+        description: The selected pricing by the EV
+        type: string
+        $ref: /iso15118#/Pricing
+      bpt_channel:
+        description: The selected bpt channel by the EV
+        type: string
+        $ref: /iso15118#/BptChannel
+      generator_mode:
+        description: The selected generator mode by the EV
+        type: string
+        $ref: /iso15118#/GeneratorMode
 # EV Side
   DcEvParameters:
     description: Target settings for dc charging
