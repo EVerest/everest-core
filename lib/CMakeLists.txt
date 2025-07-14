@@ -81,8 +81,6 @@ target_link_libraries(framework
         ryml::ryml
 )
 
-include(${everest-sqlite_SOURCE_DIR}/cmake/CollectMigrationFiles.cmake)
-
 collect_migration_files(
      LOCATION ${PROJECT_SOURCE_DIR}/schemas/migrations
      INSTALL_DESTINATION "${CMAKE_INSTALL_DATADIR}/everest/migrations"
