@@ -469,8 +469,7 @@ public:
     std::optional<KeyValue> getPriceNumberOfDecimalsForCostValuesKeyValue();
 
     std::optional<std::string> getDefaultPriceText(const std::string& language);
-    TariffMessage getTariffMessageWithDefaultPriceText();
-    TariffMessage getTariffMessageWithDefaultPriceTextOffline();
+    TariffMessage getDefaultTariffMessage(bool offline);
     ConfigurationStatus setDefaultPriceText(const CiString<50>& key, const CiString<500>& value);
     KeyValue getDefaultPriceTextKeyValue(const std::string& language);
     std::optional<std::vector<KeyValue>> getAllDefaultPriceTextKeyValues();

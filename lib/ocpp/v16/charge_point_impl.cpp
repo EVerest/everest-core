@@ -3435,10 +3435,9 @@ EnhancedIdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const 
         const auto update_tariff_message_if_eligible = [this](EnhancedIdTagInfo& enhanced_id_tag_info) {
             if (enhanced_id_tag_info.id_tag_info.status == AuthorizationStatus::Accepted &&
                 this->configuration->getCustomDisplayCostAndPriceEnabled()) {
-                enhanced_id_tag_info.tariff_message =
-                    this->websocket->is_connected()
-                        ? this->configuration->getTariffMessageWithDefaultPriceText()
-                        : this->configuration->getTariffMessageWithDefaultPriceTextOffline();
+                enhanced_id_tag_info.tariff_message = this->websocket->is_connected()
+                                                          ? this->configuration->getDefaultTariffMessage(false)
+                                                          : this->configuration->getDefaultTariffMessage(true);
             }
         };
 
@@ -3517,7 +3516,7 @@ EnhancedIdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const 
                     this->tariff_messages_by_id_token.erase(tariff_it);
                 } else {
                     EVLOG_warning << "Tariff message was not received within timeout for idToken " << idTag.get();
-                    enhanced_id_tag_info.tariff_message = this->configuration->getTariffMessageWithDefaultPriceText();
+                    enhanced_id_tag_info.tariff_message = this->configuration->getDefaultTariffMessage(false);
                 }
                 this->user_price_cvs.erase(idTag.get());
             }

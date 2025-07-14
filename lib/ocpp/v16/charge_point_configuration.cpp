@@ -2679,47 +2679,49 @@ std::optional<std::string> ChargePointConfiguration::getDefaultPriceText(const s
     return std::nullopt;
 }
 
-TariffMessage ChargePointConfiguration::getTariffMessageWithDefaultPriceText() {
+TariffMessage ChargePointConfiguration::getDefaultTariffMessage(bool offline) {
     TariffMessage tariff_message;
-    if (this->config.contains("CostAndPrice") and this->config.at("CostAndPrice").contains("DefaultPriceText")) {
-        json& default_tariff = this->config["CostAndPrice"]["DefaultPriceText"];
 
-        if (!default_tariff.contains("priceTexts")) {
+    if (!this->config.contains("CostAndPrice")) {
+        EVLOG_warning << "No CostAndPrice configuration found, returning empty TariffMessage.";
+        return tariff_message;
+    }
+
+    const auto& cost_and_price = this->config.at("CostAndPrice");
+    const std::string key = offline ? "priceTextOffline" : "priceText";
+
+    if (cost_and_price.contains("DefaultPrice")) {
+        const auto& default_price = cost_and_price.at("DefaultPrice");
+        if (default_price.contains(key)) {
+            DisplayMessageContent content;
+            content.message = default_price.at(key);
+            content.language = this->getLanguage();
+            tariff_message.message.push_back(content);
+        }
+    }
+
+    if (cost_and_price.contains("DefaultPriceText")) {
+        const auto& default_price_text = cost_and_price.at("DefaultPriceText");
+
+        if (!default_price_text.contains("priceTexts")) {
             return tariff_message;
         }
 
-        for (auto& item : default_tariff.at("priceTexts").items()) {
-            const auto tariff_message_item = item.value();
-            if (tariff_message_item.contains("priceText") and tariff_message_item.contains("language")) {
+        for (auto& item : default_price_text.at("priceTexts").items()) {
+            const auto& message_item = item.value();
+            if (message_item.contains(key) && message_item.contains("language")) {
                 DisplayMessageContent content;
-                content.message = tariff_message_item.at("priceText");
-                content.language = tariff_message_item.at("language");
+                content.message = message_item.at(key);
+                content.language = message_item.at("language");
                 tariff_message.message.push_back(content);
             }
         }
     }
-    return tariff_message;
-}
 
-TariffMessage ChargePointConfiguration::getTariffMessageWithDefaultPriceTextOffline() {
-    TariffMessage tariff_message;
-    if (this->config.contains("CostAndPrice") and this->config.at("CostAndPrice").contains("DefaultPriceText")) {
-        json& default_tariff = this->config["CostAndPrice"]["DefaultPriceText"];
-
-        if (!default_tariff.contains("priceTexts")) {
-            return tariff_message;
-        }
-
-        for (auto& item : default_tariff.at("priceTexts").items()) {
-            const auto tariff_message_item = item.value();
-            if (tariff_message_item.contains("priceTextOffline") and tariff_message_item.contains("language")) {
-                DisplayMessageContent content;
-                content.message = tariff_message_item.at("priceTextOffline");
-                content.language = tariff_message_item.at("language");
-                tariff_message.message.push_back(content);
-            }
-        }
+    if (tariff_message.message.empty()) {
+        EVLOG_warning << "No tariff message found in CostAndPrice configuration, returning empty TariffMessage.";
     }
+
     return tariff_message;
 }
 
