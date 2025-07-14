@@ -113,6 +113,11 @@ public:
             {EVSEStatusField::DischargedEnergyWh, false},
             {EVSEStatusField::Available, false},
         };
+
+        // Initialize data store with default values
+        set_charging_duration_s(0);
+        set_charged_energy_wh(0.0f);
+        set_discharged_energy_wh(0.0f);
     }
 
     // Example set method using the enum
