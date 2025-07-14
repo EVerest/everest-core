@@ -1,5 +1,6 @@
+import asyncio
 import dagger
-from dagger import object_type
+from dagger import object_type, dag
 from ..everest_ci import BaseResultType
 from .integration_tests import IntegrationTestsResult
 @object_type
@@ -39,11 +40,18 @@ async def ocpp_tests(
                 "cmake",
                 "--build", build_path,
                 "--target",
-                    "everestpy_pip_install_dist",
                     "everest-testing_pip_install_dist",
                     "iso15118_pip_install_dist",
             ],
         )
+    )
+
+
+    # set PYTHONPATH to everestpy in dist directory
+    container = await container.with_env_variable(
+        "PYTHONPATH",
+        f"{dist_path}/lib64/everest/everestpy:{dist_path}/lib/everest/everestpy:$PYTHONPATH",
+        expand=True,
     )
 
     # Install requirements.txt from occp tests
@@ -99,34 +107,41 @@ async def ocpp_tests(
     # Run the OCPP tests
     parallel_tests = await container.with_exec(["nproc"]).stdout()
     parallel_tests = int(parallel_tests.strip())
-    container = await (
-        container
-        .with_exec(
-            [
-                "bash", "-c",
-                " ".join([
-                    "python3", "-m", "pytest",
-                    "-rA",
-                    "-d", "--tx", f"\"{parallel_tests}\"*popen//python=python3",
-                    "--max-worker-restart=0",
-                    "--timeout=300",
-                    "--junitxml", f"{artifacts_path}/ocpp-tests.xml",
-                    "--html", f"{artifacts_path}/ocpp-tests.html",
-                    "--self-contained-html",
-                    "ocpp_tests/test_sets/ocpp16/*.py",
-                    "ocpp_tests/test_sets/ocpp201/*.py",
-                    "--everest-prefix", f"{dist_path}",
-                ])
-            ],
-            expect=dagger.ReturnType.ANY,
-        )
-    )
+    exit_code = 0
+    try:
+        async with asyncio.timeout(60 * 15):
+            container = await (
+                container
+                .with_exec(
+                    [
+                        "bash", "-c",
+                        " ".join([
+                            "python3", "-m", "pytest",
+                            "-rA",
+                            "-d", "--tx", f"\"{parallel_tests}\"*popen//python=python3",
+                            "--max-worker-restart=0",
+                            "--timeout=300",
+                            "--junitxml", f"{artifacts_path}/ocpp-tests.xml",
+                            "--html", f"{artifacts_path}/ocpp-tests.html",
+                            "--self-contained-html",
+                            "ocpp_tests/test_sets/ocpp16/*.py",
+                            "ocpp_tests/test_sets/ocpp201/*.py",
+                            "--everest-prefix", f"{dist_path}",
+                        ])
+                    ],
+                    expect=dagger.ReturnType.ANY,
+                )
+            )
+        exit_code = await container.exit_code()
+    except TimeoutError:
+        print("OCPP tests timed out after 15 minutes. Continuing...")
+        exit_code = 1
 
     container = await container.with_workdir(workdir_path)
 
     result = OcppTestsResult(
         container=container,
-        exit_code=await container.exit_code(),
+        exit_code=exit_code,
         result_xml=container.file(f"{artifacts_path}/ocpp-tests.xml"),
         report_html=container.file(f"{artifacts_path}/ocpp-tests.html"),
     )

@@ -14,6 +14,9 @@ jobs:
                 key: cache-${{ github.repository }}
                 path: |
                   ${{ github.workspace }}/cache
+            - name: Check cache
+              run: |
+                tree ${{ github.workspace }}/cache -L2
             - name: Initialize empty cache if necessary
               if: steps.cache-restore.outputs.cache-hit != 'true'
               run: |
@@ -25,10 +28,15 @@ jobs:
                 version: 0.18.12
                 workdir: ${{ github.workspace }}
                 module: github.com/${{ github.repository}}@${{ github.ref }}
-                call: pull-request
+                call: pull-request --cache-dir ${{ github.workspace }}/cache outputs export --path outputs
             - name: Save Cache
-              if: ${{ github.ref == 'refs/heads/main' }}
               uses: actions/cache/save@v4
               with:
                 key: cache-${{ github.repository }}
-                path: ${{ github.workspace }}/cache
+                path: ${{ github.workspace }}/outputs/cache
+            - name: Upload Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: all-artifacts
+                path: ${{ github.workspace }}/outputs/artifacts
+

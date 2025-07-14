@@ -7,14 +7,23 @@ from ..helpers.shared_container_actions import setup_cpm_cache
 
 @object_type
 class ConfigureResult(BaseResultType):
-    """Result of the configure operation"""
-    pass
+    """
+    Result of the configure operation, based on EverestCI.BaseResultType.
+    It contains the container, exit code and the cache directory after configuration.
+
+    Attributes:
+    -----------
+    cache_cpm: dagger.Directory
+        Directory containing the CPM cache for the CMake project.
+    """
+
+    cache_cpm: dagger.Directory = dagger.field()
 
 async def configure_cmake_gcc(
     container: dagger.Container,
     source_dir: dagger.Directory,
     source_path: str,
-    cache_dir: dagger.Directory | None,
+    cache_dir: dagger.Directory,
     cache_path: str,
     build_path: str,
     workdir_path: str,
@@ -31,8 +40,8 @@ async def configure_cmake_gcc(
         Source directory for the CMake project.
     source_path : str
         The path inside the container to the source directory.
-    cache_dir : dagger.Directory | None
-        Optional cache directory for the CMake project.
+    cache_dir : dagger.Directory
+        The directory handle to use for caching
     cache_path : str
         The path inside the container to the cache directory.
     build_path : str
@@ -50,8 +59,7 @@ async def configure_cmake_gcc(
         An object containing the container, exit code, and build directory after configuration.
     """
 
-    # Retrieve the cpm cache directory from the cache directory if provided
-    cpm_cache_dir = cache_dir.directory("./CPM") if cache_dir else None
+    cpm_cache_dir = cache_dir.directory("./CPM")
 
     container = setup_cpm_cache(
         container=container,
@@ -81,15 +89,23 @@ async def configure_cmake_gcc(
                     "-D", f"WHEEL_INSTALL_PREFIX={wheels_path}",
                     "-D", "BUILD_TESTING=ON",
                     "-D", "EVEREST_ENABLE_COMPILE_WARNINGS=ON",
+                    "-D", "CPM_VERBOSE_OUTPUT=ON"
             ],
             expect= dagger.ReturnType.ANY
+        )
+        .with_exec(
+            [
+                "cp", "-r",
+                f"{cache_path}/CPM",
+                "/cpm_cache"
+            ]
         )
     )
 
     result = ConfigureResult(
         container=container,
         exit_code=await container.exit_code(),
+        cache_cpm=container.directory(f"/cpm_cache"),
     )
 
     return result
-

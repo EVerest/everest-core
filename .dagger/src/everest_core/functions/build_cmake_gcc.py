@@ -6,11 +6,16 @@ from ..helpers.shared_container_actions import setup_ccache
 @object_type
 class BuildResult(BaseResultType):
     """
-    Result of the build.
-    
-    Inherits from BaseResultType to include common attributes like container and exit_code.
+    Result of the build operation, based on EverestCI.BaseResultType.
+    It contains the container, exit code, and the cache directory after the build operation.
+
+    Attributes
+    ----------
+    cache_ccache : dagger.Directory
+        Directory containing the ccache for the CMake project.
     """
-    pass
+    
+    cache_ccache: dagger.Directory = dagger.field()
 
 async def build_cmake_gcc(
     container: dagger.Container,
@@ -18,7 +23,7 @@ async def build_cmake_gcc(
     source_path: str,
     build_path: str,
     workdir_path: str,
-    cache_dir: dagger.Directory | None,
+    cache_dir: dagger.Directory,
     cache_path: str,
 ) -> BuildResult:
     """
@@ -37,6 +42,10 @@ async def build_cmake_gcc(
     workdir_path : str
         The working directory path where the build will be executed.
         Can be anyone, but it is recommended to use the build directory or its parent.
+    cache_dir : dagger.Directory
+        The directory handle to use for caching.
+    cache_path : str
+        The path inside the container to the cache directory.
 
     Returns
     -------
@@ -44,8 +53,7 @@ async def build_cmake_gcc(
         An object containing the container, exit code, and build directory after the build operation.
     """
 
-    # Retrieve the ccache directory from the cache directory if provided
-    ccache_dir = cache_dir.directory("./ccache") if cache_dir else None
+    ccache_dir = cache_dir.directory("./ccache")
 
     container = setup_ccache(
         container=container,
@@ -80,11 +88,19 @@ async def build_cmake_gcc(
             ],
             expect=dagger.ReturnType.ANY,
         )
+        .with_exec(
+            [
+                "cp", "-r",
+                f"{cache_path}/ccache",
+                "/ccache"
+            ]
+        )
     )
 
     result = BuildResult(
         container=container,
         exit_code=await container.exit_code(),
+        cache_ccache=container.directory("/ccache"),
     )
 
     return result

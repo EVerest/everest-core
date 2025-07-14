@@ -6,7 +6,7 @@ def setup_cpm_cache(
     container: dagger.Container,
     path: str,
     volume: str,
-    source: dagger.Directory | None = None,
+    source: dagger.Directory,
 
 ) -> dagger.Container:
     """
@@ -20,9 +20,8 @@ def setup_cpm_cache(
         The directory path for the CPM cache.
     volume: str
         The name of the cache volume for CPM.
-    source: dagger.Directory | None
-        Optional source directory for the CPM cache.
-        Defaults to None, which means no source directory is mounted.
+    source: dagger.Directory
+        The directory handle to use for the CPM cache.
 
     Returns
     -------
@@ -46,7 +45,7 @@ def setup_ccache(
     container: dagger.Container,
     path: str,
     volume: str,
-    source: dagger.Directory | None = None,
+    source: dagger.Directory,
 ) -> dagger.Container:
     """
     Set up ccache in the given container
@@ -59,9 +58,8 @@ def setup_ccache(
         The directory path for the ccache.
     volume: str
         The name of the cache volume for ccache.
-    source: dagger.Directory | None
-        Optional source directory for the ccache.
-        Defaults to None, which means no source directory is mounted.
+    source: dagger.Directory
+        The directory handle to use for the ccache.
 
     Returns
     -------
