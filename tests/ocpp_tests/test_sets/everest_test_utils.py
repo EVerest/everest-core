@@ -406,6 +406,7 @@ def get_everest_config(function_name, module_name):
         "transactions",
         "meterValues",
         "reservations",
+        "everest_device_model"
     ]:
         return Path(__file__).parent / Path(
             "everest-aux/config/everest-config-ocpp201.yaml"
