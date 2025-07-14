@@ -42,6 +42,7 @@ async def ocpp_tests(
                 "--target",
                     "everest-testing_pip_install_dist",
                     "iso15118_pip_install_dist",
+                    "iso15118_requirements_pip_install_dist",
             ],
         )
     )

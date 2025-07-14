@@ -18,9 +18,6 @@ jobs:
               run: |
                 mkdir -p ${{ github.workspace }}/outputs/cache/ccache
                 mkdir -p ${{ github.workspace }}/outputs/cache/CPM
-            - name: Check cache
-              run: |
-                tree -L 2 ${{ github.workspace }}/outputs/cache
             - name: Setup Dagger
               uses: dagger/dagger-for-github@8.0.0
               with:
