@@ -86,6 +86,18 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
                                     data::DataStoreEvse& evse_data) {
     evse_manager->subscribe_powermeter([this, &evse_data](const types::powermeter::Powermeter& powermeter) {
         this->meterdata_var_to_datastore(powermeter, evse_data.meterdata);
+
+        evse_data.sessioninfo.set_latest_energy_import_wh(powermeter.energy_Wh_import.total);
+        if (powermeter.energy_Wh_export.has_value()) {
+            evse_data.sessioninfo.set_latest_energy_export_wh(powermeter.energy_Wh_export.value().total);
+        }
+        if (powermeter.power_W.has_value()) {
+            evse_data.sessioninfo.set_latest_total_w(powermeter.power_W.value().total);
+        }
+        // update duration and energy values in the EVSE status store
+        evse_data.evsestatus.set_charging_duration_s(evse_data.sessioninfo.get_charging_duration_s().count());
+        evse_data.evsestatus.set_charged_energy_wh(evse_data.sessioninfo.get_charged_energy_wh());
+        evse_data.evsestatus.set_discharged_energy_wh(evse_data.sessioninfo.get_discharged_energy_wh());
     });
     evse_manager->subscribe_hw_capabilities(
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
