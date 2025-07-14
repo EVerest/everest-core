@@ -89,7 +89,7 @@ async def configure_cmake_gcc(
                     "-D", f"WHEEL_INSTALL_PREFIX={wheels_path}",
                     "-D", "BUILD_TESTING=ON",
                     "-D", "EVEREST_ENABLE_COMPILE_WARNINGS=ON",
-                    "-D", "CPM_VERBOSE_OUTPUT=ON"
+                    "-D", "FETCHCONTENT_QUIET=OFF"
             ],
             expect= dagger.ReturnType.ANY
         )

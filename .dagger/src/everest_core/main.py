@@ -373,25 +373,25 @@ class EverestCore:
                     )
             tg.create_task(artifacts_integration_tests_task_fn())
 
-            # async def ocpp_tests_task_fn() -> OcppTestsResult:
-            #     nonlocal install_task
-            #     res_install = await install_task
-            #     return await self.ocpp_tests(
-            #         container=res_install.container,
-            #     )
-            # ocpp_tests_task = tg.create_task(ocpp_tests_task_fn())
-            # async def artifacts_ocpp_tests_task_fn():
-            #     nonlocal ocpp_tests_task, artifacts, artifacts_mutex
-            #     res_ocpp_tests = await ocpp_tests_task
-            #     async with artifacts_mutex:
-            #         artifacts = artifacts.with_file(
-            #             "ocpp-tests.xml",
-            #             res_ocpp_tests.result_xml,
-            #         ).with_file(
-            #             "ocpp-tests.html",
-            #             res_ocpp_tests.report_html,
-            #         )
-            # tg.create_task(artifacts_ocpp_tests_task_fn())
+            async def ocpp_tests_task_fn() -> OcppTestsResult:
+                nonlocal install_task
+                res_install = await install_task
+                return await self.ocpp_tests(
+                    container=res_install.container,
+                )
+            ocpp_tests_task = tg.create_task(ocpp_tests_task_fn())
+            async def artifacts_ocpp_tests_task_fn():
+                nonlocal ocpp_tests_task, artifacts, artifacts_mutex
+                res_ocpp_tests = await ocpp_tests_task
+                async with artifacts_mutex:
+                    artifacts = artifacts.with_file(
+                        "ocpp-tests.xml",
+                        res_ocpp_tests.result_xml,
+                    ).with_file(
+                        "ocpp-tests.html",
+                        res_ocpp_tests.report_html,
+                    )
+            tg.create_task(artifacts_ocpp_tests_task_fn())
 
         exit_code = 0
         build_kit_res = build_kit_task.result()
@@ -436,12 +436,12 @@ class EverestCore:
         else:
             print("❌ Integration tests failed")
             exit_code = integration_tests_res.exit_code
-        # ocpp_tests_res = ocpp_tests_task.result()
-        # if ocpp_tests_res.exit_code == 0:
-        #     print("✅ OCPP tests passed")
-        # else:
-        #     print("❌ OCPP tests failed")
-        #     exit_code = ocpp_tests_res.exit_code
+        ocpp_tests_res = ocpp_tests_task.result()
+        if ocpp_tests_res.exit_code == 0:
+            print("✅ OCPP tests passed")
+        else:
+            print("❌ OCPP tests failed")
+            exit_code = ocpp_tests_res.exit_code
 
         outputs = dag.directory()
         outputs = outputs.with_directory(
