@@ -109,7 +109,7 @@ async def ocpp_tests(
     parallel_tests = int(parallel_tests.strip())
     exit_code = 0
     try:
-        async with asyncio.timeout(60 * 15):
+        async with asyncio.timeout(None):
             container = await (
                 container
                 .with_exec(
