@@ -9,6 +9,8 @@ services:
         target: /mosquitto/config/mosquitto.conf
     logging:
       driver: none
+    networks:
+      - testnetwork
 
   e2e-test-server:
     image: integration-image
@@ -25,3 +27,14 @@ services:
         target: /ext/scripts
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
+    networks:
+      - testnetwork
+
+networks:
+  testnetwork:
+    enable_ipv6: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "fd00:dead:beef::/64"

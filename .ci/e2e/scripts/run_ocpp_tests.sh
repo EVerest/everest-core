@@ -8,7 +8,8 @@ echo "Running $PARALLEL_TESTS ocpp tests in parallel"
 
 pytest \
   -rA \
-  -d --tx "$PARALLEL_TESTS"*popen//python=python3 \
+  -n "$PARALLEL_TESTS" \
+  --dist=loadgroup \
   --max-worker-restart=0 \
   --timeout=300 \
   --junitxml="$EXT_MOUNT/ocpp-tests-result.xml" \
@@ -16,6 +17,7 @@ pytest \
   --self-contained-html \
   ocpp_tests/test_sets/ocpp16/*.py \
   ocpp_tests/test_sets/ocpp201/*.py \
+  ocpp_tests/test_sets/ocpp21/*.py \
   --everest-prefix "$EXT_MOUNT/dist"
 retVal=$?
 
