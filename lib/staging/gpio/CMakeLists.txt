@@ -15,3 +15,16 @@ target_include_directories(gpio
 target_link_libraries(gpio
     PRIVATE
 )
+
+install(TARGETS gpio
+    EXPORT everest-core-targets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DESTINATION include/everest
+    FILES_MATCHING PATTERN "*.hpp"
+)
