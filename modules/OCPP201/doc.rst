@@ -364,14 +364,22 @@ than the value configured for `CompositeScheduleIntervalS` because otherwise tim
 Device model implementation details
 -----------------------------------
 
-For managing configuration and telemetry data of a charging station, the OCPP2 specification introduces
-a device model that is very different to the design of OCPP1.6. 
-The specified device model comes with these high-level requirements:
+This module provides a complete implementation of the OCPP 2.x Device Model by combining multiple variable sources into a unified view that can be exposed to the Central System (CSMS).
+The design supports both standardized and vendor-specific variables from libocpp and EVerest modules through a flexible, pluggable architecture.
 
-* 3-tier model: Break charging station down into 3 main tiers: ChargingStation, EVSE and Connector
-* Components and Variables: Break down charging station into components and variables for configuration and telemetry
-* Complex data structure for reporting and configuration of variables
-* Device model contains variables of the whole charging station, beyond OCPP business logic
+Overview of OCPP Device Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Device Model (introduced in OCPP 2.0.1 and extended in 2.1) is a hierarchical, structured data model to manage the configuration and telemetry of a charging station. It defines:
+
+* **Components** (e.g., ChargingStation, EVSE, TxCtrlr)
+* **Variables** (e.g., HeartbeatInterval, AllowReset)
+
+This enables the CSMS to:
+
+* Dynamically discover station capabilities
+* Read/write configuration values
+* Monitor status and telemetry
 
 The device model of OCPP2 can contain various physical or logical components and
 variables. While in OCPP1.6 almost all of the standardized configuration keys are used to influence the control flow of
@@ -379,50 +387,145 @@ libocpp, in OCPP2 the configuration and telemetry variables that can be part of 
 control or reporting capabilities of only libocpp. Still there is a large share of standardized variables in OCPP2
 that do influence the control flow of libocpp.
 
-Internally and externally managed variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Challenges in EVerest
+^^^^^^^^^^^^^^^^^^^^^
 
-EVerest has multiple different data sources that control the values variables that OCPP requires to report to the CSMS.
-It is therefore required to make a distinction between **internally** and **externally** managed variables of the device model.
+EVerest's modular architecture presents specific challenges:
 
-We define **internally** and **externally** managed variables as follows:
+* **Fixed hierarchy vs. loosely coupled modules**: OCPP enforces a strict component/variable structure, while EVerest modules are independently configured and instantiated.
+* **Existing configurations differ**: EVerest module configs use their own names, types, and metadata and do not always simply map to OCPP variables.
+* **High metadata overhead**: Each variable in the Device Model requires detailed attributes (e.g., characteristics, mutability, monitoring).
+* **No distinction between config and telemetry**: OCPP treats all variables uniformly, while EVerest separates static config (for modules) and dynamic telemetry (mostly vars of EVerest interfaces).
 
-* Internally Managed: Owned, stored and accessed in libocpp in device model storage
-  Examples: HeartbeatInterval, AuthorizeRemoteStart, SampledDataTxEndedMeasurands, AuthCacheStorage
-* Externally Managed: Owned, stored and accessed via EVerest config service (not yet supported)
-  Examples: ConnectionTimeout, MasterPassGroupId
-* For externally managed variables a mapping to the EVerest configuration parameter is defined (not yet supported)
+Solution: Composed Device Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Note that the EVerest config service is not yet implemented. Currently all components and variables are controlled
-by the libocpp device model storage implementation.
+To address these issues, a **ComposedDeviceModel** abstraction is introduced as part of this module. It combines two sub device models:
 
-Device Model Implementation of this module
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* **Libocpp Device Model**: Manages standardized OCPP variables used directly by libocpp. Defined via JSON component configs. Stored in SQLite database using the DeviceModelStorageSqlite.
+* **EVerest Device Model**: Maps EVerest module configurations to OCPP Device Model components and variables. Provides standardized EVSE and Connector
+components and respective variables. Is using EVerest configuration service to read and write EVerest module configuration parameters. Allows mapping of EVerest
+module parameters to OCPP variables. The OCPP representation is also stored in SQLite database using the DeviceModelStorageSqlite.
 
-This module provides an implementation of device model API provided as part of libocpp (it implements
-`device_model_storage_interface.hpp`).
-The implementation is designed to fullfill the requirements of the device model API even if the components and variables are
-controlled by different sources (Internally, Externally).
+Mapping Strategy for EVerest Device Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Device Model Sources
-^^^^^^^^^^^^^^^^^^^^
+| **OCPP Element**                           | **EVerest Source**                                    | **Description**                                      |
+| ------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------- |
+| Component.name                             | `ModuleIdType.module_type`                            | EVerest module type (e.g., `EvseManager`, `EvseV2G`) |
+| Component.instance                         | `ModuleIdTypemodule_id`                               | ID from EVerest config                               |
+| Component.evse.id                          | `ModuleTierMappings.module.evse`                      | EVSE ID (if mapped)                                  |
+| Component.evse.connector\_id               | `ModuleTierMappings.module.connector`                 | Connector ID (if mapped)                             |
+| Variables                                  | `ModuleConfigurationParameters`                       | Each parameter becomes an OCPP variable              |
+| Variable.name                              | `impl + "." + config_param.name` (if impl != !module) | Prefix with implementation name if needed            |
+| VariableCharacteristics.dataType           | `config_param.characteristics.datatype`               | Translated to OCPP type                              |
+| VariableCharacteristics.unit               | *(TODO)*                                              | Not yet implemented                                  |
+| VariableCharacteristics.supportsMonitoring | `false` *(TODO)*                                      | Monitoring is currently not supported                |
+| VariableAttribute.mutability               | `config_param.characteristics.mutability`             | Translated to OCPP mutability enum                   |
+| VariableAttribute.value                    | `config_param.value`                                  | Actual value from config                             |
 
-Device Model variables are defined in JSON component configs. For each variable a property `source` can be used to define
-the source that controls it. This design allows for a single source of truth for each variable and it 
-allows the device model implementation of this module to address the correct source for the requested operation.
-Today `OCPP` is the only supported source for internally managed variables.
+The `ComposedDeviceModel` is passed to libocpp and routes OCPP operations to the correct source, avoiding duplication and supporting clear separation of ownership.
 
-Sources for externally managed configuration variables like the EVerest config service are under development.
+User Mapping of EVerest Configuration Parameters to OCPP Variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Sequence of variable access for internally and externally managed variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EVerest modules expose their configuration parameters in a format that does not always directly match the standardized OCPP 2.x Device Model. To bridge this gap,
+the **Variable Mapping** mechanism allows users a flexible and explicit mapping between:
 
-.. image:: doc/sequence_config_service_and_ocpp.png
+* **EVerest Configuration Parameters** (identified by `module_id`, `configuration_parameter_name`, and optionally an `implementation_id`)
+* **Standardized OCPP Component Variables** (identified by `component` and `variable` names in the Device Model)
 
-Class diagram for device model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This mapping is defined in a YAML file (`mapping.yaml`) and validated against a JSON schema (`mapping_schema.json`) at runtime. The mapping supports bidirectional translation:
+
+* **When exposing the Device Model**: EVerest configuration parameters are mapped to the appropriate standardized OCPP components and variables before being sent to the CSMS.
+* **When processing incoming OCPP requests**: Operations such as `SetVariables.req` are resolved to the corresponding EVerest configuration parameter, ensuring the correct module is updated.
+
+Example for `mapping.yaml`:
+
+```yaml
+mappings:
+  - ocpp:
+      component:
+        name: "TxCtrlr"
+      variable:
+        name: "EVConnectionTimeOut"
+    everest:
+      module_id: "auth"
+      configuration_parameter_name: "connection_timeout"
+      module_implementation_id: "!module"
+```
+
+This example maps the OCPP `TxCtrlr.EVConnectionTimeout` variable to the `auth.connection_timeout` configuration parameter of the EVerest module.
+
+Note that when the CSMS requests the Device Model (e.g. via GetBaseReport.req), both representations will be shown to the CSMS.
+For the example mapping defined that would mean an extract of the NotifyReport.req would contain:
+
+```json
+...
+{
+  "component": {
+    "instance": "auth",
+    "name": "Auth"
+  },
+  "variable": {
+    "name": "connection_timeout"
+  },
+  "variableAttribute": [
+    {
+      "constant": false,
+      "mutability": "ReadWrite",
+      "persistent": true,
+      "type": "Actual",
+      "value": "15"
+    }
+  ],
+  "variableCharacteristics": {
+    "dataType": "integer",
+    "supportsMonitoring": false
+  }
+},
+{
+  "component": {
+    "name": "TxCtrlr"
+  },
+  "variable": {
+    "name": "EVConnectionTimeOut"
+  },
+  "variableAttribute": [
+    {
+      "constant": false,
+      "mutability": "ReadWrite",
+      "persistent": true,
+      "type": "Actual",
+      "value": "15"
+    }
+  ],
+  "variableCharacteristics": {
+    "dataType": "integer",
+    "supportsMonitoring": false
+  }
+},
+...
+```
+
+EVerest Configuration Service
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The **EVerest Configuration Service** is a central interface for reading and writing module configuration parameters within the EVerest runtime. It enables:
+When used with the Device Model, the Configuration Service acts as the **backend for EVerest configuration parameters**. For example, if the CSMS sets an
+OCPP configuration variable that maps to an EVerest parameter, the request is transparently translated into a call to the Configuration Service,
+which applies the change to the correct module.
+
+Device Model Implementation Architecture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Class diagram for device model:
 
 .. image:: doc/device_model_class_diagram.png
+
+Sequence of variable access for internally and externally managed variables:
+
+.. image:: doc/sequence_config_service_and_ocpp.png
 
 Clarification of the device model classes of this diagram:
 
@@ -440,15 +543,15 @@ Clarification of the device model classes of this diagram:
 * DeviceModelStorageSqlite
 
   * Implements DeviceModelStorageInterface as part of libocpp
-  * This storage holds internally managed variables
+  * Is used in libocpp as well as in EVerest device model as storage backend
 
 * EverestDeviceModelStorage
 
   * Implements DeviceModelStorageInterface as part of everest-core (OCPP201 module)
   * Uses EVerest config service to retrieve configuration variables of EVerest modules
+  * Uses DeviceModelStorageSqlite to store OCPP representation of EVerest configuration parameters and EVSE and Connector components
 
 * ComposedDeviceModelStorage
 
   * (Final) implementation of DeviceModelStorageInterface as part of everest-core (OCPP201 module)
   * A reference of this class will be passed to libocpp's ChargePoint constructor
-  * Differentiates between externally and internally managed variables

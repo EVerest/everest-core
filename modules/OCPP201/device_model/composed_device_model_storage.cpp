@@ -40,7 +40,20 @@ bool ComposedDeviceModelStorage::register_device_model_storage(
 ocpp::v2::DeviceModelMap ComposedDeviceModelStorage::get_device_model() {
     ocpp::v2::DeviceModelMap device_model_map;
     for (const auto& [name, device_model_storage] : this->device_model_storages) {
-        device_model_map.merge(device_model_storage->get_device_model());
+        const auto& partial_device_model = device_model_storage->get_device_model();
+        for (const auto& [component, variable_map] : partial_device_model) {
+            auto& existing_variable_map = device_model_map[component]; // Inserts if not present
+            // Merge variable_map into existing_variable_map
+            for (const auto& [variable, variable_meta_data] : variable_map) {
+                if (existing_variable_map.find(variable) != existing_variable_map.end()) {
+                    EVLOG_warning << "Variable " << variable.name << " already exists in component " << component.name
+                                  << " but is also defined in device model storage: " << name;
+                    EVLOG_AND_THROW(std::runtime_error(
+                        "Variable already exists in component. Fix your device model configuration."));
+                }
+                existing_variable_map[variable] = variable_meta_data; // Overwrite or insert
+            }
+        }
     }
     return device_model_map;
 }

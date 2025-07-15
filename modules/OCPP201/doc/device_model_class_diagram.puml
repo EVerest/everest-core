@@ -1,49 +1,37 @@
 @startuml
 
 package libocpp {
+  class ChargePoint {
+    - device_model: DeviceModel
+  }
 
-class ChargePoint {
-  - device_model: DeviceModel
-}
+  class DeviceModel {
+    - device_model: DeviceModelStorageInterface
+    + get_device_model(): DeviceModelRepresentation
+    + get_value(...): T
+    + set_value(...): SetVariableStatusEnum
+  }
 
-class DeviceModel {
-  - device_model: DeviceModelStorageInterface
-  + get_device_model(): DeviceModelRepresentation
-  + get_value(...): T
-  + set_value(...): SetVariableStatusEnum
-}
+  interface DeviceModelStorageInterface {
+    + get_device_model(): DeviceModelRepresentation
+    + get_variable_attribute(...): std::optional<VariableAttribute>
+    + set_variable_attribute_value(...): bool
+  }
 
-interface DeviceModelStorageInterface {
-  + get_device_model(): DeviceModelRepresentation
-  + get_variable_attribute(...): std::optional<VariableAttribute>
-  + set_variable_attribute_value(...): bool
-}
-
-class DeviceModelStorageSqlite implements DeviceModelStorageInterface
-
+  class DeviceModelStorageSqlite implements DeviceModelStorageInterface
 }
 
 package everest-core {
-
-class EverestDeviceModelStorage implements libocpp.DeviceModelStorageInterface
-class ComposedDeviceModelStorage implements libocpp.DeviceModelStorageInterface {
-    - everest_storage: EverestDeviceModelStorage
-    - libocpp_storage: DeviceModelStorageSqlite
+  class EverestDeviceModelStorage implements libocpp.DeviceModelStorageInterface
+  class ComposedDeviceModelStorage implements libocpp.DeviceModelStorageInterface {
+      - everest_storage: EverestDeviceModelStorage
+      - libocpp_storage: DeviceModelStorageSqlite
+  }
 }
-}
-
-note left of ChargePoint
-  ChargePoint and DeviceModel are
-  implemented within the library.
-end note
-
-note right of ComposedDeviceModelStorage
-    This implementation will be passed to libocpp's constructor
-end note
 
 ChargePoint *-- DeviceModel
 DeviceModel *-- DeviceModelStorageInterface
 ComposedDeviceModelStorage *-- EverestDeviceModelStorage
-ComposedDeviceModelStorage *-- DeviceModelStorageSqlite
+EverestDeviceModelStorage *-- DeviceModelStorageSqlite
 
 @enduml

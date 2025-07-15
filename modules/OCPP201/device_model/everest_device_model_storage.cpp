@@ -83,6 +83,30 @@ ComponentKey get_connector_component_key(const int32_t evse_id, const int32_t co
     return component;
 }
 
+ocpp::v2::Component get_component(const ComponentKey& component_key) {
+    ocpp::v2::Component component;
+    component.name = ocpp::CiString<50>(component_key.name, ocpp::StringTooLarge::Truncate);
+    if (component_key.instance.has_value()) {
+        component.instance = ocpp::CiString<50>(component_key.instance.value(), ocpp::StringTooLarge::Truncate);
+    }
+    if (component_key.evse_id.has_value()) {
+        ocpp::v2::EVSE evse;
+        evse.id = component_key.evse_id.value();
+        evse.connectorId = component_key.connector_id;
+        component.evse = evse;
+    }
+    return component;
+}
+
+ocpp::v2::Variable get_variable(const DeviceModelVariable& dm_variable) {
+    ocpp::v2::Variable variable;
+    variable.name = ocpp::CiString<50>(dm_variable.name, ocpp::StringTooLarge::Truncate);
+    if (dm_variable.instance.has_value()) {
+        variable.instance = ocpp::CiString<50>(dm_variable.instance.value(), ocpp::StringTooLarge::Truncate);
+    }
+    return variable;
+}
+
 // Helper function to construct DeviceModelVariable with common structure
 DeviceModelVariable make_variable(const std::string& name, const ocpp::v2::VariableCharacteristics& characteristics,
                                   const std::string& value = "",
@@ -147,45 +171,18 @@ std::string get_everest_config_value(const everest::config::ModuleConfigurationP
     throw std::out_of_range("Could not find requested config key: " + config_key);
 }
 
-// Populate EVerest module config variables
-std::vector<DeviceModelVariable>
-build_everest_config_variables(const everest::config::ModuleConfigurationParameters& module_config) {
-    std::vector<DeviceModelVariable> component_config;
-    for (const auto& [impl, config_params] : module_config) {
-        std::string prefix;
-        if (impl != Everest::config::MODULE_IMPLEMENTATION_ID) {
-            // prefix variable name with impl + .
-            prefix = impl + ".";
-        }
-        for (const auto& config_param : config_params) {
-            try {
-                const auto variable_name = prefix + config_param.name;
-                ocpp::v2::VariableCharacteristics characteristics;
-                characteristics.dataType = to_ocpp_data_enum(config_param.characteristics.datatype);
-                characteristics.supportsMonitoring = false; // TODO: can we enable monitoring support?
-                // TODO: add unit if/once available?
-
-                auto device_model_variable = make_variable(
-                    variable_name, characteristics, get_everest_config_value(module_config, impl, config_param.name),
-                    to_ocpp_mutability_enum(config_param.characteristics.mutability));
-                component_config.push_back(device_model_variable);
-            } catch (const std::exception& e) {
-                EVLOG_error << "Could not add EVerest config entry to OCPP device model: " << e.what();
-            }
-        }
-    }
-
-    return component_config;
-}
-
 } // anonymous namespace
 
 EverestDeviceModelStorage::EverestDeviceModelStorage(
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager,
     const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map,
     const std::filesystem::path& db_path, const std::filesystem::path& migration_files_path,
+    std::unique_ptr<VariableMapping> variable_mapping,
     std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client) :
-    r_evse_manager(r_evse_manager), config_service_client(config_service_client) {
+    r_evse_manager(r_evse_manager),
+    config_service_client(config_service_client),
+    variable_mapping(std::move(variable_mapping)) {
+
     this->module_configs = config_service_client->get_module_configs();
     this->mappings = config_service_client->get_mappings();
     std::map<ComponentKey, std::vector<DeviceModelVariable>> component_configs;
@@ -228,7 +225,9 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
             }
         }
 
-        component_configs[component_key] = build_everest_config_variables(module_config);
+        Component component = get_component(component_key);
+        component_configs[component_key] =
+            build_everest_config_variables(module_config, module_id_type.module_id, component);
     }
 
     ocpp::v2::InitDeviceModelDb init_device_model_db(db_path, migration_files_path);
@@ -237,7 +236,86 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
     this->device_model_storage = std::make_unique<ocpp::v2::DeviceModelStorageSqlite>(db_path);
 
     this->init_hw_capabilities(evse_hardware_capabilities_map);
-    this->init_everest_config();
+}
+
+std::vector<DeviceModelVariable> EverestDeviceModelStorage::build_everest_config_variables(
+    const everest::config::ModuleConfigurationParameters& module_config, const std::string& module_id,
+    const ocpp::v2::Component& component) {
+    std::vector<DeviceModelVariable> component_config;
+    for (const auto& [impl, config_params] : module_config) {
+        std::string prefix;
+        if (impl != Everest::config::MODULE_IMPLEMENTATION_ID) {
+            // prefix variable name with impl + .
+            prefix = impl + ".";
+        }
+        for (const auto& config_param : config_params) {
+            try {
+                const auto variable_name = prefix + config_param.name;
+                ocpp::v2::VariableCharacteristics characteristics;
+                characteristics.dataType = to_ocpp_data_enum(config_param.characteristics.datatype);
+                characteristics.supportsMonitoring = false; // TODO: can we enable monitoring support?
+                // TODO: add unit if/once available?
+
+                auto device_model_variable = make_variable(
+                    variable_name, characteristics, get_everest_config_value(module_config, impl, config_param.name),
+                    to_ocpp_mutability_enum(config_param.characteristics.mutability));
+                component_config.push_back(device_model_variable);
+
+                everest::config::ConfigurationParameterIdentifier config_param_id;
+                config_param_id.module_id = module_id;
+                config_param_id.configuration_parameter_name = config_param.name;
+                config_param_id.module_implementation_id = impl;
+
+                const auto ocpp_cv_opt = this->variable_mapping->get_ocpp_cv(config_param_id);
+
+                if (ocpp_cv_opt.has_value()) {
+                    const auto& ocpp_cv = ocpp_cv_opt.value();
+                    ocpp::v2::ComponentVariable everest_cv = {component, get_variable(device_model_variable)};
+                    // store mapping from EVerest OCPP ComponentVariable and the OCPP representation of it
+                    this->variable_mapping->add_cv_mapping(everest_cv, ocpp_cv);
+                    this->stored_in_everest_config_service.insert(ocpp_cv);
+                }
+
+                ocpp::v2::ComponentVariable component_variable{component, get_variable(device_model_variable)};
+                this->stored_in_everest_config_service.insert(component_variable);
+            } catch (const std::exception& e) {
+                EVLOG_error << "Could not add EVerest config entry to OCPP device model: " << e.what();
+            }
+        }
+    }
+
+    return component_config;
+}
+
+ocpp::v2::DeviceModelMap EverestDeviceModelStorage::apply_mappings(const ocpp::v2::DeviceModelMap& device_model_map) {
+    ocpp::v2::DeviceModelMap mapped_device_model;
+
+    for (const auto& [component, variable_map] : device_model_map) {
+        for (const auto& [variable, variable_meta_data] : variable_map) {
+            ocpp::v2::ComponentVariable everest_component_variable{component, variable};
+            const auto& ocpp_component_variable_opt = this->variable_mapping->get_ocpp_cv(everest_component_variable);
+            if (ocpp_component_variable_opt.has_value()) {
+                const auto& ocpp_component_variable = ocpp_component_variable_opt.value();
+                EVLOG_info << "Mapping identified for component variable: " << ocpp_component_variable;
+
+                if (!ocpp_component_variable.variable.has_value()) {
+                    EVLOG_warning << "No variable defined for component variable: " << ocpp_component_variable;
+                    continue;
+                }
+
+                ocpp::v2::VariableMetaData ocpp_variable_meta_data;
+                ocpp_variable_meta_data.characteristics = variable_meta_data.characteristics;
+                ocpp_variable_meta_data.monitors = variable_meta_data.monitors;
+                ocpp_variable_meta_data.source = variable_meta_data.source;
+
+                mapped_device_model[ocpp_component_variable.component][ocpp_component_variable.variable.value()] =
+                    ocpp_variable_meta_data;
+            }
+            mapped_device_model[component][variable] = variable_meta_data;
+        }
+    }
+
+    return mapped_device_model;
 }
 
 void EverestDeviceModelStorage::init_hw_capabilities(
@@ -270,41 +348,6 @@ void EverestDeviceModelStorage::init_hw_capabilities(
     }
 }
 
-void EverestDeviceModelStorage::init_everest_config() {
-    for (const auto& [module_id_type, module_config] : this->module_configs) {
-        for (const auto& [impl, config_params] : module_config) {
-            std::string prefix;
-            if (impl != Everest::config::MODULE_IMPLEMENTATION_ID) {
-                // prefix variable name with impl + .
-                prefix = impl + ".";
-            }
-            for (const auto& config_param : config_params) {
-                try {
-                    const auto variable_name = prefix + config_param.name;
-
-                    Component component;
-                    component.name = module_id_type.module_type;
-                    component.instance = module_id_type.module_id;
-                    Variable variable;
-                    variable.name = variable_name;
-                    ocpp::v2::ComponentVariable component_variable;
-                    component_variable.component = component;
-                    component_variable.variable = variable;
-                    // allows to differentiate variables backed by the EVerest config from other device model variables
-                    this->stored_in_everest_config_service.insert(component_variable);
-
-                    std::lock_guard<std::mutex> lock(device_model_mutex);
-                    this->device_model_storage->set_variable_attribute_value(
-                        component, variable, ocpp::v2::AttributeEnum::Actual,
-                        get_everest_config_value(module_config, impl, config_param.name), VARIABLE_SOURCE_EVEREST);
-                } catch (const std::exception& e) {
-                    EVLOG_error << "Could not initialize EVerest config entry in OCPP device model: " << e.what();
-                }
-            }
-        }
-    }
-}
-
 void EverestDeviceModelStorage::update_hw_capabilities(
     const Component& evse_component, const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
     std::lock_guard<std::mutex> lock(device_model_mutex);
@@ -324,7 +367,10 @@ void EverestDeviceModelStorage::update_power(const int32_t evse_id, const float 
 
 ocpp::v2::DeviceModelMap EverestDeviceModelStorage::get_device_model() {
     std::lock_guard<std::mutex> lock(device_model_mutex);
-    return this->device_model_storage->get_device_model();
+    // Get the device model from the storage and apply variable mappings
+    auto device_model = this->device_model_storage->get_device_model();
+    // The device model in the storage does not contain the mappings, so we apply the defined mappings to it
+    return this->apply_mappings(device_model);
 }
 
 std::optional<ocpp::v2::VariableAttribute>
@@ -332,7 +378,23 @@ EverestDeviceModelStorage::get_variable_attribute(const ocpp::v2::Component& com
                                                   const ocpp::v2::Variable& variable_id,
                                                   const ocpp::v2::AttributeEnum& attribute_enum) {
     std::lock_guard<std::mutex> lock(device_model_mutex);
-    return this->device_model_storage->get_variable_attribute(component_id, variable_id, attribute_enum);
+
+    // check if a mapping exists
+    ocpp::v2::ComponentVariable component_variable{component_id, variable_id};
+    const auto everest_component_variable_opt = this->variable_mapping->get_everest_cv(component_variable);
+    if (everest_component_variable_opt.has_value()) {
+        const auto& everest_component_variable = everest_component_variable_opt.value();
+
+        if (!everest_component_variable.variable.has_value()) {
+            EVLOG_warning << "No variable defined for mapped component variable: " << everest_component_variable;
+            return std::nullopt;
+        }
+
+        return this->device_model_storage->get_variable_attribute(
+            everest_component_variable.component, everest_component_variable.variable.value(), attribute_enum);
+    } else {
+        return this->device_model_storage->get_variable_attribute(component_id, variable_id, attribute_enum);
+    }
 }
 
 std::vector<ocpp::v2::VariableAttribute>
@@ -340,7 +402,22 @@ EverestDeviceModelStorage::get_variable_attributes(const ocpp::v2::Component& co
                                                    const ocpp::v2::Variable& variable_id,
                                                    const std::optional<ocpp::v2::AttributeEnum>& attribute_enum) {
     std::lock_guard<std::mutex> lock(device_model_mutex);
-    return this->device_model_storage->get_variable_attributes(component_id, variable_id, attribute_enum);
+    // check if a mapping exists
+    ocpp::v2::ComponentVariable component_variable{component_id, variable_id};
+    const auto everest_component_variable_opt = this->variable_mapping->get_everest_cv(component_variable);
+    if (everest_component_variable_opt.has_value()) {
+        const auto& everest_component_variable = everest_component_variable_opt.value();
+
+        if (!everest_component_variable.variable.has_value()) {
+            EVLOG_warning << "No variable defined for mapped component variable: " << everest_component_variable;
+            return {};
+        }
+
+        return this->device_model_storage->get_variable_attributes(
+            everest_component_variable.component, everest_component_variable.variable.value(), attribute_enum);
+    } else {
+        return this->device_model_storage->get_variable_attributes(component_id, variable_id, attribute_enum);
+    }
 }
 
 ocpp::v2::SetVariableStatusEnum EverestDeviceModelStorage::set_variable_attribute_value(
@@ -349,26 +426,29 @@ ocpp::v2::SetVariableStatusEnum EverestDeviceModelStorage::set_variable_attribut
 
     std::lock_guard<std::mutex> lock(device_model_mutex);
 
-    int evse_id = 0;
-    if (component_id.evse.has_value()) {
-        evse_id = component_id.evse.value().id;
-    }
-
     ocpp::v2::ComponentVariable component_variable;
     component_variable.component = component_id;
     component_variable.variable = variable_id;
+
+    const auto everest_component_variable_opt = this->variable_mapping->get_everest_cv(component_variable);
+    if (everest_component_variable_opt.has_value()) {
+        // there is a mapping, so the incoming component variable is not present in the storage, we need to map it to
+        // the EVerest representation of it and set this
+        component_variable = everest_component_variable_opt.value();
+    }
+
     auto stored_in_everest_config_service_it = this->stored_in_everest_config_service.find(component_variable);
     if (stored_in_everest_config_service_it != this->stored_in_everest_config_service.end()) {
         if (attribute_enum != ocpp::v2::AttributeEnum::Actual) {
             return ocpp::v2::SetVariableStatusEnum::Rejected;
         }
-        if (not component_id.instance.has_value()) {
+        if (not component_variable.component.instance.has_value()) {
             return ocpp::v2::SetVariableStatusEnum::Rejected;
         }
-        const auto module_id = component_id.instance.value();
+        const auto module_id = component_variable.component.instance.value();
         everest::config::ConfigurationParameterIdentifier identifier;
         identifier.module_id = module_id;
-        const std::string variable_name = variable_id.name;
+        const std::string variable_name = component_variable.variable.value().name;
         const auto strpos = variable_name.find(".");
         if (strpos != std::string::npos) {
             identifier.module_implementation_id = variable_name.substr(0, strpos);
@@ -382,12 +462,12 @@ ocpp::v2::SetVariableStatusEnum EverestDeviceModelStorage::set_variable_attribut
 
         if (result.set_status == everest::config::SetConfigStatus::Accepted) {
             // immediately set it in the libocpp device model as well
-            const auto libocpp_result = this->device_model_storage->set_variable_attribute_value(
-                component_id, variable_id, attribute_enum, value, source);
-            if (libocpp_result != ocpp::v2::SetVariableStatusEnum::Accepted) {
+            const auto everest_dm_result = this->device_model_storage->set_variable_attribute_value(
+                component_variable.component, component_variable.variable.value(), attribute_enum, value, source);
+            if (everest_dm_result != ocpp::v2::SetVariableStatusEnum::Accepted) {
                 EVLOG_error << "Device model set variable results disagree";
             }
-            return libocpp_result; // FIXME: what to return, libocpp or EVerest result?
+            return everest_dm_result; // FIXME: what to return, libocpp or EVerest result?
         } else if (result.set_status == everest::config::SetConfigStatus::Rejected) {
             return ocpp::v2::SetVariableStatusEnum::Rejected;
         } else if (result.set_status == everest::config::SetConfigStatus::RebootRequired) {

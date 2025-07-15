@@ -46,6 +46,19 @@ target_sources(${MODULE_NAME}
         "device_model/everest_device_model_storage.cpp"
         "device_model/composed_device_model_storage.cpp"
         "device_model/definitions.cpp"
+        "device_model/mapping/variable_mapping.cpp"
+)
+
+# Install mapping.yaml
+install(
+  FILES device_model/mapping/mapping.yaml
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/${MODULE_NAME}
+)
+
+# Install schema
+install(
+  FILES device_model/mapping/mapping_schema.json
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/${MODULE_NAME}
 )
 
 if(EVEREST_CORE_BUILD_TESTING)
