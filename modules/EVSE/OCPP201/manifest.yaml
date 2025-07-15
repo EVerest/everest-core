@@ -71,6 +71,11 @@ config:
       to the charge point's last messages before resetting.
     type: integer
     default: 0
+  MappingFilePath:
+    description: >-
+      Path to the mapping file that contains the mapping between OCPP variables and Everest configuration parameters.
+    type: string
+    default: mapping.yaml
 provides:
   auth_validator:
     description: Validates the provided token using CSMS, AuthorizationList or AuthorizationCache

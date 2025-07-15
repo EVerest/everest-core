@@ -10,8 +10,10 @@
 #include <generated/types/evse_board_support.hpp>
 #include <generated/types/powermeter.hpp>
 
+#include <device_model/mapping/variable_mapping.hpp>
 #include <ocpp/v2/device_model_storage_interface.hpp>
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/init_device_model_db.hpp>
 #include <utils/config_service.hpp>
 
 namespace module::device_model {
@@ -24,6 +26,7 @@ public:
         const std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>>& evse_supported_energy_transfers,
         const std::map<int32_t, bool>& evse_service_renegotiation_supported, const std::filesystem::path& db_path,
         const std::filesystem::path& migration_files_path,
+        std::unique_ptr<VariableMapping> variable_mapping,
         std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client);
     virtual ~EverestDeviceModelStorage() override = default;
     virtual ocpp::v2::DeviceModelMap get_device_model() override;
@@ -66,6 +69,7 @@ private:
     std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client;
     std::map<Everest::config::ModuleIdType, everest::config::ModuleConfigurationParameters> module_configs;
     std::map<std::string, ModuleTierMappings> mappings;
+    std::unique_ptr<VariableMapping> variable_mapping;
 
     void init_evse_components_and_variables(
         const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map,
@@ -83,5 +87,9 @@ private:
     void update_connected_ev_information(const ocpp::v2::Component& connected_ev_component,
                                          const types::iso15118::EvInformation& ev_information);
     void init_everest_config();
+    std::vector<ocpp::v2::DeviceModelVariable>
+    build_everest_config_variables(const everest::config::ModuleConfigurationParameters& module_config,
+                                   const std::string& module_id, const ocpp::v2::Component& component);
+    ocpp::v2::DeviceModelMap apply_mappings(const ocpp::v2::DeviceModelMap& device_model_map);
 };
 } // namespace module::device_model

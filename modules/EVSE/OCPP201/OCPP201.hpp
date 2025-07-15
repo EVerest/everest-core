@@ -62,6 +62,7 @@ struct Conf {
     std::string RequestCompositeScheduleUnit;
     int DelayOcppStart;
     int ResetStopDelay;
+    std::string MappingFilePath;
 };
 
 class OCPP201 : public Everest::ModuleBase {
