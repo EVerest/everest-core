@@ -115,6 +115,8 @@ function(ev_create_pip_install_dist_target)
         COMMAND
             ${Python3_EXECUTABLE} -m pip install --force-reinstall .
         COMMAND
+            ${CMAKE_COMMAND} -E remove_directory build
+        COMMAND
             ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
     )
 
