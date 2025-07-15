@@ -2010,7 +2010,14 @@ types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
             // by default we import energy
             update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import);
         } else {
-            update_max_watt_limit(active_local_limits, get_powersupply_capabilities().max_export_power_W);
+            types::energy::ScheduleReqEntry e;
+            e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+            e.limits_to_leaves.total_power_W = {get_powersupply_capabilities().max_export_power_W,
+                                                info.id + "update_max_watt_limit"};
+            active_local_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+            e.limits_to_leaves.total_power_W = {get_powersupply_capabilities().max_import_power_W.value_or(0.0f),
+                                                info.id + "update_max_watt_limit"};
+            active_local_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
         }
     } else {
         // apply external limits if they are lower
