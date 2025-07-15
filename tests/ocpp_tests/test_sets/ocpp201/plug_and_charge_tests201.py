@@ -9,7 +9,7 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../..")))
-from everest.testing.ocpp_utils.fixtures import *
+from everest.testing.ocpp_utils.fixtures import test_utility, central_system, CentralSystem
 from ocpp.v201.enums import DeleteCertificateStatusEnumType, AuthorizeCertificateStatusEnumType
 from ocpp.v201 import call as call201
 from ocpp.routing import create_route_map
@@ -30,9 +30,6 @@ def validate_authorize_req(
     ) == contains_ocsp
 
 
-@pytest.mark.skip(
-    "Plug and charge tests do currently interfere when they are run in parallel with other tests"
-)
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.everest_core_config(
     get_everest_config_path_str("everest-config-ocpp201-sil-dc-d2.yaml")
@@ -51,6 +48,7 @@ def validate_authorize_req(
         ]
     )
 )
+@pytest.mark.xdist_group(name="ISO15118")
 class TestPlugAndCharge:
 
     @pytest.mark.asyncio

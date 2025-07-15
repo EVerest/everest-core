@@ -30,8 +30,9 @@ def validate_notify_ev_charging_needs(meta_data, msg, exp_payload):
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.skip(
-    "Extension tests do currently interfere when they are run in parallel with other tests"
-)
+    "Extension tests currently still have an issue with the evMaxCurrent property which was" \
+    " defined as an integer in OCPP2.0.1 and decimal in OCPP2.1")
+@pytest.mark.xdist_group(name="ISO15118")
 class TestIso15118ExtenstionsOcppIntegration:
 
     @pytest.mark.everest_core_config("everest-config-ocpp201-sil-dc-d20.yaml")
