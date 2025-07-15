@@ -1719,7 +1719,7 @@ std::string Charger::evse_state_to_string(EvseState s) {
     return "Invalid";
 }
 
-float Charger::get_max_current() {
+float Charger::get_max_current() { // todo(moe): not used anywhere apparently?
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_max_current);
     return get_max_current_internal();
 }
