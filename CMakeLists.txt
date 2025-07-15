@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(iso15118
-    VERSION 0.6
+    VERSION 0.7.1
     DESCRIPTION "iso15118 library suite"
 	LANGUAGES CXX C
 )
@@ -10,6 +10,7 @@ find_package(everest-cmake 0.5
     PATHS ../everest-cmake
     NO_DEFAULT_PATH
 )
+find_package(everest-cmake 0.5)
 
 find_package(OpenSSL 3 REQUIRED)
 
