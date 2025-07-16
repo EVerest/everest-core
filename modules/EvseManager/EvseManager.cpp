@@ -515,15 +515,6 @@ void EvseManager::ready() {
                 }
             });
 
-            r_hlc[0]->subscribe_selected_service_parameters(
-                [this](types::iso15118::SelectedServiceParameters parameters) {
-                    selected_d20_energy_service.emplace(parameters.energy_transfer);
-
-                    session_log.car(
-                        true, fmt::format("EV selected service: {}",
-                                          types::iso15118::service_category_to_string(parameters.energy_transfer)));
-                });
-
             // Car requests DC contactor open. We don't actually open but switch off DC supply.
             // opening will be done by Charger on C->B CP event.
             r_hlc[0]->subscribe_dc_open_contactor([this] {
@@ -671,6 +662,13 @@ void EvseManager::ready() {
             EVLOG_error << "Unsupported charging mode.";
             exit(255);
         }
+
+        r_hlc[0]->subscribe_selected_service_parameters([this](types::iso15118::SelectedServiceParameters parameters) {
+            selected_d20_energy_service.emplace(parameters.energy_transfer);
+
+            session_log.car(true, fmt::format("EV selected service: {}",
+                                              types::iso15118::service_category_to_string(parameters.energy_transfer)));
+        });
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
