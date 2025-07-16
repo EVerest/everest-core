@@ -21,18 +21,33 @@ void ev_board_supportImpl::handle_set_cp_state(types::ev_board_support::EvCpStat
     switch (cp_state) {
     case types::ev_board_support::EvCpState::A:
         mod->serial.setBCDE(0);
+        if (mod->serial.motor_lock(false)) {
+            EVLOG_info << "Motor lock deactivated";
+        }
         break;
     case types::ev_board_support::EvCpState::B:
         mod->serial.setBCDE(1);
+        if (mod->serial.motor_lock(false)) {
+            EVLOG_info << "Motor lock deactivated";
+        }
         break;
     case types::ev_board_support::EvCpState::C:
         mod->serial.setBCDE(2);
+        if (mod->serial.motor_lock(true)) {
+            EVLOG_info << "Motor lock activated";
+        }
         break;
     case types::ev_board_support::EvCpState::D:
         mod->serial.setBCDE(3);
+        if (mod->serial.motor_lock(true)) {
+            EVLOG_info << "Motor lock activated";
+        }
         break;
     case types::ev_board_support::EvCpState::E:
         mod->serial.setBCDE(4);
+        if (mod->serial.motor_lock(false)) {
+            EVLOG_info << "Motor lock deactivated";
+        }
         break;
     }
 }

@@ -24,6 +24,7 @@ struct Conf {
     std::string serial_port;
     int baud_rate;
     int reset_gpio;
+    int motor_lock_gpio;
 };
 
 class YetiEvDriver : public Everest::ModuleBase {

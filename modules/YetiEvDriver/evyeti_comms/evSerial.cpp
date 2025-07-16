@@ -379,6 +379,34 @@ bool evSerial::reset(const int reset_pin) {
     return success;
 }
 
+bool evSerial::configure_motor_lock(const int pin) {
+    if (pin <= 0) {
+        return false;
+    }
+
+    motor_lock_pin = pin;
+
+    char cmd[100];
+    sprintf(cmd, "echo %i >/sys/class/gpio/export", pin);
+    system(cmd);
+    sprintf(cmd, "echo out > /sys/class/gpio/gpio%i/direction", pin);
+    system(cmd);
+
+    return true;
+}
+
+bool evSerial::motor_lock(bool value) {
+    if (motor_lock_pin <= 0) {
+        return false;
+    }
+
+    char cmd[100];
+    sprintf(cmd, "echo %i > /sys/class/gpio/gpio%i/value", value ? 1 : 0, motor_lock_pin);
+    system(cmd);
+
+    return true;
+}
+
 void evSerial::firmwareUpdate(bool rom) {
     HiToLo msg_out = HiToLo_init_default;
     msg_out.which_payload = HiToLo_firmware_update_tag;

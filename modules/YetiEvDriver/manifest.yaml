@@ -16,6 +16,12 @@ config:
     minimum: -1
     maximum: 1000
     default: -1
+  motor_lock_gpio:
+    description: Motor lock GPIO number to activate/deactivate motor lock.
+    type: integer
+    minimum: -1
+    maximum: 1000
+    default: -1
 provides:
   ev_board_support:
     interface: ev_board_support

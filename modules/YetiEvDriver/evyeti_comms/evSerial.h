@@ -32,6 +32,9 @@ public:
     void keepAlive();
 
     bool reset(const int reset_pin);
+    
+    bool configure_motor_lock(const int pin);
+    bool motor_lock(bool value);
 
     void setBCDE(uint32_t mode);
     void allowPowerOn(bool p);
@@ -71,6 +74,9 @@ private:
     bool serial_timed_out();
     void timeoutDetectionThread();
     std::chrono::time_point<date::utc_clock> last_keep_alive_lo_timestamp;
+
+    // motor_lock
+    int32_t motor_lock_pin{-1};
 };
 
 #endif

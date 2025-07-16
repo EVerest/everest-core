@@ -24,6 +24,10 @@ void YetiEvDriver::ready() {
         EVLOG_error << "EVYeti reset not successful.";
     }
 
+    if (not serial.configure_motor_lock(config.motor_lock_gpio)) {
+        EVLOG_error << "No motor lock pin configured";
+    }
+
     serial.signalSpuriousReset.connect([this]() { EVLOG_error << "EVYeti uC spurious reset!"; });
     serial.signalConnectionTimeout.connect([this]() { EVLOG_error << "EVYeti UART timeout!"; });
 
