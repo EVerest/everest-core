@@ -1768,12 +1768,14 @@ void Charger::check_soft_over_current() {
     bool is_over_current = false;
     if (limit > 0 and
         (shared_context.current_drawn_by_vehicle[0] > limit or shared_context.current_drawn_by_vehicle[1] > limit or
-         shared_context.current_drawn_by_vehicle[2] > limit)) {
+         shared_context.current_drawn_by_vehicle[2] > limit or shared_context.current_drawn_by_vehicle[0] < 0 or
+         shared_context.current_drawn_by_vehicle[1] < 0 or shared_context.current_drawn_by_vehicle[2] < 0)) {
         is_over_current = true;
     }
     if (limit < 0 and
         (shared_context.current_drawn_by_vehicle[0] < limit or shared_context.current_drawn_by_vehicle[1] < limit or
-         shared_context.current_drawn_by_vehicle[2] < limit)) {
+         shared_context.current_drawn_by_vehicle[2] < limit or shared_context.current_drawn_by_vehicle[0] > 0 or
+         shared_context.current_drawn_by_vehicle[1] > 0 or shared_context.current_drawn_by_vehicle[2] > 0)) {
         is_over_current = true;
     }
 
