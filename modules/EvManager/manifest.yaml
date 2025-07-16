@@ -43,7 +43,7 @@ config:
   dc_energy_capacity:
     description: Energy capacity of the EV
     type: integer
-    default: 6000
+    default: 60000
   dc_target_current:
     description: Target current requested by the EV
     type: integer
