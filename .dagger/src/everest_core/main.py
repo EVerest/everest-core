@@ -2,7 +2,8 @@ import asyncio
 import time
 import dagger
 from dagger import dag, function, object_type
-from typing import Annotated
+from functools import wraps
+from typing import Annotated, Coroutine, Callable, Any, Optional
 
 from .everest_ci import EverestCI, BaseResultType
 
@@ -14,6 +15,92 @@ from .functions.unit_tests import unit_tests as UnitTests, UnitTestsResult
 from .functions.install import install as Install, InstallResult
 from .functions.integration_tests import integration_tests as IntegrationTests, IntegrationTestsResult
 from .functions.ocpp_tests import ocpp_tests as OcppTests, OcppTestsResult
+
+def cached_task(
+    func: Optional[Callable[..., Any]] = None,
+    *,
+    key_func: Optional[Callable[..., Any]] = None
+) -> Callable[..., Coroutine[Any, Any, Any]]:
+    """
+    Decorator to cache and reuse asyncio Tasks for async or sync methods.
+
+    This decorator ensures that for a given method (optionally distinguished by a key function),
+    only one task is created and shared for concurrent calls, preventing redundant executions.
+
+    Supports decorating both asynchronous (`async def`) and synchronous (`def`) functions.
+    Synchronous functions are executed asynchronously using `asyncio.to_thread`.
+
+    Parameters:
+    -----------
+    func : Optional[Callable[..., Awaitable or Any]]
+        The function or coroutine method to decorate.
+    key_func : Optional[Callable[..., Awaitable or Any]], optional
+        Optional function to generate a cache key suffix based on the
+        decorated function’s arguments. Can be synchronous or asynchronous.
+
+    Returns:
+    --------
+    Callable[..., Coroutine]
+        An async wrapper function that manages cached tasks per key.
+
+    Usage:
+    ------
+    ```python
+    # Example 1: Using the decorator directly on async functions without parameters
+    @cached_task
+    async def some_async_function(self):
+        ...
+
+    # Example 2: Using the decorator directly on sync functions without parameters
+    @cached_task
+    def sync_function_without_param(self):
+        ...
+
+    # Example 3: Using the decorator with a key function on async functions with parameters
+    @cached_task(key_func=lambda self, param: param.id)
+    async def async_function_with_param(self, param):
+        ...
+
+    # Example 4: Using the decorator with an async key function on async functions with parameters
+    async def async_key_func(self, param):
+        return param.id
+    @cached_task(
+        key_func=async_key_func
+    )
+    async def async_function_with_param(self, param):
+        ...
+    ```
+
+    """
+    def wrap_function(
+        func: Callable[..., Any]
+    ) -> Callable[..., Coroutine[Any, Any, Any]]:
+        @wraps(func)
+        async def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+            if not hasattr(self, "_cached_tasks_lock"):
+                self._cached_tasks_lock = asyncio.Lock()
+            async with self._cached_tasks_lock:
+                if not hasattr(self, "_cached_tasks"):
+                    self._cached_tasks = {}
+                key = func.__name__
+                if key_func is not None:
+                    if asyncio.iscoroutine(key_func):
+                        key_part = await key_func(self, *args, **kwargs)
+                    else:
+                        key_part = key_func(self, *args, **kwargs)
+                    key = f"{key}-{key_part}"
+                if key not in self._cached_tasks:
+                    if asyncio.iscoroutine(func):
+                        self._cached_tasks[key] = asyncio.create_task(func(self, *args, **kwargs))
+                    else:
+                        self._cached_tasks[key] = asyncio.create_task(asyncio.to_thread(func, self, *args, **kwargs))
+                return await self._cached_tasks[key]
+        return wrapper
+    
+    if func is None:
+        return wrap_function
+    else:
+        return wrap_function(func)
 
 @object_type
 class EverestCore:
@@ -57,16 +144,22 @@ class EverestCore:
                 .with_new_directory("ccache")
             )
 
+    async def _create_key_from_container(self, container: dagger.Container) -> str:
+        """Create a unique key for the container based on its properties."""
+        return await container.id()
+
     @function
+    @cached_task
     async def build_kit(self) -> EverestCI.BuildKitResult:
         """Build the everest-core build kit container"""
 
-        return await BuildKit(
+        return BuildKit(
             docker_dir=self.source_dir.directory(".ci/build-kit/docker"),
             base_image_tag=self.everest_ci_version,
         )
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def lint(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the linter in")] = None,
@@ -85,8 +178,10 @@ class EverestCore:
         )
 
     @function
-    async def configure_cmake_gcc(self,
-            container:  Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
+    @cached_task(key_func=_create_key_from_container)
+    async def configure_cmake_gcc(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
     ) -> ConfigureResult:
         """Configure CMake with GCC in the given container"""
 
@@ -109,6 +204,7 @@ class EverestCore:
         )
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def build_cmake_gcc(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the build in, typically the build-kit image")] = None,
@@ -132,6 +228,7 @@ class EverestCore:
         )
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def unit_tests(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the tests in, typically the build-kit image")] = None,
@@ -153,6 +250,7 @@ class EverestCore:
         )
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def install(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the install in, typically the build-kit image")] = None,
@@ -173,11 +271,6 @@ class EverestCore:
             dist_path=self.dist_path,
             workdir_path=self.workdir_path,
         )
-
-    @object_type
-    class BuildWheelsResult(BaseResultType):
-        """Result of the build wheels"""
-        wheels_dir: Annotated[dagger.Directory, dagger.Doc("Directory containing the built wheels")] = dagger.field()
 
     @function
     def mqtt_server(self) -> dagger.Service:
@@ -204,6 +297,7 @@ class EverestCore:
         return service
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def integration_tests(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the integration tests in, typically the build-kit image")] = None,
@@ -229,15 +323,12 @@ class EverestCore:
             mqtt_server=mqtt_server,
         )
 
-
-    @object_type
-    class OcppTestsResult(IntegrationTestsResult):
-        pass
-
     @function
-    async def ocpp_tests(self,
-            container: Annotated[dagger.Container | None, dagger.Doc("Container to run the ocpp tests in, typically the build-kit image")] = None,
-        ) -> OcppTestsResult:
+    @cached_task(key_func=_create_key_from_container)
+    async def ocpp_tests(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the ocpp tests in, typically the build-kit image")] = None,
+    ) -> OcppTestsResult:
         """Run the OCPP tests"""
 
         if container is None:
@@ -269,6 +360,7 @@ class EverestCore:
         outputs: dagger.Directory = dagger.field()
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def pull_request(self) -> PullRequestResult:
         artifacts = dag.directory()
         artifacts_mutex = asyncio.Lock()
@@ -278,27 +370,11 @@ class EverestCore:
 
         async with asyncio.TaskGroup() as tg:
             build_kit_task = tg.create_task(self.build_kit())
-            # async def artifacts_build_kit_task_fn():
-            #     nonlocal build_kit_task, artifacts, artifacts_mutex
-            #     res_build_kit = await build_kit_task
-            #     async with artifacts_mutex:
-            #         artifacts = artifacts.with_file(
-            #             "build-kit-image.tar.gz",
-            #             await res_build_kit.container.as_tarball(),
-            #         )
-            # tg.create_task(artifacts_build_kit_task_fn())
 
-            async def lint_task_fn() -> EverestCI.ClangFormatResult:
-                nonlocal build_kit_task
-                res_build_kit = await build_kit_task
-                return await self.lint(container=res_build_kit.container)
-            lint_task = tg.create_task(lint_task_fn())
+            lint_task = tg.create_task(self.lint())
+#
+            configure_task = tg.create_task(self.configure_cmake_gcc())
 
-            async def configure_task_fn() -> ConfigureResult:
-                nonlocal build_kit_task
-                res_build_kit = await build_kit_task
-                return await self.configure_cmake_gcc(container=res_build_kit.container)
-            configure_task = tg.create_task(configure_task_fn())
             async def exp_cache_configure_task_fn():
                 nonlocal configure_task, cache, cache_mutex
                 res_configure = await configure_task
@@ -310,13 +386,7 @@ class EverestCore:
                     pass
             tg.create_task(exp_cache_configure_task_fn())
 
-            async def build_task_fn() -> BuildResult:
-                nonlocal configure_task
-                res_configure = await configure_task
-                return await self.build_cmake_gcc(
-                    container=res_configure.container,
-                )
-            build_task = tg.create_task(build_task_fn())
+            build_task = tg.create_task(self.build_cmake_gcc())
             async def exp_cache_build_task_fn():
                 nonlocal build_task, cache, cache_mutex
                 res_build = await build_task
@@ -328,13 +398,7 @@ class EverestCore:
                     pass
             tg.create_task(exp_cache_build_task_fn())
 
-            async def unit_tests_task_fn() -> UnitTestsResult:
-                nonlocal build_task
-                res_build = await build_task
-                return await self.unit_tests(
-                    container=res_build.container,
-                )
-            unit_tests_task = tg.create_task(unit_tests_task_fn())
+            unit_tests_task = tg.create_task(self.unit_tests())
             async def artifacts_unit_tests_task_fn():
                 nonlocal unit_tests_task, artifacts, artifacts_mutex
                 res_unit_tests = await unit_tests_task
@@ -345,21 +409,9 @@ class EverestCore:
                     )
             tg.create_task(artifacts_unit_tests_task_fn())
 
-            async def install_task_fn() -> InstallResult:
-                nonlocal build_task
-                res_build = await build_task
-                return await self.install(
-                    container=res_build.container,
-                )
-            install_task = tg.create_task(install_task_fn())
+            install_task = tg.create_task(self.install())
 
-            async def integration_tests_task_fn() -> IntegrationTestsResult:
-                nonlocal install_task
-                res_install = await install_task
-                return await self.integration_tests(
-                    container=res_install.container,
-                )
-            integration_tests_task = tg.create_task(integration_tests_task_fn())
+            integration_tests_task = tg.create_task(self.integration_tests())
             async def artifacts_integration_tests_task_fn():
                 nonlocal integration_tests_task, artifacts, artifacts_mutex
                 res_integration_tests = await integration_tests_task
@@ -373,13 +425,7 @@ class EverestCore:
                     )
             tg.create_task(artifacts_integration_tests_task_fn())
 
-            async def ocpp_tests_task_fn() -> OcppTestsResult:
-                nonlocal install_task
-                res_install = await install_task
-                return await self.ocpp_tests(
-                    container=res_install.container,
-                )
-            ocpp_tests_task = tg.create_task(ocpp_tests_task_fn())
+            ocpp_tests_task = tg.create_task(self.ocpp_tests())
             async def artifacts_ocpp_tests_task_fn():
                 nonlocal ocpp_tests_task, artifacts, artifacts_mutex
                 res_ocpp_tests = await ocpp_tests_task
