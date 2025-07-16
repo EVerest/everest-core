@@ -4,7 +4,7 @@ import dagger
 from dagger import dag, function, object_type
 from functools import wraps
 from typing import Annotated, Coroutine, Callable, Any, Optional
-import logging
+import inspect
 
 from .everest_ci import EverestCI, BaseResultType
 
@@ -20,7 +20,7 @@ from .functions.ocpp_tests import ocpp_tests as OcppTests, OcppTestsResult
 def cached_task(
     func: Optional[Callable[..., Any]] = None,
     *,
-    key_func: Optional[Callable[..., Any]] = None
+    key_func: Optional[Callable[..., str | None]] = None
 ) -> Callable[..., Coroutine[Any, Any, Any]]:
     """
     Decorator to cache and reuse asyncio Tasks for async or sync methods.
@@ -85,17 +85,18 @@ def cached_task(
                     self._cached_tasks = {}
                 key = func.__name__
                 if key_func is not None:
-                    if asyncio.iscoroutine(key_func):
+                    if inspect.iscoroutinefunction(key_func):
                         key_part = await key_func(self, *args, **kwargs)
                     else:
                         key_part = key_func(self, *args, **kwargs)
-                    key = f"{key}-{key_part}"
+                    if not key_part is None:
+                        key = f"{key}-{key_part}"
                 if key not in self._cached_tasks:
-                    if asyncio.iscoroutine(func):
+                    if inspect.iscoroutinefunction(func):
                         self._cached_tasks[key] = asyncio.create_task(func(self, *args, **kwargs))
                     else:
                         self._cached_tasks[key] = asyncio.create_task(asyncio.to_thread(func, self, *args, **kwargs))
-                return await self._cached_tasks[key]
+            return await self._cached_tasks[key]
         return wrapper
     
     if func is None:
@@ -121,9 +122,6 @@ class EverestCore:
     cache_path: Annotated[str, dagger.Doc("Cache directory path in the container")] = "cache"
     artifacts_path: Annotated[str, dagger.Doc("CI artifacts path in the container")] = "artifacts"
 
-    _outputs: dagger.Directory = dag.directory()
-    _outputs_mutex: asyncio.Lock = asyncio.Lock()
-
     def __post_init__(self):
         if not self.workdir_path.startswith("/"):
             print(f"Warning: workdir_path '{self.workdir_path}' does not start with '/', it will be prefixed with '/'")
@@ -148,15 +146,17 @@ class EverestCore:
                 .with_new_directory("ccache")
             )
 
-        with self._outputs_mutex:
-            self._outputs = (
-                self._outputs
-                .with_new_directory("artifacts")
-                .with_new_directory("cache")
-            )
+        self._outputs = (
+            dag.directory()
+            .with_new_directory("artifacts")
+            .with_new_directory("cache")
+        )
+        self._outputs_mutex = asyncio.Lock()
 
-    async def _create_key_from_container(self, container: dagger.Container) -> str:
+    async def _create_key_from_container(self, container: dagger.Container | None = None) -> str:
         """Create a unique key for the container based on its properties."""
+        if container is None:
+            return None
         return await container.id()
 
     @function
@@ -164,7 +164,7 @@ class EverestCore:
     async def build_kit(self) -> EverestCI.BuildKitResult:
         """Build the everest-core build kit container"""
 
-        return BuildKit(
+        return await BuildKit(
             docker_dir=self.source_dir.directory(".ci/build-kit/docker"),
             base_image_tag=self.everest_ci_version,
         )
@@ -228,7 +228,7 @@ class EverestCore:
                 raise RuntimeError(f"Failed to configure CMake with GCC: {res.exit_code}")
             container = res.container
 
-        with self._outputs_mutex:
+        async with self._outputs_mutex:
             self._outputs.with_directory(
                 "cache/CPM",
                 res.cache_cpm,
@@ -274,7 +274,7 @@ class EverestCore:
                 raise RuntimeError(f"Failed to build CMake with GCC: {res.exit_code}")
             container = res.container
 
-        with self._outputs_mutex:
+        async with self._outputs_mutex:
             self._outputs.with_directory(
                 "cache/ccache",
                 res.cache_ccache,
@@ -318,7 +318,7 @@ class EverestCore:
                 raise RuntimeError(f"Failed to run unit tests: {res.exit_code}")
             container = res.container
 
-        with self._outputs_mutex:
+        async with self._outputs_mutex:
             self._outputs = self._outputs.with_file(
                 "artifacts/unit-tests-log.txt",
                 res.last_test_log,
@@ -414,7 +414,7 @@ class EverestCore:
                 raise RuntimeError(f"Failed to run integration tests: {res.exit_code}")
             container = res.container
 
-        with self._outputs_mutex:
+        async with self._outputs_mutex:
             self._outputs = (
                 self._outputs.
                 with_file(
@@ -427,12 +427,16 @@ class EverestCore:
                 )
             )
 
-        ret = dag.directory().with_file(
-            "integration-tests.html",
-            res.report_html,
-        ).with_file(
-            "integration-tests.xml",
-            res.result_xml,
+        ret = (
+            dag.directory()
+            .with_file(
+                "integration-tests.html",
+                res.report_html,
+            )
+            .with_file(
+                "integration-tests.xml",
+                res.result_xml,
+            )
         )
         return ret
 
@@ -477,7 +481,7 @@ class EverestCore:
                 raise RuntimeError(f"Failed to run OCPP tests: {res.exit_code}")
             container = res.container
 
-        with self._outputs_mutex:
+        async with self._outputs_mutex:
             self._outputs = (
                 self._outputs
                 .with_file(
@@ -490,12 +494,15 @@ class EverestCore:
                 )
             )
 
-        ret = dag.directory().with_file(
-            "ocpp-tests.xml",
-            res.result_xml,
-        ).with_file(
-            "ocpp-tests.html",
-            res.report_html,
+        ret = (
+            dag.directory().
+            with_file(
+                "ocpp-tests.xml",
+                res.result_xml,
+            ).with_file(
+                "ocpp-tests.html",
+                res.report_html,
+            )
         )
         return ret
 
@@ -516,14 +523,14 @@ class EverestCore:
 
     def _log_function_result(self, func_name: str, exit_code: int) -> bool:
         if exit_code == 0:
-            logging.info(f"✅ {func_name} succeeded")
+            print(f"✅ {func_name} succeeded")
             return True
         else:
-            logging.error(f"❌ {func_name} failed with exit code {exit_code}")
+            print(f"❌ {func_name} failed with exit code {exit_code}")
             return False
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task
     async def pull_request(self) -> PullRequestResult:
         async with asyncio.TaskGroup() as tg:
             # Pipeline steps
@@ -555,7 +562,7 @@ class EverestCore:
         success &= self._log_function_result("Run integration tests", integration_tests_task.result().exit_code)
         success &= self._log_function_result("Run OCPP tests", ocpp_tests_task.result().exit_code)
 
-        with self._outputs_mutex:
+        async with self._outputs_mutex:
             self._outputs = (
                 self._outputs
                 .with_new_file(
