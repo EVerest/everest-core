@@ -822,28 +822,194 @@ ocpp::v2::EnergyTransferModeEnum to_ocpp_energy_transfer_mode(const types::iso15
     case types::iso15118::EnergyTransferMode::DC_unique:
         return ocpp::v2::EnergyTransferModeEnum::DC;
 
+    // OCPP 2.1+ enums
     case types::iso15118::EnergyTransferMode::AC_BPT:
+        return ocpp::v2::EnergyTransferModeEnum::AC_BPT;
     case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+        return ocpp::v2::EnergyTransferModeEnum::AC_BPT_DER;
     case types::iso15118::EnergyTransferMode::AC_DER:
+        return ocpp::v2::EnergyTransferModeEnum::AC_DER;
     case types::iso15118::EnergyTransferMode::DC_BPT:
+        return ocpp::v2::EnergyTransferModeEnum::DC_BPT;
     case types::iso15118::EnergyTransferMode::DC_ACDP:
+        return ocpp::v2::EnergyTransferModeEnum::DC_ACDP;
     case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+        return ocpp::v2::EnergyTransferModeEnum::DC_ACDP_BPT;
     case types::iso15118::EnergyTransferMode::WPT:
-        throw std::out_of_range("Could not convert EnergyTransferModeEnum: OCPP does not know this type");
+        return ocpp::v2::EnergyTransferModeEnum::WPT;
     }
 
     throw std::out_of_range("Could not convert EnergyTransferMode");
 }
 
-ocpp::v2::NotifyEVChargingNeedsRequest
-to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs) {
-    // The evseId is calculated outside of this function in the required OCPP201 module
-    ocpp::v2::NotifyEVChargingNeedsRequest _request;
-    ocpp::v2::ChargingNeeds& _charging_needs = _request.chargingNeeds;
+ocpp::v2::MobilityNeedsModeEnum
+to_ocpp_mobility_needs_mode(const types::iso15118::MobilityNeedsMode mobility_needs_mode) {
+    switch (mobility_needs_mode) {
+    case types::iso15118::MobilityNeedsMode::EVCC:
+        return ocpp::v2::MobilityNeedsModeEnum::EVCC;
+    case types::iso15118::MobilityNeedsMode::EVCC_SECC:
+        return ocpp::v2::MobilityNeedsModeEnum::EVCC_SECC;
+    }
+    throw std::out_of_range("Could not convert MobilityNeedsMode");
+}
+
+ocpp::v2::ControlModeEnum to_ocpp_control_mode(const types::iso15118::ControlMode control_mode) {
+    switch (control_mode) {
+    case types::iso15118::ControlMode::DynamicControl:
+        return ocpp::v2::ControlModeEnum::DynamicControl;
+    case types::iso15118::ControlMode::ScheduledControl:
+        return ocpp::v2::ControlModeEnum::ScheduledControl;
+    }
+    throw std::out_of_range("Could not convert ControlMode");
+}
+
+ocpp::v2::EVEnergyOffer to_ocpp_ev_energy_offer(const types::iso15118::EVEnergyOffer& ev_energy_offer) {
+    ocpp::v2::EVEnergyOffer result;
+
+    result.evPowerSchedule.timeAnchor = ocpp::DateTime(ev_energy_offer.ev_power_schedule.time_anchor);
+    result.evPowerSchedule.evPowerScheduleEntries.reserve(
+        ev_energy_offer.ev_power_schedule.ev_power_schedule_entries.size());
+    for (const auto& entry : ev_energy_offer.ev_power_schedule.ev_power_schedule_entries) {
+        ocpp::v2::EVPowerScheduleEntry ocpp_entry;
+        ocpp_entry.power = entry.power;
+        ocpp_entry.duration = entry.duration;
+        result.evPowerSchedule.evPowerScheduleEntries.emplace_back(ocpp_entry);
+    }
+
+    if (ev_energy_offer.ev_absolute_price_schedule.has_value()) {
+        const auto& iso_absolute_price_schedule = ev_energy_offer.ev_absolute_price_schedule.value();
+        ocpp::v2::EVAbsolutePriceSchedule absolute_price_schedule;
+        absolute_price_schedule.timeAnchor = ocpp::DateTime(iso_absolute_price_schedule.time_anchor);
+        absolute_price_schedule.priceAlgorithm = iso_absolute_price_schedule.price_algorithm;
+        absolute_price_schedule.currency = iso_absolute_price_schedule.currency;
+        absolute_price_schedule.evAbsolutePriceScheduleEntries.reserve(
+            iso_absolute_price_schedule.ev_absolute_price_schedule_entries.size());
+        for (const auto& iso_entry : iso_absolute_price_schedule.ev_absolute_price_schedule_entries) {
+            ocpp::v2::EVAbsolutePriceScheduleEntry entry;
+            entry.duration = iso_entry.duration;
+            entry.evPriceRule.reserve(iso_entry.ev_price_rule.size());
+            // TODO(mlitre): Transform float to rational number
+            for (const auto& iso_rule : iso_entry.ev_price_rule) {
+                ocpp::v2::PriceRule rule;
+                // rule.energyFee = iso_rule.energy_fee;
+                // rule.powerRangeStart = iso_rule.power_range_start;
+            }
+        }
+    }
+
+    return result;
+}
+
+ocpp::v2::IslandingDetectionEnum
+to_ocpp_islanding_detection(const types::iso15118::IslandingDetection islanding_detection) {
+    switch (islanding_detection) {
+    case types::iso15118::IslandingDetection::NoAntiIslandingSupport:
+        return ocpp::v2::IslandingDetectionEnum::NoAntiIslandingSupport;
+    case types::iso15118::IslandingDetection::ZeroCrossingDetection:
+        return ocpp::v2::IslandingDetectionEnum::ZeroCrossingDetection;
+    case types::iso15118::IslandingDetection::FrequencyJump:
+        return ocpp::v2::IslandingDetectionEnum::FrequencyJump;
+    case types::iso15118::IslandingDetection::ImpedanceAtFrequency:
+        return ocpp::v2::IslandingDetectionEnum::ImpedanceAtFrequency;
+    case types::iso15118::IslandingDetection::ImpedanceMeasurement:
+        return ocpp::v2::IslandingDetectionEnum::ImpedanceMeasurement;
+    case types::iso15118::IslandingDetection::SandiaFrequencyShift:
+        return ocpp::v2::IslandingDetectionEnum::SandiaFrequencyShift;
+    case types::iso15118::IslandingDetection::SandiaVoltageShift:
+        return ocpp::v2::IslandingDetectionEnum::SandiaVoltageShift;
+    case types::iso15118::IslandingDetection::SlipModeFrequencyShift:
+        return ocpp::v2::IslandingDetectionEnum::SlipModeFrequencyShift;
+    case types::iso15118::IslandingDetection::VoltageVectorShift:
+        return ocpp::v2::IslandingDetectionEnum::VoltageVectorShift;
+    case types::iso15118::IslandingDetection::OtherActive:
+        return ocpp::v2::IslandingDetectionEnum::OtherActive;
+    case types::iso15118::IslandingDetection::OtherPassive:
+        return ocpp::v2::IslandingDetectionEnum::OtherPassive;
+    case types::iso15118::IslandingDetection::RCLQFactor:
+        return ocpp::v2::IslandingDetectionEnum::RCLQFactor;
+    case types::iso15118::IslandingDetection::RoCoF:
+        return ocpp::v2::IslandingDetectionEnum::RoCoF;
+    case types::iso15118::IslandingDetection::UFP_OFP:
+        return ocpp::v2::IslandingDetectionEnum::UFP_OFP;
+    case types::iso15118::IslandingDetection::UVP_OVP:
+        return ocpp::v2::IslandingDetectionEnum::UVP_OVP;
+    }
+    throw std::out_of_range("Could not convert IslandingDetection");
+}
+
+ocpp::v2::DERControlEnum to_ocpp_der_control(const types::iso15118::DERControl der_control) {
+    switch (der_control) {
+    case types::iso15118::DERControl::EnterService:
+        return ocpp::v2::DERControlEnum::EnterService;
+    case types::iso15118::DERControl::FixedPFAbsorb:
+        return ocpp::v2::DERControlEnum::FixedPFAbsorb;
+    case types::iso15118::DERControl::FixedPFInject:
+        return ocpp::v2::DERControlEnum::FixedPFInject;
+    case types::iso15118::DERControl::FixedVar:
+        return ocpp::v2::DERControlEnum::FixedVar;
+    case types::iso15118::DERControl::FreqDroop:
+        return ocpp::v2::DERControlEnum::FreqDroop;
+    case types::iso15118::DERControl::FreqWatt:
+        return ocpp::v2::DERControlEnum::FreqWatt;
+    case types::iso15118::DERControl::VoltWatt:
+        return ocpp::v2::DERControlEnum::VoltWatt;
+    case types::iso15118::DERControl::VoltVar:
+        return ocpp::v2::DERControlEnum::VoltVar;
+    case types::iso15118::DERControl::Gradients:
+        return ocpp::v2::DERControlEnum::Gradients;
+    case types::iso15118::DERControl::HFMayTrip:
+        return ocpp::v2::DERControlEnum::HFMayTrip;
+    case types::iso15118::DERControl::HFMustTrip:
+        return ocpp::v2::DERControlEnum::HFMustTrip;
+    case types::iso15118::DERControl::HVMustTrip:
+        return ocpp::v2::DERControlEnum::HVMustTrip;
+    case types::iso15118::DERControl::LFMustTrip:
+        return ocpp::v2::DERControlEnum::LFMustTrip;
+    case types::iso15118::DERControl::LVMustTrip:
+        return ocpp::v2::DERControlEnum::LVMustTrip;
+    case types::iso15118::DERControl::PowerMonitoringMustTrip:
+        return ocpp::v2::DERControlEnum::PowerMonitoringMustTrip;
+    case types::iso15118::DERControl::HVMayTrip:
+        return ocpp::v2::DERControlEnum::HVMayTrip;
+    case types::iso15118::DERControl::LVMayTrip:
+        return ocpp::v2::DERControlEnum::LVMayTrip;
+    case types::iso15118::DERControl::HVMomCess:
+        return ocpp::v2::DERControlEnum::HVMomCess;
+    case types::iso15118::DERControl::LVMomCess:
+        return ocpp::v2::DERControlEnum::LVMomCess;
+    case types::iso15118::DERControl::LimitMaxDischarge:
+        return ocpp::v2::DERControlEnum::LimitMaxDischarge;
+    case types::iso15118::DERControl::WattPF:
+        return ocpp::v2::DERControlEnum::WattPF;
+    case types::iso15118::DERControl::WattVar:
+        return ocpp::v2::DERControlEnum::WattVar;
+    }
+    throw std::out_of_range("Could not convert DERControl");
+}
+
+ocpp::v2::ChargingNeeds to_ocpp_charging_needs(const types::iso15118::ChargingNeeds& charging_needs) {
+    ocpp::v2::ChargingNeeds _charging_needs;
 
     _charging_needs.requestedEnergyTransfer = to_ocpp_energy_transfer_mode(charging_needs.requested_energy_transfer);
+    if (charging_needs.available_energy_transfer.has_value() and
+        not charging_needs.available_energy_transfer->empty()) {
+        const auto& available = charging_needs.available_energy_transfer.value();
+        _charging_needs.availableEnergyTransfer = {};
+        _charging_needs.availableEnergyTransfer->reserve(available.size());
+        for (const auto& energy : available) {
+            _charging_needs.availableEnergyTransfer->emplace_back(to_ocpp_energy_transfer_mode(energy));
+        }
+    }
+    if (charging_needs.mobility_needs_mode.has_value()) {
+        _charging_needs.mobilityNeedsMode = to_ocpp_mobility_needs_mode(charging_needs.mobility_needs_mode.value());
+    }
+    if (charging_needs.control_mode.has_value()) {
+        _charging_needs.controlMode = to_ocpp_control_mode(charging_needs.control_mode.value());
+    }
+    if (charging_needs.departure_time.has_value()) {
+        _charging_needs.departureTime = ocpp::DateTime(charging_needs.departure_time.value());
+    }
 
-    // TODO(ioan): add v2x params
     if (charging_needs.ac_charging_parameters.has_value()) {
         const auto& ac = charging_needs.ac_charging_parameters.value();
         auto& ac_charging_parameters = _charging_needs.acChargingParameters.emplace();
@@ -864,9 +1030,99 @@ to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& c
         dc_charging_parameters.evEnergyCapacity = dc.ev_energy_capacity;
         dc_charging_parameters.fullSoC = dc.full_soc;
         dc_charging_parameters.bulkSoC = dc.bulk_soc;
-    }
+    } else if (charging_needs.v2x_charging_parameters.has_value()) {
+        const auto& v2x = charging_needs.v2x_charging_parameters.value();
+        auto& v2x_charging_params = _charging_needs.v2xChargingParameters.emplace();
 
-    return _request;
+        v2x_charging_params.evMaxEnergyRequest = v2x.ev_max_energy_request;
+        v2x_charging_params.evMinEnergyRequest = v2x.ev_min_energy_request;
+        v2x_charging_params.evMaxV2XEnergyRequest = v2x.ev_max_v2xenergy_request;
+        v2x_charging_params.evMinV2XEnergyRequest = v2x.ev_min_v2xenergy_request;
+        v2x_charging_params.evTargetEnergyRequest = v2x.ev_target_energy_request;
+        v2x_charging_params.targetSoC = v2x.target_soc;
+        v2x_charging_params.maxVoltage = v2x.max_voltage;
+        v2x_charging_params.minVoltage = v2x.min_voltage;
+        v2x_charging_params.maxChargeCurrent = v2x.max_charge_current;
+        v2x_charging_params.minChargeCurrent = v2x.min_charge_current;
+        v2x_charging_params.maxChargePower = v2x.max_charge_power;
+        v2x_charging_params.maxChargePower_L2 = v2x.max_charge_power_l2;
+        v2x_charging_params.maxChargePower_L3 = v2x.max_charge_power_l3;
+        v2x_charging_params.minChargePower = v2x.min_charge_power;
+        v2x_charging_params.minChargePower_L2 = v2x.min_charge_power_l2;
+        v2x_charging_params.minChargePower_L3 = v2x.min_charge_power_l3;
+        v2x_charging_params.maxDischargeCurrent = v2x.max_discharge_current;
+        v2x_charging_params.minDischargeCurrent = v2x.min_discharge_current;
+        v2x_charging_params.maxDischargePower = v2x.max_discharge_power;
+        v2x_charging_params.maxDischargePower_L2 = v2x.max_discharge_power_l2;
+        v2x_charging_params.maxDischargePower_L3 = v2x.max_discharge_power_l3;
+        v2x_charging_params.minDischargePower = v2x.min_discharge_power;
+        v2x_charging_params.minDischargePower_L2 = v2x.min_discharge_power_l2;
+        v2x_charging_params.minDischargePower_L3 = v2x.min_discharge_power_l3;
+    }
+    if (charging_needs.der_charging_parameters.has_value()) {
+        const auto& der = charging_needs.der_charging_parameters.value();
+        auto& der_charging_params = _charging_needs.derChargingParameters.emplace();
+
+        der_charging_params.evDurationLevel1DCInjection = der.ev_duration_level1dcinjection;
+        der_charging_params.evMaximumLevel1DCInjection = der.ev_maximum_level1dcinjection;
+        der_charging_params.evDurationLevel2DCInjection = der.ev_duration_level2dcinjection;
+        der_charging_params.evMaximumLevel2DCInjection = der.ev_maximum_level2dcinjection;
+        der_charging_params.evIslandingTripTime = der.ev_islanding_trip_time;
+        if (der.ev_islanding_detection_method.has_value()) {
+            der_charging_params.evIslandingDetectionMethod = {};
+            der_charging_params.evIslandingDetectionMethod->reserve(der.ev_islanding_detection_method->size());
+            for (const auto& method : der.ev_islanding_detection_method.value()) {
+                der_charging_params.evIslandingDetectionMethod->emplace_back(to_ocpp_islanding_detection(method));
+            }
+        }
+        der_charging_params.evInverterHwVersion = der.ev_inverter_hw_version;
+        der_charging_params.evInverterSwVersion = der.ev_inverter_sw_version;
+        der_charging_params.evInverterManufacturer = der.ev_inverter_manufacturer;
+        der_charging_params.evInverterModel = der.ev_inverter_model;
+        der_charging_params.evInverterSerialNumber = der.ev_inverter_serial_number;
+        der_charging_params.evOverExcitedMaxDischargePower = der.ev_over_excited_max_discharge_power;
+        der_charging_params.evOverExcitedPowerFactor = der.ev_over_excited_power_factor;
+        der_charging_params.evUnderExcitedMaxDischargePower = der.ev_under_excited_max_discharge_power;
+        der_charging_params.evUnderExcitedPowerFactor = der.ev_under_excited_power_factor;
+        der_charging_params.maxDischargeApparentPower = der.max_discharge_apparent_power;
+        der_charging_params.maxDischargeApparentPower_L2 = der.max_discharge_apparent_power_l2;
+        der_charging_params.maxDischargeApparentPower_L3 = der.max_discharge_apparent_power_l3;
+        der_charging_params.maxApparentPower = der.max_apparent_power;
+        der_charging_params.maxChargeApparentPower = der.max_charge_apparent_power;
+        der_charging_params.maxChargeApparentPower_L2 = der.max_charge_apparent_power_l2;
+        der_charging_params.maxChargeApparentPower_L3 = der.max_charge_apparent_power_l3;
+        der_charging_params.maxChargeReactivePower = der.max_charge_reactive_power;
+        der_charging_params.maxChargeReactivePower_L2 = der.max_charge_reactive_power_l2;
+        der_charging_params.maxChargeReactivePower_L3 = der.max_charge_reactive_power_l3;
+        der_charging_params.maxDischargeReactivePower = der.max_discharge_reactive_power;
+        der_charging_params.maxDischargeReactivePower_L2 = der.max_discharge_reactive_power_l2;
+        der_charging_params.maxDischargeReactivePower_L3 = der.max_discharge_reactive_power_l3;
+        der_charging_params.minDischargeReactivePower = der.min_discharge_reactive_power;
+        der_charging_params.minDischargeReactivePower_L2 = der.min_discharge_reactive_power_l2;
+        der_charging_params.minDischargeReactivePower_L3 = der.min_discharge_reactive_power_l3;
+        der_charging_params.minChargeReactivePower = der.min_charge_reactive_power;
+        der_charging_params.minChargeReactivePower_L2 = der.min_charge_reactive_power_l2;
+        der_charging_params.minChargeReactivePower_L3 = der.min_charge_reactive_power_l3;
+        der_charging_params.evReactiveSusceptance = der.ev_reactive_susceptance;
+        der_charging_params.evSessionTotalDischargeEnergyAvailable = der.ev_session_total_discharge_energy_available;
+        der_charging_params.maxNominalVoltage = der.max_nominal_voltage;
+        der_charging_params.minNominalVoltage = der.min_nominal_voltage;
+        der_charging_params.nominalVoltage = der.nominal_voltage;
+        der_charging_params.nominalVoltageOffset = der.nominal_voltage_offset;
+        if (der.ev_supported_dercontrol.has_value()) {
+            der_charging_params.evSupportedDERControl = {};
+            der_charging_params.evSupportedDERControl->reserve(der.ev_supported_dercontrol->size());
+            for (const auto& der_control : der.ev_supported_dercontrol.value()) {
+                der_charging_params.evSupportedDERControl->emplace_back(to_ocpp_der_control(der_control));
+            }
+        }
+    }
+    // TODO(mlitre): Support ev energy offer
+    // if (charging_needs.ev_energy_offer.has_value()) {
+    //  _charging_needs.evEnergyOffer = to_ocpp_ev_energy_offer(charging_needs.ev_energy_offer.value());
+    //}
+
+    return _charging_needs;
 }
 
 ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {

@@ -1005,7 +1005,8 @@ void OCPP201::ready() {
             const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
             if (mapping.has_value()) {
                 try {
-                    auto charge_needs = conversions::to_ocpp_notify_ev_charging_needs_request(charging_needs);
+                    ocpp::v2::NotifyEVChargingNeedsRequest charge_needs;
+                    charge_needs.chargingNeeds = conversions::to_ocpp_charging_needs(charging_needs);
                     charge_needs.evseId = mapping.value().evse;
 
                     this->charge_point->on_ev_charging_needs(charge_needs);
