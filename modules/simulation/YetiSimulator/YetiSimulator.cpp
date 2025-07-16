@@ -333,12 +333,17 @@ void YetiSimulator::read_from_car() {
         hlc_active = true;
 
     auto amps = duty_cycle_to_amps(module_state->pwm_duty_cycle);
-    if (amps > module_state->ev_max_current or hlc_active == true)
-        amps = module_state->ev_max_current;
 
-    // todo: amps negative for discharge
-
-    amps = -amps;
+    if (module_state->ev_max_current >= 0) {
+        if (amps > module_state->ev_max_current or hlc_active == true) {
+            amps = module_state->ev_max_current;
+        }
+    } else {
+        amps = -amps;
+        if (amps < module_state->ev_max_current or hlc_active == true) {
+            amps = module_state->ev_max_current;
+        }
+    }
 
     double amps1 = (module_state->relais_on == true and module_state->ev_three_phases > 0) ? amps : 0.0;
     double amps2 = (module_state->relais_on == true and module_state->ev_three_phases > 1 and
