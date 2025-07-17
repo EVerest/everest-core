@@ -120,9 +120,8 @@ ocpp::v2::Get15118EVCertificateRequest
 to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSchema& request);
 
 /// \brief Converts a given types::types::iso15118::ChargingNeeds to
-/// ocpp::v2::NotifyEVChargingNeedsRequest
-ocpp::v2::NotifyEVChargingNeedsRequest
-to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs);
+/// ocpp::v2::ChargingNeeds
+ocpp::v2::ChargingNeeds to_ocpp_charging_needs(const types::iso15118::ChargingNeeds& charging_needs);
 
 /// \brief Converts a given types::reservation::ReservationResult to ocpp::v2::ReserveNowStatusEnum
 ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
