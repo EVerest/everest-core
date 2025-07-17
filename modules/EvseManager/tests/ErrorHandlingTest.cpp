@@ -66,8 +66,9 @@ struct EvseManagerModuleAdapterStub : public module::stub::EvseManagerModuleAdap
         error_list{} {
     }
 
-    virtual std::shared_ptr<Everest::error::ErrorManagerImpl> get_error_manager_impl_fn(const std::string& str) {
-        return std::make_shared<Everest::error::ErrorManagerImpl>(
+    virtual std::vector<std::shared_ptr<Everest::error::ErrorManagerImpl>>
+    get_error_manager_impl_fn(const std::string& str) {
+        return {std::make_shared<Everest::error::ErrorManagerImpl>(
             error_type_map, std::make_shared<Everest::error::ErrorDatabaseMap>(), error_list,
             [this](const Everest::error::Error& error) {
                 if (error_raise.find(error.type) == error_raise.end()) {
@@ -83,7 +84,7 @@ struct EvseManagerModuleAdapterStub : public module::stub::EvseManagerModuleAdap
                 error_clear[error.type](error);
                 active_errors.remove(error);
             },
-            false);
+            false)};
     }
 
     virtual std::shared_ptr<Everest::error::ErrorManagerReq> get_error_manager_req_fn(const Requirement& req) {
@@ -96,12 +97,13 @@ struct EvseManagerModuleAdapterStub : public module::stub::EvseManagerModuleAdap
             });
     }
 
-    virtual std::shared_ptr<Everest::error::ErrorFactory> get_error_factory_fn(const std::string&) {
-        return std::make_shared<Everest::error::ErrorFactory>(error_type_map);
+    virtual std::vector<std::shared_ptr<Everest::error::ErrorFactory>> get_error_factory_fn(const std::string&) {
+        return {std::make_shared<Everest::error::ErrorFactory>(error_type_map)};
     }
 
-    virtual std::shared_ptr<Everest::error::ErrorStateMonitor> get_error_state_monitor_impl_fn(const std::string&) {
-        return std::make_shared<Everest::error::ErrorStateMonitor>(error_database);
+    virtual std::vector<std::shared_ptr<Everest::error::ErrorStateMonitor>>
+    get_error_state_monitor_impl_fn(const std::string&) {
+        return {std::make_shared<Everest::error::ErrorStateMonitor>(error_database)};
     }
 };
 

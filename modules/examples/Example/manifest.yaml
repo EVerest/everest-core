@@ -26,6 +26,10 @@ provides:
   store:
     interface: kvs
     description: This implements the kvs interface, mostly for testing multiple interfaces in one manifest
+  example_multiple:
+    interface: example
+    description: This implements the example interface multiple times in one provides
+    quantity: 2
 requires:
   kvs:
     interface: kvs

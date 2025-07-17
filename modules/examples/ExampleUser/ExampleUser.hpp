@@ -28,11 +28,17 @@ class ExampleUser : public Everest::ModuleBase {
 public:
     ExampleUser() = delete;
     ExampleUser(const ModuleInfo& info, std::unique_ptr<example_userImplBase> p_example_user,
-                std::unique_ptr<exampleIntf> r_example, Conf& config) :
-        ModuleBase(info), p_example_user(std::move(p_example_user)), r_example(std::move(r_example)), config(config){};
+                std::unique_ptr<exampleIntf> r_example, std::vector<std::unique_ptr<exampleIntf>> r_example_multiple,
+                Conf& config) :
+        ModuleBase(info),
+        p_example_user(std::move(p_example_user)),
+        r_example(std::move(r_example)),
+        r_example_multiple(std::move(r_example_multiple)),
+        config(config){};
 
     const std::unique_ptr<example_userImplBase> p_example_user;
     const std::unique_ptr<exampleIntf> r_example;
+    const std::vector<std::unique_ptr<exampleIntf>> r_example_multiple;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

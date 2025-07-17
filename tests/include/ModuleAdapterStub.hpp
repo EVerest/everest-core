@@ -23,7 +23,9 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         call = [this](const Requirement& req, const std::string& str, Parameters p) {
             return this->call_fn(req, str, p);
         };
-        publish = [this](const std::string& s1, const std::string& s2, Value v) { this->publish_fn(s1, s2, v); };
+        publish = [this](std::size_t index, const std::string& s1, const std::string& s2, Value v) {
+            this->publish_fn(index, s1, s2, v);
+        };
         subscribe = [this](const Requirement& req, const std::string& str, ValueCallback cb) {
             this->subscribe_fn(req, str, cb);
         };
@@ -54,24 +56,26 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         std::printf("call_fn\n");
         return std::nullopt;
     }
-    virtual void publish_fn(const std::string&, const std::string&, Value) {
+    virtual void publish_fn(std::size_t, const std::string&, const std::string&, Value) {
         std::printf("publish_fn\n");
     }
     virtual void subscribe_fn(const Requirement&, const std::string& fn, ValueCallback) {
         std::printf("subscribe_fn(%s)\n", fn.c_str());
     }
-    virtual std::shared_ptr<Everest::error::ErrorManagerImpl> get_error_manager_impl_fn(const std::string&) {
+    virtual std::vector<std::shared_ptr<Everest::error::ErrorManagerImpl>>
+    get_error_manager_impl_fn(const std::string&) {
         std::printf("get_error_manager_impl_fn\n");
-        return std::make_shared<Everest::error::ErrorManagerImpl>(
+        return {std::make_shared<Everest::error::ErrorManagerImpl>(
             std::make_shared<Everest::error::ErrorTypeMap>(), std::make_shared<Everest::error::ErrorDatabaseMap>(),
             std::list<Everest::error::ErrorType>(),
             [](const Everest::error::Error&) { std::printf("publish_raised_error\n"); },
-            [](const Everest::error::Error&) { std::printf("publish_cleared_error\n"); });
+            [](const Everest::error::Error&) { std::printf("publish_cleared_error\n"); })};
     }
-    virtual std::shared_ptr<Everest::error::ErrorStateMonitor> get_error_state_monitor_impl_fn(const std::string&) {
+    virtual std::vector<std::shared_ptr<Everest::error::ErrorStateMonitor>>
+    get_error_state_monitor_impl_fn(const std::string&) {
         std::printf("get_error_state_monitor_impl_fn\n");
-        return std::make_shared<Everest::error::ErrorStateMonitor>(
-            std::make_shared<Everest::error::ErrorDatabaseMap>());
+        return {
+            std::make_shared<Everest::error::ErrorStateMonitor>(std::make_shared<Everest::error::ErrorDatabaseMap>())};
     }
     virtual std::shared_ptr<Everest::error::ErrorManagerReqGlobal> get_global_error_manager_fn() {
         std::printf("get_global_error_manager_fn\n");
@@ -81,9 +85,9 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         std::printf("get_global_error_state_monitor_fn\n");
         return {};
     }
-    virtual std::shared_ptr<Everest::error::ErrorFactory> get_error_factory_fn(const std::string&) {
+    virtual std::vector<std::shared_ptr<Everest::error::ErrorFactory>> get_error_factory_fn(const std::string&) {
         std::printf("get_error_factory_fn\n");
-        return std::make_shared<Everest::error::ErrorFactory>(std::make_shared<Everest::error::ErrorTypeMap>());
+        return {std::make_shared<Everest::error::ErrorFactory>(std::make_shared<Everest::error::ErrorTypeMap>())};
     }
     virtual std::shared_ptr<Everest::error::ErrorManagerReq> get_error_manager_req_fn(const Requirement&) {
         std::printf("get_error_manager_req_fn\n");
@@ -124,19 +128,21 @@ struct QuietModuleAdapterStub : public ModuleAdapterStub {
     Result call_fn(const Requirement&, const std::string&, Parameters) override {
         return {};
     }
-    void publish_fn(const std::string&, const std::string&, Value) override {
+    void publish_fn(std::size_t, const std::string&, const std::string&, Value) override {
     }
     void subscribe_fn(const Requirement&, const std::string& fn, ValueCallback) override {
     }
-    std::shared_ptr<Everest::error::ErrorManagerImpl> get_error_manager_impl_fn(const std::string&) override {
-        return std::make_shared<Everest::error::ErrorManagerImpl>(
+    std::vector<std::shared_ptr<Everest::error::ErrorManagerImpl>>
+    get_error_manager_impl_fn(const std::string&) override {
+        return {std::make_shared<Everest::error::ErrorManagerImpl>(
             std::make_shared<Everest::error::ErrorTypeMap>(), std::make_shared<Everest::error::ErrorDatabaseMap>(),
             std::list<Everest::error::ErrorType>(), [](const Everest::error::Error&) {},
-            [](const Everest::error::Error&) {});
+            [](const Everest::error::Error&) {})};
     }
-    std::shared_ptr<Everest::error::ErrorStateMonitor> get_error_state_monitor_impl_fn(const std::string&) override {
-        return std::make_shared<Everest::error::ErrorStateMonitor>(
-            std::make_shared<Everest::error::ErrorDatabaseMap>());
+    std::vector<std::shared_ptr<Everest::error::ErrorStateMonitor>>
+    get_error_state_monitor_impl_fn(const std::string&) override {
+        return {
+            std::make_shared<Everest::error::ErrorStateMonitor>(std::make_shared<Everest::error::ErrorDatabaseMap>())};
     }
     std::shared_ptr<Everest::error::ErrorManagerReqGlobal> get_global_error_manager_fn() override {
         return {};
@@ -144,8 +150,8 @@ struct QuietModuleAdapterStub : public ModuleAdapterStub {
     std::shared_ptr<Everest::error::ErrorStateMonitor> get_global_error_state_monitor_fn() override {
         return {};
     }
-    std::shared_ptr<Everest::error::ErrorFactory> get_error_factory_fn(const std::string&) override {
-        return std::make_shared<Everest::error::ErrorFactory>(std::make_shared<Everest::error::ErrorTypeMap>());
+    std::vector<std::shared_ptr<Everest::error::ErrorFactory>> get_error_factory_fn(const std::string&) override {
+        return {std::make_shared<Everest::error::ErrorFactory>(std::make_shared<Everest::error::ErrorTypeMap>())};
     }
     std::shared_ptr<Everest::error::ErrorManagerReq> get_error_manager_req_fn(const Requirement&) override {
         return std::make_shared<Everest::error::ErrorManagerReq>(

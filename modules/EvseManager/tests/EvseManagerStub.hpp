@@ -88,8 +88,9 @@ struct EvseManagerModuleAdapter : public ModuleAdapterStub {
             });
     }
 
-    virtual std::shared_ptr<Everest::error::ErrorManagerImpl> get_error_manager_impl_fn(const std::string& str) {
-        return std::make_shared<Everest::error::ErrorManagerImpl>(
+    virtual std::vector<std::shared_ptr<Everest::error::ErrorManagerImpl>>
+    get_error_manager_impl_fn(const std::string& str) {
+        return {std::make_shared<Everest::error::ErrorManagerImpl>(
             std::make_shared<Everest::error::ErrorTypeMap>(), std::make_shared<Everest::error::ErrorDatabaseMap>(),
             std::list<Everest::error::ErrorType>(),
             [this](const Everest::error::Error& error) {
@@ -106,7 +107,7 @@ struct EvseManagerModuleAdapter : public ModuleAdapterStub {
                 }
                 error_clear[error.type](error);
             },
-            false);
+            false)};
     }
 };
 
