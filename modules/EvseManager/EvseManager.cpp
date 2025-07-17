@@ -280,6 +280,11 @@ void EvseManager::ready() {
             // transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
             transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, support_bidi});
 
+            // todo(moe): add config option!
+            if (true) {
+                transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, true});
+            }
+
             types::iso15118::AcEvseMaximumPower ac_maximum_power;
             const float max_charge_power_per_phase = config.ac_nominal_voltage * hw_capabilities.max_current_A_import;
             const float max_discharge_power_per_phase =
