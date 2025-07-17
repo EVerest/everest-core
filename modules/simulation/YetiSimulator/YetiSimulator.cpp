@@ -202,7 +202,7 @@ void YetiSimulator::run_telemetry_slow() const {
                            {"operating_time_error", p_p_c_v.operating_time_h_error},
                            {"error", p_p_c_v.error}});
 
-        std::this_thread::sleep_for(std::chrono::milliseconds{15000});                  
+        std::this_thread::sleep_for(std::chrono::milliseconds{15000});
     }
 }
 
@@ -579,21 +579,21 @@ void YetiSimulator::simulate_powermeter() {
     module_state->powermeter_data.vrmsL1 = module_state->simulation_data.voltages.L1;
     module_state->powermeter_data.irmsL1 = module_state->simulation_data.currents.L1;
     module_state->powermeter_data.wattHrL1 = round(module_state->watt_hr.L1);
-    module_state->powermeter_data.tempL1 = 25.0 + (wattL1 + wattL2 + wattL3) * 0.003;
+    module_state->powermeter_data.tempL1 = 25.0 + fabs(wattL1 + wattL2 + wattL3) * 0.003;
     module_state->powermeter_data.freqL1 = module_state->simulation_data.frequencies.L1;
 
     module_state->powermeter_data.wattL2 = round(wattL2);
     module_state->powermeter_data.vrmsL2 = module_state->simulation_data.voltages.L2;
     module_state->powermeter_data.irmsL2 = module_state->simulation_data.currents.L1;
     module_state->powermeter_data.wattHrL2 = round(module_state->watt_hr.L2);
-    module_state->powermeter_data.tempL2 = 25.0 + (wattL1 + wattL2 + wattL3) * 0.003;
+    module_state->powermeter_data.tempL2 = 25.0 + fabs(wattL1 + wattL2 + wattL3) * 0.003;
     module_state->powermeter_data.freqL2 = module_state->simulation_data.frequencies.L2;
 
     module_state->powermeter_data.wattL3 = round(wattL3);
     module_state->powermeter_data.vrmsL3 = module_state->simulation_data.voltages.L3;
     module_state->powermeter_data.irmsL3 = module_state->simulation_data.currents.L3;
     module_state->powermeter_data.wattHrL3 = round(module_state->watt_hr.L3);
-    module_state->powermeter_data.tempL3 = 25.0 + (wattL1 + wattL2 + wattL3) * 0.003;
+    module_state->powermeter_data.tempL3 = 25.0 + fabs(wattL1 + wattL2 + wattL3) * 0.003;
     module_state->powermeter_data.freqL3 = module_state->simulation_data.frequencies.L3;
 
     module_state->powermeter_data.irmsN = module_state->simulation_data.currents.N;
