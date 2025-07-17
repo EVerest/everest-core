@@ -22,6 +22,17 @@ jobs:
   dagger:
     name: Dagger Build, Lint and Test
     runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+      checks: write
+      statuses: write
+      id-token: write
+      issues: write
+      deployments: write
+      discussions: write
+      pages: write
     steps:
       - name: Restore Cache
         uses: actions/cache/restore@v4
