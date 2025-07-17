@@ -123,10 +123,9 @@ void EvseManager::init() {
             r_powersupply_DC[0]->subscribe_capabilities([this](const auto& caps) {
                 update_powersupply_capabilities(caps);
                 const bool dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
-                bool dc_bpt_was_updated = false;
-                if (caps.bidirectional) {
-                    dc_bpt_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
-                }
+                bool dc_bpt_was_updated =
+                    caps.bidirectional ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT)
+                                       : false;
                 if (dc_was_updated || dc_bpt_was_updated) {
                     this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
                 }
@@ -168,11 +167,10 @@ void EvseManager::init() {
                                        hw_capabilities.max_phase_count_import);
             const bool ac_1_was_updated =
                 update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_single_phase_core);
-            bool ac_3_was_updated = false;
-            if (c.max_phase_count_import == 3) {
-                ac_3_was_updated =
-                    update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core);
-            }
+            bool ac_3_was_updated =
+                c.max_phase_count_import == 3
+                    ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core)
+                    : false;
             if (ac_1_was_updated || ac_3_was_updated) {
                 this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
             }
@@ -1117,8 +1115,7 @@ void EvseManager::ready_to_start_charging() {
     charger->enable_disable_initial_state_publish();
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
-                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
     if (!initial_powermeter_value_received) {
         EVLOG_warning << "No powermeter value received yet!";
     }
@@ -1421,24 +1418,6 @@ void EvseManager::set_central_contract_validation_allowed(const bool value) {
 }
 
 void EvseManager::set_contract_certificate_installation_enabled(const bool value) {
-    contract_certificate_installation_enabled = value;
-}
-
-<<<<<<< HEAD
-void EvseManager::set_pnc_enabled(const bool value) {
-    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_set_pnc_enabled);
-    pnc_enabled = value;
-}
-
-void EvseManager::set_central_contract_validation_allowed(const bool value) {
-    Everest::scoped_lock_timeout lock(hlc_mutex,
-                                      Everest::MutexDescription::EVSE_set_central_contract_validation_allowed);
-    central_contract_validation_allowed = value;
-}
-
-void EvseManager::set_contract_certificate_installation_enabled(const bool value) {
-    Everest::scoped_lock_timeout lock(hlc_mutex,
-                                      Everest::MutexDescription::EVSE_set_contract_certificate_installation_enabled);
     contract_certificate_installation_enabled = value;
 }
 

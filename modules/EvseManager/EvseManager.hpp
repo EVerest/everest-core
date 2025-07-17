@@ -146,7 +146,7 @@ public:
         r_over_voltage_monitor(std::move(r_over_voltage_monitor)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
-        config(config) {};
+        config(config){};
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -301,10 +301,6 @@ private:
     std::atomic_bool pnc_enabled{false};
     std::atomic_bool central_contract_validation_allowed{false};
     std::atomic_bool contract_certificate_installation_enabled{false};
-
-    bool pnc_enabled{false};
-    bool central_contract_validation_allowed{false};
-    bool contract_certificate_installation_enabled{false};
 
     VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;

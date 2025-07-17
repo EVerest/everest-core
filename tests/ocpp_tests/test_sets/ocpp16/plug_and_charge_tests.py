@@ -408,7 +408,7 @@ class TestPlugAndCharge:
             test_utility,
             charge_point_v16,
             "StatusNotification",
-            call.StatusNotificationPayload(
+            call.StatusNotification(
                 1, ChargePointErrorCode.no_error, ChargePointStatus.available
             ),
         )
