@@ -1149,7 +1149,6 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
     int64_t pmax{0};
 
     if (conn->ctx->is_dc_charger == false) {
-        int64_t departure_time_duration = req->AC_EVChargeParameter.DepartureTime;
         /* Determin max current and nominal voltage */
         /* Setup default params (before the departure time overrides) */
         float max_current = conn->ctx->basic_config.evse_ac_current_limit;
@@ -1160,7 +1159,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
 
         dlog(DLOG_LEVEL_INFO,
              "before adjusting for departure time, max_current %f, nom_voltage %d, pmax %d, departure_duration %d",
-             max_current, voltage, pmax, departure_time_duration);
+             max_current, voltage, pmax, req->AC_EVChargeParameter.DepartureTime);
     }
 
     /* Configure SA-schedules*/
