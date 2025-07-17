@@ -280,19 +280,12 @@ bool CarSimulation::iso_start_v2g_session(const CmdArguments& arguments, bool th
     if (energy_mode == constants::AC) {
         sim_data.energy_mode = EnergyMode::AC;
         if (three_phases == false) {
-<<<<<<< HEAD
             r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_single_phase_core, departure_time,
                                          e_amount);
         } else {
             r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_three_phase_core, departure_time,
                                          e_amount);
-=======
-            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_single_phase_core);
-            charge_mode = ChargeMode::AC;
-        } else {
-            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_three_phase_core);
             charge_mode = ChargeMode::ACThreePhase;
->>>>>>> upstream/main
         }
     } else if (energy_mode == constants::DC) {
         r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::DC_extended, departure_time, e_amount);

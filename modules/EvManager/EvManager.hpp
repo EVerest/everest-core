@@ -47,12 +47,9 @@ struct Conf {
     int dc_discharge_v2g_minimal_soc;
     double max_current;
     bool three_phases;
-<<<<<<< HEAD
     int departure_time;
     int e_amount;
-=======
     int soc;
->>>>>>> upstream/main
     bool keep_cross_boot_plugin_state;
 };
 
@@ -74,7 +71,7 @@ public:
         r_slac(std::move(r_slac)),
         r_powermeter(std::move(r_powermeter)),
         r_kvs(std::move(r_kvs)),
-        config(config){};
+        config(config) {};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<car_simulatorImplBase> p_main;
