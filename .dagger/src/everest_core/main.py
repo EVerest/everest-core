@@ -17,6 +17,8 @@ from .functions.install import install as Install, InstallResult
 from .functions.integration_tests import integration_tests as IntegrationTests, IntegrationTestsResult
 from .functions.ocpp_tests import ocpp_tests as OcppTests, OcppTestsResult
 
+from .utils.github_status import initialize_status, update_status, CIStep, GithubStatusState
+
 def cached_task(
     func: Optional[Callable[..., Any]] = None,
     *,
@@ -122,6 +124,12 @@ class EverestCore:
     cache_path: Annotated[str, dagger.Doc("Cache directory path in the container")] = "cache"
     artifacts_path: Annotated[str, dagger.Doc("CI artifacts path in the container")] = "artifacts"
 
+    is_github_run: Annotated[bool, dagger.Doc("Whether the current run is a GitHub run")] = False
+    github_token: Annotated[dagger.Secret | None, dagger.Doc("GitHub authentication token")] = None
+    org_name: Annotated[str | None, dagger.Doc("GitHub organization name")] = None
+    repo_name: Annotated[str | None, dagger.Doc("GitHub repository name")] = None
+    sha: Annotated[str | None, dagger.Doc("Commit SHA")] = None
+
     def __post_init__(self):
         if not self.workdir_path.startswith("/"):
             print(f"Warning: workdir_path '{self.workdir_path}' does not start with '/', it will be prefixed with '/'")
@@ -145,13 +153,34 @@ class EverestCore:
                 .with_new_directory("CPM")
                 .with_new_directory("ccache")
             )
-
+        
         self._outputs = (
             dag.directory()
             .with_new_directory("artifacts")
             .with_new_directory("cache")
         )
         self._outputs_mutex = asyncio.Lock()
+
+    @function
+    def test_github_status(self) -> None:
+        initialize_status(
+            auth_token=self.github_token,
+            org_name=self.org_name,
+            repo_name=self.repo_name,
+            sha=self.sha,
+            step=CIStep.BUILD_CMAKE_GCC,
+        )
+        # wait 20 seconds to simulate a long-running task
+        time.sleep(20)
+        update_status(
+            auth_token=self.github_token,
+            org_name=self.org_name,
+            repo_name=self.repo_name,
+            sha=self.sha,
+            step=CIStep.BUILD_CMAKE_GCC,
+            state=GithubStatusState.SUCCESS,
+            target_url="https://example.com",
+        )
 
     async def _create_key_from_container(self, container: dagger.Container | None = None) -> str:
         """Create a unique key for the container based on its properties."""
