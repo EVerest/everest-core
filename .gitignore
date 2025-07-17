@@ -9,7 +9,3 @@ CMakeLists.txt.user
 .idea/
 dist/
 wheels/
-ACTION_PLAN.md
-ARCHITECTURE.md
-DEVELOPMENT.md
-PROTOCOL.md
