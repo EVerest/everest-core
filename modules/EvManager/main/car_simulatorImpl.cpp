@@ -317,6 +317,7 @@ void car_simulatorImpl::setup_ev_parameters() {
                                           mod->config.dc_target_current, mod->config.dc_target_voltage});
         if (mod->config.support_sae_j2847) {
             mod->r_ev[0]->call_enable_sae_j2847_v2g_v2h();
+            mod->r_ev[0]->call_enable_service_hpc1();
             mod->r_ev[0]->call_set_bpt_dc_params(
                 {mod->config.dc_discharge_max_current_limit, mod->config.dc_discharge_max_power_limit,
                  mod->config.dc_discharge_target_current, mod->config.dc_discharge_v2g_minimal_soc});
