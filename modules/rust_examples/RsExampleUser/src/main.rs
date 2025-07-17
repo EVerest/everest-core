@@ -41,6 +41,19 @@ impl ExampleClientSubscriber for ExampleClient {
             let _ = clone.another_example.uses_something("foo".to_string());
         }))
     }
+
+    fn on_error_raised(
+        &self,
+        _context: &Context,
+        _error: crate::generated::errors::example::Error,
+    ) {
+    }
+    fn on_error_cleared(
+        &self,
+        _context: &Context,
+        _error: crate::generated::errors::example::Error,
+    ) {
+    }
 }
 
 struct MainService {}

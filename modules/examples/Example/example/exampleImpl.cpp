@@ -19,6 +19,8 @@ void exampleImpl::ready() {
 }
 
 bool exampleImpl::handle_uses_something(std::string& key) {
+    EVLOG_info << "got something, (no index) key: " << key;
+
     if (mod->r_kvs->call_exists(key)) {
         EVLOG_debug << "IT SHOULD NOT AND DOES NOT EXIST";
     }
