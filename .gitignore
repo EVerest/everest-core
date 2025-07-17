@@ -7,5 +7,4 @@ workspace.yaml
 /modules/target
 CMakeLists.txt.user
 .idea/
-dist/
-wheels/
+
