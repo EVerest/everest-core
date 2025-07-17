@@ -125,7 +125,7 @@ class EverestCore:
     artifacts_path: Annotated[str, dagger.Doc("CI artifacts path in the container")] = "artifacts"
 
     is_github_run: Annotated[bool, dagger.Doc("Whether the current run is a GitHub run")] = False
-    github_token: Annotated[dagger.Secret | None, dagger.Doc("GitHub authentication token")] = None
+    github_token: Annotated[str | None, dagger.Doc("GitHub authentication token")] = None
     org_name: Annotated[str | None, dagger.Doc("GitHub organization name")] = None
     repo_name: Annotated[str | None, dagger.Doc("GitHub repository name")] = None
     sha: Annotated[str | None, dagger.Doc("Commit SHA")] = None
@@ -164,7 +164,7 @@ class EverestCore:
     @function
     async def test_github_status(self) -> None:
         initialize_status(
-            auth_token=await self.github_token.plaintext(),
+            auth_token=self.github_token,
             org_name=self.org_name,
             repo_name=self.repo_name,
             sha=self.sha,
@@ -173,7 +173,7 @@ class EverestCore:
         # wait 20 seconds to simulate a long-running task
         time.sleep(20)
         update_status(
-            auth_token=await self.github_token.plaintext(),
+            auth_token=self.github_token,
             org_name=self.org_name,
             repo_name=self.repo_name,
             sha=self.sha,
