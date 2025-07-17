@@ -66,9 +66,9 @@ class EverestCore:
             )
 
     @function
-    def test_github_status(self) -> None:
+    async def test_github_status(self) -> None:
         initialize_status(
-            auth_token=self.github_token,
+            auth_token=await self.github_token.plaintext(),
             org_name=self.org_name,
             repo_name=self.repo_name,
             sha=self.sha,
@@ -77,7 +77,7 @@ class EverestCore:
         # wait 20 seconds to simulate a long-running task
         time.sleep(20)
         update_status(
-            auth_token=self.github_token,
+            auth_token=await self.github_token.plaintext(),
             org_name=self.org_name,
             repo_name=self.repo_name,
             sha=self.sha,
