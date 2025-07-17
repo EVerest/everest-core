@@ -85,7 +85,7 @@ class PyEVJosevModule():
             self._ready_event.wait()
             try:
                 asyncio.run(evcc_handler_main_loop(self._setup.configs.module))
-                self._mod.publish_variable('ev', 'V2G_Session_Finished', None)
+                self._mod.publish_variable('ev', 'v2g_session_finished', None)
             except KeyboardInterrupt:
                 log.debug("SECC program terminated manually")
                 break
