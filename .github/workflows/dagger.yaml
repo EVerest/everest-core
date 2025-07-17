@@ -22,6 +22,17 @@ jobs:
   dagger:
     name: Dagger Build, Lint and Test
     runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+      checks: write
+      statuses: write
+      id-token: write
+      issues: write
+      deployments: write
+      discussions: write
+      pages: write
     steps:
       - name: Restore Cache
         uses: actions/cache/restore@v4
@@ -43,7 +54,7 @@ jobs:
           version: 0.18.12
           workdir: ${{ github.workspace }}
           module: github.com/${{ github.repository}}@${{ github.ref }}
-          call: --cache-dir ${{ github.workspace }}/outputs/cache pull-request outputs export --path outputs
+          call: --cache-dir ${{ github.workspace }}/outputs/cache --is-github-run --github-token ${{ secrets.GITHUB_TOKEN }} --org-name ${{ github.repository_owner }} --repo-name ${{ github.event.repository.name }} --sha ${{ github.sha }} test-github-status
       - name: Save Cache
         if: contains(fromJSON('["schedule","push","pull_request"]'), github.event_name)
         uses: actions/cache/save@v4
