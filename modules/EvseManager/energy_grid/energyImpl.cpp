@@ -471,7 +471,11 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
             // this needs to be fixed in transition to -20 AC bidirectional.
             // todo(moe): check cases for non -20 AC_BPT
-            mod->charger->set_max_current(limit, Everest::Date::from_rfc3339(value.valid_until));
+            if (mod->session_is_iso_d20_ac_bpt()) {
+                mod->charger->set_max_current(limit, Everest::Date::from_rfc3339(value.valid_until));
+            } else {
+                mod->charger->set_max_current(0, Everest::Date::from_rfc3339(value.valid_until));
+            }
         }
 
         if (limit > 1e-5 || limit < -1e-5)

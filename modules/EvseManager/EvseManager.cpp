@@ -2037,4 +2037,9 @@ void EvseManager::apply_new_target_voltage_current() {
     }
 }
 
+bool EvseManager::session_is_iso_d20_ac_bpt() {
+    return selected_d20_energy_service.has_value() &&
+           selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT;
+}
+
 } // namespace module
