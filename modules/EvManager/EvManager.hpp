@@ -71,7 +71,7 @@ public:
         r_slac(std::move(r_slac)),
         r_powermeter(std::move(r_powermeter)),
         r_kvs(std::move(r_kvs)),
-        config(config) {};
+        config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<car_simulatorImplBase> p_main;
