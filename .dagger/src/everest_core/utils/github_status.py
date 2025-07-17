@@ -25,6 +25,7 @@ def initialize_status(
     repo_name: str,
     sha: str,
     step: CIStep,
+    description: str | None = None,
 ) -> None:
     """
     Initialize a GitHub status for a specific commit.
@@ -52,8 +53,8 @@ def initialize_status(
     body = {
         "state": GithubStatusState.PENDING.value,
         "target_url": None,
-        "description": step.value,
-        "context": "dagger-everest-core",
+        "description": description,
+        "context": f"Dagger: {step.value}",
     }
     res = requests.post(api_url, json=body, headers=headers)
 
@@ -70,6 +71,7 @@ def update_status(
     step: CIStep,
     state: GithubStatusState,
     target_url: str,
+    description: str | None = None,
 ) -> None:
     """
     Update a GitHub status for a specific commit.
@@ -101,8 +103,8 @@ def update_status(
     body = {
         "state": state.value,
         "target_url": target_url,
-        "description": step.value,
-        "context": "dagger-everest-core",
+        "description": description,
+        "context": f"Dagger: {step.value}",
     }
     
     res = requests.post(api_url, json=body, headers=headers)
