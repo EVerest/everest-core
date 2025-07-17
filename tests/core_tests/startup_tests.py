@@ -129,10 +129,6 @@ async def test_001_start_test_module(everest_core: EverestCore):
 
 @pytest.mark.everest_core_config('config-sil.yaml')
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    os.getenv("EXT_MOUNT") == "/ext",
-    reason="HLC tests do not work without a IPv6 link-local address, which currently seems to be the case in GitHub CI"
-)
 async def test_002_start_test_module_ac_hlc(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_002_start_test_module_ac_hlc <<<<<<<<<")
 
@@ -156,10 +152,6 @@ async def test_002_start_test_module_ac_hlc(everest_core: EverestCore):
 
 @pytest.mark.everest_core_config('config-sil-dc.yaml')
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    os.getenv("EXT_MOUNT") == "/ext",
-    reason="HLC tests do not work without a IPv6 link-local address, which currently seems to be the case in GitHub CI"
-)
 async def test_003_start_test_module_dc(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_003_start_test_module_dc <<<<<<<<<")
 

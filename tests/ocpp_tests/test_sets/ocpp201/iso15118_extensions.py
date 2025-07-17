@@ -9,7 +9,8 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 
 from ocpp.v201 import call as call201
 
-from test_sets.everest_test_utils import *  # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
+# Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
+from test_sets.everest_test_utils import *
 from everest.testing.ocpp_utils.charge_point_utils import (
     wait_for_and_validate,
     TestUtility,
@@ -21,16 +22,19 @@ from everest.testing.ocpp_utils.fixtures import *
 
 log = logging.getLogger("iso15118ExtensionsTest")
 
+
 def validate_notify_ev_charging_needs(meta_data, msg, exp_payload):
     return True
+
 
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.skip(
-    "Extension tests do currently interfere when they are run in parallel with other tests"
-)
-class TestIso15118ExtenstionsOcppIntegration:    
-    
+    "Extension tests currently still have an issue with the evMaxCurrent property which was" \
+    " defined as an integer in OCPP2.0.1 and decimal in OCPP2.1")
+@pytest.mark.xdist_group(name="ISO15118")
+class TestIso15118ExtenstionsOcppIntegration:
+
     @pytest.mark.everest_core_config("everest-config-ocpp201-sil-dc-d20.yaml")
     async def test_charge_params_sent_dc_d20(
         self,
@@ -47,7 +51,7 @@ class TestIso15118ExtenstionsOcppIntegration:
             test_utility,
             charge_point,
             "NotifyEVChargingNeeds",
-            call201.NotifyEVChargingNeedsPayload(
+            call201.NotifyEVChargingNeeds(
                 evse_id="1",
                 charging_needs=None,
                 custom_data=None
@@ -93,7 +97,7 @@ class TestIso15118ExtenstionsOcppIntegration:
             test_utility,
             charge_point,
             "NotifyEVChargingNeeds",
-            call201.NotifyEVChargingNeedsPayload(
+            call201.NotifyEVChargingNeeds(
                 evse_id="1",
                 charging_needs=None,
                 custom_data=None

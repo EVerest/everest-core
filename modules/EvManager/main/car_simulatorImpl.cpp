@@ -315,11 +315,11 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
     // subscribe ev events
     if (!mod->r_ev.empty()) {
         const auto& _ev = mod->r_ev.at(0);
-        _ev->subscribe_AC_EVPowerReady([this](auto value) { car_simulation->set_iso_pwr_ready(value); });
-        _ev->subscribe_AC_EVSEMaxCurrent([this](auto value) { car_simulation->set_evse_max_current(value); });
-        _ev->subscribe_AC_StopFromCharger([this]() { car_simulation->set_iso_stopped(true); });
-        _ev->subscribe_V2G_Session_Finished([this]() { car_simulation->set_v2g_finished(true); });
-        _ev->subscribe_DC_PowerOn([this]() { car_simulation->set_dc_power_on(true); });
+        _ev->subscribe_ev_power_ready([this](auto value) { car_simulation->set_iso_pwr_ready(value); });
+        _ev->subscribe_ac_evse_max_current([this](auto value) { car_simulation->set_evse_max_current(value); });
+        _ev->subscribe_stop_from_charger([this]() { car_simulation->set_iso_stopped(true); });
+        _ev->subscribe_v2g_session_finished([this]() { car_simulation->set_v2g_finished(true); });
+        _ev->subscribe_dc_power_on([this]() { car_simulation->set_dc_power_on(true); });
         _ev->subscribe_pause_from_charger([this]() { car_simulation->set_iso_d20_paused(true); });
     }
 }

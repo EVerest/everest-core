@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.21.1
+  git_tag: v0.22.1
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -47,7 +47,7 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: v0.6.0
+  git_tag: v0.7.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
@@ -73,23 +73,23 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: 3b1231392c9f93e1a1375e4691cb20b83cc63a9b
+  git_tag: v0.9.7
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: f31f7d28a010b4fad04467d97b49c0e77630c07c
+  git_tag: v0.28.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2025.5.0
+  git_tag: 2025.7.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: c261e8a4be5367c5bc7e89106c5fb7a470de87bb
+  git_tag: v0.6.0
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
@@ -104,7 +104,7 @@ gtest:
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 everest-sqlite:
   git: https://github.com/EVerest/everest-sqlite.git
-  git_tag: v0.1.1
+  git_tag: v0.1.2
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0

@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <vector>
 
 #include <openssl_util.hpp>
 #include <tls.hpp>
@@ -251,9 +252,8 @@ struct v2g_context {
         struct v2g_evse_id evse_id;
         unsigned int date_time_now_is_used;
         struct iso2_ChargeServiceType charge_service;
-        struct iso2_ServiceType evse_service_list[iso2_ServiceType_8_ARRAY_SIZE];
+        std::vector<iso2_ServiceType> evse_service_list{};
         struct iso2_ServiceParameterListType service_parameter_list[iso2_ServiceType_8_ARRAY_SIZE];
-        uint16_t evse_service_list_len;
 
         struct iso2_SAScheduleListType evse_sa_schedule_list;
         bool evse_sa_schedule_list_is_used;

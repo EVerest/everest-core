@@ -12,6 +12,10 @@
 
 using namespace std::literals::chrono_literals;
 
+namespace {
+static const std::vector<std::unique_ptr<powermeterIntf>> EMPTY_POWERMETER_VECTOR;
+}
+
 namespace module {
 
 static const types::power_supply_DC::Capabilities get_sane_default_power_supply_capabilities() {
@@ -167,11 +171,10 @@ void EvseManager::ready() {
 
     // we provide the powermeter interface to the ErrorHandling only if we need to react to powermeter errors
     // otherwise we provide an empty vector of pointers to the powermeter interface
-    const std::vector<std::unique_ptr<powermeterIntf>> empty;
     error_handling = std::unique_ptr<ErrorHandling>(
         new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC,
-                          config.fail_on_powermeter_errors ? r_powermeter_billing() : empty, r_over_voltage_monitor,
-                          config.inoperative_error_use_vendor_id));
+                          config.fail_on_powermeter_errors ? r_powermeter_billing() : EMPTY_POWERMETER_VECTOR,
+                          r_over_voltage_monitor, config.inoperative_error_use_vendor_id));
 
     if (not config.lock_connector_in_state_b) {
         EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
