@@ -550,3 +550,11 @@ types:
       contract_certificate_installation_enabled:
         description: Indicates if ISO 15118 contract certificate installation/update is enabled
         type: boolean
+  UpdateAllowedEnergyTransferModesResult:
+    description: Enum used to indicate whether an UpdateAllowedEnergyTransferModes cmd was successful or not.
+    type: string
+    enum:
+      - Accepted
+      - IncompatibleEnergyTransfer
+      - ServiceRenegotiationFailed
+      - NoHlc

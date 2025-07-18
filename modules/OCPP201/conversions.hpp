@@ -120,9 +120,8 @@ ocpp::v2::Get15118EVCertificateRequest
 to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSchema& request);
 
 /// \brief Converts a given types::types::iso15118::ChargingNeeds to
-/// ocpp::v2::NotifyEVChargingNeedsRequest
-ocpp::v2::NotifyEVChargingNeedsRequest
-to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs);
+/// ocpp::v2::ChargingNeeds
+ocpp::v2::ChargingNeeds to_ocpp_charging_needs(const types::iso15118::ChargingNeeds& charging_needs);
 
 /// \brief Converts a given types::reservation::ReservationResult to ocpp::v2::ReserveNowStatusEnum
 ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
@@ -245,6 +244,9 @@ to_everest_charging_schedules(const std::vector<ocpp::v2::CompositeSchedule>& co
 /// \brief Converts a given ocpp::v2::CompositeSchedule \p composite_schedule to a types::ocpp::ChargingSchedule
 types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v2::CompositeSchedule& composite_schedule);
 
+/// \brief Converts a given ocpp::v2::OperationModeEnum to a types::ocpp::Operation_mode enum.
+types::ocpp::Operation_mode to_everest_operation_mode(const ocpp::v2::OperationModeEnum operation_mode);
+
 /// \brief Converst a given ocpp::v2::ChargingSchedulePeriod \p period to a types::ocpp::ChargingSchedulePeriod
 types::ocpp::ChargingSchedulePeriod to_everest_charging_schedule_period(const ocpp::v2::ChargingSchedulePeriod& period);
 
@@ -271,6 +273,14 @@ to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageRe
 ocpp::v2::ClearDisplayMessageResponse
 to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response);
 
+/// \brief Converst a given ocpp::v2::EnergyTransferModeEnum \p to a types::iso15118::EnergyTransferMode
+types::iso15118::EnergyTransferMode
+to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& allowed_energy_transfer_mode);
+
+/// \brief Converst a given std::vector<ocpp::v2::EnergyTransferModeEnum> \p to a
+/// std::vector<types::iso15118::EnergyTransferMode>
+std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_transfer_modes(
+    const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes);
 } // namespace conversions
 } // namespace module
 

@@ -146,7 +146,7 @@ public:
         r_over_voltage_monitor(std::move(r_over_voltage_monitor)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
-        config(config){};
+        config(config) {};
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -302,6 +302,10 @@ private:
     std::atomic_bool central_contract_validation_allowed{false};
     std::atomic_bool contract_certificate_installation_enabled{false};
 
+    bool pnc_enabled{false};
+    bool central_contract_validation_allowed{false};
+    bool contract_certificate_installation_enabled{false};
+
     VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;
     VarContainer<bool> selftest_result;
@@ -372,6 +376,9 @@ private:
 
     types::power_supply_DC::ChargingPhase last_power_supply_DC_charging_phase{
         types::power_supply_DC::ChargingPhase::Other};
+    std::mutex supported_energy_transfers_mutex;
+    std::vector<types::iso15118::EnergyTransferMode> supported_energy_transfers;
+    bool update_supported_energy_transfers(const types::iso15118::EnergyTransferMode& energy_transfer);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
