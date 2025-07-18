@@ -9,6 +9,7 @@
 
 #include <conversions.hpp>
 #include <device_model/composed_device_model_storage.hpp>
+#include <device_model/mapping/variable_mapping.hpp>
 #include <error_handling.hpp>
 #include <evse_security_ocpp.hpp>
 #include <external_energy_limits.hpp>
@@ -419,6 +420,17 @@ void OCPP201::ready() {
             return config_device_model_config_path;
         }
     }();
+
+    const auto mapping_file_path = [&]() {
+        const auto config_mapping_file_path = fs::path(this->config.MappingFilePath);
+        if (config_mapping_file_path.is_relative()) {
+            return this->ocpp_share_path / config_mapping_file_path;
+        } else {
+            return config_mapping_file_path;
+        }
+    }();
+
+    const auto mapping_schema_path = this->ocpp_share_path / "mapping_schema.yaml";
 
     if (!fs::exists(this->config.MessageLogPath)) {
         try {
@@ -838,6 +850,8 @@ void OCPP201::ready() {
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
 
+    auto variable_mapping = std::make_unique<VariableMapping>(mapping_file_path, mapping_schema_path);
+
     // initialize libocpp device model
     auto libocpp_device_model_storage = std::make_shared<ocpp::v2::DeviceModelStorageSqlite>(
         device_model_database_path, device_model_database_migration_path, device_model_config_path);
@@ -845,7 +859,7 @@ void OCPP201::ready() {
     // initialize everest device model
     this->everest_device_model_storage = std::make_shared<device_model::EverestDeviceModelStorage>(
         r_evse_manager, this->evse_hardware_capabilities_map, everest_device_model_database_path,
-        device_model_database_migration_path, get_config_service_client());
+        device_model_database_migration_path, std::move(variable_mapping), get_config_service_client());
 
     // initialize composed device model, this will be provided to the ChargePoint constructor
     auto composed_device_model_storage = std::make_unique<module::device_model::ComposedDeviceModelStorage>();
