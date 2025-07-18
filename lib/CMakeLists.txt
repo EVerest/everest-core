@@ -99,12 +99,13 @@ if(LIBOCPP_ENABLE_V2)
             ocpp/v2/functional_blocks/firmware_update.cpp
             ocpp/v2/functional_blocks/reservation.cpp
             ocpp/v2/functional_blocks/diagnostics.cpp
-            ocpp/v2/functional_blocks/display_message.cpp            
+            ocpp/v2/functional_blocks/display_message.cpp
             ocpp/v2/functional_blocks/meter_values.cpp
             ocpp/v2/functional_blocks/provisioning.cpp
             ocpp/v2/functional_blocks/remote_transaction_control.cpp
             ocpp/v2/functional_blocks/tariff_and_cost.cpp
             ocpp/v2/functional_blocks/transaction.cpp
+            ocpp/v21/functional_blocks/bidirectional.cpp
     )
     add_subdirectory(ocpp/v2/messages)
     add_subdirectory(ocpp/v21/messages)

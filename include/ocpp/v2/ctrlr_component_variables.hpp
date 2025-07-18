@@ -69,6 +69,7 @@ extern const Component AuthCacheCtrlr;
 extern const Component AuthCtrlr;
 extern const Component ChargingStation;
 extern const Component ClockCtrlr;
+extern const Component ConnectedEV;
 extern const Component CustomizationCtrlr;
 extern const Component DeviceDataCtrlr;
 extern const Component DisplayMessageCtrlr;
@@ -276,6 +277,17 @@ extern const ComponentVariable Phases3to1;
 extern const RequiredComponentVariable ChargingProfileMaxStackLevel;
 extern const RequiredComponentVariable ChargingScheduleChargingRateUnit;
 extern const ComponentVariable IgnoredProfilePurposesOffline;
+extern const ComponentVariable ChargingProfilePersistenceTxProfile;
+extern const ComponentVariable ChargingProfilePersistenceChargingStationExternalConstraints;
+extern const ComponentVariable ChargingProfilePersistenceLocalGeneration;
+extern const ComponentVariable ChargingProfileUpdateRateLimit;
+extern const ComponentVariable MaxExternalConstraintsId;
+extern const ComponentVariable SupportedAdditionalPurposes;
+extern const ComponentVariable SupportsDynamicProfiles;
+extern const ComponentVariable SupportsUseLocalTime;
+extern const ComponentVariable SupportsRandomizedDelay;
+extern const ComponentVariable SupportsLimitAtSoC;
+extern const ComponentVariable SupportsEvseSleep;
 extern const ComponentVariable TariffCostCtrlrAvailableTariff;
 extern const ComponentVariable TariffCostCtrlrAvailableCost;
 extern const RequiredComponentVariable TariffCostCtrlrCurrency;
@@ -291,6 +303,24 @@ extern const RequiredComponentVariable StopTxOnInvalidId;
 extern const ComponentVariable TxBeforeAcceptedEnabled;
 extern const RequiredComponentVariable TxStartPoint;
 extern const RequiredComponentVariable TxStopPoint;
+extern const ComponentVariable V2XChargingCtrlrAvailable;
+extern const RequiredComponentVariable V2XChargingCtrlrEnabled;
+extern const RequiredComponentVariable V2XChargingCtrlrSupportedEnergyTransferModes;
+extern const RequiredComponentVariable V2XChargingCtrlrSupportedOperationModes;
+extern const ComponentVariable V2XSampledDataTxStartedMeasurands;
+extern const ComponentVariable V2XSampledDataTxEndedMeasurands;
+extern const ComponentVariable V2XSampledDataTxEndedInterval;
+extern const ComponentVariable V2XSampledDataTxUpdatedMeasurands;
+extern const ComponentVariable V2XSampledDataTxUpdatedInterval;
+extern const ComponentVariable ISO15118CtrlrAvailable;
+extern const ComponentVariable ISO15118CtrlrEnabled;
+extern const ComponentVariable ISO15118CtrlrServiceRenegotiationSupport;
+extern const ComponentVariable ISO15118CtrlrProtocolSupported;
+ComponentVariable get_v2x_tx_started_measurands(const OperationModeEnum& mode);
+ComponentVariable get_v2x_tx_ended_measurands(const OperationModeEnum& mode);
+ComponentVariable get_v2x_tx_ended_interval(const OperationModeEnum& mode);
+ComponentVariable get_v2x_tx_updated_measurands(const OperationModeEnum& mode);
+ComponentVariable get_v2x_tx_updated_interval(const OperationModeEnum& mode);
 } // namespace ControllerComponentVariables
 
 namespace EvseComponentVariables {
@@ -299,6 +329,7 @@ extern const Variable AvailabilityState;
 extern const Variable SupplyPhases;
 extern const Variable AllowReset;
 extern const Variable Power;
+extern const Variable DCInputPhaseControl;
 extern const Variable ISO15118EvseId;
 ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable);
 } // namespace EvseComponentVariables
@@ -310,6 +341,18 @@ extern const Variable Type;
 extern const Variable SupplyPhases;
 ComponentVariable get_component_variable(const int32_t evse_id, const int32_t connector_id, const Variable& variable);
 } // namespace ConnectorComponentVariables
+
+namespace ConnectedEvComponentVariables {
+extern const Variable Available;
+extern const Variable VehicleId;
+extern const Variable ProtocolAgreed;
+extern const Variable VehicleCertificateLeaf;
+extern const Variable VehicleCertificateSubCa1;
+extern const Variable VehicleCertificateSubCa2;
+extern const Variable VehicleCertificateRoot;
+Variable get_protocol_supported_by_ev(const int32_t priority);
+ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable);
+} // namespace ConnectedEvComponentVariables
 
 } // namespace v2
 } // namespace ocpp

@@ -44,6 +44,7 @@ class SecurityInterface;
 class SmartChargingInterface;
 class TariffAndCostInterface;
 class TransactionInterface;
+class BidirectionalInterface;
 
 class DatabaseHandler;
 class DeviceModel;
@@ -361,6 +362,7 @@ private:
     std::unique_ptr<TransactionInterface> transaction;
     std::unique_ptr<ProvisioningInterface> provisioning;
     std::unique_ptr<RemoteTransactionControlInterface> remote_transaction_control;
+    std::unique_ptr<BidirectionalInterface> bidirectional;
 
     // utility
     std::shared_ptr<MessageQueue<v2::MessageType>> message_queue;

@@ -192,22 +192,26 @@ bool is_critical(const std::string& security_event) {
     return false;
 }
 
+std::vector<ChargingProfilePurposeEnum> get_charging_profile_purposes(const std::string& csl) {
+    std::vector<ChargingProfilePurposeEnum> purposes;
+    const auto purposes_vec = split_string(csl, ',');
+
+    for (const auto& purpose : purposes_vec) {
+        try {
+            purposes.push_back(conversions::string_to_charging_profile_purpose_enum(purpose));
+        } catch (std::out_of_range& e) {
+            EVLOG_warning << "Error while converting charging profile purpose to ignore: " << purpose;
+        }
+    }
+    return purposes;
+}
+
 std::vector<ChargingProfilePurposeEnum> get_purposes_to_ignore(const std::string& csl, const bool is_offline) {
     if (not is_offline or csl.empty()) {
         return {};
     }
 
-    std::vector<ChargingProfilePurposeEnum> purposes_to_ignore;
-    const auto purposes_to_ignore_vec = split_string(csl, ',');
-
-    for (const auto& purpose : purposes_to_ignore_vec) {
-        try {
-            purposes_to_ignore.push_back(conversions::string_to_charging_profile_purpose_enum(purpose));
-        } catch (std::out_of_range& e) {
-            EVLOG_warning << "Error while converting charging profile purpose to ignore: " << purpose;
-        }
-    }
-    return purposes_to_ignore;
+    return get_charging_profile_purposes(csl);
 }
 
 std::vector<OcppProtocolVersion> get_ocpp_protocol_versions(const std::string& csl) {

@@ -42,7 +42,8 @@
 using ::testing::MockFunction;
 namespace ocpp::v2 {
 
-static const std::string BASE_JSON_PATH = std::string(TEST_PROFILES_LOCATION_V2) + "/json";
+static const std::string BASE_JSON_PATH_V2 = std::string(TEST_PROFILES_LOCATION_V2) + "/json";
+static const std::string BASE_JSON_PATH_V21 = std::string(TEST_PROFILES_LOCATION_V21) + "/json";
 
 constexpr int NR_OF_EVSES = 1;
 constexpr int NR_OF_TWO_EVSES = 2;
@@ -90,10 +91,12 @@ create_charging_profile(int32_t charging_profile_id, ChargingProfilePurposeEnum 
 ChargingSchedule create_charge_schedule(ChargingRateUnitEnum charging_rate_unit);
 ChargingSchedule create_charge_schedule(ChargingRateUnitEnum charging_rate_unit,
                                         const std::vector<ChargingSchedulePeriod>& charging_schedule_period,
-                                        std::optional<ocpp::DateTime> start_schedule = std::nullopt);
+                                        std::optional<ocpp::DateTime> start_schedule = std::nullopt,
+                                        std::optional<int32_t> duration = std::nullopt);
 std::vector<ChargingSchedulePeriod>
 create_charging_schedule_periods(int32_t start_period, std::optional<int32_t> number_phases = std::nullopt,
-                                 std::optional<int32_t> phase_to_use = std::nullopt);
+                                 std::optional<int32_t> phase_to_use = std::nullopt,
+                                 std::optional<float> limit = std::nullopt);
 std::vector<ChargingSchedulePeriod> create_charging_schedule_periods(const std::vector<int32_t>& start_periods);
 std::vector<ChargingSchedulePeriod>
 create_charging_schedule_periods_with_phases(int32_t start_period, int32_t numberPhases, int32_t phaseToUse);
@@ -141,7 +144,8 @@ protected:
     void SetUp() override;
     void TearDown() override;
     void load_charging_profiles_for_evse(const std::filesystem::path& path, int32_t evse_id);
-    std::unique_ptr<TestSmartCharging> create_smart_charging_handler();
+    std::unique_ptr<TestSmartCharging>
+    create_smart_charging_handler(const OcppProtocolVersion ocpp_version = OcppProtocolVersion::v201);
 
 public:
     CompositeScheduleTestFixtureV2();
@@ -157,8 +161,16 @@ public:
     std::unique_ptr<FunctionalBlockContext> functional_block_context;
     std::unique_ptr<DatabaseHandlerFake> database_handler;
     MockFunction<void()> set_charging_profiles_callback_mock;
+    MockFunction<RequestStartStopStatusEnum(const int32_t evse_id, const ReasonEnum& stop_reason)>
+        stop_transaction_callback_mock;
     std::unique_ptr<TestSmartCharging> handler;
     boost::uuids::random_generator uuid_generator;
+    std::atomic<OcppProtocolVersion> ocpp_version = OcppProtocolVersion::v201;
+};
+
+class CompositeScheduleTestFixtureV21 : public CompositeScheduleTestFixtureV2 {
+public:
+    CompositeScheduleTestFixtureV21();
 };
 
 } // namespace ocpp::v2

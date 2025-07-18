@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/common/utils.hpp>
+
 #include <boost/algorithm/string/predicate.hpp>
+#include <cmath>
 #include <mutex>
 #include <regex>
 #include <sstream>
-
-#include <ocpp/common/utils.hpp>
 
 namespace ocpp {
 
@@ -102,6 +103,14 @@ std::string trim_string(const std::string& string_to_trim) {
 
 bool is_boolean(const std::string& value) {
     return iequals(value, "true") || iequals(value, "false");
+}
+
+bool is_equal(const float& value1, const float& value2, const double& epsilon) {
+    return is_equal(static_cast<double>(value1), static_cast<double>(value2), epsilon);
+}
+
+bool is_equal(const double& value1, const double& value2, const double& epsilon) {
+    return fabs(value1 - value2) < epsilon;
 }
 
 } // namespace ocpp

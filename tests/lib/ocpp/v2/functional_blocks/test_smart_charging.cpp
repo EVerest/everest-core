@@ -89,7 +89,7 @@ protected:
         device_model = device_model_test_helper.get_device_model();
         this->functional_block_context = std::make_unique<FunctionalBlockContext>(
             this->mock_dispatcher, *this->device_model, this->connectivity_manager, *this->evse_manager,
-            *this->database_handler, this->evse_security, this->component_state_manager);
+            *this->database_handler, this->evse_security, this->component_state_manager, this->ocpp_version);
         // Defaults
         const auto& charging_rate_unit_cv = ControllerComponentVariables::ChargingScheduleChargingRateUnit;
         device_model->set_value(charging_rate_unit_cv.component, charging_rate_unit_cv.variable.value(),
@@ -98,9 +98,9 @@ protected:
         const auto& ac_phase_switching_cv = ControllerComponentVariables::ACPhaseSwitchingSupported;
         device_model->set_value(ac_phase_switching_cv.component, ac_phase_switching_cv.variable.value(),
                                 AttributeEnum::Actual, ac_phase_switching_supported.value_or(""), "test", true);
-        return TestSmartCharging(*functional_block_context, set_charging_profiles_callback_mock.AsStdFunction());
+        return TestSmartCharging(*functional_block_context, set_charging_profiles_callback_mock.AsStdFunction(),
+                                 stop_transaction_callback_mock.AsStdFunction());
     }
-
     std::string uuid() {
         std::stringstream s;
         s << uuid_generator();
@@ -143,9 +143,12 @@ protected:
     ocpp::EvseSecurityMock evse_security;
     ComponentStateManagerMock component_state_manager;
     MockFunction<void()> set_charging_profiles_callback_mock;
+    MockFunction<RequestStartStopStatusEnum(const int32_t evse_id, const ReasonEnum& stop_reason)>
+        stop_transaction_callback_mock;
     std::unique_ptr<FunctionalBlockContext> functional_block_context;
     TestSmartCharging smart_charging = create_smart_charging();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
+    std::atomic<OcppProtocolVersion> ocpp_version = OcppProtocolVersion::v201;
 };
 
 TEST_F(SmartChargingTest, K01FR03_IfTxProfileIsMissingTransactionId_ThenProfileIsInvalid) {

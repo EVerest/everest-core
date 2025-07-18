@@ -86,6 +86,18 @@ bool Callbacks::all_callbacks_valid(std::shared_ptr<DeviceModel> device_model) c
                 valid = false;
             }
         }
+
+        if (device_model->get_optional_value<bool>(ControllerComponentVariables::V2XChargingCtrlrAvailable)
+                .value_or(false) and
+            device_model->get_optional_value<bool>(ControllerComponentVariables::ISO15118CtrlrAvailable)
+                .value_or(false)) {
+            if (!this->update_allowed_energy_transfer_modes_callback.has_value() or
+                this->update_allowed_energy_transfer_modes_callback == nullptr) {
+                EVLOG_error << "V2XCharging and ISO15118 are both marked as 'Available', but "
+                               "update_allowed_energy_transfer_modes_callback is not implemented";
+                valid = false;
+            }
+        }
     }
 
     return valid;

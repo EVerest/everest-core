@@ -173,6 +173,12 @@ struct Callbacks {
 
     /// @} // End ocpp 201 callbacks group / topic
 
+    /// \brief Callback function is called when an update to the allowed energy transfer modes has been received,
+    /// OCPP 2.1
+    std::optional<std::function<bool(const std::vector<ocpp::v2::EnergyTransferModeEnum> allowed_energy_transfer_modes,
+                                     const CiString<36> transaction_id)>>
+        update_allowed_energy_transfer_modes_callback;
+
     /// @} // End group
 };
 } // namespace ocpp::v2

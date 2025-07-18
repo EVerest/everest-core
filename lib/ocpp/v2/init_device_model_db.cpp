@@ -733,7 +733,7 @@ void InitDeviceModelDb::insert_variable_monitors(const std::vector<VariableMonit
 
 void InitDeviceModelDb::update_variable_monitor(const VariableMonitoringMeta& new_monitor,
                                                 const VariableMonitoringMeta& db_monitor, const int64_t& variable_id) {
-    /* clang-format off */                                                
+    /* clang-format off */
     static const std::string update_monitor = "UPDATE VARIABLE_MONITORING "
                                               "SET SEVERITY=?, 'TRANSACTION'=?, TYPE_ID=?, CONFIG_TYPE_ID=?, VALUE=?, REFERENCE_VALUE=? "
                                               "WHERE ID=?";

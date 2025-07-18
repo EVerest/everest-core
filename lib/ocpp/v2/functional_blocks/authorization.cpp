@@ -73,7 +73,7 @@ ocpp::v2::Authorization::authorize_req(const IdToken id_token, const std::option
     auto future = this->context.message_dispatcher.dispatch_call_async(call);
 
     if (future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
-        EVLOG_warning << "Waiting for DataTransfer.conf(Authorize) future timed out!";
+        EVLOG_warning << "Waiting for Authorize Response future timed out!";
         return response;
     }
 

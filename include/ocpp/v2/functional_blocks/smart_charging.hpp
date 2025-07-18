@@ -11,6 +11,11 @@ namespace ocpp::v2 {
 struct FunctionalBlockContext;
 class SmartChargingHandlerInterface;
 
+typedef std::function<RequestStartStopStatusEnum(const int32_t evse_id, const ReasonEnum& stop_reason)>
+    StopTransactionCallback;
+
+struct LimitsSetpointsForOperationMode;
+
 struct GetChargingProfilesRequest;
 struct SetChargingProfileRequest;
 struct SetChargingProfileResponse;
@@ -20,6 +25,15 @@ struct ClearChargingProfileResponse;
 struct ClearChargingProfileRequest;
 struct ReportChargingProfilesRequest;
 struct NotifyEVChargingNeedsRequest;
+struct NotifyEVChargingNeedsResponse;
+
+/// \brief Different types of limits and setpoints, used in the limits_setpoints_per_operation_mode map.
+enum LimitSetpointType {
+    Limit,
+    DischargeLimit,
+    Setpoint,
+    SetpointReactive
+};
 
 enum class ProfileValidationResultEnum {
     Valid,
@@ -35,12 +49,29 @@ enum class ProfileValidationResultEnum {
     ChargingProfileFirstStartScheduleIsNotZero,
     ChargingProfileMissingRequiredStartSchedule,
     ChargingProfileExtraneousStartSchedule,
+    ChargingProfileRateLimitExceeded,
+    ChargingProfileIdSmallerThanMaxExternalConstraintsId,
+    ChargingProfileUnsupportedPurpose,
+    ChargingProfileUnsupportedKind,
+    ChargingProfileNotDynamic,
     ChargingScheduleChargingRateUnitUnsupported,
+    ChargingSchedulePriorityExtranousDuration,
+    ChargingScheduleRandomizedDelay,
+    ChargingScheduleUnsupportedLocalTime,
+    ChargingScheduleUnsupportedRandomizedDelay,
+    ChargingScheduleUnsupportedLimitAtSoC,
+    ChargingScheduleUnsupportedEvseSleep,
     ChargingSchedulePeriodsOutOfOrder,
     ChargingSchedulePeriodInvalidPhaseToUse,
     ChargingSchedulePeriodUnsupportedNumberPhases,
     ChargingSchedulePeriodExtraneousPhaseValues,
     ChargingSchedulePeriodPhaseToUseACPhaseSwitchingUnsupported,
+    ChargingSchedulePeriodPriorityChargingNotChargingOnly,
+    ChargingSchedulePeriodUnsupportedOperationMode,
+    ChargingSchedulePeriodUnsupportedLimitSetpoint,
+    ChargingSchedulePeriodNoPhaseForDC,
+    ChargingSchedulePeriodNoFreqWattCurve,
+    ChargingSchedulePeriodSignDifference,
     ChargingStationMaxProfileCannotBeRelative,
     ChargingStationMaxProfileEvseIdGreaterThanZero,
     DuplicateTxDefaultProfileFound,
@@ -128,10 +159,13 @@ class SmartCharging : public SmartChargingInterface {
 private: // Members
     const FunctionalBlockContext& context;
     std::function<void()> set_charging_profiles_callback;
+    std::map<ChargingProfilePurposeEnum, DateTime> last_charging_profile_update;
+    StopTransactionCallback stop_transaction_callback;
 
 public:
     SmartCharging(const FunctionalBlockContext& functional_block_context,
-                  std::function<void()> set_charging_profiles_callback);
+                  std::function<void()> set_charging_profiles_callback,
+                  StopTransactionCallback stop_transaction_callback);
     void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;
     GetCompositeScheduleResponse get_composite_schedule(const GetCompositeScheduleRequest& request) override;
     std::optional<CompositeSchedule> get_composite_schedule(int32_t evse_id, std::chrono::seconds duration,
@@ -182,6 +216,15 @@ protected:
         const ChargingProfile& profile, int32_t evse_id,
         AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) const;
 
+    ///
+    /// \brief Validates the given profile according to the specification.
+    /// \param profile  Profile to validate.
+    /// \param evse_id  Evse id this charging profile belongs to.
+    /// \return ProfileValidationResultEnum::Valid if valid.
+    ///
+    ProfileValidationResultEnum validate_priority_charging_profile(const ChargingProfile& profile,
+                                                                   int32_t evse_id) const;
+
     /// \brief validates that the given \p profile has valid charging schedules.
     /// If a profiles charging schedule period does not have a valid numberPhases,
     /// we set it to the default value (3).
@@ -228,6 +271,7 @@ private: // Functions
     void handle_clear_charging_profile_req(Call<ClearChargingProfileRequest> call);
     void handle_get_charging_profiles_req(Call<GetChargingProfilesRequest> call);
     void handle_get_composite_schedule_req(Call<GetCompositeScheduleRequest> call);
+    void handle_notify_ev_charging_needs_response(const EnhancedMessage<MessageType>& call_result);
 
     GetCompositeScheduleResponse get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
                                                                  bool simulate_transaction_active = true);
@@ -244,6 +288,7 @@ private: // Functions
 
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
+    std::vector<ChargingProfile> get_charging_station_max_profiles() const;
     std::vector<ChargingProfile>
     get_valid_profiles_for_evse(int32_t evse_id,
                                 const std::vector<ChargingProfilePurposeEnum>& purposes_to_ignore = {});
@@ -257,5 +302,87 @@ private: // Functions
     ///
     void conform_validity_periods(ChargingProfile& profile) const;
     CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;
+
+    ///
+    /// \brief Verify rate limit, only for OCPP 2.1
+    ///
+    /// When Charging Station receives a SetChargingProfileRequest for a ChargingProfileType with a
+    /// chargingProfilePurpose that is to be stored persistently AND the previous SetChargingProfileRequest for this
+    /// chargingProfilePurpose was less than ChargingProfileUpdate RateLimit seconds ago, Charging Station MAY respond
+    /// with SetChargingProfileResponse with status = Rejected and reasonCode = "RateLimitExceeded" (K01.FR.56).
+    ///
+    /// \param profile  Charging profile
+    /// \return ProfileValidationResultEnum::Valid when rate limit was not exceeded, or OCPP 2.0.1.
+    ///         ProfileValidationResultEnum::ChargingProfileRateLimitExceeded when rate limit was exceeded.
+    ///
+    ProfileValidationResultEnum verify_rate_limit(const ChargingProfile& profile);
+
+    ///
+    /// \brief Check if DCInputPhaseControl is enabled for this evse id.
+    ///
+    /// \note This function can also be used for evse id 0, it will then check all existing evse's for this variable.
+    ///
+    /// \param evse_id  The evse id. Can also be 0.
+    /// \return True if evse has DCInputPhaseControl enabled.
+    ///
+    bool has_dc_input_phase_control(const int32_t evse_id) const;
+
+    ///
+    /// \brief Check if DCInputPhaseControl is enabled for this evse id.
+    /// \param evse_id  The evse id. Should not be 0.
+    /// \return True if evse has DCInputPhaseControl enabled.
+    ///
+    bool evse_has_dc_input_phase_control(const int32_t evse_id) const;
 };
+
+///
+/// \brief Check if limits and checkpoints of an operation mode are correct.
+///
+/// Check if all required limits and setpoints are set and if there are limits and / or setpoints that should not be
+/// there.
+///
+/// \param limits_setpoints The information about required and optional limits and setpoints.
+/// \param limit        Limit or setpoint (for phase 1 if L2 and L3 are set, otherwise for all phases).
+/// \param limit_L2     Limit or setpoint phase 2.
+/// \param limit_L3     Limit or setpoint phase 3.
+/// \return True if all limits and setpoints are set / not set according to limits_setpoints struct.
+///
+bool are_limits_and_setpoints_of_operation_mode_correct(const LimitsSetpointsForOperationMode& limits_setpoints,
+                                                        const ocpp::v2::LimitSetpointType& type,
+                                                        const std::optional<float>& limit,
+                                                        const std::optional<float>& limit_L2,
+                                                        const std::optional<float>& limit_L3);
+
+///
+/// \brief Check if operation mode for the charging profile purpose is correct.
+///
+/// See 2.1 spec: Table 95. operationMode for various ChargingProfilePurposes
+///
+/// \param operation_mode   The operation mode.
+/// \param purpose          The charging profile purpose.
+/// \return True if this operation mode is allowed.
+///
+bool check_operation_modes_for_charging_profile_purposes(const OperationModeEnum& operation_mode,
+                                                         const ChargingProfilePurposeEnum& purpose);
+
+///
+/// \brief Check if limits and checkpoints of an operation mode are correct.
+///
+/// Check if all required limits and setpoints are set and if there are limits and / or setpoints that should not be
+/// there.
+///
+/// \param charging_schedule_period The charging schedule period.
+/// \return True when all limits and limits are set / not set according to the spec.
+///
+bool check_limits_and_setpoints(const ChargingSchedulePeriod& charging_schedule_period);
+
+///
+/// \brief Check if all setpoint signs are equal (for all phases positive or for all phases negative).
+///
+/// This check assumes that if setpoint is not set, setpoint_L2 and setpoint_L3 are not set as well.
+///
+/// \param charging_schedule_period The schedule period to check the setpoints for.
+/// \return true if all signs are equal.
+///
+bool all_setpoints_signs_equal(const ChargingSchedulePeriod& charging_schedule_period);
 } // namespace ocpp::v2

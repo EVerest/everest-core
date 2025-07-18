@@ -123,6 +123,22 @@
       ],
       "description": "The name of the EVSE in the string format as required by ISO 15118 and IEC 63119-2. Example: \"DE*ICE*E*1234567890*1\"",
       "type": "string"
+    },
+    "DCInputPhaseControl": {
+      "variable_name": "DCInputPhaseControl",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": false
+        }
+      ],
+      "description": "When DCInputPhaseControl is true, then the values of numberPhases and PhaseToUse in a ChargingSchedulePeriodType will select the input phases from the grid to be used by the DC EVSE.",
+      "type": "boolean"
     }
   },
   "required": [

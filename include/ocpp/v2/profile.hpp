@@ -1,15 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/common/constants.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 namespace v2 {
 
+struct PeriodLimit {
+    float limit;
+    float limit_L2;
+    float limit_L3;
+    bool operator==(const PeriodLimit& other) const;
+    bool operator!=(const PeriodLimit& other) const;
+};
+
 struct IntermediatePeriod {
     int32_t startPeriod;
-    float current_limit;
-    float power_limit;
+    PeriodLimit current_limit;
+    PeriodLimit power_limit;
+    PeriodLimit current_discharge_limit;
+    PeriodLimit power_discharge_limit;
+    PeriodLimit current_setpoint;
+    PeriodLimit power_setpoint;
     std::optional<int32_t> numberPhases;
     std::optional<int32_t> phaseToUse;
 };
@@ -31,7 +44,9 @@ struct period_entry_t {
 
     ocpp::DateTime start;
     ocpp::DateTime end;
-    float limit;
+    PeriodLimit limit;
+    PeriodLimit discharge_limit;
+    PeriodLimit setpoint;
     std::optional<std::int32_t> number_phases;
     std::optional<std::int32_t> phase_to_use;
     std::int32_t stack_level;
@@ -40,6 +55,7 @@ struct period_entry_t {
 
     bool equals(const period_entry_t& other) const {
         return (start == other.start) && (end == other.end) && (limit == other.limit) &&
+               (discharge_limit == other.discharge_limit) && (setpoint == other.setpoint) &&
                (number_phases == other.number_phases) && (stack_level == other.stack_level) &&
                (charging_rate_unit == other.charging_rate_unit) && (min_charging_rate == other.min_charging_rate);
     }
@@ -114,12 +130,14 @@ IntermediateProfile merge_tx_profile_with_tx_default_profile(const IntermediateP
                                                              const IntermediateProfile& tx_default_profile);
 
 /// \brief Generates a new profile by taking the lowest limit of all the provided \param profiles
-IntermediateProfile merge_profiles_by_lowest_limit(const std::vector<IntermediateProfile>& profiles);
+IntermediateProfile merge_profiles_by_lowest_limit(const std::vector<IntermediateProfile>& profiles,
+                                                   const OcppProtocolVersion ocpp_version);
 
 /// \brief Generates a new profile by summing the limits of all the provided \param profiles, filling in defaults
 /// wherever a profile has no limit
 IntermediateProfile merge_profiles_by_summing_limits(const std::vector<IntermediateProfile>& profiles,
-                                                     float current_default, float power_default);
+                                                     float current_default, float power_default,
+                                                     const OcppProtocolVersion ocpp_version);
 
 /// \brief Fills all the periods without a limit or a number of phases with the defaults provided
 void fill_gaps_with_defaults(IntermediateProfile& schedule, float default_limit, int32_t default_number_phases);

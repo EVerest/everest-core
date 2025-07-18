@@ -54,6 +54,7 @@ endif()
 
 if(LIBOCPP_ENABLE_V2)
     add_subdirectory(lib/ocpp/v2)
+    add_subdirectory(lib/ocpp/v21)
 endif()
 
 add_custom_command(TARGET libocpp_unit_tests POST_BUILD

@@ -28,18 +28,21 @@ struct FunctionalBlockContext {
     DatabaseHandlerInterface& database_handler;
     EvseSecurity& evse_security;
     ComponentStateManagerInterface& component_state_manager;
+    std::atomic<OcppProtocolVersion>& ocpp_version;
 
     FunctionalBlockContext(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
                            ConnectivityManagerInterface& connectivity_manager, EvseManagerInterface& evse_manager,
                            DatabaseHandlerInterface& database_handler, EvseSecurity& evse_security,
-                           ComponentStateManagerInterface& component_state_manager) :
+                           ComponentStateManagerInterface& component_state_manager,
+                           std::atomic<OcppProtocolVersion>& ocpp_version) :
         message_dispatcher(message_dispatcher),
         device_model(device_model),
         connectivity_manager(connectivity_manager),
         evse_manager(evse_manager),
         database_handler(database_handler),
         evse_security(evse_security),
-        component_state_manager(component_state_manager) {
+        component_state_manager(component_state_manager),
+        ocpp_version(ocpp_version) {
     }
 };
 } // namespace v2

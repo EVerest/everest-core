@@ -41,6 +41,7 @@ protected: // Members
     ocpp::EvseSecurityMock evse_security;
     EvseManagerFake evse_manager;
     ComponentStateManagerMock component_state_manager;
+    std::atomic<ocpp::OcppProtocolVersion> ocpp_version;
     FunctionalBlockContext functional_block_context;
 
     DataTransferTest() :
@@ -51,9 +52,10 @@ protected: // Members
         evse_security(),
         evse_manager(1),
         component_state_manager(),
-        functional_block_context{this->mock_dispatcher,        *this->device_model,         this->connectivity_manager,
-                                 this->evse_manager,           this->database_handler_mock, this->evse_security,
-                                 this->component_state_manager} {
+        ocpp_version(ocpp::OcppProtocolVersion::v201),
+        functional_block_context{
+            this->mock_dispatcher,       *this->device_model, this->connectivity_manager,    this->evse_manager,
+            this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version} {
     }
 };
 
