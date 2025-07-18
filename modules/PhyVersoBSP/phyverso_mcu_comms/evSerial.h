@@ -91,6 +91,7 @@ public:
     bool is_open() {
         return fd > 0;
     };
+    void flush_buffers();
 
     void read_thread();
     void run();
