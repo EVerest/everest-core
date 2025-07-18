@@ -65,41 +65,29 @@ types:
     - wResonant
     - Undetermined
     - Unknown
-  EVSEErrorEnum:
-    description: >-
-      EVSEErrorEnum can be used to show more details of an EVSE error for example in a service tool application for the technician. The enum naming is identical to EVerest error handler semantic.
+  Severity:
+    description: Severity of an error
     type: string
     enum:
-    - NoError
-  # FIXME these should probably be transparent via EVerest error interface
-  #   - power_supply_DC/HardwareFault
-  #   - power_supply_DC/OverTemperature
-  #   - power_supply_DC/UnderTemperature
-  #   - power_supply_DC/UnderVoltageAC
-  #   - power_supply_DC/OverVoltageAC
-  #   - power_supply_DC/UnderVoltageDC
-  #   - power_supply_DC/OverVoltageDC
-  #   - power_supply_DC/OverCurrentAC
-  #   - power_supply_DC/OverCurrentDC
-  #   - power_supply_DC/VendorError
-  #   - power_supply_DC/VendorWarning
-  #   - evse_board_support/MREC2GroundFailure
-  #   - evse_board_support/MREC3HighTemperature
-  #   - evse_board_support/MREC4OverCurrentFailure
-  #   - evse_board_support/MREC5OverVoltage
-  #   - evse_board_support/MREC6UnderVoltage
-  #   - evse_board_support/MREC8EmergencyStop
-  #   - evse_board_support/MREC10InvalidVehicleMode
-  #   - evse_board_support/MREC14PilotFault
-  #   - evse_board_support/MREC15PowerLoss
-  #   - evse_board_support/MREC17EVSEContactorFault
-  #   - evse_board_support/MREC18CableOverTempDerate
-  #   - evse_board_support/MREC19CableOverTempStop
-  #   - evse_board_support/MREC20PartialInsertion
-  #   - evse_board_support/MREC23ProximityFault
-  #   - evse_board_support/MREC24ConnectorVoltageHigh
-  #   - evse_board_support/MREC25BrokenLatch
-  #   - evse_board_support/MREC26CutCable
+      - High
+      - Medium
+      - Low
+  ImplementationIdentifier:
+    description: Identifier of an implementation
+    type: object
+    required:
+      - module_id
+      - implementation_id
+    properties:
+      module_id:
+        type: string
+        minLength: 2
+      implementation_id:
+        type: string
+      evse_index:
+        type: integer
+      connector_index:
+        type: integer
 
   # data type sub-objects
   ChargerInfoObj:
@@ -144,6 +132,41 @@ types:
       firmware_version:
         description: EVSE firmware version
         type: string
+  ErrorObj:
+    description: Represents an error
+    type: object
+    required:
+      - type
+      - description
+      - message
+      - origin
+      - timestamp
+      - uuid
+      - severity
+      - state
+    properties:
+      type:
+        type: string
+        minLength: 2
+      sub_type:
+        type: string
+      description:
+        type: string
+        minLength: 2
+      message:
+        type: string
+        minLength: 2
+      severity:
+        $ref: /json_rpc_api#/Severity
+      origin:
+        $ref: /json_rpc_api#/ImplementationIdentifier
+      timestamp:
+        type: string
+        format: date-time
+      uuid:
+        type: string
+        minLength: 2
+    additionalProperties: false
   ConnectorInfoObj:
     description: Static information about a connector of an EVSE
     type: object
@@ -427,7 +450,7 @@ types:
       - charging_allowed
       - available
       - active_connector_id
-      - evse_error
+      - error_present
       - charge_protocol
       - state
     properties:
@@ -449,10 +472,9 @@ types:
       active_connector_id:
         description: active_connector_id
         type: integer
-      evse_error:
-        description: evse_error
-        type: object
-        $ref: /json_rpc_api#/EVSEErrorEnum
+      error_present:
+        description: error_present
+        type: boolean
       charge_protocol:
         description: charge_protocol
         type: object
@@ -649,6 +671,25 @@ types:
           description: EVSE infos
           type: object
           $ref: /json_rpc_api#/EVSEInfoObj
+      error:
+        description: Response error
+        type: object
+        $ref: /json_rpc_api#/ResponseErrorEnum
+  ChargePointGetActiveErrorsObj:
+    description: Response to ChargePoint.GetActiveErrors
+    type: object
+    additionalProperties: false
+    required:
+      - active_errors
+      - error
+    properties:
+      active_errors:
+        description: Array of active charge point errors
+        type: array
+        items:
+          description: EVSE error
+          type: object
+          $ref: /json_rpc_api#/ErrorObj
       error:
         description: Response error
         type: object
