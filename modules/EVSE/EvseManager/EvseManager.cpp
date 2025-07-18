@@ -979,6 +979,21 @@ void EvseManager::ready() {
             }
         });
 
+    for (auto& bay : r_parking_bay) {
+        if (bay == nullptr) {
+            continue;
+        }
+
+        bay->subscribe_occupancy_status([this](types::parking_bay::OccupancyStatus parking_bay) {
+            EVLOG_debug << fmt::format("Parking bay occupancy status: {} at {}", parking_bay.is_occupied,
+                                       parking_bay.timestamp);
+            types::evse_manager::SessionEvent se;
+            se.event = types::evse_manager::SessionEventEnum::ParkingBay;
+            se.parking_bay = parking_bay;
+            p_evse->publish_session_event(se);
+        });
+    }
+
     invoke_ready(*p_evse);
     invoke_ready(*p_energy_grid);
     invoke_ready(*p_token_provider);

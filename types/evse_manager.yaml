@@ -113,6 +113,7 @@ types:
         PluginTimeout: Signaled when an EV has been plugged in but no authorization is present within specified ConnectionTimeout
         SwitchingPhases: Signaled when the EVSE Manager starts switching phases
         SessionResumed: Signaled when a session is resumed at startup (e.g. because of previous powerloss)
+        ParkingBay: Signaled when the parking bay sensor changes.
     type: string
     enum:
       - Authorized
@@ -139,6 +140,7 @@ types:
       - PluginTimeout
       - SwitchingPhases
       - SessionResumed
+      - ParkingBay
   SessionStarted:
     description: Data for the SessionStarted event
     type: object
@@ -353,6 +355,10 @@ types:
           Additional data for Enabled/Disabled events. Specifies the source of the command that changed the state.
         type: object
         $ref: /evse_manager#/EnableDisableSource
+      parking_bay:
+        description: Data from the parking bay.
+        type: object
+        $ref: /parking_bay#/OccupancyStatus
   Limits:
     description: Limits of this EVSE
     type: object

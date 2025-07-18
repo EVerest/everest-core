@@ -1,0 +1,10 @@
+description: >-
+  This interface defines a parking bay that can monitor and report its occupancy status.
+  It provides variables to notify about occupancy changes.
+vars:
+  occupancy_status:
+    description: Current occupancy status of the parking bay, published on change
+    type: object
+    $ref: /parking_bay#/OccupancyStatus
+errors:
+  - reference: /errors/parking_bay

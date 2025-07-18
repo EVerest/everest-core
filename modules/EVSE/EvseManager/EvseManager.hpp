@@ -24,6 +24,7 @@
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
 #include <generated/interfaces/over_voltage_monitor/Interface.hpp>
+#include <generated/interfaces/parking_bay/Interface.hpp>
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/interfaces/slac/Interface.hpp>
@@ -129,7 +130,8 @@ public:
                 std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd,
                 std::vector<std::unique_ptr<over_voltage_monitorIntf>> r_over_voltage_monitor,
                 std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC,
-                std::vector<std::unique_ptr<kvsIntf>> r_store, Conf& config) :
+                std::vector<std::unique_ptr<kvsIntf>> r_store,
+                std::vector<std::unique_ptr<parking_bayIntf>> r_parking_bay, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         telemetry(telemetry),
@@ -148,6 +150,7 @@ public:
         r_over_voltage_monitor(std::move(r_over_voltage_monitor)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
+        r_parking_bay(std::move(r_parking_bay)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -167,6 +170,7 @@ public:
     const std::vector<std::unique_ptr<over_voltage_monitorIntf>> r_over_voltage_monitor;
     const std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC;
     const std::vector<std::unique_ptr<kvsIntf>> r_store;
+    const std::vector<std::unique_ptr<parking_bayIntf>> r_parking_bay;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

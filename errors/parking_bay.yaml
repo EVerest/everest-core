@@ -1,0 +1,6 @@
+description: >-
+  Errors for a parking bay sensor.
+errors:
+  - name: CommunicationFault
+    description: >-
+      The communication to the hardware or underlying driver is lost or has errors.
