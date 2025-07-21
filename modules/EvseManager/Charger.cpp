@@ -1719,7 +1719,7 @@ std::string Charger::evse_state_to_string(EvseState s) {
     return "Invalid";
 }
 
-float Charger::get_max_current() { // todo(moe): not used anywhere apparently?
+float Charger::get_max_current() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_max_current);
     return get_max_current_internal();
 }
@@ -1763,20 +1763,25 @@ void Charger::check_soft_over_current() {
     float limit = (get_max_current_signalled_to_ev_internal() + soft_over_current_measurement_noise_A) *
                   (1. + soft_over_current_tolerance_percent / 100.);
 
-    // todo(moe): cleanup
     bool is_over_current = false;
-    if (limit > 0 and
+
+    // check for charging overcurrent
+    if (limit >= 0 and
         (shared_context.current_drawn_by_vehicle[0] > limit or shared_context.current_drawn_by_vehicle[1] > limit or
          shared_context.current_drawn_by_vehicle[2] > limit or shared_context.current_drawn_by_vehicle[0] < 0 or
          shared_context.current_drawn_by_vehicle[1] < 0 or shared_context.current_drawn_by_vehicle[2] < 0)) {
         is_over_current = true;
     }
+
+    // check for discharging overcurrent
     if (limit < 0 and
         (shared_context.current_drawn_by_vehicle[0] < limit or shared_context.current_drawn_by_vehicle[1] < limit or
          shared_context.current_drawn_by_vehicle[2] < limit or shared_context.current_drawn_by_vehicle[0] > 0 or
          shared_context.current_drawn_by_vehicle[1] > 0 or shared_context.current_drawn_by_vehicle[2] > 0)) {
         is_over_current = true;
     }
+
+    // todo(AC_BPT): check if in above code it is necessary to check for inverse current flow (as it is now)
 
     if (is_over_current) {
         if (not internal_context.over_current) {
