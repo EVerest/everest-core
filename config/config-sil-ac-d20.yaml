@@ -25,6 +25,7 @@ active_modules:
       ac_hlc_enabled: true
       ac_hlc_use_5percent: false
       ac_nominal_voltage: 230
+      supported_iso_ac_bpt: true
       charge_mode: AC
       connector_id: 1
       ev_receipt_required: false

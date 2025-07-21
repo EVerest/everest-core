@@ -273,15 +273,13 @@ void EvseManager::ready() {
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
             r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-            constexpr auto support_bidi = false;
-
             // FIXME: we cannot change this during run time at the moment. Refactor ISO interface to exclude transfer
             // modes from setup
             // transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
-            transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, support_bidi});
+            // note: support AC in any case; support for BPT is optional
+            transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, false});
 
-            // todo(moe): add config option!
-            if (true) {
+            if (config.supported_iso_ac_bpt) {
                 transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, true});
             }
 
