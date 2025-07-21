@@ -35,7 +35,8 @@ namespace module {
 using ErrorList = std::list<Everest::error::ErrorType>;
 static const struct IgnoreErrors {
     // p_evse. We need to ignore Inoperative here as this is the result of this check.
-    ErrorList evse{"evse_manager/Inoperative"};
+    ErrorList evse{"evse_manager/Inoperative", "evse_manager/MREC22ResistanceFault",
+                   "evse_manager/MREC11CableCheckFault"};
     ErrorList bsp{"evse_board_support/MREC3HighTemperature", "evse_board_support/MREC18CableOverTempDerate",
                   "evse_board_support/VendorWarning"};
     ErrorList connector_lock{"connector_lock/VendorWarning"};
