@@ -90,3 +90,8 @@ target_compile_definitions(framework
     PRIVATE
         TARGET_MIGRATION_FILE_VERSION=${TARGET_MIGRATION_FILE_VERSION}
 )
+
+set_target_properties(framework
+    PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+)
