@@ -21,6 +21,11 @@ target_include_directories(everest_sqlite
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+set_target_properties(everest_sqlite
+    PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+)
+
 #############
 # Logging configuration
 #############
