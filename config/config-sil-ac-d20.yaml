@@ -15,7 +15,7 @@ active_modules:
       supported_ISO15118_2: false
       supported_ISO15118_20_DC: false
       supported_ISO15118_20_AC: true
-      supported_d20_energy_services: "AC, AC_BPT"
+      supported_d20_energy_services: "AC_BPT, AC"
       tls_active: true
       enable_tls_1_3: true
   evse_manager:
