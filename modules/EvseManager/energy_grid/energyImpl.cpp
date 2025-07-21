@@ -394,10 +394,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             float current_limit_power = value.limits_root_side.total_power_W.value().value /
                                         mod->config.ac_nominal_voltage / mod->ac_nr_phases_active;
 
-            // todo(moe): verify
-            if (limit > 0 and limit > current_limit_power) {
-                limit = current_limit_power;
-            } else if (limit < 0 and limit < current_limit_power) {
+            if ((limit >= 0 and limit > current_limit_power) or (limit < 0 and limit < current_limit_power)) {
                 limit = current_limit_power;
             }
         }
@@ -431,7 +428,6 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 limit_when_random_delay_started = last_enforced_limit;
             }
 
-            // todo(moe): check if negative enforced_limits works with random delay code
             // If a delay is running, replace the current limit with the stored value
             if (mod->random_delay_running) {
                 // use limit from the time point when the random delay started
