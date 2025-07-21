@@ -565,7 +565,7 @@ void Charger::run_state_machine() {
                             internal_context.t_step_EF_return_state = EvseState::PrepareCharging;
                             internal_context.t_step_EF_return_pwm =
                                 ampere_to_duty_cycle(fabs(get_max_current_internal()));
-                            internal_context.t_step_EF_return_ampere = fabs(get_max_current_internal()); // todo: abs?
+                            internal_context.t_step_EF_return_ampere = fabs(get_max_current_internal());
                             shared_context.current_state = EvseState::T_step_EF;
                         } else if (not shared_context.hlc_charging_active and shared_context.legacy_wakeup_done and
                                    time_in_current_state > PREPARING_TIMEOUT_PAUSED_BY_EV) {
@@ -1079,8 +1079,7 @@ bool Charger::set_max_current(float c, std::chrono::time_point<date::utc_clock> 
                 shared_context.max_current = c;
                 shared_context.max_current_valid_until = validUntil;
             }
-            bsp->set_overcurrent_limit(
-                c); // todo: abs? If no -> use this in YetiSimulator to do correct powermeter reporting
+            bsp->set_overcurrent_limit(c); // todo(AC_BPT): fabs(c) here or not?
             signal_max_current(c);
             return true;
         }
