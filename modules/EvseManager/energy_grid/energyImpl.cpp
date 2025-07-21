@@ -390,14 +390,15 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
                               value.limits_root_side.total_power_W.value().value);
 
-            // todo(moe): rename a to something more meaningful
-            float a = value.limits_root_side.total_power_W.value().value / mod->config.ac_nominal_voltage /
-                      mod->ac_nr_phases_active;
+            // watt limit converted to current limit
+            float current_limit_power = value.limits_root_side.total_power_W.value().value /
+                                        mod->config.ac_nominal_voltage / mod->ac_nr_phases_active;
+
             // todo(moe): verify
-            if (limit > 0 and limit > a) {
-                limit = a;
-            } else if (limit < 0 and limit < a) {
-                limit = a;
+            if (limit > 0 and limit > current_limit_power) {
+                limit = current_limit_power;
+            } else if (limit < 0 and limit < current_limit_power) {
+                limit = current_limit_power;
             }
         }
 
@@ -468,12 +469,10 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             mod->charger->set_max_current(limit, Everest::Date::from_rfc3339(value.valid_until));
         } else {
             // export
-            // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
-            // this needs to be fixed in transition to -20 AC bidirectional.
-            // todo(moe): check cases for non -20 AC_BPT
             if (mod->session_is_iso_d20_ac_bpt()) {
                 mod->charger->set_max_current(limit, Everest::Date::from_rfc3339(value.valid_until));
             } else {
+                // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
                 mod->charger->set_max_current(0, Everest::Date::from_rfc3339(value.valid_until));
             }
         }
