@@ -40,6 +40,11 @@ config:
     description: The EVCC will enable TLS version 1.3
     type: boolean
     default: false
+  enable_service_hpc1:
+    description: >-
+      Enable the service for HPC1 as defined in CharIN Guide ISO 15118 Service HPC1 V1.3
+    type: boolean
+    default: false
 provides:  
   ev:
     interface: ISO15118_ev
