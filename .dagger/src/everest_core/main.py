@@ -56,6 +56,15 @@ from .utils.types import (
     CIConfig,
 )
 
+from opentelemetry import trace
+
+
+from opentelemetry import trace
+
+from dagger import dag, function, object_type
+
+tracer = trace.get_tracer(__name__)
+
 
 @object_type
 class EverestCore:
@@ -253,10 +262,13 @@ class EverestCore:
     async def build_kit(self) -> EverestCI.BuildKitResult:
         """Build the everest-core build kit container"""
 
-        return await BuildKit(
-            docker_dir=self.source_dir.directory(".ci/build-kit/docker"),
-            ci_config=self.get_ci_config(),
-        )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.build_kit",
+        ):
+            return await BuildKit(
+                docker_dir=self.source_dir.directory(".ci/build-kit/docker"),
+                ci_config=self.get_ci_config(),
+            )
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -303,10 +315,13 @@ class EverestCore:
                 )
             container = res.container
 
-        return await Lint(
-            container=container,
-            ci_config=self.get_ci_config()
-        )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.lint",
+        ):
+            return await Lint(
+                container=container,
+                ci_config=self.get_ci_config()
+            )
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -352,10 +367,13 @@ class EverestCore:
                 )
             container = res.container
 
-        return await ConfigureCmakeGcc(
-            container=container,
-            ci_config=self.get_ci_config()
-        )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.configure_cmake_gcc",
+        ):
+            return await ConfigureCmakeGcc(
+                container=container,
+                ci_config=self.get_ci_config()
+            )
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -372,13 +390,16 @@ class EverestCore:
             res = await self.configure_cmake_gcc()
             container = res.container
 
-        async with self._outputs_mutex:
-            self._outputs.with_directory(
-                "cache/CPM",
-                res.cache_cpm,
-            )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.export_cpm_cache",
+        ):
+            async with self._outputs_mutex:
+                self._outputs.with_directory(
+                    "cache/CPM",
+                    res.cache_cpm,
+                )
 
-        return res.cache_cpm
+            return res.cache_cpm
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -430,10 +451,13 @@ class EverestCore:
                 )
             container = res.container
 
-        return await BuildCmakeGcc(
-            container=container,
-            ci_config=self.get_ci_config()
-        )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.build_cmake_gcc",
+        ):
+            return await BuildCmakeGcc(
+                container=container,
+                ci_config=self.get_ci_config()
+            )
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -450,13 +474,16 @@ class EverestCore:
             res = await self.build_cmake_gcc()
             container = res.container
 
-        async with self._outputs_mutex:
-            self._outputs.with_directory(
-                "cache/ccache",
-                res.cache_ccache,
-            )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.export_ccache_cache",
+        ):
+            async with self._outputs_mutex:
+                self._outputs.with_directory(
+                    "cache/ccache",
+                    res.cache_ccache,
+                )
 
-        return res.cache_ccache
+            return res.cache_ccache
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -503,12 +530,15 @@ class EverestCore:
             res = await self.build_cmake_gcc()
             if res.exit_code != 0:
                 raise RuntimeError(f"Failed to build CMake: {res.exit_code}")
-            container = res.container
+        container = res.container
 
-        return await UnitTests(
-            container=container,
-            ci_config=self.get_ci_config()
-        )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.unit_tests",
+        ):
+            return await UnitTests(
+                container=container,
+                ci_config=self.get_ci_config()
+            )
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -525,13 +555,16 @@ class EverestCore:
             res = await self.unit_tests()
             container = res.container
 
-        async with self._outputs_mutex:
-            self._outputs = self._outputs.with_file(
-                "artifacts/unit-tests-log.txt",
-                res.last_test_log,
-            )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.export_unit_tests_log_file",
+        ):
+            async with self._outputs_mutex:
+                self._outputs = self._outputs.with_file(
+                    "artifacts/unit-tests-log.txt",
+                    res.last_test_log,
+                )
 
-        return res.last_test_log
+            return res.last_test_log
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -582,39 +615,45 @@ class EverestCore:
                 )
             container = res.container
 
-        return await Install(
-            container=container,
-            ci_config=self.get_ci_config()
-        )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.install",
+        ):
+            return await Install(
+                container=container,
+                ci_config=self.get_ci_config()
+            )
 
     @function
     def mqtt_server(self) -> Service:
         """Start and return mqtt server as a service"""
 
-        service = (
-            dag.container()
-            .from_(
-                f"ghcr.io/everest/everest-dev-environment/mosquitto:"
-                f"{self.everest_dev_environment_docker_version}"
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.mqtt_server",
+        ):
+            service = (
+                dag.container()
+                .from_(
+                    f"ghcr.io/everest/everest-dev-environment/mosquitto:"
+                    f"{self.everest_dev_environment_docker_version}"
+                )
+                .with_exposed_port(1883)
+                .with_exec([
+                    "mkdir", "-p", "/etc/mosquitto",
+                ])
+                .with_exec([
+                    "cp",
+                    "/mosquitto/config/mosquitto.conf",
+                    "/etc/mosquitto/mosquitto.conf",
+                ])
+                .as_service(
+                    args=[
+                        "/usr/sbin/mosquitto",
+                        "-c", "/etc/mosquitto/mosquitto.conf",
+                    ]
+                )
             )
-            .with_exposed_port(1883)
-            .with_exec([
-                "mkdir", "-p", "/etc/mosquitto",
-            ])
-            .with_exec([
-                "cp",
-                "/mosquitto/config/mosquitto.conf",
-                "/etc/mosquitto/mosquitto.conf",
-            ])
-            .as_service(
-                args=[
-                    "/usr/sbin/mosquitto",
-                    "-c", "/etc/mosquitto/mosquitto.conf",
-                ]
-            )
-        )
 
-        return service
+            return service
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -663,11 +702,14 @@ class EverestCore:
 
         mqtt_server = self.mqtt_server()
 
-        return await IntegrationTests(
-            container=container,
-            ci_config=self.get_ci_config(),
-            mqtt_server=mqtt_server,
-        )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.integration_tests",
+        ):
+            return await IntegrationTests(
+                container=container,
+                ci_config=self.get_ci_config(),
+                mqtt_server=mqtt_server,
+            )
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -685,31 +727,34 @@ class EverestCore:
             res = await self.integration_tests()
             container = res.container
 
-        async with self._outputs_mutex:
-            self._outputs = (
-                self._outputs.
-                with_file(
-                    "artifacts/integration-tests.html",
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.export_integration_tests_artifacts",
+        ):
+            async with self._outputs_mutex:
+                self._outputs = (
+                    self._outputs.
+                    with_file(
+                        "artifacts/integration-tests.html",
+                        res.report_html,
+                    )
+                    .with_file(
+                        "artifacts/integration-tests.xml",
+                        res.result_xml,
+                    )
+                )
+
+            ret = (
+                dag.directory()
+                .with_file(
+                    "integration-tests.html",
                     res.report_html,
                 )
                 .with_file(
-                    "artifacts/integration-tests.xml",
+                    "integration-tests.xml",
                     res.result_xml,
                 )
             )
-
-        ret = (
-            dag.directory()
-            .with_file(
-                "integration-tests.html",
-                res.report_html,
-            )
-            .with_file(
-                "integration-tests.xml",
-                res.result_xml,
-            )
-        )
-        return ret
+            return ret
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -758,11 +803,14 @@ class EverestCore:
 
         mqtt_server = self.mqtt_server()
 
-        return await OcppTests(
-            container=container,
-            ci_config=self.get_ci_config(),
-            mqtt_server=mqtt_server,
-        )
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.ocpp_tests",
+        ):
+            return await OcppTests(
+                container=container,
+                ci_config=self.get_ci_config(),
+                mqtt_server=mqtt_server,
+            )
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -782,30 +830,33 @@ class EverestCore:
             res = await self.ocpp_tests()
             container = res.container
 
-        async with self._outputs_mutex:
-            self._outputs = (
-                self._outputs
-                .with_file(
-                    "artifacts/ocpp-tests.xml",
-                    res.result_xml,
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.export_ocpp_tests_artifacts",
+        ):
+            async with self._outputs_mutex:
+                self._outputs = (
+                    self._outputs
+                    .with_file(
+                        "artifacts/ocpp-tests.xml",
+                        res.result_xml,
+                    )
+                    .with_file(
+                        "artifacts/ocpp-tests.html",
+                        res.report_html,
+                    )
                 )
-                .with_file(
-                    "artifacts/ocpp-tests.html",
+
+            ret = (
+                dag.directory().
+                with_file(
+                    "ocpp-tests.xml",
+                    res.result_xml,
+                ).with_file(
+                    "ocpp-tests.html",
                     res.report_html,
                 )
             )
-
-        ret = (
-            dag.directory().
-            with_file(
-                "ocpp-tests.xml",
-                res.result_xml,
-            ).with_file(
-                "ocpp-tests.html",
-                res.report_html,
-            )
-        )
-        return ret
+            return ret
 
     @object_type
     class PullRequestResult():
