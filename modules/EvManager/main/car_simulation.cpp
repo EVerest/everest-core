@@ -282,6 +282,7 @@ bool CarSimulation::iso_start_v2g_session(const CmdArguments& arguments, bool th
         if (three_phases == false) {
             r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_single_phase_core, departure_time,
                                          e_amount);
+            charge_mode = ChargeMode::AC;
         } else {
             r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_three_phase_core, departure_time,
                                          e_amount);
