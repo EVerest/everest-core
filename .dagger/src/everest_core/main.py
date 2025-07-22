@@ -145,25 +145,29 @@ class EverestCore:
         bool,
         Doc("Whether the current run is a GitHub run"),
     ] = False
-
     github_token: Annotated[
         str | None,
         Doc("GitHub authentication token"),
     ] = None
-
     org_name: Annotated[
         str | None,
         Doc("GitHub organization name"),
     ] = None
-
     repo_name: Annotated[
         str | None,
         Doc("GitHub repository name"),
     ] = None
-
     sha: Annotated[
         str | None,
         Doc("Commit SHA"),
+    ] = None
+    run_id: Annotated[
+        str | None,
+        Doc("GitHub Actions run ID"),
+    ] = None
+    attempt_number: Annotated[
+        int | None,
+        Doc("GitHub Actions attempt number"),
     ] = None
 
     def __post_init__(self):
@@ -192,6 +196,8 @@ class EverestCore:
             org_name=self.org_name,
             repo_name=self.repo_name,
             sha=self.sha,
+            run_id=self.run_id,
+            attempt_number=self.attempt_number,
         )
 
         if self.cache_dir is None:
@@ -240,7 +246,8 @@ class EverestCore:
         repo_name=lambda self: self.get_github_config().repo_name,
         sha=lambda self: self.get_github_config().sha,
         function_name="Build the build kit",
-        target_url=None,
+        run_id=lambda self: self.get_github_config().run_id,
+        attempt_number=lambda self: self.get_github_config().attempt_number,
         description=None,
     )
     async def build_kit(self) -> EverestCI.BuildKitResult:
@@ -269,8 +276,13 @@ class EverestCore:
         sha=(
             lambda self, container: self.get_github_config().sha
         ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
         function_name="Linting the source code",
-        target_url=None,
         description=None,
     )
     async def lint(
@@ -314,8 +326,13 @@ class EverestCore:
         sha=(
             lambda self, container: self.get_github_config().sha
         ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
         function_name="Configure CMake with GCC",
-        target_url=None,
         description=None,
     )
     async def configure_cmake_gcc(
@@ -381,8 +398,13 @@ class EverestCore:
         sha=(
             lambda self, container: self.get_github_config().sha
         ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
         function_name="Build CMake with GCC",
-        target_url=None,
         description=None,
     )
     async def build_cmake_gcc(
@@ -454,8 +476,13 @@ class EverestCore:
         sha=(
             lambda self, container: self.get_github_config().sha
         ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
         function_name="Run unit tests",
-        target_url=None,
         description=None,
     )
     async def unit_tests(
@@ -524,8 +551,13 @@ class EverestCore:
         sha=(
             lambda self, container: self.get_github_config().sha
         ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
         function_name="Install the built artifacts",
-        target_url=None,
         description=None,
     )
     async def install(
@@ -602,8 +634,13 @@ class EverestCore:
         sha=(
             lambda self, container: self.get_github_config().sha
         ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
         function_name="Run integration tests",
-        target_url=None,
         description=None,
     )
     async def integration_tests(
@@ -692,8 +729,13 @@ class EverestCore:
         sha=(
             lambda self, container: self.get_github_config().sha
         ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
         function_name="Run OCPP tests",
-        target_url=None,
         description=None,
     )
     async def ocpp_tests(

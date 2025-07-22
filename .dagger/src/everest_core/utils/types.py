@@ -139,6 +139,14 @@ class GithubConfig:
         str | None,
         Doc("GitHub commit SHA. None if not provided.")
     ] = None
+    run_id: Annotated[
+        str | None,
+        Doc("GitHub Actions run ID. None if not provided.")
+    ] = None
+    attempt_number: Annotated[
+        int | None,
+        Doc("GitHub Actions attempt number. None if not provided.")
+    ] = None
 
 
 @object_type

@@ -31,13 +31,15 @@ def _initialize_status(
     repo_name: str,
     sha: str,
     function_name: str,
+    run_id: str,
+    attempt_number: int,
     description: str | None = None,
 ) -> None:
     """
     Initialize a GitHub status for a specific commit.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     auth_token : str
         GitHub authentication token.
     org_name : str
@@ -45,9 +47,20 @@ def _initialize_status(
     repo_name : str
         Repository name on GitHub.
     sha : str
-        Commit SHA to set the status for.
-    step : CIStep
-        The CI step for which the status is being set.
+        Commit SHA to initialize the status for.
+    function_name : str
+        The name of the function for which the status is being initialized.
+    run_id : str
+        Run ID to link in the GitHub status (e.g., CI job output).
+    attempt_number : int
+        Attempt number of the GitHub Actions run.
+    description : str | None
+        Optional short description to include with the GitHub status.
+
+    Raises
+    ------
+    RuntimeError
+        If the GitHub status initialization fails.
     """
 
     api_url = f"{_github_api_base_url}/{org_name}/{repo_name}/statuses/{sha}"
@@ -58,7 +71,7 @@ def _initialize_status(
     }
     body = {
         "state": _GithubStatusState.PENDING.value,
-        "target_url": None,
+        "target_url": f"https://github.com/{org_name}/{repo_name}/actions/runs/{run_id}/attempts/{attempt_number}",
         "description": description,
         "context": f"Dagger: {function_name}",
     }
@@ -81,14 +94,15 @@ def _update_status(
     sha: str,
     function_name: str,
     success: bool,
-    target_url: str | None = None,
+    run_id: str,
+    attempt_number: int,
     description: str | None = None,
 ) -> None:
     """
     Update a GitHub status for a specific commit.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     auth_token : str
         GitHub authentication token.
     org_name : str
@@ -97,12 +111,21 @@ def _update_status(
         Repository name on GitHub.
     sha : str
         Commit SHA to update the status for.
-    step : CIStep
-        The CI step for which the status is being updated.
-    state : GithubStatusState
-        The new state of the status.
-    target_url : str
-        URL to link to for more details.
+    function_name : str
+        The name of the function for which the status is being updated.
+    success : bool
+        Whether the function execution was successful (exit code 0).
+    run_id : str
+        Run ID to link in the GitHub status (e.g., CI job output).
+    attempt_number : int
+        Attempt number of the GitHub Actions run.
+    description : str | None
+        Optional short description to include with the GitHub status.
+
+    Raises
+    ------
+    RuntimeError
+        If the GitHub status update fails.
     """
     if success:
         state = _GithubStatusState.SUCCESS
@@ -117,7 +140,7 @@ def _update_status(
     }
     body = {
         "state": state.value,
-        "target_url": target_url,
+        "target_url": f"https://github.com/{org_name}/{repo_name}/actions/runs/{run_id}/attempts/{attempt_number}",
         "description": description,
         "context": f"Dagger: {function_name}",
     }
@@ -153,6 +176,7 @@ def _resolve_callable_value(
     bound.apply_defaults()
     return value(**bound.arguments)
 
+
 def create_github_status(
     *,
     condition: bool | Callable[P, bool],
@@ -161,7 +185,8 @@ def create_github_status(
     org_name: str | Callable[P, str] | None,
     repo_name: str | Callable[P, str] | None,
     sha: str | Callable[P, str] | None,
-    target_url: str | Callable[P, str] | None = None,
+    run_id: str | Callable[P, str] | None,
+    attempt_number: int | Callable[P, int] | None = None,
     description: str | Callable[P, str] | None = None,
 ) -> WrapFunc:
     """
@@ -196,8 +221,12 @@ def create_github_status(
         If condition is `False`, this can be `None`
     function_name : str | Callable[P, str]
         The name to use for the GitHub status context.
-    target_url : str | Callable[P, str] | None
-        Optional URL to link in the GitHub status (e.g., CI job output).
+    run_id : str | Callable[P, str] | None
+        Run ID to link in the GitHub status (e.g., CI job output).
+        If condition is `False`, this can be `None`
+    attempt_number : int | Callable[P, int] | None
+        Attempt number of the GitHub Actions run.
+        If condition is `False`, this can be `None`
     description : str | Callable[P, str] | None
         Optional short description to include with the GitHub status.
 
@@ -222,8 +251,9 @@ def create_github_status(
         org_name="my-org",
         repo_name="my-repo",
         sha="abc123",
-        function_name="my-task"
-        target_url="https://ci.example.com/job/123",
+        function_name="my-task",
+        run_id="123",
+        attempt_number=1,
         description="Running my task"
     )
     def run_step() -> MyResult:
@@ -237,7 +267,8 @@ def create_github_status(
         repo_name=lambda self: self.get_github_config().repo_name,
         sha=lambda self: self.get_github_config().sha,
         function_name="run_step",
-        target_url=None,
+        run_id=lambda self: self.get_github_config().run_id,
+        attempt_number=lambda self: self.get_github_config().attempt_number,
         description=None,
     )
     async def run_step(self) -> MyResult:
@@ -267,7 +298,7 @@ def create_github_status(
                 **kwargs: P.kwargs,
             ) -> R:
                 nonlocal condition, auth_token, org_name, repo_name, sha, \
-                    function_name, target_url, description
+                    function_name, run_id, attempt_number, description
                 condition = _resolve_callable_value(
                     condition, func, *args, **kwargs
                 )
@@ -286,8 +317,11 @@ def create_github_status(
                 function_name = _resolve_callable_value(
                     function_name, func, *args, **kwargs
                 )
-                target_url = _resolve_callable_value(
-                    target_url, func, *args, **kwargs
+                run_id = _resolve_callable_value(
+                    run_id, func, *args, **kwargs
+                )
+                attempt_number = _resolve_callable_value(
+                    attempt_number, func, *args, **kwargs
                 )
                 description = _resolve_callable_value(
                     description, func, *args, **kwargs
@@ -312,6 +346,14 @@ def create_github_status(
                         raise ValueError(
                             "sha must be provided when condition is True"
                         )
+                    if run_id is None:
+                        raise ValueError(
+                            "run_id must be provided when condition is True"
+                        )
+                    if attempt_number is None:
+                        raise ValueError(
+                            "attempt_number must be provided when condition is True"
+                        )
                     _initialize_status(
                         auth_token=auth_token,
                         org_name=org_name,
@@ -319,6 +361,8 @@ def create_github_status(
                         sha=sha,
                         function_name=function_name,
                         description=description,
+                        run_id=run_id,
+                        attempt_number=attempt_number,
                     )
                 result = await func(*args, **kwargs)
                 if not isinstance(result, BaseResultType):
@@ -335,7 +379,8 @@ def create_github_status(
                         sha=sha,
                         function_name=function_name,
                         success=success,
-                        target_url=target_url,
+                        run_id=run_id,
+                        attempt_number=attempt_number,
                         description=description,
                     )
                 return result
@@ -347,7 +392,7 @@ def create_github_status(
                 **kwargs: P.kwargs,
             ) -> R:
                 nonlocal condition, auth_token, org_name, repo_name, sha, \
-                    function_name, target_url, description
+                    function_name, run_id, attempt_number, description
                 condition = _resolve_callable_value(
                     condition, func, *args, **kwargs
                 )
@@ -366,8 +411,11 @@ def create_github_status(
                 function_name = _resolve_callable_value(
                     function_name, func, *args, **kwargs
                 )
-                target_url = _resolve_callable_value(
-                    target_url, func, *args, **kwargs
+                run_id = _resolve_callable_value(
+                    run_id, func, *args, **kwargs
+                )
+                attempt_number = _resolve_callable_value(
+                    attempt_number, func, *args, **kwargs
                 )
                 description = _resolve_callable_value(
                     description, func, *args, **kwargs
@@ -392,6 +440,14 @@ def create_github_status(
                         raise ValueError(
                             "sha must be provided when condition is True"
                         )
+                    if run_id is None:
+                        raise ValueError(
+                            "run_id must be provided when condition is True"
+                        )
+                    if attempt_number is None:
+                        raise ValueError(
+                            "attempt_number must be provided when condition is True"
+                        )
                     _initialize_status(
                         auth_token=auth_token,
                         org_name=org_name,
@@ -399,6 +455,8 @@ def create_github_status(
                         sha=sha,
                         function_name=function_name,
                         description=description,
+                        run_id=run_id,
+                        attempt_number=attempt_number,
                     )
                 result = func(*args, **kwargs)
                 if not isinstance(result, BaseResultType):
@@ -415,7 +473,8 @@ def create_github_status(
                         sha=sha,
                         function_name=function_name,
                         success=success,
-                        target_url=target_url,
+                        run_id=run_id,
+                        attempt_number=attempt_number,
                         description=description,
                     )
                 return result
