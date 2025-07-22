@@ -267,6 +267,9 @@ mod tests {
         }
         // Test case with specific hex strings
         for (input_hex, expected_hex) in [
+            // No zeros.
+            ("30440220015d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49", 
+            "30440220015d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49"),
             // In the first segment 1 byte with zero.
             ("30440220005d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49", 
             "3043021f5d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49"), 
