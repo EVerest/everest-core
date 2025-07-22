@@ -2,7 +2,9 @@ import asyncio
 import time
 import dagger
 from dagger import dag, function, object_type
-from typing import Annotated
+from functools import wraps
+from typing import Annotated, Coroutine, Callable, Any, Optional
+import inspect
 
 from .everest_ci import EverestCI, BaseResultType
 
@@ -14,6 +16,93 @@ from .functions.unit_tests import unit_tests as UnitTests, UnitTestsResult
 from .functions.install import install as Install, InstallResult
 from .functions.integration_tests import integration_tests as IntegrationTests, IntegrationTestsResult
 from .functions.ocpp_tests import ocpp_tests as OcppTests, OcppTestsResult
+
+def cached_task(
+    func: Optional[Callable[..., Any]] = None,
+    *,
+    key_func: Optional[Callable[..., str | None]] = None
+) -> Callable[..., Coroutine[Any, Any, Any]]:
+    """
+    Decorator to cache and reuse asyncio Tasks for async or sync methods.
+
+    This decorator ensures that for a given method (optionally distinguished by a key function),
+    only one task is created and shared for concurrent calls, preventing redundant executions.
+
+    Supports decorating both asynchronous (`async def`) and synchronous (`def`) functions.
+    Synchronous functions are executed asynchronously using `asyncio.to_thread`.
+
+    Parameters:
+    -----------
+    func : Optional[Callable[..., Awaitable or Any]]
+        The function or coroutine method to decorate.
+    key_func : Optional[Callable[..., Awaitable or Any]], optional
+        Optional function to generate a cache key suffix based on the
+        decorated function’s arguments. Can be synchronous or asynchronous.
+
+    Returns:
+    --------
+    Callable[..., Coroutine]
+        An async wrapper function that manages cached tasks per key.
+
+    Usage:
+    ------
+    ```python
+    # Example 1: Using the decorator directly on async functions without parameters
+    @cached_task
+    async def some_async_function(self):
+        ...
+
+    # Example 2: Using the decorator directly on sync functions without parameters
+    @cached_task
+    def sync_function_without_param(self):
+        ...
+
+    # Example 3: Using the decorator with a key function on async functions with parameters
+    @cached_task(key_func=lambda self, param: param.id)
+    async def async_function_with_param(self, param):
+        ...
+
+    # Example 4: Using the decorator with an async key function on async functions with parameters
+    async def async_key_func(self, param):
+        return param.id
+    @cached_task(
+        key_func=async_key_func
+    )
+    async def async_function_with_param(self, param):
+        ...
+    ```
+
+    """
+    def wrap_function(
+        func: Callable[..., Any]
+    ) -> Callable[..., Coroutine[Any, Any, Any]]:
+        @wraps(func)
+        async def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+            if not hasattr(self, "_cached_tasks_lock"):
+                self._cached_tasks_lock = asyncio.Lock()
+            async with self._cached_tasks_lock:
+                if not hasattr(self, "_cached_tasks"):
+                    self._cached_tasks = {}
+                key = func.__name__
+                if key_func is not None:
+                    if inspect.iscoroutinefunction(key_func):
+                        key_part = await key_func(self, *args, **kwargs)
+                    else:
+                        key_part = key_func(self, *args, **kwargs)
+                    if not key_part is None:
+                        key = f"{key}-{key_part}"
+                if key not in self._cached_tasks:
+                    if inspect.iscoroutinefunction(func):
+                        self._cached_tasks[key] = asyncio.create_task(func(self, *args, **kwargs))
+                    else:
+                        self._cached_tasks[key] = asyncio.create_task(asyncio.to_thread(func, self, *args, **kwargs))
+            return await self._cached_tasks[key]
+        return wrapper
+    
+    if func is None:
+        return wrap_function
+    else:
+        return wrap_function(func)
 
 @object_type
 class EverestCore:
@@ -57,7 +146,21 @@ class EverestCore:
                 .with_new_directory("ccache")
             )
 
+        self._outputs = (
+            dag.directory()
+            .with_new_directory("artifacts")
+            .with_new_directory("cache")
+        )
+        self._outputs_mutex = asyncio.Lock()
+
+    async def _create_key_from_container(self, container: dagger.Container | None = None) -> str:
+        """Create a unique key for the container based on its properties."""
+        if container is None:
+            return None
+        return await container.id()
+
     @function
+    @cached_task
     async def build_kit(self) -> EverestCI.BuildKitResult:
         """Build the everest-core build kit container"""
 
@@ -67,6 +170,7 @@ class EverestCore:
         )
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def lint(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the linter in")] = None,
@@ -85,8 +189,10 @@ class EverestCore:
         )
 
     @function
-    async def configure_cmake_gcc(self,
-            container:  Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
+    @cached_task(key_func=_create_key_from_container)
+    async def configure_cmake_gcc(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
     ) -> ConfigureResult:
         """Configure CMake with GCC in the given container"""
 
@@ -107,8 +213,31 @@ class EverestCore:
             cache_dir=self.cache_dir,
             cache_path=self.cache_path,
         )
+    
+    @function
+    @cached_task(key_func=_create_key_from_container)
+    async def export_cpm_cache(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
+    ) -> dagger.Directory:
+        """Export the cache from the configure_cmake_gcc function"""
+
+        if container is None:
+            res = await self.configure_cmake_gcc()
+            if res.exit_code != 0:
+                raise RuntimeError(f"Failed to configure CMake with GCC: {res.exit_code}")
+            container = res.container
+
+        async with self._outputs_mutex:
+            self._outputs.with_directory(
+                "cache/CPM",
+                res.cache_cpm,
+            )
+        
+        return res.cache_cpm
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def build_cmake_gcc(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the build in, typically the build-kit image")] = None,
@@ -130,8 +259,31 @@ class EverestCore:
             cache_dir=self.cache_dir,
             cache_path=self.cache_path,
         )
+    
+    @function
+    @cached_task(key_func=_create_key_from_container)
+    async def export_ccache_cache(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
+    ) -> dagger.Directory:
+        """Export the ccache cache from the build_cmake_gcc function"""
+
+        if container is None:
+            res = await self.build_cmake_gcc()
+            if res.exit_code != 0:
+                raise RuntimeError(f"Failed to build CMake with GCC: {res.exit_code}")
+            container = res.container
+
+        async with self._outputs_mutex:
+            self._outputs.with_directory(
+                "cache/ccache",
+                res.cache_ccache,
+            )
+        
+        return res.cache_ccache
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def unit_tests(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the tests in, typically the build-kit image")] = None,
@@ -153,6 +305,29 @@ class EverestCore:
         )
 
     @function
+    @cached_task(key_func=_create_key_from_container)
+    async def export_unit_tests_log_file(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the tests in, typically the build-kit image")] = None,
+    ) -> dagger.File:
+        """Returns the last unit tests log file"""
+
+        if container is None:
+            res = await self.unit_tests()
+            if res.exit_code != 0:
+                raise RuntimeError(f"Failed to run unit tests: {res.exit_code}")
+            container = res.container
+
+        async with self._outputs_mutex:
+            self._outputs = self._outputs.with_file(
+                "artifacts/unit-tests-log.txt",
+                res.last_test_log,
+            )
+
+        return res.last_test_log
+
+    @function
+    @cached_task(key_func=_create_key_from_container)
     async def install(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the install in, typically the build-kit image")] = None,
@@ -173,11 +348,6 @@ class EverestCore:
             dist_path=self.dist_path,
             workdir_path=self.workdir_path,
         )
-
-    @object_type
-    class BuildWheelsResult(BaseResultType):
-        """Result of the build wheels"""
-        wheels_dir: Annotated[dagger.Directory, dagger.Doc("Directory containing the built wheels")] = dagger.field()
 
     @function
     def mqtt_server(self) -> dagger.Service:
@@ -204,6 +374,7 @@ class EverestCore:
         return service
 
     @function
+    @cached_task(key_func=_create_key_from_container)
     async def integration_tests(
         self,
         container: Annotated[dagger.Container | None, dagger.Doc("Container to run the integration tests in, typically the build-kit image")] = None,
@@ -228,16 +399,53 @@ class EverestCore:
             workdir_path=self.workdir_path,
             mqtt_server=mqtt_server,
         )
+    
+    @function
+    @cached_task(key_func=_create_key_from_container)
+    async def export_integration_tests_artifacts(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the integration tests in, typically the build-kit image")] = None,
+    ) -> dagger.Directory:
+        """Export the artifacts from the integration tests"""
 
+        if container is None:
+            res = await self.integration_tests()
+            if res.exit_code != 0:
+                raise RuntimeError(f"Failed to run integration tests: {res.exit_code}")
+            container = res.container
 
-    @object_type
-    class OcppTestsResult(IntegrationTestsResult):
-        pass
+        async with self._outputs_mutex:
+            self._outputs = (
+                self._outputs.
+                with_file(
+                    "artifacts/integration-tests.html",
+                    res.report_html,
+                )
+                .with_file(
+                    "artifacts/integration-tests.xml",
+                    res.result_xml,
+                )
+            )
+
+        ret = (
+            dag.directory()
+            .with_file(
+                "integration-tests.html",
+                res.report_html,
+            )
+            .with_file(
+                "integration-tests.xml",
+                res.result_xml,
+            )
+        )
+        return ret
 
     @function
-    async def ocpp_tests(self,
-            container: Annotated[dagger.Container | None, dagger.Doc("Container to run the ocpp tests in, typically the build-kit image")] = None,
-        ) -> OcppTestsResult:
+    @cached_task(key_func=_create_key_from_container)
+    async def ocpp_tests(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the ocpp tests in, typically the build-kit image")] = None,
+    ) -> OcppTestsResult:
         """Run the OCPP tests"""
 
         if container is None:
@@ -259,206 +467,121 @@ class EverestCore:
             mqtt_server=mqtt_server,
         )
 
+    @function
+    @cached_task(key_func=_create_key_from_container)
+    async def export_ocpp_tests_artifacts(
+        self,
+        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the ocpp tests in, typically the build-kit image")] = None,
+    ) -> dagger.Directory:
+        """Export the artifacts from the OCPP tests"""
+
+        if container is None:
+            res = await self.ocpp_tests()
+            if res.exit_code != 0:
+                raise RuntimeError(f"Failed to run OCPP tests: {res.exit_code}")
+            container = res.container
+
+        async with self._outputs_mutex:
+            self._outputs = (
+                self._outputs
+                .with_file(
+                    "artifacts/ocpp-tests.xml",
+                    res.result_xml,
+                )
+                .with_file(
+                    "artifacts/ocpp-tests.html",
+                    res.report_html,
+                )
+            )
+
+        ret = (
+            dag.directory().
+            with_file(
+                "ocpp-tests.xml",
+                res.result_xml,
+            ).with_file(
+                "ocpp-tests.html",
+                res.report_html,
+            )
+        )
+        return ret
+
     @object_type
     class PullRequestResult():
-        container: dagger.Container = dagger.field()
+        build_kit_result: EverestCI.BuildKitResult = dagger.field()
+        lint_result: EverestCI.ClangFormatResult = dagger.field()
+        configure_result: ConfigureResult = dagger.field()
+        build_result: BuildResult = dagger.field()
+        unit_tests_result: UnitTestsResult = dagger.field()
+        install_result: InstallResult = dagger.field()
+        integration_tests_result: IntegrationTestsResult = dagger.field()
+        ocpp_tests_result: OcppTestsResult = dagger.field()
         exit_code: int = dagger.field()
-        workspace: dagger.Directory = dagger.field()
         artifacts: dagger.Directory = dagger.field()
         cache: dagger.Directory = dagger.field()
         outputs: dagger.Directory = dagger.field()
 
+    def _log_function_result(self, func_name: str, exit_code: int) -> bool:
+        if exit_code == 0:
+            print(f"✅ {func_name} succeeded")
+            return True
+        else:
+            print(f"❌ {func_name} failed with exit code {exit_code}")
+            return False
+
     @function
+    @cached_task
     async def pull_request(self) -> PullRequestResult:
-        artifacts = dag.directory()
-        artifacts_mutex = asyncio.Lock()
-
-        cache = dag.directory()
-        cache_mutex = asyncio.Lock()
-
         async with asyncio.TaskGroup() as tg:
+            # Pipeline steps
             build_kit_task = tg.create_task(self.build_kit())
-            # async def artifacts_build_kit_task_fn():
-            #     nonlocal build_kit_task, artifacts, artifacts_mutex
-            #     res_build_kit = await build_kit_task
-            #     async with artifacts_mutex:
-            #         artifacts = artifacts.with_file(
-            #             "build-kit-image.tar.gz",
-            #             await res_build_kit.container.as_tarball(),
-            #         )
-            # tg.create_task(artifacts_build_kit_task_fn())
+            lint_task = tg.create_task(self.lint())
+            configure_task = tg.create_task(self.configure_cmake_gcc())
+            build_task = tg.create_task(self.build_cmake_gcc())
+            unit_tests_task = tg.create_task(self.unit_tests())
+            install_task = tg.create_task(self.install())
+            integration_tests_task = tg.create_task(self.integration_tests())
+            ocpp_tests_task = tg.create_task(self.ocpp_tests())
 
-            async def lint_task_fn() -> EverestCI.ClangFormatResult:
-                nonlocal build_kit_task
-                res_build_kit = await build_kit_task
-                return await self.lint(container=res_build_kit.container)
-            lint_task = tg.create_task(lint_task_fn())
+            # Export caches
+            tg.create_task(self.export_cpm_cache())
+            tg.create_task(self.export_ccache_cache())
 
-            async def configure_task_fn() -> ConfigureResult:
-                nonlocal build_kit_task
-                res_build_kit = await build_kit_task
-                return await self.configure_cmake_gcc(container=res_build_kit.container)
-            configure_task = tg.create_task(configure_task_fn())
-            async def exp_cache_configure_task_fn():
-                nonlocal configure_task, cache, cache_mutex
-                res_configure = await configure_task
-                async with cache_mutex:
-                    cache = cache.with_directory(
-                        "CPM",
-                        res_configure.cache_cpm,
-                    )
-                    pass
-            tg.create_task(exp_cache_configure_task_fn())
+            # Export artifacts
+            tg.create_task(self.export_unit_tests_log_file())
+            tg.create_task(self.export_integration_tests_artifacts())
+            tg.create_task(self.export_ocpp_tests_artifacts())
 
-            async def build_task_fn() -> BuildResult:
-                nonlocal configure_task
-                res_configure = await configure_task
-                return await self.build_cmake_gcc(
-                    container=res_configure.container,
+        success = True
+        success &= self._log_function_result("Build build kit", build_kit_task.result().exit_code)
+        success &= self._log_function_result("Lint", lint_task.result().exit_code)
+        success &= self._log_function_result("Configure CMake with GCC", configure_task.result().exit_code)
+        success &= self._log_function_result("Build CMake with GCC", build_task.result().exit_code)
+        success &= self._log_function_result("Run unit tests", unit_tests_task.result().exit_code)
+        success &= self._log_function_result("Install", install_task.result().exit_code)
+        success &= self._log_function_result("Run integration tests", integration_tests_task.result().exit_code)
+        success &= self._log_function_result("Run OCPP tests", ocpp_tests_task.result().exit_code)
+
+        async with self._outputs_mutex:
+            self._outputs = (
+                self._outputs
+                .with_new_file(
+                    "success.txt",
+                    "true" if success else "false"
                 )
-            build_task = tg.create_task(build_task_fn())
-            async def exp_cache_build_task_fn():
-                nonlocal build_task, cache, cache_mutex
-                res_build = await build_task
-                async with cache_mutex:
-                    cache = cache.with_directory(
-                        "ccache",
-                        res_build.cache_ccache,
-                    )
-                    pass
-            tg.create_task(exp_cache_build_task_fn())
-
-            async def unit_tests_task_fn() -> UnitTestsResult:
-                nonlocal build_task
-                res_build = await build_task
-                return await self.unit_tests(
-                    container=res_build.container,
-                )
-            unit_tests_task = tg.create_task(unit_tests_task_fn())
-            async def artifacts_unit_tests_task_fn():
-                nonlocal unit_tests_task, artifacts, artifacts_mutex
-                res_unit_tests = await unit_tests_task
-                async with artifacts_mutex:
-                    artifacts = artifacts.with_file(
-                        "unit-tests-log.txt",
-                        res_unit_tests.last_test_log,
-                    )
-            tg.create_task(artifacts_unit_tests_task_fn())
-
-            async def install_task_fn() -> InstallResult:
-                nonlocal build_task
-                res_build = await build_task
-                return await self.install(
-                    container=res_build.container,
-                )
-            install_task = tg.create_task(install_task_fn())
-
-            async def integration_tests_task_fn() -> IntegrationTestsResult:
-                nonlocal install_task
-                res_install = await install_task
-                return await self.integration_tests(
-                    container=res_install.container,
-                )
-            integration_tests_task = tg.create_task(integration_tests_task_fn())
-            async def artifacts_integration_tests_task_fn():
-                nonlocal integration_tests_task, artifacts, artifacts_mutex
-                res_integration_tests = await integration_tests_task
-                async with artifacts_mutex:
-                    artifacts = artifacts.with_file(
-                        "integration-tests.xml",
-                        res_integration_tests.result_xml,
-                    ).with_file(
-                        "integration-tests.html",
-                        res_integration_tests.report_html,
-                    )
-            tg.create_task(artifacts_integration_tests_task_fn())
-
-            async def ocpp_tests_task_fn() -> OcppTestsResult:
-                nonlocal install_task
-                res_install = await install_task
-                return await self.ocpp_tests(
-                    container=res_install.container,
-                )
-            ocpp_tests_task = tg.create_task(ocpp_tests_task_fn())
-            async def artifacts_ocpp_tests_task_fn():
-                nonlocal ocpp_tests_task, artifacts, artifacts_mutex
-                res_ocpp_tests = await ocpp_tests_task
-                async with artifacts_mutex:
-                    artifacts = artifacts.with_file(
-                        "ocpp-tests.xml",
-                        res_ocpp_tests.result_xml,
-                    ).with_file(
-                        "ocpp-tests.html",
-                        res_ocpp_tests.report_html,
-                    )
-            tg.create_task(artifacts_ocpp_tests_task_fn())
-
-        exit_code = 0
-        build_kit_res = build_kit_task.result()
-        if build_kit_res.exit_code == 0:
-            print("✅ Build kit container built successfully")
-        else:
-            print("❌ Failed to build the build kit container")
-            exit_code = build_kit_res.exit_code
-        lint_res = lint_task.result()
-        if lint_res.exit_code == 0:
-            print("✅ Linting passed")
-        else:
-            print("❌ Linting failed")
-            exit_code = lint_res.exit_code
-        configure_res = configure_task.result()
-        if configure_res.exit_code == 0:
-            print("✅ CMake configuration succeeded")
-        else:
-            print("❌ CMake configuration failed")
-            exit_code = configure_res.exit_code
-        build_res = build_task.result()
-        if build_res.exit_code == 0:
-            print("✅ CMake build succeeded")
-        else:
-            print("❌ CMake build failed")
-            exit_code = build_res.exit_code
-        unit_tests_res = unit_tests_task.result()
-        if unit_tests_res.exit_code == 0:
-            print("✅ Unit tests passed")
-        else:
-            print("❌ Unit tests failed")
-            exit_code = unit_tests_res.exit_code
-        install_res = install_task.result()
-        if install_res.exit_code == 0:
-            print("✅ Installation succeeded")
-        else:
-            print("❌ Installation failed")
-            exit_code = install_res.exit_code
-        integration_tests_res = integration_tests_task.result()
-        if integration_tests_res.exit_code == 0:
-            print("✅ Integration tests passed")
-        else:
-            print("❌ Integration tests failed")
-            exit_code = integration_tests_res.exit_code
-        ocpp_tests_res = ocpp_tests_task.result()
-        if ocpp_tests_res.exit_code == 0:
-            print("✅ OCPP tests passed")
-        else:
-            print("❌ OCPP tests failed")
-            exit_code = ocpp_tests_res.exit_code
-
-        outputs = dag.directory()
-        outputs = outputs.with_directory(
-            "artifacts",
-            artifacts,
-        ).with_directory(
-            "cache",
-            cache,
-        )
-
-        result = self.PullRequestResult(
-            container=unit_tests_res.container,
-            exit_code=exit_code,
-            workspace=unit_tests_res.container.directory(self.workdir_path),
-            artifacts=artifacts,
-            cache=cache,
-            outputs=outputs,
-        )
-
-        return result
+            )
+            result = self.PullRequestResult(
+                build_kit_result=build_kit_task.result(),
+                lint_result=lint_task.result(),
+                configure_result=configure_task.result(),
+                build_result=build_task.result(),
+                unit_tests_result=unit_tests_task.result(),
+                install_result=install_task.result(),
+                integration_tests_result=integration_tests_task.result(),
+                ocpp_tests_result=ocpp_tests_task.result(),
+                exit_code=0 if success else 1,
+                artifacts=self._outputs.directory("artifacts"),
+                cache=self._outputs.directory("cache"),
+                outputs=self._outputs,
+            )
+            return result
