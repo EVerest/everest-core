@@ -69,7 +69,7 @@ pub fn to_hex_string(input: Vec<u16>) -> String {
 }
 
 /// The Iskra firmware has a bug where we must remove leading zeros from the r
-/// and s segments if the first non-zero byte is loss than 0x80.
+/// and s segments if the first non-zero byte is smaller than 0x80.
 ///
 /// The signature looks like
 /// 0x30, 0x44, 0x02, 0x20 ... 0x02, 0x20, ...
