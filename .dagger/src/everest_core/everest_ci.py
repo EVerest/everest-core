@@ -23,14 +23,14 @@ class EverestCI:
 
     @function
     async def clang_format(self,
-            container: Annotated[dagger.Container, dagger.Doc("Container to run clang-format in")],
-            source_dir: Annotated[dagger.Directory, dagger.Doc("Directory to run clang-format on"), dagger.DefaultPath("/")],
-            exclude: Annotated[str, dagger.Doc("comma separated list, exclude paths matching the given glob-like pattern(s)")] = "cache,build,dist",
-            extensions: Annotated[str, dagger.Doc("comma separated list of file extensions")]  = "hpp,cpp",
-            color: Annotated[bool, dagger.Doc("show colored diff")] = True,
-            recursive: Annotated[bool, dagger.Doc("run recursively over directories")]= True,
-            fix: Annotated[bool, dagger.Doc("format file instead of printing differences")] = False,
-        ) -> ClangFormatResult:
+        container: Annotated[dagger.Container, dagger.Doc("Container to run clang-format in")],
+        source_dir: Annotated[dagger.Directory, dagger.Doc("Directory to run clang-format on"), dagger.DefaultPath("/")],
+        exclude: Annotated[str, dagger.Doc("comma separated list, exclude paths matching the given glob-like pattern(s)")] = "cache,build,dist",
+        extensions: Annotated[str, dagger.Doc("comma separated list of file extensions")]  = "hpp,cpp",
+        color: Annotated[bool, dagger.Doc("show colored diff")] = True,
+        recursive: Annotated[bool, dagger.Doc("run recursively over directories")]= True,
+        fix: Annotated[bool, dagger.Doc("format file instead of printing differences")] = False,
+    ) -> ClangFormatResult:
         """Returns a container that run clang-format on the provided Directory inside the provided Container"""
 
         cmd_args = [

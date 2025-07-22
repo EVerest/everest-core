@@ -2,6 +2,8 @@ import dagger
 from dagger import object_type
 from ..everest_ci import BaseResultType
 from typing import Annotated
+from ..utils.types import CIConfig
+
 
 @object_type
 class UnitTestsResult(BaseResultType):
@@ -17,12 +19,10 @@ class UnitTestsResult(BaseResultType):
 
     last_test_log: Annotated[dagger.File, dagger.Doc("Last test log file")] = dagger.field()
 
+
 async def unit_tests(
     container: dagger.Container,
-    source_dir: dagger.Directory,
-    source_path: str,
-    build_path: str,
-    workdir_path: str,
+    ci_config: CIConfig,
 ) -> UnitTestsResult:
     """
     Run unit tests in a Dagger container.
@@ -32,17 +32,9 @@ async def unit_tests(
     ----------
     container : dagger.Container
         The Dagger container in which to run the tests.
-    source_dir : dagger.Directory
-        The source directory containing the CMake project.
-    source_path : str
-        The path inside the container to the source directory.
-    build_path : str
-        The path inside the container to the build directory.
-        Should be the same as for building
-    workdir_path : str
-        The working directory path inside the container.
-        Can be any, it is recommend to use the build directory or its parent.
-    
+    ci_config : CIConfig
+        The CI configuration object containing paths and directories.
+
     Returns
     -------
     UnitTestResult
@@ -52,23 +44,23 @@ async def unit_tests(
     
     build_dir_exists = await (
         container
-        .with_exec(["test", "-d", build_path], expect=dagger.ReturnType.ANY)
+        .with_exec(["test", "-d", ci_config.ci_workspace_config.build_path], expect=dagger.ReturnType.ANY)
         .exit_code()
     ) == 0
     if not build_dir_exists:
-        raise RuntimeError(f"Build directory {build_path} does not exist. Please build the project first.")
-    
+        raise RuntimeError(f"Build directory {ci_config.ci_workspace_config.build_path} does not exist. Please build the project first.")
+
     container = await (
         container
         .with_mounted_directory(
-            source_path,
-            source_dir,
+            ci_config.ci_workspace_config.source_path,
+            ci_config.source_dir,
         )
-        .with_workdir(workdir_path)
+        .with_workdir(ci_config.ci_workspace_config.workspace_path)
         .with_exec(
             [
                 "cmake",
-                "--build", build_path,
+                "--build", ci_config.ci_workspace_config.build_path,
                 "--target", "test",
             ],
             expect=dagger.ReturnType.ANY,
@@ -79,7 +71,7 @@ async def unit_tests(
         container=container,
         exit_code=await container.exit_code(),
         last_test_log=await container.file(
-            f"{build_path}/Testing/Temporary/LastTest.log",
+            f"{ci_config.ci_workspace_config.build_path}/Testing/Temporary/LastTest.log",
         )
     )
 

@@ -3,18 +3,17 @@ import dagger
 from dagger import object_type, dag
 from ..everest_ci import BaseResultType
 from .integration_tests import IntegrationTestsResult
+from ..utils.types import CIConfig
+
+
 @object_type
 class OcppTestsResult(IntegrationTestsResult):
     pass
 
+
 async def ocpp_tests(
     container: dagger.Container,
-    source_dir: dagger.Directory,
-    source_path: str,
-    build_path: str,
-    artifacts_path: str,
-    dist_path: str,
-    workdir_path: str,
+    ci_config: CIConfig,
     mqtt_server: dagger.Service,
 ) -> OcppTestsResult:
 
@@ -22,13 +21,13 @@ async def ocpp_tests(
     # Mount source directory
     container = await (
         container
-        .with_mounted_directory(source_path, source_dir)
+        .with_mounted_directory(ci_config.ci_workspace_config.source_path, ci_config.source_dir)
     )
 
     # Set venv from build directory
     container = await (
         container
-        .with_env_variable("VIRTUAL_VENV", f"{build_path}/venv")
+        .with_env_variable("VIRTUAL_VENV", f"{ci_config.ci_workspace_config.build_path}/venv")
         .with_env_variable("PATH", "$VIRTUAL_VENV/bin:$PATH", expand=True)
     )
 
@@ -38,20 +37,19 @@ async def ocpp_tests(
         .with_exec(
             [
                 "cmake",
-                "--build", build_path,
+                "--build", ci_config.ci_workspace_config.build_path,
                 "--target",
-                    "everest-testing_pip_install_dist",
-                    "iso15118_pip_install_dist",
-                    "iso15118_requirements_pip_install_dist",
+                "everest-testing_pip_install_dist",
+                "iso15118_pip_install_dist",
+                "iso15118_requirements_pip_install_dist",
             ],
         )
     )
 
-
     # set PYTHONPATH to everestpy in dist directory
     container = await container.with_env_variable(
         "PYTHONPATH",
-        f"{dist_path}/lib64/everest/everestpy:{dist_path}/lib/everest/everestpy:$PYTHONPATH",
+        f"{ci_config.ci_workspace_config.dist_path}/lib64/everest/everestpy:{ci_config.ci_workspace_config.dist_path}/lib/everest/everestpy:$PYTHONPATH",
         expand=True,
     )
 
@@ -63,7 +61,7 @@ async def ocpp_tests(
                 "pip",
                 "install",
                 "--break-system-packages",
-                "-r", f"{source_path}/tests/ocpp_tests/requirements.txt",
+                "-r", f"{ci_config.ci_workspace_config.source_path}/tests/ocpp_tests/requirements.txt",
             ]
         )
     )
@@ -71,13 +69,13 @@ async def ocpp_tests(
     # Execute install_certs.sh and install_configs.sh
     container = await (
         container
-        .with_workdir(f"{source_path}/tests/ocpp_tests/test_sets/everest-aux")
+        .with_workdir(f"{ci_config.ci_workspace_config.source_path}/tests/ocpp_tests/test_sets/everest-aux")
         .with_exec(
             [
                 "bash", "-c",
                 " ".join([
                     "./install_certs.sh",
-                    f"{dist_path}",
+                    f"{ci_config.ci_workspace_config.dist_path}",
                 ])
             ]
         )
@@ -86,7 +84,7 @@ async def ocpp_tests(
                 "bash", "-c",
                 " ".join([
                     "./install_configs.sh",
-                    f"{dist_path}",
+                    f"{ci_config.ci_workspace_config.dist_path}",
                 ])
             ]
         )
@@ -102,7 +100,7 @@ async def ocpp_tests(
     # Set workdir for OCPP tests
     container = await (
         container
-        .with_workdir(f"{source_path}/tests")
+        .with_workdir(f"{ci_config.ci_workspace_config.source_path}/tests")
     )
 
     # Run the OCPP tests
@@ -122,12 +120,12 @@ async def ocpp_tests(
                             "-d", "--tx", f"\"{parallel_tests}\"*popen//python=python3",
                             "--max-worker-restart=0",
                             "--timeout=300",
-                            "--junitxml", f"{artifacts_path}/ocpp-tests.xml",
-                            "--html", f"{artifacts_path}/ocpp-tests.html",
+                            "--junitxml", f"{ci_config.ci_workspace_config.artifacts_path}/ocpp-tests.xml",
+                            "--html", f"{ci_config.ci_workspace_config.artifacts_path}/ocpp-tests.html",
                             "--self-contained-html",
                             "ocpp_tests/test_sets/ocpp16/*.py",
                             "ocpp_tests/test_sets/ocpp201/*.py",
-                            "--everest-prefix", f"{dist_path}",
+                            "--everest-prefix", f"{ci_config.ci_workspace_config.dist_path}",
                         ])
                     ],
                     expect=dagger.ReturnType.ANY,
@@ -138,13 +136,13 @@ async def ocpp_tests(
         print("OCPP tests timed out after 15 minutes. Continuing...")
         exit_code = 1
 
-    container = await container.with_workdir(workdir_path)
+    container = await container.with_workdir(ci_config.ci_workspace_config.workspace_path)
 
     result = OcppTestsResult(
         container=container,
         exit_code=exit_code,
-        result_xml=container.file(f"{artifacts_path}/ocpp-tests.xml"),
-        report_html=container.file(f"{artifacts_path}/ocpp-tests.html"),
+        result_xml=container.file(f"{ci_config.ci_workspace_config.artifacts_path}/ocpp-tests.xml"),
+        report_html=container.file(f"{ci_config.ci_workspace_config.artifacts_path}/ocpp-tests.html"),
     )
 
     return result

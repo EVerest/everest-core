@@ -1,20 +1,32 @@
 from ..everest_ci import EverestCI
 import dagger
 from typing import Annotated
+from ..utils.types import CIConfig
+
 
 async def lint(
-    container: Annotated[dagger.Container, dagger.Doc("Container to run the linting on")],
-    source_dir: Annotated[dagger.Directory, dagger.Doc("Directory to run linting on")],
+    container: Annotated[
+        dagger.Container,
+        dagger.Doc(
+            "Container to run the linting on"
+        ),
+    ],
+    ci_config: Annotated[
+        CIConfig,
+        dagger.Doc(
+            "CI configuration containing paths and directories"
+        ),
+    ]
 ) -> EverestCI.ClangFormatResult:
     """
     Run linting on the given container
-    
+
     Parameters
     ----------
     container : dagger.Container
         The container in which to run the linting.
-    source_dir : dagger.Directory
-        The directory containing the source code to be linted.
+    ci_config : CIConfig
+        The CI configuration object containing paths and directories.
 
     Returns
     -------
@@ -24,7 +36,7 @@ async def lint(
 
     result = await EverestCI().clang_format(
         container=container,
-        source_dir=source_dir,
+        source_dir=ci_config.source_dir,
     )
 
     return result

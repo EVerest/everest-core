@@ -1,151 +1,198 @@
+from dagger import (
+    dag,
+    function,
+    object_type,
+    Directory,
+    Doc,
+    File,
+    DefaultPath,
+    Container,
+    Service,
+    field,
+)
 import asyncio
-import time
-import dagger
-from dagger import dag, function, object_type
-from functools import wraps
-from typing import Annotated, Coroutine, Callable, Any, Optional
-import inspect
+from typing import Annotated
+import traceback
 
-from .everest_ci import EverestCI, BaseResultType
+from .everest_ci import EverestCI
 
 from .functions.build_kit import build_kit as BuildKit
 from .functions.lint import lint as Lint
-from .functions.configure_cmake_gcc import configure_cmake_gcc as ConfigureCmakeGcc, ConfigureResult
-from .functions.build_cmake_gcc import build_cmake_gcc as BuildCmakeGcc, BuildResult
-from .functions.unit_tests import unit_tests as UnitTests, UnitTestsResult
-from .functions.install import install as Install, InstallResult
-from .functions.integration_tests import integration_tests as IntegrationTests, IntegrationTestsResult
-from .functions.ocpp_tests import ocpp_tests as OcppTests, OcppTestsResult
+from .functions.configure_cmake_gcc import (
+    configure_cmake_gcc as ConfigureCmakeGcc,
+    ConfigureResult,
+)
+from .functions.build_cmake_gcc import (
+    build_cmake_gcc as BuildCmakeGcc,
+    BuildResult,
+)
+from .functions.unit_tests import (
+    unit_tests as UnitTests,
+    UnitTestsResult,
+)
+from .functions.install import (
+    install as Install,
+    InstallResult,
+)
+from .functions.integration_tests import (
+    integration_tests as IntegrationTests,
+    IntegrationTestsResult,
+)
+from .functions.ocpp_tests import (
+    ocpp_tests as OcppTests,
+    OcppTestsResult,
+)
 
-from .utils.github_status import initialize_status, update_status, CIStep, GithubStatusState
+from .utils.github_status import (
+    create_github_status,
+)
+from .utils.task_caching import (
+    cached_task,
+    create_key_from_container
+)
+from .utils.types import (
+    CIWorkspaceConfig,
+    GithubConfig,
+    CIConfig,
+)
 
-def cached_task(
-    func: Optional[Callable[..., Any]] = None,
-    *,
-    key_func: Optional[Callable[..., str | None]] = None
-) -> Callable[..., Coroutine[Any, Any, Any]]:
-    """
-    Decorator to cache and reuse asyncio Tasks for async or sync methods.
-
-    This decorator ensures that for a given method (optionally distinguished by a key function),
-    only one task is created and shared for concurrent calls, preventing redundant executions.
-
-    Supports decorating both asynchronous (`async def`) and synchronous (`def`) functions.
-    Synchronous functions are executed asynchronously using `asyncio.to_thread`.
-
-    Parameters:
-    -----------
-    func : Optional[Callable[..., Awaitable or Any]]
-        The function or coroutine method to decorate.
-    key_func : Optional[Callable[..., Awaitable or Any]], optional
-        Optional function to generate a cache key suffix based on the
-        decorated function’s arguments. Can be synchronous or asynchronous.
-
-    Returns:
-    --------
-    Callable[..., Coroutine]
-        An async wrapper function that manages cached tasks per key.
-
-    Usage:
-    ------
-    ```python
-    # Example 1: Using the decorator directly on async functions without parameters
-    @cached_task
-    async def some_async_function(self):
-        ...
-
-    # Example 2: Using the decorator directly on sync functions without parameters
-    @cached_task
-    def sync_function_without_param(self):
-        ...
-
-    # Example 3: Using the decorator with a key function on async functions with parameters
-    @cached_task(key_func=lambda self, param: param.id)
-    async def async_function_with_param(self, param):
-        ...
-
-    # Example 4: Using the decorator with an async key function on async functions with parameters
-    async def async_key_func(self, param):
-        return param.id
-    @cached_task(
-        key_func=async_key_func
-    )
-    async def async_function_with_param(self, param):
-        ...
-    ```
-
-    """
-    def wrap_function(
-        func: Callable[..., Any]
-    ) -> Callable[..., Coroutine[Any, Any, Any]]:
-        @wraps(func)
-        async def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-            if not hasattr(self, "_cached_tasks_lock"):
-                self._cached_tasks_lock = asyncio.Lock()
-            async with self._cached_tasks_lock:
-                if not hasattr(self, "_cached_tasks"):
-                    self._cached_tasks = {}
-                key = func.__name__
-                if key_func is not None:
-                    if inspect.iscoroutinefunction(key_func):
-                        key_part = await key_func(self, *args, **kwargs)
-                    else:
-                        key_part = key_func(self, *args, **kwargs)
-                    if not key_part is None:
-                        key = f"{key}-{key_part}"
-                if key not in self._cached_tasks:
-                    if inspect.iscoroutinefunction(func):
-                        self._cached_tasks[key] = asyncio.create_task(func(self, *args, **kwargs))
-                    else:
-                        self._cached_tasks[key] = asyncio.create_task(asyncio.to_thread(func, self, *args, **kwargs))
-            return await self._cached_tasks[key]
-        return wrapper
-    
-    if func is None:
-        return wrap_function
-    else:
-        return wrap_function(func)
 
 @object_type
 class EverestCore:
-    """Functions that compose multiple EverestCoreFunctions and EverestCI functions in workflows"""
+    """
+    Functions that compose multiple EverestCoreFunctions and EverestCI
+    functions in workflows
+    """
 
-    everest_ci_version: Annotated[str, dagger.Doc("Version of the Everest CI")] = "v1.5.2"
-    everest_dev_environment_docker_version: Annotated[str, dagger.Doc("Version of the Everest development environment docker images")] = "docker-images-v0.1.0"
+    everest_ci_version: Annotated[
+        str,
+        Doc("Version of the Everest CI"),
+    ] = "v1.5.2"
+    everest_dev_environment_docker_version: Annotated[
+        str,
+        Doc(
+            "Version of the Everest development environment docker images"
+        ),
+    ] = "docker-images-v0.1.0"
 
-    source_dir: Annotated[dagger.Directory, dagger.Doc("Source directory with the source code"), dagger.DefaultPath(".")]
-    cache_dir: Annotated[dagger.Directory | None, dagger.Doc("Optional cache directory for the build process")] = None
+    source_dir: Annotated[
+        Directory,
+        Doc("Source directory with the source code"),
+        DefaultPath("."),
+    ]
+    cache_dir: Annotated[
+        Directory | None,
+        Doc("Optional prefilled cache directory for the build process"),
+    ] = None
 
-    workdir_path: Annotated[str, dagger.Doc("Working directory path for the container")] = "/workspace"
-    source_path: Annotated[str, dagger.Doc("Source path in the container for the source code")] = "source"
-    build_path: Annotated[str, dagger.Doc("Build directory path in the container")] = "build"
-    dist_path: Annotated[str, dagger.Doc("Dist directory path in the container")] = "dist"
-    wheels_path: Annotated[str, dagger.Doc("Path in the container to install wheel files to")] = "wheels"
-    cache_path: Annotated[str, dagger.Doc("Cache directory path in the container")] = "cache"
-    artifacts_path: Annotated[str, dagger.Doc("CI artifacts path in the container")] = "artifacts"
+    ###################################################
+    # Optional overwrite options for workspace config #
+    ###################################################
+    overwrite_workspace_path: Annotated[
+        str | None,
+        Doc(
+            "Overwrite the workspace path inside containers, if not provided "
+            "it will be set to its default value"
+        ),
+    ] = None
+    overwrite_source_path: Annotated[
+        str | None,
+        Doc(
+            "Overwrite the source path inside containers, if not provided "
+            "it will be set to its default value"
+        ),
+    ] = None
+    overwrite_build_path: Annotated[
+        str | None,
+        Doc(
+            "Overwrite the build path inside containers, if not provided "
+            "it will be set to its default value"
+        ),
+    ] = None
+    overwrite_dist_path: Annotated[
+        str | None,
+        Doc(
+            "Overwrite the dist path inside containers, if not provided "
+            "it will be set to its default value"
+        ),
+    ] = None
+    overwrite_wheels_path: Annotated[
+        str | None,
+        Doc(
+            "Overwrite the wheels path inside containers, if not provided "
+            "it will be set to its default value"
+        ),
+    ] = None
+    overwrite_cache_path: Annotated[
+        str | None,
+        Doc(
+            "Overwrite the cache path inside containers, if not provided "
+            "it will be set to its default value"
+        ),
+    ] = None
+    overwrite_artifacts_path: Annotated[
+        str | None,
+        Doc(
+            "Overwrite the artifacts path inside containers, if not provided "
+            "it will be set to its default value"
+        ),
+    ] = None
 
-    is_github_run: Annotated[bool, dagger.Doc("Whether the current run is a GitHub run")] = False
-    github_token: Annotated[str | None, dagger.Doc("GitHub authentication token")] = None
-    org_name: Annotated[str | None, dagger.Doc("GitHub organization name")] = None
-    repo_name: Annotated[str | None, dagger.Doc("GitHub repository name")] = None
-    sha: Annotated[str | None, dagger.Doc("Commit SHA")] = None
+    ##############################
+    # Github Actions Environment #
+    ##############################
+    is_github_run: Annotated[
+        bool,
+        Doc("Whether the current run is a GitHub run"),
+    ] = False
+
+    github_token: Annotated[
+        str | None,
+        Doc("GitHub authentication token"),
+    ] = None
+
+    org_name: Annotated[
+        str | None,
+        Doc("GitHub organization name"),
+    ] = None
+
+    repo_name: Annotated[
+        str | None,
+        Doc("GitHub repository name"),
+    ] = None
+
+    sha: Annotated[
+        str | None,
+        Doc("Commit SHA"),
+    ] = None
 
     def __post_init__(self):
-        if not self.workdir_path.startswith("/"):
-            print(f"Warning: workdir_path '{self.workdir_path}' does not start with '/', it will be prefixed with '/'")
-            self.workdir_path = f"/{self.workdir_path}"
-        if not self.source_path.startswith("/"):
-            self.source_path = f"{self.workdir_path}/{self.source_path}"
-        if not self.build_path.startswith("/"):
-            self.build_path = f"{self.workdir_path}/{self.build_path}"
-        if not self.dist_path.startswith("/"):
-            self.dist_path = f"{self.workdir_path}/{self.dist_path}"
-        if not self.wheels_path.startswith("/"):
-            self.wheels_path = f"{self.workdir_path}/{self.wheels_path}"
-        if not self.cache_path.startswith("/"):
-            self.cache_path = f"{self.workdir_path}/{self.cache_path}"
-        if not self.artifacts_path.startswith("/"):
-            self.artifacts_path = f"{self.workdir_path}/{self.artifacts_path}"
+        key_args = {}
+        if self.overwrite_workspace_path is not None:
+            key_args["workspace_path"] = self.overwrite_workspace_path
+        if self.overwrite_source_path is not None:
+            key_args["source_path"] = self.overwrite_source_path
+        if self.overwrite_build_path is not None:
+            key_args["build_path"] = self.overwrite_build_path
+        if self.overwrite_dist_path is not None:
+            key_args["dist_path"] = self.overwrite_dist_path
+        if self.overwrite_wheels_path is not None:
+            key_args["wheels_path"] = self.overwrite_wheels_path
+        if self.overwrite_cache_path is not None:
+            key_args["cache_path"] = self.overwrite_cache_path
+        if self.overwrite_artifacts_path is not None:
+            key_args["artifacts_path"] = self.overwrite_artifacts_path
+        self._ci_workspace_config = CIWorkspaceConfig(
+            **key_args
+        )
+
+        self._github_config = GithubConfig(
+            is_github_run=self.is_github_run,
+            github_token=self.github_token,
+            org_name=self.org_name,
+            repo_name=self.repo_name,
+            sha=self.sha,
+        )
 
         if self.cache_dir is None:
             self.cache_dir = (
@@ -153,7 +200,18 @@ class EverestCore:
                 .with_new_directory("CPM")
                 .with_new_directory("ccache")
             )
-        
+
+        self._ci_config = CIConfig(
+            everest_ci_version=self.everest_ci_version,
+            everest_dev_environment_docker_version=(
+                self.everest_dev_environment_docker_version
+            ),
+            source_dir=self.source_dir,
+            cache_dir=self.cache_dir,
+            ci_workspace_config=self._ci_workspace_config,
+            github_config=self._github_config,
+        )
+
         self._outputs = (
             dag.directory()
             .with_new_directory("artifacts")
@@ -162,99 +220,139 @@ class EverestCore:
         self._outputs_mutex = asyncio.Lock()
 
     @function
-    async def test_github_status(self) -> None:
-        initialize_status(
-            auth_token=self.github_token,
-            org_name=self.org_name,
-            repo_name=self.repo_name,
-            sha=self.sha,
-            step=CIStep.BUILD_CMAKE_GCC,
-        )
-        # wait 20 seconds to simulate a long-running task
-        time.sleep(20)
-        update_status(
-            auth_token=self.github_token,
-            org_name=self.org_name,
-            repo_name=self.repo_name,
-            sha=self.sha,
-            step=CIStep.BUILD_CMAKE_GCC,
-            state=GithubStatusState.SUCCESS,
-            target_url="https://example.com",
-        )
+    def get_ci_workspace_config(self) -> CIWorkspaceConfig:
+        return self._ci_workspace_config
 
-    async def _create_key_from_container(self, container: dagger.Container | None = None) -> str:
-        """Create a unique key for the container based on its properties."""
-        if container is None:
-            return None
-        return await container.id()
+    @function
+    def get_github_config(self) -> GithubConfig:
+        return self._github_config
+
+    @function
+    def get_ci_config(self) -> CIConfig:
+        return self._ci_config
 
     @function
     @cached_task
+    @create_github_status(
+        condition=lambda self: self.get_github_config().is_github_run,
+        auth_token=lambda self: self.get_github_config().github_token,
+        org_name=lambda self: self.get_github_config().org_name,
+        repo_name=lambda self: self.get_github_config().repo_name,
+        sha=lambda self: self.get_github_config().sha,
+        function_name="Build the build kit",
+        target_url=None,
+        description=None,
+    )
     async def build_kit(self) -> EverestCI.BuildKitResult:
         """Build the everest-core build kit container"""
 
         return await BuildKit(
             docker_dir=self.source_dir.directory(".ci/build-kit/docker"),
-            base_image_tag=self.everest_ci_version,
+            ci_config=self.get_ci_config(),
         )
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        function_name="Linting the source code",
+        target_url=None,
+        description=None,
+    )
     async def lint(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the linter in")] = None,
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the linter in")
+        ] = None,
     ) -> EverestCI.ClangFormatResult:
         """Run the linter on the source directory"""
 
         if container is None:
             res = await self.build_kit()
             if res.exit_code != 0:
-                raise RuntimeError(f"Failed to build the build kit container: {res.exit_code}")
+                raise RuntimeError(
+                    f"Failed to build the build kit container: "
+                    f"{res.exit_code}"
+                )
             container = res.container
 
         return await Lint(
             container=container,
-            source_dir=self.source_dir,
+            ci_config=self.get_ci_config()
         )
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        function_name="Configure CMake with GCC",
+        target_url=None,
+        description=None,
+    )
     async def configure_cmake_gcc(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the function in")
+        ] = None,
     ) -> ConfigureResult:
         """Configure CMake with GCC in the given container"""
 
         if container is None:
             res = await self.build_kit()
             if res.exit_code != 0:
-                raise RuntimeError(f"Failed to build the build kit container: {res.exit_code}")
+                raise RuntimeError(
+                    f"Failed to build the build kit container: {res.exit_code}"
+                )
             container = res.container
 
         return await ConfigureCmakeGcc(
             container=container,
-            source_dir=self.source_dir,
-            workdir_path=self.workdir_path,
-            source_path=self.source_path,
-            build_path=self.build_path,
-            dist_path=self.dist_path,
-            wheels_path=self.wheels_path,
-            cache_dir=self.cache_dir,
-            cache_path=self.cache_path,
+            ci_config=self.get_ci_config()
         )
-    
+
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
     async def export_cpm_cache(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
-    ) -> dagger.Directory:
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the function in")
+        ] = None,
+    ) -> Directory:
         """Export the cache from the configure_cmake_gcc function"""
 
         if container is None:
             res = await self.configure_cmake_gcc()
-            if res.exit_code != 0:
-                raise RuntimeError(f"Failed to configure CMake with GCC: {res.exit_code}")
             container = res.container
 
         async with self._outputs_mutex:
@@ -262,45 +360,72 @@ class EverestCore:
                 "cache/CPM",
                 res.cache_cpm,
             )
-        
+
         return res.cache_cpm
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        function_name="Build CMake with GCC",
+        target_url=None,
+        description=None,
+    )
     async def build_cmake_gcc(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the build in, typically the build-kit image")] = None,
+        container: Annotated[
+            Container | None,
+            Doc(
+                "Container to run the build in, "
+                "typically the build-kit image"
+            )
+        ] = None,
     ) -> BuildResult:
-        """Returns a container that builds the provided Directory inside the provided Container"""
+        """
+        Returns a container that builds the provided Directory inside the
+        provided Container
+        """
 
         if container is None:
             res = await self.configure_cmake_gcc()
             if res.exit_code != 0:
-                raise RuntimeError(f"Failed to configure build build-kit: {res.exit_code}")
+                raise RuntimeError(
+                    f"Failed to configure build build-kit: {res.exit_code}"
+                )
             container = res.container
 
         return await BuildCmakeGcc(
             container=container,
-            source_dir=self.source_dir,
-            source_path=self.source_path,
-            build_path=self.build_path,
-            workdir_path=self.workdir_path,
-            cache_dir=self.cache_dir,
-            cache_path=self.cache_path,
+            ci_config=self.get_ci_config()
         )
-    
+
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
     async def export_ccache_cache(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the function in")] = None,
-    ) -> dagger.Directory:
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the function in")
+        ] = None,
+    ) -> Directory:
         """Export the ccache cache from the build_cmake_gcc function"""
 
         if container is None:
             res = await self.build_cmake_gcc()
-            if res.exit_code != 0:
-                raise RuntimeError(f"Failed to build CMake with GCC: {res.exit_code}")
             container = res.container
 
         async with self._outputs_mutex:
@@ -308,16 +433,44 @@ class EverestCore:
                 "cache/ccache",
                 res.cache_ccache,
             )
-        
+
         return res.cache_ccache
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        function_name="Run unit tests",
+        target_url=None,
+        description=None,
+    )
     async def unit_tests(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the tests in, typically the build-kit image")] = None,
+        container: Annotated[
+            Container | None,
+            Doc(
+                "Container to run the tests in, "
+                "typically the build-kit image"
+            )
+        ] = None,
     ) -> UnitTestsResult:
-        """Returns a container that run unit tests inside the provided Container"""
+        """
+        Returns a container that run unit tests inside the provided Container
+        """
 
         if container is None:
             res = await self.build_cmake_gcc()
@@ -327,24 +480,22 @@ class EverestCore:
 
         return await UnitTests(
             container=container,
-            source_dir=self.source_dir,
-            source_path=self.source_path,
-            build_path=self.build_path,
-            workdir_path=self.workdir_path,
+            ci_config=self.get_ci_config()
         )
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
     async def export_unit_tests_log_file(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the tests in, typically the build-kit image")] = None,
-    ) -> dagger.File:
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the tests in, typically the build-kit image")
+        ] = None,
+    ) -> File:
         """Returns the last unit tests log file"""
 
         if container is None:
             res = await self.unit_tests()
-            if res.exit_code != 0:
-                raise RuntimeError(f"Failed to run unit tests: {res.exit_code}")
             container = res.container
 
         async with self._outputs_mutex:
@@ -356,41 +507,72 @@ class EverestCore:
         return res.last_test_log
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        function_name="Install the built artifacts",
+        target_url=None,
+        description=None,
+    )
     async def install(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the install in, typically the build-kit image")] = None,
+        container: Annotated[
+            Container | None,
+            Doc(
+                "Container to run the install in, "
+                "typically the build-kit image"
+            ),
+        ] = None,
     ) -> InstallResult:
-        """Install the built artifacts into the dist directory"""
+        """
+        Install the built artifacts into the dist directory
+        """
 
         if container is None:
             res = await self.build_cmake_gcc()
             if res.exit_code != 0:
-                raise RuntimeError(f"Failed to build the build kit: {res.exit_code}")
+                raise RuntimeError(
+                    f"Failed to build the build kit: {res.exit_code}"
+                )
             container = res.container
 
         return await Install(
             container=container,
-            source_dir=self.source_dir,
-            source_path=self.source_path,
-            build_path=self.build_path,
-            dist_path=self.dist_path,
-            workdir_path=self.workdir_path,
+            ci_config=self.get_ci_config()
         )
 
     @function
-    def mqtt_server(self) -> dagger.Service:
+    def mqtt_server(self) -> Service:
         """Start and return mqtt server as a service"""
 
         service = (
             dag.container()
-            .from_(f"ghcr.io/everest/everest-dev-environment/mosquitto:{ self.everest_dev_environment_docker_version }")
+            .from_(
+                f"ghcr.io/everest/everest-dev-environment/mosquitto:"
+                f"{self.everest_dev_environment_docker_version}"
+            )
             .with_exposed_port(1883)
             .with_exec([
                 "mkdir", "-p", "/etc/mosquitto",
             ])
             .with_exec([
-                "cp", "/mosquitto/config/mosquitto.conf", "/etc/mosquitto/mosquitto.conf",
+                "cp",
+                "/mosquitto/config/mosquitto.conf",
+                "/etc/mosquitto/mosquitto.conf",
             ])
             .as_service(
                 args=[
@@ -403,10 +585,36 @@ class EverestCore:
         return service
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        function_name="Run integration tests",
+        target_url=None,
+        description=None,
+    )
     async def integration_tests(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the integration tests in, typically the build-kit image")] = None,
+        container: Annotated[
+            Container | None,
+            Doc(
+                "Container to run the integration tests in, "
+                "typically the build-kit image"
+            )
+        ] = None,
     ) -> IntegrationTestsResult:
         """Run the integration tests"""
 
@@ -420,27 +628,24 @@ class EverestCore:
 
         return await IntegrationTests(
             container=container,
-            source_dir=self.source_dir,
-            source_path=self.source_path,
-            build_path=self.build_path,
-            artifacts_path=self.artifacts_path,
-            dist_path=self.dist_path,
-            workdir_path=self.workdir_path,
+            ci_config=self.get_ci_config(),
             mqtt_server=mqtt_server,
         )
-    
+
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
     async def export_integration_tests_artifacts(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the integration tests in, typically the build-kit image")] = None,
-    ) -> dagger.Directory:
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the integration tests in, "
+                "typically the build-kit image")
+        ] = None,
+    ) -> Directory:
         """Export the artifacts from the integration tests"""
 
         if container is None:
             res = await self.integration_tests()
-            if res.exit_code != 0:
-                raise RuntimeError(f"Failed to run integration tests: {res.exit_code}")
             container = res.container
 
         async with self._outputs_mutex:
@@ -470,10 +675,36 @@ class EverestCore:
         return ret
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        function_name="Run OCPP tests",
+        target_url=None,
+        description=None,
+    )
     async def ocpp_tests(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the ocpp tests in, typically the build-kit image")] = None,
+        container: Annotated[
+            Container | None,
+            Doc(
+                "Container to run the ocpp tests in, "
+                "typically the build-kit image"
+            )
+        ] = None,
     ) -> OcppTestsResult:
         """Run the OCPP tests"""
 
@@ -487,27 +718,26 @@ class EverestCore:
 
         return await OcppTests(
             container=container,
-            source_dir=self.source_dir,
-            source_path=self.source_path,
-            build_path=self.build_path,
-            artifacts_path=self.artifacts_path,
-            dist_path=self.dist_path,
-            workdir_path=self.workdir_path,
+            ci_config=self.get_ci_config(),
             mqtt_server=mqtt_server,
         )
 
     @function
-    @cached_task(key_func=_create_key_from_container)
+    @cached_task(key_func=create_key_from_container)
     async def export_ocpp_tests_artifacts(
         self,
-        container: Annotated[dagger.Container | None, dagger.Doc("Container to run the ocpp tests in, typically the build-kit image")] = None,
-    ) -> dagger.Directory:
+        container: Annotated[
+            Container | None,
+            Doc(
+                "Container to run the ocpp tests in, "
+                "typically the build-kit image"
+            )
+        ] = None,
+    ) -> Directory:
         """Export the artifacts from the OCPP tests"""
 
         if container is None:
             res = await self.ocpp_tests()
-            if res.exit_code != 0:
-                raise RuntimeError(f"Failed to run OCPP tests: {res.exit_code}")
             container = res.container
 
         async with self._outputs_mutex:
@@ -537,18 +767,18 @@ class EverestCore:
 
     @object_type
     class PullRequestResult():
-        build_kit_result: EverestCI.BuildKitResult = dagger.field()
-        lint_result: EverestCI.ClangFormatResult = dagger.field()
-        configure_result: ConfigureResult = dagger.field()
-        build_result: BuildResult = dagger.field()
-        unit_tests_result: UnitTestsResult = dagger.field()
-        install_result: InstallResult = dagger.field()
-        integration_tests_result: IntegrationTestsResult = dagger.field()
-        ocpp_tests_result: OcppTestsResult = dagger.field()
-        exit_code: int = dagger.field()
-        artifacts: dagger.Directory = dagger.field()
-        cache: dagger.Directory = dagger.field()
-        outputs: dagger.Directory = dagger.field()
+        build_kit_result: EverestCI.BuildKitResult = field()
+        lint_result: EverestCI.ClangFormatResult = field()
+        configure_result: ConfigureResult = field()
+        build_result: BuildResult = field()
+        unit_tests_result: UnitTestsResult = field()
+        install_result: InstallResult = field()
+        integration_tests_result: IntegrationTestsResult = field()
+        ocpp_tests_result: OcppTestsResult = field()
+        exit_code: int = field()
+        artifacts: Directory = field()
+        cache: Directory = field()
+        outputs: Directory = field()
 
     def _log_function_result(self, func_name: str, exit_code: int) -> bool:
         if exit_code == 0:
@@ -561,35 +791,65 @@ class EverestCore:
     @function
     @cached_task
     async def pull_request(self) -> PullRequestResult:
-        async with asyncio.TaskGroup() as tg:
-            # Pipeline steps
-            build_kit_task = tg.create_task(self.build_kit())
-            lint_task = tg.create_task(self.lint())
-            configure_task = tg.create_task(self.configure_cmake_gcc())
-            build_task = tg.create_task(self.build_cmake_gcc())
-            unit_tests_task = tg.create_task(self.unit_tests())
-            install_task = tg.create_task(self.install())
-            integration_tests_task = tg.create_task(self.integration_tests())
-            ocpp_tests_task = tg.create_task(self.ocpp_tests())
+        try:
+            async with asyncio.TaskGroup() as tg:
+                # Pipeline steps
+                build_kit_task = tg.create_task(self.build_kit())
+                lint_task = tg.create_task(self.lint())
+                configure_task = tg.create_task(self.configure_cmake_gcc())
+                build_task = tg.create_task(self.build_cmake_gcc())
+                unit_tests_task = tg.create_task(self.unit_tests())
+                install_task = tg.create_task(self.install())
+                integration_tests_task = tg.create_task(self.integration_tests())
+                ocpp_tests_task = tg.create_task(self.ocpp_tests())
 
-            # Export caches
-            tg.create_task(self.export_cpm_cache())
-            tg.create_task(self.export_ccache_cache())
+                # Export caches
+                tg.create_task(self.export_cpm_cache())
+                tg.create_task(self.export_ccache_cache())
 
-            # Export artifacts
-            tg.create_task(self.export_unit_tests_log_file())
-            tg.create_task(self.export_integration_tests_artifacts())
-            tg.create_task(self.export_ocpp_tests_artifacts())
+                # Export artifacts
+                tg.create_task(self.export_unit_tests_log_file())
+                tg.create_task(self.export_integration_tests_artifacts())
+                tg.create_task(self.export_ocpp_tests_artifacts())
+        except* Exception as eg:
+            print("‼️ TaskGroup failed with multiple exceptions:")
+            for i, exc in enumerate(eg.exceptions, 1):
+                print(f"\n--- Exception {i} ---")
+                traceback.print_exception(type(exc), exc, exc.__traceback__)
 
         success = True
-        success &= self._log_function_result("Build build kit", build_kit_task.result().exit_code)
-        success &= self._log_function_result("Lint", lint_task.result().exit_code)
-        success &= self._log_function_result("Configure CMake with GCC", configure_task.result().exit_code)
-        success &= self._log_function_result("Build CMake with GCC", build_task.result().exit_code)
-        success &= self._log_function_result("Run unit tests", unit_tests_task.result().exit_code)
-        success &= self._log_function_result("Install", install_task.result().exit_code)
-        success &= self._log_function_result("Run integration tests", integration_tests_task.result().exit_code)
-        success &= self._log_function_result("Run OCPP tests", ocpp_tests_task.result().exit_code)
+        success &= self._log_function_result(
+            "Build build kit",
+            build_kit_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Lint",
+            lint_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Configure CMake with GCC",
+            configure_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Build CMake with GCC",
+            build_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Run unit tests",
+            unit_tests_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Install",
+            install_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Run integration tests",
+            integration_tests_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Run OCPP tests",
+            ocpp_tests_task.result().exit_code,
+        )
 
         async with self._outputs_mutex:
             self._outputs = (

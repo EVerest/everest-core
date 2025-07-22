@@ -1,6 +1,7 @@
 import dagger
 from dagger import object_type
 from ..everest_ci import BaseResultType
+from ..utils.types import CIConfig
 
 @object_type
 class IntegrationTestsResult(BaseResultType):
@@ -20,12 +21,7 @@ class IntegrationTestsResult(BaseResultType):
 
 async def integration_tests(
     container: dagger.Container,
-    source_dir: dagger.Directory,
-    source_path: str,
-    build_path: str,
-    artifacts_path: str,
-    dist_path: str,
-    workdir_path: str,
+    ci_config: CIConfig,
     mqtt_server: dagger.Service,
 ) -> IntegrationTestsResult:
 
@@ -33,13 +29,13 @@ async def integration_tests(
     # Mount source directory
     container = await (
         container
-        .with_mounted_directory(source_path, source_dir)
+        .with_mounted_directory(ci_config.ci_workspace_config.source_path, ci_config.source_dir)
     )
 
     # Set venv from build directory
     container = await (
         container
-        .with_env_variable("VIRTUAL_VENV", f"{build_path}/venv")
+        .with_env_variable("VIRTUAL_VENV", f"{ci_config.ci_workspace_config.build_path}/venv")
         .with_env_variable("PATH", "$VIRTUAL_VENV/bin:$PATH", expand=True)
     )
 
@@ -49,7 +45,7 @@ async def integration_tests(
         .with_exec(
             [
                 "cmake",
-                "--build", build_path,
+                "--build", ci_config.ci_workspace_config.build_path,
                 "--target",
                     "everest-testing_pip_install_dist",
             ],
@@ -62,7 +58,7 @@ async def integration_tests(
     # set PYTHONPATH to everestpy in dist directory
     container = await container.with_env_variable(
         "PYTHONPATH",
-        f"{dist_path}/lib64/everest/everestpy:{dist_path}/lib/everest/everestpy:$PYTHONPATH",
+        f"{ci_config.ci_workspace_config.dist_path}/lib64/everest/everestpy:{ci_config.ci_workspace_config.dist_path}/lib/everest/everestpy:$PYTHONPATH",
         expand=True,
     )
 
@@ -73,11 +69,10 @@ async def integration_tests(
         .with_env_variable("MQTT_SERVER_ADDRESS", "mqtt-server")
     )
 
-
     # Set workdir
     container = await (
         container
-        .with_workdir(f"{source_path}/tests")
+        .with_workdir(f"{ci_config.ci_workspace_config.source_path}/tests")
     )
 
     # Run the integration tests
@@ -89,24 +84,24 @@ async def integration_tests(
                 " ".join([
                     "python3", "-m", "pytest",
                     "-rA",
-                    "--junitxml", f"{artifacts_path}/integration-tests.xml",
-                    "--html", f"{artifacts_path}/integration-tests.html",
+                    "--junitxml", f"{ci_config.ci_workspace_config.artifacts_path}/integration-tests.xml",
+                    "--html", f"{ci_config.ci_workspace_config.artifacts_path}/integration-tests.html",
                     "--self-contained-html",
                     "core_tests/*",
                     "framework_tests/*",
-                    "--everest-prefix", dist_path,
+                    "--everest-prefix", ci_config.ci_workspace_config.dist_path,
                 ])
             ],
             expect=dagger.ReturnType.ANY,
         )
     )
 
-    container = await container.with_workdir(workdir_path)
+    container = await container.with_workdir(ci_config.ci_workspace_config.workspace_path)
 
     result = IntegrationTestsResult(
         container=container,
         exit_code=await container.exit_code(),
-        result_xml=container.file(f"{artifacts_path}/integration-tests.xml"),
-        report_html=container.file(f"{artifacts_path}/integration-tests.html"),
+        result_xml=container.file(f"{ci_config.ci_workspace_config.artifacts_path}/integration-tests.xml"),
+        report_html=container.file(f"{ci_config.ci_workspace_config.artifacts_path}/integration-tests.html"),
     )
     return result
