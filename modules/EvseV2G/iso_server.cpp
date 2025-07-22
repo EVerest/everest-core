@@ -1202,7 +1202,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         res->SAScheduleList_isUsed = (unsigned int)1; //  The SECC shall only omit the parameter 'SAScheduleList' in
                                                       //  case EVSEProcessing is set to 'Ongoing'.
 
-        if (conn->ctx->service_hpc1_enabled) {  // V2G2-PnC-CharIN-022
+        if (conn->ctx->service_hpc1_enabled) { // V2G2-PnC-CharIN-022
             req->MaxEntriesSAScheduleTuple_isUsed = (unsigned int)0;
             dlog(DLOG_LEVEL_INFO, "Ignored MaxEntriesSAScheduleTuple parameter, because HPC1 is enabled");
         }
@@ -1270,9 +1270,9 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                                      .PMax.Multiplier)) > pmax) {
                         dlog(DLOG_LEVEL_WARNING,
                              "Provided SA-schedule-list doesn't match with the physical value limits");
-                                     }
+                    }
                     if (conn->ctx->service_hpc1_enabled && idx2 >= 1) {
-                        break;  // V2G2-PnC-CharIN-019
+                        break; // V2G2-PnC-CharIN-019
                     }
                 }
             }
