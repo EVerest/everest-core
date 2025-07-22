@@ -68,6 +68,93 @@ pub fn to_hex_string(input: Vec<u16>) -> String {
         .concat()
 }
 
+/// The Iskra firmware has a bug where we must remove leading zeros from the r
+/// and s segments if the first non-zero byte is loss than 0x80.
+///
+/// The signature looks like
+/// 0x30, 0x44, 0x02, 0x20 ... 0x02, 0x20, ...
+/// |     |     |     |        |     | length of the component
+/// |     |     |     |        | start of the r/s component
+/// |     |     |     | length of the component.
+/// |     |     | start of r/s component.
+/// |     | signature length
+/// start
+pub fn correct_signature(input: Vec<u16>) -> Vec<u16> {
+    // Check if we have the first two bytes.
+    if input.len() < 2 {
+        log::warn!("Signature too short, aborting");
+        return input;
+    }
+
+    // Check the integrity of the signature
+    if input.len() != input[1] as usize + 2 {
+        log::warn!(
+            "Signature length mismatch: Expected {} received {}, aborting",
+            input.len(),
+            input[1] as usize + 2
+        );
+        return input;
+    }
+
+    let mut output = Vec::new();
+    output.reserve(input.len());
+    output.extend_from_slice(&input[0..2]);
+
+    let mut current_pos = 2;
+
+    // Process sub-components
+    while current_pos < input.len() {
+        if input[current_pos] != 2 {
+            log::warn!(
+                "Sub-component starts with {} instead of 2, aborting",
+                input[current_pos]
+            );
+            return input;
+        }
+        output.push(2);
+        current_pos += 1;
+
+        if current_pos >= input.len() {
+            log::warn!("No length element, aborting");
+            return input;
+        }
+
+        // Get the length of the current sub-component
+        let sub_component_length = input[current_pos] as usize;
+        current_pos += 1;
+
+        // Check if we have enough u16 values for the sub-component
+        if current_pos + sub_component_length > input.len() {
+            log::warn!("Sub-component length exceeds available u16 values, aborting");
+            return input;
+        }
+
+        // Extract the sub-component
+        let mut sub_component = &input[current_pos..current_pos + sub_component_length];
+
+        // Process sub-component. Find the first non-zero value.
+        let non_zero_idx = sub_component
+            .iter()
+            .position(|&value| value != 0)
+            .unwrap_or(sub_component.len() - 1);
+        let non_zero_value = sub_component[non_zero_idx];
+        // If there is a non-zero value, check if it is less than 0x80.
+        if non_zero_value < 0x80 {
+            log::info!("Removed {} leading zeros from sub-component", non_zero_idx);
+            sub_component = &sub_component[non_zero_idx..];
+        }
+
+        output.push(sub_component.len() as u16);
+        output.extend_from_slice(&sub_component);
+
+        current_pos += sub_component_length;
+    }
+
+    // Update the signature length (2nd u16) if any zeros were removed
+    output[1] = (output.len() - 2) as u16;
+    output
+}
+
 pub fn create_ocmf(signed_meter_values: String, signature: String) -> String {
     format!("OCMF|{}|{{\"SD\":\"{}\"}}", signed_meter_values, signature)
 }
@@ -161,6 +248,62 @@ mod tests {
 
         for (input, expected) in parameters {
             assert_eq!(to_hex_string(input), expected);
+        }
+    }
+
+    #[test]
+    fn test__correct_signature() {
+        fn hex_string_to_vec(hex: &str) -> Vec<u16> {
+            hex.as_bytes()
+                .chunks(2)
+                .map(|chunk| {
+                    let hex_str = std::str::from_utf8(chunk).unwrap();
+                    u16::from_str_radix(hex_str, 16).unwrap()
+                })
+                .collect()
+        }
+        // Test case with specific hex strings
+        for (input_hex, expected_hex) in [
+            // In the first segment 1 byte with zero.
+            ("30440220005d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49", 
+            "3043021f5d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49"), 
+            // In the first segment 2 bytes with zero.
+            ("304402200000226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49", 
+            "3042021e226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49"), 
+            // In the first segment 1 bytes with zero but second element is valid
+            ("304402200080226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49",
+            "304402200080226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce402206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49"),
+            // In the second segment 3 bytes with zero.
+            ("304402200080226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce4022000000016da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49",
+            "304102200080226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce4021d16da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49"),
+            // In the first segment all zeros
+            ("30440220000000000000000000000000000000000000000000000000000000000000000002206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49", 
+             "302502010002206a9b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49"),
+            // In both are zeros.
+            ("30440220005d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce40220007b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49", 
+            "3042021f5d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce4021f7b5ad6da8a3234e5df67fbddd2dd98b454c74625f9340a2e82fc81c4b41d49"),
+            // No second sub-component
+            ("30220220005d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce4", 
+            "3021021f5d226c5f20ebebfd9f0d1da2aa696dd4f77f3708eecde72b4a346ae03b8ce4"),            
+            ] {
+            // Convert hex strings to Vec<u16>
+            let input = hex_string_to_vec(input_hex);
+            let expected = hex_string_to_vec(expected_hex);
+
+            assert_eq!(correct_signature(input), expected);
+        }
+
+        // Test cases with invalid input
+        for input in [
+            "304402",     // Not the right length overall. 44 is Wrong.
+            "30020300",   // Sub-component not started by 2. 03 is Wrong.
+            "030102",     // No length element.
+            "0303020201", // Length too short in the sub-component. 02 is Wrong.
+            "01",         // Too short.
+            "",           // Also too short.
+        ] {
+            let expected = hex_string_to_vec(input);
+            assert_eq!(correct_signature(expected.clone()), expected);
         }
     }
 }
