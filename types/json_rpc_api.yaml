@@ -675,7 +675,7 @@ types:
         description: Response error
         type: object
         $ref: /json_rpc_api#/ResponseErrorEnum
-  ChargePointGetActiveErrorsObj:
+  ChargePointGetActiveErrorsResObj:
     description: Response to ChargePoint.GetActiveErrors
     type: object
     additionalProperties: false
@@ -766,6 +766,20 @@ types:
         type: object
         $ref: /json_rpc_api#/ResponseErrorEnum
   # notifications
+  ChargePointActiveErrorsChangedObj:
+    description: Notification ChargePoint.ActiveErrorsChanged
+    type: object
+    additionalProperties: false
+    required:
+      - active_errors
+    properties:
+      active_errors:
+        description: Array of active charge point errors
+        type: array
+        items:
+          description: EVSE error
+          type: object
+          $ref: /json_rpc_api#/ErrorObj
   EVSEHardwareCapabilitiesChangedObj:
     description: Notification EVSE.HardwareCapabilitiesChanged
     type: object
