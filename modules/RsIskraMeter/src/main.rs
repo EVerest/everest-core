@@ -58,8 +58,8 @@ use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use utils::{
-    counter, create_ocmf, create_random_meter_session_id, from_t5_format, from_t6_format,
-    string_to_vec, to_8_string, to_hex_string,
+    correct_signature, counter, create_ocmf, create_random_meter_session_id, from_t5_format,
+    from_t6_format, string_to_vec, to_8_string, to_hex_string,
 };
 
 /// Public key prefix for transparency software, defined under 6.5.14.
@@ -669,6 +669,7 @@ impl ReadyState {
         log::info!("Length of signature: {}", length_of_signature);
         let registers_amount = (length_of_signature + 1) / 2;
         let regs = self.read_holding_registers(8188, registers_amount)?;
+        let regs = correct_signature(regs);
         let mut signature = to_hex_string(regs);
         signature.truncate((length_of_signature * 2) as usize);
         log::info!("Read the signature: {}", signature);
