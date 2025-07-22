@@ -19,4 +19,11 @@ active_modules:
       example:
         - module_id: example
           implementation_id: example
+      example_multiple:
+        - module_id: example
+          implementation_id: example_multiple.0 # TODO: use .0 ... .127 index syntax
+        - module_id: example
+          implementation_id: example_multiple.1
+        # - module_id: example
+        #   implementation_id: example_multiple.2
     module: ExampleUser

@@ -6,6 +6,10 @@ provides:
 requires:
   example:
     interface: example
+  example_multiple:
+    interface: example
+    min_connections: 1
+    max_connections: 128 # TODO
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

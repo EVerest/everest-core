@@ -12,6 +12,7 @@
 
 // headers for provided interface implementations
 #include <generated/interfaces/example/Implementation.hpp>
+#include <generated/interfaces/example/ImplementationMultiple.hpp>
 #include <generated/interfaces/kvs/Implementation.hpp>
 
 // headers for required interface implementations
@@ -29,17 +30,20 @@ class Example : public Everest::ModuleBase {
 public:
     Example() = delete;
     Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<exampleImplBase> p_example,
-            std::unique_ptr<kvsImplBase> p_store, std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
+            std::unique_ptr<kvsImplBase> p_store, std::unique_ptr<exampleImplBaseMultiple> p_example_multiple,
+            std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_example(std::move(p_example)),
         p_store(std::move(p_store)),
+        p_example_multiple(std::move(p_example_multiple)),
         r_kvs(std::move(r_kvs)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<exampleImplBase> p_example;
     const std::unique_ptr<kvsImplBase> p_store;
+    const std::unique_ptr<exampleImplBaseMultiple> p_example_multiple;
     const std::unique_ptr<kvsIntf> r_kvs;
     const Conf& config;
 
