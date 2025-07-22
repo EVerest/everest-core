@@ -81,7 +81,7 @@ pub fn to_hex_string(input: Vec<u16>) -> String {
 /// |     |     |     | length of the r/s component.
 /// |     |     | start of r/s component.
 /// |     | signature length
-/// start
+/// | start
 pub fn correct_signature(input: Vec<u16>) -> Vec<u16> {
     // Check if we have the first two bytes.
     if input.len() < 2 {
