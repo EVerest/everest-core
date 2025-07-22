@@ -9,14 +9,14 @@ py_binary(
 
 genrule(
     name = "compile_time_settings",
-    srcs = ["@//schemas/migrations:migrations"],
+    srcs = ["//schemas/migrations"],
     outs = ["include/everest/compile_time_settings.hpp"],
     tools = [":collect_migration_files"],
     cmd = """
     echo "#define EVEREST_INSTALL_PREFIX \\"/usr\\"" > $@
     echo "#define EVEREST_INSTALL_LIBDIR \\"/lib\\"" >> $@
     echo "#define EVEREST_NAMESPACE (\\"everest\\")" >> $@
-    $(location :collect_migration_files) --migration-files $(locations @//schemas/migrations:migrations) --output $@
+    $(location :collect_migration_files) --migration-files $(locations //schemas/migrations) --output $@
   """,
 )
 
