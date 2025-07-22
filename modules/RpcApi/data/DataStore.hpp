@@ -39,6 +39,40 @@ public:
     }
 };
 
+class ChargerErrorsStore : public GenericInfoStore<std::vector<types::json_rpc_api::ErrorObj>> {
+public:
+    void add_error(const types::json_rpc_api::ErrorObj& error) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        // Check if the error already exists in the vector
+        for (const auto& existing_error : this->dataobj) {
+            if (existing_error.uuid == error.uuid) {
+                // Error already exists, no need to add it again
+                throw std::runtime_error("Error with UUID " + error.uuid + " already exists in the store.");
+            }
+        }
+        this->dataobj.push_back(error);
+        this->data_is_valid = true; // set the data as valid, since we have a valid error now
+        data_lock.unlock();
+        // Notify that data has changed
+        this->notify_data_changed();
+    }
+
+    void clear_error(const types::json_rpc_api::ErrorObj& error) {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        // Find and remove the error from the vector
+        for (auto it = this->dataobj.begin(); it != this->dataobj.end(); ++it) {
+            // String comparison for uuid
+            if (it->uuid == error.uuid) {
+                this->dataobj.erase(it);
+                data_lock.unlock();
+                // Notify that data has changed
+                this->notify_data_changed();
+                return; // Exit after removing the first matching error
+            }
+        }
+    }
+};
+
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {
 public:
     void set_bidi_charging(bool enabled) {
@@ -298,6 +332,7 @@ struct DataStoreEvse {
 // For more information see 3-Tier model definition of OCPP 2.0.
 struct DataStoreCharger {
     ChargerInfoStore chargerinfo;
+    ChargerErrorsStore chargererrors;
     std::string everest_version;
     std::vector<std::unique_ptr<DataStoreEvse>> evses;
 

@@ -16,6 +16,7 @@ namespace RPCDataTypes = types::json_rpc_api;
 namespace methods {
 
 static const std::string METHOD_CHARGEPOINT_GET_EVSE_INFOS = "ChargePoint.GetEVSEInfos";
+static const std::string METHOD_CHARGEPOINT_GET_ACTIVE_ERRORS = "ChargePoint.GetActiveErrors";
 
 /// This class includes all methods of the ChargePoint namespace.
 /// It contains the data object and the methods to access it.
@@ -42,6 +43,20 @@ public:
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
         } else {
             res.error = RPCDataTypes::ResponseErrorEnum::NoError;
+        }
+
+        return res;
+    };
+
+    RPCDataTypes::ChargePointGetActiveErrorsResObj getActiveErrors() {
+        RPCDataTypes::ChargePointGetActiveErrorsResObj res {};
+
+        if (m_dataobj.chargererrors.get_data().has_value()) {
+            res.active_errors = m_dataobj.chargererrors.get_data().value();
+            res.error = RPCDataTypes::ResponseErrorEnum::NoError;
+        }
+        else {
+            res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
         }
 
         return res;
