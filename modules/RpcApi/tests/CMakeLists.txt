@@ -4,6 +4,7 @@ set(TEST_SOURCES
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/data/SessionInfo.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/RpcHandler.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/notifications/Evse.cpp
+    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/notifications/ChargePoint.cpp
     ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp
     server/WebsocketServerTests.cpp
     rpc/RpcHandlerTests.cpp
