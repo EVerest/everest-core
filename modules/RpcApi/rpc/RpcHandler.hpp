@@ -26,6 +26,7 @@
 #include "methods/Api.hpp"
 #include "methods/ChargePoint.hpp"
 #include "methods/Evse.hpp"
+#include "notifications/ChargePoint.hpp"
 #include "notifications/Evse.hpp"
 
 using namespace server;
@@ -130,6 +131,7 @@ private:
     methods::ChargePoint m_methods_chargepoint;
     methods::Evse m_methods_evse;
     ClientConnector m_conn;
+    std::unique_ptr<notifications::ChargePoint> m_notifications_chargepoint;
     std::unique_ptr<notifications::Evse> m_notifications_evse;
 };
 } // namespace rpc

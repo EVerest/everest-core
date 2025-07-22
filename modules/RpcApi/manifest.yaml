@@ -71,6 +71,7 @@ requires:
     interface: external_energy_limits
     min_connections: 0
     max_connections: 128
+enable_global_errors: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

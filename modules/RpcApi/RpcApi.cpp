@@ -4,6 +4,7 @@
 
 #include "RpcApi.hpp"
 #include "helpers/Conversions.hpp"
+#include "helpers/ErrorHandler.hpp"
 
 namespace module {
 
@@ -29,6 +30,8 @@ void RpcApi::init() {
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
     transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
     m_rpc_handler = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data, std::move(m_request_handler));
+
+    subscribe_global_errors();
 }
 
 void RpcApi::ready() {
@@ -127,6 +130,17 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         auto var_selected_protocol = types::json_rpc_api::evse_manager_protocol_to_charge_protocol(selected_protocol);
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
     });
+}
+
+void RpcApi::subscribe_global_errors() {
+    // Subscribe to global error events
+    const auto error_handler = [this](const Everest::error::Error& error) {
+        helpers::handle_error_raised(this->data, error);
+    };
+    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
+        helpers::handle_error_cleared(this->data, error);
+    };
+    subscribe_global_all_errors(error_handler, error_cleared_handler);
 }
 
 void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
@@ -313,7 +327,7 @@ bool RpcApi::check_evse_mapping() {
                 connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown;
                 evse_data->evseinfo.set_available_connector(connector);
                 evse_data->evsestatus.set_active_connector_id(connector.id);
-                EVLOG_error << "Please configure an evse mapping to your configuration file for the connected ";
+                EVLOG_error << "Please configure an evse mapping to your configuration file for the connected EVSE.";
                 return false;
             }
         }

@@ -74,6 +74,7 @@ RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> 
     init_rpc_api();
     init_transport_interfaces();
     m_notifications_evse = std::make_unique<notifications::Evse>(m_rpc_server, dataobj);
+    m_notifications_chargepoint = std::make_unique<notifications::ChargePoint>(m_rpc_server, dataobj);
 }
 
 void RpcHandler::init_rpc_api() {
