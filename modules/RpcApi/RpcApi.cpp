@@ -135,10 +135,12 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
 void RpcApi::subscribe_global_errors() {
     // Subscribe to global error events
     const auto error_handler = [this](const Everest::error::Error& error) {
-        helpers::handle_error_raised(this->data, error);
+        auto tmp_error = types::json_rpc_api::everest_error_to_rpc_error(error);
+        helpers::handle_error_raised(this->data, tmp_error);
     };
     const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        helpers::handle_error_cleared(this->data, error);
+        auto tmp_error = types::json_rpc_api::everest_error_to_rpc_error(error);
+        helpers::handle_error_cleared(this->data, tmp_error);
     };
     subscribe_global_all_errors(error_handler, error_cleared_handler);
 }
