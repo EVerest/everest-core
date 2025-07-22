@@ -809,8 +809,6 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
         case MessageType::GetPeriodicEventStreamResponse:
         case MessageType::GetTariffs:
         case MessageType::GetTariffsResponse:
-        case MessageType::NotifyCRL:
-        case MessageType::NotifyCRLResponse:
         case MessageType::NotifyDERAlarm:
         case MessageType::NotifyDERAlarmResponse:
         case MessageType::NotifyDERStartStop:
@@ -819,8 +817,6 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
         case MessageType::NotifyPeriodicEventStreamResponse:
         case MessageType::NotifyPriorityCharging:
         case MessageType::NotifyPriorityChargingResponse:
-        case MessageType::NotifyQRCodeScanned:
-        case MessageType::NotifyQRCodeScannedResponse:
         case MessageType::NotifySettlement:
         case MessageType::NotifySettlementResponse:
         case MessageType::OpenPeriodicEventStream:

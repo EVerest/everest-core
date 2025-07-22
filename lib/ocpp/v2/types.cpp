@@ -316,10 +316,6 @@ std::string messagetype_to_string(MessageType m) {
         return "NotifyAllowedEnergyTransfer";
     case MessageType::NotifyAllowedEnergyTransferResponse:
         return "NotifyAllowedEnergyTransferResponse";
-    case MessageType::NotifyCRL:
-        return "NotifyCRL";
-    case MessageType::NotifyCRLResponse:
-        return "NotifyCRLResponse";
     case MessageType::NotifyDERAlarm:
         return "NotifyDERAlarm";
     case MessageType::NotifyDERAlarmResponse:
@@ -336,10 +332,6 @@ std::string messagetype_to_string(MessageType m) {
         return "NotifyPriorityCharging";
     case MessageType::NotifyPriorityChargingResponse:
         return "NotifyPriorityChargingResponse";
-    case MessageType::NotifyQRCodeScanned:
-        return "NotifyQRCodeScanned";
-    case MessageType::NotifyQRCodeScannedResponse:
-        return "NotifyQRCodeScannedResponse";
     case MessageType::NotifySettlement:
         return "NotifySettlement";
     case MessageType::NotifySettlementResponse:
@@ -689,10 +681,6 @@ MessageType string_to_messagetype(const std::string& s) {
         return MessageType::NotifyAllowedEnergyTransfer;
     } else if (s == "NotifyAllowedEnergyTransferResponse") {
         return MessageType::NotifyAllowedEnergyTransferResponse;
-    } else if (s == "NotifyCRL") {
-        return MessageType::NotifyCRL;
-    } else if (s == "NotifyCRLResponse") {
-        return MessageType::NotifyCRLResponse;
     } else if (s == "NotifyDERAlarm") {
         return MessageType::NotifyDERAlarm;
     } else if (s == "NotifyDERAlarmResponse") {
@@ -709,10 +697,6 @@ MessageType string_to_messagetype(const std::string& s) {
         return MessageType::NotifyPriorityCharging;
     } else if (s == "NotifyPriorityChargingResponse") {
         return MessageType::NotifyPriorityChargingResponse;
-    } else if (s == "NotifyQRCodeScanned") {
-        return MessageType::NotifyQRCodeScanned;
-    } else if (s == "NotifyQRCodeScannedResponse") {
-        return MessageType::NotifyQRCodeScannedResponse;
     } else if (s == "NotifySettlement") {
         return MessageType::NotifySettlement;
     } else if (s == "NotifySettlementResponse") {
