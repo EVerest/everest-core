@@ -71,11 +71,14 @@ pub fn to_hex_string(input: Vec<u16>) -> String {
 /// The Iskra firmware has a bug where we must remove leading zeros from the r
 /// and s segments if the first non-zero byte is smaller than 0x80.
 ///
+/// If we remove any zeros we have to correct the lengths of the entire signature
+/// and the affected r/s components.
+///
 /// The signature looks like
 /// 0x30, 0x44, 0x02, 0x20 ... 0x02, 0x20, ...
-/// |     |     |     |        |     | length of the component
+/// |     |     |     |        |     | length of the r/s component
 /// |     |     |     |        | start of the r/s component
-/// |     |     |     | length of the component.
+/// |     |     |     | length of the r/s component.
 /// |     |     | start of r/s component.
 /// |     | signature length
 /// start
