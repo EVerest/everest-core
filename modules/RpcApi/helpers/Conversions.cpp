@@ -71,5 +71,47 @@ namespace json_rpc_api {
             return ChargeProtocolEnum::Unknown;
         }
     }
+
+   types::json_rpc_api::ErrorObj everest_error_to_rpc_error(const Everest::error::Error& error_object) {
+        std::vector<types::json_rpc_api::ErrorObj> rpc_errors;
+
+        types::json_rpc_api::ErrorObj rpc_error;
+        rpc_error.type = error_object.type;
+        rpc_error.description = error_object.description;
+        rpc_error.message = error_object.message;
+
+        switch (error_object.severity) {
+            case Everest::error::Severity::High:
+                rpc_error.severity = types::json_rpc_api::Severity::High;
+                break;
+            case Everest::error::Severity::Medium:
+                rpc_error.severity = types::json_rpc_api::Severity::Medium;
+                break;
+            case Everest::error::Severity::Low:
+                rpc_error.severity = types::json_rpc_api::Severity::Low;
+                break;
+            default:
+                throw std::out_of_range("Provided severity " + std::to_string(static_cast<int>(error_object.severity)) + " could not be converted to enum of type SeverityEnum");
+        }
+        rpc_error.origin.module_id = error_object.origin.module_id;
+        rpc_error.origin.implementation_id = error_object.origin.implementation_id;
+
+        if(error_object.origin.mapping.has_value()){
+            rpc_error.origin.evse_index = error_object.origin.mapping.value().evse;
+
+            if (error_object.origin.mapping.value().connector.has_value()) {
+                rpc_error.origin.connector_index = error_object.origin.mapping.value().connector.value();
+            }
+        }
+
+        rpc_error.origin.evse_index = 0;
+        rpc_error.origin.connector_index = 0;
+
+        rpc_error.timestamp = Everest::Date::to_rfc3339(error_object.timestamp);
+        rpc_error.uuid = error_object.uuid.to_string();
+
+        return rpc_error;
+    }
+
 } // namespace json_rpc_api
 } // namespace types
