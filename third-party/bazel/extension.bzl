@@ -16,9 +16,9 @@ def _deps_impl(module_ctx):
     maybe(
         http_archive,
         name = "com_github_everest_everest-sqlite",
-        url = "https://github.com/EVerest/everest-sqlite/archive/80f374bde3adafb9c946654e9e803749c7c2d9ca.tar.gz",
-        sha256 = "9ee74458627f5aa581e5d735d54ea602abf012a4b78cfe2c60e275f1a1c9f3dc",
-        strip_prefix = "everest-sqlite-80f374bde3adafb9c946654e9e803749c7c2d9ca",
+        url = "https://github.com/EVerest/everest-sqlite/archive/ccb56abb214a7f40b90598dfbec7c8d155999ada.tar.gz",
+        sha256 = "9c101aa8d37020f289c26394f247f963d33f7a877fcb382449a35edb2371b540",
+        strip_prefix = "everest-sqlite-ccb56abb214a7f40b90598dfbec7c8d155999ada",
         build_file = "@everest-framework//third-party/bazel:BUILD.everest-sqlite.bazel",
     )
 
