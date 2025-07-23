@@ -30,6 +30,7 @@
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 use anyhow::Result;
+use generated::errors::payment_terminal::{Error as PTError, PaymentTerminalError};
 use generated::types::{
     authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
     money::MoneyAmount,
@@ -41,6 +42,7 @@ use generated::{
     Context, Module, ModulePublisher, OnReadySubscriber, PaymentTerminalServiceSubscriber,
     SessionCostClientSubscriber,
 };
+
 use std::collections::HashMap;
 use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
 use std::time::Duration;
@@ -123,6 +125,11 @@ mod sync_feig {
             let mut inner = self.inner.lock().unwrap();
             self.rt.block_on(inner.commit_transaction(token, amount))
         }
+
+        pub fn configure(&self) -> Result<()> {
+            let mut inner = self.inner.lock().unwrap();
+            self.rt.block_on(inner.configure())
+        }
     }
 }
 
@@ -144,7 +151,7 @@ impl ProvidedIdToken {
             },
             authorization_type,
             certificate: None,
-            connectors: connectors,
+            connectors,
             iso_15118_certificate_hash_data: None,
             prevalidated: None,
             request_id: None,
@@ -352,8 +359,26 @@ impl AuthTokenProviderServiceSubscriber for PaymentTerminalModule {}
 
 impl BankSessionTokenProviderClientSubscriber for PaymentTerminalModule {}
 
+impl From<anyhow::Error> for PTError {
+    fn from(value: anyhow::Error) -> Self {
+        match value.downcast_ref::<Error>() {
+            Some(inner) => match inner {
+                Error::TidMismatch => {
+                    PTError::PaymentTerminal(PaymentTerminalError::TerminalIdNotSet)
+                }
+                _ => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
+            },
+            None => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
+        }
+    }
+}
+
 impl OnReadySubscriber for PaymentTerminalModule {
     fn on_ready(&self, publishers: &ModulePublisher) {
+        if let Err(inner) = self.feig.configure() {
+            publishers.payment_terminal.raise_error(inner.into())
+        }
+
         // Send the publishers to the main thread.
         self.tx.send(publishers.clone()).unwrap();
     }

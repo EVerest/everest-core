@@ -8,8 +8,8 @@ cmds:
         description: Supported card types array
         type: array
         items:
-            type: string
-            $ref: /payment_terminal#/CardType
+          type: string
+          $ref: /payment_terminal#/CardType
       connector_id:
         description: Which connector
         type: integer
@@ -30,4 +30,5 @@ vars:
       Provides a rejection reason for the rejected credit card read.
     type: string
     $ref: /payment_terminal#/RejectionReason
-
+errors:
+  - reference: /errors/payment_terminal
