@@ -590,8 +590,9 @@ class EverestCore:
         if container is None:
             res = await self.build_bazel()
             if res.exit_code != 0:
-                raise RuntimeError(
-                    f"Failed to build the Bazel project: {res.exit_code}"
+                return BaseResultType(
+                    container=res.container,
+                    exit_code=res.exit_code,
                 )
             container = res.container
 
