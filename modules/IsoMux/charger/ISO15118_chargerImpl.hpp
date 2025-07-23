@@ -34,9 +34,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_setup(types::iso15118::EVSEID& evse_id,
-                              std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-                              types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) override;
+    virtual void handle_setup(types::iso15118::EVSEID& evse_id, types::iso15118::SaeJ2847BidiMode& sae_j2847_mode,
+                              bool& debug_mode) override;
     virtual void handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) override;
     virtual void handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
                                       bool& supported_certificate_service,
@@ -49,6 +48,8 @@ protected:
     virtual void handle_receipt_is_required(bool& receipt_required) override;
     virtual void handle_stop_charging(bool& stop) override;
     virtual void handle_pause_charging(bool& pause) override;
+    virtual void handle_update_energy_transfer_modes(
+        std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) override;
     virtual void handle_update_ac_max_current(double& max_current) override;
     virtual void handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) override;
     virtual void handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) override;

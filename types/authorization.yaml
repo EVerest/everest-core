@@ -191,6 +191,15 @@ types:
       reservation_id:
         description: The reservation id that is used with this validated token.
         type: integer
+      allowed_energy_transfer_modes:
+        description: >-
+          This is only used when we want to specify which energy transfer modes are allowed for
+          the respective authorization request.
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/EnergyTransferMode
+        minItems: 1
   SelectionAlgorithm:
     description: >-
       The selection algorithm defines the logic to select one connector

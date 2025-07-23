@@ -6,8 +6,6 @@
 static constexpr auto VARIABLE_SOURCE_OCPP = "OCPP";
 
 namespace module::device_model {
-ComposedDeviceModelStorage::ComposedDeviceModelStorage() {
-}
 
 bool ComposedDeviceModelStorage::register_device_model_storage(
     std::string device_model_storage_id, std::shared_ptr<ocpp::v2::DeviceModelStorageInterface> device_model_storage) {

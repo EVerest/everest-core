@@ -26,8 +26,13 @@ const std::string MASTER_PASS_GROUP_ID_VAR_NAME = "MasterPassGroupId";
 const std::string EV_CONNECTION_TIMEOUT_VAR_NAME = "EVConnectionTimeOut";
 const std::string CENTRAL_CONTRACT_VALIDATION_ALLOWED_VAR_NAME = "CentralContractValidationAllowed";
 const std::string CONTRACT_CERTIFICATE_INSTALLATION_ENABLED_VAR_NAME = "ContractCertificateInstallationEnabled";
+const std::string SETPOINT_PRIORITY_VAR_NAME = "SetpointPriority";
 const std::string TX_START_POINT_VAR_NAME = "TxStartPoint";
 const std::string TX_STOP_POINT_VAR_NAME = "TxStopPoint";
+const std::string SETPOINT_SOURCE = "OCPP";
+
+static constexpr int32_t LOWEST_SETPOINT_PRIORITY = 1000;
+static constexpr int32_t HIGHEST_SETPOINT_PRIORITY = 0;
 
 namespace fs = std::filesystem;
 
@@ -112,12 +117,6 @@ ocpp::v2::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v2::R
         return ocpp::v2::TriggerReasonEnum::ChargingStateChanged;
     case ocpp::v2::ReasonEnum::MasterPass:
         return ocpp::v2::TriggerReasonEnum::StopAuthorized;
-    case ocpp::v2::ReasonEnum::Other:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
-    case ocpp::v2::ReasonEnum::OvercurrentFault:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
-    case ocpp::v2::ReasonEnum::PowerLoss:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     case ocpp::v2::ReasonEnum::PowerQuality:
         return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     case ocpp::v2::ReasonEnum::Reboot:
@@ -132,8 +131,10 @@ ocpp::v2::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v2::R
         return ocpp::v2::TriggerReasonEnum::TimeLimitReached;
     case ocpp::v2::ReasonEnum::Timeout:
         return ocpp::v2::TriggerReasonEnum::EVConnectTimeout;
+    case ocpp::v2::ReasonEnum::Other:
     case ocpp::v2::ReasonEnum::ReqEnergyTransferRejected:
-        return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v2::ReasonEnum::OvercurrentFault:
+    case ocpp::v2::ReasonEnum::PowerLoss:
     default:
         return ocpp::v2::TriggerReasonEnum::AbnormalCondition;
     }
@@ -373,6 +374,11 @@ void OCPP201::init() {
             ->subscribe_hw_capabilities(
                 [this, evse_id](const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
                     this->evse_hardware_capabilities_map[evse_id] = hw_capabilities;
+                });
+        this->r_evse_manager.at(evse_id - 1)
+            ->subscribe_supported_energy_transfer_modes(
+                [this](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+                    // TODO(mlitre): Update device model
                 });
     }
 }
@@ -745,7 +751,8 @@ void OCPP201::ready() {
                 try {
                     currency = types::money::string_to_currency_code(currency_code.value());
                 } catch (const std::out_of_range& e) {
-                    // If conversion fails, we just don't add the currency code. But we want to see it in the logging.
+                    // If conversion fails, we just don't add the currency code. But we want to see it in the
+                    // logging.
                     EVLOG_error << e.what();
                 }
             }
@@ -958,7 +965,10 @@ void OCPP201::ready() {
 
         evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
             if (ev_info.soc.has_value()) {
-                this->evse_soc_map[evse_id] = ev_info.soc.value();
+                this->evse_soc_map[evse_id] = ev_info.soc;
+            }
+            if (ev_info.evcc_id.has_value()) {
+                update_evcc_id_token(evse_id, ev_info.evcc_id.value());
             }
         });
 
@@ -977,7 +987,7 @@ void OCPP201::ready() {
     }
 
     int32_t extensions_id = 0;
-    for (auto& extension : this->r_extensions_15118) {
+    for (const auto& extension : this->r_extensions_15118) {
         extension->subscribe_iso15118_certificate_request(
             [this, extensions_id](const types::iso15118::RequestExiStreamSchema& certificate_request) {
                 auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
@@ -1000,7 +1010,10 @@ void OCPP201::ready() {
             const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
             if (mapping.has_value()) {
                 try {
-                    auto charge_needs = conversions::to_ocpp_notify_ev_charging_needs_request(charging_needs);
+                    // TODO(mlitre): if requested energy transfer is not what was allowed should we stop charging or
+                    // renegotiate or ignore?
+                    ocpp::v2::NotifyEVChargingNeedsRequest charge_needs;
+                    charge_needs.chargingNeeds = conversions::to_ocpp_charging_needs(charging_needs);
                     charge_needs.evseId = mapping.value().evse;
 
                     this->charge_point->on_ev_charging_needs(charge_needs);
@@ -1011,6 +1024,16 @@ void OCPP201::ready() {
             } else {
                 EVLOG_warning << "ISO15118 Extension interface mapping not set! Not sending 'ChargingNeeds'!";
             }
+        });
+
+        extension->subscribe_service_renegotiation_supported(
+            [this, extensions_id](bool service_renegotiation_supported) {
+                // TODO(mlitre): Update device model
+            });
+
+        extension->subscribe_ev_info([this, extensions_id](const types::iso15118::EvInformation& ev_info) {
+            // TODO(mlitre): Update device model
+            update_evcc_id_token(extensions_id, ev_info.evcc_id);
         });
 
         extensions_id++;
@@ -1066,8 +1089,8 @@ void OCPP201::ready() {
         evse->call_external_ready_to_start_charging();
     }
 
-    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might be
-    // plugged in at startup)
+    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might
+    // be plugged in at startup)
     std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
     // start OCPP connection
     this->charge_point->connect_websocket();
@@ -1148,8 +1171,8 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         break;
     }
 
-    // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not yet
-    // been authorized by the CSMS
+    // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not
+    // yet been authorized by the CSMS
     const auto authorized_id_token = get_authorized_id_token(session_event);
     if (authorized_id_token.has_value()) {
         this->charge_point->on_authorized(evse_id, connector_id, authorized_id_token.value());
@@ -1238,6 +1261,7 @@ void OCPP201::process_session_started(const int32_t evse_id, const int32_t conne
     if (session_started.reason == types::evse_manager::StartSessionReason::EVConnected) {
         this->charge_point->on_session_started(evse_id, connector_id);
     }
+    // TODO(mlitre): Update ConnectedEV device model to update available
 }
 
 void OCPP201::process_session_finished(const int32_t evse_id, const int32_t connector_id,
@@ -1252,6 +1276,7 @@ void OCPP201::process_session_finished(const int32_t evse_id, const int32_t conn
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::EV_DISCONNECTED);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
     this->charge_point->on_session_finished(evse_id, connector_id);
+    // TODO(mlitre): Update ConnectedEV device model to clear info and update available
 }
 
 void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t connector_id,
@@ -1273,8 +1298,9 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
         return;
     }
 
-    // at this point we dont know if the TransactionStarted event was triggered because of an Authorization or EV Plug
-    // in event. We assume cable has been plugged in first and then authorized and update if other order was applied
+    // at this point we dont know if the TransactionStarted event was triggered because of an Authorization or EV
+    // Plug in event. We assume cable has been plugged in first and then authorized and update if other order was
+    // applied
     auto tx_event = TxEvent::AUTHORIZED;
     auto trigger_reason = ocpp::v2::TriggerReasonEnum::Authorized;
     const auto transaction_started = session_event.transaction_started.value();
@@ -1357,8 +1383,8 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
                                                           ocpp::v2::TriggerReasonEnum::StopAuthorized);
         }
     } else {
-        // TODO(piet): If StopTxOnEVSideDisconnect is false, authorization shall still be present. This cannot only be
-        // handled within this module, but probably also within EvseManager and Auth
+        // TODO(piet): If StopTxOnEVSideDisconnect is false, authorization shall still be present. This cannot only
+        // be handled within this module, but probably also within EvseManager and Auth
 
         // authorization is always withdrawn in case of TransactionFinished, so in case we haven't updated the
         // transaction handler yet, we have to do it
@@ -1459,8 +1485,81 @@ void OCPP201::publish_charging_schedules(const std::vector<ocpp::v2::CompositeSc
 void OCPP201::set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>& composite_schedules) {
     const auto start_time = ocpp::DateTime();
 
-    // iterate over all schedules reported by the libocpp to create ExternalLimits
-    // for each connector
+    auto to_timestamp = [&](int seconds_offset) {
+        return ocpp::DateTime(start_time.to_time_point() + std::chrono::seconds(seconds_offset)).to_rfc3339();
+    };
+
+    int32_t setpoint_priority = LOWEST_SETPOINT_PRIORITY;
+    const auto resp = this->charge_point->request_value<std::string>(ocpp::v2::ControllerComponents::SmartChargingCtrlr,
+                                                                     ocpp::v2::Variable{SETPOINT_PRIORITY_VAR_NAME},
+                                                                     ocpp::v2::AttributeEnum::Actual);
+
+    if (resp.status == ocpp::v2::GetVariableStatusEnum::Accepted && resp.value.has_value()) {
+        setpoint_priority = resp.value.value() == "CSMS" ? HIGHEST_SETPOINT_PRIORITY : LOWEST_SETPOINT_PRIORITY;
+    }
+
+    auto create_setpoint_entry =
+        [&](const std::string& timestamp, const ocpp::v2::ChargingSchedulePeriod& period,
+            const ocpp::v2::ChargingRateUnitEnum& unit) -> std::optional<types::energy::ScheduleSetpointEntry> {
+        const bool has_basic_setpoint = period.setpoint.has_value();
+        const bool has_freq_table = period.v2xFreqWattCurve.has_value() && !period.v2xFreqWattCurve->empty();
+
+        if (!has_basic_setpoint && !has_freq_table) {
+            return std::nullopt;
+        }
+
+        types::energy::ScheduleSetpointEntry entry;
+        types::energy::SetpointType setpoint;
+        setpoint.source = SETPOINT_SOURCE;
+        setpoint.priority = setpoint_priority;
+        entry.timestamp = timestamp;
+
+        if (has_basic_setpoint) {
+            if (unit == ocpp::v2::ChargingRateUnitEnum::A) {
+                setpoint.ac_current_A = period.setpoint.value();
+            } else {
+                setpoint.total_power_W = period.setpoint.value();
+            }
+        }
+
+        if (has_freq_table) {
+            std::vector<types::energy::FrequencyWattPoint> frequency_table;
+            for (const auto& point : period.v2xFreqWattCurve.value()) {
+                types::energy::FrequencyWattPoint freq_point;
+                freq_point.frequency_Hz = point.frequency;
+                freq_point.total_power_W = point.power;
+                frequency_table.push_back(freq_point);
+            }
+            setpoint.frequency_table = std::move(frequency_table);
+        }
+
+        entry.setpoint = std::move(setpoint);
+        return entry;
+    };
+
+    auto create_limits_entry =
+        [&](const std::string& timestamp, const ocpp::v2::ChargingSchedulePeriod& period,
+            const ocpp::v2::ChargingRateUnitEnum& unit) -> std::optional<types::energy::ScheduleReqEntry> {
+        if (!period.limit.has_value()) {
+            return std::nullopt;
+        }
+
+        types::energy::ScheduleReqEntry entry;
+        entry.timestamp = timestamp;
+
+        types::energy::LimitsReq limits_req;
+        if (unit == ocpp::v2::ChargingRateUnitEnum::A) {
+            limits_req.ac_max_current_A = {period.limit.value(), source_ext_limit};
+            if (period.numberPhases.has_value()) {
+                limits_req.ac_max_phase_count = {period.numberPhases.value(), source_ext_limit};
+            }
+        } else {
+            limits_req.total_power_W = {period.limit.value(), source_ext_limit};
+        }
+
+        entry.limits_to_leaves = limits_req;
+        return entry;
+    };
 
     for (const auto& composite_schedule : composite_schedules) {
         auto evse_id = composite_schedule.evseId;
@@ -1471,31 +1570,54 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>
 
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
+        std::vector<types::energy::ScheduleSetpointEntry> schedule_setpoints;
+
+        const auto& unit = composite_schedule.chargingRateUnit;
 
         for (const auto& period : composite_schedule.chargingSchedulePeriod) {
-            types::energy::ScheduleReqEntry schedule_req_entry;
-            types::energy::LimitsReq limits_req;
-            const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
-            schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
-            if (composite_schedule.chargingRateUnit == ocpp::v2::ChargingRateUnitEnum::A) {
-                if (period.limit.has_value()) {
-                    limits_req.ac_max_current_A = {period.limit.value(), source_ext_limit};
-                }
-                if (period.numberPhases.has_value()) {
-                    limits_req.ac_max_phase_count = {period.numberPhases.value(), source_ext_limit};
-                }
-            } else {
-                if (period.limit.has_value()) {
-                    limits_req.total_power_W = {period.limit.value(), source_ext_limit};
-                }
+            const auto timestamp = to_timestamp(period.startPeriod);
+
+            if (auto setpoint_entry = create_setpoint_entry(timestamp, period, unit)) {
+                schedule_setpoints.push_back(*setpoint_entry);
             }
-            schedule_req_entry.limits_to_leaves = limits_req;
-            schedule_import.push_back(schedule_req_entry);
+
+            if (auto limits_entry = create_limits_entry(timestamp, period, unit)) {
+                schedule_import.push_back(*limits_entry);
+            }
         }
-        limits.schedule_import = schedule_import;
+
+        limits.schedule_import = std::move(schedule_import);
+        limits.schedule_setpoints = std::move(schedule_setpoints);
 
         auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, evse_id);
         evse_sink.call_set_external_limits(limits);
+    }
+}
+
+void OCPP201::update_evcc_id_token(const int& evse_id, const std::string& evcc_id) {
+    // TODO(mlitre): Update ConnectedEVVehicleId DeviceModel
+    if (evse_id == 0) {
+        return;
+    }
+    auto tx_data = this->transaction_handler->get_transaction_data(evse_id);
+    if (tx_data == nullptr) {
+        return;
+    }
+    if (tx_data->id_token.has_value()) {
+        auto info_vector = tx_data->id_token->additionalInfo.has_value() ? tx_data->id_token->additionalInfo.value()
+                                                                         : std::vector<ocpp::v2::AdditionalInfo>{};
+        if (!tx_data->id_token->additionalInfo.has_value() or
+            (tx_data->id_token->additionalInfo.has_value() and
+             std::find_if(tx_data->id_token->additionalInfo->cbegin(), tx_data->id_token->additionalInfo->cend(),
+                          [evcc_id](const ocpp::v2::AdditionalInfo& info) {
+                              return info.additionalIdToken.get() == evcc_id;
+                          }) == tx_data->id_token->additionalInfo->cend())) {
+            ocpp::v2::AdditionalInfo info;
+            info.additionalIdToken = evcc_id;
+            info.type = "EVCCID";
+            info_vector.push_back(info);
+            tx_data->id_token->additionalInfo = info_vector;
+        }
     }
 }
 
