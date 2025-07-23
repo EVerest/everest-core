@@ -37,6 +37,8 @@ namespace {{namespace}} {
     {%- else %}
         {%- if property.type == 'ocpp::DateTime' %}
 k.{{property.name}}.to_rfc3339()
+        {% elif property.type.startswith('std::vector<') and property.type.endswith('Enum>') %}
+            json::array()
         {%- else %}
 k.{{property.name}}
         {%- endif %}
@@ -48,6 +50,17 @@ k.{{property.name}}
 {%- else %}
 };
 {%- endif %}
+{%- for property in type.properties %}
+{%- if property.required and property.type.startswith('std::vector<') and property.type.endswith('Enum>')%}
+            for (auto val : k.{{property.name}}) {
+                {%- if property.type.endswith('Enum>') %}
+                j["{{property.name}}"].push_back({{ conversions_namespace_prefix }}conversions::{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}_to_string(val));
+                {%- else%}
+                j["{{property.name}}"].push_back(val);
+                {%- endif%}
+            }
+{%- endif%}
+{%- endfor %}
 
         // the optional parts of the message
 {% for property in type.properties %}
@@ -97,7 +110,11 @@ j["{{property.name}}"] = k.{{property.name}}.value();
 {% if property.required %}
 {% if property.type.startswith('std::vector<') %}
         for (auto val : j.at("{{property.name}}")) {
+{%- if property.type.endswith('Enum>') %}
+            k.{{property.name}}.push_back({{ conversions_namespace_prefix }}conversions::string_to_{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}(val));
+{% else %}
             k.{{property.name}}.push_back(val);
+{% endif %}
         }
 {% else %}
         k.{{property.name}} =
@@ -131,7 +148,7 @@ j["{{property.name}}"] = k.{{property.name}}.value();
             k.{{property.name}}.emplace(vec);
 {% else %}
 {% if property.enum %}
-            k.{{property.name}}.emplace({{ conversions_namespace_prefix }}conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}")));
+            k.{{property.name}}.emplace({{ conversions_namespace_prefix }}conversions::string_to_{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}(j.at("{{property.name}}")));
 {% else %}
 {% if property.type == 'ocpp::DateTime' %}
             k.{{property.name}}.emplace(ocpp::DateTime(std::string(j.at("{{property.name}}"))));
