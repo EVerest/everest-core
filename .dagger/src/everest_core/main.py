@@ -9,12 +9,16 @@ from dagger import (
     Container,
     Service,
     field,
+    ReturnType,
 )
 import asyncio
 from typing import Annotated
 import traceback
 
-from .everest_ci import EverestCI
+from .everest_ci import (
+    EverestCI,
+    BaseResultType,
+)
 
 from .functions.build_kit import build_kit as BuildKit
 from .functions.lint import lint as Lint
@@ -178,6 +182,10 @@ class EverestCore:
         int | None,
         Doc("GitHub Actions attempt number"),
     ] = None
+    event_name: Annotated[
+        str | None,
+        Doc("GitHub Actions event name"),
+    ] = None
 
     def __post_init__(self):
         key_args = {}
@@ -207,6 +215,7 @@ class EverestCore:
             sha=self.sha,
             run_id=self.run_id,
             attempt_number=self.attempt_number,
+            event_name=self.event_name,
         )
 
         if self.cache_dir is None:
@@ -321,6 +330,288 @@ class EverestCore:
             return await Lint(
                 container=container,
                 ci_config=self.get_ci_config()
+            )
+
+    @function
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
+        function_name="Manifest Tests",
+        description=None,
+    )
+    async def manifest_tests(
+        self,
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the manifest tests in")
+        ] = None,
+    ) -> BaseResultType:
+        if container is None:
+            res = await self.build_kit()
+            if res.exit_code != 0:
+                raise RuntimeError(
+                    f"Failed to build the build kit container: {res.exit_code}"
+                )
+            container = res.container
+
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.manifest_tests",
+        ):
+            container = await (
+                container
+                .with_mounted_directory(
+                    self.get_ci_workspace_config().source_path,
+                    self.source_dir,
+                )
+                .with_workdir(
+                    f"{self.get_ci_workspace_config().source_path}"
+                )
+                .with_exec(
+                    [
+                        "bash", "-c",
+                        " ".join([
+                            "python3", "-m", "pytest",
+                            "tests/manifest_tests/*.py",
+                        ]),
+                    ],
+                    expect=ReturnType.ANY,
+                )
+            )
+
+            return BaseResultType(
+                container=container,
+                exit_code=await container.exit_code(),
+            )
+
+    @function
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
+        function_name="DCO Check",
+        description=None,
+    )
+    async def dco_check(
+        self,
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the DCO check in")
+        ] = None,
+    ) -> BaseResultType:
+        """Run the DCO check on the source directory"""
+
+        if container is None:
+            res = await self.build_kit()
+            if res.exit_code != 0:
+                raise RuntimeError(
+                    f"Failed to build the build kit container: {res.exit_code}"
+                )
+            container = res.container
+
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.dco_check",
+        ):
+            if (
+                self.get_github_config().is_github_run
+                and self.get_github_config().event_name == "merge_group"
+            ):
+                return BaseResultType(
+                    container=container,
+                    exit_code=0,
+                )
+            container = await (
+                container
+                .with_mounted_directory(
+                    self.get_ci_workspace_config().source_path,
+                    self.source_dir,
+                )
+                .with_workdir(
+                    f"{self.get_ci_workspace_config().source_path}"
+                )
+                .with_exec(
+                    [
+                        "dco-check",
+                        "--default-branch", "main",
+                        "-v",
+                    ],
+                    expect=ReturnType.ANY,
+                )
+            )
+
+            return BaseResultType(
+                container=container,
+                exit_code=await container.exit_code(),
+            )
+
+    @function
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
+        function_name="Bazel Build",
+        description=None,
+    )
+    async def build_bazel(
+        self,
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the Bazel build in")
+        ] = None,
+    ) -> BaseResultType:
+        """Run the Bazel build on the source directory"""
+
+        if container is None:
+            res = await self.build_kit()
+            if res.exit_code != 0:
+                raise RuntimeError(
+                    f"Failed to build the build kit container: {res.exit_code}"
+                )
+            container = res.container
+
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.build_bazel",
+        ):
+            container = await (
+                container
+                .with_mounted_directory(
+                    self.get_ci_workspace_config().source_path,
+                    self.source_dir,
+                )
+                .with_workdir(
+                    f"{self.get_ci_workspace_config().source_path}"
+                )
+                .with_exec(
+                    [
+                        "bazelisk", "build", "//...",
+                    ],
+                    expect=ReturnType.ANY,
+                )
+            )
+
+            return BaseResultType(
+                container=container,
+                exit_code=await container.exit_code(),
+            )
+    
+    @function
+    @cached_task(key_func=create_key_from_container)
+    @create_github_status(
+        condition=(
+            lambda self, container: self.get_github_config().is_github_run
+        ),
+        auth_token=(
+            lambda self, container: self.get_github_config().github_token
+        ),
+        org_name=(
+            lambda self, container: self.get_github_config().org_name
+        ),
+        repo_name=(
+            lambda self, container: self.get_github_config().repo_name
+        ),
+        sha=(
+            lambda self, container: self.get_github_config().sha
+        ),
+        run_id=(
+            lambda self, container: self.get_github_config().run_id
+        ),
+        attempt_number=(
+            lambda self, container: self.get_github_config().attempt_number
+        ),
+        function_name="Bazel Test",
+        description=None,
+    )
+    async def test_bazel(
+        self,
+        container: Annotated[
+            Container | None,
+            Doc("Container to run the Bazel tests in")
+        ] = None,
+    ) -> BaseResultType:
+        """Run the Bazel tests on the source directory"""
+
+        if container is None:
+            res = await self.build_bazel()
+            if res.exit_code != 0:
+                raise RuntimeError(
+                    f"Failed to build the Bazel project: {res.exit_code}"
+                )
+            container = res.container
+
+        with tracer.start_as_current_span(
+            f"{self.__class__.__name__}.test_bazel",
+        ):
+            container = await (
+                container
+                .with_exec(
+                    [
+                        "bazelisk", "test", "//...",
+                        "--test_output=errors",
+                    ],
+                    expect=ReturnType.ANY,
+                )
+            )
+
+            return BaseResultType(
+                container=container,
+                exit_code=await container.exit_code(),
             )
 
     @function
@@ -862,6 +1153,10 @@ class EverestCore:
     class PullRequestResult():
         build_kit_result: EverestCI.BuildKitResult = field()
         lint_result: EverestCI.ClangFormatResult = field()
+        manifest_tests_result: BaseResultType = field()
+        dco_check_result: BaseResultType | None = field()
+        build_bazel_result: BaseResultType = field()
+        test_bazel_result: BaseResultType = field()
         configure_result: ConfigureResult = field()
         build_result: BuildResult = field()
         unit_tests_result: UnitTestsResult = field()
@@ -889,6 +1184,9 @@ class EverestCore:
                 # Pipeline steps
                 build_kit_task = tg.create_task(self.build_kit())
                 lint_task = tg.create_task(self.lint())
+                manifest_tests_task = tg.create_task(self.manifest_tests())
+                build_bazel_task = tg.create_task(self.build_bazel())
+                test_bazel_task = tg.create_task(self.test_bazel())
                 configure_task = tg.create_task(self.configure_cmake_gcc())
                 build_task = tg.create_task(self.build_cmake_gcc())
                 unit_tests_task = tg.create_task(self.unit_tests())
@@ -904,6 +1202,19 @@ class EverestCore:
                 tg.create_task(self.export_unit_tests_log_file())
                 tg.create_task(self.export_integration_tests_artifacts())
                 tg.create_task(self.export_ocpp_tests_artifacts())
+
+                run_dco_check = False
+                if self.get_github_config().is_github_run:
+                    if (
+                        self.get_github_config().event_name == "pull_request"
+                        or self.get_github_config().event_name == "merge_group"
+                    ):
+                        run_dco_check = True
+                else:
+                    run_dco_check = True
+                if run_dco_check:
+                    dco_check_task = tg.create_task(self.dco_check())
+
         except* Exception as eg:
             print("‼️ TaskGroup failed with multiple exceptions:")
             for i, exc in enumerate(eg.exceptions, 1):
@@ -918,6 +1229,18 @@ class EverestCore:
         success &= self._log_function_result(
             "Lint",
             lint_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Manifest tests",
+            manifest_tests_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Build Bazel",
+            build_bazel_task.result().exit_code,
+        )
+        success &= self._log_function_result(
+            "Test Bazel",
+            test_bazel_task.result().exit_code,
         )
         success &= self._log_function_result(
             "Configure CMake with GCC",
@@ -943,6 +1266,11 @@ class EverestCore:
             "Run OCPP tests",
             ocpp_tests_task.result().exit_code,
         )
+        if run_dco_check:
+            success &= self._log_function_result(
+                "DCO Check",
+                dco_check_task.result().exit_code,
+            )
 
         async with self._outputs_mutex:
             self._outputs = (
@@ -955,6 +1283,12 @@ class EverestCore:
             result = self.PullRequestResult(
                 build_kit_result=build_kit_task.result(),
                 lint_result=lint_task.result(),
+                manifest_tests_result=manifest_tests_task.result(),
+                dco_check_result=(
+                    dco_check_task.result() if run_dco_check else None
+                ),
+                build_bazel_result=build_bazel_task.result(),
+                test_bazel_result=test_bazel_task.result(),
                 configure_result=configure_task.result(),
                 build_result=build_task.result(),
                 unit_tests_result=unit_tests_task.result(),

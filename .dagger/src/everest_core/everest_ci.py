@@ -4,11 +4,13 @@ import dagger
 from dagger import dag, function, object_type
 from typing import Annotated
 
+
 @object_type
 class BaseResultType:
     """Base class for result types"""
     container: Annotated[dagger.Container, dagger.Doc("Container that ran the operation")] = dagger.field()
     exit_code: Annotated[int, dagger.Doc("The exit code of the operation")] = dagger.field()
+
 
 @object_type
 class EverestCI:
@@ -45,14 +47,14 @@ class EverestCI:
             "--extensions",
             extensions,
         ])
-        
+
         exclude_list = exclude.split(",")
         for ex in exclude_list:
             cmd_args.extend([
                 "--exclude",
                 f"/workspace/source/{ ex }",
             ])
-        
+
         cmd_args.extend([
             "--color",
         ])
@@ -64,12 +66,12 @@ class EverestCI:
             cmd_args.extend([
                 "never"
             ])
-        
+
         if recursive:
             cmd_args.extend([
                 "-r",
             ])
-        
+
         if fix:
             cmd_args.extend([
                 "--in-place",
@@ -96,16 +98,16 @@ class EverestCI:
 
     @function
     async def build_kit(self,
-            docker_dir: Annotated[dagger.Directory, dagger.Doc("Directory of the build kit dockerfile"), dagger.DefaultPath("/.ci/build-kit/docker")],
-            base_image_tag: Annotated[str, dagger.Doc("Base image tag to build the build-kit from")],
-        ) -> BuildKitResult:
+        docker_dir: Annotated[dagger.Directory, dagger.Doc("Directory of the build kit dockerfile"), dagger.DefaultPath("/.ci/build-kit/docker")],
+        base_image_tag: Annotated[str, dagger.Doc("Base image tag to build the build-kit from")],
+    ) -> BuildKitResult:
         """Returns a container that builds the provided Directory inside the provided Container"""
         container = await docker_dir.docker_build(
-            build_args = [
+            build_args=[
                 dagger.BuildArg("BASE_IMAGE_TAG", base_image_tag),
             ],
         )
-
+        container = await container.with_workdir("/workspace/build-kit")
         container = await (
             container
             .with_exec(
@@ -114,9 +116,16 @@ class EverestCI:
                     "install",
                     "--break-system-packages",
                     "pytest-html",
+                    "dco-check==0.5.0",
                 ],
                 expect=dagger.ReturnType.ANY,
             )
+            .with_exec(
+                [
+                    "npm", "install", "-g", "@bazel/bazelisk"
+                ]
+            )
+
         )
 
         result = self.BuildKitResult(

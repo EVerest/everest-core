@@ -147,6 +147,10 @@ class GithubConfig:
         int | None,
         Doc("GitHub Actions attempt number. None if not provided.")
     ] = None
+    event_name: Annotated[
+        str | None,
+        Doc("GitHub Actions event name. None if not provided.")
+    ] = None
 
 
 @object_type

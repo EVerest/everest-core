@@ -66,4 +66,3 @@ jobs:
         with:
           name: all-artifacts
           path: ${{ github.workspace }}/outputs/artifacts
-
