@@ -80,7 +80,7 @@ class EverestCore:
     everest_ci_version: Annotated[
         str,
         Doc("Version of the Everest CI"),
-    ] = "v1.5.2"
+    ] = "v1.5.3"
     everest_dev_environment_docker_version: Annotated[
         str,
         Doc(
