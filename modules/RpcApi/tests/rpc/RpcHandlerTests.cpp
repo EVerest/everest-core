@@ -5,6 +5,7 @@
 #include "../data/DataStore.hpp"
 #include "../helpers/JsonRpcUtils.hpp"
 #include "../helpers/RequestHandlerDummy.hpp"
+#include "../helpers/ErrorHandler.hpp"
 #include "../helpers/WebSocketTestClient.hpp"
 #include "../rpc/RpcHandler.hpp"
 #include "../server/WebsocketServer.hpp"
@@ -175,6 +176,109 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
     // Send ChargePoint.GetEVSEInfos request and validate response
     send_req_and_validate_res(client, charge_point_get_evse_infos_req, expected_response);
+}
+
+// Test: Connect to WebSocket server and send ChargePoint.GetActiveErrors request
+TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
+
+    // Set up the data store with test data
+    RPCDataTypes::EVSEInfoObj evse_info;
+    evse_info.index = 1; ///< Unique identifier
+    evse_info.available_connectors.emplace_back();
+    evse_info.available_connectors[0].id = 1;
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
+    evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
+    evse_info.description = "Test EVSE 1";
+    data_store.evses[0]->evseinfo.set_data(evse_info);
+    // Add a second EVSE with a different index
+    data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
+    evse_info.index = 2; ///< Unique identifier
+    evse_info.description = "Test EVSE 2";
+    data_store.evses[1]->evseinfo.set_data(evse_info);
+    // Set up the EVSE status for both EVSEs
+    RPCDataTypes::EVSEStatusObj evse_status1, evse_status2;
+    evse_status1.error_present = false;
+    evse_status2.error_present = false;
+    data_store.evses[0]->evsestatus.set_data(evse_status1);
+    data_store.evses[1]->evsestatus.set_data(evse_status2);
+
+    types::json_rpc_api::ErrorObj error0, error1, error2;
+    error0.origin.evse_index = 1;
+    error0.origin.connector_index = 0;
+    error0.origin.module_id = "evse_1";
+    error0.origin.implementation_id = "board_support";
+    error0.message = "Test error message";
+    error0.description = "Test error description";
+    error0.uuid = "6db8758b-194d-48e1-99af-c8f0b1d2e3f3";
+    error0.severity = types::json_rpc_api::Severity::Low;
+    error0.timestamp = "2025-01-01T12:00:00Z";
+    error0.type = "TestErrorType";
+
+    error1.origin.evse_index = 2;
+    error1.origin.connector_index = 1;
+    error1.origin.module_id = "evse_2";
+    error1.origin.implementation_id = "board_support";
+    error1.message = "Test error message";
+    error1.description = "Test error description";
+    error1.uuid = "7db8758b-194d-48e1-99af-c8f0b1d2e3f4";
+    error1.severity = types::json_rpc_api::Severity::Medium;
+    error1.timestamp = "2025-01-01T12:00:00Z";
+    error1.type = "TestErrorType";
+
+    error2.origin.evse_index = 2;
+    error2.origin.connector_index = 1;
+    error2.origin.module_id = "evse_2";
+    error2.origin.implementation_id = "board_support";
+    error2.message = "Another test error message";
+    error2.description = "Another test error description";
+    error2.uuid = "8db8758b-194d-48e1-99af-c8f0b1d2e3f5";
+    error2.severity = types::json_rpc_api::Severity::High;
+    error2.timestamp = "2025-01-01T12:00:01Z";
+    error2.type = "AnotherTestErrorType";
+
+    // Set up the data store with test data
+    RPCDataTypes::ChargePointGetActiveErrorsResObj result; // Expected response
+    result.active_errors.push_back(error1);
+    result.active_errors.push_back(error2);
+    result.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
+    // Set up request and expected response
+    nlohmann::json charge_point_get_active_errors_req = create_json_rpc_request("ChargePoint.GetActiveErrors", {}, 1);
+    nlohmann::json expected_response = create_json_rpc_response(result, 1);
+    // Send Api.Hello request
+    client.send_api_hello_req();
+    client.wait_for_data(std::chrono::seconds(1));
+    // Raise the error in the data store for the first EVSE
+    helpers::handle_error_raised(data_store, error0);
+    // Check if the error is set to present in the EVSE status
+    auto tmp_evse_store_1 = data::DataStoreCharger::get_evse_store(data_store, 1);
+    ASSERT_TRUE(tmp_evse_store_1 != nullptr);
+    ASSERT_TRUE(tmp_evse_store_1->evsestatus.get_data().value().error_present);
+    // Clear the error in the data store for the first EVSE
+    helpers::handle_error_cleared(data_store, error0);
+    // Check if the error is cleared in the EVSE status
+    ASSERT_FALSE(tmp_evse_store_1->evsestatus.get_data().value().error_present);
+    // Raise the second error in the data store for the second EVSE
+    helpers::handle_error_raised(data_store, error1);
+    helpers::handle_error_raised(data_store, error2);
+    // Check if error is set to present in the EVSE status
+    ASSERT_FALSE(tmp_evse_store_1->evsestatus.get_data().value().error_present);
+    auto tmp_evse_store_2 = data::DataStoreCharger::get_evse_store(data_store, 2);
+    ASSERT_TRUE(tmp_evse_store_2 != nullptr);
+    ASSERT_TRUE(tmp_evse_store_2->evsestatus.get_data().value().error_present);
+    // Send ChargePoint.GetActiveErrors request and validate response
+    send_req_and_validate_res(client, charge_point_get_active_errors_req, expected_response);
+    // Clear the errors for the second EVSE
+    helpers::handle_error_cleared(data_store, error1);
+    // Check if the error is still present in the EVSE status
+    ASSERT_TRUE(tmp_evse_store_2->evsestatus.get_data().value().error_present);
+    // Clear the second error
+    helpers::handle_error_cleared(data_store, error2);
+    // Check if error is cleared in the EVSE status
+    ASSERT_FALSE(tmp_evse_store_1->evsestatus.get_data().value().error_present);
+    ASSERT_FALSE(tmp_evse_store_2->evsestatus.get_data().value().error_present);
 }
 
 // Test: Connect to WebSocket server and send EVSE.Infos request with valid and invalid index
