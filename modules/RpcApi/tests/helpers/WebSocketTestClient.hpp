@@ -32,9 +32,25 @@ public:
         }
         return data;
     }
-    std::string wait_for_data(std::chrono::milliseconds timeout) {
+
+    std::string wait_for_data(std::chrono::milliseconds timeout, bool is_result = true) {
         std::unique_lock<std::mutex> lock(m_cv_mutex);
-        m_cv.wait_for(lock, timeout, [this] { return !m_received_data.empty(); });
+
+        bool received = m_cv.wait_for(lock, timeout, [this, is_result]() {
+            if (m_received_data.empty()) return false;
+            if (is_result) {
+                // Check string for "result" and "id" keys if is_result is true
+                bool has_result = m_received_data.find("\"result\"") != std::string::npos;
+                bool has_id     = m_received_data.find("\"id\"")     != std::string::npos;
+                return has_result && has_id;
+            }
+            return true; // For regular responses, we just check if we have data
+        });
+
+        if (!received) {
+            return ""; // Timeout
+        }
+
         std::string data = m_received_data;
         m_received_data.clear(); // Clear the received data after getting it
         return data;

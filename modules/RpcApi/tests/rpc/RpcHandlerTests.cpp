@@ -44,7 +44,7 @@ protected:
         data_store.chargerinfo.set_data(charger_info);
         data_store.everest_version = "2025.1.0";
         // Properly initialize EVSE objects
-        const auto& ptr = data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
+        data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
     }
 
     void send_req_and_validate_res(
@@ -430,7 +430,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingReq) {
     // Send EVSE.SetACCharging request with valid ID
     client.send(evse_set_ac_charging_req_valid_id.dump());
     // Wait for the response
-    std::string received_data = client.wait_for_data(std::chrono::seconds(1));
+    std::string received_data = client.wait_for_data(std::chrono::seconds(1), false);
     // Check if the response is valid
     nlohmann::json response = nlohmann::json::parse(received_data);
     ASSERT_EQ(response, expected_res);
@@ -531,7 +531,7 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingReq) {
     // Send EVSE.SetDCCharging request with valid ID
     client.send(evse_set_dc_charging_req_valid_id.dump());
     // Wait for the response
-    std::string received_data = client.wait_for_data(std::chrono::seconds(1));
+    std::string received_data = client.wait_for_data(std::chrono::seconds(1), false);
     // Check if the response is valid
     nlohmann::json response = nlohmann::json::parse(received_data);
     ASSERT_EQ(response, expected_res);
@@ -629,7 +629,7 @@ TEST_F(RpcHandlerTest, InvalidRequest) {
     // Send invalid request
     client.send(invalid_request.dump());
     // Wait for the response
-    std::string received_data = client.wait_for_data(std::chrono::seconds(1));
+    std::string received_data = client.wait_for_data(std::chrono::seconds(1), false);
     // Check if the response is not empty
     ASSERT_FALSE(received_data.empty());
     // Check if the response is valid
