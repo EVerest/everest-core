@@ -16,6 +16,7 @@ void handle_error_raised(data::DataStoreCharger& data, const types::json_rpc_api
     if (error.origin.evse_index.has_value()) {
         auto tmp_evse_store = data::DataStoreCharger::get_evse_store(data, error.origin.evse_index.value());
         if (tmp_evse_store != nullptr) {
+            EVLOG_debug << "Setting error present for EVSE index: " << error.origin.evse_index.value();
             tmp_evse_store->evsestatus.set_error_present(true);
         } else {
             EVLOG_warning << "No EVSE store found for EVSE index: " << error.origin.evse_index.value();
