@@ -1,0 +1,26 @@
+# Main lib BUILD file that exposes staging libraries
+
+# Alias libraries to provide the expected target names
+alias(
+    name = "ocpp",
+    actual = "@libocpp//:libocpp",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "ocpp_evse_security",
+    actual = "//lib/staging/ocpp:ocpp_evse_security",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "ocpp_conversions",
+    actual = "//lib/staging/ocpp:ocpp_conversions",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "external_energy_limits",
+    actual = "//lib/staging/external_energy_limits:external_energy_limits",
+    visibility = ["//visibility:public"],
+)

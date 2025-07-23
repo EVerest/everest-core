@@ -1,0 +1,35 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+IMPLS = [
+    "auth_validator",
+    "auth_provider",
+    "data_transfer",
+    "ocpp_generic",
+    "session_cost",
+]
+
+cc_everest_module(
+    name = "OCPP201",
+    srcs = [
+        "conversions.cpp",
+        "conversions.hpp",
+        "transaction_handler.cpp",
+        "transaction_handler.hpp",
+        "error_handling.hpp",
+        "device_model/everest_device_model_storage.cpp",
+        "device_model/everest_device_model_storage.hpp",
+        "device_model/composed_device_model_storage.cpp",
+        "device_model/composed_device_model_storage.hpp",
+        "device_model/definitions.cpp",
+        "device_model/definitions.hpp",
+    ],
+    deps = [
+        "@openssl//:ssl",
+        "@openssl//:crypto",
+        "@everest-core//lib:ocpp",
+        "@everest-core//lib:ocpp_evse_security",
+        "@everest-core//lib:ocpp_conversions",
+        "@everest-core//lib:external_energy_limits",
+    ],
+    impls = IMPLS,
+)

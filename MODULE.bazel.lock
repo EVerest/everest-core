@@ -315,6 +315,8 @@
     "https://bcr.bazel.build/modules/rules_shell/0.2.0/MODULE.bazel": "fda8a652ab3c7d8fee214de05e7a9916d8b28082234e8d2c0094505c5268ed3c",
     "https://bcr.bazel.build/modules/rules_shell/0.3.0/MODULE.bazel": "de4402cd12f4cc8fda2354fce179fdb068c0b9ca1ec2d2b17b3e21b24c1a937b",
     "https://bcr.bazel.build/modules/rules_shell/0.3.0/source.json": "c55ed591aa5009401ddf80ded9762ac32c358d2517ee7820be981e2de9756cf3",
+    "https://bcr.bazel.build/modules/sqlite3/3.49.1/MODULE.bazel": "d162b602a16810ef2eb76ad15a32d7809a10b9831082e55ad35d82cbf59860da",
+    "https://bcr.bazel.build/modules/sqlite3/3.49.1/source.json": "7adca38f64362cc70081167b7e9f7066381e1a63151c6c82eae111487dbbbe07",
     "https://bcr.bazel.build/modules/stardoc/0.5.1/MODULE.bazel": "1a05d92974d0c122f5ccf09291442580317cdd859f07a8655f1db9a60374f9f8",
     "https://bcr.bazel.build/modules/stardoc/0.5.3/MODULE.bazel": "c7f6948dae6999bf0db32c1858ae345f112cacf98f174c7a8bb707e41b974f1c",
     "https://bcr.bazel.build/modules/stardoc/0.5.6/MODULE.bazel": "c43dabc564990eeab55e25ed61c07a1aadafe9ece96a4efabb3f8bf9063b71ef",
@@ -333,7 +335,7 @@
   "moduleExtensions": {
     "//third-party/bazel:extension.bzl%deps": {
       "general": {
-        "bzlTransitiveDigest": "KdYACV97PC6ZINX00jgVvkOWbymLNik/Ewjclwpmb6k=",
+        "bzlTransitiveDigest": "tK3JVGHGjZI0og6BsmtPSAX1fbMT4woi9rf5/Yr0mb0=",
         "usagesDigest": "u1s/5rUOS1MTfb5W26qbMsw0xxt6wqMAgnnDoK8GisQ=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -369,10 +371,70 @@
           "libevse-security": {
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
-              "url": "https://github.com/EVerest/libevse-security/archive/fbe634af0ab3784f3cd336a309007f0f36558df6.tar.gz",
-              "sha256": "8dab7dd82f8b44f9dee70435d4313963c06e9cfd1b0e38763e857da2d66b0b3d",
-              "strip_prefix": "libevse-security-fbe634af0ab3784f3cd336a309007f0f36558df6",
+              "url": "https://github.com/EVerest/libevse-security/archive/9f246bcca44ffe18212e919273bce281e07f3d7f.tar.gz",
+              "sha256": "80cedf260cbf4282ffc04516444019e66d2f624e29949a9a56a4caf9b0883a2c",
+              "strip_prefix": "libevse-security-9f246bcca44ffe18212e919273bce281e07f3d7f",
               "build_file": "@@//third-party/bazel:BUILD.libevse-security.bazel"
+            }
+          },
+          "libocpp": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/EVerest/libocpp/archive/1d2ce8db1b699f13fe73c17e71d2f25f7b68da32.tar.gz",
+              "sha256": "a8f1e2732c8eebc9cef75e2839a57073fd7ed6ce1b5a0d1134f98c2c030d7659",
+              "strip_prefix": "libocpp-1d2ce8db1b699f13fe73c17e71d2f25f7b68da32",
+              "build_file": "@@//third-party/bazel:BUILD.libocpp.bazel"
+            }
+          },
+          "com_github_warmcatt_libwebsockets": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/warmcat/libwebsockets/archive/v4.3.3.tar.gz",
+              "sha256": "6fd33527b410a37ebc91bb64ca51bdabab12b076bc99d153d7c5dd405e4bdf90",
+              "strip_prefix": "libwebsockets-4.3.3",
+              "build_file": "@@//third-party/bazel:BUILD.libwebsockets.bazel"
+            }
+          },
+          "rules_license": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/bazelbuild/rules_license/archive/0.0.7.tar.gz",
+              "sha256": "7626bea5473d3b11d44269c5b510a210f11a78bca1ed639b0f846af955b0fe31",
+              "strip_prefix": "rules_license-0.0.7"
+            }
+          },
+          "rules_cc": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/bazelbuild/rules_cc/archive/0.0.9.tar.gz",
+              "sha256": "2037875b9a4456dce4a79d112a8ae885bbc4aad968e6587dca6e64f3a0900cdf",
+              "strip_prefix": "rules_cc-0.0.9"
+            }
+          },
+          "platforms": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/bazelbuild/platforms/archive/0.0.10.tar.gz",
+              "sha256": "3df33228654e56b09f17613613767b052581b822d57cb9cfd5e7b19a8e617b42",
+              "strip_prefix": "platforms-0.0.10"
+            }
+          },
+          "everest_sqlite": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/EVerest/everest-sqlite/archive/v0.1.1.tar.gz",
+              "sha256": "7a8a7b1edf4177d771c80a28ed0558e4b9fcb74cdda1bacdf6399766f2c8ff83",
+              "strip_prefix": "everest-sqlite-0.1.1",
+              "build_file": "@@//third-party/bazel:BUILD.everest-sqlite.bazel"
+            }
+          },
+          "com_github_pboettch_json-schema-validator": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/pboettch/json-schema-validator/archive/2.1.0.tar.gz",
+              "sha256": "83f61d8112f485e0d3f1e72d51610ba3924b179926a8376aef3c038770faf202",
+              "strip_prefix": "json-schema-validator-2.1.0",
+              "build_file": "@@everest-framework+//third-party/bazel:BUILD.json-schema-validator.bazel"
             }
           },
           "com_github_HowardHinnant_date": {
@@ -442,8 +504,8 @@
     },
     "@@everest-framework+//third-party/bazel:extension.bzl%deps": {
       "general": {
-        "bzlTransitiveDigest": "vVLZwTf3fVw/a7QFe30j+W7rllzRHvwUlzal7jEJTzI=",
-        "usagesDigest": "xggAox1WG/szGTX38Zu8tCFTN3nVhFoJszQ/oy56rlc=",
+        "bzlTransitiveDigest": "KqRJF0V3CDs8x0DqeyMqrqrCFu/rDCHgShcHW8W2Z+M=",
+        "usagesDigest": "+zrKF7+PyfYjfxMKhQmmMCShhDS+0SaKj+/aNTYZ0Fw=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -451,10 +513,19 @@
           "com_github_everest_liblog": {
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
-              "url": "https://github.com/EVerest/liblog/archive/763a56a4bf194e7cf1cab7446e993c376ce933fa.tar.gz",
-              "sha256": "6d1f4238f8984cbe0dea9d7bc2c3771ca803387b5215a2b42df0c850bd561770",
-              "strip_prefix": "liblog-763a56a4bf194e7cf1cab7446e993c376ce933fa",
+              "url": "https://github.com/EVerest/liblog/archive/08ff519b647beaa51f8f25ab04b88c079ca253a7.tar.gz",
+              "sha256": "32c5e419e63bffd094dcdf13adf9da7db1942029d575e7ace7559a434da967f5",
+              "strip_prefix": "liblog-08ff519b647beaa51f8f25ab04b88c079ca253a7",
               "build_file": "@@everest-framework+//third-party/bazel:BUILD.liblog.bazel"
+            }
+          },
+          "com_github_everest_everest-sqlite": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/EVerest/everest-sqlite/archive/80f374bde3adafb9c946654e9e803749c7c2d9ca.tar.gz",
+              "sha256": "9ee74458627f5aa581e5d735d54ea602abf012a4b78cfe2c60e275f1a1c9f3dc",
+              "strip_prefix": "everest-sqlite-80f374bde3adafb9c946654e9e803749c7c2d9ca",
+              "build_file": "@@everest-framework+//third-party/bazel:BUILD.everest-sqlite.bazel"
             }
           },
           "com_github_pboettch_json-schema-validator": {
