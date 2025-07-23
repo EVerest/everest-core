@@ -116,7 +116,7 @@ async def ocpp_tests(
                         "bash", "-c",
                         " ".join([
                             "python3", "-m", "pytest",
-                            "-rA",
+                            "-rfE",
                             "-d", "--tx", f"\"{parallel_tests}\"*popen//python=python3",
                             "--max-worker-restart=0",
                             "--timeout=300",

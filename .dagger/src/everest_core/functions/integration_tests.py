@@ -3,11 +3,13 @@ from dagger import object_type
 from ..everest_ci import BaseResultType
 from ..utils.types import CIConfig
 
+
 @object_type
 class IntegrationTestsResult(BaseResultType):
     """
     Result of the integration tests based on EverestCI.BaseResultType.
-    It contains the result of the integration tests in JUnit XML format and an HTML report.
+    It contains the result of the integration tests in JUnit XML format and
+    an HTML report.
 
     Attributes:
     -----------
@@ -19,6 +21,7 @@ class IntegrationTestsResult(BaseResultType):
     result_xml: dagger.File = dagger.field()
     report_html: dagger.File = dagger.field()
 
+
 async def integration_tests(
     container: dagger.Container,
     ci_config: CIConfig,
@@ -29,7 +32,10 @@ async def integration_tests(
     # Mount source directory
     container = await (
         container
-        .with_mounted_directory(ci_config.ci_workspace_config.source_path, ci_config.source_dir)
+        .with_mounted_directory(
+            ci_config.ci_workspace_config.source_path,
+            ci_config.source_dir,
+        )
     )
 
     # Set venv from build directory
@@ -47,7 +53,7 @@ async def integration_tests(
                 "cmake",
                 "--build", ci_config.ci_workspace_config.build_path,
                 "--target",
-                    "everest-testing_pip_install_dist",
+                "everest-testing_pip_install_dist",
             ],
             expect=dagger.ReturnType.ANY
         )
@@ -83,7 +89,7 @@ async def integration_tests(
                 "bash", "-c",
                 " ".join([
                     "python3", "-m", "pytest",
-                    "-rA",
+                    "-rfE",
                     "--junitxml", f"{ci_config.ci_workspace_config.artifacts_path}/integration-tests.xml",
                     "--html", f"{ci_config.ci_workspace_config.artifacts_path}/integration-tests.html",
                     "--self-contained-html",
