@@ -69,7 +69,6 @@ private:
     std::string source_base;
     std::string source_bsp_caps;
     std::string source_psu_caps;
-
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
