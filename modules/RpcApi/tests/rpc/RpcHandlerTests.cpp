@@ -364,7 +364,7 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     evse_status.error_present = false;
     evse_status.charge_protocol = types::json_rpc_api::ChargeProtocolEnum::ISO15118; ///< charge_protocol
     evse_status.state = types::json_rpc_api::EVSEStateEnum::Charging;
-    evse_status.ac_charge_loop.emplace().evse_active_phase_count = 3;
+    evse_status.ac_charge_status.emplace().evse_active_phase_count = 3;
 
     // Set up the expected responses
     RPCDataTypes::EVSEGetStatusResObj res_valid_id;
