@@ -16,10 +16,34 @@ void RpcApi::init() {
         auto& evse_data = this->data.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
         // subscribe to evse_manager interface variables
         this->subscribe_evse_manager(evse_manager, *evse_data);
+    }
+    // no info available until we get the new charger_information interface, see
+    // https://github.com/EVerest/everest-core/pull/1109
+    this->data.chargerinfo.set_unknown();
 
-        // no info available until we get the new charger_information interface, see
-        // https://github.com/EVerest/everest-core/pull/1109
-        this->data.chargerinfo.set_unknown();
+    if (r_evse_energy_sink.empty()) {
+        EVLOG_warning << "No EVSE energy sinks configured. Configuration of EVSE external limits will not be possible.";
+    }
+
+    // Check if all evse_energy_sink(s) have a mapping to an EVSE
+    check_evse_mapping();
+
+    // Subscribe to all EVSE energy interfaces
+    for (const auto& evse_energy : r_energy_listener) {
+        if (evse_energy->get_mapping().has_value()) {
+            // Write EVSE index and connector id to the datastore
+            auto evse_store = this->data.get_evse_store(evse_energy->get_mapping().value().evse);
+            if (evse_store == nullptr) {
+                EVLOG_error << "EVSE index " << evse_energy->get_mapping().value().evse
+                            << " not found in data store, cannot subscribe to energy interface";
+                continue;
+            }
+            this->subscribe_evse_energy(evse_energy, *evse_store);
+            EVLOG_error << "EVSE index set in energy interface mapping, using first EVSE index " << evse_energy->get_mapping().value().evse;
+        } else {
+            this->subscribe_evse_energy(evse_energy, *this->data.evses.at(0)); // currently only one EVSE is supported
+            EVLOG_warning << "EVSE index not set in energy interface mapping, using first EVSE index 0";
+        }
     }
 
     // Create the request handler
@@ -35,8 +59,6 @@ void RpcApi::init() {
 }
 
 void RpcApi::ready() {
-    // Check if all evse_energy_sink(s) have a mapping to an EVSE
-    check_evse_mapping();
     // Start server instances
     m_rpc_handler->start_server();
 
@@ -129,6 +151,17 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
         auto var_selected_protocol = types::json_rpc_api::evse_manager_protocol_to_charge_protocol(selected_protocol);
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
+    });
+}
+
+void RpcApi::subscribe_evse_energy(const std::unique_ptr<energyIntf>& evse_energy, data::DataStoreEvse& evse_data) {
+    evse_energy->subscribe_energy_flow_request([this, &evse_data](const types::energy::EnergyFlowRequest& request) {
+        if (request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.has_value() &&
+            request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value() != 0) {
+            RPCDataTypes::ACChargeStatusObj ac_charge_status;
+            ac_charge_status.evse_active_phase_count = request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value();
+            evse_data.evsestatus.set_ac_charge_status(ac_charge_status);
+        }
     });
 }
 
@@ -285,11 +318,6 @@ void RpcApi::hwcaps_var_to_datastore(const types::evse_board_support::HardwareCa
 
 bool RpcApi::check_evse_mapping() {
     // Interate over the configured EVSE mapping and configure the data store accordingly
-    if (r_evse_energy_sink.empty()) {
-        EVLOG_error << "No EVSE energy sinks configured. Unable to extract EVSE index and connector id for the "
-                        "connected r_evse_energy_sink. Please check your configuration file.";
-        return false;
-    }
     if (r_evse_manager.size() != this->data.evses.size()) {
         throw std::runtime_error(
             "The number of EVSE managers does not match the number of EVSE data stores. ");

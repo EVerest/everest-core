@@ -337,23 +337,22 @@ struct DataStoreCharger {
     std::vector<std::unique_ptr<DataStoreEvse>> evses;
 
     // get the EVSE data with a specific id
-    static data::DataStoreEvse* get_evse_store(DataStoreCharger& dataobj, const int32_t evse_index) {
-        if (dataobj.evses.empty()) {
+    data::DataStoreEvse* get_evse_store(const int32_t evse_index) {
+        if (evses.empty()) {
+            EVLOG_error << "No EVSEs found in the data store.";
             return nullptr;
         }
 
-        for (const auto& evse : dataobj.evses) {
-            if (not evse->evseinfo.get_data().has_value()) {
-                continue;
-            }
-
-            const auto data = evse->evseinfo.get_data().value();
-            if (data.index == evse_index) {
+        for (const auto& evse : evses) {
+            const auto tmp_index = evse->evseinfo.get_index();
+            EVLOG_info << "Checking EVSE index: " << tmp_index << " for requested index: " << evse_index;
+            if (tmp_index == evse_index) {
                 return evse.get();
             }
         }
+        EVLOG_error << "EVSE index " << evse_index << " not found in data store.";
         return nullptr;
-    };
+    }
 };
 
 } // namespace data

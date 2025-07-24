@@ -253,7 +253,7 @@ TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
     // Raise the error in the data store for the first EVSE
     helpers::handle_error_raised(data_store, error0);
     // Check if the error is set to present in the EVSE status
-    auto tmp_evse_store_1 = data::DataStoreCharger::get_evse_store(data_store, 1);
+    auto tmp_evse_store_1 = data_store.get_evse_store(1);
     ASSERT_TRUE(tmp_evse_store_1 != nullptr);
     ASSERT_TRUE(tmp_evse_store_1->evsestatus.get_data().value().error_present);
     // Clear the error in the data store for the first EVSE
@@ -265,7 +265,7 @@ TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
     helpers::handle_error_raised(data_store, error2);
     // Check if error is set to present in the EVSE status
     ASSERT_FALSE(tmp_evse_store_1->evsestatus.get_data().value().error_present);
-    auto tmp_evse_store_2 = data::DataStoreCharger::get_evse_store(data_store, 2);
+    auto tmp_evse_store_2 = data_store.get_evse_store(2);
     ASSERT_TRUE(tmp_evse_store_2 != nullptr);
     ASSERT_TRUE(tmp_evse_store_2->evsestatus.get_data().value().error_present);
     // Send ChargePoint.GetActiveErrors request and validate response
