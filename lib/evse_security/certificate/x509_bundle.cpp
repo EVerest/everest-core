@@ -303,8 +303,22 @@ bool X509CertificateBundle::export_certificates() {
 
         return exported_all;
     } else if (source == X509CertificateSource::FILE) {
-        // We're using a single file, no need to check for deleted certificates
-        return filesystem_utils::write_to_file(path, to_export_string(), std::ios::trunc);
+        // write to a separate file to minimise corruption and data loss; then rename
+        namespace fs = std::filesystem;
+        bool result{false};
+
+        try {
+            const auto tmp_file = path.string() + '$';
+            fs::remove(tmp_file);
+
+            // We're using a single file, no need to check for deleted certificates
+            result = filesystem_utils::write_to_file(tmp_file, to_export_string(), std::ios::trunc);
+
+            fs::rename(tmp_file, path);
+        } catch (const fs::filesystem_error& ex) {
+            EVLOG_error << "Error export_certificates: " << ex.path1() << ' ' << ex.path2() << ": " << ex.what();
+        }
+        return result;
     }
 
     return false;
