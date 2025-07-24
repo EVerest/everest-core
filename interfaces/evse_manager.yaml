@@ -120,6 +120,26 @@ cmds:
         description: The plug and charge configuration object
         type: object
         $ref: /evse_manager#/PlugAndChargeConfiguration
+  update_allowed_energy_transfer_modes:
+    description: >-
+      Sets the supported energy transfer mode for ISO15118. It is expected that this command will update the ISO15118
+      software stack to only propose the list of allowed_energy_transfer_modes presented in this message.
+      If a transaction is already in progress, it is expected that this triggers a service renegotiation.
+      If no HLC is present, this will be accepted, but do nothing.
+    arguments:
+      allowed_energy_transfer_modes:
+        description: >-
+          The list of supported energy transfer modes. It cannot be empty as we need to propose something
+          to the EV.
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/EnergyTransferMode
+        minItems: 1
+    result:
+      description: Returns an enum indicating whether the update was successful or not.
+      type: string
+      $ref: /evse_manager#/UpdateAllowedEnergyTransferModesResult
 vars:
   session_event:
     description: Emits all events related to sessions
@@ -171,5 +191,13 @@ vars:
     description: >-
       Contains the selected protocol used for charging for informative purposes
     type: string
+  supported_energy_transfer_modes:
+    description: >-
+      Contains the list of supported energy transfers e.g. AC mono/tri, DC, DC_BPT, etc.
+    type: array
+    items:
+      type: object
+      $ref: /iso15118#/EnergyTransferMode
+    minItems: 1
 errors:
   - reference: /errors/evse_manager

@@ -10,7 +10,8 @@ import logging
 
 from everest.testing.ocpp_utils.central_system import CentralSystem
 
-from everest_test_utils import *  # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
+# Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
+from everest_test_utils import *
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.core_utils.controller.test_controller_interface import TestController
@@ -20,12 +21,13 @@ from everest_test_utils_probe_modules import (probe_module,
 
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, ConnectorStatusType)
+from ocpp.v201.enums import (
+    IdTokenEnumType as IdTokenTypeEnum, ConnectorStatusEnumType)
 from ocpp.v201.datatypes import *
 
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
-    GenericOCPP201ConfigAdjustment,
-    OCPP201ConfigVariableIdentifier,
+    GenericOCPP2XConfigAdjustment,
+    OCPP2XConfigVariableIdentifier,
 )
 from validations import validate_status_notification_201
 
@@ -36,38 +38,40 @@ log = logging.getLogger("ocpp201DisplayMessageTest")
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.inject_csms_mock
 @pytest.mark.everest_core_config(get_everest_config_path_str('everest-config-ocpp201-costandprice.yaml'))
-@pytest.mark.ocpp_config_adaptions(GenericOCPP201ConfigAdjustment([
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageCtrlrAvailable", "Actual"),
+@pytest.mark.ocpp_config_adaptions(GenericOCPP2XConfigAdjustment([
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageCtrlrAvailable", "Actual"),
      "true"),
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "QRCodeDisplayCapable",
-                                     "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageLanguage", "Actual"),
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "QRCodeDisplayCapable",
+                                    "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageLanguage", "Actual"),
      "en"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrAvailableTariff", "Actual"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrAvailableTariff", "Actual"),
      "true"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrAvailableCost", "Actual"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrAvailableCost", "Actual"),
      "true"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrEnabledTariff", "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "TariffCostCtrlrEnabledCost", "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("TariffCostCtrlr", "NumberOfDecimalsForCostValues", "Actual"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr",
+     "TariffCostCtrlrEnabledTariff", "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr",
+     "TariffCostCtrlrEnabledCost", "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("TariffCostCtrlr", "NumberOfDecimalsForCostValues", "Actual"),
      "5"),
-    (OCPP201ConfigVariableIdentifier("OCPPCommCtrlr", "MessageTimeout", "Actual"),
+    (OCPP2XConfigVariableIdentifier("OCPPCommCtrlr", "MessageTimeout", "Actual"),
      "1"),
-    (OCPP201ConfigVariableIdentifier("OCPPCommCtrlr", "MessageAttemptInterval",
-                                     "Actual"), "1"),
-    (OCPP201ConfigVariableIdentifier("OCPPCommCtrlr", "MessageAttempts", "Actual"),
+    (OCPP2XConfigVariableIdentifier("OCPPCommCtrlr", "MessageAttemptInterval",
+                                    "Actual"), "1"),
+    (OCPP2XConfigVariableIdentifier("OCPPCommCtrlr", "MessageAttempts", "Actual"),
      "3"),
-    (OCPP201ConfigVariableIdentifier("AuthCacheCtrlr", "AuthCacheCtrlrEnabled", "Actual"),
+    (OCPP2XConfigVariableIdentifier("AuthCacheCtrlr", "AuthCacheCtrlrEnabled", "Actual"),
      "true"),
-    (OCPP201ConfigVariableIdentifier("AuthCtrlr", "LocalPreAuthorize",
-                                     "Actual"), "true"),
-    (OCPP201ConfigVariableIdentifier("AuthCacheCtrlr", "AuthCacheLifeTime", "Actual"),
+    (OCPP2XConfigVariableIdentifier("AuthCtrlr", "LocalPreAuthorize",
+                                    "Actual"), "true"),
+    (OCPP2XConfigVariableIdentifier("AuthCacheCtrlr", "AuthCacheLifeTime", "Actual"),
      "86400"),
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageSupportedPriorities",
-                                                                    "Actual"), "AlwaysFront,NormalCycle"),
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageSupportedFormats",
-                                                                    "Actual"), "ASCII,URI,UTF8"),
-    (OCPP201ConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageSupportedStates", "Actual"),
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageSupportedPriorities",
+                                    "Actual"), "AlwaysFront,NormalCycle"),
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageSupportedFormats",
+                                    "Actual"), "ASCII,URI,UTF8"),
+    (OCPP2XConfigVariableIdentifier("DisplayMessageCtrlr", "DisplayMessageSupportedStates", "Actual"),
      "Charging,Faulted,Unavailable")
 ]))
 class TestOcpp201DisplayMessage:
@@ -89,18 +93,18 @@ class TestOcpp201DisplayMessage:
         )
 
         assert await wait_for_and_validate(test_utility, charge_point, "StatusNotification",
-                                           call201.StatusNotificationPayload(datetime.now().isoformat(),
-                                                                             ConnectorStatusType.available,
-                                                                             evse_id=evse_id1,
-                                                                             connector_id=connector_id),
+                                           call201.StatusNotification(datetime.now().isoformat(),
+                                                                      ConnectorStatusEnumType.available,
+                                                                      evse_id=evse_id1,
+                                                                      connector_id=connector_id),
                                            validate_status_notification_201)
 
         # Charging station is now available, start charging session.
         # swipe id tag to authorize
         test_controller.swipe(id_token.id_token)
         assert await wait_for_and_validate(test_utility, charge_point, "Authorize",
-                                           call201.AuthorizePayload(id_token
-                                                                    ))
+                                           call201.Authorize(id_token
+                                                             ))
 
         # start charging session
         test_controller.plug_in()
@@ -143,7 +147,8 @@ class TestOcpp201DisplayMessage:
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
         start_time = datetime.now(timezone.utc).isoformat()
-        end_time = (datetime.now(timezone.utc) + timedelta(minutes=1)).isoformat()
+        end_time = (datetime.now(timezone.utc) +
+                    timedelta(minutes=1)).isoformat()
 
         message = {'id': 1, 'priority': 'NormalCycle',
                    'message': {'format': 'UTF8', 'language': 'en',
@@ -162,7 +167,8 @@ class TestOcpp201DisplayMessage:
         }
 
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "SetDisplayMessage",
-                                           call_result201.SetDisplayMessagePayload(status='Accepted'),
+                                           call_result201.SetDisplayMessage(
+                                               status='Accepted'),
                                            timeout=5)
         probe_module_mock_fn.assert_called_once_with(data_received)
 
@@ -173,7 +179,8 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.set_display_message_req(message=message, custom_data=None)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "SetDisplayMessage",
-                                           call_result201.SetDisplayMessagePayload(status='Rejected'),
+                                           call_result201.SetDisplayMessage(
+                                               status='Rejected'),
                                            timeout=5)
 
         probe_module_mock_fn.return_value = {
@@ -185,7 +192,8 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.set_display_message_req(message=message, custom_data=None)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "SetDisplayMessage",
-                                           call_result201.SetDisplayMessagePayload(status='NotSupportedPriority'),
+                                           call_result201.SetDisplayMessage(
+                                               status='NotSupportedPriority'),
                                            timeout=5)
         message['priority'] = 'NormalCycle'
 
@@ -194,7 +202,8 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.set_display_message_req(message=message, custom_data=None)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "SetDisplayMessage",
-                                           call_result201.SetDisplayMessagePayload(status='NotSupportedMessageFormat'),
+                                           call_result201.SetDisplayMessage(
+                                               status='NotSupportedMessageFormat'),
                                            timeout=5)
         message['message']['format'] = 'UTF8'
 
@@ -203,7 +212,8 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.set_display_message_req(message=message, custom_data=None)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "SetDisplayMessage",
-                                           call_result201.SetDisplayMessagePayload(status='NotSupportedState'),
+                                           call_result201.SetDisplayMessage(
+                                               status='NotSupportedState'),
                                            timeout=5)
 
         message['state'] = 'Charging'
@@ -213,7 +223,8 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.set_display_message_req(message=message, custom_data=None)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "SetDisplayMessage",
-                                           call_result201.SetDisplayMessagePayload(status='UnknownTransaction'),
+                                           call_result201.SetDisplayMessage(
+                                               status='UnknownTransaction'),
                                            timeout=5)
 
     @pytest.mark.asyncio
@@ -257,7 +268,8 @@ class TestOcpp201DisplayMessage:
 
         probe_module_mock_fn.assert_called_once_with(data_received)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "SetDisplayMessage",
-                                           call_result201.SetDisplayMessagePayload(status='Accepted'),
+                                           call_result201.SetDisplayMessage(
+                                               status='Accepted'),
                                            timeout=5)
 
         # Test unknown transaction
@@ -265,7 +277,8 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.set_display_message_req(message=message, custom_data=None)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "SetDisplayMessage",
-                                           call_result201.SetDisplayMessagePayload(status='UnknownTransaction'),
+                                           call_result201.SetDisplayMessage(
+                                               status='UnknownTransaction'),
                                            timeout=5)
 
     @pytest.mark.asyncio
@@ -294,7 +307,8 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.get_display_nessages_req(request_id=1)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "GetDisplayMessage",
-                                           call_result201.GetDisplayMessagesPayload(status='Unknown'),
+                                           call_result201.GetDisplayMessages(
+                                               status='Unknown'),
                                            timeout=5)
 
         # At least one message should return 'accepted'
@@ -307,19 +321,20 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.get_display_nessages_req(id=[1], request_id=1)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "GetDisplayMessage",
-                                           call_result201.GetDisplayMessagesPayload(status='Accepted'),
+                                           call_result201.GetDisplayMessages(
+                                               status='Accepted'),
                                            timeout=5)
 
         assert await \
             wait_for_and_validate(test_utility, chargepoint_with_pm, "NotifyDisplayMessages",
-                                  call201.NotifyDisplayMessagesPayload(request_id=1,
-                                                                       message_info=[{"id": 1,
-                                                                                      "message": {
-                                                                                          "content": "This is a "
-                                                                                                     "display message",
-                                                                                          "format": "UTF8",
-                                                                                          "language": "en"},
-                                                                                      "priority": "InFront"}]))
+                                  call201.NotifyDisplayMessages(request_id=1,
+                                                                message_info=[{"id": 1,
+                                                                               "message": {
+                                                                                   "content": "This is a "
+                                                                                   "display message",
+                                                                                   "format": "UTF8",
+                                                                                   "language": "en"},
+                                                                               "priority": "InFront"}]))
 
         # Return multiple messages
         probe_module_mock_fn.return_value = {
@@ -333,26 +348,27 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.get_display_nessages_req(request_id=1)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "GetDisplayMessage",
-                                           call_result201.GetDisplayMessagesPayload(status='Accepted'),
+                                           call_result201.GetDisplayMessages(
+                                               status='Accepted'),
                                            timeout=5)
 
         assert await \
             wait_for_and_validate(test_utility, chargepoint_with_pm, "NotifyDisplayMessages",
-                                  call201.NotifyDisplayMessagesPayload(request_id=1,
-                                                                       message_info=[{"id": 1,
-                                                                                      "message": {
-                                                                                          "content": "This is a "
-                                                                                                     "display message",
-                                                                                          "format": "UTF8",
-                                                                                          "language": "en"},
-                                                                                      "priority": "InFront"}, {"id": 2,
-                                                                                      "message": {
-                                                                                          "content": "This is a "
-                                                                                                     "display message 2",
-                                                                                          "format": "UTF8",
-                                                                                          "language": "en"},
-                                                                                      "priority": "NormalCycle"}
-                                                                                     ]))
+                                  call201.NotifyDisplayMessages(request_id=1,
+                                                                message_info=[{"id": 1,
+                                                                               "message": {
+                                                                                   "content": "This is a "
+                                                                                   "display message",
+                                                                                   "format": "UTF8",
+                                                                                   "language": "en"},
+                                                                               "priority": "InFront"}, {"id": 2,
+                                                                                                        "message": {
+                                                                                                            "content": "This is a "
+                                                                                                            "display message 2",
+                                                                                                            "format": "UTF8",
+                                                                                                            "language": "en"},
+                                                                                                        "priority": "NormalCycle"}
+                                                                              ]))
 
     @pytest.mark.asyncio
     @pytest.mark.probe_module
@@ -380,7 +396,8 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.clear_display_message_req(id=1)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "ClearDisplayMessage",
-                                           call_result201.ClearDisplayMessagePayload(status='Accepted'),
+                                           call_result201.ClearDisplayMessage(
+                                               status='Accepted'),
                                            timeout=5)
 
         # Clear display message returns unknown
@@ -390,5 +407,6 @@ class TestOcpp201DisplayMessage:
 
         await chargepoint_with_pm.clear_display_message_req(id=1)
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "ClearDisplayMessage",
-                                           call_result201.ClearDisplayMessagePayload(status='Unknown'),
+                                           call_result201.ClearDisplayMessage(
+                                               status='Unknown'),
                                            timeout=5)

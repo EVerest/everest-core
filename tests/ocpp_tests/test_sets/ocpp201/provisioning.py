@@ -18,9 +18,9 @@ from ocpp.v201.datatypes import *
 from ocpp.routing import on, create_route_map
 from everest.testing.ocpp_utils.fixtures import *
 from everest_test_utils import * # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
-from ocpp.v201.enums import (Action, SetVariableStatusType, ConnectorStatusType,GetVariableStatusType)
+from ocpp.v201.enums import (Action, SetVariableStatusEnumType, ConnectorStatusEnumType,GetVariableStatusEnumType)
 from validations import validate_status_notification_201, validate_notify_report_data_201, wait_for_callerror_and_validate
-from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP201ConfigAdjustment
+from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP2XConfigAdjustment
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility, OcppTestConfiguration, ValidationMode
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 # fmt: on
@@ -51,7 +51,7 @@ async def test_B08_FR_07(
     )
 
     # set a component variable to true
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "ChargingStatusIndicator", "Active", "true"
         )
@@ -59,17 +59,17 @@ async def test_B08_FR_07(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     r = await charge_point_v201.get_report_req(
-        request_id=567, component_criteria=[ComponentCriterionType.active]
+        request_id=567, component_criteria=[ComponentCriterionEnumType.active]
     )
 
     exp_single_report_data_active = ReportDataType(
         component=ComponentType(name="ChargingStatusIndicator"),
         variable=VariableType(name="Active"),
         variable_attribute=VariableAttributeType(
-            type=AttributeType.actual, value="true"
+            type=AttributeEnumType.actual, value="true"
         ),
     )
 
@@ -78,7 +78,7 @@ async def test_B08_FR_07(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=567,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -107,16 +107,16 @@ async def test_B08_FR_08(
     )
 
     await charge_point_v201.get_report_req(
-        request_id=777, component_criteria=[ComponentCriterionType.available]
+        request_id=777, component_criteria=[ComponentCriterionEnumType.available]
     )
 
     exp_single_report_data_avail = ReportDataType(
         component=ComponentType(name="AuthCacheCtrlr"),
         variable=VariableType(name="Available"),
         variable_attribute=VariableAttributeType(
-            type=AttributeType.actual,
+            type=AttributeEnumType.actual,
             value="true",
-            # mutability=MutabilityType.read_write
+            # mutability=MutabilityEnumType.read_write
         ),
     )
 
@@ -125,7 +125,7 @@ async def test_B08_FR_08(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=777,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -152,7 +152,7 @@ async def test_B08_FR_09(
     )
 
     # Enable some variables with enable
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCacheCtrlr", "Enabled", "true"
         )
@@ -160,9 +160,9 @@ async def test_B08_FR_09(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "SampledDataCtrlr", "Enabled", "false"
         )
@@ -170,15 +170,17 @@ async def test_B08_FR_09(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     r = await charge_point_v201.get_report_req(
         request_id=1,
-        component_criteria=[ComponentCriterionType.enabled],
+        component_criteria=[ComponentCriterionEnumType.enabled],
         component_variable=[
             ComponentVariableType(component=ComponentType(name="TxCtrlr")),
-            ComponentVariableType(component=ComponentType(name="DeviceDataCtrlr")),
-            ComponentVariableType(component=ComponentType(name="AuthCacheCtrlr")),
+            ComponentVariableType(
+                component=ComponentType(name="DeviceDataCtrlr")),
+            ComponentVariableType(
+                component=ComponentType(name="AuthCacheCtrlr")),
         ],
     )
 
@@ -186,12 +188,12 @@ async def test_B08_FR_09(
         component=ComponentType(name="AuthCacheCtrlr"),
         variable=VariableType(name="Enabled"),
         variable_attribute=VariableAttributeType(
-            type=AttributeType.actual,
+            type=AttributeEnumType.actual,
             value="true",
-            # mutability=MutabilityType.read_write
+            # mutability=MutabilityEnumType.read_write
         ),
         variable_characteristics=VariableCharacteristicsType(
-            data_type=DataType.boolean, supports_monitoring=True
+            data_type=DataEnumType.boolean, supports_monitoring=True
         ),
     )
 
@@ -200,7 +202,7 @@ async def test_B08_FR_09(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=1,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -231,7 +233,7 @@ async def test_B08_FR_10(
     )
 
     # set a component variable to true
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "ChargingStation", "Problem", "true"
         )
@@ -239,19 +241,19 @@ async def test_B08_FR_10(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     r = await charge_point_v201.get_report_req(
-        request_id=45, component_criteria=[ComponentCriterionType.problem]
+        request_id=45, component_criteria=[ComponentCriterionEnumType.problem]
     )
 
     exp_single_report_data2 = ReportDataType(
         component=ComponentType(name="ChargingStation"),
         variable=VariableType(name="Problem"),
         variable_attribute=VariableAttributeType(
-            type=AttributeType.actual,
+            type=AttributeEnumType.actual,
             value="true",
-            # mutability=MutabilityType.read_write
+            # mutability=MutabilityEnumType.read_write
         ),
     )
 
@@ -260,7 +262,7 @@ async def test_B08_FR_10(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=45,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -273,10 +275,10 @@ async def test_B08_FR_10(
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "DeviceDataCtrlr", "BytesPerMessageGetReport", "Actual"
                 ),
                 "42",
@@ -303,7 +305,7 @@ async def test_B08_FR_18(
     )
 
     # get the value of BytesPerMessage
-    r: call_result201.GetVariablesPayload = await charge_point_v201.get_variables_req(
+    r: call_result201.GetVariables = await charge_point_v201.get_variables_req(
         get_variable_data=[
             GetVariableDataType(
                 component=ComponentType(name="DeviceDataCtrlr"),
@@ -311,19 +313,19 @@ async def test_B08_FR_18(
                     name="BytesPerMessage",
                     instance="GetReport",
                 ),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             )
         ]
     )
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     bytes_per_message = json.loads(get_variables_result.attribute_value)
     log.debug(" max bytes per get report request %d" % bytes_per_message)
 
     r = await charge_point_v201.get_report_req(
-        request_id=777, component_criteria=[ComponentCriterionType.available]
+        request_id=777, component_criteria=[ComponentCriterionEnumType.available]
     )
     assert await wait_for_callerror_and_validate(
         test_utility, charge_point_v201, "FormatViolation"
@@ -333,10 +335,10 @@ async def test_B08_FR_18(
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "DeviceDataCtrlr", "ItemsPerMessageGetReport"
                 ),
                 "2",
@@ -363,7 +365,7 @@ async def test_B08_FR_17(
     )
 
     # get the value of ItemsPerMessage
-    r: call_result201.GetVariablesPayload = await charge_point_v201.get_variables_req(
+    r: call_result201.GetVariables = await charge_point_v201.get_variables_req(
         get_variable_data=[
             GetVariableDataType(
                 component=ComponentType(name="DeviceDataCtrlr"),
@@ -371,14 +373,14 @@ async def test_B08_FR_17(
                     name="ItemsPerMessage",
                     instance="GetReport",
                 ),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             )
         ]
     )
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     items_per_message = json.loads(get_variables_result.attribute_value)
     log.debug(" max items per get report request %d" % items_per_message)
 
@@ -425,7 +427,7 @@ async def test_TC_B_18_CS(
 
     r = await charge_point_v201.get_report_req(
         request_id=2534,
-        component_criteria=[ComponentCriterionType.available],
+        component_criteria=[ComponentCriterionEnumType.available],
         component_variable=[
             ComponentVariableType(
                 component=ComponentType(name="EVSE", evse=EVSEType(id=1)),
@@ -438,7 +440,7 @@ async def test_TC_B_18_CS(
         component=ComponentType(name="EVSE", evse=EVSEType(id=1)),
         variable=VariableType(name="AvailabilityState"),
         variable_attribute=VariableAttributeType(
-            type=AttributeType.actual, value="Available"
+            type=AttributeEnumType.actual, value="Available"
         ),
     )
 
@@ -446,7 +448,7 @@ async def test_TC_B_18_CS(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=2534,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -455,9 +457,9 @@ async def test_TC_B_18_CS(
         validate_notify_report_data_201,
     )
 
-    r: call_result201.GetReportPayload = await charge_point_v201.get_report_req(
+    r: call_result201.GetReport = await charge_point_v201.get_report_req(
         request_id=2535,
-        component_criteria=[ComponentCriterionType.problem],
+        component_criteria=[ComponentCriterionEnumType.problem],
         component_variable=[
             ComponentVariableType(
                 component=ComponentType(name="EVSE", evse=EVSEType(id=1)),
@@ -473,16 +475,16 @@ async def test_TC_B_18_CS(
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "DeviceDataCtrlr", "ItemsPerMessageGetReport"
                 ),
                 "4",
             ),
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "DeviceDataCtrlr", "ItemsPerMessageGetVariables"
                 ),
                 "2",
@@ -521,7 +523,8 @@ async def test_TC_B_54_CS(
             name="DeviceDataCtrlr",
         ),
         variable=VariableType(name="ItemsPerMessage", instance="GetReport"),
-        variable_attribute=VariableAttributeType(type=AttributeType.actual, value="4"),
+        variable_attribute=VariableAttributeType(
+            type=AttributeEnumType.actual, value="4"),
     )
 
     b_54_2 = ReportDataType(
@@ -529,14 +532,15 @@ async def test_TC_B_54_CS(
             name="DeviceDataCtrlr",
         ),
         variable=VariableType(name="ItemsPerMessage", instance="GetVariables"),
-        variable_attribute=VariableAttributeType(type=AttributeType.actual, value="2"),
+        variable_attribute=VariableAttributeType(
+            type=AttributeEnumType.actual, value="2"),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=2538,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -549,10 +553,10 @@ async def test_TC_B_54_CS(
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "DeviceDataCtrlr", "ItemsPerMessageGetReport"
                 ),
                 "4",
@@ -582,7 +586,8 @@ async def test_TC_B_55_CS(
                 component=ComponentType(
                     name="DeviceDataCtrlr",
                 ),
-                variable=VariableType(name="ItemsPerMessage", instance="GetReport"),
+                variable=VariableType(
+                    name="ItemsPerMessage", instance="GetReport"),
             )
         ],
     )
@@ -592,14 +597,15 @@ async def test_TC_B_55_CS(
             name="DeviceDataCtrlr",
         ),
         variable=VariableType(name="ItemsPerMessage", instance="GetReport"),
-        variable_attribute=VariableAttributeType(type=AttributeType.actual, value="4"),
+        variable_attribute=VariableAttributeType(
+            type=AttributeEnumType.actual, value="4"),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=2539,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -640,7 +646,7 @@ async def test_TC_B_56_CS(
         component=ComponentType(name="EVSE", evse=EVSEType(id=1)),
         variable=VariableType(name="AvailabilityState"),
         variable_attribute=VariableAttributeType(
-            type=AttributeType.actual, value="Available"
+            type=AttributeEnumType.actual, value="Available"
         ),
     )
 
@@ -648,7 +654,7 @@ async def test_TC_B_56_CS(
         component=ComponentType(name="EVSE", evse=EVSEType(id=2)),
         variable=VariableType(name="AvailabilityState"),
         variable_attribute=VariableAttributeType(
-            type=AttributeType.actual, value="Available"
+            type=AttributeEnumType.actual, value="Available"
         ),
     )
 
@@ -656,7 +662,7 @@ async def test_TC_B_56_CS(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=2544,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -687,8 +693,8 @@ async def test_cold_boot_01(
             test_utility,
             charge_point_v201,
             "StatusNotification",
-            call201.StatusNotificationPayload(
-                datetime.now().isoformat(), ConnectorStatusType.available, 1, 1
+            call201.StatusNotification(
+                datetime.now().isoformat(), ConnectorStatusEnumType.available, 1, 1
             ),
             validate_status_notification_201,
         )
@@ -708,20 +714,20 @@ async def test_cold_boot_pending_01(
     test_utility: TestUtility,
 ):
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_pending(**kwargs):
-        return call_result201.BootNotificationPayload(
+        return call_result201.BootNotification(
             current_time=datetime.now().isoformat(),
             interval=5,
-            status=RegistrationStatusType.pending,
+            status=RegistrationStatusEnumType.pending,
         )
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result201.BootNotificationPayload(
+        return call_result201.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
-            status=RegistrationStatusType.accepted,
+            status=RegistrationStatusEnumType.accepted,
         )
 
     test_utility.forbidden_actions.append("SecurityEventNotification")
@@ -733,7 +739,8 @@ async def test_cold_boot_pending_01(
     test_controller.start()
     charge_point_v201 = await central_system_v201.wait_for_chargepoint()
 
-    setattr(charge_point_v201, "on_boot_notification", on_boot_notification_accepted)
+    setattr(charge_point_v201, "on_boot_notification",
+            on_boot_notification_accepted)
     central_system_v201.chargepoint.route_map = create_route_map(
         central_system_v201.chargepoint
     )
@@ -760,20 +767,20 @@ async def test_cold_boot_rejected_01(
     test_utility: TestUtility,
 ):
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_pending(**kwargs):
-        return call_result201.BootNotificationPayload(
+        return call_result201.BootNotification(
             current_time=datetime.now().isoformat(),
             interval=5,
-            status=RegistrationStatusType.rejected,
+            status=RegistrationStatusEnumType.rejected,
         )
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result201.BootNotificationPayload(
+        return call_result201.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
-            status=RegistrationStatusType.accepted,
+            status=RegistrationStatusEnumType.accepted,
         )
 
     central_system_v201.function_overrides.append(
@@ -783,7 +790,8 @@ async def test_cold_boot_rejected_01(
     test_controller.start()
     charge_point_v201 = await central_system_v201.wait_for_chargepoint()
 
-    setattr(charge_point_v201, "on_boot_notification", on_boot_notification_accepted)
+    setattr(charge_point_v201, "on_boot_notification",
+            on_boot_notification_accepted)
     central_system_v201.chargepoint.route_map = create_route_map(
         central_system_v201.chargepoint
     )
@@ -804,7 +812,7 @@ async def test_set_get_variables_01(
             GetVariableDataType(
                 component=ComponentType(name="TxCtrlr"),
                 variable=VariableType(name="StopTxOnInvalidId"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             )
         ]
     )
@@ -813,13 +821,13 @@ async def test_set_get_variables_01(
         test_utility,
         charge_point_v201,
         "GetVariables",
-        call_result201.GetVariablesPayload(
+        call_result201.GetVariables(
             get_variable_result=[
                 GetVariableResultType(
                     component=ComponentType(name="TxCtrlr"),
                     variable=VariableType(name="StopTxOnInvalidId"),
-                    attribute_status=GetVariableStatusType.accepted,
-                    attribute_type=AttributeType.actual,
+                    attribute_status=GetVariableStatusEnumType.accepted,
+                    attribute_type=AttributeEnumType.actual,
                     attribute_value="true",
                 )
             ]
@@ -830,7 +838,7 @@ async def test_set_get_variables_01(
         set_variable_data=[
             SetVariableDataType(
                 attribute_value="false",
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
                 component=ComponentType(name="TxCtrlr"),
                 variable=VariableType(name="StopTxOnInvalidId"),
             )
@@ -842,7 +850,7 @@ async def test_set_get_variables_01(
             GetVariableDataType(
                 component=ComponentType(name="TxCtrlr"),
                 variable=VariableType(name="StopTxOnInvalidId"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             )
         ]
     )
@@ -851,13 +859,13 @@ async def test_set_get_variables_01(
         test_utility,
         charge_point_v201,
         "GetVariables",
-        call_result201.GetVariablesPayload(
+        call_result201.GetVariables(
             get_variable_result=[
                 GetVariableResultType(
                     component=ComponentType(name="TxCtrlr"),
                     variable=VariableType(name="StopTxOnInvalidId"),
-                    attribute_status=GetVariableStatusType.accepted,
-                    attribute_type=AttributeType.actual,
+                    attribute_status=GetVariableStatusEnumType.accepted,
+                    attribute_type=AttributeEnumType.actual,
                     attribute_value="false",
                 )
             ]
@@ -875,22 +883,22 @@ async def test_set_get_variables_02(
             GetVariableDataType(
                 component=ComponentType(name="TxCtrlr"),
                 variable=VariableType(name="StopTxOnInvalidId"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             ),
             GetVariableDataType(
                 component=ComponentType(name="InternalCtrlr"),
                 variable=VariableType(name="ChargePointVendor"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             ),
             GetVariableDataType(
                 component=ComponentType(name="OCPPCommCtrlr"),
                 variable=VariableType(name="UnknownVariable"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             ),
             GetVariableDataType(
                 component=ComponentType(name="UnknownComponent"),
                 variable=VariableType(name="UnknownVariable"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             ),
         ]
     )
@@ -899,33 +907,33 @@ async def test_set_get_variables_02(
         test_utility,
         charge_point_v201,
         "GetVariables",
-        call_result201.GetVariablesPayload(
+        call_result201.GetVariables(
             get_variable_result=[
                 GetVariableResultType(
                     component=ComponentType(name="TxCtrlr"),
                     variable=VariableType(name="StopTxOnInvalidId"),
-                    attribute_status=GetVariableStatusType.accepted,
-                    attribute_type=AttributeType.actual,
+                    attribute_status=GetVariableStatusEnumType.accepted,
+                    attribute_type=AttributeEnumType.actual,
                     attribute_value="true",
                 ),
                 GetVariableResultType(
                     component=ComponentType(name="InternalCtrlr"),
                     variable=VariableType(name="ChargePointVendor"),
-                    attribute_status=GetVariableStatusType.accepted,
-                    attribute_type=AttributeType.actual,
+                    attribute_status=GetVariableStatusEnumType.accepted,
+                    attribute_type=AttributeEnumType.actual,
                     attribute_value="EVerestVendor",
                 ),
                 GetVariableResultType(
                     component=ComponentType(name="OCPPCommCtrlr"),
                     variable=VariableType(name="UnknownVariable"),
-                    attribute_status=GetVariableStatusType.unknown_variable,
-                    attribute_type=AttributeType.actual,
+                    attribute_status=GetVariableStatusEnumType.unknown_variable,
+                    attribute_type=AttributeEnumType.actual,
                 ),
                 GetVariableResultType(
                     component=ComponentType(name="UnknownComponent"),
                     variable=VariableType(name="UnknownVariable"),
-                    attribute_status=GetVariableStatusType.unknown_component,
-                    attribute_type=AttributeType.actual,
+                    attribute_status=GetVariableStatusEnumType.unknown_component,
+                    attribute_type=AttributeEnumType.actual,
                 ),
             ]
         ),
@@ -938,15 +946,15 @@ async def test_get_base_report_01(
     charge_point_v201: ChargePoint201, test_utility: TestUtility
 ):
     await charge_point_v201.get_base_report_req(
-        request_id=1, report_base=ReportBaseType.full_inventory
+        request_id=1, report_base=ReportBaseEnumType.full_inventory
     )
 
     await wait_for_and_validate(
         test_utility,
         charge_point_v201,
         "GetBaseReport",
-        call_result201.GetBaseReportPayload(
-            status=GenericDeviceModelStatusType.accepted
+        call_result201.GetBaseReport(
+            status=GenericDeviceModelStatusEnumType.accepted
         ),
     )
 
@@ -954,12 +962,12 @@ async def test_get_base_report_01(
         component=ComponentType(name="TxCtrlr"),
         variable=VariableType(name="StopTxOnInvalidId"),
         variable_attribute=VariableAttributeType(
-            type=AttributeType.actual,
+            type=AttributeEnumType.actual,
             value="true",
-            mutability=MutabilityType.read_write,
+            mutability=MutabilityEnumType.read_write,
         ),
         variable_characteristics=VariableCharacteristicsType(
-            data_type=DataType.boolean, supports_monitoring=True
+            data_type=DataEnumType.boolean, supports_monitoring=True
         ),
     )
 
@@ -967,7 +975,7 @@ async def test_get_base_report_01(
         test_utility,
         charge_point_v201,
         "NotifyReport",
-        call201.NotifyReportPayload(
+        call201.NotifyReport(
             request_id=1,
             generated_at=datetime.now().isoformat(),
             seq_no=0,
@@ -988,7 +996,7 @@ async def test_get_custom_report_01(charge_point_v201: ChargePoint201):
                 variable=VariableType(name="NotAValidVariable"),
             ),
         ],
-        component_criteria=[ComponentCriterionType.enabled],
+        component_criteria=[ComponentCriterionEnumType.enabled],
     )
 
 
@@ -1002,7 +1010,7 @@ async def test_b09_b10(
 
     # TODO(This discovers a bug in the connectivity_manager of libocpp. this->network_connection_profiles are not updated when a new profile is set)
 
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "InternalCtrlr", "NetworkConnectionProfiles"
         )
@@ -1010,22 +1018,22 @@ async def test_b09_b10(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
 
     profiles = json.loads(get_variables_result.attribute_value)
     assert len(profiles) == 1
 
     # invalid security profile
-    r: call_result201.SetNetworkProfilePayload = (
+    r: call_result201.SetNetworkProfile = (
         await charge_point_v201.set_network_profile_req(
             configuration_slot=1,
             connection_data=NetworkConnectionProfileType(
-                ocpp_version=OCPPVersionType.ocpp20,
-                ocpp_transport=OCPPTransportType.json,
+                ocpp_version=OCPPVersionEnumType.ocpp20,
+                ocpp_transport=OCPPTransportEnumType.json,
                 ocpp_csms_url="ws://localhost:9000/cp001",
                 message_timeout=30,
                 security_profile=0,
-                ocpp_interface=OCPPInterfaceType.wired0,
+                ocpp_interface=OCPPInterfaceEnumType.wired0,
             ),
         )
     )
@@ -1033,16 +1041,16 @@ async def test_b09_b10(
     assert r.status == "Rejected"
 
     # invalid configuration slot
-    r: call_result201.SetNetworkProfilePayload = (
+    r: call_result201.SetNetworkProfile = (
         await charge_point_v201.set_network_profile_req(
             configuration_slot=100,
             connection_data=NetworkConnectionProfileType(
-                ocpp_version=OCPPVersionType.ocpp20,
-                ocpp_transport=OCPPTransportType.json,
+                ocpp_version=OCPPVersionEnumType.ocpp20,
+                ocpp_transport=OCPPTransportEnumType.json,
                 ocpp_csms_url="ws://localhost:9000/cp001",
                 message_timeout=30,
                 security_profile=0,
-                ocpp_interface=OCPPInterfaceType.wired0,
+                ocpp_interface=OCPPInterfaceEnumType.wired0,
             ),
         )
     )
@@ -1050,23 +1058,23 @@ async def test_b09_b10(
     assert r.status == "Rejected"
 
     # valid
-    r: call_result201.SetNetworkProfilePayload = (
+    r: call_result201.SetNetworkProfile = (
         await charge_point_v201.set_network_profile_req(
             configuration_slot=2,
             connection_data=NetworkConnectionProfileType(
-                ocpp_version=OCPPVersionType.ocpp20,
-                ocpp_transport=OCPPTransportType.json,
+                ocpp_version=OCPPVersionEnumType.ocpp20,
+                ocpp_transport=OCPPTransportEnumType.json,
                 ocpp_csms_url="wss://localhost:9000/cp001",
                 message_timeout=30,
                 security_profile=2,
-                ocpp_interface=OCPPInterfaceType.wired0,
+                ocpp_interface=OCPPInterfaceEnumType.wired0,
             ),
         )
     )
 
     assert r.status == "Accepted"
 
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "InternalCtrlr", "NetworkConnectionProfiles"
         )
@@ -1074,13 +1082,13 @@ async def test_b09_b10(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
 
     profiles = json.loads(get_variables_result.attribute_value)
     assert len(profiles) == 2
 
     # Set valid NetworkConfigurationPriority
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "OCPPCommCtrlr", "NetworkConfigurationPriority", "2,1"
         )
@@ -1088,16 +1096,16 @@ async def test_b09_b10(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
 
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "DeviceDataCtrlr", "ItemsPerMessageGetVariables"
                 ),
                 "2",
@@ -1128,7 +1136,7 @@ async def test_B06_09_16(
     )
 
     # Write into Basic Auth Password
-    r: call_result.SetVariablesPayload = (
+    r: call_result.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "SecurityCtrlr", "BasicAuthPassword", "8BADF00D8BADF00D"
         )
@@ -1136,14 +1144,14 @@ async def test_B06_09_16(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # wait for reconnect
     charge_point_v201 = await central_system_v201.wait_for_chargepoint(
         wait_for_bootnotification=False
     )
 
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "SecurityCtrlr", "BasicAuthPassword"
         )
@@ -1151,13 +1159,13 @@ async def test_B06_09_16(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.rejected
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.rejected
 
     # Charging Station receives a GetVariablesRequest with more GetVariableData elements than allowed by ItemsPerMessageGetVariables
     # The Charging Station MAY respond with a CALLERROR(OccurenceConstraintViolation)
 
     # get the value of ItemsPerMessage
-    r: call_result201.GetVariablesPayload = await charge_point_v201.get_variables_req(
+    r: call_result201.GetVariables = await charge_point_v201.get_variables_req(
         get_variable_data=[
             GetVariableDataType(
                 component=ComponentType(name="DeviceDataCtrlr"),
@@ -1165,20 +1173,20 @@ async def test_B06_09_16(
                     name="ItemsPerMessage",
                     instance="GetVariables",
                 ),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             )
         ]
     )
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    assert get_variables_result.attribute_status == GetVariableStatusType.accepted
+    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
     items_per_message = json.loads(get_variables_result.attribute_value)
     log.debug(" max items per get variables request %d" % items_per_message)
 
     # request more than max items per message variables
     # get the value of ItemsPerMessage
-    r: call_result201.GetVariablesPayload = await charge_point_v201.get_variables_req(
+    r: call_result201.GetVariables = await charge_point_v201.get_variables_req(
         get_variable_data=[
             GetVariableDataType(
                 component=ComponentType(name="DeviceDataCtrlr"),
@@ -1186,22 +1194,22 @@ async def test_B06_09_16(
                     name="ItemsPerMessage",
                     instance="GetVariables",
                 ),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             ),
             GetVariableDataType(
                 component=ComponentType(name="TxCtrlr"),
                 variable=VariableType(name="StopTxOnInvalidId"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             ),
             GetVariableDataType(
                 component=ComponentType(name="AlignedDataCtrlr"),
                 variable=VariableType(name="Measurands"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             ),
             GetVariableDataType(
                 component=ComponentType(name="AuthCacheCtrlr"),
                 variable=VariableType(name="Enabled"),
-                attribute_type=AttributeType.actual,
+                attribute_type=AttributeEnumType.actual,
             ),
         ]
     )
@@ -1229,12 +1237,12 @@ async def test_B04(
 
     evse_id2 = 2
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result201.BootNotificationPayload(
+        return call_result201.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=3,
-            status=RegistrationStatusType.accepted,
+            status=RegistrationStatusEnumType.accepted,
         )
 
     central_system_v201.function_overrides.append(
@@ -1262,9 +1270,9 @@ async def test_B04(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id=evse_id1,
             connector_id=connector_id,
         ),
@@ -1274,9 +1282,9 @@ async def test_B04(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id=evse_id2,
             connector_id=connector_id,
         ),
@@ -1284,7 +1292,7 @@ async def test_B04(
     )
 
     # Set valid OfflineThreshold to 15s
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "OCPPCommCtrlr", "OfflineThreshold", "15"
         )
@@ -1292,14 +1300,14 @@ async def test_B04(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     test_utility.messages.clear()
 
     for _ in range(3):
         # send HeartBeat request when idle
         assert await wait_for_and_validate(
-            test_utility, charge_point_v201, "Heartbeat", call.HeartbeatPayload()
+            test_utility, charge_point_v201, "Heartbeat", call.Heartbeat()
         )
 
     test_utility.messages.clear()
@@ -1325,9 +1333,9 @@ async def test_B04(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id=evse_id1,
             connector_id=connector_id,
         ),
@@ -1338,9 +1346,9 @@ async def test_B04(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id=evse_id2,
             connector_id=connector_id,
         ),
@@ -1362,9 +1370,9 @@ async def test_B04(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.occupied,
+            ConnectorStatusEnumType.occupied,
             evse_id=evse_id2,
             connector_id=connector_id,
         ),
@@ -1397,9 +1405,9 @@ async def test_B04(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id=evse_id2,
             connector_id=connector_id,
         ),
@@ -1411,5 +1419,5 @@ async def test_B04(
     for _ in range(3):
         # send HeartBeat request when idle
         assert await wait_for_and_validate(
-            test_utility, charge_point_v201, "Heartbeat", call.HeartbeatPayload()
+            test_utility, charge_point_v201, "Heartbeat", call.Heartbeat()
         )

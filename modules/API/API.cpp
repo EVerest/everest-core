@@ -553,6 +553,16 @@ void API::init() {
             evse->call_resume_charging(); //
         });
 
+        std::string cmd_stop_charging = cmd_base + "stop_charging";
+        this->mqtt.subscribe(cmd_stop_charging, [this, &evse](const std::string& data) {
+            this->evse_manager_check.wait_ready();
+
+            types::evse_manager::StopTransactionRequest request;
+            request.reason = types::evse_manager::StopTransactionReason::Local;
+
+            evse->call_stop_transaction(request);
+        });
+
         std::string cmd_set_limit = cmd_base + "set_limit_amps";
 
         if (external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, evse_id)) {

@@ -13,7 +13,7 @@ from everest.testing.core_utils.everest_core import EverestCore
 from everest.testing.core_utils.probe_module import ProbeModule
 from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
-from ocpp.v16.call import SetChargingProfilePayload
+from ocpp.v16.call import SetChargingProfile
 
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
     GenericOCPP16ConfigAdjustment,
@@ -58,7 +58,8 @@ async def _env(
                 if implementation_id in overwrite_implementation:
                     to_overwrite = overwrite_implementation[implementation_id]
                     if command in to_overwrite:
-                        logging.info(f"Overwriting implementation of {command}")
+                        logging.info(
+                            f"Overwriting implementation of {command}")
                         value = to_overwrite[command]
             probe_module_command_mocks.setdefault(implementation_id, {})[
                 command
@@ -77,28 +78,37 @@ async def _env(
             {"id": idx + 1, "connectors": [{"id": 1}]},
             skip_implementation,
         )
-        _add_pm_command_mock(evse_manager, "enable_disable", True, skip_implementation)
+        _add_pm_command_mock(evse_manager, "enable_disable",
+                             True, skip_implementation)
         _add_pm_command_mock(
             evse_manager, "authorize_response", None, skip_implementation
         )
         _add_pm_command_mock(
             evse_manager, "withdraw_authorization", None, skip_implementation
         )
-        _add_pm_command_mock(evse_manager, "reserve", False, skip_implementation)
+        _add_pm_command_mock(evse_manager, "reserve",
+                             False, skip_implementation)
         _add_pm_command_mock(
             evse_manager, "cancel_reservation", None, skip_implementation
         )
-        _add_pm_command_mock(evse_manager, "set_faulted", None, skip_implementation)
-        _add_pm_command_mock(evse_manager, "pause_charging", True, skip_implementation)
-        _add_pm_command_mock(evse_manager, "resume_charging", True, skip_implementation)
+        _add_pm_command_mock(evse_manager, "set_faulted",
+                             None, skip_implementation)
+        _add_pm_command_mock(evse_manager, "pause_charging",
+                             True, skip_implementation)
+        _add_pm_command_mock(evse_manager, "resume_charging",
+                             True, skip_implementation)
         _add_pm_command_mock(
             evse_manager, "stop_transaction", True, skip_implementation
         )
-        _add_pm_command_mock(evse_manager, "force_unlock", True, skip_implementation)
+        _add_pm_command_mock(evse_manager, "force_unlock",
+                             True, skip_implementation)
+        _add_pm_command_mock(
+            evse_manager, "update_allowed_energy_transfer_modes", None, skip_implementation)
         _add_pm_command_mock(
             evse_manager, "external_ready_to_start_charging", True, skip_implementation
         )
-        _add_pm_command_mock(evse_manager, "set_plug_and_charge_configuration", True, skip_implementation)
+        _add_pm_command_mock(
+            evse_manager, "set_plug_and_charge_configuration", True, skip_implementation)
     _add_pm_command_mock(
         "security", "get_leaf_expiry_days_count", 42, skip_implementation
     )
@@ -123,14 +133,16 @@ async def _env(
     _add_pm_command_mock(
         "security", "update_leaf_certificate", "Accepted", skip_implementation
     )
-    _add_pm_command_mock("security", "verify_certificate", "Valid", skip_implementation)
+    _add_pm_command_mock("security", "verify_certificate",
+                         "Valid", skip_implementation)
     _add_pm_command_mock(
         "security",
         "get_installed_certificates",
         {"status": "Accepted", "certificate_hash_data_chain": []},
         skip_implementation,
     )
-    _add_pm_command_mock("security", "update_ocsp_cache", None, skip_implementation)
+    _add_pm_command_mock("security", "update_ocsp_cache",
+                         None, skip_implementation)
     _add_pm_command_mock(
         "security", "is_ca_certificate_installed", False, skip_implementation
     )
@@ -146,8 +158,10 @@ async def _env(
         {"status": "Accepted"},
         skip_implementation,
     )
-    _add_pm_command_mock("security", "get_verify_file", "", skip_implementation)
-    _add_pm_command_mock("security", "verify_file_signature", True, skip_implementation)
+    _add_pm_command_mock("security", "get_verify_file",
+                         "", skip_implementation)
+    _add_pm_command_mock("security", "verify_file_signature",
+                         True, skip_implementation)
     _add_pm_command_mock(
         "security",
         "get_all_valid_certificates_info",
@@ -160,25 +174,34 @@ async def _env(
         "",
         skip_implementation,
     )
-    _add_pm_command_mock("auth", "set_connection_timeout", None, skip_implementation)
-    _add_pm_command_mock("auth", "withdraw_authorization", "Accepted", skip_implementation)
-    _add_pm_command_mock("auth", "set_master_pass_group_id", None, skip_implementation)
+    _add_pm_command_mock("auth", "set_connection_timeout",
+                         None, skip_implementation)
+    _add_pm_command_mock("auth", "withdraw_authorization",
+                         "Accepted", skip_implementation)
+    _add_pm_command_mock("auth", "set_master_pass_group_id",
+                         None, skip_implementation)
     _add_pm_command_mock(
         "reservation", "cancel_reservation", "Accepted", skip_implementation
     )
-    _add_pm_command_mock("reservation", "reserve_now", False, skip_implementation)
+    _add_pm_command_mock("reservation", "reserve_now",
+                         False, skip_implementation)
     _add_pm_command_mock(
         "reservation", "exists_reservation", False, skip_implementation
     )
-    _add_pm_command_mock("system", "get_boot_reason", "PowerUp", skip_implementation)
-    _add_pm_command_mock("system", "update_firmware", "Accepted", skip_implementation)
+    _add_pm_command_mock("system", "get_boot_reason",
+                         "PowerUp", skip_implementation)
+    _add_pm_command_mock("system", "update_firmware",
+                         "Accepted", skip_implementation)
     _add_pm_command_mock(
         "system", "allow_firmware_installation", None, skip_implementation
     )
-    _add_pm_command_mock("system", "upload_logs", "Accepted", skip_implementation)
-    _add_pm_command_mock("system", "is_reset_allowed", True, skip_implementation)
+    _add_pm_command_mock("system", "upload_logs",
+                         "Accepted", skip_implementation)
+    _add_pm_command_mock("system", "is_reset_allowed",
+                         True, skip_implementation)
     _add_pm_command_mock("system", "reset", None, skip_implementation)
-    _add_pm_command_mock("system", "set_system_time", True, skip_implementation)
+    _add_pm_command_mock("system", "set_system_time",
+                         True, skip_implementation)
 
     probe_module.start()
     await probe_module.wait_to_be_ready()
@@ -533,7 +556,7 @@ class TestOCPP16GenericInterfaceIntegration:
         )
 
         await _env.charge_point.set_charging_profile_req(
-            SetChargingProfilePayload(
+            SetChargingProfile(
                 connector_id=0,
                 cs_charging_profiles={
                     "chargingProfileId": 0,
@@ -598,7 +621,8 @@ class TestOCPP16GenericInterfaceIntegration:
 
     async def test_subscribe_is_connected(self, _env):
         subscription_mock = Mock()
-        _env.probe_module.subscribe_variable("ocpp", "is_connected", subscription_mock)
+        _env.probe_module.subscribe_variable(
+            "ocpp", "is_connected", subscription_mock)
 
         assert await _env.probe_module.call_command("ocpp", "stop", None)
         assert await _env.probe_module.call_command("ocpp", "restart", None)
@@ -626,7 +650,8 @@ class TestOCPP16GenericInterfaceIntegration:
         )
 
     async def test_change_availability_request_connector(self, _env):
-        _env.probe_module_command_mocks["evse_manager"]["enable_disable"].reset_mock()
+        _env.probe_module_command_mocks["evse_manager"]["enable_disable"].reset_mock(
+        )
 
         res = await _env.probe_module.call_command(
             "ocpp",
@@ -657,8 +682,10 @@ class TestOCPP16GenericInterfaceIntegration:
             ),
         )  # as currently implemented in disable_evse callback in OCPP module
 
-        _env.probe_module_command_mocks["evse_manager"]["enable_disable"].reset_mock()
-        _env.probe_module_command_mocks["evse_manager_b"]["enable_disable"].reset_mock()
+        _env.probe_module_command_mocks["evse_manager"]["enable_disable"].reset_mock(
+        )
+        _env.probe_module_command_mocks["evse_manager_b"]["enable_disable"].reset_mock(
+        )
 
         res = await _env.probe_module.call_command(
             "ocpp",
@@ -690,7 +717,8 @@ class TestOCPP16GenericInterfaceIntegration:
         )  # as currently implemented in disable_evse callback in OCPP module
 
     async def test_change_availability_request_evse(self, _env):
-        _env.probe_module_command_mocks["evse_manager"]["enable_disable"].reset_mock()
+        _env.probe_module_command_mocks["evse_manager"]["enable_disable"].reset_mock(
+        )
 
         res = await _env.probe_module.call_command(
             "ocpp",

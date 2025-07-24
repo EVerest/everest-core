@@ -295,6 +295,14 @@ active_modules:
           implementation_id: external_limits
         - module_id: evse_manager_2_api_sink
           implementation_id: external_limits
+  ev_api:
+    module: EvAPI
+    connections:
+      ev_manager:
+        - implementation_id: ev_manager
+          module_id: ev_manager_1
+        - implementation_id: ev_manager
+          module_id: ev_manager_2
   error_history:
     module: ErrorHistory
     config_implementation:

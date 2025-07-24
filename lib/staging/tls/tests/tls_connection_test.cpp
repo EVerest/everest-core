@@ -40,7 +40,7 @@ tls::Server::OptionalConfig ssl_init() {
     ref.private_key_file = "server_priv.pem";
     ref.trust_anchor_file = "server_root_cert.pem";
     ref.ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
-    server_config->host = "localhost";
+    server_config->host = "127.0.0.1";
     server_config->service = "8444";
     server_config->ipv6_only = false;
     server_config->verify_client = false;
@@ -857,7 +857,7 @@ TEST_F(TlsTest, TCKeysInvalid) {
     client.reset();
     // localhost works in some cases but not in the CI pipeline for IPv6
     // use ip6-localhost
-    auto connection = client.connect("localhost", "8444", false, 1000);
+    auto connection = client.connect("127.0.0.1", "8444", false, 1000);
     if (connection) {
         if (connection->connect() == result_t::success) {
             set(ClientTest::flags_t::connected);

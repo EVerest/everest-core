@@ -16,7 +16,8 @@ void car_simulatorImpl::init() {
     register_all_commands();
     subscribe_to_variables_on_init();
 
-    car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac);
+    car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac, mod->p_ev_manager,
+                                                     mod->config);
 
     std::thread(&car_simulatorImpl::run, this).detach();
 }
@@ -273,6 +274,7 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
             set_execution_active(false);
             car_simulation->set_state(SimState::UNPLUGGED);
         }
+        mod->p_ev_manager->publish_bsp_event(bsp_event);
     });
 
     // subscribe bsp_measurement
@@ -285,6 +287,11 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
         }
     });
 
+    // subscribe EVInfo
+    using types::evse_manager::EVInfo;
+    mod->r_ev_board_support->subscribe_ev_info(
+        [this](const auto& ev_info) { mod->p_ev_manager->publish_ev_info(ev_info); });
+
     // subscribe slac_state
     if (!mod->r_slac.empty()) {
         const auto& slac = mod->r_slac.at(0);
@@ -294,11 +301,11 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
     // subscribe ev events
     if (!mod->r_ev.empty()) {
         const auto& _ev = mod->r_ev.at(0);
-        _ev->subscribe_AC_EVPowerReady([this](auto value) { car_simulation->set_iso_pwr_ready(value); });
-        _ev->subscribe_AC_EVSEMaxCurrent([this](auto value) { car_simulation->set_evse_max_current(value); });
-        _ev->subscribe_AC_StopFromCharger([this]() { car_simulation->set_iso_stopped(true); });
-        _ev->subscribe_V2G_Session_Finished([this]() { car_simulation->set_v2g_finished(true); });
-        _ev->subscribe_DC_PowerOn([this]() { car_simulation->set_dc_power_on(true); });
+        _ev->subscribe_ev_power_ready([this](auto value) { car_simulation->set_iso_pwr_ready(value); });
+        _ev->subscribe_ac_evse_max_current([this](auto value) { car_simulation->set_evse_max_current(value); });
+        _ev->subscribe_stop_from_charger([this]() { car_simulation->set_iso_stopped(true); });
+        _ev->subscribe_v2g_session_finished([this]() { car_simulation->set_v2g_finished(true); });
+        _ev->subscribe_dc_power_on([this]() { car_simulation->set_dc_power_on(true); });
         _ev->subscribe_pause_from_charger([this]() { car_simulation->set_iso_d20_paused(true); });
     }
 }

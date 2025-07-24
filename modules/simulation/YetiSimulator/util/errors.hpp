@@ -13,6 +13,7 @@ enum class ErrorTarget {
     BoardSupport,
     ConnectorLock,
     Rcd,
+    Powermeter
 };
 
 struct ErrorDefinition {
@@ -129,5 +130,9 @@ inline const auto connector_lock_MREC1ConnectorLockFailure =
 
 inline const auto connector_lock_VendorError =
     ErrorDefinition{"connector_lock/VendorError", "", "Simulated fault event"};
+
+inline const auto powermeter_CommunicationFault =
+    ErrorDefinition{"powermeter/CommunicationFault", "", "Simulated fault event", Everest::error::Severity::High,
+                    ErrorTarget::Powermeter};
 
 } // namespace error_definitions

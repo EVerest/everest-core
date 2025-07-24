@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "EvseManager.hpp"
 
+#include <algorithm>
 #include <fmt/color.h>
 #include <fmt/core.h>
 
@@ -9,8 +10,13 @@
 #include "SessionLog.hpp"
 #include "Timeout.hpp"
 #include "scoped_lock_timeout.hpp"
+#include "utils.hpp"
 
 using namespace std::literals::chrono_literals;
+
+namespace {
+static const std::vector<std::unique_ptr<powermeterIntf>> EMPTY_POWERMETER_VECTOR;
+}
 
 namespace module {
 
@@ -114,8 +120,16 @@ void EvseManager::init() {
     if (hlc_enabled) {
         if (config.charge_mode == "DC") {
             // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
-            r_powersupply_DC[0]->subscribe_capabilities(
-                [this](const auto& caps) { update_powersupply_capabilities(caps); });
+            r_powersupply_DC[0]->subscribe_capabilities([this](const auto& caps) {
+                update_powersupply_capabilities(caps);
+                const bool dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+                bool dc_bpt_was_updated =
+                    caps.bidirectional ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT)
+                                       : false;
+                if (dc_was_updated || dc_bpt_was_updated) {
+                    this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
+                }
+            });
         }
     }
 
@@ -151,6 +165,15 @@ void EvseManager::init() {
         if (config.charge_mode == "AC") {
             EVLOG_debug << fmt::format("Max AC hardware capabilities: {}A/{}ph", hw_capabilities.max_current_A_import,
                                        hw_capabilities.max_phase_count_import);
+            const bool ac_1_was_updated =
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_single_phase_core);
+            bool ac_3_was_updated =
+                c.max_phase_count_import == 3
+                    ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core)
+                    : false;
+            if (ac_1_was_updated || ac_3_was_updated) {
+                this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
+            }
         }
     });
 
@@ -159,7 +182,7 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp, config.lock_connector_in_state_b));
+    bsp = std::make_unique<IECStateMachine>(r_bsp, config.lock_connector_in_state_b);
 
     if (config.hack_simplified_mode_limit_10A) {
         bsp->set_ev_simplified_mode_evse_limit(true);
@@ -167,11 +190,10 @@ void EvseManager::ready() {
 
     // we provide the powermeter interface to the ErrorHandling only if we need to react to powermeter errors
     // otherwise we provide an empty vector of pointers to the powermeter interface
-    const std::vector<std::unique_ptr<powermeterIntf>> empty;
     error_handling = std::unique_ptr<ErrorHandling>(
         new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC,
-                          config.fail_on_powermeter_errors ? r_powermeter_billing() : empty, r_over_voltage_monitor,
-                          config.inoperative_error_use_vendor_id));
+                          config.fail_on_powermeter_errors ? r_powermeter_billing() : EMPTY_POWERMETER_VECTOR,
+                          r_over_voltage_monitor, config.inoperative_error_use_vendor_id));
 
     if (not config.lock_connector_in_state_b) {
         EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
@@ -207,7 +229,7 @@ void EvseManager::ready() {
         if (pnc_enabled) {
             payment_options.push_back(types::iso15118::PaymentOption::Contract);
         }
-        if (config.payment_enable_eim == false and pnc_enabled == false) {
+        if (!config.payment_enable_eim and !pnc_enabled) {
             EVLOG_warning << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
             payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
         }
@@ -263,27 +285,25 @@ void EvseManager::ready() {
         auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-        std::vector<types::iso15118::SupportedEnergyMode> transfer_modes;
+        std::vector<types::iso15118::EnergyTransferMode> transfer_modes;
         if (config.charge_mode == "AC") {
             types::iso15118::SetupPhysicalValues setup_physical_values;
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
             r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-            constexpr auto support_bidi = false;
-
-            // FIXME: we cannot change this during run time at the moment. Refactor ISO interface to exclude transfer
-            // modes from setup
-            // transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
-            transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, support_bidi});
+            transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_three_phase_core);
+            update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core);
 
         } else if (config.charge_mode == "DC") {
-            transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, false});
+            transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
+            update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
 
             const auto caps = get_powersupply_capabilities();
             update_powersupply_capabilities(caps);
 
             if (caps.bidirectional) {
-                transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, true});
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
             }
 
             // Set present measurements on HLC to sane defaults
@@ -635,7 +655,8 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+        r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
 
         // reset error flags
         r_hlc[0]->call_reset_error();
@@ -1084,6 +1105,8 @@ void EvseManager::ready_to_start_charging() {
     }
     charger_ready = true;
 
+    this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
+
     timepoint_ready_for_charging = std::chrono::steady_clock::now();
     charger->run();
 
@@ -1136,13 +1159,12 @@ void EvseManager::setup_fake_DC_mode() {
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-    std::vector<types::iso15118::SupportedEnergyMode> transfer_modes;
-    constexpr auto support_bidi = false;
+    std::vector<types::iso15118::EnergyTransferMode> transfer_modes;
 
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_core, support_bidi});
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_extended, support_bidi});
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_combo_core, support_bidi});
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::DC_unique, support_bidi});
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_core);
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_combo_core);
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_unique);
 
     types::iso15118::DcEvsePresentVoltageCurrent present_values;
     present_values.evse_present_voltage = 400; // FIXME: set a correct values
@@ -1163,7 +1185,8 @@ void EvseManager::setup_fake_DC_mode() {
 
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
-    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+    r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+    r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
 }
 
 void EvseManager::setup_AC_mode() {
@@ -1177,13 +1200,12 @@ void EvseManager::setup_AC_mode() {
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-    std::vector<types::iso15118::SupportedEnergyMode> transfer_modes;
-    constexpr auto support_bidi = false;
+    std::vector<types::iso15118::EnergyTransferMode> transfer_modes;
 
-    transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_single_phase_core, support_bidi});
+    transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
 
     if (get_hw_capabilities().max_phase_count_import == 3) {
-        transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_three_phase_core, support_bidi});
+        transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_three_phase_core);
     }
 
     types::iso15118::SetupPhysicalValues setup_physical_values;
@@ -1191,7 +1213,8 @@ void EvseManager::setup_AC_mode() {
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
     if (hlc_enabled) {
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
+        r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
     }
 }
 
@@ -1396,6 +1419,19 @@ void EvseManager::set_central_contract_validation_allowed(const bool value) {
 
 void EvseManager::set_contract_certificate_installation_enabled(const bool value) {
     contract_certificate_installation_enabled = value;
+}
+
+bool EvseManager::update_supported_energy_transfers(const types::iso15118::EnergyTransferMode& energy_transfer) {
+    std::scoped_lock lock(supported_energy_transfers_mutex);
+    bool was_updated = supported_energy_transfers.end() ==
+                       std::find_if(supported_energy_transfers.begin(), supported_energy_transfers.end(),
+                                    [energy_transfer](const auto& supported_energy_transfer) {
+                                        return energy_transfer == supported_energy_transfer;
+                                    });
+    if (was_updated) {
+        supported_energy_transfers.push_back(energy_transfer);
+    }
+    return was_updated;
 }
 
 void EvseManager::log_v2g_message(types::iso15118::V2gMessages v2g_messages) {

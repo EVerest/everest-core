@@ -13,7 +13,7 @@ from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate,
 from everest.testing.ocpp_utils.fixtures import *
 
 from everest_test_utils import * # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, SetVariableStatusType, ConnectorStatusType,GetVariableStatusType)
+from ocpp.v201.enums import (IdTokenEnumType as IdTokenTypeEnum, SetVariableStatusEnumType, ConnectorStatusEnumType,GetVariableStatusEnumType)
 from ocpp.v201.datatypes import *
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
@@ -41,7 +41,8 @@ async def test_J01_19(
     evse_id2 = 2
 
     # make an unknown IdToken
-    id_tokenJ01 = IdTokenType(id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
+    id_tokenJ01 = IdTokenType(
+        id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
 
     log.info(
         "##################### J01.FR.19: Sending Meter Values not related to a transaction #################"
@@ -58,9 +59,9 @@ async def test_J01_19(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id=evse_id1,
             connector_id=connector_id,
         ),
@@ -70,9 +71,9 @@ async def test_J01_19(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call201.StatusNotificationPayload(
+        call201.StatusNotification(
             datetime.now().isoformat(),
-            ConnectorStatusType.available,
+            ConnectorStatusEnumType.available,
             evse_id=evse_id2,
             connector_id=connector_id,
         ),
@@ -80,7 +81,7 @@ async def test_J01_19(
     )
 
     # Configure AlignedDataInterval
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AlignedDataCtrlr", "Interval", "3"
         )
@@ -88,10 +89,10 @@ async def test_J01_19(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Configure SampledDataInterval
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "SampledDataCtrlr", "TxUpdatedInterval", "3"
         )
@@ -99,10 +100,10 @@ async def test_J01_19(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Configure AlignedDataInterval
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AlignedDataCtrlr", "SendDuringIdle", "true"
         )
@@ -110,10 +111,10 @@ async def test_J01_19(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Configure PhaseRotation
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "ChargingStation", "PhaseRotation", "TRS"
         )
@@ -121,10 +122,10 @@ async def test_J01_19(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Get the value of PhaseRotation
-    r: call_result201.GetVariablesPayload = (
+    r: call_result201.GetVariables = (
         await charge_point_v201.get_config_variables_req(
             "ChargingStation", "PhaseRotation"
         )
@@ -132,7 +133,7 @@ async def test_J01_19(
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
-    if get_variables_result.attribute_status == GetVariableStatusType.accepted:
+    if get_variables_result.attribute_status == GetVariableStatusEnumType.accepted:
         log.info("Phase Rotation %s " % get_variables_result.attribute_value)
 
     # send meter values periodically when not charging
@@ -158,7 +159,8 @@ async def test_J01_19(
     test_utility.forbidden_actions.append("MeterValues")
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
     )
 
     for _ in range(3):
@@ -176,5 +178,6 @@ async def test_J01_19(
     test_controller.plug_out()
 
     assert await wait_for_and_validate(
-        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Ended"}
     )

@@ -89,6 +89,52 @@ convert_dynamic_values(const iso15118::message_20::datatypes::BPT_Dynamic_DC_CLR
             convert_from_optional<float>(in.min_v2x_energy_request)};
 }
 
+dt::Parameter convert_parameter(const types::iso15118_vas::Parameter& parameter) {
+    dt::Parameter out;
+    out.name = parameter.name;
+
+    if (parameter.value.bool_value.has_value()) {
+        out.value = parameter.value.bool_value.value();
+    } else if (parameter.value.int_value.has_value()) {
+        out.value = (int32_t)parameter.value.int_value.value();
+    } else if (parameter.value.short_value.has_value()) {
+        out.value = (int16_t)parameter.value.short_value.value();
+    } else if (parameter.value.byte_value.has_value()) {
+        out.value = (int8_t)parameter.value.byte_value.value();
+    } else if (parameter.value.rational_number.has_value()) {
+        out.value = dt::from_float(parameter.value.rational_number.value());
+    } else if (parameter.value.finite_string.has_value()) {
+        out.value = parameter.value.finite_string.value();
+    } else {
+        throw std::invalid_argument("Invalid ParameterValue in convert_parameter: " + parameter.name +
+                                    " has no value set");
+    }
+
+    return out;
+}
+
+dt::ParameterSet convert_parameter_set(const types::iso15118_vas::ParameterSet& parameter_set) {
+    dt::ParameterSet out;
+    out.id = parameter_set.set_id;
+
+    out.parameter.reserve(parameter_set.parameters.size());
+    for (const auto& parameter : parameter_set.parameters) {
+        out.parameter.push_back(convert_parameter(parameter));
+    }
+
+    return out;
+}
+
+std::vector<dt::ParameterSet>
+convert_parameter_set_list(const std::vector<types::iso15118_vas::ParameterSet>& parameter_set_list) {
+    std::vector<dt::ParameterSet> out;
+    out.reserve(parameter_set_list.size());
+    for (const auto& parameter_set : parameter_set_list) {
+        out.push_back(convert_parameter_set(parameter_set));
+    }
+    return out;
+}
+
 auto fill_mobility_needs_modes_from_config(const module::Conf& module_config) {
 
     std::vector<iso15118::d20::ControlMobilityNeedsModes> mobility_needs_modes{};
@@ -239,6 +285,28 @@ void ISO15118_chargerImpl::init() {
             break;
         }
     });
+
+    supported_vas_services_per_provider.reserve(mod->r_iso15118_vas.size());
+
+    for (size_t i = 0; i < mod->r_iso15118_vas.size(); i++) {
+        supported_vas_services_per_provider.emplace_back();
+
+        this->mod->r_iso15118_vas[i]->subscribe_offered_vas(
+            [this, i](types::iso15118_vas::OfferedServices offered_services) {
+                std::vector<uint16_t> service_ids;
+
+                service_ids.reserve(offered_services.service_ids.size());
+                for (const auto& item : offered_services.service_ids) {
+                    service_ids.push_back(item);
+                }
+
+                EVLOG_verbose << "Updated Supported VAS services for provider #" << i;
+                supported_vas_services_per_provider[i] = service_ids;
+
+                // report to controller if it exists, also check for duplicate service ids
+                update_supported_vas_services();
+            });
+    }
 }
 
 void ISO15118_chargerImpl::ready() {
@@ -274,6 +342,9 @@ void ISO15118_chargerImpl::ready() {
     const auto v2g_root_cert_path = mod->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
     const auto mo_root_cert_path = mod->r_security->call_get_verify_file(types::evse_security::CaCertificateType::MO);
 
+    // TODO(mlitre): Should be updated once libiso supports service renegotiation
+    this->mod->p_extensions->publish_service_renegotiation_supported(false);
+
     const iso15118::TbdConfig tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
@@ -296,13 +367,56 @@ void ISO15118_chargerImpl::ready() {
 
     setup_config.control_mobility_modes = fill_mobility_needs_modes_from_config(mod->config);
 
+    if (not mod->config.custom_protocol_namespace.empty()) {
+        setup_config.custom_protocol.emplace(mod->config.custom_protocol_namespace);
+    }
+
     controller = std::make_unique<iso15118::TbdController>(tbd_config, callbacks, setup_config);
+
+    // if the vas providers report their supported vas services before the controller exists,
+    // we need to update the controller with the supported vas services after instantiation
+    update_supported_vas_services();
 
     try {
         controller->loop();
     } catch (const std::exception& e) {
         EVLOG_error << e.what();
     }
+}
+
+void ISO15118_chargerImpl::update_supported_vas_services() {
+    iso15118::d20::SupportedVASs supported_vas_services;
+
+    for (const auto& provider_services : supported_vas_services_per_provider) {
+        for (const auto& service_id : provider_services) {
+            // Check for duplicate service IDs across all providers
+            if (std::find(supported_vas_services.begin(), supported_vas_services.end(), service_id) !=
+                supported_vas_services.end()) {
+                EVLOG_error << "Duplicate VAS service ID found: " << std::to_string(service_id)
+                            << ". Skipping this service.";
+                continue;
+            }
+
+            supported_vas_services.push_back(service_id);
+        }
+    }
+
+    if (this->controller) {
+        this->controller->update_supported_vas_services(supported_vas_services);
+    } else {
+        EVLOG_verbose << "Controller not initialized, skipping setting supported VAS services.";
+    }
+}
+
+std::optional<size_t> ISO15118_chargerImpl::get_vas_provider_index(uint16_t service_id) const {
+    for (size_t i = 0; i < supported_vas_services_per_provider.size(); i++) {
+        const auto& provider_services = supported_vas_services_per_provider[i];
+        if (std::find(provider_services.begin(), provider_services.end(), service_id) != provider_services.end()) {
+            return i;
+        }
+    }
+
+    return std::nullopt; // Service ID not found in any provider's list
 }
 
 iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() {
@@ -474,40 +588,120 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 
     callbacks.selected_protocol = [this](const std::string& protocol) { publish_selected_protocol(protocol); };
 
+    callbacks.selected_vas_services = [this](const dt::VasSelectedServiceList& selected_services) {
+        // Group selected services by VAS provider index
+        std::map<size_t, std::vector<types::iso15118_vas::SelectedService>> services_by_provider;
+
+        for (const auto& service : selected_services) {
+            const auto provider_index = get_vas_provider_index(service.service_id);
+            if (not provider_index.has_value()) {
+                EVLOG_warning << "Selected Service ID " << service.service_id
+                              << " is not supported by any VAS provider";
+                continue;
+            }
+
+            types::iso15118_vas::SelectedService converted_service;
+            converted_service.service_id = service.service_id;
+            converted_service.parameter_set_id = service.parameter_set_id;
+
+            services_by_provider[*provider_index].push_back(converted_service);
+        }
+
+        // Notify providers about their selected services
+        for (const auto& [provider_index, services] : services_by_provider) {
+            mod->r_iso15118_vas[provider_index]->call_selected_services(services);
+        }
+    };
+
+    callbacks.get_vas_parameters = [this](uint16_t service_id) -> std::optional<dt::ServiceParameterList> {
+        const auto provider_index = get_vas_provider_index(service_id);
+        if (not provider_index.has_value()) {
+            // note: this can only happen if the service ID was removed from the provider after ServiceDiscoveryRes
+            // was sent
+            EVLOG_warning << "Service ID " << service_id << " is not supported by any VAS provider";
+            return std::nullopt;
+        }
+
+        const auto vas_parameters = mod->r_iso15118_vas[*provider_index]->call_get_service_parameters(service_id);
+
+        if (vas_parameters.empty()) {
+            EVLOG_warning << "No parameters found for service ID " << service_id << " in provider #" << *provider_index;
+            return std::nullopt;
+        }
+
+        try {
+            return convert_parameter_set_list(vas_parameters);
+        } catch (const std::exception& e) {
+            EVLOG_error << "Failed to convert VAS parameters for service ID " << service_id << " from provider #"
+                        << *provider_index << ": " << e.what();
+            return std::nullopt;
+        }
+    };
+    callbacks.ev_information = [this](const iso15118::d20::EVInformation& ev_info) {
+        types::iso15118::EvInformation info = convert_ev_info(ev_info);
+        this->mod->p_extensions->publish_ev_info(info);
+    };
+
     return callbacks;
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
 
     std::scoped_lock lock(GEL);
     setup_config.evse_id = evse_id.evse_id; // TODO(SL): Check format for d20
 
+    setup_steps_done.set(to_underlying_value(SetupStep::SETUP));
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+
+    std::scoped_lock lock(GEL);
+
     std::vector<dt::ServiceCategory> services;
 
     for (const auto& mode : supported_energy_transfer_modes) {
-        if (mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::AC_single_phase_core ||
-            mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::AC_three_phase_core) {
-            if (mode.bidirectional) {
-                services.push_back(dt::ServiceCategory::AC_BPT);
-            } else {
-                services.push_back(dt::ServiceCategory::AC);
-            }
-        } else if (mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_core ||
-                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_extended ||
-                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_combo_core ||
-                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_unique) {
-            if (mode.bidirectional) {
-                services.push_back(dt::ServiceCategory::DC_BPT);
-            } else {
-                services.push_back(dt::ServiceCategory::DC);
-            }
+        switch (mode) {
+        case types::iso15118::EnergyTransferMode::AC_single_phase_core:
+        case types::iso15118::EnergyTransferMode::AC_two_phase:
+        case types::iso15118::EnergyTransferMode::AC_three_phase_core:
+            services.push_back(dt::ServiceCategory::AC);
+            break;
+        case types::iso15118::EnergyTransferMode::AC_BPT:
+        case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+            services.push_back(dt::ServiceCategory::AC_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::AC_DER:
+            services.push_back(dt::ServiceCategory::AC_DER);
+            break;
+        case types::iso15118::EnergyTransferMode::DC:
+        case types::iso15118::EnergyTransferMode::DC_core:
+        case types::iso15118::EnergyTransferMode::DC_extended:
+        case types::iso15118::EnergyTransferMode::DC_combo_core:
+        case types::iso15118::EnergyTransferMode::DC_unique:
+            services.push_back(dt::ServiceCategory::DC);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_BPT:
+            services.push_back(dt::ServiceCategory::DC_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_ACDP:
+            services.push_back(dt::ServiceCategory::DC_ACDP);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+            services.push_back(dt::ServiceCategory::DC_ACDP_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::WPT:
+            services.push_back(dt::ServiceCategory::WPT);
+            break;
         }
     }
 
     setup_config.supported_energy_services = services;
+
+    if (controller) {
+        controller->update_energy_modes(services);
+    }
 
     setup_steps_done.set(to_underlying_value(SetupStep::ENERGY_SERVICE));
 }

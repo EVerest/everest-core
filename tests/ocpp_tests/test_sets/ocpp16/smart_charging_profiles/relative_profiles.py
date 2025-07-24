@@ -3,13 +3,13 @@
 
 from datetime import datetime, timedelta, timezone
 
-from ocpp.v16.enums import GetCompositeScheduleStatus
+from ocpp.v16.enums import *
 from ocpp.v16.datatypes import *
 from ocpp.v16 import call, call_result
 
 
 def rel_req1_test1():
-    return call.SetChargingProfilePayload(
+    return call.SetChargingProfile(
         connector_id=1,
         cs_charging_profiles=ChargingProfile(
             charging_profile_id=1,
@@ -18,12 +18,15 @@ def rel_req1_test1():
             charging_profile_purpose=ChargingProfilePurposeType.tx_profile,
             charging_profile_kind=ChargingProfileKindType.relative,
             valid_from=datetime.now(timezone.utc).isoformat(),
-            valid_to=(datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+            valid_to=(datetime.now(timezone.utc) +
+                      timedelta(days=3)).isoformat(),
             charging_schedule=ChargingSchedule(
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=16, number_phases=1),
-                    ChargingSchedulePeriod(start_period=50, limit=20, number_phases=3),
+                    ChargingSchedulePeriod(
+                        start_period=0, limit=16, number_phases=1),
+                    ChargingSchedulePeriod(
+                        start_period=50, limit=20, number_phases=3),
                 ],
             ),
         ),
@@ -31,7 +34,7 @@ def rel_req1_test1():
 
 
 def rel_exp_test1():
-    return call_result.GetCompositeSchedulePayload(
+    return call_result.GetCompositeSchedule(
         status=GetCompositeScheduleStatus.accepted,
         schedule_start=datetime.now(timezone.utc).isoformat(),
         connector_id=1,
@@ -40,15 +43,17 @@ def rel_exp_test1():
             start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=16, number_phases=1),
-                ChargingSchedulePeriod(start_period=50, limit=20, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=16, number_phases=1),
+                ChargingSchedulePeriod(
+                    start_period=50, limit=20, number_phases=3),
             ],
         ),
     )
 
 
 def rel_req1_test2():
-    return call.SetChargingProfilePayload(
+    return call.SetChargingProfile(
         connector_id=1,
         cs_charging_profiles=ChargingProfile(
             charging_profile_id=1,
@@ -56,12 +61,15 @@ def rel_req1_test2():
             charging_profile_purpose=ChargingProfilePurposeType.tx_default_profile,
             charging_profile_kind=ChargingProfileKindType.relative,
             valid_from=datetime.now(timezone.utc).isoformat(),
-            valid_to=(datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+            valid_to=(datetime.now(timezone.utc) +
+                      timedelta(days=3)).isoformat(),
             charging_schedule=ChargingSchedule(
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=16, number_phases=3),
-                    ChargingSchedulePeriod(start_period=100, limit=20, number_phases=3),
+                    ChargingSchedulePeriod(
+                        start_period=0, limit=16, number_phases=3),
+                    ChargingSchedulePeriod(
+                        start_period=100, limit=20, number_phases=3),
                 ],
             ),
         ),
@@ -69,7 +77,7 @@ def rel_req1_test2():
 
 
 def rel_req2_test2():
-    return call.SetChargingProfilePayload(
+    return call.SetChargingProfile(
         connector_id=0,
         cs_charging_profiles=ChargingProfile(
             charging_profile_id=2,
@@ -77,13 +85,16 @@ def rel_req2_test2():
             charging_profile_purpose=ChargingProfilePurposeType.tx_default_profile,
             charging_profile_kind=ChargingProfileKindType.relative,
             valid_from=datetime.now(timezone.utc).isoformat(),
-            valid_to=(datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+            valid_to=(datetime.now(timezone.utc) +
+                      timedelta(days=3)).isoformat(),
             charging_schedule=ChargingSchedule(
                 duration=200,
                 charging_rate_unit=ChargingRateUnitType.amps,
                 charging_schedule_period=[
-                    ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
-                    ChargingSchedulePeriod(start_period=50, limit=6, number_phases=3),
+                    ChargingSchedulePeriod(
+                        start_period=0, limit=10, number_phases=3),
+                    ChargingSchedulePeriod(
+                        start_period=50, limit=6, number_phases=3),
                 ],
             ),
         ),
@@ -91,7 +102,7 @@ def rel_req2_test2():
 
 
 def rel_exp_test2():
-    return call_result.GetCompositeSchedulePayload(
+    return call_result.GetCompositeSchedule(
         status=GetCompositeScheduleStatus.accepted,
         schedule_start=datetime.now(timezone.utc).isoformat(),
         connector_id=1,
@@ -100,16 +111,19 @@ def rel_exp_test2():
             start_schedule=datetime.now(timezone.utc).isoformat(),
             charging_rate_unit=ChargingRateUnitType.amps,
             charging_schedule_period=[
-                ChargingSchedulePeriod(start_period=0, limit=10, number_phases=3),
-                ChargingSchedulePeriod(start_period=50, limit=6, number_phases=3),
-                ChargingSchedulePeriod(start_period=200, limit=20, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=0, limit=10, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=50, limit=6, number_phases=3),
+                ChargingSchedulePeriod(
+                    start_period=200, limit=20, number_phases=3),
             ],
         ),
     )
 
 
 def rel_req1_test3():
-    return call.SetChargingProfilePayload(
+    return call.SetChargingProfile(
         connector_id=0,
         cs_charging_profiles=ChargingProfile(
             charging_profile_id=1,
@@ -117,7 +131,8 @@ def rel_req1_test3():
             charging_profile_purpose=ChargingProfilePurposeType.tx_default_profile,
             charging_profile_kind=ChargingProfileKindType.relative,
             valid_from=datetime.now(timezone.utc).isoformat(),
-            valid_to=(datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+            valid_to=(datetime.now(timezone.utc) +
+                      timedelta(days=3)).isoformat(),
             charging_schedule=ChargingSchedule(
                 charging_rate_unit=ChargingRateUnitType.watts,
                 charging_schedule_period=[
@@ -130,7 +145,7 @@ def rel_req1_test3():
 
 
 def rel_req2_test3():
-    return call.SetChargingProfilePayload(
+    return call.SetChargingProfile(
         connector_id=0,
         cs_charging_profiles=ChargingProfile(
             charging_profile_id=2,
@@ -151,7 +166,7 @@ def rel_req2_test3():
 
 
 def rel_exp_test3():
-    return call_result.GetCompositeSchedulePayload(
+    return call_result.GetCompositeSchedule(
         status=GetCompositeScheduleStatus.accepted,
         schedule_start=datetime.now(timezone.utc).isoformat(),
         connector_id=1,

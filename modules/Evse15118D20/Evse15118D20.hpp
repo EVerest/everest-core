@@ -15,6 +15,7 @@
 #include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
 // headers for required interface implementations
+#include <generated/interfaces/ISO15118_vas/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -35,6 +36,7 @@ struct Conf {
     bool supported_dynamic_mode;
     bool supported_mobility_needs_mode_provided_by_secc;
     bool supported_scheduled_mode;
+    std::string custom_protocol_namespace;
 };
 
 class Evse15118D20 : public Everest::ModuleBase {
@@ -42,16 +44,19 @@ public:
     Evse15118D20() = delete;
     Evse15118D20(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_charger,
                  std::unique_ptr<iso15118_extensionsImplBase> p_extensions,
-                 std::unique_ptr<evse_securityIntf> r_security, Conf& config) :
+                 std::unique_ptr<evse_securityIntf> r_security,
+                 std::vector<std::unique_ptr<ISO15118_vasIntf>> r_iso15118_vas, Conf& config) :
         ModuleBase(info),
         p_charger(std::move(p_charger)),
         p_extensions(std::move(p_extensions)),
         r_security(std::move(r_security)),
+        r_iso15118_vas(std::move(r_iso15118_vas)),
         config(config){};
 
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
     const std::unique_ptr<iso15118_extensionsImplBase> p_extensions;
     const std::unique_ptr<evse_securityIntf> r_security;
+    const std::vector<std::unique_ptr<ISO15118_vasIntf>> r_iso15118_vas;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

@@ -11,16 +11,17 @@ from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
 from everest.testing.ocpp_utils.fixtures import charge_point_v201
 from everest.testing.core_utils.controller.test_controller_interface import TestController
-from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP201ConfigAdjustment
+from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP2XConfigAdjustment
 from everest_test_utils import *
 
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, ReserveNowStatusType, ConnectorStatusType,
-                             OperationalStatusType, CancelReservationStatusType, SetVariableStatusType,
-                             RequestStartStopStatusType)
+from ocpp.v201.enums import (IdTokenEnumType as IdTokenTypeEnum, ReserveNowStatusEnumType, ConnectorStatusEnumType,
+                             OperationalStatusEnumType, CancelReservationStatusEnumType, SetVariableStatusEnumType,
+                             RequestStartStopStatusEnumType)
 from ocpp.v201.datatypes import *
 from ocpp.v201 import call as call_201
 from ocpp.v201 import call_result as call_result201
-from validations import (validate_remote_start_stop_transaction, wait_for_callerror_and_validate)
+from validations import (
+    validate_remote_start_stop_transaction, wait_for_callerror_and_validate)
 from ocpp.routing import on, create_route_map
 
 
@@ -52,7 +53,7 @@ async def test_reservation_local_start_tx(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # expect StatusNotification with status reserved
@@ -60,8 +61,8 @@ async def test_reservation_local_start_tx(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -76,8 +77,8 @@ async def test_reservation_local_start_tx(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.available, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.available, 1, 1
         ),
     )
 
@@ -104,7 +105,7 @@ async def test_reservation_local_start_tx(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Occupied', 1, 1
         ),
     )
@@ -138,7 +139,7 @@ async def test_reservation_local_start_tx_plugin_first(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # expect StatusNotification with status reserved
@@ -146,8 +147,8 @@ async def test_reservation_local_start_tx_plugin_first(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -168,8 +169,8 @@ async def test_reservation_local_start_tx_plugin_first(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.occupied, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.occupied, 1, 1
         ),
     )
 
@@ -217,7 +218,7 @@ async def test_reservation_plug_in_other_idtoken(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # expect StatusNotification with status reserved
@@ -225,8 +226,8 @@ async def test_reservation_plug_in_other_idtoken(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -240,8 +241,8 @@ async def test_reservation_plug_in_other_idtoken(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.occupied, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.occupied, 1, 1
         ),
         timeout=5
     )
@@ -255,8 +256,8 @@ async def test_reservation_plug_in_other_idtoken(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.occupied, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.occupied, 1, 1
         ),
         timeout=5
     )
@@ -286,7 +287,7 @@ async def test_reservation_plug_in_other_idtoken(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Occupied', 1, 1
         ),
     )
@@ -321,7 +322,7 @@ async def test_reservation_remote_start_tx(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # expect StatusNotification with status reserved
@@ -329,8 +330,8 @@ async def test_reservation_remote_start_tx(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -345,7 +346,7 @@ async def test_reservation_remote_start_tx(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(status="Accepted"),
+        call_result201.RequestStartTransaction(status="Accepted"),
         validate_remote_start_stop_transaction,
     )
 
@@ -357,8 +358,8 @@ async def test_reservation_remote_start_tx(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.available, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.available, 1, 1
         ),
     )
 
@@ -367,7 +368,7 @@ async def test_reservation_remote_start_tx(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Occupied', 1, 1
         ),
     )
@@ -417,7 +418,7 @@ async def test_reservation_connector_expire(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # expect StatusNotification with status reserved
@@ -425,8 +426,8 @@ async def test_reservation_connector_expire(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -441,7 +442,7 @@ async def test_reservation_connector_expire(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(status="Rejected"),
+        call_result201.RequestStartTransaction(status="Rejected"),
         validate_remote_start_stop_transaction,
     )
 
@@ -450,7 +451,7 @@ async def test_reservation_connector_expire(
         test_utility,
         charge_point_v201,
         "ReservationStatusUpdate",
-        call_201.ReservationStatusUpdatePayload(
+        call_201.ReservationStatusUpdate(
             5, "Expired"
         ),
     )
@@ -460,8 +461,8 @@ async def test_reservation_connector_expire(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.available, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.available, 1, 1
         ),
     )
 
@@ -476,7 +477,7 @@ async def test_reservation_connector_expire(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(status="Accepted"),
+        call_result201.RequestStartTransaction(status="Accepted"),
         validate_remote_start_stop_transaction,
     )
 
@@ -488,7 +489,7 @@ async def test_reservation_connector_expire(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Occupied', 1, 1
         ),
     )
@@ -529,7 +530,7 @@ async def test_reservation_connector_faulted(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Faulted', 1, 1
         ),
     )
@@ -552,7 +553,7 @@ async def test_reservation_connector_faulted(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.faulted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.faulted),
     )
 
     test_controller.clear_error()
@@ -563,7 +564,7 @@ async def test_reservation_connector_faulted(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Available', 1, 1
         ),
     )
@@ -580,7 +581,8 @@ async def test_reservation_connector_faulted_after_reservation(
     """
     Test if a reservation is cancelled after the evse status is 'Faulted'
     """
-    logging.info("######### test_reservation_connector_faulted_after_reservation #########")
+    logging.info(
+        "######### test_reservation_connector_faulted_after_reservation #########")
 
     t = datetime.now(timezone.utc) + timedelta(minutes=10)
     await charge_point_v201.reserve_now_req(
@@ -599,7 +601,7 @@ async def test_reservation_connector_faulted_after_reservation(
         test_utility,
         charge_point_v201,
         "ReservationStatusUpdate",
-        call_201.ReservationStatusUpdatePayload(
+        call_201.ReservationStatusUpdate(
             42, "Removed"
         ),
     )
@@ -612,7 +614,7 @@ async def test_reservation_connector_faulted_after_reservation(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Available', 1, 1
         ),
     )
@@ -639,7 +641,7 @@ async def test_reservation_connector_occupied(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Occupied', 1, 1
         ),
     )
@@ -662,7 +664,7 @@ async def test_reservation_connector_occupied(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.occupied),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.occupied),
     )
 
 
@@ -680,7 +682,7 @@ async def test_reservation_connector_unavailable(
 
     # Set evse id 1 to inoperative.
     await charge_point_v201.change_availablility_req(
-        evse={'id': 1}, operational_status=OperationalStatusType.inoperative
+        evse={'id': 1}, operational_status=OperationalStatusEnumType.inoperative
     )
 
     t = datetime.now(timezone.utc) + timedelta(seconds=30)
@@ -699,17 +701,17 @@ async def test_reservation_connector_unavailable(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.unavailable),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.unavailable),
     )
 
 
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "ReservationCtrlr", "ReservationCtrlrAvailable", "Actual"
                 ),
                 "false",
@@ -747,10 +749,10 @@ async def test_reservation_connector_rejected(
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "ReservationCtrlr", "ReservationCtrlrNonEvseSpecific", "Actual"
                 ),
                 "false",
@@ -767,7 +769,8 @@ async def test_reservation_non_evse_specific_rejected(
     """
     Try to make a non-evse specific reservation, while that is not allowed according to the settings. That should fail.
     """
-    logging.info("######### test_reservation_non_evse_specific_rejected #########")
+    logging.info(
+        "######### test_reservation_non_evse_specific_rejected #########")
 
     t = datetime.now(timezone.utc) + timedelta(seconds=30)
 
@@ -784,17 +787,17 @@ async def test_reservation_non_evse_specific_rejected(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.rejected),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.rejected),
     )
 
 
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "ReservationCtrlr", "ReservationCtrlrNonEvseSpecific", "Actual"
                 ),
                 "true",
@@ -811,7 +814,8 @@ async def test_reservation_non_evse_specific_accepted(
     """
     Try to make a non evse specific reservation. This should succeed, according to the settings (devicemodel).
     """
-    logging.info("######### test_reservation_non_evse_specific_accepted #########")
+    logging.info(
+        "######### test_reservation_non_evse_specific_accepted #########")
 
     t = datetime.now(timezone.utc) + timedelta(seconds=30)
 
@@ -828,7 +832,7 @@ async def test_reservation_non_evse_specific_accepted(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # swipe valid id tag to authorize
@@ -857,7 +861,7 @@ async def test_reservation_non_evse_specific_accepted(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Occupied', 1, 1
         ),
     )
@@ -866,10 +870,10 @@ async def test_reservation_non_evse_specific_accepted(
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.ocpp_config_adaptions(
-    GenericOCPP201ConfigAdjustment(
+    GenericOCPP2XConfigAdjustment(
         [
             (
-                OCPP201ConfigVariableIdentifier(
+                OCPP2XConfigVariableIdentifier(
                     "ReservationCtrlr", "ReservationCtrlrNonEvseSpecific", "Actual"
                 ),
                 "true",
@@ -888,7 +892,8 @@ async def test_reservation_non_evse_specific_accepted_multiple(
     When making multiple reservations, as soon as there are as many reservations as evse's available, the evse's should
     go to occupied.
     """
-    logging.info("######### test_reservation_non_evse_specific_accepted_multiple #########")
+    logging.info(
+        "######### test_reservation_non_evse_specific_accepted_multiple #########")
 
     t = datetime.now(timezone.utc) + timedelta(seconds=30)
 
@@ -905,7 +910,7 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # Make another reservation with another reservation id.
@@ -921,7 +926,7 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # There are now as many reservations as evse's, so all evse's go to 'reserved'.
@@ -929,8 +934,8 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -938,8 +943,8 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 2, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 2, 1
         ),
     )
 
@@ -956,7 +961,7 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.occupied),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.occupied),
     )
 
     # swipe valid id tag to authorize
@@ -985,7 +990,7 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Occupied', 1, 1
         ),
     )
@@ -1010,7 +1015,7 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Available', 1, 1
         ),
     )
@@ -1019,7 +1024,7 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Available', 2, 1
         ),
     )
@@ -1044,7 +1049,7 @@ async def test_reservation_faulted_state(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Faulted', 1, 1
         ),
     )
@@ -1067,7 +1072,7 @@ async def test_reservation_faulted_state(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.faulted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.faulted),
     )
 
     test_controller.clear_error("MREC6UnderVoltage", 1)
@@ -1078,7 +1083,7 @@ async def test_reservation_faulted_state(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Available', 1, 1
         ),
     )
@@ -1113,7 +1118,7 @@ async def test_reservation_cancel(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # expect StatusNotification request with status reserved
@@ -1121,8 +1126,8 @@ async def test_reservation_cancel(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -1134,7 +1139,8 @@ async def test_reservation_cancel(
         test_utility,
         charge_point_v201,
         "CancelReservation",
-        call_result201.CancelReservationPayload(status=CancelReservationStatusType.accepted),
+        call_result201.CancelReservation(
+            status=CancelReservationStatusEnumType.accepted),
     )
 
     # expect StatusNotification with status available
@@ -1142,8 +1148,8 @@ async def test_reservation_cancel(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.available, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.available, 1, 1
         ),
     )
 
@@ -1154,7 +1160,7 @@ async def test_reservation_cancel(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
+        call_201.StatusNotification(
             ANY, 'Occupied', 1, 1
         ),
     )
@@ -1170,7 +1176,7 @@ async def test_reservation_cancel(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(status="Accepted"),
+        call_result201.RequestStartTransaction(status="Accepted"),
         validate_remote_start_stop_transaction,
     )
 
@@ -1219,7 +1225,7 @@ async def test_reservation_cancel_rejected(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # expect StatusNotification with status reserved
@@ -1227,8 +1233,8 @@ async def test_reservation_cancel_rejected(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -1240,7 +1246,8 @@ async def test_reservation_cancel_rejected(
         test_utility,
         charge_point_v201,
         "CancelReservation",
-        call_result201.CancelReservationPayload(status=CancelReservationStatusType.rejected),
+        call_result201.CancelReservation(
+            status=CancelReservationStatusEnumType.rejected),
     )
 
 
@@ -1259,15 +1266,15 @@ async def test_reservation_with_parentid(
     logging.info("######### test_reservation_with_parentid #########")
 
     # authorize.conf with parent id tag
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         id_tag_info = IdTokenInfoType(
-            status=AuthorizationStatusType.accepted,
+            status=AuthorizationStatusEnumType.accepted,
             group_id_token=IdTokenType(
                 id_token=test_config.authorization_info.parent_id_tag, type=IdTokenTypeEnum.iso14443
             ),
         )
-        return call_result201.AuthorizePayload(id_token_info=id_tag_info)
+        return call_result201.Authorize(id_token_info=id_tag_info)
 
     setattr(charge_point_v201, "on_authorize", on_authorize)
     central_system_v201.chargepoint.route_map = create_route_map(
@@ -1275,7 +1282,7 @@ async def test_reservation_with_parentid(
     )
     charge_point_v201.route_map = create_route_map(charge_point_v201)
 
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "AuthorizeRemoteStart", "true"
         )
@@ -1284,10 +1291,10 @@ async def test_reservation_with_parentid(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     # Disable remote authorization so an 'Authorize' request is sent when starting remotely.
-    r: call_result201.SetVariablesPayload = (
+    r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
             "AuthCtrlr", "DisableRemoteAuthorization", "false"
         )
@@ -1296,7 +1303,7 @@ async def test_reservation_with_parentid(
     set_variable_result: SetVariableResultType = SetVariableResultType(
         **r.set_variable_result[0]
     )
-    assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+    assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
     t = datetime.now(timezone.utc) + timedelta(minutes=10)
 
@@ -1307,7 +1314,7 @@ async def test_reservation_with_parentid(
         id_token=IdTokenType(id_token=test_config.authorization_info.valid_id_tag_1,
                              type=IdTokenTypeEnum.iso14443),
         group_id_token=IdTokenType(id_token=test_config.authorization_info.parent_id_tag,
-                             type=IdTokenTypeEnum.iso14443),
+                                   type=IdTokenTypeEnum.iso14443),
         id=0,
     )
 
@@ -1316,7 +1323,7 @@ async def test_reservation_with_parentid(
         test_utility,
         charge_point_v201,
         "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+        call_result201.ReserveNow(ReserveNowStatusEnumType.accepted),
     )
 
     # expect StatusNotification request with status reserved
@@ -1324,8 +1331,8 @@ async def test_reservation_with_parentid(
         test_utility,
         charge_point_v201,
         "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.reserved, 1, 1
+        call_201.StatusNotification(
+            ANY, ConnectorStatusEnumType.reserved, 1, 1
         ),
     )
 
@@ -1343,7 +1350,7 @@ async def test_reservation_with_parentid(
         test_utility,
         charge_point_v201,
         "RequestStartTransaction",
-        call_result201.RequestStartTransactionPayload(status="Accepted"),
+        call_result201.RequestStartTransaction(status="Accepted"),
         validate_remote_start_stop_transaction,
     )
 
@@ -1352,12 +1359,12 @@ async def test_reservation_with_parentid(
         test_utility,
         charge_point_v201,
         "Authorize",
-        call_201.AuthorizePayload(IdTokenType(id_token=test_config.authorization_info.valid_id_tag_2,
-                                              type=IdTokenTypeEnum.iso14443)),
+        call_201.Authorize(IdTokenType(id_token=test_config.authorization_info.valid_id_tag_2,
+                                       type=IdTokenTypeEnum.iso14443)),
     )
 
     # Authorize was accepted because of the correct group id token, transaction is started.
-    r: call_201.TransactionEventPayload = call_201.TransactionEventPayload(
+    r: call_201.TransactionEvent = call_201.TransactionEvent(
         **await wait_for_and_validate(
             test_utility,
             charge_point_v201,
@@ -1386,8 +1393,8 @@ async def test_reservation_with_parentid(
         test_utility,
         charge_point_v201,
         "RequestStopTransaction",
-        call_result201.RequestStartTransactionPayload(
-            status=RequestStartStopStatusType.accepted
+        call_result201.RequestStartTransaction(
+            status=RequestStartStopStatusEnumType.accepted
         ),
     )
 

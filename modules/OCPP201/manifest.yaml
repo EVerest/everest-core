@@ -13,8 +13,14 @@ config:
     description: Path to the SQLite database for the device model
     type: string
     default: device_model_storage.db
+  EverestDeviceModelDatabasePath:
+    description: >-
+      Path to the SQLite databse for the EVerest device model. This database stores components and variables
+      like EVSE and Connector that are closely related to everest-core and therefore not owned and managed by libocpp.
+    type: string
+    default: everest_device_model_storage.db
   DeviceModelDatabaseMigrationPath:
-    description: Path to the migration files for the device model
+    description: Path to the migration files for both device models
     type: string
     default: device_model_migrations
   DeviceModelConfigPath:

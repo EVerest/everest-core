@@ -35,6 +35,11 @@ const std::unordered_map<std::string, std::pair<ocpp::v16::ChargePointErrorCode,
     {"ac_rcd/MREC2GroundFailure", {ocpp::v16::ChargePointErrorCode::GroundFailure, "CX002"}},
 };
 
+// TODO: add other ChargePointErrorCode mappings
+const std::unordered_map<std::string, ocpp::v16::ChargePointErrorCode> OCPP_ERROR_MAP = {
+    {"powermeter/CommunicationFault", ocpp::v16::ChargePointErrorCode::PowerMeterFailure},
+};
+
 } // namespace module
 
 #endif

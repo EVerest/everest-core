@@ -32,6 +32,7 @@
 // insert your custom include headers here
 #include <tuple>
 
+#include <device_model/everest_device_model_storage.hpp>
 #include <generated/types/evse_board_support.hpp>
 #include <ocpp/v2/charge_point.hpp>
 #include <transaction_handler.hpp>
@@ -43,6 +44,7 @@ struct Conf {
     std::string MessageLogPath;
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
+    std::string EverestDeviceModelDatabasePath;
     std::string DeviceModelDatabaseMigrationPath;
     std::string DeviceModelConfigPath;
     bool EnableExternalWebsocketControl;
@@ -120,6 +122,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    std::shared_ptr<device_model::EverestDeviceModelStorage> everest_device_model_storage;
     std::unique_ptr<TransactionHandler> transaction_handler;
     Everest::SteadyTimer charging_schedules_timer;
 
@@ -174,6 +177,9 @@ private:
 
     /// \brief This function applies given \p composite_schedules for each connected evse_energy_sink
     void set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>& composite_schedules);
+
+    /// \brief This function updates the additionalIdToken of the additionalTokenInfo field with the evcc_id.
+    void update_evcc_id_token(const int& evse_id, const std::string& evcc_id);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

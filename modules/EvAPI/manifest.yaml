@@ -1,0 +1,18 @@
+description: >-
+  The EVerest EV API module, exposing some internal functionality on an external
+  MQTT connection.
+config: {}
+provides:
+  main:
+    description: EVerest EV API
+    interface: empty
+requires:
+  ev_manager:
+    interface: ev_manager
+    min_connections: 1
+    max_connections: 128
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Kai-Uwe Hermann

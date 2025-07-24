@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from everest.testing.core_utils.controller.test_controller_interface import (
     TestController,
 )
-from ocpp.v16.datatypes import (
+from ocpp.v16.enums import (
     ChargingRateUnitType,
 )
 
@@ -41,7 +41,7 @@ async def test_absolute_1(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -54,7 +54,7 @@ async def test_absolute_1(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -69,7 +69,7 @@ async def test_absolute_1(
     assert await charge_point_v16.set_charging_profile_req(req3) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=400)
+        call.GetCompositeSchedule(connector_id=1, duration=400)
     )
 
     passed_seconds = int(
@@ -96,7 +96,7 @@ async def test_absolute_2(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -113,14 +113,14 @@ async def test_absolute_2(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=300)
+        call.GetCompositeSchedule(connector_id=1, duration=300)
     )
 
     passed_seconds = int(
@@ -147,7 +147,7 @@ async def test_absolute_3(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -160,17 +160,18 @@ async def test_absolute_3(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
     req = abs_req1_test3()
 
+    await asyncio.sleep(1) #ensure we respond before sending
     assert await charge_point_v16.set_charging_profile_req(req) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=300)
+        call.GetCompositeSchedule(connector_id=1, duration=300)
     )
 
     passed_seconds = int(
@@ -201,7 +202,7 @@ async def test_absolute_4(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -214,7 +215,7 @@ async def test_absolute_4(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -225,7 +226,7 @@ async def test_absolute_4(
     assert await charge_point_v16.set_charging_profile_req(req) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=300)
+        call.GetCompositeSchedule(connector_id=1, duration=300)
     )
 
     passed_seconds = int(
@@ -252,7 +253,7 @@ async def test_absolute_5(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -271,14 +272,14 @@ async def test_absolute_5(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=350)
+        call.GetCompositeSchedule(connector_id=1, duration=350)
     )
 
     passed_seconds = int(
@@ -300,7 +301,7 @@ async def test_absolute_5(
     test_utility.messages.clear()
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=550)
+        call.GetCompositeSchedule(connector_id=1, duration=550)
     )
 
     passed_seconds = int(
@@ -331,7 +332,7 @@ async def test_absolute_6(
     test_utility: TestUtility,
 ):
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -344,7 +345,7 @@ async def test_absolute_6(
     assert await charge_point_v16.set_charging_profile_req(req3) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=0, duration=700)
+        call.GetCompositeSchedule(connector_id=0, duration=700)
     )
 
     exp_con0 = abs_exp_test6_con0()
@@ -360,7 +361,7 @@ async def test_absolute_6(
     test_utility.messages.clear()
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=0, duration=700)
+        call.GetCompositeSchedule(connector_id=0, duration=700)
     )
 
     assert await wait_for_and_validate(
@@ -382,14 +383,14 @@ async def test_absolute_6(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=900)
+        call.GetCompositeSchedule(connector_id=1, duration=900)
     )
 
     passed_seconds = int(
@@ -420,14 +421,14 @@ async def test_absolute_6(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             2, test_config.authorization_info.valid_id_tag_2, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=2, duration=400)
+        call.GetCompositeSchedule(connector_id=2, duration=400)
     )
 
     passed_seconds = int(
@@ -468,13 +469,13 @@ async def test_combined_1(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -487,13 +488,13 @@ async def test_combined_1(
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(
+        call.GetCompositeSchedule(
             connector_id=1, duration=400, charging_rate_unit=ChargingRateUnitType.watts
         )
     )
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(
+        call.GetCompositeSchedule(
             connector_id=1, duration=400, charging_rate_unit=ChargingRateUnitType.amps
         )
     )
@@ -519,14 +520,14 @@ async def test_combined_2(charge_point_v16: ChargePoint16, test_utility: TestUti
 
     req = comb_req1_test2()
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
     assert await charge_point_v16.set_charging_profile_req(req) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=0, duration=400)
+        call.GetCompositeSchedule(connector_id=0, duration=400)
     )
 
     exp = comb_exp_test2()
@@ -557,14 +558,14 @@ async def test_recurring_1(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
     req = rec_req1_test1()
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.rejected
     )
 
@@ -588,13 +589,13 @@ async def test_recurring_2(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -606,7 +607,7 @@ async def test_recurring_2(
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=172800)
+        call.GetCompositeSchedule(connector_id=1, duration=172800)
     )
 
     assert await wait_for_and_validate(
@@ -635,13 +636,13 @@ async def test_recurring_3(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -653,7 +654,7 @@ async def test_recurring_3(
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=172800)
+        call.GetCompositeSchedule(connector_id=1, duration=172800)
     )
 
     assert await wait_for_and_validate(
@@ -684,20 +685,21 @@ async def test_relative_1(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
+    await asyncio.sleep(1) #enseure we respond befor sending next message
     assert await charge_point_v16.set_charging_profile_req(req1) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=400)
+        call.GetCompositeSchedule(connector_id=1, duration=400)
     )
 
     exp = rel_exp_test1()
@@ -731,13 +733,13 @@ async def test_relative_2(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -745,7 +747,7 @@ async def test_relative_2(
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=300)
+        call.GetCompositeSchedule(connector_id=1, duration=300)
     )
 
     exp = rel_exp_test2()
@@ -770,7 +772,7 @@ async def test_relative_3(
     req1 = rel_req1_test3()
     req2 = rel_req2_test3()
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -788,7 +790,7 @@ async def test_relative_3(
         test_utility,
         charge_point_v16,
         "RemoteStartTransaction",
-        call_result.RemoteStartTransactionPayload(
+        call_result.RemoteStartTransaction(
             RemoteStartStopStatus.accepted),
         validate_remote_start_stop_transaction,
     )
@@ -798,14 +800,14 @@ async def test_relative_3(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
     )
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=90)
+        call.GetCompositeSchedule(connector_id=1, duration=90)
     )
 
     exp = rel_exp_test3()
@@ -829,7 +831,7 @@ async def test_clear_charging_profiles_for_connector_0(
     central_system_v16: CentralSystem,
 ):
 
-    exp_scp_result = call_result.SetChargingProfilePayload(
+    exp_scp_result = call_result.SetChargingProfile(
         ChargingProfileStatus.accepted
     )
 
@@ -842,7 +844,7 @@ async def test_clear_charging_profiles_for_connector_0(
         test_utility,
         charge_point_v16,
         "StartTransaction",
-        call.StartTransactionPayload(
+        call.StartTransaction(
             1, test_config.authorization_info.valid_id_tag_1, 0, ""
         ),
         validate_standard_start_transaction,
@@ -853,7 +855,7 @@ async def test_clear_charging_profiles_for_connector_0(
     assert await charge_point_v16.set_charging_profile_req(req1) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=400)
+        call.GetCompositeSchedule(connector_id=1, duration=400)
     )
 
     passed_seconds = int(
@@ -877,7 +879,7 @@ async def test_clear_charging_profiles_for_connector_0(
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
 
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=400)
+        call.GetCompositeSchedule(connector_id=1, duration=400)
     )
 
     passed_seconds = int(
@@ -901,7 +903,7 @@ async def test_clear_charging_profiles_for_connector_0(
         test_utility,
         charge_point_v16,
         "ClearChargingProfile",
-        call_result.ClearChargingProfilePayload(
+        call_result.ClearChargingProfile(
             ClearChargingProfileStatus.accepted),
     )
 
@@ -911,7 +913,7 @@ async def test_clear_charging_profiles_for_connector_0(
 
     charge_point_v16 = await central_system_v16.wait_for_chargepoint()
     await charge_point_v16.get_composite_schedule(
-        call.GetCompositeSchedulePayload(connector_id=1, duration=90)
+        call.GetCompositeSchedule(connector_id=1, duration=90)
     )
 
     passed_seconds = int(
