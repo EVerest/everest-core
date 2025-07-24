@@ -220,6 +220,9 @@ impl PaymentTerminalModule {
         // Wait for the card.
         let read_card_loop = || -> Result<CardInfo> {
             loop {
+                if let Err(inner) = self.feig.configure() {
+                    publishers.payment_terminal.raise_error(inner.into())
+                }
                 if !self.has_everything_enabled() && !self.is_enabled() {
                     log::debug!("Reading is disabled, waiting...");
                     std::thread::sleep(Duration::from_secs(1));
@@ -375,10 +378,6 @@ impl From<anyhow::Error> for PTError {
 
 impl OnReadySubscriber for PaymentTerminalModule {
     fn on_ready(&self, publishers: &ModulePublisher) {
-        if let Err(inner) = self.feig.configure() {
-            publishers.payment_terminal.raise_error(inner.into())
-        }
-
         // Send the publishers to the main thread.
         self.tx.send(publishers.clone()).unwrap();
     }
