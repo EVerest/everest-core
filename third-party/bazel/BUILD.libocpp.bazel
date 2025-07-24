@@ -15,12 +15,11 @@ cc_library(
         "lib/ocpp/v16/*.cpp",
         "lib/ocpp/v2/*.cpp",
         "lib/ocpp/v2/functional_blocks/*.cpp",
+        "lib/ocpp/v21/functional_blocks/*.cpp",
         "lib/ocpp/common/websocket/*.cpp",
         "lib/ocpp/v16/messages/*.cpp",
         "lib/ocpp/v2/messages/*.cpp",
         "lib/ocpp/v21/messages/*.cpp",
-    ], exclude = [
-        "lib/ocpp/v21/messages/NotifyCRL.cpp",
     ]),
     hdrs = glob([
         "include/**/*.hpp",

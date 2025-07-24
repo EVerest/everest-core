@@ -335,7 +335,7 @@
   "moduleExtensions": {
     "//third-party/bazel:extension.bzl%deps": {
       "general": {
-        "bzlTransitiveDigest": "NOi+tEoqPpIKEKQsoUwlmX/mP3tfPXuRkCqynJ7KsBw=",
+        "bzlTransitiveDigest": "i/OBy5koywjL3AuT5/gEbqbY9IPHGP7Es52P8kc/81Q=",
         "usagesDigest": "u1s/5rUOS1MTfb5W26qbMsw0xxt6wqMAgnnDoK8GisQ=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -380,9 +380,9 @@
           "libocpp": {
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
-              "url": "https://github.com/EVerest/libocpp/archive/1d2ce8db1b699f13fe73c17e71d2f25f7b68da32.tar.gz",
-              "sha256": "a8f1e2732c8eebc9cef75e2839a57073fd7ed6ce1b5a0d1134f98c2c030d7659",
-              "strip_prefix": "libocpp-1d2ce8db1b699f13fe73c17e71d2f25f7b68da32",
+              "url": "https://github.com/EVerest/libocpp/archive/89c7b62ec899db637f43b54f19af2c4af30cfa66.tar.gz",
+              "sha256": "5f359e9b50680bee345d469b7a6e54c9bad3a308dee2bc11351860f5831dde36",
+              "strip_prefix": "libocpp-89c7b62ec899db637f43b54f19af2c4af30cfa66",
               "build_file": "@@//third-party/bazel:BUILD.libocpp.bazel"
             }
           },
