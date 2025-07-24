@@ -60,30 +60,6 @@ def _deps_impl(module_ctx):
 
     maybe(
         http_archive,
-        name = "rules_license",
-        url = "https://github.com/bazelbuild/rules_license/archive/0.0.7.tar.gz",
-        sha256 = "7626bea5473d3b11d44269c5b510a210f11a78bca1ed639b0f846af955b0fe31",
-        strip_prefix = "rules_license-0.0.7",
-    )
-
-    maybe(
-        http_archive,
-        name = "rules_cc",
-        url = "https://github.com/bazelbuild/rules_cc/archive/0.0.9.tar.gz",
-        sha256 = "2037875b9a4456dce4a79d112a8ae885bbc4aad968e6587dca6e64f3a0900cdf",
-        strip_prefix = "rules_cc-0.0.9",
-    )
-
-    maybe(
-        http_archive,
-        name = "platforms",
-        url = "https://github.com/bazelbuild/platforms/archive/0.0.10.tar.gz",
-        sha256 = "3df33228654e56b09f17613613767b052581b822d57cb9cfd5e7b19a8e617b42",
-        strip_prefix = "platforms-0.0.10",
-    )
-
-    maybe(
-        http_archive,
         name = "everest_sqlite",
         url = "https://github.com/EVerest/everest-sqlite/archive/v0.1.1.tar.gz",
         sha256 = "7a8a7b1edf4177d771c80a28ed0558e4b9fcb74cdda1bacdf6399766f2c8ff83",
