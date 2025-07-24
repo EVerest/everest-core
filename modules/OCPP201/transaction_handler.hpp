@@ -187,8 +187,13 @@ public:
     /// \param transaction_data
     void add_transaction_data(const int32_t evse_id, const std::shared_ptr<TransactionData>& transaction_data);
 
-    /// \brief Gets transaction_data for the given \p evse_id from the \ref evse_id_transaction_data_map
+    /// \brief Gets evse_id associated to a specific transaction id.
     std::shared_ptr<TransactionData> get_transaction_data(const int32_t evse_id);
+
+    /// \brief Gets transaction_data for the given \p evse_id from the \ref evse_id_transaction_data_map
+    /// \param transaction_id string corresponding to the id of the transaction
+    /// \return will return -1 if not found, else will return associated evse_id
+    int get_evse_id(const std::string& transaction_id);
 
     /// \brief Resets transaction_data for the given \p evse_id in the \ref evse_id_transaction_data_map. It efectively
     /// sets the value for the \p evse_id to nullptr
