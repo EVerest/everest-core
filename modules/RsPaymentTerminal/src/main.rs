@@ -222,6 +222,18 @@ impl PaymentTerminalModule {
             loop {
                 if let Err(inner) = self.feig.configure() {
                     publishers.payment_terminal.raise_error(inner.into())
+                } else {
+                    // TODO: use the clear all interface when it is implemented in the framework
+                    publishers
+                        .payment_terminal
+                        .clear_error(PTError::PaymentTerminal(
+                            PaymentTerminalError::TerminalIdNotSet,
+                        ));
+                    publishers
+                        .payment_terminal
+                        .clear_error(PTError::PaymentTerminal(
+                            PaymentTerminalError::GenericPaymentTerminalError,
+                        ));
                 }
                 if !self.has_everything_enabled() && !self.is_enabled() {
                     log::debug!("Reading is disabled, waiting...");
