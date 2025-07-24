@@ -285,22 +285,22 @@ public:
             this->notify_data_changed();
         }
     }
-    // set the AC charge loop
-    void set_ac_charge_loop(const std::optional<RPCDataTypes::ACChargeLoopObj>& ac_charge_loop) {
+    // set the AC charge status
+    void set_ac_charge_status(const std::optional<RPCDataTypes::ACChargeStatusObj>& ac_charge_status) {
         std::unique_lock<std::mutex> data_lock(this->data_mutex);
         // check if data has changed
-        if (this->dataobj.ac_charge_loop != ac_charge_loop) {
-            this->dataobj.ac_charge_loop = ac_charge_loop;
+        if (this->dataobj.ac_charge_status != ac_charge_status) {
+            this->dataobj.ac_charge_status = ac_charge_status;
             data_lock.unlock();
             this->notify_data_changed();
         }
     }
-    // set the DC charge loop
-    void set_dc_charge_loop(const std::optional<RPCDataTypes::DCChargeLoopObj>& dc_charge_loop) {
+    // set the DC charge status
+    void set_dc_charge_status(const std::optional<RPCDataTypes::DCChargeStatusObj>& dc_charge_status) {
         std::unique_lock<std::mutex> data_lock(this->data_mutex);
         // check if data has changed
-        if (this->dataobj.dc_charge_loop != dc_charge_loop) {
-            this->dataobj.dc_charge_loop = dc_charge_loop;
+        if (this->dataobj.dc_charge_status != dc_charge_status) {
+            this->dataobj.dc_charge_status = dc_charge_status;
             data_lock.unlock();
             this->notify_data_changed();
         }
