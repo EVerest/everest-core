@@ -50,16 +50,19 @@ public:
     RpcApi() = delete;
     RpcApi(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
            std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
-           std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink, Conf& config) :
+           std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
+           std::vector<std::unique_ptr<energyIntf>> r_energy_listener, Conf& config) :
         ModuleBase(info),
         p_main(std::move(p_main)),
         r_evse_manager(std::move(r_evse_manager)),
         r_evse_energy_sink(std::move(r_evse_energy_sink)),
+        r_energy_listener(std::move(r_energy_listener)),
         config(config){};
 
     const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
+    const std::vector<std::unique_ptr<energyIntf>> r_energy_listener;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -83,8 +86,10 @@ private:
     std::unique_ptr<rpc::RpcHandler> m_rpc_handler;
     std::unique_ptr<request_interface::RequestHandlerInterface> m_request_handler;
 
-    void check_evse_session_event(data::DataStoreEvse& evse_data, const types::evse_manager::SessionEvent& session_event);
+    void check_evse_session_event(data::DataStoreEvse& evse_data,
+                                  const types::evse_manager::SessionEvent& session_event);
     void subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager, data::DataStoreEvse& evse_data);
+    void subscribe_evse_energy(const std::unique_ptr<energyIntf>& evse_energy, data::DataStoreEvse& evse_data);
     void subscribe_global_errors();
     void meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter, data::MeterDataStore& meter_data);
     void hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
