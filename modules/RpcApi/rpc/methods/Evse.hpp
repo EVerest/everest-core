@@ -42,7 +42,7 @@ public:
     RPCDataTypes::EVSEGetInfoResObj get_info(const int32_t evse_index) {
         RPCDataTypes::EVSEGetInfoResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -61,7 +61,7 @@ public:
     RPCDataTypes::EVSEGetStatusResObj get_status(const int32_t evse_index) {
         RPCDataTypes::EVSEGetStatusResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -80,7 +80,7 @@ public:
     RPCDataTypes::EVSEGetHardwareCapabilitiesResObj get_hardware_capabilities(const int32_t evse_index) {
         RPCDataTypes::EVSEGetHardwareCapabilitiesResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -98,7 +98,7 @@ public:
     RPCDataTypes::ErrorResObj set_charging_allowed(const int32_t evse_index, bool charging_allowed) {
         RPCDataTypes::ErrorResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -109,7 +109,7 @@ public:
     RPCDataTypes::EVSEGetMeterDataResObj get_meter_data(const int32_t evse_index) {
         RPCDataTypes::EVSEGetMeterDataResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -126,7 +126,7 @@ public:
     RPCDataTypes::ErrorResObj set_ac_charging(const int32_t evse_index, bool charging_allowed, float max_current, std::optional<int> phase_count) {
         RPCDataTypes::ErrorResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -137,7 +137,7 @@ public:
     RPCDataTypes::ErrorResObj set_ac_charging_current(const int32_t evse_index, float max_current) {
         RPCDataTypes::ErrorResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -148,7 +148,7 @@ public:
     RPCDataTypes::ErrorResObj set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
         RPCDataTypes::ErrorResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -160,7 +160,7 @@ public:
     RPCDataTypes::ErrorResObj set_dc_charging(const int32_t evse_index, bool charging_allowed, float max_power) {
         RPCDataTypes::ErrorResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -171,7 +171,7 @@ public:
     RPCDataTypes::ErrorResObj set_dc_charging_power(const int32_t evse_index, float max_power) {
         RPCDataTypes::ErrorResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
@@ -182,7 +182,7 @@ public:
     RPCDataTypes::ErrorResObj enable_connector(const int32_t evse_index, int connector_id, bool enable, int priority) {
         RPCDataTypes::ErrorResObj res {};
 
-        auto evse = data::DataStoreCharger::get_evse_store(m_dataobj, evse_index);
+        auto evse = m_dataobj.get_evse_store(evse_index);
         if (!evse) {
             res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
             return res;
