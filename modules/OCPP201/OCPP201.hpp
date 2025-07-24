@@ -134,6 +134,8 @@ private:
     std::map<int32_t, bool> evse_ready_map;
     std::map<int32_t, std::optional<float>> evse_soc_map;
     std::map<int32_t, types::evse_board_support::HardwareCapabilities> evse_hardware_capabilities_map;
+    std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>> evse_supported_energy_transfer_modes;
+    std::map<int32_t, bool> evse_service_renegotiation_supported;
     int32_t event_id_counter{0};
     std::mutex evse_ready_mutex;
     std::mutex session_event_mutex;
