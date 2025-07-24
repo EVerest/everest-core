@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+
+#include <filesystem>
 #include <fstream>
 #include <future>
 #include <mutex>
@@ -209,11 +211,23 @@ json ChargePointConfiguration::get_user_config() {
 }
 
 void ChargePointConfiguration::setInUserConfig(std::string profile, std::string key, const json value) {
-    json user_config = this->get_user_config();
-    user_config[profile][key] = value;
-    std::ofstream ofs(this->user_config_path.c_str());
-    ofs << user_config << std::endl;
-    ofs.close();
+    // write to a separate file to minimise corruption and data loss; then rename
+    namespace fs = std::filesystem;
+
+    try {
+        const auto tmp_file = user_config_path.string() + '$';
+        fs::remove(tmp_file);
+
+        json user_config = get_user_config();
+        user_config[profile][key] = value;
+        std::ofstream ofs(tmp_file);
+        ofs << user_config << std::endl;
+        ofs.close();
+
+        fs::rename(tmp_file, user_config_path);
+    } catch (const fs::filesystem_error& ex) {
+        EVLOG_error << "Error updating user config: " << ex.path1() << ' ' << ex.path2() << ": " << ex.what();
+    }
 }
 
 std::string to_csl(const std::vector<std::string>& vec) {
