@@ -261,7 +261,7 @@ types:
       evse_minimum_discharge_power:
         description: evse_minimum_discharge_power
         type: number
-  ACChargeLoopObj:
+  ACChargeStatusObj:
     description: AC related parameters during charging of a charge point EVSE
     type: object
     additionalProperties: false
@@ -271,7 +271,7 @@ types:
       evse_active_phase_count:
         description: evse_active_phase_count
         type: integer
-  DCChargeLoopObj:
+  DCChargeStatusObj:
     description: DC related parameters during charging of a charge point EVSE
     type: object
     additionalProperties: false
@@ -487,14 +487,14 @@ types:
         description: dc_charge_param
         type: object
         $ref: /json_rpc_api#/DCChargeParametersObj
-      ac_charge_loop:
-        description: ac_charge_loop
+      ac_charge_status:
+        description: ac_charge_status
         type: object
-        $ref: /json_rpc_api#/ACChargeLoopObj
-      dc_charge_loop:
-        description: dc_charge_loop
+        $ref: /json_rpc_api#/ACChargeStatusObj
+      dc_charge_status:
+        description: dc_charge_status
         type: object
-        $ref: /json_rpc_api#/DCChargeLoopObj
+        $ref: /json_rpc_api#/DCChargeStatusObj
       display_parameters:
         description: display_parameters
         type: object
