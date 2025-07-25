@@ -25,3 +25,12 @@ vars:
       has to be sent during the 'ChargeParameterDiscoveryReq' state machine
     type: object
     $ref: /iso15118#/ChargingNeeds
+  ev_info:
+    description: >-
+      The ISO15118 ev information concerning the certificates used for TLS, the supported protocols and evccId.
+    type: object
+    $ref: /iso15118#/EvInformation
+  service_renegotiation_supported:
+    description: >-
+      Indicates whether service renegotiation is supported or not.
+    type: boolean

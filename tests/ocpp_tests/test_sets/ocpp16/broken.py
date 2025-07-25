@@ -39,12 +39,12 @@ async def test_missing_payload_field(
 ):
     logging.info("######### test_missing_payload_field #########")
 
-    payload = call.ChangeConfigurationPayload(key="WebSocketPingInterval", value="0")
+    payload = call.ChangeConfiguration(key="WebSocketPingInterval", value="0")
     camel_case_payload = snake_to_camel_case(asdict(payload))
 
     call_msg = Call(
         unique_id=str(charge_point_v16._unique_id_generator()),
-        action=payload.__class__.__name__[:-7],
+        action=payload.__class__.__name__,
         payload=remove_nones(camel_case_payload),
     )
 
@@ -71,12 +71,12 @@ async def test_additional_payload_field(
 ):
     logging.info("######### test_additional_payload_field #########")
 
-    payload = call.ChangeConfigurationPayload(key="WebSocketPingInterval", value="0")
+    payload = call.ChangeConfiguration(key="WebSocketPingInterval", value="0")
     camel_case_payload = snake_to_camel_case(asdict(payload))
 
     call_msg = Call(
         unique_id=str(charge_point_v16._unique_id_generator()),
-        action=payload.__class__.__name__[:-7],
+        action=payload.__class__.__name__,
         payload=remove_nones(camel_case_payload),
     )
 
@@ -104,12 +104,13 @@ async def test_wrong_payload_type(
     logging.info("######### test_wrong_payload_type #########")
 
     # key should just be string, but here we set it to array of string
-    payload = call.ChangeConfigurationPayload(key=["WebSocketPingInterval"], value="0")
+    payload = call.ChangeConfiguration(
+        key=["WebSocketPingInterval"], value="0")
     camel_case_payload = snake_to_camel_case(asdict(payload))
 
     call_msg = Call(
         unique_id=str(charge_point_v16._unique_id_generator()),
-        action=payload.__class__.__name__[:-7],
+        action=payload.__class__.__name__,
         payload=remove_nones(camel_case_payload),
     )
 
@@ -132,16 +133,16 @@ async def test_wrong_auth_payload(
 ):
     logging.info("######### test_wrong_auth_payload #########")
 
-    @on(Action.Authorize)
+    @on(Action.authorize)
     def on_authorize(**kwargs):
         # send an empty id_tag_info, this should not crash EVerest
         id_tag_info = {}
-        res = call_result.AuthorizePayload(id_tag_info=id_tag_info)
+        res = call_result.Authorize(id_tag_info=id_tag_info)
         return res
 
     setattr(charge_point_v16, "on_authorize", on_authorize)
     charge_point_v16.route_map = create_route_map(charge_point_v16)
-    charge_point_v16.route_map[Action.Authorize]["_skip_schema_validation"] = True
+    charge_point_v16.route_map[Action.authorize]["_skip_schema_validation"] = True
 
     await charge_point_v16.change_configuration_req(
         key="AuthorizeRemoteTxRequests", value="true"
@@ -155,7 +156,7 @@ async def test_wrong_auth_payload(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_1),
+        call.Authorize(test_config.authorization_info.valid_id_tag_1),
     )
 
     # this only works if we don't crash from the broken response
@@ -165,7 +166,7 @@ async def test_wrong_auth_payload(
         test_utility,
         charge_point_v16,
         "Authorize",
-        call.AuthorizePayload(test_config.authorization_info.valid_id_tag_2),
+        call.Authorize(test_config.authorization_info.valid_id_tag_2),
     )
 
 
@@ -182,18 +183,18 @@ async def test_data_transfer_with_probe_module(
 ):
     logging.info("######### test_data_transfer_with_probe_module #########")
 
-    @on(Action.DataTransfer)
+    @on(Action.data_transfer)
     def on_data_transfer(**kwargs):
         logging.info(f"Received a data transfer message {datetime.now()}")
-        req = call.DataTransferPayload(**kwargs)
+        req = call.DataTransfer(**kwargs)
         if req.vendor_id == "PIONIX" and req.message_id == "test_message":
-            return call_result.DataTransferPayload(
+            return call_result.DataTransfer(
                 status=DataTransferStatus.accepted, data="Hello there"
             )
         elif req.vendor_id == "PIONIX" and req.message_id == "test_message_broken":
             # purposefully return a wrong payload
-            return call_result.AuthorizePayload(id_tag_info={})
-        return call_result.DataTransferPayload(
+            return call_result.Authorize(id_tag_info={})
+        return call_result.DataTransfer(
             status=DataTransferStatus.unknown_message_id, data="Please implement me"
         )
 
@@ -206,7 +207,7 @@ async def test_data_transfer_with_probe_module(
     await probe_module.wait_to_be_ready()
 
     charge_point_v16 = await central_system_v16_standalone.wait_for_chargepoint()
-    charge_point_v16.route_map[Action.DataTransfer]["_skip_schema_validation"] = True
+    charge_point_v16.route_map[Action.data_transfer]["_skip_schema_validation"] = True
 
     result = await probe_module.call_command(
         "ocpp_data_transfer",
@@ -262,13 +263,13 @@ async def test_boot_notification_call_error(
 
     test_controller.start()
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_error(**kwargs):
         raise InternalError()
 
-    @on(Action.BootNotification)
+    @on(Action.boot_notification)
     def on_boot_notification_accepted(**kwargs):
-        return call_result.BootNotificationPayload(
+        return call_result.BootNotification(
             current_time=datetime.now(timezone.utc).isoformat(),
             interval=5,
             status=RegistrationStatus.accepted,
@@ -280,13 +281,13 @@ async def test_boot_notification_call_error(
     charge_point_v16 = await central_system_v16.wait_for_chargepoint(
         wait_for_bootnotification=False
     )
-    # charge_point_v16.route_map[Action.Authorize]['_skip_schema_validation'] = True
+    # charge_point_v16.route_map[Action.authorize]['_skip_schema_validation'] = True
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "BootNotification",
-        call.BootNotificationPayload(
+        call.BootNotification(
             charge_box_serial_number="cp001",
             charge_point_model="Yeti",
             charge_point_vendor="Pionix",
@@ -311,13 +312,13 @@ async def test_boot_notification_call_error(
     charge_point_v16 = await central_system_v16.wait_for_chargepoint(
         wait_for_bootnotification=False
     )
-    # charge_point_v16.route_map[Action.Authorize]['_skip_schema_validation'] = True
+    # charge_point_v16.route_map[Action.authorize]['_skip_schema_validation'] = True
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "BootNotification",
-        call.BootNotificationPayload(
+        call.BootNotification(
             charge_box_serial_number="cp001",
             charge_point_model="Yeti",
             charge_point_vendor="Pionix",
@@ -339,7 +340,8 @@ async def test_start_transaction_call_error_or_timeout(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
-    logging.info("######### test_start_transaction_call_error_or_timeout #########")
+    logging.info(
+        "######### test_start_transaction_call_error_or_timeout #########")
 
     test_controller.start()
 
@@ -348,7 +350,7 @@ async def test_start_transaction_call_error_or_timeout(
         NotImplementedError(),
         NotImplementedError(),
         NotImplementedError(),
-        call_result.StartTransactionPayload(
+        call_result.StartTransaction(
             transaction_id=1, id_tag_info=IdTagInfo(status=AuthorizationStatus.accepted)
         ),
     ]
@@ -386,12 +388,13 @@ async def test_too_long_payload_field(
 ):
     logging.info("######### test_too_long_payload_field #########")
 
-    payload = call.ChangeConfigurationPayload(key="ThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50characters", value="0")
+    payload = call.ChangeConfiguration(
+        key="ThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50charactersThisIsMuchLongerThan50characters", value="0")
     camel_case_payload = snake_to_camel_case(asdict(payload))
 
     call_msg = Call(
         unique_id=str(charge_point_v16._unique_id_generator()),
-        action=payload.__class__.__name__[:-7],
+        action=payload.__class__.__name__,
         payload=remove_nones(camel_case_payload),
     )
 
@@ -399,4 +402,27 @@ async def test_too_long_payload_field(
 
     assert await wait_for_callerror_and_validate(
         test_utility, charge_point_v16, "FormationViolation"
+    )
+
+
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-sil-ocpp.yaml")
+)
+@pytest.mark.asyncio
+async def test_invalid_encoding_in_payload(
+    test_config,
+    charge_point_v16: ChargePoint16,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
+    logging.info("######### test_invalid_encoding_in_payload #########")
+
+    # a malformed CALL should trigger a RpcFrameworkError CALLERROR
+    call_msg = b"\xd8\x00\x00\x00"
+
+    async with charge_point_v16._call_lock:
+        await charge_point_v16._send(call_msg)
+
+    assert await wait_for_callerror_and_validate(
+        test_utility, charge_point_v16, "GenericError"
     )

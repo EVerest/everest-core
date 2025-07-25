@@ -24,16 +24,16 @@ from everest_test_utils import OCPPConfigReader, CertificateHelper
 from unittest.mock import call as mock_call, Mock, ANY
 from ocpp.v201 import call_result
 from ocpp.v201.datatypes import SetVariableResultType
-from ocpp.v201.enums import SetVariableStatusType
+from ocpp.v201.enums import SetVariableStatusEnumType
 
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.ocpp_utils.central_system import CentralSystem
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
-    GenericOCPP201ConfigAdjustment,
-    OCPP201ConfigVariableIdentifier,
+    GenericOCPP2XConfigAdjustment,
+    OCPP2XConfigVariableIdentifier,
 )
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
-    _OCPP201NetworkConnectionProfileAdjustment,
+    _OCPP2XNetworkConnectionProfileAdjustment,
 )
 
 
@@ -60,7 +60,7 @@ class _BaseTest:
     def _setup_csms_mock(self, csms_mock: Mock, test_data: _CertificateSigningTestData):
         status = "Accepted" if test_data.csr_accepted else "Rejected"
         csms_mock.on_sign_certificate.side_effect = (
-            lambda csr: call_result.SignCertificatePayload(status=status)
+            lambda csr: call_result.SignCertificate(status=status)
         )
 
     def _get_expected_csr_data(
@@ -167,7 +167,8 @@ class TestSecurityOCPPIntegration(_BaseTest):
         test_data = _CertificateSigningTestData(
             csr="mock certificate request", signed_certificate="mock signed certificate"
         )
-        security_mocks = self._setup_security_module_mocks(probe_module, test_data)
+        security_mocks = self._setup_security_module_mocks(
+            probe_module, test_data)
         self._setup_csms_mock(csms_mock, test_data)
 
         # start and ready probe module EvseManagers and wait for libocpp to connect
@@ -178,9 +179,10 @@ class TestSecurityOCPPIntegration(_BaseTest):
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
         # # Act CSMS triggers SignChargingStationCertificate
-        trigger_result: call_result.TriggerMessagePayload = (
+        trigger_result: call_result.TriggerMessage = (
             await chargepoint_with_pm.trigger_message_req(
-                requested_message=f"Sign{certificate_type}"  # todo: SignV2GCertificate
+                # todo: SignV2GCertificate
+                requested_message=f"Sign{certificate_type}"
             )
         )
 
@@ -193,7 +195,8 @@ class TestSecurityOCPPIntegration(_BaseTest):
             security_mocks.generate_certificate_signing_request
         )
         assert security_mocks.generate_certificate_signing_request.mock_calls == [
-            mock_call(self._get_expected_csr_data(certificate_type, ocpp_config_reader))
+            mock_call(self._get_expected_csr_data(
+                certificate_type, ocpp_config_reader))
         ]
         #
         await self._wait_for_mock_called(csms_mock.on_sign_certificate)
@@ -202,7 +205,7 @@ class TestSecurityOCPPIntegration(_BaseTest):
         ]
 
         # Act II: CSMS sends signed result to ChargePoint
-        signed_result: call_result.CertificateSignedPayload = (
+        signed_result: call_result.CertificateSigned = (
             await chargepoint_with_pm.certificate_signed_req(
                 certificate_chain=test_data.signed_certificate,
                 certificate_type=certificate_type,
@@ -212,7 +215,8 @@ class TestSecurityOCPPIntegration(_BaseTest):
         # Verify II
         # -  Chargepoint accepts signed certificate
         #  - OCPP module verifies and installs certificate in Security Module
-        assert signed_result == call_result.CertificateSignedPayload(status="Accepted")
+        assert signed_result == call_result.CertificateSigned(
+            status="Accepted")
         await self._wait_for_mock_called(security_mocks.update_leaf_certificate)
         assert security_mocks.update_leaf_certificate.mock_calls == [
             mock_call(
@@ -240,7 +244,8 @@ class TestSecurityOCPPIntegration(_BaseTest):
             csr="mock certificate request", signed_certificate="mock signed certificate"
         )
         certificate_type = "ChargingStationCertificate"
-        security_mocks = self._setup_security_module_mocks(probe_module, test_data)
+        security_mocks = self._setup_security_module_mocks(
+            probe_module, test_data)
         self._setup_csms_mock(csms_mock, test_data)
 
         # start and ready probe module EvseManagers and wait for libocpp to connect
@@ -251,7 +256,7 @@ class TestSecurityOCPPIntegration(_BaseTest):
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
         # Act CSMS triggers SignChargingStationCertificate
-        trigger_result: call_result.TriggerMessagePayload = (
+        trigger_result: call_result.TriggerMessage = (
             await chargepoint_with_pm.trigger_message_req(
                 requested_message="SignChargingStationCertificate"
             )
@@ -266,7 +271,8 @@ class TestSecurityOCPPIntegration(_BaseTest):
             security_mocks.generate_certificate_signing_request
         )
         assert security_mocks.generate_certificate_signing_request.mock_calls == [
-            mock_call(self._get_expected_csr_data(certificate_type, ocpp_config_reader))
+            mock_call(self._get_expected_csr_data(
+                certificate_type, ocpp_config_reader))
         ]
 
         await self._wait_for_mock_called(csms_mock.on_sign_certificate)
@@ -308,7 +314,8 @@ class TestSecurityOCPPIntegration(_BaseTest):
             signed_certificate_valid=False,
         )
         certificate_type = "ChargingStationCertificate"
-        security_mocks = self._setup_security_module_mocks(probe_module, test_data)
+        security_mocks = self._setup_security_module_mocks(
+            probe_module, test_data)
         self._setup_csms_mock(csms_mock, test_data)
 
         # start and ready probe module EvseManagers and wait for libocpp to connect
@@ -319,7 +326,7 @@ class TestSecurityOCPPIntegration(_BaseTest):
         chargepoint_with_pm = await central_system.wait_for_chargepoint()
 
         # Act CSMS triggers SignChargingStationCertificate
-        trigger_result: call_result.TriggerMessagePayload = (
+        trigger_result: call_result.TriggerMessage = (
             await chargepoint_with_pm.trigger_message_req(
                 requested_message="SignChargingStationCertificate"  # todo: SignV2GCertificate
             )
@@ -334,7 +341,8 @@ class TestSecurityOCPPIntegration(_BaseTest):
             security_mocks.generate_certificate_signing_request
         )
         assert security_mocks.generate_certificate_signing_request.mock_calls == [
-            mock_call(self._get_expected_csr_data(certificate_type, ocpp_config_reader))
+            mock_call(self._get_expected_csr_data(
+                certificate_type, ocpp_config_reader))
         ]
 
         await self._wait_for_mock_called(csms_mock.on_sign_certificate)
@@ -343,7 +351,7 @@ class TestSecurityOCPPIntegration(_BaseTest):
         ]
 
         # Act II: CSMS sends signed result to ChargePoint
-        signed_result: call_result.CertificateSignedPayload = (
+        signed_result: call_result.CertificateSigned = (
             await chargepoint_with_pm.certificate_signed_req(
                 certificate_chain=test_data.signed_certificate,
                 certificate_type=certificate_type,
@@ -352,7 +360,8 @@ class TestSecurityOCPPIntegration(_BaseTest):
         # Verify II
         # -  Chargepoint accepts signed certificate
         #  - OCPP module rejects certificate and sends security event notification
-        assert signed_result == call_result.CertificateSignedPayload(status="Rejected")
+        assert signed_result == call_result.CertificateSigned(
+            status="Rejected")
         await self._wait_for_mock_called(
             csms_mock.on_security_event_notification,
             call=mock_call(
@@ -387,7 +396,8 @@ class TestSecurityOCPPE2E(_BaseTest):
 
     @classmethod
     def _parse_certificate_request(cls, csr: str) -> _ParsedCSR:
-        request = x509.load_pem_x509_csr(csr.encode("utf-8"), default_backend())
+        request = x509.load_pem_x509_csr(
+            csr.encode("utf-8"), default_backend())
         email_address = None
         if request.subject.get_attributes_for_oid(x509.NameOID.EMAIL_ADDRESS):
             email_address = request.subject.get_attributes_for_oid(
@@ -395,11 +405,13 @@ class TestSecurityOCPPE2E(_BaseTest):
             )[0].value
         return cls._ParsedCSR(
             csr,
-            request.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value,
+            request.subject.get_attributes_for_oid(
+                x509.NameOID.COMMON_NAME)[0].value,
             request.subject.get_attributes_for_oid(x509.NameOID.ORGANIZATION_NAME)[
                 0
             ].value,
-            request.subject.get_attributes_for_oid(x509.NameOID.COUNTRY_NAME)[0].value,
+            request.subject.get_attributes_for_oid(
+                x509.NameOID.COUNTRY_NAME)[0].value,
             email_address,
             request.public_key()
             .public_bytes(
@@ -432,7 +444,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         self._setup_csms_mock(csms_mock, test_data)
 
         # # Act CSMS triggers SignChargingStationCertificate
-        trigger_result: call_result.TriggerMessagePayload = (
+        trigger_result: call_result.TriggerMessage = (
             await charge_point.trigger_message_req(
                 requested_message=f"Sign{certificate_type}"
             )
@@ -478,14 +490,16 @@ class TestSecurityOCPPE2E(_BaseTest):
                 issuer_private_key_passphrase="123456",
             )
             signed_certificate += (
-                Path(__file__).parent / "../everest-aux/certs/ca/cso/CPO_SUB_CA2.pem"
+                Path(__file__).parent /
+                "../everest-aux/certs/ca/cso/CPO_SUB_CA2.pem"
             ).read_text() + "\n"
             signed_certificate += (
-                Path(__file__).parent / "../everest-aux/certs/ca/cso/CPO_SUB_CA1.pem"
+                Path(__file__).parent /
+                "../everest-aux/certs/ca/cso/CPO_SUB_CA1.pem"
             ).read_text() + "\n"
 
         # Act II: CSMS sends signed result to ChargePoint
-        signed_result: call_result.CertificateSignedPayload = (
+        signed_result: call_result.CertificateSigned = (
             await charge_point.certificate_signed_req(
                 certificate_chain=signed_certificate, certificate_type=certificate_type
             )
@@ -494,7 +508,8 @@ class TestSecurityOCPPE2E(_BaseTest):
         # Verify II
         # -  Chargepoint accepts signed certificate
         #  - OCPP module verifies and installs certificate in Security Module
-        assert signed_result == call_result.CertificateSignedPayload(status="Accepted")
+        assert signed_result == call_result.CertificateSigned(
+            status="Accepted")
 
     async def test_A02_update_charging_station_certificate_by_csms_request_invalid_as_expired(
         self,
@@ -511,7 +526,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         self._setup_csms_mock(csms_mock, test_data)
 
         # # Act CSMS triggers SignChargingStationCertificate
-        trigger_result: call_result.TriggerMessagePayload = (
+        trigger_result: call_result.TriggerMessage = (
             await charge_point.trigger_message_req(
                 requested_message=f"SignChargingStationCertificate"
             )
@@ -538,7 +553,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         )
 
         # Act II: CSMS sends signed result to ChargePoint
-        signed_result: call_result.CertificateSignedPayload = (
+        signed_result: call_result.CertificateSigned = (
             await charge_point.certificate_signed_req(
                 certificate_chain=signed_certificate,
                 certificate_type="ChargingStationCertificate",
@@ -548,7 +563,8 @@ class TestSecurityOCPPE2E(_BaseTest):
         # Verify II
         # -  Chargepoint accepts signed certificate
         #  - OCPP module rejects wrongly signed certificate
-        assert signed_result == call_result.CertificateSignedPayload(status="Rejected")
+        assert signed_result == call_result.CertificateSigned(
+            status="Rejected")
 
         # Assert an InvalidChargingStationCertificate event is triggered
         await self._wait_for_mock_called(
@@ -574,7 +590,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         self._setup_csms_mock(csms_mock, test_data)
 
         # # Act CSMS triggers SignChargingStationCertificate
-        trigger_result: call_result.TriggerMessagePayload = (
+        trigger_result: call_result.TriggerMessage = (
             await charge_point.trigger_message_req(
                 requested_message=f"SignChargingStationCertificate"
             )
@@ -601,7 +617,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         )
 
         # Act II: CSMS sends signed result to ChargePoint
-        signed_result: call_result.CertificateSignedPayload = (
+        signed_result: call_result.CertificateSigned = (
             await charge_point.certificate_signed_req(
                 certificate_chain=signed_certificate,
                 certificate_type="ChargingStationCertificate",
@@ -611,7 +627,8 @@ class TestSecurityOCPPE2E(_BaseTest):
         # Verify II
         # -  Chargepoint accepts signed certificate
         #  - OCPP module rejects wrongly signed certificate
-        assert signed_result == call_result.CertificateSignedPayload(status="Rejected")
+        assert signed_result == call_result.CertificateSigned(
+            status="Rejected")
 
         # Assert an InvalidChargingStationCertificate event is triggered
         await self._wait_for_mock_called(
@@ -633,7 +650,8 @@ class TestSecurityOCPPE2E(_BaseTest):
         def _compare_websocket_and_cert_components(
             websocket_components, cert_components
         ):
-            websocket_cert_subject_dict = {k: v for ((k, v),) in websocket_components}
+            websocket_cert_subject_dict = {
+                k: v for ((k, v),) in websocket_components}
             cert_subject_dict = {k: v for (k, v) in cert_components}
             for websocket_key, cert_key in [
                 ("countryName", b"C"),
@@ -646,10 +664,12 @@ class TestSecurityOCPPE2E(_BaseTest):
                 ) == cert_subject_dict.get(cert_key, b"").decode("utf-8")
 
         _compare_websocket_and_cert_components(
-            websocket_client_cert["subject"], x509_cert.get_subject().get_components()
+            websocket_client_cert["subject"], x509_cert.get_subject(
+            ).get_components()
         )
         _compare_websocket_and_cert_components(
-            websocket_client_cert["issuer"], x509_cert.get_issuer().get_components()
+            websocket_client_cert["issuer"], x509_cert.get_issuer(
+            ).get_components()
         )
         assert (
             int(websocket_client_cert["serialNumber"], 16)
@@ -663,7 +683,7 @@ class TestSecurityOCPPE2E(_BaseTest):
 
     @pytest.mark.csms_tls(verify_client_certificate=True)
     @pytest.mark.ocpp_config_adaptions(
-        _OCPP201NetworkConnectionProfileAdjustment(None, None, 3)
+        _OCPP2XNetworkConnectionProfileAdjustment(None, None, 3)
     )
     async def test_A02_use_newest_certificate_after_installation(
         self, central_system: CentralSystem, charge_point: ChargePoint201
@@ -676,9 +696,11 @@ class TestSecurityOCPPE2E(_BaseTest):
         # Check originally used certificate
         assert len(central_system.ws_server.websockets) == 1
         old_connection = next(iter(central_system.ws_server.websockets))
-        original_certificate = old_connection.transport.get_extra_info("peercert")
+        original_certificate = old_connection.transport.get_extra_info(
+            "peercert")
         expected_original_certificate = (
-            Path(__file__).parent / "../everest-aux/certs/client/csms/CSMS_RSA.pem"
+            Path(__file__).parent /
+            "../everest-aux/certs/client/csms/CSMS_RSA.pem"
         ).read_text()
         self.assert_websocket_client_sslproto_certificate_equals_certificate(
             original_certificate, expected_original_certificate
@@ -705,13 +727,14 @@ class TestSecurityOCPPE2E(_BaseTest):
             / "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.key",
             issuer_private_key_passphrase="123456",
         )
-        signed_result: call_result.CertificateSignedPayload = (
+        signed_result: call_result.CertificateSigned = (
             await charge_point.certificate_signed_req(
                 certificate_chain=signed_certificate,
                 certificate_type="ChargingStationCertificate",
             )
         )
-        assert signed_result == call_result.CertificateSignedPayload(status="Accepted")
+        assert signed_result == call_result.CertificateSigned(
+            status="Accepted")
 
         # Verify: wait for new connection to be established; validate certificate
         async def wait_for_reconnect():
@@ -729,7 +752,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         )
 
     @pytest.mark.ocpp_config_adaptions(
-        _OCPP201NetworkConnectionProfileAdjustment(None, None, 3)
+        _OCPP2XNetworkConnectionProfileAdjustment(None, None, 3)
     )
     @pytest.mark.csms_tls(verify_client_certificate=True)
     async def test_A02_use_newest_certificate_according_to_validity(
@@ -757,15 +780,18 @@ class TestSecurityOCPPE2E(_BaseTest):
         )
 
         ca_certificate = (
-            Path(__file__).parent / "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.pem"
+            Path(__file__).parent /
+            "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.pem"
         )
-        ca_key = Path(__file__).parent / "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.key"
+        ca_key = Path(__file__).parent / \
+            "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.key"
         ca_passphrase = "123456"  # nosec bandit B105
 
         # Install 3 certificates; the second is newest w.r.t. validity (shortest relative shift from now to the past)
         certificates = {}
         for cert_index, (cert_name, relative_valid_time) in enumerate(
-            [("Cert1-notNewest", -50), ("Cert2-newest", -10), ("Cert3-notNewest", -100)]
+            [("Cert1-notNewest", -50), ("Cert2-newest", -10),
+             ("Cert3-notNewest", -100)]
         ):
             cert_req, cert_key = CertificateHelper.generate_certificate_request(
                 cert_name
@@ -801,10 +827,10 @@ class TestSecurityOCPPE2E(_BaseTest):
 
     @pytest.mark.parametrize("certificate_type", ["ChargingStation", "V2G"])
     @pytest.mark.ocpp_config_adaptions(
-        GenericOCPP201ConfigAdjustment(
+        GenericOCPP2XConfigAdjustment(
             [
                 (
-                    OCPP201ConfigVariableIdentifier(
+                    OCPP2XConfigVariableIdentifier(
                         "InternalCtrlr",
                         "V2GCertificateExpireCheckInitialDelaySeconds",
                         "Actual",
@@ -815,10 +841,10 @@ class TestSecurityOCPPE2E(_BaseTest):
         )
     )
     @pytest.mark.ocpp_config_adaptions(
-        GenericOCPP201ConfigAdjustment(
+        GenericOCPP2XConfigAdjustment(
             [
                 (
-                    OCPP201ConfigVariableIdentifier(
+                    OCPP2XConfigVariableIdentifier(
                         "InternalCtrlr",
                         "ClientCertificateExpireCheckInitialDelaySeconds",
                         "Actual",
@@ -829,7 +855,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         )
     )
     @pytest.mark.ocpp_config_adaptions(
-        _OCPP201NetworkConnectionProfileAdjustment(None, None, 3)
+        _OCPP2XNetworkConnectionProfileAdjustment(None, None, 3)
     )
     async def test_A03_install_new_if_expired(
         self,
@@ -858,10 +884,12 @@ class TestSecurityOCPPE2E(_BaseTest):
             )
 
             ca_certificate = (
-                Path(__file__).parent / "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.pem"
+                Path(__file__).parent /
+                "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.pem"
             )
             ca_key = (
-                Path(__file__).parent / "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.key"
+                Path(__file__).parent /
+                "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.key"
             )
             ca_passphrase = "123456"  # nosec bandit B10
         else:
@@ -877,7 +905,8 @@ class TestSecurityOCPPE2E(_BaseTest):
             )
 
             ca_certificate = (
-                Path(__file__).parent / "../everest-aux/certs/ca/cso/CPO_SUB_CA2.pem"
+                Path(__file__).parent /
+                "../everest-aux/certs/ca/cso/CPO_SUB_CA2.pem"
             )
             ca_key = (
                 Path(__file__).parent
@@ -916,7 +945,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         self, central_system: CentralSystem, charge_point_v201: ChargePoint201
     ):
         # Disable AuthCacheCtrlr
-        r: call_result.SetVariablesPayload = (
+        r: call_result.SetVariables = (
             await charge_point_v201.set_config_variables_req(
                 "SecurityCtrlr", "BasicAuthPassword", "BEEFDEADBEEFDEAD"
             )
@@ -924,7 +953,7 @@ class TestSecurityOCPPE2E(_BaseTest):
         set_variable_result: SetVariableResultType = SetVariableResultType(
             **r.set_variable_result[0]
         )
-        assert set_variable_result.attribute_status == SetVariableStatusType.accepted
+        assert set_variable_result.attribute_status == SetVariableStatusEnumType.accepted
 
         # wait for reconnect
         await central_system.wait_for_chargepoint(wait_for_bootnotification=False)

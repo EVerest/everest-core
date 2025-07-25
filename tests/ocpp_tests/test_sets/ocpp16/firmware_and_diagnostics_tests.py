@@ -47,30 +47,14 @@ async def test_get_diagnostics_retries(
         test_utility,
         charge_point_v16,
         "DiagnosticsStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading),
+        call.DiagnosticsStatusNotification(DiagnosticsStatus.uploading),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "DiagnosticsStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed),
-    )
-
-    test_utility.messages.clear()
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "DiagnosticsStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading),
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "DiagnosticsStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed),
+        call.DiagnosticsStatusNotification(DiagnosticsStatus.upload_failed),
     )
 
     test_utility.messages.clear()
@@ -79,14 +63,30 @@ async def test_get_diagnostics_retries(
         test_utility,
         charge_point_v16,
         "DiagnosticsStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading),
+        call.DiagnosticsStatusNotification(DiagnosticsStatus.uploading),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "DiagnosticsStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed),
+        call.DiagnosticsStatusNotification(DiagnosticsStatus.upload_failed),
+    )
+
+    test_utility.messages.clear()
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "DiagnosticsStatusNotification",
+        call.DiagnosticsStatusNotification(DiagnosticsStatus.uploading),
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "DiagnosticsStatusNotification",
+        call.DiagnosticsStatusNotification(DiagnosticsStatus.upload_failed),
     )
 
 
@@ -120,7 +120,7 @@ async def test_upload_security_log_retries(
         test_utility,
         charge_point_v16,
         "GetLog",
-        call_result.GetLogPayload(LogStatus.accepted),
+        call_result.GetLog(LogStatus.accepted),
         validate_get_log,
     )
 
@@ -128,30 +128,14 @@ async def test_upload_security_log_retries(
         test_utility,
         charge_point_v16,
         "LogStatusNotification",
-        call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1),
+        call.LogStatusNotification(UploadLogStatus.uploading, 1),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "LogStatusNotification",
-        call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1),
-    )
-
-    test_utility.messages.clear()
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "LogStatusNotification",
-        call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1),
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "LogStatusNotification",
-        call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1),
+        call.LogStatusNotification(UploadLogStatus.upload_failure, 1),
     )
 
     test_utility.messages.clear()
@@ -160,14 +144,30 @@ async def test_upload_security_log_retries(
         test_utility,
         charge_point_v16,
         "LogStatusNotification",
-        call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1),
+        call.LogStatusNotification(UploadLogStatus.uploading, 1),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "LogStatusNotification",
-        call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1),
+        call.LogStatusNotification(UploadLogStatus.upload_failure, 1),
+    )
+
+    test_utility.messages.clear()
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "LogStatusNotification",
+        call.LogStatusNotification(UploadLogStatus.uploading, 1),
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "LogStatusNotification",
+        call.LogStatusNotification(UploadLogStatus.upload_failure, 1),
     )
 
 
@@ -196,30 +196,14 @@ async def test_firwmare_update_retries(
         test_utility,
         charge_point_v16,
         "FirmwareStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading),
+        call.DiagnosticsStatusNotification(FirmwareStatus.downloading),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "FirmwareStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed),
-    )
-
-    test_utility.messages.clear()
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "FirmwareStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading),
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "FirmwareStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed),
+        call.DiagnosticsStatusNotification(FirmwareStatus.download_failed),
     )
 
     test_utility.messages.clear()
@@ -228,14 +212,30 @@ async def test_firwmare_update_retries(
         test_utility,
         charge_point_v16,
         "FirmwareStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading),
+        call.DiagnosticsStatusNotification(FirmwareStatus.downloading),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "FirmwareStatusNotification",
-        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed),
+        call.DiagnosticsStatusNotification(FirmwareStatus.download_failed),
+    )
+
+    test_utility.messages.clear()
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "FirmwareStatusNotification",
+        call.DiagnosticsStatusNotification(FirmwareStatus.downloading),
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "FirmwareStatusNotification",
+        call.DiagnosticsStatusNotification(FirmwareStatus.download_failed),
     )
 
 
@@ -262,7 +262,7 @@ async def test_signed_update_firmware_retries(
         test_utility,
         charge_point_v16,
         "InstallCertificate",
-        call_result.InstallCertificatePayload(CertificateStatus.accepted),
+        call_result.InstallCertificate(CertificateStatus.accepted),
     )
 
     location = f"ftp://{getpass.getuser()}:12345@localhost:2121/firmware_update.pnx"
@@ -287,37 +287,22 @@ async def test_signed_update_firmware_retries(
         test_utility,
         charge_point_v16,
         "SignedUpdateFirmware",
-        call_result.SignedUpdateFirmwarePayload(UpdateFirmwareStatus.accepted),
+        call_result.SignedUpdateFirmware(UpdateFirmwareStatus.accepted),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "SignedFirmwareStatusNotification",
-        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1),
+        call.SignedFirmwareStatusNotification(FirmwareStatus.downloading, 1),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "SignedFirmwareStatusNotification",
-        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1),
-    )
-
-    test_utility.messages.clear()
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "SignedFirmwareStatusNotification",
-        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1),
-    )
-
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "SignedFirmwareStatusNotification",
-        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1),
+        call.SignedFirmwareStatusNotification(
+            FirmwareStatus.download_failed, 1),
     )
 
     test_utility.messages.clear()
@@ -326,19 +311,37 @@ async def test_signed_update_firmware_retries(
         test_utility,
         charge_point_v16,
         "SignedFirmwareStatusNotification",
-        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1),
+        call.SignedFirmwareStatusNotification(FirmwareStatus.downloading, 1),
     )
 
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
         "SignedFirmwareStatusNotification",
-        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1),
+        call.SignedFirmwareStatusNotification(
+            FirmwareStatus.download_failed, 1),
+    )
+
+    test_utility.messages.clear()
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedFirmwareStatusNotification",
+        call.SignedFirmwareStatusNotification(FirmwareStatus.downloading, 1),
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedFirmwareStatusNotification",
+        call.SignedFirmwareStatusNotification(
+            FirmwareStatus.download_failed, 1),
     )
 
     # no SignedFirmwareStatusNotification.req should be sent anymore
     test_utility.forbidden_actions.append("SignedFirmwareStatusNotification")
     test_utility.messages.clear()
     assert await wait_for_and_validate(
-        test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
+        test_utility, charge_point_v16, "Heartbeat", call.Heartbeat()
     )

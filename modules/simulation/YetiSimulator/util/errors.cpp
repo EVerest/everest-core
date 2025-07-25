@@ -14,6 +14,9 @@ std::tuple<bool, std::optional<ErrorDefinition>> parse_error_type(const std::str
 
     const auto error_type = static_cast<std::string>(e.at("error_type"));
 
+    if (error_type == "powermeter/CommunicationFault") {
+        return {raise, error_definitions::powermeter_CommunicationFault};
+    }
     if (error_type == "DiodeFault") {
         return {raise, error_definitions::evse_board_support_DiodeFault};
     }
