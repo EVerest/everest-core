@@ -7,11 +7,15 @@ module(
 # B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
 ###############################################################################
 
-bazel_dep(name = "everest-framework", version = "0.21.1")
-git_override(module_name="everest-framework", commit="8031136e5c31a345044e187a68de70b4dcae2912", remote="https://github.com/EVerest/everest-framework")
+bazel_dep(name = "everest-framework", version = "0.22.2")
+git_override(
+    module_name="everest-framework",
+    commit="41ae8d15cffd79c4b270f5e0e811f562594063bc",
+    remote="https://github.com/EVerest/everest-framework",
+)
 
-bazel_dep(name = "everest-utils", version = "0.5.2")
-git_override(module_name="everest-utils", commit="824abc6293f1d130f6166a7765319102cd7d7d92", remote="https://github.com/EVerest/everest-utils")
+bazel_dep(name = "everest-utils", version = "0.6.0")
+git_override(module_name="everest-utils", commit="f1117f9d6a9a2fe29d350dd50ecc727a7101ead1", remote="https://github.com/EVerest/everest-utils")
 
 bazel_dep(name = "bazel_features", version = "1.21.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
@@ -21,9 +25,12 @@ bazel_dep(name = "boost.uuid", version = BOOST_VERSION)
 bazel_dep(name = "fmt", version = "11.1.4", repo_name = "com_github_fmtlib_fmt")
 bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "com_github_nlohmann_json")
 bazel_dep(name = "openssl", version = "3.3.1.bcr.1")
-bazel_dep(name = "rules_rust", version = "0.59.2")
-bazel_dep(name = "rules_python", version = "1.3.0")
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "rules_foreign_cc", version = "0.14.0")
+bazel_dep(name = "rules_license", version = "0.0.7")
+bazel_dep(name = "rules_python", version = "1.3.0")
+bazel_dep(name = "rules_rust", version = "0.59.2")
 
 ###############################################################################
 # N O N   M O D U L E
@@ -34,6 +41,7 @@ use_repo(
     deps,
     "libtimer",
     "libevse-security",
+    "libocpp",
     "pugixml",
     "sigslot",
     "com_github_HowardHinnant_date",
