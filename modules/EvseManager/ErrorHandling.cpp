@@ -35,7 +35,8 @@ namespace module {
 using ErrorList = std::list<Everest::error::ErrorType>;
 static const struct IgnoreErrors {
     // p_evse. We need to ignore Inoperative here as this is the result of this check.
-    ErrorList evse{"evse_manager/Inoperative"};
+    ErrorList evse{"evse_manager/Inoperative", "evse_manager/MREC22ResistanceFault",
+                   "evse_manager/MREC11CableCheckFault"};
     ErrorList bsp{"evse_board_support/MREC3HighTemperature", "evse_board_support/MREC18CableOverTempDerate",
                   "evse_board_support/VendorWarning"};
     ErrorList connector_lock{"connector_lock/VendorWarning"};
@@ -162,7 +163,7 @@ void ErrorHandling::process_error() {
 std::optional<Everest::error::Error> ErrorHandling::errors_prevent_charging() {
 
     auto is_fatal = [](auto errors, auto ignore_list) -> std::optional<Everest::error::Error> {
-        for (const auto e : errors) {
+        for (const auto& e : errors) {
             if (std::none_of(ignore_list.begin(), ignore_list.end(), [e](const auto& ign) { return e->type == ign; })) {
                 return *e;
             }
@@ -302,6 +303,34 @@ void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
     // clear externally
     if (p_evse->error_state_monitor->is_error_active("evse_manager/PowermeterTransactionStartFailed", "")) {
         p_evse->clear_error("evse_manager/PowermeterTransactionStartFailed");
+        process_error();
+    }
+}
+
+void ErrorHandling::raise_isolation_resistance_fault(const std::string& description) {
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/MREC22ResistanceFault", "", description, Everest::error::Severity::High);
+    p_evse->raise_error(error_object);
+    process_error();
+}
+
+void ErrorHandling::clear_isolation_resistance_fault() {
+    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC22ResistanceFault", "")) {
+        p_evse->clear_error("evse_manager/MREC22ResistanceFault", "");
+        process_error();
+    }
+}
+
+void ErrorHandling::raise_cable_check_fault(const std::string& description) {
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/MREC11CableCheckFault", "Self test failed", description, Everest::error::Severity::High);
+    p_evse->raise_error(error_object);
+    process_error();
+}
+
+void ErrorHandling::clear_cable_check_fault() {
+    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC11CableCheckFault", "Self test failed")) {
+        p_evse->clear_error("evse_manager/MREC11CableCheckFault", "Self test failed");
         process_error();
     }
 }
