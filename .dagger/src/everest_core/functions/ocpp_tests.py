@@ -117,7 +117,8 @@ async def ocpp_tests(
                         " ".join([
                             "python3", "-m", "pytest",
                             "-rfE",
-                            "-d", "--tx", f"\"{parallel_tests}\"*popen//python=python3",
+                            "-n", f"\"{parallel_tests}\"",
+                            "--dist=loadgroup",
                             "--max-worker-restart=0",
                             "--timeout=300",
                             "--junitxml", f"{ci_config.ci_workspace_config.artifacts_path}/ocpp-tests.xml",
@@ -125,6 +126,7 @@ async def ocpp_tests(
                             "--self-contained-html",
                             "ocpp_tests/test_sets/ocpp16/*.py",
                             "ocpp_tests/test_sets/ocpp201/*.py",
+                            "ocpp_tests/test_sets/ocpp21/*.py",
                             "--everest-prefix", f"{ci_config.ci_workspace_config.dist_path}",
                         ])
                     ],
