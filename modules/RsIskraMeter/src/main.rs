@@ -636,9 +636,29 @@ impl ReadyState {
         Ok(resp)
     }
 
-    fn write_metadata(&self, evse_id: &str) -> Result<()> {
+    fn write_metadata(&self, evse_id: &str, tariff_text: &str) -> Result<()> {
         let mut ocmf_data = self.ocmf_data.clone();
-        ocmf_data.identification_data = format!("{} {}", evse_id, create_random_meter_session_id());
+        let session_id = create_random_meter_session_id();
+        // WM3M4 V2 supports OCMF 1.3.0. There we have a dedicated field `TT`
+        // for the tariff text. If we implement support for it add logic here
+        // to write it into the right field.
+        let mut identification_data =
+            std::collections::LinkedList::from([&session_id, tariff_text]);
+
+        // Overwrite the `charge_point_identification` if needed. Otherwise drop
+        // it into the `identification_data`.
+        if &ocmf_data.charge_point_identification_type == "EVSEID" && !evse_id.is_empty() {
+            ocmf_data.charge_point_identification = evse_id.to_string();
+        } else {
+            identification_data.push_front(evse_id);
+        }
+        // Remove empty strings. Maybe also sanitize the input.
+        ocmf_data.identification_data = identification_data
+            .iter()
+            .filter(|s| !s.is_empty())
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(" ");
 
         let message = everest_serde_json::to_string(&ocmf_data)?;
         let data = string_to_vec(&message);
@@ -709,7 +729,10 @@ impl ReadyState {
                 // but in the future, we might want to handle this differently.
                 log::error!("Unexpected state {state:?}, trying to stop stuck transaction");
                 self.set_time()?;
-                self.write_metadata(&req.evse_id)?;
+                self.write_metadata(
+                    &req.evse_id,
+                    &req.tariff_text.as_ref().unwrap_or(&String::new()),
+                )?;
                 self.stop_transaction()?;
                 log::info!("Stopped stuck transaction");
             }
@@ -723,7 +746,7 @@ impl ReadyState {
         log::info!("Set time");
         // set algorithm
         self.write_single_register(7059, 0)?;
-        self.write_metadata(&req.evse_id)?;
+        self.write_metadata(&req.evse_id, &req.tariff_text.unwrap_or_default())?;
 
         // Finally send start transaction, we are sending 'B'
         self.write_single_register(7051, 0x4200)?;
@@ -1078,22 +1101,24 @@ mod tests {
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         mock.expect_modbus_write_single_register()
-            .with(eq(189), eq(7056), eq(1234))
+            .with(eq(205), eq(7056), eq(1234))
             .times(1)
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         mock.expect_modbus_read_holding_registers()
-            .with(eq(7100), eq(95), eq(1234))
+            .with(eq(7100), eq(103), eq(1234))
             .times(1)
             .returning(|_, _, _| {
                 Ok(generated::types::serial_comm_hub_requests::Result {
                     status_code: StatusCodeEnum::Success,
-                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 95]),
+                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 103]),
                 })
             });
 
         let ready_state = make_ready_state(mock);
-        ready_state.write_metadata("some evse id").unwrap();
+        ready_state
+            .write_metadata("some evse id", "some tariff text")
+            .unwrap();
     }
 
     #[test]
@@ -1281,13 +1306,13 @@ mod tests {
             .in_sequence(&mut seq)
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
         mock.expect_modbus_read_holding_registers()
-            .with(eq(7100), eq(89), eq(1234))
+            .with(eq(7100), eq(88), eq(1234))
             .times(1)
             .in_sequence(&mut seq)
             .returning(|_, _, _| {
                 Ok(generated::types::serial_comm_hub_requests::Result {
                     status_code: StatusCodeEnum::Success,
-                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 89]),
+                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 88]),
                 })
             });
 

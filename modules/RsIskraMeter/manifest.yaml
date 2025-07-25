@@ -29,7 +29,9 @@ config:
     default: "EVSEID"
     type: string
   ocmf_charge_point_identification:
-    description: Identification information for the charge point.
+    description: >-
+      Identification information for the charge point. If you set it to `EVSEID`
+      it will be overwritten by the evse-id provided by `TransactionReq`
     default: ""
     type: string
   communication_errors_threshold:
