@@ -34,10 +34,46 @@ def _deps_impl(module_ctx):
     maybe(
         http_archive,
         name = "libevse-security",
-        url = "https://github.com/EVerest/libevse-security/archive/fbe634af0ab3784f3cd336a309007f0f36558df6.tar.gz",
-        sha256 = "8dab7dd82f8b44f9dee70435d4313963c06e9cfd1b0e38763e857da2d66b0b3d",
-        strip_prefix = "libevse-security-fbe634af0ab3784f3cd336a309007f0f36558df6",
+        url = "https://github.com/EVerest/libevse-security/archive/9f246bcca44ffe18212e919273bce281e07f3d7f.tar.gz",
+        sha256 = "80cedf260cbf4282ffc04516444019e66d2f624e29949a9a56a4caf9b0883a2c",
+        strip_prefix = "libevse-security-9f246bcca44ffe18212e919273bce281e07f3d7f",
         build_file = "@everest-core//third-party/bazel:BUILD.libevse-security.bazel",
+    )
+
+    maybe(
+        http_archive,
+        name = "libocpp",
+        url = "https://github.com/EVerest/libocpp/archive/89c7b62ec899db637f43b54f19af2c4af30cfa66.tar.gz",
+        sha256 = "5f359e9b50680bee345d469b7a6e54c9bad3a308dee2bc11351860f5831dde36",
+        strip_prefix = "libocpp-89c7b62ec899db637f43b54f19af2c4af30cfa66",
+        build_file = "@everest-core//third-party/bazel:BUILD.libocpp.bazel",
+    )
+
+    maybe(
+        http_archive,
+        name = "com_github_warmcatt_libwebsockets",
+        url = "https://github.com/warmcat/libwebsockets/archive/v4.3.3.tar.gz",
+        sha256 = "6fd33527b410a37ebc91bb64ca51bdabab12b076bc99d153d7c5dd405e4bdf90",
+        strip_prefix = "libwebsockets-4.3.3",
+        build_file = "@everest-core//third-party/bazel:BUILD.libwebsockets.bazel",
+    )
+
+    maybe(
+        http_archive,
+        name = "everest_sqlite",
+        url = "https://github.com/EVerest/everest-sqlite/archive/v0.1.1.tar.gz",
+        sha256 = "7a8a7b1edf4177d771c80a28ed0558e4b9fcb74cdda1bacdf6399766f2c8ff83",
+        strip_prefix = "everest-sqlite-0.1.1",
+        build_file = "@everest-core//third-party/bazel:BUILD.everest-sqlite.bazel",
+    )
+
+    maybe(
+        http_archive,
+        name = "com_github_pboettch_json-schema-validator",
+        url = "https://github.com/pboettch/json-schema-validator/archive/2.1.0.tar.gz",
+        sha256 = "83f61d8112f485e0d3f1e72d51610ba3924b179926a8376aef3c038770faf202",
+        strip_prefix = "json-schema-validator-2.1.0",
+        build_file = "@everest-framework//third-party/bazel:BUILD.json-schema-validator.bazel",
     )
 
     maybe(
