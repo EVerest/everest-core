@@ -59,6 +59,8 @@ class PyEVJosevModule():
         etc_certs_path = m.info.paths.etc / EVEREST_CERTS_SUB_DIR
         set_PKI_PATH(str(etc_certs_path.resolve()))
 
+        self._es.ServiceHPC1_Active = self._setup.configs.module['enable_service_hpc1']
+
         if self._setup.configs.module['enable_tls_1_3'] == True:
             enable_tls_1_3()
 
