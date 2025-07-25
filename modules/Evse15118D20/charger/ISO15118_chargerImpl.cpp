@@ -438,13 +438,22 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         [this](const dt::ServiceCategory& service_category, const std::optional<dt::AcConnector>& ac_connector,
                const dt::ControlMode& control_mode, const dt::MobilityNeedsMode& mobility_needs_mode,
                const feedback::EvseTransferLimits& evse_limits, const feedback::EvTransferLimits& ev_limits,
-               const feedback::EvSEControlMode& ev_control_mode) {
+               const feedback::EvSEControlMode& ev_control_mode,
+               const std::vector<iso15118::message_20::datatypes::ServiceCategory>& ev_energy_services) {
             // Everest types sent to OCPP
             using namespace types::iso15118;
 
             ChargingNeeds charging_needs;
 
             charging_needs.requested_energy_transfer = get_energy_transfer_mode(service_category, ac_connector);
+            if (!ev_energy_services.empty()) {
+                charging_needs.available_energy_transfer = std::vector<types::iso15118::EnergyTransferMode>{};
+                charging_needs.available_energy_transfer->reserve(ev_energy_services.size());
+                for (const auto& energy_transfer : ev_energy_services) {
+                    charging_needs.available_energy_transfer->emplace_back(
+                        get_energy_transfer_mode(energy_transfer, std::nullopt));
+                }
+            }
 
             if (control_mode == dt::ControlMode::Scheduled) {
                 charging_needs.control_mode = ControlMode::ScheduledControl;
