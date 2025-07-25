@@ -131,6 +131,8 @@
     "https://bcr.bazel.build/modules/boost.predef/1.87.0/source.json": "421162e76f175a64d22296b9cf3272441324fa994766acffd367182a777ad092",
     "https://bcr.bazel.build/modules/boost.preprocessor/1.87.0/MODULE.bazel": "fdbcce15c585de47e4a5e9f6e2b9aa87f690a87e205eded400c5590f7e64535a",
     "https://bcr.bazel.build/modules/boost.preprocessor/1.87.0/source.json": "ef9b9006890126f5880bb51ccbe8a97a95baf21606e2f30acdb1c30c0dd79758",
+    "https://bcr.bazel.build/modules/boost.process/1.87.0/MODULE.bazel": "9cf594dd5d2b8b1a0f4881c619dfe8de73fd72a942df3d4cf709f24f04e8c51d",
+    "https://bcr.bazel.build/modules/boost.process/1.87.0/source.json": "cd8420cbe9c93e05350f9bb53ddfc2f941389a1ddb16b3e161409836eaf5bec4",
     "https://bcr.bazel.build/modules/boost.program_options/1.87.0/MODULE.bazel": "186e44a5e01b9dedc91420141fba5b31cb73d04f374a6387f80ab53d725faafc",
     "https://bcr.bazel.build/modules/boost.program_options/1.87.0/source.json": "53dacc9541ab7e68796c86cacb4d395b9a758a2a2fb2778f67ca5dcd1ef990e0",
     "https://bcr.bazel.build/modules/boost.property_tree/1.87.0/MODULE.bazel": "f3fd3d9af4f36b53ef365f34d73491c1dcc64adf5dccf46b19680daa98ca1981",
@@ -1134,7 +1136,7 @@
     },
     "@@rules_python+//python/extensions:pip.bzl%pip": {
       "general": {
-        "bzlTransitiveDigest": "yEVWLW9mb0bMpTaglerJSQLCIiELrHNTPnIZndkaWOw=",
+        "bzlTransitiveDigest": "2OFs0GWv7CkWNcamJzcCcqDils9EKzfwuAySONu85Tk=",
         "usagesDigest": "hfd6Vvoca8pwAjfCQ0A1gPTCgJMtHoD5SceuasZJOUw=",
         "recordedFileInputs": {
           "@@everest-utils+//requirements-bazel.txt": "86d6c66ef03d93aeb7a5b6576fc419790fd34918ac13d91c5948f82df97fb5bf",

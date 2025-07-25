@@ -1,0 +1,38 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+IMPLS = [
+    "main",
+]
+
+cc_everest_module(
+    name = "System",
+    deps = [
+        "@com_github_HowardHinnant_date//:date",
+        "@libtimer//:libtimer",
+        "//lib:run_application",
+    ],
+    impls = IMPLS,
+)
+
+# Install script files alongside the binary
+genrule(
+    name = "system_scripts",
+    srcs = [
+        "constants.env",
+        "diagnostics_uploader.sh",
+        "firmware_updater.sh",
+        "signed_firmware_downloader.sh",
+        "signed_firmware_installer.sh",
+    ],
+    outs = [
+        "System/constants.env",
+        "System/diagnostics_uploader.sh",
+        "System/firmware_updater.sh",
+        "System/signed_firmware_downloader.sh",
+        "System/signed_firmware_installer.sh",
+    ],
+    cmd = "mkdir -p $(RULEDIR)/System && " +
+          "cp $(SRCS) $(RULEDIR)/System/",
+    visibility = ["//visibility:public"],
+)
+
