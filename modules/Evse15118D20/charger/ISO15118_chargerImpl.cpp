@@ -654,58 +654,6 @@ void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
     setup_steps_done.set(to_underlying_value(SetupStep::SETUP));
 }
 
-void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
-    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
-
-    std::scoped_lock lock(GEL);
-
-    std::vector<dt::ServiceCategory> services;
-
-    for (const auto& mode : supported_energy_transfer_modes) {
-        switch (mode) {
-        case types::iso15118::EnergyTransferMode::AC_single_phase_core:
-        case types::iso15118::EnergyTransferMode::AC_two_phase:
-        case types::iso15118::EnergyTransferMode::AC_three_phase_core:
-            services.push_back(dt::ServiceCategory::AC);
-            break;
-        case types::iso15118::EnergyTransferMode::AC_BPT:
-        case types::iso15118::EnergyTransferMode::AC_BPT_DER:
-            services.push_back(dt::ServiceCategory::AC_BPT);
-            break;
-        case types::iso15118::EnergyTransferMode::AC_DER:
-            services.push_back(dt::ServiceCategory::AC_DER);
-            break;
-        case types::iso15118::EnergyTransferMode::DC:
-        case types::iso15118::EnergyTransferMode::DC_core:
-        case types::iso15118::EnergyTransferMode::DC_extended:
-        case types::iso15118::EnergyTransferMode::DC_combo_core:
-        case types::iso15118::EnergyTransferMode::DC_unique:
-            services.push_back(dt::ServiceCategory::DC);
-            break;
-        case types::iso15118::EnergyTransferMode::DC_BPT:
-            services.push_back(dt::ServiceCategory::DC_BPT);
-            break;
-        case types::iso15118::EnergyTransferMode::DC_ACDP:
-            services.push_back(dt::ServiceCategory::DC_ACDP);
-            break;
-        case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
-            services.push_back(dt::ServiceCategory::DC_ACDP_BPT);
-            break;
-        case types::iso15118::EnergyTransferMode::WPT:
-            services.push_back(dt::ServiceCategory::WPT);
-            break;
-        }
-    }
-
-    setup_config.supported_energy_services = services;
-
-    if (controller) {
-        controller->update_energy_modes(services);
-    }
-
-    setup_steps_done.set(to_underlying_value(SetupStep::ENERGY_SERVICE));
-}
-
 void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
     // your code for cmd set_charging_parameters goes here
 }
@@ -782,6 +730,62 @@ void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
     if (controller) {
         controller->send_control_event(iso15118::d20::PauseCharging{pause});
     }
+}
+
+void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) {
+    // your code for cmd no_energy_pause_charging goes here
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+
+    std::scoped_lock lock(GEL);
+
+    std::vector<dt::ServiceCategory> services;
+
+    for (const auto& mode : supported_energy_transfer_modes) {
+        switch (mode) {
+        case types::iso15118::EnergyTransferMode::AC_single_phase_core:
+        case types::iso15118::EnergyTransferMode::AC_two_phase:
+        case types::iso15118::EnergyTransferMode::AC_three_phase_core:
+            services.push_back(dt::ServiceCategory::AC);
+            break;
+        case types::iso15118::EnergyTransferMode::AC_BPT:
+        case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+            services.push_back(dt::ServiceCategory::AC_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::AC_DER:
+            services.push_back(dt::ServiceCategory::AC_DER);
+            break;
+        case types::iso15118::EnergyTransferMode::DC:
+        case types::iso15118::EnergyTransferMode::DC_core:
+        case types::iso15118::EnergyTransferMode::DC_extended:
+        case types::iso15118::EnergyTransferMode::DC_combo_core:
+        case types::iso15118::EnergyTransferMode::DC_unique:
+            services.push_back(dt::ServiceCategory::DC);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_BPT:
+            services.push_back(dt::ServiceCategory::DC_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_ACDP:
+            services.push_back(dt::ServiceCategory::DC_ACDP);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+            services.push_back(dt::ServiceCategory::DC_ACDP_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::WPT:
+            services.push_back(dt::ServiceCategory::WPT);
+            break;
+        }
+    }
+
+    setup_config.supported_energy_services = services;
+
+    if (controller) {
+        controller->update_energy_modes(services);
+    }
+
+    setup_steps_done.set(to_underlying_value(SetupStep::ENERGY_SERVICE));
 }
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {

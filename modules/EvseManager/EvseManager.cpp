@@ -282,6 +282,20 @@ void EvseManager::ready() {
         charger->signal_hlc_error.connect(
             [this](types::iso15118::EvseError error) { r_hlc[0]->call_send_error(error); });
 
+        // Right now only no energy pause after cable check and pre charge is supported
+        // For DIN it is always stop before cablecheck
+        charger->signal_hlc_no_energy_available.connect([this] {
+            if (config.zero_power_ignore_pause) {
+                EVLOG_info << "HLC module wont perform a pause. Even when there is no energy available.";
+                return;
+            }
+
+            const auto no_energy_pause_mode = config.zero_power_allow_ev_to_ignore_pause
+                                                  ? types::iso15118::NoEnergyPauseMode::AllowEvToIgnorePause
+                                                  : types::iso15118::NoEnergyPauseMode::PauseAfterPrecharge;
+            r_hlc[0]->call_no_energy_pause_charging(no_energy_pause_mode);
+        });
+
         auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.

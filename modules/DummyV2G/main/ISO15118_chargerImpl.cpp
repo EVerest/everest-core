@@ -17,11 +17,6 @@ void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
     // your code for cmd setup goes here
 }
 
-void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
-    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
-    // your code for cmd update_energy_transfer_modes goes here
-}
-
 void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
     // your code for cmd set_charging_parameters goes here
 }
@@ -60,6 +55,15 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
 
 void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
     // your code for cmd pause_charging goes here
+}
+
+void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) {
+    // your code for cmd no_energy_pause_charging goes here
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+    // your code for cmd update_energy_transfer_modes goes here
 }
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
