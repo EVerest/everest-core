@@ -12,8 +12,8 @@ class ConfigureResult(BaseResultType):
     Result of the configure operation, based on EverestCI.BaseResultType.
     It contains the container, exit code and the cache directory after configuration.
 
-    Attributes:
-    -----------
+    Attributes
+    ----------
     cache_cpm: dagger.Directory
         Directory containing the CPM cache for the CMake project.
     """

@@ -318,9 +318,12 @@ class EverestCore:
         if container is None:
             res = await self.build_kit()
             if res.exit_code != 0:
-                raise RuntimeError(
-                    f"Failed to build the build kit container: "
-                    f"{res.exit_code}"
+                print(
+                    f"Failed to build the build kit container: {res.exit_code}"
+                )
+                return EverestCI.ClangFormatResult(
+                    container=res.container,
+                    exit_code=res.exit_code,
                 )
             container = res.container
 
@@ -369,8 +372,12 @@ class EverestCore:
         if container is None:
             res = await self.build_kit()
             if res.exit_code != 0:
-                raise RuntimeError(
+                print(
                     f"Failed to build the build kit container: {res.exit_code}"
+                )
+                return BaseResultType(
+                    container=res.container,
+                    exit_code=res.exit_code,
                 )
             container = res.container
 
@@ -442,8 +449,12 @@ class EverestCore:
         if container is None:
             res = await self.build_kit()
             if res.exit_code != 0:
-                raise RuntimeError(
+                print(
                     f"Failed to build the build kit container: {res.exit_code}"
+                )
+                return BaseResultType(
+                    container=res.container,
+                    exit_code=res.exit_code,
                 )
             container = res.container
 
@@ -521,8 +532,12 @@ class EverestCore:
         if container is None:
             res = await self.build_kit()
             if res.exit_code != 0:
-                raise RuntimeError(
+                print(
                     f"Failed to build the build kit container: {res.exit_code}"
+                )
+                return BaseResultType(
+                    container=res.container,
+                    exit_code=res.exit_code,
                 )
             container = res.container
 
@@ -590,6 +605,9 @@ class EverestCore:
         if container is None:
             res = await self.build_bazel()
             if res.exit_code != 0:
+                print(
+                    f"Failed to build with bazel: {res.exit_code}"
+                )
                 return BaseResultType(
                     container=res.container,
                     exit_code=res.exit_code,
@@ -654,8 +672,13 @@ class EverestCore:
         if container is None:
             res = await self.build_kit()
             if res.exit_code != 0:
-                raise RuntimeError(
+                print(
                     f"Failed to build the build kit container: {res.exit_code}"
+                )
+                return ConfigureResult(
+                    container=res.container,
+                    exit_code=res.exit_code,
+                    cache_cpm=dag.Directory(),
                 )
             container = res.container
 
@@ -738,8 +761,13 @@ class EverestCore:
         if container is None:
             res = await self.configure_cmake_gcc()
             if res.exit_code != 0:
-                raise RuntimeError(
-                    f"Failed to configure build build-kit: {res.exit_code}"
+                print(
+                    f"Failed to configure CMake with GCC: {res.exit_code}"
+                )
+                return BuildResult(
+                    container=res.container,
+                    exit_code=res.exit_code,
+                    cache_ccache=dag.Directory(),
                 )
             container = res.container
 
@@ -821,7 +849,14 @@ class EverestCore:
         if container is None:
             res = await self.build_cmake_gcc()
             if res.exit_code != 0:
-                raise RuntimeError(f"Failed to build CMake: {res.exit_code}")
+                print(
+                    f"Failed to build CMake with GCC: {res.exit_code}"
+                )
+                return UnitTestsResult(
+                    container=res.container,
+                    exit_code=res.exit_code,
+                    last_test_log=dag.File(),
+                )
         container = res.container
 
         with tracer.start_as_current_span(
@@ -902,8 +937,13 @@ class EverestCore:
         if container is None:
             res = await self.build_cmake_gcc()
             if res.exit_code != 0:
-                raise RuntimeError(
-                    f"Failed to build the build kit: {res.exit_code}"
+                print(
+                    f"Failed to build CMake with GCC: {res.exit_code}"
+                )
+                return InstallResult(
+                    container=res.container,
+                    exit_code=res.exit_code,
+                    dist_dir=dag.Directory(),
                 )
             container = res.container
 
@@ -989,7 +1029,15 @@ class EverestCore:
         if container is None:
             res = await self.install()
             if res.exit_code != 0:
-                raise RuntimeError(f"Failed to install: {res.exit_code}")
+                print(
+                    f"Failed to install the built: {res.exit_code}"
+                )
+                return IntegrationTestsResult(
+                    container=res.container,
+                    exit_code=res.exit_code,
+                    result_xml=dag.File(),
+                    report_html=dag.File(),
+                )
             container = res.container
 
         mqtt_server = self.mqtt_server()
@@ -1090,7 +1138,13 @@ class EverestCore:
         if container is None:
             res = await self.install()
             if res.exit_code != 0:
-                raise RuntimeError(f"Failed to install: {res.exit_code}")
+                print(
+                    f"Failed to install the built: {res.exit_code}"
+                )
+                return OcppTestsResult(
+                    container=res.container,
+                    exit_code=res.exit_code,
+                )
             container = res.container
 
         mqtt_server = self.mqtt_server()

@@ -11,8 +11,8 @@ class IntegrationTestsResult(BaseResultType):
     It contains the result of the integration tests in JUnit XML format and
     an HTML report.
 
-    Attributes:
-    -----------
+    Attributes
+    ----------
     result_xml: dagger.File
         File containing the result of the integration tests in JUnit XML format
     report_html: dagger.File

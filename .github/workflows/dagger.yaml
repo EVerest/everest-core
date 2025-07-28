@@ -54,7 +54,7 @@ jobs:
           version: 0.18.12
           workdir: ${{ github.workspace }}
           module: github.com/${{ github.repository}}@${{ github.ref }}
-          call: --cache-dir ${{ github.workspace }}/outputs/cache --is-github-run --github-token ${{ secrets.GITHUB_TOKEN }} --org-name ${{ github.repository_owner }} --repo-name ${{ github.event.repository.name }} --sha ${{ github.sha }} --run-id ${{ github.run_id }} --attempt-number ${{ github.run_attempt }} pull-request outputs export --path ${{ github.workspace }}/outputs
+          call: --cache-dir ${{ github.workspace }}/outputs/cache --is-github-run --github-token ${{ secrets.GITHUB_TOKEN }} --org-name ${{ github.repository_owner }} --repo-name ${{ github.event.repository.name }} --sha ${{ github.sha }} --run-id ${{ github.run_id }} --attempt-number ${{ github.run_attempt }} --event-name ${{ github.event_name }} pull-request outputs export --path ${{ github.workspace }}/outputs
       - name: Save Cache
         if: contains(fromJSON('["schedule","push","pull_request"]'), github.event_name)
         uses: actions/cache/save@v4
