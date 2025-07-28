@@ -347,19 +347,18 @@ types:
     type: object
     required:
       - uuid
-      - valid_until
+      - valid_until_ts
       - schedule
       - limits_root_side
     properties:
       uuid:
         description: UUID of node that this limit applies to
         type: string
-      valid_until:
+      valid_until_ts:
         description: >-
-          Limits are valid until this timepoint in RFC3339 UTC. If no new
-          update is received, power consumption must be stopped after that timepoint.
-        type: string
-        format: date-time
+          Limits are valid until this timestamp in seconds from the monotonic clock. If no new
+          update is received, power consumption must be stopped after that timestamp.
+        type: integer
       limits_root_side:
         description: Enforced limits that must be respected at the root side.
         type: object

@@ -3,6 +3,7 @@
 
 #include <EnergyManagerImpl.hpp>
 
+#include <chrono>
 #include <fstream>
 
 #include "Broker.hpp"
@@ -184,11 +185,12 @@ std::vector<types::energy::EnforcedLimits> EnergyManagerImpl::run_optimizer(type
         const auto sold_energy = local_market.get_sold_energy();
 
         if (sold_energy.size() > 0) {
+            using namespace std::chrono;
 
             types::energy::EnforcedLimits l;
             l.uuid = local_market.energy_flow_request.uuid;
-            l.valid_until =
-                Everest::Date::to_rfc3339(globals.start_time + std::chrono::seconds(config.update_interval * 10));
+            l.valid_until_ts = duration_cast<seconds>(steady_clock::now().time_since_epoch()).count();
+            l.valid_until_ts += config.update_interval * 10;
 
             l.schedule = sold_energy;
 

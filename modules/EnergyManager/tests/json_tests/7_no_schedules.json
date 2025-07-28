@@ -43,7 +43,7 @@
                 ],
                 "schedule_setpoints": [],
                 "uuid": "evse_manager",
-                "valid_until": "2024-01-01T12:00:10.000Z"
+                "valid_until_ts": 0
             }
         ]
     ],
