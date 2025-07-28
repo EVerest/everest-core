@@ -558,7 +558,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
     RPCDataTypes::EVSEStatusObj evse_status;
     evse_status.available = false;
     evse_status.ac_charge_param.emplace();
-    evse_status.ac_charge_param->evse_max_current.emplace(12.3);
+    evse_status.ac_charge_param->evse_max_current = 12.3;
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
     // Set up the expected responses
@@ -597,7 +597,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     RPCDataTypes::EVSEStatusObj evse_status;
     evse_status.available = false;
     evse_status.ac_charge_param.emplace();
-    evse_status.ac_charge_param->evse_max_current.emplace(12.3);
+    evse_status.ac_charge_param->evse_max_current = 12.3;
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
     // Set up the expected responses
