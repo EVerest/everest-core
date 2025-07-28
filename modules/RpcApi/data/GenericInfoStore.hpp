@@ -64,7 +64,7 @@ public:
     // notify that data has changed
     void notify_data_changed() {
         std::unique_lock<std::mutex> data_lock(this->data_mutex);
-        if (this->notification_callback) {
+        if (this->notification_callback && this->data_is_valid) {
             // create a copy of the data object
             T data_copy = this->dataobj;
             // unlock explicitly before entering callback
