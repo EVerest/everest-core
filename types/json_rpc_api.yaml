@@ -182,7 +182,6 @@ types:
         description: Connector type
         type: object
         $ref: /json_rpc_api#/ConnectorTypeEnum
-
       description:
         description: Description
         type: string
