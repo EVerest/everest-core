@@ -191,6 +191,8 @@ types:
     type: object
     additionalProperties: false
     required:
+      - evse_max_current
+      - evse_max_phase_count
       - evse_maximum_charge_power
       - evse_minimum_charge_power
       - evse_nominal_frequency
@@ -201,6 +203,9 @@ types:
       evse_max_current:
         description: evse_max_current
         type: number
+      evse_max_phase_count:
+        description: evse_max_phase_count
+        type: integer
       evse_maximum_charge_power:
         description: evse_maximum_charge_power
         type: number
