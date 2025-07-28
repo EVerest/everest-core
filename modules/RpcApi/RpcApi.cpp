@@ -39,15 +39,14 @@ void RpcApi::init() {
                 continue;
             }
             this->subscribe_evse_energy(evse_energy, *evse_store);
-            EVLOG_error << "EVSE index set in energy interface mapping, using first EVSE index " << evse_energy->get_mapping().value().evse;
         } else {
-            this->subscribe_evse_energy(evse_energy, *this->data.evses.at(0)); // currently only one EVSE is supported
+            this->subscribe_evse_energy(evse_energy, *this->data.evses.at(0)); // only one EVSE is supported
             EVLOG_warning << "EVSE index not set in energy interface mapping, using first EVSE index 0";
         }
     }
 
     // Create the request handler
-    m_request_handler = std::make_unique<RpcApiRequestHandler>(r_evse_manager, r_evse_energy_sink);
+    m_request_handler = std::make_unique<RpcApiRequestHandler>(data, r_evse_manager, r_evse_energy_sink);
 
     m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port, config.websocket_interface);
     // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
@@ -71,6 +70,10 @@ void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data, const type
     types::json_rpc_api::evse_manager_session_event_to_evse_state(session_event);
     evse_data.evsestatus.set_state(evse_state);
     evse_data.sessioninfo.update_state(session_event);
+
+    if (evse_state == types::json_rpc_api::EVSEStateEnum::Charging) {
+        evse_data.evsestatus.set_charging_allowed(true);
+    }
 
     if (session_event.source.has_value()) {
         const auto source = session_event.source.value();
@@ -151,6 +154,18 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
         auto var_selected_protocol = types::json_rpc_api::evse_manager_protocol_to_charge_protocol(selected_protocol);
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
+    });
+
+    evse_manager->subscribe_limits(
+        [this, &evse_data](const types::evse_manager::Limits& limits) {
+            // set the external limits in the data store
+            auto tmp = evse_data.evsestatus.get_ac_charge_param();
+            if (!tmp.has_value()) {
+                tmp.emplace();
+            }
+            tmp->evse_max_current = limits.max_current;
+            tmp->evse_max_phase_count = limits.nr_of_phases_available;
+            evse_data.evsestatus.set_ac_charge_param(tmp);
     });
 }
 
@@ -322,44 +337,44 @@ bool RpcApi::check_evse_mapping() {
         throw std::runtime_error(
             "The number of EVSE managers does not match the number of EVSE data stores. ");
     }
-    else {
-        // As long as the EvseManager only supports one statically configured connector, we extract the
-        // connector id from the mapping. Only the connector type is retrieved from the EvseManager.
-        // Iterate over all over the mapping of the EVSE's and configure the data store accordingly
-        for (std::size_t idx = 0; idx < r_evse_manager.size(); idx++) {
-            const auto& evse_manager = r_evse_manager[idx];
-            auto& evse_data = this->data.evses[idx++];
-            types::json_rpc_api::ConnectorInfoObj connector;
-            // create one DataStore object per EVSE sink
-            if (evse_manager->get_mapping().has_value()) {
-                // Write EVSE index and connector id to the datastore
-                evse_data->evseinfo.set_index(evse_manager->get_mapping().value().evse);
-                if (evse_manager->get_mapping().value().connector.has_value()) {
-                    // Initialize connector id
-                    connector.id = evse_manager->get_mapping().value().connector.value();
-                    types::evse_manager::Evse evse = evse_manager->call_get_evse();
-                    if (!evse.connectors.empty() && evse.connectors[0].type.has_value()) {
-                        try {
-                            connector.type = types::json_rpc_api::string_to_connector_type_enum(types::evse_manager::connector_type_enum_to_string(evse.connectors[0].type.value()));//evse.connectors[0].type; // use the first connector type
-                        } catch (const std::out_of_range& e) {
-                            EVLOG_debug << "Unknown connector typ";
-                            connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown;
-                        }
+    // As long as the EvseManager only supports one statically configured connector, we extract the
+    // connector id from the mapping. Only the connector type is retrieved from the EvseManager.
+    // Iterate over all over the mapping of the EVSE's and configure the data store accordingly
+    for (std::size_t idx = 0; idx < r_evse_manager.size(); idx++) {
+        const auto& evse_manager = r_evse_manager[idx];
+        auto& evse_data = this->data.evses[idx++];
+        // Initialize connector id for the case of no mapping information
+        types::json_rpc_api::ConnectorInfoObj connector;
+        connector.id = 1; // default connector id
+        connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
+        evse_data->evseinfo.set_available_connector(connector);
+        evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
+        // create one DataStore object per EVSE sink
+        if (evse_manager->get_mapping().has_value()) {
+            // Write EVSE index and connector id to the datastore
+            evse_data->evseinfo.set_index(evse_manager->get_mapping().value().evse);
+            if (evse_manager->get_mapping().value().connector.has_value()) {
+                // Initialize connector id
+                connector.id = evse_manager->get_mapping().value().connector.value();
+                types::evse_manager::Evse evse = evse_manager->call_get_evse();
+                if (!evse.connectors.empty() && evse.connectors[0].type.has_value()) {
+                    try {
+                        connector.type = types::json_rpc_api::string_to_connector_type_enum(types::evse_manager::connector_type_enum_to_string(evse.connectors[0].type.value()));//evse.connectors[0].type; // use the first connector type
+                    } catch (const std::out_of_range& e) {
+                        EVLOG_debug << "Unknown connector type for connector id " << connector.id;
                     }
-                    else {
-                        connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
-                    }
-                    evse_data->evseinfo.set_available_connector(connector);
-                    evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
                 }
-            } else {
-                connector.id = 1;
-                connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown;
+                else {
+                    EVLOG_debug << "Unknown connector type for connector id " << connector.id;
+                }
                 evse_data->evseinfo.set_available_connector(connector);
-                evse_data->evsestatus.set_active_connector_id(connector.id);
-                EVLOG_error << "Please configure an evse mapping to your configuration file for the connected EVSE.";
-                return false;
+                evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
             }
+            else {
+                EVLOG_debug << "No connector id configured in the evse mapping, using default connector id " << connector.id;
+            }
+        } else {
+            return false;
         }
     }
     return true;

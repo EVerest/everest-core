@@ -315,6 +315,21 @@ public:
             this->notify_data_changed();
         }
     }
+
+    types::json_rpc_api::EVSEStateEnum get_state() const {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        return this->dataobj.state;
+    }
+
+    const std::optional<RPCDataTypes::ACChargeParametersObj>& get_ac_charge_param() {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        return this->dataobj.ac_charge_param;
+    }
+
+    const std::optional<RPCDataTypes::DCChargeParametersObj>& get_dc_charge_param() {
+        std::unique_lock<std::mutex> data_lock(this->data_mutex);
+        return this->dataobj.dc_charge_param;
+    }
 };
 class HardwareCapabilitiesStore : public GenericInfoStore<RPCDataTypes::HardwareCapabilitiesObj> {};
 class MeterDataStore : public GenericInfoStore<RPCDataTypes::MeterDataObj> {};
