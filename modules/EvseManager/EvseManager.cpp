@@ -37,7 +37,7 @@ inline static types::authorization::ProvidedIdToken create_autocharge_token(std:
     autocharge_token.authorization_type = types::authorization::AuthorizationType::Autocharge;
     trim_colons_from_string(token);
     autocharge_token.id_token = {"VID:" + token, types::authorization::IdTokenType::MacAddress};
-    autocharge_token.connectors.emplace(connector_id, 1);
+    autocharge_token.connectors.emplace({connector_id});
     return autocharge_token;
 }
 
