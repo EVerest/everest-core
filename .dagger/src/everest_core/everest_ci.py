@@ -125,7 +125,12 @@ class EverestCI:
                     "npm", "install", "-g", "@bazel/bazelisk"
                 ]
             )
-
+            .with_env_variable(
+                "LANG", "C.UTF-8"
+            )
+            .with_env_variable(
+                "LC_ALL", "C.UTF-8"
+            )
         )
 
         result = self.BuildKitResult(
