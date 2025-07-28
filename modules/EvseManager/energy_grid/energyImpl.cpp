@@ -410,11 +410,6 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 mod->random_delay_running = false;
             }
 
-            // Is it running but expired?
-            if (mod->random_delay_running && std::chrono::steady_clock::now() > mod->random_delay_end_time) {
-                mod->random_delay_running = false;
-            }
-
             // Do we need to start a new random delay?
             // Ignore changes of less then 0.1 amps
             if (not mod->random_delay_running and random_delay_needed(last_enforced_limit, limit)) {
@@ -435,17 +430,21 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                                                                                      std::chrono::steady_clock::now())
                                         .count();
                 types::uk_random_delay::CountDown c;
-                c.countdown_s = seconds_left;
                 c.current_limit_after_delay_A = enforced_limit;
                 c.current_limit_during_delay_A = limit_when_random_delay_started;
-                c.start_time = Everest::Date::to_rfc3339(mod->random_delay_start_time);
-                mod->p_random_delay->publish_countdown(c);
-                EVLOG_debug << "Random delay running, " << seconds_left
-                            << "s left. Applying the limit before the random delay (" << limit_when_random_delay_started
-                            << "A) instead of requested limit (" << enforced_limit << "A)";
-                if (seconds_left == 0) {
+                if (seconds_left <= 0) {
                     EVLOG_info << "UK Smart Charging regulations: Random delay elapsed.";
+                    c.countdown_s = 0;
+                    mod->random_delay_running = false;
+                } else {
+                    EVLOG_debug << "Random delay running, " << seconds_left
+                                << "s left. Applying the limit before the random delay ("
+                                << limit_when_random_delay_started << "A) instead of requested limit ("
+                                << enforced_limit << "A)";
+                    c.countdown_s = seconds_left;
+                    c.start_time = Everest::Date::to_rfc3339(mod->random_delay_start_time);
                 }
+                mod->p_random_delay->publish_countdown(c);
             } else {
                 types::uk_random_delay::CountDown c;
                 c.countdown_s = 0;
