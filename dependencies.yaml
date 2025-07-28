@@ -61,14 +61,15 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: git@github.com:PionixPro/libevse-security.git
-  git_tag: v0.9.3
+  # in branch basecamp/release/1.0
+  git_tag: 2f032623fbd019e780d25f393b553700bae716a1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: git@github.com:PionixPro/libocpp.git
   # in branch basecamp/release/1.0
-  git_tag: 7c518c167580c70a59476ce4c1e345c52a78d3d3
+  git_tag: bfc57cc4a21470a9a36a13ce26c24f7f8cfa99a8
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
