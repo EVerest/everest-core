@@ -64,9 +64,11 @@ types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power
 }
 
 RpcApiRequestHandler::RpcApiRequestHandler(
+    data::DataStoreCharger& dataobj,
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_managers,
     const std::vector<std::unique_ptr<external_energy_limitsIntf>>& r_evse_energy_sink)
-    : evse_managers(r_evse_managers),
+    : data_store(dataobj),
+      evse_managers(r_evse_managers),
       evse_energy_sink(r_evse_energy_sink) {
 }
 
@@ -76,7 +78,9 @@ RpcApiRequestHandler::~RpcApiRequestHandler() {
 
 ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index, bool charging_allowed) {
     ErrorResObj res {};
+    bool success {true};
 
+    // find the EVSE manager for the given index
     const auto it = std::find_if(evse_managers.begin(), evse_managers.end(),
                                  [&evse_index](const auto& manager) {
                                      return (manager->get_mapping().has_value() &&
@@ -90,9 +94,76 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
     }
 
     auto& evse_manager = *it;
-    const bool success = charging_allowed
-                             ? evse_manager->call_resume_charging()
-                             : evse_manager->call_pause_charging();
+    auto evse_store = data_store.get_evse_store(evse_index);
+
+    // If the charging allowed state is already set to the desired value, we can return early.
+    if (evse_store->evsestatus.get_data()->charging_allowed == charging_allowed) {
+        EVLOG_debug << "Charging allowed state for EVSE index: " << evse_index
+                    << " is already set to: " << charging_allowed;
+        res.error = ResponseErrorEnum::NoError;
+        return res;
+    }
+
+    // Determine the current state of the EVSE. In case the EVSE is currently charging, we can use
+    // the resume-pause methods to control the charging process.
+    auto evse_state = evse_store->evsestatus.get_state();
+    bool is_charging = (evse_state == types::json_rpc_api::EVSEStateEnum::Charging);
+    bool is_charging_paused = (evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEVSE ||
+                            evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEV);
+    float limit = 0.0f;
+    bool is_power_limit = configured_limits.is_current_set;
+
+    if (charging_allowed) {
+        // first we need to determine which limits to apply. If the limit (current or power) is already set, we will use that.
+        if (configured_limits.evse_limit.has_value()) {
+            // If current is set, use the configured current limit
+            limit = configured_limits.evse_limit.value();
+        } else {
+            // If no limits are set, use the default values. TODO: It would be better to get the default values from the EVSE manager.
+            limit = 999.9f; // Default maximum current
+            is_power_limit = false;
+        }
+        auto result = set_external_limit(evse_index, limit, std::function<types::energy::ExternalLimits(float)>(
+                        [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
+        if (result.error != ResponseErrorEnum::NoError) {
+            EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
+                          << " with error: " << result.error;
+            res.error = result.error;
+            return res;
+        }
+        if (is_charging_paused) {
+            if (!evse_manager->call_resume_charging()) {
+                success = false;
+                EVLOG_warning << "Failed to resume charging for EVSE index: " << evse_index;
+            }
+        }
+    }
+    else {
+        if (is_charging) {
+            // If charging is not allowed, we need to pause the charging process
+            if (!evse_manager->call_pause_charging()) {
+                success = false;
+                EVLOG_warning << "Failed to pause charging for EVSE index: " << evse_index;
+            }
+        }
+
+        // Additionally, if charging is not allowed, we set the external limits to zero.
+        float max_power = 0.0f;
+        if (!charging_allowed) {
+            auto result = set_external_limit(evse_index, max_power, std::function<types::energy::ExternalLimits(float)>(
+                [this](float value) { return get_external_limits(value, true); }));
+            if (result.error != ResponseErrorEnum::NoError) {
+                EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
+                              << " with error: " << result.error;
+                res.error = result.error;
+                return res;
+            }
+        }
+    }
+
+    // Update the EVSE status in the data store
+    // TODO: Add a var to the EVSEManager to track if charging is allowed
+    evse_store->evsestatus.set_charging_allowed(charging_allowed);
 
     if (success) {
         res.error = ResponseErrorEnum::NoError;
@@ -140,6 +211,8 @@ ErrorResObj RpcApiRequestHandler::set_external_limit(const int32_t evse_index, T
 }
 
 ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_index, float max_current) {
+    configured_limits.is_current_set = true;
+    configured_limits.evse_limit = max_current;
     return set_external_limit(evse_index, max_current,
                               std::function<types::energy::ExternalLimits(float)>(
                                   [this](float value) { return get_external_limits(value); }));
@@ -159,6 +232,8 @@ ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool
 }
 
 ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index, float max_power) {
+    configured_limits.is_current_set = false;
+    configured_limits.evse_limit = max_power;
     return set_external_limit(evse_index, max_power, std::function<types::energy::ExternalLimits(float)>(
                                 [this](float value) { return get_external_limits(value, true); }));
 }
