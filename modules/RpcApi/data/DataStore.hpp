@@ -129,6 +129,7 @@ private:
         for (const auto& [field, is_set] : field_status) {
             if (!is_set) {
                 this->data_is_valid = false;
+                EVLOG_debug << "EVSEStatusStore: Field " << static_cast<int>(field) << " is not set, data is invalid.";
                 return;
             }
         }
@@ -154,6 +155,8 @@ public:
         set_charging_duration_s(0);
         set_charged_energy_wh(0.0f);
         set_discharged_energy_wh(0.0f);
+        set_error_present(false);
+        set_charging_allowed(true);
     }
 
     // Example set method using the enum
@@ -360,7 +363,6 @@ struct DataStoreCharger {
 
         for (const auto& evse : evses) {
             const auto tmp_index = evse->evseinfo.get_index();
-            EVLOG_info << "Checking EVSE index: " << tmp_index << " for requested index: " << evse_index;
             if (tmp_index == evse_index) {
                 return evse.get();
             }
