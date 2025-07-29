@@ -36,6 +36,7 @@ struct SimulationData {
 
     bool v2g_finished{false};
     bool iso_stopped{false};
+    bool iso_charger_paused{false};
     size_t evse_maxcurrent{0};
     size_t max_current{0};
     std::string payment{"ExternalPayment"};

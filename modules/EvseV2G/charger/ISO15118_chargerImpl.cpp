@@ -302,6 +302,23 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     }
 }
 
+void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118_charger::NoEnergyPauseMode& mode) {
+
+    switch (mode) {
+    case types::iso15118_charger::NoEnergyPauseMode::PauseAfterPrecharge:
+        v2g_ctx->evse_v2g_data.no_energy_pause = NoEnergyPauseStatus::AfterCableCheckPreCharge;
+        break;
+
+    case types::iso15118_charger::NoEnergyPauseMode::PauseBeforeCableCheck:
+        v2g_ctx->evse_v2g_data.no_energy_pause = NoEnergyPauseStatus::BeforeCableCheck;
+        break;
+
+    case types::iso15118_charger::NoEnergyPauseMode::AllowEvToIgnorePause:
+        v2g_ctx->evse_v2g_data.no_energy_pause = NoEnergyPauseStatus::AllowEvToIgnorePause;
+        break;
+    }
+}
+
 void ISO15118_chargerImpl::handle_set_charging_parameters(
     types::iso15118_charger::SetupPhysicalValues& physical_values) {
 

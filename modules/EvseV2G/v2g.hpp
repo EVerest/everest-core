@@ -176,6 +176,13 @@ struct SAE_Bidi_Data {
     bool discharging;
 };
 
+enum NoEnergyPauseStatus {
+    None,
+    AllowEvToIgnorePause,
+    AfterCableCheckPreCharge,
+    BeforeCableCheck,
+};
+
 /**
  * Abstracts a charging port, i.e. a power outlet in this daemon.
  *
@@ -322,6 +329,9 @@ struct v2g_context {
 
         // Specific SAE J2847 bidi values
         struct SAE_Bidi_Data sae_bidi_data;
+
+        // No energy pause IEC61851-23:2023
+        NoEnergyPauseStatus no_energy_pause{NoEnergyPauseStatus::None};
 
     } evse_v2g_data;
 

@@ -577,8 +577,10 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
     } else {
         res->SAScheduleList.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].PMax = SHRT_MAX;
     }
+    constexpr auto PAUSE_DURATION = 60 * 30;
     res->SAScheduleList.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].RelativeTimeInterval.duration =
-        SA_SCHEDULE_DURATION; // Must cover 24 hours
+        conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::None ? SA_SCHEDULE_DURATION
+                                                                              : PAUSE_DURATION; // Must cover 24 hours
     res->SAScheduleList.SAScheduleTuple.array[0]
         .PMaxSchedule.PMaxScheduleEntry.array[0]
         .RelativeTimeInterval.duration_isUsed = 1; // Must be used in DIN
@@ -599,6 +601,12 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
     // res->SASchedules.noContent
     res->SASchedules_isUsed = (unsigned int)0;
 
+    if (res->EVSEProcessing == din_EVSEProcessingType_Finished and
+        conn->ctx->evse_v2g_data.no_energy_pause != NoEnergyPauseStatus::None) {
+        res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSENotification = din_EVSENotificationType_StopCharging;
+        res->DC_EVSEChargeParameter.DC_EVSEStatus.NotificationMaxDelay = 0;
+    }
+
     /* Check the current response code and check if no external error has occurred */
     nextEvent = din_validate_response_code(&res->ResponseCode, conn);
 
@@ -608,7 +616,13 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
             dlog(DLOG_LEVEL_WARNING,
                  "EVSE wants to finish charge parameter phase, but status code is not set to 'ready' (1)");
         }
-        conn->ctx->state = WAIT_FOR_CABLECHECK; // [V2G-DC-453]
+        if (conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::BeforeCableCheck or
+            conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::AfterCableCheckPreCharge) {
+            conn->ctx->state = WAIT_FOR_SESSIONSTOP; // IEC61851-23:2023 CC.5.3.2
+        } else {
+            conn->ctx->state = WAIT_FOR_CABLECHECK; // [V2G-DC-453]
+        }
+
     } else {
         conn->ctx->state = WAIT_FOR_CHARGEPARAMETERDISCOVERY; // [V2G-DC-498]
     }

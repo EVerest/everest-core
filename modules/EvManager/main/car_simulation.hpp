@@ -76,6 +76,10 @@ public:
         sim_data.iso_stopped = iso_stopped;
     }
 
+    void set_iso_charger_paused(bool iso_charger_paused) {
+        sim_data.iso_charger_paused = iso_charger_paused;
+    }
+
     void set_v2g_finished(bool v2g_finished) {
         sim_data.v2g_finished = v2g_finished;
     }

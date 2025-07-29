@@ -297,10 +297,11 @@ void Charger::run_state_machine() {
                 types::iso15118_charger::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
                 if (not(evse_limit.evse_maximum_current_limit > 0 and evse_limit.evse_maximum_power_limit > 0)) {
                     if (not internal_context.no_energy_warning_printed) {
-                        EVLOG_warning << "No energy available, still retrying...";
+                        EVLOG_warning << "No energy available, still retrying... Some EVs dont like 0W and/or 0A in "
+                                         "ChargingParameterDiscoveryRes message";
                         internal_context.no_energy_warning_printed = true;
+                        signal_hlc_no_energy_available();
                     }
-                    break;
                 }
             }
 
@@ -507,6 +508,14 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::PrepareCharging);
                 bcb_toggle_reset();
+
+                if (config_context.charge_mode == ChargeMode::DC) {
+                    // Create a copy of the atomic struct
+                    types::iso15118_charger::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
+                    if (not(evse_limit.evse_maximum_current_limit > 0 and evse_limit.evse_maximum_power_limit > 0)) {
+                        signal_hlc_no_energy_available();
+                    }
+                }
             }
 
             if (config_context.charge_mode == ChargeMode::DC) {
@@ -874,6 +883,7 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
         } else if (cp_event == CPEvent::CarRequestedStopPower) {
             shared_context.iec_allow_close_contactor = false;
             signal_dc_supply_off();
+            shared_context.current_state = EvseState::ChargingPausedEVSE;
         }
         break;
 

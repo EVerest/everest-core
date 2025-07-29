@@ -259,6 +259,7 @@ bool CarSimulation::iso_dc_power_on(const CmdArguments& arguments) {
         charge_three_phase = false;
         return true;
     }
+
     return false;
 }
 
@@ -329,6 +330,7 @@ bool CarSimulation::iso_wait_for_stop(const CmdArguments& arguments, size_t loop
         sim_data.sleep_ticks_left.reset();
         return true;
     }
+
     return false;
 }
 
