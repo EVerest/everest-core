@@ -241,10 +241,10 @@ ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index
 ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int connector_id, bool enable, int priority) {
     ErrorResObj res {};
 
-    const std::string evse_index_str = std::to_string(evse_index);
     const auto it = std::find_if(evse_managers.begin(), evse_managers.end(),
-                                 [&evse_index_str](const auto& manager) {
-                                     return manager->module_id == evse_index_str;
+                                 [&evse_index](const auto& manager) {
+                                     return (manager->get_mapping().has_value() &&
+                                     (manager->get_mapping().value().evse == evse_index));
                                  });
 
     if (it == evse_managers.end()) {
@@ -261,9 +261,9 @@ ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int
                                       : types::evse_manager::Enable_state::Disable;
     cmd_source.enable_priority = priority;
 
-    const bool success =  evse_manager->call_enable_disable(connector_id, cmd_source);
+    const bool result_enabled =  evse_manager->call_enable_disable(connector_id, cmd_source);
 
-    if (success) {
+    if (result_enabled == enable) {
         res.error = ResponseErrorEnum::NoError;
         EVLOG_debug << "Connector " << connector_id << " on EVSE index: " << evse_index
                     << " has been " << (enable ? "enabled" : "disabled") << " with priority: "
