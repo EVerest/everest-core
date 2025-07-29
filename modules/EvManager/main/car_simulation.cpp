@@ -264,6 +264,33 @@ bool CarSimulation::iso_dc_power_on(const CmdArguments& arguments) {
         charge_mode = ChargeMode::DC;
         return true;
     }
+
+    if (sim_data.iso_charger_paused) {
+
+        const auto cmds =
+            std::array<std::string, 2>{"pause;iso_wait_v2g_session_stopped;sleep 2;iso_wait_pwm_is_running;",
+                                       "iso_wait_pwr_ready;iso_wait_for_stop 36000"};
+
+        EVLOG_info << "Charger wants to pause the session";
+        r_ev_board_support->call_allow_power_on(false);
+
+        // NOTE(sl): Change when the Energymode has more then 2 values
+        const std::string energy_mode = (sim_data.energy_mode == EnergyMode::AC) ? "AC" : "DC";
+        const std::string iso_start_v2g_session = "iso_start_v2g_session " + energy_mode + ";";
+
+        auto& modify_session_cmds = sim_data.modify_charging_session_cmds.emplace();
+
+        modify_session_cmds = cmds[0];
+        modify_session_cmds += iso_start_v2g_session;
+        modify_session_cmds += cmds[1];
+
+        sim_data.iso_pwr_ready = false;
+        sim_data.sleep_ticks_left.reset();
+        sim_data.iso_charger_paused = false;
+
+        // NOTE(sl): return false, otherwise the simulation will end too early before the session cmds can be adjusted
+    }
+
     return false;
 }
 
@@ -333,7 +360,7 @@ bool CarSimulation::iso_wait_for_stop(const CmdArguments& arguments, size_t loop
         return true;
     }
 
-    if (sim_data.iso_d20_paused) {
+    if (sim_data.iso_charger_paused) {
 
         const auto cmds =
             std::array<std::string, 2>{"pause;iso_wait_v2g_session_stopped;sleep 2;iso_wait_pwm_is_running;",
@@ -354,7 +381,7 @@ bool CarSimulation::iso_wait_for_stop(const CmdArguments& arguments, size_t loop
 
         sim_data.iso_pwr_ready = false;
         sim_data.sleep_ticks_left.reset();
-        sim_data.iso_d20_paused = false;
+        sim_data.iso_charger_paused = false;
 
         // NOTE(sl): return false, otherwise the simulation will end too early before the session cmds can be adjusted
         return false;

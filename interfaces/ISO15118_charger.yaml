@@ -110,6 +110,20 @@ cmds:
       pause:
         description: Set to true when to pause, set to false when to continue
         type: boolean
+  no_energy_pause_charging:
+    description: >-
+      Right now there is no power available for the charging process. According to
+      IEC61851-23:2023 CC3.5.3 the charger can pause the session before or after the cable check and
+      pre charge stage.
+    arguments:
+      mode:
+        description: >-
+          Set to different no energy pause modes. For PauseAfterPrecharge the charger should pause but
+          has power for cable check and pre charge. For PauseBeforeCableCheck the charger should pause
+          before cable check. For AllowEvToIgnorePause charger should ignore, that the ev will go to
+          CurrentDemand instead of pausing the session, this is against IEC61851-23:2023.
+        type: string
+        $ref: /iso15118#/NoEnergyPauseMode
 # Update physical values
   update_energy_transfer_modes:
     description: >-

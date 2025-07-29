@@ -338,6 +338,20 @@ config:
       - UUID_BASE64
       - SHORT_BASE64
     default: UUID
+  zero_power_ignore_pause:
+    description: >-
+      If no energy is available the charger can signal a pause to the car before cable check.
+      With this option the charger ignores that and continues as if energy were available.
+      This is not standard compliant!
+    type: boolean
+    default: false
+  zero_power_allow_ev_to_ignore_pause:
+    description: >-
+      If no energy is available the charger can signal a pause to the car before cable check.
+      With this option, the charger ignores that the ev goes to the energy phase instead of pausing
+      the session. This is not standard compliant!
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager

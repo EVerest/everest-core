@@ -110,6 +110,8 @@ struct Conf {
     bool contract_certificate_installation_enabled;
     bool inoperative_error_use_vendor_id;
     std::string session_id_type;
+    bool zero_power_ignore_pause;
+    bool zero_power_allow_ev_to_ignore_pause;
 };
 
 class EvseManager : public Everest::ModuleBase {
