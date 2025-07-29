@@ -971,7 +971,11 @@ impl generated::OnReadySubscriber for IskraMeter {
         if let Err(err) =
             ready_state.write_lcd_text(&ready_state.main_text, &ready_state.label_text)
         {
-            log::warn!("Failed to set the labels: {err:}");
+            log::warn!(
+                "Failed to set the texts `{}` and `{}: {err:}",
+                ready_state.main_text,
+                ready_state.label_text
+            );
         }
 
         let ready_state_clone = ready_state.clone();
