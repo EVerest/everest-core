@@ -1099,7 +1099,15 @@ mod tests {
 
     /// Helper to produce the class  under test.
     fn make_ready_state(publisher: SerialCommunicationHubClientPublisher) -> ReadyState {
-        ReadyState::new(InitState::new(1234, OcmfData::default()), publisher)
+        ReadyState::new(
+            InitState::new(
+                1234,
+                OcmfData::default(),
+                "main".to_string(),
+                "label".to_string(),
+            ),
+            publisher,
+        )
     }
 
     #[test]
@@ -1443,47 +1451,70 @@ mod tests {
     }
 
     #[test]
-    fn ready_state__read_lcd_custom_string() {
-        let mut mock = SerialCommunicationHubClientPublisher::default();
+    fn ready_state__write_lcd_text() {
+        use mockall::Sequence;
 
-        // Test reading both main string and label string from registers
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(LCD_CUSTOM_STRING_REGISTER as i64), eq(4), eq(1234))
-            .times(1)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![
-                        u16::from_be_bytes([b'H', b'e']).into(),
-                        u16::from_be_bytes([b'l', b'l']).into(),
-                        u16::from_be_bytes([b'o', b' ']).into(),
-                        0,
-                    ]),
+        for (main_text, label_text) in [
+            ("Hello", "Nice"),                // The normal case.
+            ("VeryLongBlub", "AlsoVeryLong"), // The too long case.
+            ("", "Something"),                // Main is empty.
+            ("Something", ""),                // Label is empty.
+        ] {
+            let mut mock = SerialCommunicationHubClientPublisher::default();
+            let mut seq = Sequence::new();
+
+            // Test writing a short string to main LCD register
+            // First expect read of LCD parameters register
+            mock.expect_modbus_read_holding_registers()
+                .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| {
+                    Ok(generated::types::serial_comm_hub_requests::Result {
+                        status_code: StatusCodeEnum::Success,
+                        value: Some(vec![0x0000]), // Current value without bit 3 set
+                    })
+                });
+
+            // Then expect write of LCD parameters register with bit 3 set
+            mock.expect_modbus_write_single_register()
+                .with(eq(0x0008), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0008 = bit 3 set
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+            // Then expect write to the main text.
+            mock.expect_modbus_write_multiple_registers()
+                .withf(|data, addr, id| {
+                    *addr == LCD_CUSTOM_STRING_REGISTER as i64
+                        && *id == 1234
+                        && data.data.len() == 4
                 })
-            });
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(LCD_CUSTOM_STRING_LABEL_REGISTER as i64), eq(2), eq(1234))
-            .times(1)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![
-                        u16::from_be_bytes([b'T', b'e']).into(),
-                        u16::from_be_bytes([b's', b't']).into(),
-                    ]),
+            // Then expect write to the label text.
+            mock.expect_modbus_write_multiple_registers()
+                .withf(|data, addr, id| {
+                    *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
+                        && *id == 1234
+                        && data.data.len() == 2
                 })
-            });
-
-        let ready_state = make_ready_state(mock);
-        let res = ready_state.read_lcd_custom_string().unwrap();
-        assert_eq!(res, ("Hello \0\0".to_string(), "Test".to_string()));
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+            let ready_state = make_ready_state(mock);
+            let res = ready_state.write_lcd_text(main_text, label_text);
+            assert!(res.is_ok());
+        }
     }
 
     #[test]
-    fn ready_state__write_lcd_custom_string() {
-        let mut mock = SerialCommunicationHubClientPublisher::default();
+    fn ready_state__write_lcd_text__empty() {
         use mockall::Sequence;
+
+        let mut mock = SerialCommunicationHubClientPublisher::default();
         let mut seq = Sequence::new();
 
         // Test writing a short string to main LCD register
@@ -1495,244 +1526,38 @@ mod tests {
             .returning(|_, _, _| {
                 Ok(generated::types::serial_comm_hub_requests::Result {
                     status_code: StatusCodeEnum::Success,
-                    value: Some(vec![0x0000]), // Current value without bit 3 set
+                    value: Some(vec![0x00ff]), // Current value without bit 3 set
                 })
             });
 
         // Then expect write of LCD parameters register with bit 3 set
         mock.expect_modbus_write_single_register()
-            .with(eq(0x0008), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0008 = bit 3 set
+            .with(eq(0x00f7), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 3 bit set to zero
             .times(1)
             .in_sequence(&mut seq)
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
-        // Finally expect write of custom string registers
+        // Then expect write to the main text.
         mock.expect_modbus_write_multiple_registers()
             .withf(|data, addr, id| {
                 *addr == LCD_CUSTOM_STRING_REGISTER as i64 && *id == 1234 && data.data.len() == 4
-                // "Hello" = [0x4865, 0x6C6C, 0x6F00, 0x0000] in big-endian format
             })
             .times(1)
             .in_sequence(&mut seq)
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
-        let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_text("Hello", TextType::Main);
-        assert!(res.is_ok());
-
-        // Test writing a long string (should be truncated to 8 characters)
-        let mut mock = SerialCommunicationHubClientPublisher::default();
-        let mut seq = Sequence::new();
-
-        // First expect read of LCD parameters register
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![0x0010]), // Some other bits set
-                })
-            });
-
-        // Then expect write of LCD parameters register with bit 3 set
-        mock.expect_modbus_write_single_register()
-            .with(eq(0x0018), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0010 | 0x0008 = 0x0018
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        // Finally expect write of custom string registers with truncated data
-        mock.expect_modbus_write_multiple_registers()
-            .withf(|data, addr, id| {
-                *addr == LCD_CUSTOM_STRING_REGISTER as i64 && *id == 1234 && data.data.len() == 4
-                // "VeryLong" (truncated to 8 chars) data
-            })
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_text("VeryLongStringThatShouldBeTruncated", TextType::Main);
-        assert!(res.is_ok());
-
-        // Test writing an empty string
-        let mut mock = SerialCommunicationHubClientPublisher::default();
-        let mut seq = Sequence::new();
-
-        // First expect read of LCD parameters register
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![0x0000]),
-                })
-            });
-
-        // Then expect write of LCD parameters register with bit 3 set
-        mock.expect_modbus_write_single_register()
-            .with(eq(0x0008), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234))
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        // Finally expect write of custom string registers with empty data (all zeros)
-        mock.expect_modbus_write_multiple_registers()
-            .withf(|data, addr, id| {
-                *addr == LCD_CUSTOM_STRING_REGISTER as i64
-                    && *id == 1234
-                    && data.data.len() == 4
-                    && data.data.iter().all(|&x| x == 0) // All zeros for empty string
-            })
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_text("", TextType::Main);
-
-        assert!(res.is_ok());
-    }
-
-    #[test]
-    fn ready_state__write_lcd_custom_string_label() {
-        let mut mock = SerialCommunicationHubClientPublisher::default();
-        use mockall::Sequence;
-        let mut seq = Sequence::new();
-
-        // Test writing a label string to registers
-        // First expect read of LCD parameters register
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![0x0000]), // Current value without bit 3 set
-                })
-            });
-
-        // Then expect write of LCD parameters register with bit 3 set
-        mock.expect_modbus_write_single_register()
-            .with(eq(0x0008), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0008 = bit 3 set
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        // Finally expect write of label string registers
+        // Then expect write to the label text.
         mock.expect_modbus_write_multiple_registers()
             .withf(|data, addr, id| {
                 *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
                     && *id == 1234
                     && data.data.len() == 2
-                // "Test" = [0x5465, 0x7374] in big-endian format
             })
             .times(1)
             .in_sequence(&mut seq)
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
         let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_text("Test", TextType::Label);
-        assert!(res.is_ok());
-
-        // Test writing a long label string (should be truncated to 4 characters)
-        let mut mock = SerialCommunicationHubClientPublisher::default();
-        let mut seq = Sequence::new();
-
-        // First expect read of LCD parameters register
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![0x0010]), // Some other bits set
-                })
-            });
-
-        // Then expect write of LCD parameters register with bit 3 set
-        mock.expect_modbus_write_single_register()
-            .with(eq(0x0018), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0010 | 0x0008 = 0x0018
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        // Finally expect write of label string registers with truncated data
-        mock.expect_modbus_write_multiple_registers()
-            .withf(|data, addr, id| {
-                *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
-                    && *id == 1234
-                    && data.data.len() == 2
-                // "Long" (truncated from "LongLabel") data
-            })
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        let ready_state = make_ready_state(mock);
-        let res = ready_state.write_lcd_text("LongLabel", TextType::Label);
-        assert!(res.is_ok());
-    }
-
-    #[test]
-    fn ready_state__clear_lcd_custom_string() {
-        let mut mock = SerialCommunicationHubClientPublisher::default();
-        use mockall::Sequence;
-        let mut seq = Sequence::new();
-
-        // Test clearing LCD custom string
-
-        // First expect read of LCD parameters register
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![0x0018]), // Current value with bit 3 set and other bits
-                })
-            });
-
-        // Then expect write of LCD parameters register with bit 3 cleared
-        mock.expect_modbus_write_single_register()
-            .with(eq(0x0010), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0018 & !0x0008 = 0x0010
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        // Then expect write of empty string to custom string registers (main)
-        mock.expect_modbus_write_multiple_registers()
-            .withf(|data, addr, id| {
-                *addr == LCD_CUSTOM_STRING_REGISTER as i64
-                    && *id == 1234
-                    && data.data.len() == 4
-                    && data.data.iter().all(|&x| x == 0) // All zeros (empty string)
-            })
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        // Finally expect write of empty string to custom string label registers
-        mock.expect_modbus_write_multiple_registers()
-            .withf(|data, addr, id| {
-                *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
-                    && *id == 1234
-                    && data.data.len() == 2
-                    && data.data.iter().all(|&x| x == 0) // All zeros (empty label)
-            })
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-
-        let ready_state = make_ready_state(mock);
-        let res = ready_state.clear_lcd_custom_string();
+        let res = ready_state.write_lcd_text("", "");
         assert!(res.is_ok());
     }
 }
