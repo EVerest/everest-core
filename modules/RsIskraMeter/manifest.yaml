@@ -38,15 +38,18 @@ config:
     description: The maximum number of consecutive errors allowed before a persistent error is reported
     default: 10
     type: integer
+  lcd_main_text:
+    description: Text to display when there is no transaction. At most 8 chars.
+    type: string
+    default: ""
+  lcd_label_text:
+    description: Label to display when there is no transaction. At most 4 chars.
+    type: string
+    default: ""
 provides:
   meter:
     description: Implementation of the driver functionality
     interface: powermeter
-  lcd_display:
-    description: >-
-        Implementation of the LCD display functionality, can set up to 2 display messages (8 & 4 chars long)
-        For allowed charactes, check the datasheet
-    interface: display_message
 requires:
   modbus:
     interface: serial_communication_hub
