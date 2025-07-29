@@ -46,6 +46,7 @@ cc_library(
         "@everest-framework//:framework",
     ],
     cxxopts = ["-std=c++17"],
+    linkopts = ["-lstdc++"],
     visibility = ["//visibility:public"],
 )
 
