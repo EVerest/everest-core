@@ -145,6 +145,17 @@ types:
     enum:
       - Install
       - Update
+  NoEnergyPauseMode:
+    description: >-
+      PauseAfterPrecharge the charger should pause but has power for cable check and pre charge.
+      PauseBeforeCableCheck the charger should pause before cable check.
+      AllowEvToIgnorePause charger should ignore, that the ev will go to CurrentDemand instead
+      of pausing the session, this is against IEC61851-23:2023.
+    type: string
+    enum:
+      - PauseAfterPrecharge
+      - PauseBeforeCableCheck
+      - AllowEvToIgnorePause
   EVSEID:
     description: >-
       An ID that uniquely identifies the EVSE and the power outlet the

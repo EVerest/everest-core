@@ -476,12 +476,6 @@ void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
     mod->r_iso2->call_setup(evse_id, sae_j2847_mode, debug_mode);
 }
 
-void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
-    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
-    mod->r_iso20->call_update_energy_transfer_modes(supported_energy_transfer_modes);
-    mod->r_iso2->call_update_energy_transfer_modes(supported_energy_transfer_modes);
-}
-
 void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
     mod->r_iso20->call_set_charging_parameters(physical_values);
     mod->r_iso2->call_set_charging_parameters(physical_values);
@@ -549,6 +543,20 @@ void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
     } else {
         mod->r_iso2->call_pause_charging(pause);
     }
+}
+
+void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_no_energy_pause_charging(mode);
+    } else {
+        mod->r_iso2->call_no_energy_pause_charging(mode);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+    mod->r_iso20->call_update_energy_transfer_modes(supported_energy_transfer_modes);
+    mod->r_iso2->call_update_energy_transfer_modes(supported_energy_transfer_modes);
 }
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {

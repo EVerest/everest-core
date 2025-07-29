@@ -320,7 +320,7 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
         _ev->subscribe_stop_from_charger([this]() { car_simulation->set_iso_stopped(true); });
         _ev->subscribe_v2g_session_finished([this]() { car_simulation->set_v2g_finished(true); });
         _ev->subscribe_dc_power_on([this]() { car_simulation->set_dc_power_on(true); });
-        _ev->subscribe_pause_from_charger([this]() { car_simulation->set_iso_d20_paused(true); });
+        _ev->subscribe_pause_from_charger([this]() { car_simulation->set_iso_charger_paused(true); });
     }
 }
 

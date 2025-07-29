@@ -60,6 +60,9 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
     virtual void handle_pause_charging(bool& pause) {
         std::cout << "ISO15118_chargerImplBase::handle_pause_charging called" << std::endl;
     }
+    virtual void handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) {
+        std::cout << "ISO15118_chargerImplBase::handle_no_energy_pause_charging called" << std::endl;
+    }
     virtual void handle_update_ac_max_current(double& max_current) {
         std::cout << "ISO15118_chargerImplBase::handle_update_ac_max_current called" << std::endl;
     }
