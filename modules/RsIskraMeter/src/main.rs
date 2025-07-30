@@ -32,8 +32,8 @@
 //! mqtt
 //!
 //! ```sh
-//! mosquitto_pub -t everest/power_meter_1/meter/cmd -m '{"data":{"args":{"value":{"cable_id":1,"client_id":"","evse_id":"DEABCD312ABC11","tariff_id":1,"transaction_id":"foobarbaz","user_data":""}},"id":"foo","origin":"bar"},"name":"start_transaction","type":"call"}'
-//! mosquitto_pub -t everest/power_meter_1/meter/cmd -m '{"data":{"args":{"transaction_id":"foobarbaz"}, "id":"foo","origin":"bar"},"name":"stop_transaction","type":"call"}'
+//! mosquitto_pub -t everest/modules/power_meter_1/impl/meter/cmd -m '{"data":{"args":{"value":{"evse_id":"DEABCD312ABC11","tariff_text":"0001c", identification_data":"04281FD2FB7381","identification_flags":[],"identification_status":"ASSIGNED","identification_type":"LOCAL","transaction_id":"foobarbaz"}},"id":"foo","origin":"bar"},"name":"start_transaction","type":"call"}'
+//! mosquitto_pub -t everest/modules/power_meter_1/impl/meter/cmd -m '{"data":{"args":{"transaction_id":"foobarbaz"}, "id":"foo","origin":"bar"},"name":"stop_transaction","type":"call"}'
 //! ```
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -64,6 +64,12 @@ use utils::{
 
 /// Public key prefix for transparency software, defined under 6.5.14.
 const PUBLIC_KEY_PREFIX: &str = "3059301306072A8648CE3D020106082A8648CE3D03010703420004";
+
+/// LCD custom string register address (start address for 4 registers: 47063-47066)
+const LCD_CUSTOM_STRING_REGISTER: u16 = 7063;
+/// LCD custom string label egister address (start address for 2 registers: 47067-47068)
+const LCD_CUSTOM_STRING_LABEL_REGISTER: u16 = 7067;
+const LCD_PARAMETERS_REGISTER: u16 = 7062;
 
 /// The charging state from register 7000, defined at table 6.
 #[derive(PartialEq, Debug)]
@@ -398,6 +404,34 @@ mod retry {
     }
 }
 
+/// Text type for LCD display
+#[derive(Debug, Clone, Copy)]
+enum TextType {
+    Main,
+    Label,
+}
+
+/// Parameters for LCD text display
+struct TextParameter {
+    address: u16,
+    num_registers: usize,
+}
+
+impl From<TextType> for TextParameter {
+    fn from(value: TextType) -> Self {
+        match value {
+            TextType::Main => TextParameter {
+                address: LCD_CUSTOM_STRING_REGISTER,
+                num_registers: 4,
+            },
+            TextType::Label => TextParameter {
+                address: LCD_CUSTOM_STRING_LABEL_REGISTER,
+                num_registers: 2,
+            },
+        }
+    }
+}
+
 // Below we're using the type state pattern to implement a small state machine
 // with the states `InitState` and `ReadyState`.
 
@@ -410,13 +444,21 @@ struct InitState {
 
     /// The base ocmf data.
     ocmf_data: OcmfData,
+
+    /// The main text to show when there is no transaction.
+    main_text: String,
+
+    /// The label text to show when there is no transaction.
+    label_text: String,
 }
 
 impl InitState {
-    fn new(device_id: i64, ocmf_data: OcmfData) -> Self {
+    fn new(device_id: i64, ocmf_data: OcmfData, main_text: String, label_text: String) -> Self {
         Self {
             device_id,
             ocmf_data,
+            main_text,
+            label_text,
         }
     }
 }
@@ -435,6 +477,12 @@ struct ReadyState {
 
     /// Public key
     public_key: Arc<Mutex<Option<String>>>,
+
+    /// The main text to show when there is no transaction.
+    main_text: String,
+
+    /// The label text to show when there is no transaction.
+    label_text: String,
 }
 
 impl ReadyState {
@@ -445,6 +493,8 @@ impl ReadyState {
             ocmf_data: init_state.ocmf_data,
             serial_comm_pub,
             public_key: Arc::new(Mutex::new(None)),
+            main_text: init_state.main_text,
+            label_text: init_state.label_text,
         }
     }
 
@@ -746,7 +796,11 @@ impl ReadyState {
         log::info!("Set time");
         // set algorithm
         self.write_single_register(7059, 0)?;
-        self.write_metadata(&req.evse_id, &req.tariff_text.unwrap_or_default())?;
+        self.write_metadata(
+            &req.evse_id,
+            req.tariff_text.as_ref().unwrap_or(&String::new()),
+        )?;
+        self.write_lcd_text(&req.tariff_text.unwrap_or_default(), "")?;
 
         // Finally send start transaction, we are sending 'B'
         self.write_single_register(7051, 0x4200)?;
@@ -807,6 +861,9 @@ impl ReadyState {
         self.check_signature_status()?;
         let signature = self.read_signature()?;
         let signed_meter_values = self.read_signed_meter_values()?;
+
+        // Reset the lcp display
+        self.write_lcd_text(&self.main_text, &self.label_text)?;
         Ok(TransactionStopResponse {
             error: Option::None,
             // Iskra meter has both start and stop snapshot in one
@@ -836,6 +893,40 @@ impl ReadyState {
                 Ok(key)
             }
         }
+    }
+
+    /// Write text to LCD display registers
+    ///
+    /// Generic function to write strings to LCD display registers.
+    /// Non-printable values are replaced with empty space by the meter.
+    /// Also sets bit 3 in the LCD parameters register (47062) to enable text
+    /// display.
+    ///
+    /// # Arguments
+    /// * `main_text` - The main text
+    /// * `label_text` - The label text.
+    fn write_lcd_text(&self, main_text: &str, label_text: &str) -> Result<()> {
+        let current_params = self.read_holding_registers_fixed::<1>(LCD_PARAMETERS_REGISTER)?[0];
+
+        // Check if we need to show text at all - empty strings clear that.
+        let new_params = if main_text.is_empty() && label_text.is_empty() {
+            current_params & !(1 << 3) // Clear bit 3 to 0
+        } else {
+            current_params | (1 << 3) // Set bit 3 to 1
+        };
+        self.write_single_register(LCD_PARAMETERS_REGISTER, new_params)?;
+
+        for (text, text_type) in [(main_text, TextType::Main), (label_text, TextType::Label)] {
+            let params = TextParameter::from(text_type);
+            // Convert string to register values
+            let mut data = string_to_vec(text);
+            data.resize(params.num_registers, 0u16);
+
+            // Write to the specified registers
+            self.write_multiple_registers(params.address, &data)?;
+            log::info!("Wrote `{text}` to {text_type:?}");
+        }
+        Ok(())
     }
 }
 
@@ -875,6 +966,17 @@ impl generated::OnReadySubscriber for IskraMeter {
         print_spec(&ready_state.read_device_group(), "device group");
         print_spec(&ready_state.read_device_model(), "device model");
         print_spec(&ready_state.read_device_serial(), "device serial");
+
+        // Set the lcd data
+        if let Err(err) =
+            ready_state.write_lcd_text(&ready_state.main_text, &ready_state.label_text)
+        {
+            log::warn!(
+                "Failed to set the texts `{}` and `{}: {err:}",
+                ready_state.main_text,
+                ready_state.label_text
+            );
+        }
 
         let ready_state_clone = ready_state.clone();
         let power_meter_clone = publishers.meter.clone();
@@ -975,6 +1077,8 @@ fn main() {
         state_machine: Mutex::new(StateMachine::InitState(InitState::new(
             config.powermeter_device_id,
             (&config).into(),
+            config.lcd_main_text,
+            config.lcd_label_text,
         ))),
         communication_errors_threshold: config.communication_errors_threshold as usize,
     });
@@ -999,7 +1103,15 @@ mod tests {
 
     /// Helper to produce the class  under test.
     fn make_ready_state(publisher: SerialCommunicationHubClientPublisher) -> ReadyState {
-        ReadyState::new(InitState::new(1234, OcmfData::default()), publisher)
+        ReadyState::new(
+            InitState::new(
+                1234,
+                OcmfData::default(),
+                "main".to_string(),
+                "label".to_string(),
+            ),
+            publisher,
+        )
     }
 
     #[test]
@@ -1340,5 +1452,116 @@ mod tests {
             identification_level: None,
             tariff_text: None,
         });
+    }
+
+    #[test]
+    fn ready_state__write_lcd_text() {
+        use mockall::Sequence;
+
+        for (main_text, label_text) in [
+            ("Hello", "Nice"),                // The normal case.
+            ("VeryLongBlub", "AlsoVeryLong"), // The too long case.
+            ("", "Something"),                // Main is empty.
+            ("Something", ""),                // Label is empty.
+        ] {
+            let mut mock = SerialCommunicationHubClientPublisher::default();
+            let mut seq = Sequence::new();
+
+            // Test writing a short string to main LCD register
+            // First expect read of LCD parameters register
+            mock.expect_modbus_read_holding_registers()
+                .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| {
+                    Ok(generated::types::serial_comm_hub_requests::Result {
+                        status_code: StatusCodeEnum::Success,
+                        value: Some(vec![0x0000]), // Current value without bit 3 set
+                    })
+                });
+
+            // Then expect write of LCD parameters register with bit 3 set
+            mock.expect_modbus_write_single_register()
+                .with(eq(0x0008), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 0x0008 = bit 3 set
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+            // Then expect write to the main text.
+            mock.expect_modbus_write_multiple_registers()
+                .withf(|data, addr, id| {
+                    *addr == LCD_CUSTOM_STRING_REGISTER as i64
+                        && *id == 1234
+                        && data.data.len() == 4
+                })
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+            // Then expect write to the label text.
+            mock.expect_modbus_write_multiple_registers()
+                .withf(|data, addr, id| {
+                    *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
+                        && *id == 1234
+                        && data.data.len() == 2
+                })
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+            let ready_state = make_ready_state(mock);
+            let res = ready_state.write_lcd_text(main_text, label_text);
+            assert!(res.is_ok());
+        }
+    }
+
+    #[test]
+    fn ready_state__write_lcd_text__empty() {
+        use mockall::Sequence;
+
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        let mut seq = Sequence::new();
+
+        // Test writing a short string to main LCD register
+        // First expect read of LCD parameters register
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(LCD_PARAMETERS_REGISTER as i64), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![0x00ff]), // Current value without bit 3 set
+                })
+            });
+
+        // Then expect write of LCD parameters register with bit 3 set
+        mock.expect_modbus_write_single_register()
+            .with(eq(0x00f7), eq(LCD_PARAMETERS_REGISTER as i64), eq(1234)) // 3 bit set to zero
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Then expect write to the main text.
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_REGISTER as i64 && *id == 1234 && data.data.len() == 4
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+
+        // Then expect write to the label text.
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|data, addr, id| {
+                *addr == LCD_CUSTOM_STRING_LABEL_REGISTER as i64
+                    && *id == 1234
+                    && data.data.len() == 2
+            })
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+        let ready_state = make_ready_state(mock);
+        let res = ready_state.write_lcd_text("", "");
+        assert!(res.is_ok());
     }
 }
