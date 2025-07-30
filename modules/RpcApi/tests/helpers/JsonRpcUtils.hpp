@@ -2,6 +2,7 @@
 #define JSON_RPC_UTILS_HPP
 
 #include <nlohmann/json.hpp>
+#include "../../helpers/LimitDecimalPlaces.hpp"
 
 namespace json_rpc_utils {
 
@@ -15,9 +16,11 @@ inline nlohmann::json create_json_rpc_request(const std::string& method, const n
 }
 
 inline nlohmann::json create_json_rpc_response(const nlohmann::json& result, int id) {
+    auto tmp = result;
     nlohmann::json response;
     response["jsonrpc"] = "2.0";
-    response["result"] = result;
+    helpers::roundFloatsInJson(tmp);
+    response["result"] = tmp;
     response["id"] = id;
     return response;
 }
