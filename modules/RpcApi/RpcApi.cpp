@@ -52,7 +52,7 @@ void RpcApi::init() {
     // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
     transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-    m_rpc_handler = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data, std::move(m_request_handler));
+    m_rpc_handler = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data, std::move(m_request_handler), config.max_decimal_places_other);
 
     subscribe_global_errors();
 }

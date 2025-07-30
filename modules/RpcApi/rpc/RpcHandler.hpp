@@ -28,6 +28,7 @@
 #include "methods/Evse.hpp"
 #include "notifications/ChargePoint.hpp"
 #include "notifications/Evse.hpp"
+#include "../helpers/LimitDecimalPlaces.hpp"
 
 using namespace server;
 using namespace jsonrpccxx;
@@ -73,9 +74,10 @@ public:
     JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
     // helper to be able to put data object into caller
     // which is something which json-rpc-cxx should be doing
-    template <typename T> void CallNotificationWithObject(const std::string& name, const T& in) {
+    template <typename T> void CallNotificationWithObject(const std::string& name, const T& in, int precision = 3) {
         nlohmann::json j;
         nlohmann::to_json(j, in);
+        helpers::roundFloatsInJson(j, precision);
         CallNotificationNamed(name, j);
     }
 };
@@ -86,7 +88,7 @@ public:
     RpcHandler() = delete;
     // RpcHandler just needs just a tranport interface array
     RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces, DataStoreCharger& dataobj,
-               std::unique_ptr<request_interface::RequestHandlerInterface> request_handler);
+               std::unique_ptr<request_interface::RequestHandlerInterface> request_handler, int precision = 3);
 
     ~RpcHandler() = default;
 
@@ -133,6 +135,7 @@ private:
     ClientConnector m_conn;
     std::unique_ptr<notifications::ChargePoint> m_notifications_chargepoint;
     std::unique_ptr<notifications::Evse> m_notifications_evse;
+    int m_precision = 3;
 };
 } // namespace rpc
 

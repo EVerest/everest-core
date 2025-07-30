@@ -11,6 +11,8 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <everest/logging.hpp>
 
+#include "../helpers/LimitDecimalPlaces.hpp"
+
 namespace rpc {
 
 template <typename T>
@@ -42,9 +44,33 @@ auto extract_param(const nlohmann::json& j) {
 
 // json-rpc-cpp does not support optional parameters in method signatures
 // so we need to create our own get_handle function to handle methods with optional parameters correctly
+template <typename...>
+using void_t = void;
+
+template <typename Default, template <typename...> class Op, typename... Args>
+struct detector {
+    using value_t = std::false_type;
+    using type = Default;
+};
+
+template <template <typename...> class Op, typename... Args>
+struct detector<void_t<Op<Args...>>, Op, Args...> {
+    using value_t = std::true_type;
+    using type = Op<Args...>;
+};
+
+template <template <typename...> class Op, typename... Args>
+using is_detected = typename detector<void, Op, Args...>::value_t;
+
+template <typename T>
+using is_to_json_serializable = decltype(to_json(std::declval<nlohmann::json&>(), std::declval<T>()));
+
+template <typename T>
+constexpr bool is_to_json_serializable_v = is_detected<is_to_json_serializable, T>::value;
+
 template <typename T, typename ReturnType, typename... ParamTypes>
-MethodHandle get_handle(ReturnType (T::*method)(ParamTypes...), T& instance) {
-    return [&instance, method](const json& params) -> ReturnType {
+MethodHandle get_handle(ReturnType (T::*method)(ParamTypes...), T& instance, int precision = 3) {
+    return [&instance, method, precision](const json& params) -> json {
         if (!params.is_array()) {
             throw std::runtime_error("params must be array");
         }
@@ -54,27 +80,41 @@ MethodHandle get_handle(ReturnType (T::*method)(ParamTypes...), T& instance) {
             throw std::runtime_error("invalid number of parameters");
         }
 
-        return [&]<std::size_t... I>(std::index_sequence<I...>) {
+        auto result = [&]<std::size_t... I>(std::index_sequence<I...>) {
             return (instance.*method)(
                 (extract_param<std::remove_reference_t<ParamTypes>>(params.at(I)))...
             );
         }(std::index_sequence_for<ParamTypes...>{});
+
+        if constexpr (std::is_same_v<ReturnType, void>) {
+            return json(); // no return value
+        } else if constexpr (std::is_same_v<ReturnType, nlohmann::json>) {
+            return result; // return json directly
+        } else if constexpr (is_to_json_serializable_v<ReturnType>) {
+            nlohmann::json j;
+            to_json(j, result);
+            helpers::roundFloatsInJson(j, precision);
+            return j; // convert to json and round floats
+        } else {
+            return result; // fallback: no conversion to json possible, return as is
+        }
     };
 }
 
 // RpcHandler just needs just a tranport interface array
 RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
-                        DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler) :
-    m_data_store(dataobj),
-    m_transport_interfaces(std::move(transport_interfaces)),
-    m_methods_api(dataobj),
-    m_methods_chargepoint(dataobj),
-    m_methods_evse(dataobj, std::move(request_handler)),
-    m_conn(m_transport_interfaces, m_api_hello_received) {
+                        DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler, int precision)
+    : m_data_store(dataobj),
+      m_transport_interfaces(std::move(transport_interfaces)),
+      m_methods_api(dataobj),
+      m_methods_chargepoint(dataobj),
+      m_methods_evse(dataobj, std::move(request_handler)),
+      m_conn(m_transport_interfaces, m_api_hello_received),
+      m_precision(precision) {
     init_rpc_api();
     init_transport_interfaces();
-    m_notifications_evse = std::make_unique<notifications::Evse>(m_rpc_server, dataobj);
-    m_notifications_chargepoint = std::make_unique<notifications::ChargePoint>(m_rpc_server, dataobj);
+    m_notifications_evse = std::make_unique<notifications::Evse>(m_rpc_server, dataobj, m_precision);
+    m_notifications_chargepoint = std::make_unique<notifications::ChargePoint>(m_rpc_server, dataobj, m_precision);
 }
 
 void RpcHandler::init_rpc_api() {
@@ -82,33 +122,33 @@ void RpcHandler::init_rpc_api() {
     m_methods_api.set_authentication_required(false);
     m_methods_api.set_api_version(API_VERSION);
     m_rpc_server = std::make_shared<JsonRpc2ServerWithClient>(m_conn);
-    m_rpc_server->Add(methods::METHOD_API_HELLO, get_handle(&methods::Api::hello, m_methods_api), {});
+    m_rpc_server->Add(methods::METHOD_API_HELLO, get_handle(&methods::Api::hello, m_methods_api, m_precision), {});
     m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
-        get_handle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint), {});
+        get_handle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint, m_precision), {});
     m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_ACTIVE_ERRORS,
-        get_handle(&methods::ChargePoint::getActiveErrors, m_methods_chargepoint), {});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, get_handle(&methods::Evse::get_info, m_methods_evse),
+        get_handle(&methods::ChargePoint::getActiveErrors, m_methods_chargepoint, m_precision), {});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, get_handle(&methods::Evse::get_info, m_methods_evse, m_precision),
                       {"evse_index"});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS, get_handle(&methods::Evse::get_status, m_methods_evse),
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS, get_handle(&methods::Evse::get_status, m_methods_evse, m_precision),
                       {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_GET_HARDWARE_CAPABILITIES,
-        get_handle(&methods::Evse::get_hardware_capabilities, m_methods_evse), {"evse_index"});
+        get_handle(&methods::Evse::get_hardware_capabilities, m_methods_evse, m_precision), {"evse_index"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_CHARGING_ALLOWED,
-        get_handle(&methods::Evse::set_charging_allowed, m_methods_evse), {"evse_index", "charging_allowed"});
-    m_rpc_server->Add(methods::METHOD_EVSE_GET_METER_DATA, get_handle(&methods::Evse::get_meter_data, m_methods_evse),
+        get_handle(&methods::Evse::set_charging_allowed, m_methods_evse, m_precision), {"evse_index", "charging_allowed"});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_METER_DATA, get_handle(&methods::Evse::get_meter_data, m_methods_evse, m_precision),
                       {"evse_index"});
-    // TODO: m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING,  (get_handle(&methods::Evse::set_ac_charging, m_methods_evse)),
+    // TODO: m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING,  (get_handle(&methods::Evse::set_ac_charging, m_methods_evse, m_precision)),
     //                  {"evse_index", "charging_allowed", "max_current", "phase_count"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING_CURRENT,
-        get_handle(&methods::Evse::set_ac_charging_current, m_methods_evse), {"evse_index", "max_current"});
+        get_handle(&methods::Evse::set_ac_charging_current, m_methods_evse, m_precision), {"evse_index", "max_current"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING_PHASE_COUNT,
-        get_handle(&methods::Evse::set_ac_charging_phase_count, m_methods_evse), {"evse_index", "phase_count"});
-    // TODO: m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING, (get_handle(&methods::Evse::set_dc_charging, m_methods_evse)),
+        get_handle(&methods::Evse::set_ac_charging_phase_count, m_methods_evse, m_precision), {"evse_index", "phase_count"});
+    // TODO: m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING, (get_handle(&methods::Evse::set_dc_charging, m_methods_evse, m_precision)),
     //                  {"evse_index", "charging_allowed", "max_power"});
     m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING_POWER,
-        get_handle(&methods::Evse::set_dc_charging_power, m_methods_evse), {"evse_index", "max_power"});
+        get_handle(&methods::Evse::set_dc_charging_power, m_methods_evse, m_precision), {"evse_index", "max_power"});
     m_rpc_server->Add(methods::METHOD_EVSE_ENABLE_CONNECTOR,
-        get_handle(&methods::Evse::enable_connector, m_methods_evse), {"evse_index", "connector_id", "enable", "priority"});
+        get_handle(&methods::Evse::enable_connector, m_methods_evse, m_precision), {"evse_index", "connector_id", "enable", "priority"});
 }
 
 void RpcHandler::init_transport_interfaces() {
