@@ -1424,37 +1424,6 @@ mod tests {
                 })
             });
 
-        // Writes needed to set the time
-        for value in [7054, 7055, 7053, 7071] {
-            mock.expect_modbus_write_single_register()
-                .withf(move |_data, addr, _id| *addr == value as i64)
-                .times(1)
-                .in_sequence(&mut seq)
-                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-        }
-
-        // Writes needed to write metadata
-        mock.expect_modbus_write_multiple_registers()
-            .withf(|_data, addr, _id| *addr == 7100)
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-        mock.expect_modbus_write_single_register()
-            .withf(|_data, addr, _id| *addr == 7056)
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(7100), eq(88), eq(1234))
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 88]),
-                })
-            });
-
         // Second call to read the meter state when stopping the transaction
         mock.expect_modbus_read_holding_registers()
             .with(eq(7000), eq(1), eq(1234))
