@@ -822,6 +822,13 @@ void EvseManager::ready() {
 
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
                          p.energy_Wh_import.total / 1000.);
+
+            if (p.energy_Wh_export.has_value()) {
+                mqtt.publish(
+                    fmt::format("everest_external/nodered/{}/powermeter/totalExportKWattHr", config.connector_id),
+                    p.energy_Wh_export.value().total / 1000.);
+            }
+
             json j;
             to_json(j, p);
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id), j.dump());

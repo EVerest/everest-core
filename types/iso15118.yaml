@@ -1520,3 +1520,26 @@ types:
         type: number
         minimum: 0
         maximum: 99
+  AcTargetPower:
+    description: Target active and reactive power from the EVSE
+    type: object
+    additionalProperties: false
+    properties:
+      target_active_power:
+        description: Target active power requested by the EVSE
+        type: number
+      target_active_power_L2:
+        description: Target active power requested by the EVSE on L2
+        type: number
+      target_active_power_L3:
+        description: Target active power requested by the EVSE on L3
+        type: number
+      target_reactive_power:
+        description: Target reactive power requested by the EVSE
+        type: number
+      target_reactive_power_L2:
+        description: Target reactive power requested by the EVSE on L2
+        type: number
+      target_reactive_power_L3:
+        description: Target reactive power requested by the EVSE on L3
+        type: number
