@@ -40,4 +40,13 @@ add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 ev_register_test_target(${TEST_TARGET_NAME})
 
 # Copy the json files used for testing to the destination directory
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json_tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(GLOB JSON_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/json_tests/*")
+
+add_custom_target(copy_json_tests
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_CURRENT_SOURCE_DIR}/json_tests
+            ${CMAKE_CURRENT_BINARY_DIR}/json_tests
+    DEPENDS ${JSON_TEST_FILES}
+)
+
+add_dependencies(${TEST_TARGET_NAME} copy_json_tests)
