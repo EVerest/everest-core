@@ -683,6 +683,11 @@ IntermediateProfile merge_profiles_by_summing_limits(const std::vector<Intermedi
                                                      const OcppProtocolVersion ocpp_version) {
     auto combinator = [current_default, power_default, ocpp_version](const period_pair_vector& periods) {
         IntermediatePeriod period{};
+
+        // summing limits dont have a setpoint, so set to default values
+        period.current_setpoint = {NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED};
+        period.power_setpoint = {NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED};
+
         bool three_phases_used = false;
         // Get number of phases for this period (the lowest of the number of phases).
         for (const auto& [it, end] : periods) {
@@ -715,6 +720,9 @@ IntermediateProfile merge_profiles_by_summing_limits(const std::vector<Intermedi
                     new_period.current_limit.limit_L2 >= 0.0F ? new_period.current_limit.limit_L2 : current_default;
                 period.current_limit.limit_L3 +=
                     new_period.current_limit.limit_L3 >= 0.0F ? new_period.current_limit.limit_L3 : current_default;
+            } else {
+                period.current_limit.limit_L2 = NO_LIMIT_SPECIFIED;
+                period.current_limit.limit_L3 = NO_LIMIT_SPECIFIED;
             }
 
             period.power_limit.limit +=
@@ -725,6 +733,9 @@ IntermediateProfile merge_profiles_by_summing_limits(const std::vector<Intermedi
                     new_period.power_limit.limit_L2 >= 0.0F ? new_period.power_limit.limit_L2 : power_default;
                 period.power_limit.limit_L3 +=
                     new_period.power_limit.limit_L3 >= 0.0F ? new_period.power_limit.limit_L3 : power_default;
+            } else {
+                period.power_limit.limit_L2 = NO_LIMIT_SPECIFIED;
+                period.power_limit.limit_L3 = NO_LIMIT_SPECIFIED;
             }
         }
         return period;
@@ -900,7 +911,7 @@ void set_setpoint_limit_phase_values(PeriodLimit& current_limit, PeriodLimit& po
 ///
 float get_max_limit(const float limit1, const float limit2, const std::optional<float> cap_max) {
     float limit = limit1;
-    if (limit2 <= 0.0F) {
+    if (limit2 < 0.0F) {
         limit = std::max(limit1, limit2);
     }
 
@@ -938,7 +949,7 @@ PeriodLimit get_max_limit(const PeriodLimit& limit1, const PeriodLimit& limit2, 
 ///
 float get_min_limit(const float limit1, const float limit2, const std::optional<float> cap_min) {
     float limit = limit1;
-    if (limit2 > 0.0F) {
+    if (limit2 >= 0.0F) {
         limit = std::min(limit1, limit2);
     }
 

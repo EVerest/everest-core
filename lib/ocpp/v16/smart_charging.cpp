@@ -246,6 +246,11 @@ EnhancedChargingSchedule SmartChargingHandler::calculate_enhanced_composite_sche
         // Get the ChargingStationExternalConstraints and Combined Tx(Default)Profiles per evse
         std::vector<IntermediateProfile> evse_schedules{};
         for (int evse = 1; evse <= nr_of_evses; evse++) {
+            session_start.reset();
+            auto transaction = this->connectors.at(evse)->transaction;
+            if (transaction != nullptr) {
+                session_start = transaction->get_start_energy_wh()->timestamp;
+            }
             auto intermediates = generate_evse_intermediates(
                 get_valid_profiles(start_time, end_time, evse, config.purposes_to_ignore), station_wide_profiles,
                 start_time, end_time, session_start, simulate_transaction_active);

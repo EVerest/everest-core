@@ -1119,4 +1119,86 @@ TEST_F(CompositeScheduleTestFixtureV2, NoGapsWithSequentialProfiles) {
                 ));
     // clang-format on
 }
+
+TEST_F(CompositeScheduleTestFixtureV2, TxDefaultConnector0) {
+    this->load_charging_profiles_for_evse("relative/TxDefault_relative.json", STATION_WIDE_ID);
+
+    constexpr int32_t nr_of_evses = 2;
+    this->reconfigure_for_nr_of_evses(nr_of_evses);
+
+    const DateTime start_time = ocpp::DateTime("2024-01-02T08:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-02T08:20:00");
+
+    CompositeSchedule result_con0 =
+        handler->calculate_composite_schedule(start_time, end_time, 0, ChargingRateUnitEnum::W, false, true);
+
+    EXPECT_EQ(result_con0.evseId, STATION_WIDE_ID);
+    EXPECT_EQ(result_con0.scheduleStart, start_time);
+    EXPECT_EQ(result_con0.duration, 1200);
+    EXPECT_EQ(result_con0.chargingRateUnit, ChargingRateUnitEnum::W);
+
+    EXPECT_THAT(result_con0.chargingSchedulePeriod,
+                testing::ElementsAre(PeriodEquals(0, 2000.0F), PeriodEquals(70, 14000.0F), PeriodEquals(140, 0.0F),
+                                     PeriodEquals(210, 12000.0F), PeriodEquals(280, 3000.0F),
+                                     PeriodEquals(350, 10000.0F)));
+
+    CompositeSchedule result_con1 =
+        handler->calculate_composite_schedule(start_time, end_time, 1, ChargingRateUnitEnum::W, false, true);
+
+    EXPECT_EQ(result_con1.evseId, 1);
+    EXPECT_EQ(result_con1.scheduleStart, start_time);
+    EXPECT_EQ(result_con1.duration, 1200);
+    EXPECT_EQ(result_con1.chargingRateUnit, ChargingRateUnitEnum::W);
+
+    EXPECT_THAT(result_con1.chargingSchedulePeriod,
+                testing::ElementsAre(PeriodEquals(0, 1000.0F), PeriodEquals(70, 7000.0F), PeriodEquals(140, 0.0F),
+                                     PeriodEquals(210, 6000.0F), PeriodEquals(280, 1500.0F),
+                                     PeriodEquals(350, 5000.0F)));
+
+    CompositeSchedule result_con2 =
+        handler->calculate_composite_schedule(start_time, end_time, 2, ChargingRateUnitEnum::W, false, true);
+
+    EXPECT_EQ(result_con2.evseId, 2);
+    EXPECT_EQ(result_con2.scheduleStart, start_time);
+    EXPECT_EQ(result_con2.duration, 1200);
+    EXPECT_EQ(result_con2.chargingRateUnit, ChargingRateUnitEnum::W);
+
+    EXPECT_THAT(result_con2.chargingSchedulePeriod,
+                testing::ElementsAre(PeriodEquals(0, 1000.0F), PeriodEquals(70, 7000.0F), PeriodEquals(140, 0.0F),
+                                     PeriodEquals(210, 6000.0F), PeriodEquals(280, 1500.0F),
+                                     PeriodEquals(350, 5000.0F)));
+
+    const DateTime tx_start_time = ocpp::DateTime("2024-01-02T08:00:00");
+    const DateTime request_time = ocpp::DateTime("2024-01-02T08:03:00");
+    auto timer = std::unique_ptr<Everest::SteadyTimer>();
+
+    this->evse_manager->open_transaction(1, "TX_ID_12345", tx_start_time);
+
+    CompositeSchedule result_con1_tx_active =
+        handler->calculate_composite_schedule(request_time, end_time, 1, ChargingRateUnitEnum::W, false, true);
+
+    EXPECT_EQ(result_con1_tx_active.evseId, 1);
+    EXPECT_EQ(result_con1_tx_active.scheduleStart, request_time);
+    EXPECT_EQ(result_con1_tx_active.duration, 1020);
+    EXPECT_EQ(result_con1_tx_active.chargingRateUnit, ChargingRateUnitEnum::W);
+
+    EXPECT_THAT(result_con1_tx_active.chargingSchedulePeriod,
+                testing::ElementsAre(PeriodEquals(0, 0.0F), PeriodEquals(30, 6000.0F), PeriodEquals(100, 1500.0F),
+                                     PeriodEquals(170, 5000.0F)));
+
+    result_con0 =
+        handler->calculate_composite_schedule(request_time, end_time, 0, ChargingRateUnitEnum::W, false, true);
+
+    EXPECT_EQ(result_con0.evseId, STATION_WIDE_ID);
+    EXPECT_EQ(result_con0.scheduleStart, request_time);
+    EXPECT_EQ(result_con0.duration, 1020);
+    EXPECT_EQ(result_con0.chargingRateUnit, ChargingRateUnitEnum::W);
+
+    EXPECT_THAT(result_con0.chargingSchedulePeriod,
+                testing::ElementsAre(PeriodEquals(0, 1000.0F), PeriodEquals(30, 7000.0F), PeriodEquals(70, 13000.0F),
+                                     PeriodEquals(100, 8500.0F), PeriodEquals(140, 1500.0F), PeriodEquals(170, 5000.0F),
+                                     PeriodEquals(210, 11000.0F), PeriodEquals(280, 6500.0F),
+                                     PeriodEquals(350, 10000.0F)));
+}
+
 } // namespace ocpp::v2

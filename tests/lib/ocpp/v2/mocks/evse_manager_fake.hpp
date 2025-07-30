@@ -92,10 +92,11 @@ public:
         return std::nullopt;
     }
 
-    void open_transaction(int evse_id, const std::string& transaction_id) {
+    void open_transaction(int evse_id, const std::string& transaction_id, const DateTime& start_time = DateTime()) {
         auto& transaction = this->transactions.at(evse_id - 1);
         transaction = std::make_unique<EnhancedTransaction>(db_handler, false);
         transaction->transactionId = transaction_id;
+        transaction->start_time = start_time;
 
         auto& mock = this->get_mock(evse_id);
         EXPECT_CALL(mock, get_transaction).WillRepeatedly(testing::ReturnRef(this->transactions.at(evse_id - 1)));
