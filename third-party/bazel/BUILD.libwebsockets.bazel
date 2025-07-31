@@ -2,7 +2,16 @@ load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 
 filegroup(
     name = "all_srcs",
-    srcs = glob(["**"]),
+    srcs = [
+        "CMakeLists.txt",
+        "CMakeLists-implied-options.txt",
+    ] + glob([
+        "cmake/**",
+        "include/**",
+        "lib/**",
+        "lwsws/**",
+        "plugins/**",
+    ]),
     visibility = ["//visibility:public"],
 )
 
