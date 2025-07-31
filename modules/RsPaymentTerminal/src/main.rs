@@ -509,8 +509,14 @@ mod tests {
                 .expect_get_bank_session_token()
                 .times(1)
                 .return_once(|| input);
+            everest_mock
+                .payment_terminal
+                .expect_clear_error()
+                .times(0)
+                .return_const(());
 
-            let feig = SyncFeig::default();
+            let mut feig = SyncFeig::default();
+            feig.expect_configure().times(0).return_once(|| Ok(()));
             let (tx, _) = channel();
 
             let pt_module = PaymentTerminalModule {
@@ -536,6 +542,11 @@ mod tests {
             let mut everest_mock = ModulePublisher::default();
             let mut feig_mock = SyncFeig::default();
 
+            everest_mock
+                .payment_terminal
+                .expect_clear_error()
+                .times(2)
+                .return_const(());
             everest_mock
                 .bank_session_token_slots
                 .push(BankSessionTokenProviderClientPublisher::default());
@@ -567,6 +578,8 @@ mod tests {
                     .with(eq("my bank token"))
                     .return_once(|_| Ok(()));
             }
+
+            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
 
             let (tx, _) = channel();
 
@@ -630,6 +643,12 @@ mod tests {
         {
             let mut everest_mock = ModulePublisher::default();
             let mut feig_mock = SyncFeig::default();
+            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
+            everest_mock
+                .payment_terminal
+                .expect_clear_error()
+                .times(2)
+                .return_const(());
 
             everest_mock
                 .bank_session_token_slots
@@ -939,6 +958,12 @@ mod tests {
 
             let mut everest_mock = ModulePublisher::default();
             let mut feig_mock = SyncFeig::default();
+            feig_mock.expect_configure().times(3).returning(|| Ok(()));
+            everest_mock
+                .payment_terminal
+                .expect_clear_error()
+                .times(6)
+                .return_const(());
 
             everest_mock
                 .bank_session_token_slots
