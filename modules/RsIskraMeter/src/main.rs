@@ -48,7 +48,8 @@ use everestrs::serde as everest_serde;
 use everestrs::serde_json as everest_serde_json;
 use generated::errors::powermeter::{Error, PowermeterError};
 use generated::types::powermeter::{
-    Powermeter, TransactionRequestStatus, TransactionStartResponse, TransactionStopResponse,
+    Powermeter, TransactionReq, TransactionRequestStatus, TransactionStartResponse,
+    TransactionStopResponse,
 };
 use generated::types::serial_comm_hub_requests::{StatusCodeEnum, VectorUint16};
 use generated::types::units::{Current, Energy, Frequency, Power, ReactivePower, Voltage};
@@ -478,6 +479,9 @@ struct ReadyState {
     /// Public key
     public_key: Arc<Mutex<Option<String>>>,
 
+    /// Transaction Metadata
+    transaction: Arc<Mutex<Option<TransactionReq>>>,
+
     /// The main text to show when there is no transaction.
     main_text: String,
 
@@ -493,6 +497,7 @@ impl ReadyState {
             ocmf_data: init_state.ocmf_data,
             serial_comm_pub,
             public_key: Arc::new(Mutex::new(None)),
+            transaction: Arc::new(Mutex::new(None)),
             main_text: init_state.main_text,
             label_text: init_state.label_text,
         }
@@ -763,26 +768,19 @@ impl ReadyState {
         )
     }
 
-    fn start_transaction(
-        &self,
-        req: generated::types::powermeter::TransactionReq,
-    ) -> Result<TransactionStartResponse> {
+    fn start_transaction(&self, req: TransactionReq) -> Result<TransactionStartResponse> {
+        // Store the transaction in case of a power loss.
+        *self.transaction.lock().unwrap() = Some(req.clone());
+
         // We can start transaction only in Idle state
         let state = self.read_state()?;
         match state {
-            IskraMaterState::Active | IskraMaterState::Active_after_reset => {
-                log::error!("Unexpected state {state:?}, trying to stop active transaction");
-                self.stop_transaction()?;
-            }
-            IskraMaterState::Active_after_power_failure => {
+            IskraMaterState::Active
+            | IskraMaterState::Active_after_reset
+            | IskraMaterState::Active_after_power_failure => {
                 // For now, we just cancel any active transaction after a power failure,
                 // but in the future, we might want to handle this differently.
                 log::error!("Unexpected state {state:?}, trying to stop stuck transaction");
-                self.set_time()?;
-                self.write_metadata(
-                    &req.evse_id,
-                    &req.tariff_text.as_ref().unwrap_or(&String::new()),
-                )?;
                 self.stop_transaction()?;
                 log::info!("Stopped stuck transaction");
             }
@@ -835,9 +833,19 @@ impl ReadyState {
                 log::error!("The state of meter is Idle and we can not stop transaction",);
                 anyhow::bail!("Transaction not started");
             }
-            IskraMaterState::Active
-            | IskraMaterState::Active_after_power_failure
-            | IskraMaterState::Active_after_reset => {}
+            IskraMaterState::Active | IskraMaterState::Active_after_reset => {}
+            IskraMaterState::Active_after_power_failure => {
+                // See 6.6 Power loss behaviour: We have to set time and
+                // metadata to be able to finish the transaction.
+                self.set_time()?;
+                match &(*self.transaction.lock().unwrap()) {
+                    Some(req) => self.write_metadata(
+                        &req.evse_id,
+                        req.tariff_text.as_ref().unwrap_or(&String::new()),
+                    )?,
+                    None => self.write_metadata("", "")?,
+                }
+            }
             IskraMaterState::Unknown => {
                 log::warn!("Unknown state")
             }
@@ -864,6 +872,7 @@ impl ReadyState {
 
         // Reset the lcp display
         self.write_lcd_text(&self.main_text, &self.label_text)?;
+        *self.transaction.lock().unwrap() = None;
         Ok(TransactionStopResponse {
             error: Option::None,
             // Iskra meter has both start and stop snapshot in one
@@ -1010,6 +1019,24 @@ impl generated::OnReadySubscriber for IskraMeter {
                         .raise_error(Error::Powermeter(PowermeterError::CommunicationFault));
                 }
             };
+            // Check the time status. In case of failure we just carry on.
+            let Ok(time_status) = ready_state_clone.read_holding_registers_fixed::<1>(7071) else {
+                continue;
+            };
+            // Table 5: The clock is not synced. We lost power.
+            if time_status[0] == 0 {
+                log::warn!("Clock not syncronized - updating volatile data");
+                let _ = ready_state_clone.set_time();
+                // Update the lcd text.
+                let _ = match &(*ready_state_clone.transaction.lock().unwrap()) {
+                    Some(req) => ready_state_clone
+                        .write_lcd_text(req.tariff_text.as_ref().unwrap_or(&String::new()), ""),
+                    None => ready_state_clone.write_lcd_text(
+                        &ready_state_clone.main_text,
+                        &ready_state_clone.label_text,
+                    ),
+                };
+            }
         });
 
         // Finally update the state in the lock.
@@ -1394,37 +1421,6 @@ mod tests {
                 Ok(generated::types::serial_comm_hub_requests::Result {
                     status_code: StatusCodeEnum::Success,
                     value: Some(vec![IskraMaterState::Active_after_power_failure as i64]),
-                })
-            });
-
-        // Writes needed to set the time
-        for value in [7054, 7055, 7053, 7071] {
-            mock.expect_modbus_write_single_register()
-                .withf(move |_data, addr, _id| *addr == value as i64)
-                .times(1)
-                .in_sequence(&mut seq)
-                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-        }
-
-        // Writes needed to write metadata
-        mock.expect_modbus_write_multiple_registers()
-            .withf(|_data, addr, _id| *addr == 7100)
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-        mock.expect_modbus_write_single_register()
-            .withf(|_data, addr, _id| *addr == 7056)
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
-        mock.expect_modbus_read_holding_registers()
-            .with(eq(7100), eq(88), eq(1234))
-            .times(1)
-            .in_sequence(&mut seq)
-            .returning(|_, _, _| {
-                Ok(generated::types::serial_comm_hub_requests::Result {
-                    status_code: StatusCodeEnum::Success,
-                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 88]),
                 })
             });
 
