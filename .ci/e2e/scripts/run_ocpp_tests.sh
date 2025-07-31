@@ -6,7 +6,7 @@ PARALLEL_TESTS=$(nproc)
 
 echo "Running $PARALLEL_TESTS ocpp tests in parallel"
 
-pytest \
+python3 -m pytest \
   -rA \
   -n "$PARALLEL_TESTS" \
   --dist=loadgroup \
