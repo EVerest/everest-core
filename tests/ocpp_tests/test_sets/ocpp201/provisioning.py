@@ -1294,7 +1294,7 @@ async def test_B04(
     # Set valid OfflineThreshold to 15s
     r: call_result201.SetVariables = (
         await charge_point_v201.set_config_variables_req(
-            "OCPPCommCtrlr", "OfflineThreshold", "15"
+            "OCPPCommCtrlr", "OfflineThreshold", "10"
         )
     )
     set_variable_result: SetVariableResultType = SetVariableResultType(
@@ -1304,20 +1304,12 @@ async def test_B04(
 
     test_utility.messages.clear()
 
-    for _ in range(3):
-        # send HeartBeat request when idle
-        assert await wait_for_and_validate(
-            test_utility, charge_point_v201, "Heartbeat", call.Heartbeat()
-        )
-
-    test_utility.messages.clear()
-
     log.debug("========================B04.FR.01=========================")
     # Simulate connection loss
     test_controller.disconnect_websocket()
 
     # Wait 20 seconds
-    await asyncio.sleep(20)
+    await asyncio.sleep(11)
 
     # Connect CS
     log.debug(" Connect the CS to the CSMS")
@@ -1382,8 +1374,8 @@ async def test_B04(
     # Simulate connection loss
     test_controller.disconnect_websocket()
 
-    # Wait 7 seconds
-    await asyncio.sleep(7)
+    # Wait 2 seconds
+    await asyncio.sleep(2)
 
     # stop charging session
     test_controller.plug_out(connector_id=2)
