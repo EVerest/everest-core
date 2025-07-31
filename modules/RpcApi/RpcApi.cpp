@@ -92,7 +92,11 @@ void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data,
         evse_data.sessioninfo.set_enable_disable_source(
             types::evse_manager::enable_source_to_string(source.enable_source),
             types::evse_manager::enable_state_to_string(source.enable_state), source.enable_priority);
-        evse_data.evsestatus.set_available(source.enable_state == types::evse_manager::Enable_state::Enable);
+        if (source.enable_state == types::evse_manager::Enable_state::Disable) {
+            evse_data.evsestatus.set_available(false);
+        } else if (source.enable_state == types::evse_manager::Enable_state::Enable) {
+            evse_data.evsestatus.set_available(true);
+        }
     }
 
     if (session_event.event == types::evse_manager::SessionEventEnum::TransactionStarted) {
