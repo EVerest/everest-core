@@ -42,8 +42,6 @@ target_sources(${MODULE_NAME}
         "connector_lock_1/connector_lockImpl.cpp"
         "connector_lock_2/connector_lockImpl.cpp"
         "phyverso_mcu_temperature/phyverso_mcu_temperatureImpl.cpp"
-        "system_specific_data_1/generic_arrayImpl.cpp"
-        "system_specific_data_2/generic_arrayImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

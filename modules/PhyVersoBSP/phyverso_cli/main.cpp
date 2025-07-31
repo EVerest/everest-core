@@ -176,10 +176,6 @@ int main(int argc, char* argv[]) {
             printf("\n");
         });
 
-        p.signal_opaque_data.connect([](int connector, const std::vector<int32_t>& data) {
-            printf("Received data from connector %i\n", connector);
-        });
-
         p.signal_error_flags.connect([](int connector, ErrorFlags error_flags) {
             printf("------------\nError flags Connector %d:\n", connector);
             printf("\tdiode_fault: %d\n", error_flags.diode_fault);

@@ -139,8 +139,6 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
 
     if (handle_McuToEverest_packet(buf, len))
         return;
-    else if (handle_OpaqueData_packet(buf, len))
-        return;
     else
         printf("Cannot handle a packet");
 }
@@ -196,50 +194,6 @@ bool evSerial::handle_McuToEverest_packet(uint8_t* buf, int len) {
         signal_config_request();
         break;
     }
-
-    return true;
-}
-
-bool evSerial::handle_OpaqueData_packet(uint8_t* buf, int len) {
-    OpaqueData data = OpaqueData_init_default;
-    pb_istream_t istream = pb_istream_from_buffer(buf, len);
-    if (!pb_decode(&istream, OpaqueData_fields, &data))
-        return false;
-    EVLOG_debug << "Received chunk " << data.id << " " << data.chunks_total << " " << data.chunk_current << " "
-                << data.data_count;
-
-    // Lambda for updating OpaqueDataHandler - here just to simplify the return
-    // logic.
-    [this](const OpaqueData& data) {
-        auto iter = opaque_handlers.find(data.connector);
-        if (iter == opaque_handlers.end()) {
-            // The item does not exist - try to insert it.
-            try {
-                iter = opaque_handlers.emplace(data.connector, data).first;
-            } catch (...) {
-                // We can't do anything here - the chunk is ill formed and does
-                // not start with 0.
-                EVLOG_debug << "Stray chunk " << data.id << "; Ignoring";
-                return;
-            }
-        } else {
-            try {
-                iter->second.insert(data);
-            } catch (...) {
-                // We've failed to insert the data.. Drop the current buffer.
-                EVLOG_debug << "Stray chunk " << data.id << "; Resetting";
-                opaque_handlers.erase(iter);
-                return;
-            }
-        }
-        if (!iter->second.is_complete())
-            return;
-
-        const auto readings = iter->second.get_data();
-        EVLOG_debug << "Received sensor data with the size " << readings.size();
-        signal_opaque_data(iter->first, readings);
-        opaque_handlers.erase(iter);
-    }(data);
 
     return true;
 }
