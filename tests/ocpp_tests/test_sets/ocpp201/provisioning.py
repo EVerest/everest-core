@@ -1308,7 +1308,7 @@ async def test_B04(
     # Simulate connection loss
     test_controller.disconnect_websocket()
 
-    # Wait 20 seconds
+    # Wait 11 seconds
     await asyncio.sleep(11)
 
     # Connect CS
