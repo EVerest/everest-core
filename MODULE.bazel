@@ -1,16 +1,16 @@
 module(
     name = "everest-core",
-    version = "2025.5.0",
+    version = "2025.7.0",
 )
 
 ###############################################################################
 # B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
 ###############################################################################
 
-bazel_dep(name = "everest-framework", version = "0.22.2")
+bazel_dep(name = "everest-framework", version = "0.22.3")
 git_override(
     module_name="everest-framework",
-    commit="41ae8d15cffd79c4b270f5e0e811f562594063bc",
+    commit="8745e46ababf39f6e3a796e6edc735b8d39e0742",
     remote="https://github.com/EVerest/everest-framework",
 )
 
@@ -24,7 +24,7 @@ bazel_dep(name = "boost.asio", version = BOOST_VERSION)
 bazel_dep(name = "boost.process", version = BOOST_VERSION)
 bazel_dep(name = "boost.uuid", version = BOOST_VERSION)
 bazel_dep(name = "fmt", version = "11.1.4", repo_name = "com_github_fmtlib_fmt")
-bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "com_github_nlohmann_json")
+bazel_dep(name = "nlohmann_json", version = "3.12.0", repo_name = "com_github_nlohmann_json")
 bazel_dep(name = "openssl", version = "3.3.1.bcr.1")
 bazel_dep(name = "platforms", version = "0.0.10")
 bazel_dep(name = "rules_cc", version = "0.0.9")

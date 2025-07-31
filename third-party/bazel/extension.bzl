@@ -7,18 +7,18 @@ def _deps_impl(module_ctx):
     maybe(
         http_archive,
         name = "sigslot",
-        url = "https://github.com/palacaze/sigslot/archive/33802bb3e94c4dfe07bd41b537b36806f94c3e3a.tar.gz",
-        sha256 = "fe00d8a4ecc7e6b831ab4dcb3a848144b83d28494dee74596eb31d038c37f50f",
-        strip_prefix = "sigslot-33802bb3e94c4dfe07bd41b537b36806f94c3e3a",
+        url = "https://github.com/palacaze/sigslot/archive/b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1.tar.gz",
+        sha256 = "140f0a2a731ed7d9ebff1bad4cb506ea2aa28fd57f42b3ec79031b1505dc6680",
+        strip_prefix = "sigslot-b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1",
         build_file = "@everest-core//third-party/bazel:BUILD.sigslot.bazel",
     )
 
     maybe(
         http_archive,
         name = "pugixml",
-        url = "https://github.com/zeux/pugixml/archive/dd50fa5b45ab8d58d6c27566c2eaf04a8b7e5841.tar.gz",
-        sha256 = "c3ba8dddb6d8a36f374050494629c23239c6ef4868f09b934848baf2ecf44502",
-        strip_prefix = "pugixml-dd50fa5b45ab8d58d6c27566c2eaf04a8b7e5841",
+        url = "https://github.com/zeux/pugixml/archive/ee86beb30e4973f5feffe3ce63bfa4fbadf72f38.tar.gz",
+        sha256 = "51c102d4187fac99daa38af281b0772c5e6c586f65004cdc63f8f2e011a21492",
+        strip_prefix = "pugixml-ee86beb30e4973f5feffe3ce63bfa4fbadf72f38",
         build_file = "@everest-core//third-party/bazel:BUILD.pugixml.bazel",
     )
 
@@ -43,27 +43,27 @@ def _deps_impl(module_ctx):
     maybe(
         http_archive,
         name = "libocpp",
-        url = "https://github.com/EVerest/libocpp/archive/89c7b62ec899db637f43b54f19af2c4af30cfa66.tar.gz",
-        sha256 = "5f359e9b50680bee345d469b7a6e54c9bad3a308dee2bc11351860f5831dde36",
-        strip_prefix = "libocpp-89c7b62ec899db637f43b54f19af2c4af30cfa66",
+        url = "https://github.com/EVerest/libocpp/archive/9c8ec21f15a404b27438accc4fe006cfcd6accbe.tar.gz",
+        sha256 = "efa065955a420d4c545c0deafc14fc2cc0cff8d172dea1daa2615bc7fe2bdc72",
+        strip_prefix = "libocpp-9c8ec21f15a404b27438accc4fe006cfcd6accbe",
         build_file = "@everest-core//third-party/bazel:BUILD.libocpp.bazel",
     )
 
     maybe(
         http_archive,
         name = "com_github_warmcatt_libwebsockets",
-        url = "https://github.com/warmcat/libwebsockets/archive/v4.3.3.tar.gz",
-        sha256 = "6fd33527b410a37ebc91bb64ca51bdabab12b076bc99d153d7c5dd405e4bdf90",
-        strip_prefix = "libwebsockets-4.3.3",
+        url = "https://github.com/warmcat/libwebsockets/archive/e83ed4eb88b77039d69189327482263f6fdf5fef.tar.gz",
+        sha256 = "d0a4029a2b7b557a386eb74883c1d88e15a020168c805769ab326000f2fe40fa",
+        strip_prefix = "libwebsockets-e83ed4eb88b77039d69189327482263f6fdf5fef",
         build_file = "@everest-core//third-party/bazel:BUILD.libwebsockets.bazel",
     )
 
     maybe(
         http_archive,
         name = "everest_sqlite",
-        url = "https://github.com/EVerest/everest-sqlite/archive/v0.1.1.tar.gz",
-        sha256 = "7a8a7b1edf4177d771c80a28ed0558e4b9fcb74cdda1bacdf6399766f2c8ff83",
-        strip_prefix = "everest-sqlite-0.1.1",
+        url = "https://github.com/EVerest/everest-sqlite/archive/ccb56abb214a7f40b90598dfbec7c8d155999ada.tar.gz",
+        sha256 = "9c101aa8d37020f289c26394f247f963d33f7a877fcb382449a35edb2371b540",
+        strip_prefix = "everest-sqlite-ccb56abb214a7f40b90598dfbec7c8d155999ada",
         build_file = "@everest-core//third-party/bazel:BUILD.everest-sqlite.bazel",
     )
 
@@ -79,9 +79,9 @@ def _deps_impl(module_ctx):
     maybe(
         http_archive,
         name = "com_github_HowardHinnant_date",
-        url = "https://github.com/HowardHinnant/date/archive/2ef74cb41a31dcd03b39dd5e9bf8b340669f48a4.tar.gz",
-        sha256 = "3446ad7e2ba07c9105769bf6fd9b521d4e3a2f2dd0a955643a20f4adb1870efa",
-        strip_prefix = "date-2ef74cb41a31dcd03b39dd5e9bf8b340669f48a4",
+        url = "https://github.com/HowardHinnant/date/archive/f94b8f36c6180be0021876c4a397a054fe50c6f2.tar.gz",
+        sha256 = "8be4c3a52d99b22a4478ce3e2a23fa4b38587ea3d3bc3d1a4d68de22c2e65fb2",
+        strip_prefix = "date-f94b8f36c6180be0021876c4a397a054fe50c6f2",
         build_file = "@everest-framework//third-party/bazel:BUILD.date.bazel",
     )
 
