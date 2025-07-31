@@ -339,7 +339,7 @@
     "//third-party/bazel:extension.bzl%deps": {
       "general": {
         "bzlTransitiveDigest": "KoCuX6G0qXFeQhw/UckSG21Q2clXMxdDVLSXKWpvoks=",
-        "usagesDigest": "u1s/5rUOS1MTfb5W26qbMsw0xxt6wqMAgnnDoK8GisQ=",
+        "usagesDigest": "kfwLg8odi+1i2HuW8/THy+z7x9YE0op2neGVJZz4rA8=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -4171,7 +4171,7 @@
     "@@rules_rust+//crate_universe:extensions.bzl%crate": {
       "general": {
         "bzlTransitiveDigest": "0aE92G9z87P2ty8Ik4pXnKVoBMGz3DvWx6vFWObtqeo=",
-        "usagesDigest": "9+dHw5NoP/qD4tzEsPjYHzfHbQ1U8U8PEzxyA3x1Hl0=",
+        "usagesDigest": "JxrpvVRaIOhEszHpvzd30AMmCsYJSzZyvT0LZoiv5ug=",
         "recordedFileInputs": {
           "@@//modules/Cargo.lock": "8a8cdbe99d6d935a29c4d2612f2e7f68e3f0d43221c96a5364f7f13aeafd71dd",
           "@@//modules/Cargo.toml": "848aec3acae76cd6d51b2c99bb90c7b8485a4dc61433f914fe71554217558881",
