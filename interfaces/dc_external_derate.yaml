@@ -1,0 +1,19 @@
+description: >-
+  Interface to provide DC power supply capabilities for external derating.
+cmds:
+  set_external_capabilities:
+    description: >-
+      Set external capabilities for the DC power supply. The provided capabilities
+      will be merged with the existing internal capabilites of the power supply.
+      For max values, the minimum of the internal and external values will be used.
+      For min values, the maximum of the internal and external values will be used.
+    arguments:
+      capabilities:
+        description: Operation mode of power supply
+        type: string
+        $ref: /power_supply_DC#/Capabilities
+vars:
+  plug_temperature_C:
+    description: Current temperature of the plug in degree celsius
+    type: number
+
