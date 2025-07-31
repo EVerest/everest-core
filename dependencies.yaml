@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.22.1
+  git_tag: fa0ed7ee1a069e0f0c1b073b40cc72cc033291f1 # FIXME: v0.22.3
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -12,14 +12,14 @@ everest-framework:
   ]
 sigslot:
   git: https://github.com/palacaze/sigslot
-  git_tag: v1.2.0
+  git_tag: v1.2.3
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SIGSLOT"
   options:
     - "SIGSLOT_COMPILE_EXAMPLES OFF"
     - "SIGSLOT_COMPILE_TESTS OFF"
 pugixml:
   git: https://github.com/zeux/pugixml
-  git_tag: v1.12.1
+  git_tag: v1.15
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
 
 # Auth module
@@ -53,7 +53,7 @@ libiso15118:
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
 libcurl:
   git: https://github.com/curl/curl.git
-  git_tag: curl-8_13_0
+  git_tag: curl-8_15_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
   options: [
     "BUILD_EXAMPLES OFF",
@@ -79,7 +79,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 5cb564a0db6455bd885204e409ab13a24450b9b2
+  git_tag: 78658c380e5074ab108ff9adfdd43a1041fa1173 # FIXME: v0.29.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -104,8 +104,8 @@ gtest:
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 everest-sqlite:
   git: https://github.com/EVerest/everest-sqlite.git
-  git_tag: v0.1.2
+  git_tag: v0.1.3
 catch2:
   git: https://github.com/catchorg/Catch2.git
-  git_tag: v3.4.0
+  git_tag: v3.9.0
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
