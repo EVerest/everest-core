@@ -635,6 +635,18 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
            conn->ctx->evse_v2g_data.payment_option_list_len * sizeof(iso2_paymentOptionType));
     res->PaymentOptionList.PaymentOption.arrayLen = conn->ctx->evse_v2g_data.payment_option_list_len;
 
+    /* Include the HPC1 Service if it is enabled */
+    if (conn->ctx->service_hpc1_enabled) {
+        auto hpc1_service = iso2_ServiceType{};
+
+        init_iso2_ServiceType(&hpc1_service);
+
+        hpc1_service.ServiceID = 63000;
+        hpc1_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
+        hpc1_service.FreeService = true;
+        add_service_to_service_list(conn->ctx, hpc1_service);
+    }
+
     /* Find requested scope id within evse service list */
     if (req->ServiceScope_isUsed) {
         /* Check if ServiceScope is in evse ServiceList */
@@ -1194,6 +1206,10 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         res->SAScheduleList_isUsed = (unsigned int)1; //  The SECC shall only omit the parameter 'SAScheduleList' in
                                                       //  case EVSEProcessing is set to 'Ongoing'.
 
+        if (conn->ctx->service_hpc1_enabled) { // V2G2-PnC-CharIN-022
+            req->MaxEntriesSAScheduleTuple_isUsed = (unsigned int)0;
+            dlog(DLOG_LEVEL_INFO, "Ignored MaxEntriesSAScheduleTuple parameter, because HPC1 is enabled");
+        }
         if ((req->MaxEntriesSAScheduleTuple_isUsed == (unsigned int)1) &&
             (req->MaxEntriesSAScheduleTuple < res->SAScheduleList.SAScheduleTuple.arrayLen)) {
             dlog(DLOG_LEVEL_WARNING, "EV's max. SA-schedule-tuple entries exceeded");
@@ -1203,12 +1219,15 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         res->SAScheduleList_isUsed = (unsigned int)0;
     }
 
-    /* Checking SAScheduleTupleID */
+    /* Checking SAScheduleTupleID and in case of HPC1 make sure no Sales Tariff is used. */
     for (uint8_t idx = 0; idx < res->SAScheduleList.SAScheduleTuple.arrayLen; idx++) {
         if (res->SAScheduleList.SAScheduleTuple.array[idx].SAScheduleTupleID == (uint8_t)0) {
             dlog(DLOG_LEVEL_WARNING, "Selected SAScheduleTupleID is not ISO15118 conform. The SECC shall use the "
                                      "values 1 to 255"); // [V2G2-773]  The SECC shall use the values 1 to 255 for the
                                                          // parameter SAScheduleTupleID.
+        }
+        if (conn->ctx->service_hpc1_enabled) {
+            res->SAScheduleList.SAScheduleTuple.array[idx].SalesTariff_isUsed = false; // V2G2-PnC-CharIN-024
         }
     }
 
@@ -1246,7 +1265,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
             for (uint8_t idx = 0; idx < res->SAScheduleList.SAScheduleTuple.arrayLen; idx++) {
                 for (uint8_t idx2 = 0;
                      idx2 < res->SAScheduleList.SAScheduleTuple.array[idx].PMaxSchedule.PMaxScheduleEntry.arrayLen;
-                     idx2++)
+                     idx2++) {
                     if ((res->SAScheduleList.SAScheduleTuple.array[idx]
                              .PMaxSchedule.PMaxScheduleEntry.array[idx2]
                              .PMax.Value *
@@ -1256,6 +1275,10 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                         dlog(DLOG_LEVEL_WARNING,
                              "Provided SA-schedule-list doesn't match with the physical value limits");
                     }
+                    if (conn->ctx->service_hpc1_enabled && idx2 >= 1) {
+                        break; // V2G2-PnC-CharIN-019
+                    }
+                }
             }
         }
 
@@ -1465,7 +1488,10 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
         break;
 
     case iso2_chargeProgressType_Renegotiate:
-        conn->ctx->session.renegotiation_required = true;
+        if (not conn->ctx->service_hpc1_enabled) {
+            // ignore renegotiation request if HPC1 is enabled
+            conn->ctx->session.renegotiation_required = true;
+        }
         break;
 
     default:
@@ -1506,6 +1532,9 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
             conn->ctx->session.sa_schedule_tuple_id = req->SAScheduleTupleID;
             break;
         }
+        if (conn->ctx->service_hpc1_enabled) { // V2G2-PnC-CharIN-023
+            break;
+        }
     }
 
     res->ResponseCode =
@@ -1528,7 +1557,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
-    if ((req->ChargeProgress == iso2_chargeProgressType_Renegotiate) &&
+    if ((req->ChargeProgress == iso2_chargeProgressType_Renegotiate && not conn->ctx->service_hpc1_enabled) &&
         ((conn->ctx->last_v2g_msg == V2G_CURRENT_DEMAND_MSG) || (conn->ctx->last_v2g_msg == V2G_CHARGING_STATUS_MSG))) {
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY; // [V2G-813]
 
