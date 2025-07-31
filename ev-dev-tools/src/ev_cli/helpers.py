@@ -732,7 +732,7 @@ def write_content_to_file(file_info, strategy, only_diff=False, reason = '', che
 
     # check if file header is different from license header
     if check_license_header:
-        if 'license_header' in file_info:
+        if 'license_header' in file_info and file_path.exists():
             original_content = file_path.read_text()
             if not original_content.startswith(file_info['license_header']):
                 # determine likely end of license header
