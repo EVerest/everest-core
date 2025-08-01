@@ -770,6 +770,16 @@ void ErrorHandling::raise_powermeter_transaction_start_failed_error(const std::s
 void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
 }
 
+void ErrorHandling::raise_isolation_resistance_fault(const std::string& description) {
+}
+void ErrorHandling::clear_isolation_resistance_fault() {
+}
+
+void ErrorHandling::raise_cable_check_fault(const std::string& description) {
+}
+void ErrorHandling::clear_cable_check_fault() {
+}
+
 // ----------------------------------------------------------------------------
 // SessionLog stub
 SessionLog::SessionLog() {
