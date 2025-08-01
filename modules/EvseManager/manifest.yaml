@@ -408,6 +408,10 @@ requires:
     interface: kvs
     min_connections: 0
     max_connections: 1
+  parking_bay:
+    interface: parking_bay
+    min_connections: 0
+    max_connections: 1
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:
