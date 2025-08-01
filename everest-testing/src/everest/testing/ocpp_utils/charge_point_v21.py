@@ -359,3 +359,7 @@ class ChargePoint21(cp):
     async def update_firmware(self, **kwargs):
         payload = call.UpdateFirmware(**kwargs)
         return await self.call(payload)
+
+    async def notify_allowed_energy_transfer_request(self, **kwargs):
+        payload = call.NotifyAllowedEnergyTransfer(**kwargs)
+        return await self.call(payload)
