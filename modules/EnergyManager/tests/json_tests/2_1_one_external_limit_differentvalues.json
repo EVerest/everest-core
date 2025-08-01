@@ -228,7 +228,7 @@
         ],
         "schedule_setpoints": [],
         "uuid": "evse1",
-        "valid_until": "2024-12-17T13:00:10.000Z"
+        "valid_until_ts": 0
       }
     ]
   ]
