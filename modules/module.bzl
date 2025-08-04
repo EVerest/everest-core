@@ -4,7 +4,8 @@ def cc_everest_module(
     name,
     srcs = [],
     deps = [],
-    impls = []
+    impls = [],
+    data = []
 ):
     """
     Define C++ Everest module.
@@ -17,6 +18,7 @@ def cc_everest_module(
             module.
         impls: List of implementations that the module has. It should match the
             content of mainifest.yaml file.
+        data: List of data files that should be available at runtime.
     """
     impl_srcs = native.glob([
         "{}/*.cpp".format(impl)
@@ -71,6 +73,7 @@ def cc_everest_module(
             "@everest-core//interfaces:interfaces_lib",
             "@everest-framework//:framework",
         ],
+        data = data,  # Pass through data files to the binary
         copts = ["-std=c++17"],
         includes = [
             ".",
@@ -103,6 +106,7 @@ def cc_everest_module(
         name = name,
         srcs = [
             ":copy_to_subdir",
-        ],
+        ] + data,  # Include data files in the filegroup
+        data = [":" + binary],  # Include the binary to get its runfiles
         visibility = ["//visibility:public"],
     )
