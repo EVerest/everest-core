@@ -35,14 +35,6 @@ void evse_managerImpl::init() {
 
     // Interface to Node-RED debug UI
 
-    mod->mqtt.subscribe(
-        fmt::format("everest_external/nodered/{}/cmd/set_max_current", mod->config.connector_id),
-        [&charger = mod->charger, this](std::string data) { mod->nodered_set_current_limit(std::stof(data)); });
-
-    mod->mqtt.subscribe(
-        fmt::format("everest_external/nodered/{}/cmd/set_max_watt", mod->config.connector_id),
-        [&charger = mod->charger, this](std::string data) { mod->nodered_set_watt_limit(std::stof(data)); });
-
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/enable", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) {
                             charger->enable_disable(0, {types::evse_manager::Enable_source::LocalAPI,

@@ -178,11 +178,11 @@ public:
     types::evse_board_support::HardwareCapabilities get_hw_capabilities();
 
     std::mutex external_local_limits_mutex;
-    bool update_max_current_limit(types::energy::ExternalLimits& limits, float max_current); // deprecated
-    bool update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt);       // deprecated
+    bool update_max_current_limit(types::energy::ExternalLimits& limax_current_importmits, float max_current_import,
+                                  float max_current_export);
+    bool update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt_export,
+                               std::optional<float> max_watt_import);
     bool update_local_energy_limit(types::energy::ExternalLimits l);
-    void nodered_set_current_limit(float max_current);
-    void nodered_set_watt_limit(float max_watt);
     types::energy::ExternalLimits get_local_energy_limits();
 
     void cancel_reservation(bool signal_event);
