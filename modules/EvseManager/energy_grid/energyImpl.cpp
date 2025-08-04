@@ -457,7 +457,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         last_enforced_limit = enforced_limit;
 
         // update limit at the charger
-        const time_point<steady_clock> valid_until(seconds(value.valid_until_ts));
+        const auto valid_until = steady_clock::now() + seconds(value.valid_for);
         if (limit >= 0) {
             // import
             mod->charger->set_max_current(limit, valid_until);
