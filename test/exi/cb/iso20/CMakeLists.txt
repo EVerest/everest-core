@@ -25,4 +25,5 @@ create_exi_test_target(dc_charge_loop)
 create_exi_test_target(dc_welding_detection)
 create_exi_test_target(session_stop)
 create_exi_test_target(ac_charge_parameter_discovery)
+create_exi_test_target(ac_charge_loop)
 

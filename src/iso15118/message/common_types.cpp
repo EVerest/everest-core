@@ -83,6 +83,11 @@ template <> void convert(const datatypes::EvseStatus& in, struct iso20_ac_EVSESt
     cb_convert_enum(in.notification, out.EVSENotification);
 }
 
+template <> void convert(const struct iso20_ac_EVSEStatusType& in, datatypes::EvseStatus& out) {
+    cb_convert_enum(in.EVSENotification, out.notification);
+    out.notification_max_delay = in.NotificationMaxDelay;
+}
+
 template <typename cb_MeterInfoType> void convert_meterinfo(const datatypes::MeterInfo& in, cb_MeterInfoType& out) {
 
     CPP2CB_STRING(in.meter_id, out.MeterID);
