@@ -3,10 +3,10 @@ add_subdirectory(external_energy_limits)
 add_subdirectory(helpers)
 add_subdirectory(run_application)
 add_subdirectory(util)
+add_subdirectory(tls)
 
 if(EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY)
     add_subdirectory(evse_security)
-    add_subdirectory(tls)
 endif()
 
 if(EVEREST_DEPENDENCY_ENABLED_LIBSLAC AND EVEREST_DEPENDENCY_ENABLED_LIBFSM)
