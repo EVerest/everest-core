@@ -12,7 +12,6 @@ public:
     // delete default constructor
     RpcApiRequestHandler() = delete;
     RpcApiRequestHandler(const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_managers,
-        const std::vector<std::unique_ptr<error_historyIntf>>& r_error_histories,
         const std::vector<std::unique_ptr<external_energy_limitsIntf>>& r_evse_energy_sink);
     ~RpcApiRequestHandler();
 
@@ -30,7 +29,6 @@ private:
         std::function<types::energy::ExternalLimits(T)> make_limits);
 
     const std::vector<std::unique_ptr<evse_managerIntf>>& evse_managers;
-    const std::vector<std::unique_ptr<error_historyIntf>>& error_histories;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>>& evse_energy_sink;
 };
 

@@ -65,10 +65,8 @@ types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power
 
 RpcApiRequestHandler::RpcApiRequestHandler(
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_managers,
-    const std::vector<std::unique_ptr<error_historyIntf>>& r_error_histories,
     const std::vector<std::unique_ptr<external_energy_limitsIntf>>& r_evse_energy_sink)
     : evse_managers(r_evse_managers),
-      error_histories(r_error_histories),
       evse_energy_sink(r_evse_energy_sink) {
 }
 

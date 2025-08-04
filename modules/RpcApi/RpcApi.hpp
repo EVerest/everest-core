@@ -14,7 +14,7 @@
 #include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/interfaces/error_history/Interface.hpp>
+#include <generated/interfaces/energy/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
 
@@ -50,18 +50,15 @@ public:
     RpcApi() = delete;
     RpcApi(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
            std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
-           std::vector<std::unique_ptr<error_historyIntf>> r_error_history,
            std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink, Conf& config) :
         ModuleBase(info),
         p_main(std::move(p_main)),
         r_evse_manager(std::move(r_evse_manager)),
-        r_error_history(std::move(r_error_history)),
         r_evse_energy_sink(std::move(r_evse_energy_sink)),
         config(config){};
 
     const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
-    const std::vector<std::unique_ptr<error_historyIntf>> r_error_history;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const Conf& config;
 
