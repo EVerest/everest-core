@@ -331,7 +331,7 @@
           }
         ],
         "uuid": "evse1",
-        "valid_until_ts": 0
+        "valid_for": 10
       }
     ]
   ]

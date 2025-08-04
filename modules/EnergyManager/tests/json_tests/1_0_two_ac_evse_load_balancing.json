@@ -249,7 +249,7 @@
         ],
         "schedule_setpoints": [],
         "uuid": "evse1",
-        "valid_until_ts": 0
+        "valid_for": 10
       },
       {
         "limits_root_side": {
@@ -292,7 +292,7 @@
         ],
         "schedule_setpoints": [],
         "uuid": "evse2",
-        "valid_until_ts": 0
+        "valid_for": 10
       }
     ]
   ]

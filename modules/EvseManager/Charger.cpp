@@ -1803,7 +1803,6 @@ void Charger::check_soft_over_current() {
 // i.e. max_current is in valid range
 bool Charger::power_available() {
     const auto overrun = duration_cast<seconds>(steady_clock::now() - shared_context.max_current_valid_until).count();
-    EVLOG_info << "Charger::power_available: overrun: " << overrun;
     if (overrun > 0) {
         EVLOG_warning << "Power budget expired, falling back to 0. Last update: " << overrun << " seconds ago";
         if (shared_context.max_current > 0.) {
