@@ -4,7 +4,8 @@
 #ifndef API_HPP
 #define API_HPP
 
-#include <vector>
+#include <optional>
+#include <string>
 
 #include "../../data/DataStore.hpp"
 
@@ -22,53 +23,18 @@ class Api {
 public:
     // Constructor and Destructor
     Api() = delete;
-    Api(DataStoreCharger& dataobj) : m_dataobj(dataobj), m_authentication_required(false){};
+    explicit Api(DataStoreCharger& dataobj) : m_dataobj(dataobj), m_authentication_required(false){};
 
     ~Api() = default;
 
     // Methods
-    RPCDataTypes::HelloResObj hello() {
-        RPCDataTypes::HelloResObj res {};
-        // check if data is valid
-        if (!m_dataobj.chargerinfo.get_data().has_value()) {
-            throw std::runtime_error("Data is not valid");
-        }
-        res.charger_info = m_dataobj.chargerinfo.get_data().value();
-        res.authentication_required = is_authentication_required();
-        res.api_version = get_api_version();
-        res.everest_version = m_dataobj.everest_version;
-        if (m_authenticated.has_value()) {
-            res.authenticated = m_authenticated.value();
-        }
-
-        return res;
-    };
-
-    void set_authentication_required(bool required) {
-        m_authentication_required = required;
-    };
-
-    bool is_authentication_required() const {
-        return m_authentication_required;
-    };
-    void set_api_version(const std::string& version) {
-        m_api_version = version;
-    };
-
-    std::string get_api_version() const {
-        return m_api_version;
-    };
-
-    void set_authenticated(bool authenticated) {
-        m_authenticated = authenticated;
-    };
-
-    bool is_authenticated() const {
-        if (m_authenticated.has_value()) {
-            return m_authenticated.value();
-        }
-        return false;
-    };
+    RPCDataTypes::HelloResObj hello();
+    void set_authentication_required(bool required);
+    bool is_authentication_required() const;
+    void set_api_version(const std::string& version);
+    std::string get_api_version() const;
+    void set_authenticated(bool authenticated);
+    bool is_authenticated() const;
 
 private:
     DataStoreCharger& m_dataobj;

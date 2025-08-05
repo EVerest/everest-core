@@ -34,12 +34,16 @@ target_link_libraries(${MODULE_NAME}
 
 target_sources(${MODULE_NAME}
     PRIVATE
+        "data/DataStore.cpp"
         "data/GenericInfoStore.cpp"
         "data/SessionInfo.cpp"
         "helpers/Conversions.cpp"
         "helpers/ErrorHandler.cpp"
         "helpers/LimitDecimalPlaces.cpp"
         "rpc/RpcHandler.cpp"
+        "rpc/methods/Api.cpp"
+        "rpc/methods/ChargePoint.cpp"
+        "rpc/methods/Evse.cpp"
         "rpc/notifications/ChargePoint.cpp"
         "rpc/notifications/Evse.cpp"
         "server/TransportInterface.cpp"
