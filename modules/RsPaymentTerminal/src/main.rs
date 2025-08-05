@@ -30,6 +30,7 @@
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 use anyhow::Result;
+use generated::errors::payment_terminal::{Error as PTError, PaymentTerminalError};
 use generated::types::{
     authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
     money::MoneyAmount,
@@ -41,6 +42,7 @@ use generated::{
     Context, Module, ModulePublisher, OnReadySubscriber, PaymentTerminalServiceSubscriber,
     SessionCostClientSubscriber,
 };
+
 use std::collections::HashMap;
 use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
 use std::time::Duration;
@@ -123,6 +125,11 @@ mod sync_feig {
             let mut inner = self.inner.lock().unwrap();
             self.rt.block_on(inner.commit_transaction(token, amount))
         }
+
+        pub fn configure(&self) -> Result<()> {
+            let mut inner = self.inner.lock().unwrap();
+            self.rt.block_on(inner.configure())
+        }
     }
 }
 
@@ -144,7 +151,7 @@ impl ProvidedIdToken {
             },
             authorization_type,
             certificate: None,
-            connectors: connectors,
+            connectors,
             iso_15118_certificate_hash_data: None,
             prevalidated: None,
             request_id: None,
@@ -213,6 +220,21 @@ impl PaymentTerminalModule {
         // Wait for the card.
         let read_card_loop = || -> Result<CardInfo> {
             loop {
+                if let Err(inner) = self.feig.configure() {
+                    publishers.payment_terminal.raise_error(inner.into())
+                } else {
+                    // TODO: use the clear all interface when it is implemented in the framework
+                    publishers
+                        .payment_terminal
+                        .clear_error(PTError::PaymentTerminal(
+                            PaymentTerminalError::TerminalIdNotSet,
+                        ));
+                    publishers
+                        .payment_terminal
+                        .clear_error(PTError::PaymentTerminal(
+                            PaymentTerminalError::GenericPaymentTerminalError,
+                        ));
+                }
                 if !self.has_everything_enabled() && !self.is_enabled() {
                     log::debug!("Reading is disabled, waiting...");
                     std::thread::sleep(Duration::from_secs(1));
@@ -352,6 +374,20 @@ impl AuthTokenProviderServiceSubscriber for PaymentTerminalModule {}
 
 impl BankSessionTokenProviderClientSubscriber for PaymentTerminalModule {}
 
+impl From<anyhow::Error> for PTError {
+    fn from(value: anyhow::Error) -> Self {
+        match value.downcast_ref::<Error>() {
+            Some(inner) => match inner {
+                Error::TidMismatch => {
+                    PTError::PaymentTerminal(PaymentTerminalError::TerminalIdNotSet)
+                }
+                _ => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
+            },
+            None => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
+        }
+    }
+}
+
 impl OnReadySubscriber for PaymentTerminalModule {
     fn on_ready(&self, publishers: &ModulePublisher) {
         // Send the publishers to the main thread.
@@ -473,8 +509,14 @@ mod tests {
                 .expect_get_bank_session_token()
                 .times(1)
                 .return_once(|| input);
+            everest_mock
+                .payment_terminal
+                .expect_clear_error()
+                .times(0)
+                .return_const(());
 
-            let feig = SyncFeig::default();
+            let mut feig = SyncFeig::default();
+            feig.expect_configure().times(0).return_once(|| Ok(()));
             let (tx, _) = channel();
 
             let pt_module = PaymentTerminalModule {
@@ -500,6 +542,11 @@ mod tests {
             let mut everest_mock = ModulePublisher::default();
             let mut feig_mock = SyncFeig::default();
 
+            everest_mock
+                .payment_terminal
+                .expect_clear_error()
+                .times(2)
+                .return_const(());
             everest_mock
                 .bank_session_token_slots
                 .push(BankSessionTokenProviderClientPublisher::default());
@@ -531,6 +578,8 @@ mod tests {
                     .with(eq("my bank token"))
                     .return_once(|_| Ok(()));
             }
+
+            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
 
             let (tx, _) = channel();
 
@@ -594,6 +643,12 @@ mod tests {
         {
             let mut everest_mock = ModulePublisher::default();
             let mut feig_mock = SyncFeig::default();
+            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
+            everest_mock
+                .payment_terminal
+                .expect_clear_error()
+                .times(2)
+                .return_const(());
 
             everest_mock
                 .bank_session_token_slots
@@ -903,6 +958,12 @@ mod tests {
 
             let mut everest_mock = ModulePublisher::default();
             let mut feig_mock = SyncFeig::default();
+            feig_mock.expect_configure().times(3).returning(|| Ok(()));
+            everest_mock
+                .payment_terminal
+                .expect_clear_error()
+                .times(6)
+                .return_const(());
 
             everest_mock
                 .bank_session_token_slots
