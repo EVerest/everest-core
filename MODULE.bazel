@@ -35,13 +35,13 @@ bazel_dep(name = "boringssl", version = "0.20250311.0")
 
 bazel_dep(name = "fast_float", version = "6.1.6")
 
-bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "com_github_nlohmann_json")
+bazel_dep(name = "nlohmann_json", version = "3.12.0", repo_name = "com_github_nlohmann_json")
 
 bazel_dep(name = "cxx.rs", version = "1.0.153")
 
 bazel_dep(name = "rules_foreign_cc", version = "0.14.0")
 
-bazel_dep(name = "fmt", version = "11.1.4", repo_name = "com_github_fmtlib_fmt")
+bazel_dep(name = "fmt", version = "11.2.0", repo_name = "com_github_fmtlib_fmt")
 
 bazel_dep(name = "sqlite3", version = "3.49.1")
 

@@ -1,13 +1,14 @@
 ---
 ryml:
   git: https://github.com/biojppm/rapidyaml
-  git_tag: v0.4.1
+  git_tag: v0.9.0
   options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
-  git_tag: v4.3.3
+  git_tag: v4.3.6
   cmake_condition: "EVEREST_ENABLE_ADMIN_PANEL_BACKEND"
   options:
+    - CMAKE_POLICY_VERSION_MINIMUM 3.5
     - CMAKE_POLICY_DEFAULT_CMP0077 NEW
     - LWS_ROLE_RAW_FILE OFF
     - LWS_UNIX_SOCK OFF
@@ -30,7 +31,7 @@ libwebsockets:
     - LWS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR}
 nlohmann_json:
   git: https://github.com/nlohmann/json
-  git_tag: v3.11.2
+  git_tag: v3.12.0
   options: ["JSON_BuildTests OFF", "JSON_MultipleHeaders ON"]
 nlohmann_json_schema_validator:
   git: https://github.com/pboettch/json-schema-validator
@@ -52,12 +53,12 @@ liblog:
   options: ["BUILD_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
 libfmt:
   git: https://github.com/fmtlib/fmt.git
-  git_tag: 10.1.0
+  git_tag: 11.2.0
   options:
     ["FMT_TEST OFF", "FMT_DOC OFF", "BUILD_SHARED_LIBS ON", "FMT_INSTALL ON"]
 date:
   git: https://github.com/HowardHinnant/date.git
-  git_tag: v3.0.1
+  git_tag: v3.0.4
   options:
     [
       "BUILD_TZ_LIB ON",
@@ -68,15 +69,15 @@ date:
     ]
 catch2:
   git: https://github.com/catchorg/Catch2.git
-  git_tag: v3.7.1
+  git_tag: v3.9.0
   cmake_condition: "EVEREST_FRAMEWORK_BUILD_TESTING"
 pybind11:
   git: https://github.com/pybind/pybind11.git
-  git_tag: v2.11.1
+  git_tag: v2.13.6
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT"
 pybind11_json:
   git: https://github.com/pybind/pybind11_json.git
-  git_tag: 0.2.13
+  git_tag: 0.2.15
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT"
 everest-sqlite:
   git: https://github.com/EVerest/everest-sqlite.git

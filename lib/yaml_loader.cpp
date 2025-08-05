@@ -45,7 +45,7 @@ struct RymlCallbackInitializer {
 
 namespace {
 // NOLINTNEXTLINE(misc-no-recursion): recursive parsing preferred for simplicity
-nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::NodeRef& ryml_node) {
+nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::ConstNodeRef& ryml_node) {
     if (ryml_node.is_map()) {
         // handle object
         auto object = nlohmann::ordered_json::object();
