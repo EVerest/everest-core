@@ -32,9 +32,10 @@ void RpcApi::init() {
     for (const auto& evse_energy : r_energy_listener) {
         if (evse_energy->get_mapping().has_value()) {
             // Write EVSE index and connector id to the datastore
-            auto evse_store = this->data.get_evse_store(evse_energy->get_mapping().value().evse);
+            const auto evse_index = evse_energy->get_mapping().value().evse;
+            auto evse_store = this->data.get_evse_store(evse_index);
             if (evse_store == nullptr) {
-                EVLOG_error << "EVSE index " << evse_energy->get_mapping().value().evse
+                EVLOG_error << "EVSE index " << evse_index
                             << " not found in data store, cannot subscribe to energy interface";
                 continue;
             }
