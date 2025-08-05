@@ -343,7 +343,7 @@ bool RpcApi::check_evse_mapping() {
     // Iterate over all over the mapping of the EVSE's and configure the data store accordingly
     for (std::size_t idx = 0; idx < r_evse_manager.size(); idx++) {
         const auto& evse_manager = r_evse_manager[idx];
-        auto& evse_data = this->data.evses[idx++];
+        const auto& evse_data = this->data.evses[idx++];
         // Initialize connector id for the case of no mapping information
         types::json_rpc_api::ConnectorInfoObj connector;
         connector.id = 1;                                                 // default connector id

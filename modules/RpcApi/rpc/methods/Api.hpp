@@ -22,7 +22,7 @@ class Api {
 public:
     // Constructor and Destructor
     Api() = delete;
-    Api(DataStoreCharger& dataobj) : m_dataobj(dataobj){};
+    Api(DataStoreCharger& dataobj) : m_dataobj(dataobj), m_authentication_required(false){};
 
     ~Api() = default;
 
