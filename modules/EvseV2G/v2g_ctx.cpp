@@ -250,6 +250,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     ctx->evse_v2g_data.sae_bidi_data.sae_v2h_minimal_soc = 20;
     ctx->evse_v2g_data.sae_bidi_data.discharging = false;
 
+    ctx->evse_v2g_data.no_energy_pause = NoEnergyPauseStatus::None;
+
     // Init EV received v2g-data to an invalid state
     memset(&ctx->ev_v2g_data, 0xff, sizeof(ctx->ev_v2g_data));
 

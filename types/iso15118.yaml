@@ -133,7 +133,7 @@ types:
       - DcWeldingDetectionRes
       - UnknownMessage
   SaeJ2847BidiMode:
-    description: Bidi mode for sae j2847_2 
+    description: Bidi mode for sae j2847_2
     type: string
     enum:
       - None
@@ -145,6 +145,17 @@ types:
     enum:
       - Install
       - Update
+  NoEnergyPauseMode:
+    description: >-
+      PauseAfterPrecharge the charger should pause but has power for cable check and pre charge.
+      PauseBeforeCableCheck the charger should pause before cable check.
+      AllowEvToIgnorePause charger should ignore, that the ev will go to CurrentDemand instead
+      of pausing the session, this is against IEC61851-23:2023.
+    type: string
+    enum:
+      - PauseAfterPrecharge
+      - PauseBeforeCableCheck
+      - AllowEvToIgnorePause
   EVSEID:
     description: >-
       An ID that uniquely identifies the EVSE and the power outlet the
@@ -499,7 +510,7 @@ types:
       iso15118_schema_version:
         description: Schema Version used for CertificateReq message between EV and Charger
         type: string
-        maxLength: 50 
+        maxLength: 50
       certificate_action:
         description: Type of the certificate request
         type: string
@@ -538,21 +549,6 @@ types:
         description: This contains the responder URL
         type: string
         maxLength: 512
-  SupportedEnergyMode:
-    description: Supported energy mode and if the mode supports bidirectional
-    type: object
-    additionalProperties: false
-    required:
-      - energy_transfer_mode
-      - bidirectional
-    properties:
-      energy_transfer_mode:
-        description: The energy mode supported by the SECC 
-        type: string
-        $ref: /iso15118#/EnergyTransferMode
-      bidirectional:
-        description: Set true if the powersupply (AC or DC) supports bidi mode
-        type: boolean
   DisplayParameters:
     description: Parameters that may be displayed on the EVSE
     type: object
@@ -1520,3 +1516,44 @@ types:
         type: number
         minimum: 0
         maximum: 99
+  EvInformation:
+    description: Information concerning TLS certificates used by EV, as well as supported protocols.
+    type: object
+    additionalProperties: false
+    required:
+      - supported_protocols
+      - selected_protocol
+      - evcc_id
+    properties:
+      supported_protocols:
+        type: object
+        description:
+          Ordered list of all of the supported protocols by the EV.
+        $ref: /iso15118#/AppProtocols
+      selected_protocol:
+        type: object
+        description:
+          The protocol chosen for the communication.
+        $ref: /iso15118#/AppProtocol
+      evcc_id:
+        description:
+          Specifies the EVs identification in a readable format. It contains
+          the MAC address of the EVCC in uppercase
+        type: string
+        pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
+      tls_leaf_certificate:
+        description:
+          Certificate used by the EV for the TLS1.3 communication.
+        type: string
+      tls_sub_ca_1_certificate:
+        description:
+          Certificate used by the EV for the TLS1.3 communication.
+        type: string
+      tls_sub_ca_2_certificate:
+        description:
+          Certificate used by the EV for the TLS1.3 communication.
+        type: string
+      tls_root_certificate:
+        description:
+          Certificate used by the EV for the TLS1.3 communication.
+        type: string

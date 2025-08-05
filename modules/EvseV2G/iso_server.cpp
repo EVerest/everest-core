@@ -1187,9 +1187,13 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                 .PMaxSchedule.PMaxScheduleEntry.array[0]
                 .RelativeTimeInterval.duration_isUsed = 1;
+
+            constexpr auto PAUSE_DURATION = 60 * 30;
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                 .PMaxSchedule.PMaxScheduleEntry.array[0]
-                .RelativeTimeInterval.duration = departure_time_duration;
+                .RelativeTimeInterval.duration = conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::None
+                                                     ? departure_time_duration
+                                                     : PAUSE_DURATION;
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                 .PMaxSchedule.PMaxScheduleEntry.arrayLen = 1;
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.arrayLen = 1;
@@ -1341,6 +1345,17 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
             ev_maximum_voltage_limit < evse_minimum_voltage_limit) {
             res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter;
         }
+
+        if (res->EVSEProcessing == iso2_EVSEProcessingType_Finished and
+            conn->ctx->evse_v2g_data.no_energy_pause != NoEnergyPauseStatus::None) {
+            res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSENotification = iso2_EVSENotificationType_StopCharging;
+
+            constexpr auto PAUSE_NOTIFICATION_DELAY = 300;
+            res->DC_EVSEChargeParameter.DC_EVSEStatus.NotificationMaxDelay =
+                conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::BeforeCableCheck
+                    ? 0
+                    : PAUSE_NOTIFICATION_DELAY;
+        }
     }
 
     /* Check the current response code and check if no external error has occurred */
@@ -1348,9 +1363,13 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
 
     /* Set next expected req msg */
     if (conn->ctx->is_dc_charger == true) {
-        conn->ctx->state = (iso2_EVSEProcessingType_Finished == res->EVSEProcessing)
-                               ? (int)iso_dc_state_id::WAIT_FOR_CABLECHECK
-                               : (int)iso_dc_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY; // [V2G-582], [V2G-688]
+        if (conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::BeforeCableCheck) {
+            conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_PRECHARGE_POWERDELIVERY; // IEC6185-1:2023 CC.3.5.2
+        } else {
+            conn->ctx->state = (iso2_EVSEProcessingType_Finished == res->EVSEProcessing)
+                                   ? (int)iso_dc_state_id::WAIT_FOR_CABLECHECK
+                                   : (int)iso_dc_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY; // [V2G-582], [V2G-688]
+        }
     } else {
         conn->ctx->state = (iso2_EVSEProcessingType_Finished == res->EVSEProcessing)
                                ? (int)iso_ac_state_id::WAIT_FOR_POWERDELIVERY
@@ -1384,6 +1403,10 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
 
     /* At first, publish the received EV request message to the MQTT interface */
     publish_iso_power_delivery_req(conn->ctx, req);
+
+    const auto ev_should_pause =
+        conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::AfterCableCheckPreCharge or
+        conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::BeforeCableCheck;
 
     /* build up response */
     res->ResponseCode = iso2_responseCodeType_OK;
@@ -1422,6 +1445,13 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
                     pthread_mutex_unlock(&conn->ctx->mqtt_lock);
                 }
             }
+        } else if (ev_should_pause) {
+
+            dlog(DLOG_LEVEL_ERROR, "The EV did not pause the session even EVSE signaled the EV that no energy is "
+                                   "available. Abort the session");
+            res->ResponseCode = iso2_responseCodeType_FAILED;
+            conn->ctx->session.is_charging = false;
+            conn->ctx->p_charger->publish_dc_open_contactor(nullptr);
         }
         break;
 

@@ -30,10 +30,10 @@
 /modules/ErrorHistory/ @corneliusclaussen @hikinggrass @pietfried @andistorm
 /modules/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried @mlitre
 /modules/EvManager/ @SebaLukas @pietfried @MarzellT
-/modules/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen
+/modules/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen @pietfried @hikinggrass @MarzellT
 /modules/EvseSecurity/ @AssemblyJohn @pietfried @hikinggrass
-/modules/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc
-/modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas
+/modules/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc @pietfried @hikinggrass @MarzellT
+/modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas @pietfried @hikinggrass
 /modules/OCPP/ @hikinggrass @pietfried @mlitre
 /modules/OCPP201/ @hikinggrass @pietfried @mlitre
 /modules/PacketSniffer/ @corneliusclaussen @SebaLukas @hikinggrass

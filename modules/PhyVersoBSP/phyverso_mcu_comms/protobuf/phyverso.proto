@@ -140,25 +140,6 @@ message Temperature {
   repeated uint32 temp = 1;
 }
 
-// Message for parking sensor data.
-message OpaqueData {
-  // The data itself.
-  repeated uint32 data = 1;
-
-  // The id of the message - this allows the receiver to assemble chunks of the
-  // same message.
-  uint32 id = 2;
-
-  // The total number of chunks belonging to the `id`.
-  uint32 chunks_total = 3;
-
-  // The current chunk.
-  uint32 chunk_current = 4;
-
-  // The connector or parking sensor.
-  int32 connector = 5;
-}
-
 message RcdCommand {
   bool test = 1;  // true -> set TEST pin high, false -> set TEST pin low
   bool reset = 2; // reset RCD/emergency off if set to true

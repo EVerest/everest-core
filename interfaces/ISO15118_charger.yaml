@@ -7,18 +7,9 @@ cmds:
       evse_id:
         description: >-
           Set an ID that uniquely identifies the EVSE and the power outlet the
-          vehicle is connected to 
+          vehicle is connected to
         type: object
         $ref: /iso15118#/EVSEID
-      supported_energy_transfer_modes:
-        description: Available energy transfer modes supported by the EVSE
-        type: array
-        items:
-          description: The different energy modes supported by the SECC 
-          type: object
-          $ref: /iso15118#/SupportedEnergyMode
-        minItems: 1
-        maxItems: 6
       sae_j2847_mode:
         description: Charger is supporting SAE J2847 V2G/V2H version
         type: string
@@ -54,7 +45,7 @@ cmds:
         type: boolean
       central_contract_validation_allowed:
         description: >-
-          Indicates if the vehicle contract may be forwarded to and validated by a CSMS in case 
+          Indicates if the vehicle contract may be forwarded to and validated by a CSMS in case
           local validation was not successful
         type: boolean
 # Response messages to vars:
@@ -80,7 +71,7 @@ cmds:
       status:
         description: Set to true when contactor is closed, false when contactor is open
         type: boolean
-# Events 
+# Events
   dlink_ready:
     description: >-
       Signals dlink_ready from SLAC layer according to ISO15118-3
@@ -119,7 +110,37 @@ cmds:
       pause:
         description: Set to true when to pause, set to false when to continue
         type: boolean
+  no_energy_pause_charging:
+    description: >-
+      Right now there is no power available for the charging process. According to
+      IEC61851-23:2023 CC3.5.3 the charger can pause the session before or after the cable check and
+      pre charge stage.
+    arguments:
+      mode:
+        description: >-
+          Set to different no energy pause modes. For PauseAfterPrecharge the charger should pause but
+          has power for cable check and pre charge. For PauseBeforeCableCheck the charger should pause
+          before cable check. For AllowEvToIgnorePause charger should ignore, that the ev will go to
+          CurrentDemand instead of pausing the session, this is against IEC61851-23:2023.
+        type: string
+        $ref: /iso15118#/NoEnergyPauseMode
 # Update physical values
+  update_energy_transfer_modes:
+    description: >-
+      Update the supported energy transfer modes. Call at least once during start up.
+      Typically for ISO15118-2 and basic charging we expect unidirectional charging modes.
+      For ISO15118-20 the user can set what type of modes the hardware supports, may that be
+      bidirectional, unidirectional, wireless, etc charging.
+    arguments:
+      supported_energy_transfer_modes:
+        description: Available energy transfer modes supported by the EVSE
+        type: array
+        items:
+          description: The different energy modes supported by the SECC
+          type: object
+          $ref: /iso15118#/EnergyTransferMode
+        minItems: 1
+        maxItems: 6
   update_ac_max_current:
     description: Update the maximum allowed line current restriction per phase. Call at least once during start up.
     arguments:
@@ -143,7 +164,7 @@ cmds:
         type: object
         $ref: /iso15118#/DcEvseMinimumLimits
   update_isolation_status:
-    description: Update the isolation condition 
+    description: Update the isolation condition
     arguments:
       isolation_status:
         description: Result of the isolation monitoring
@@ -180,7 +201,7 @@ vars:
     description: An EIM authorization is requiered
     type: "null"
   require_auth_pnc:
-    description: >- 
+    description: >-
       The EVCC provides the payment details for a PnC authorization by sending
       the signature certificate chain and eMAID.
     type: object

@@ -1,0 +1,9 @@
+description: >-
+  Errors for PaymentTerminal
+errors:
+  - name: TerminalIdNotSet
+    description: >-
+      The terminal identifier has not been set properly
+  - name: GenericPaymentTerminalError
+    description: >-
+      The terminal reported an error

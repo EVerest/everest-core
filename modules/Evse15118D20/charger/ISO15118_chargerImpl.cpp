@@ -342,6 +342,9 @@ void ISO15118_chargerImpl::ready() {
     const auto v2g_root_cert_path = mod->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
     const auto mo_root_cert_path = mod->r_security->call_get_verify_file(types::evse_security::CaCertificateType::MO);
 
+    // TODO(mlitre): Should be updated once libiso supports service renegotiation
+    this->mod->p_extensions->publish_service_renegotiation_supported(false);
+
     const iso15118::TbdConfig tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
@@ -634,43 +637,21 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             return std::nullopt;
         }
     };
+    callbacks.ev_information = [this](const iso15118::d20::EVInformation& ev_info) {
+        types::iso15118::EvInformation info = convert_ev_info(ev_info);
+        this->mod->p_extensions->publish_ev_info(info);
+    };
 
     return callbacks;
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
 
     std::scoped_lock lock(GEL);
     setup_config.evse_id = evse_id.evse_id; // TODO(SL): Check format for d20
 
-    std::vector<dt::ServiceCategory> services;
-
-    for (const auto& mode : supported_energy_transfer_modes) {
-        if (mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::AC_single_phase_core ||
-            mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::AC_three_phase_core) {
-            if (mode.bidirectional) {
-                services.push_back(dt::ServiceCategory::AC_BPT);
-            } else {
-                services.push_back(dt::ServiceCategory::AC);
-            }
-        } else if (mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_core ||
-                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_extended ||
-                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_combo_core ||
-                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_unique) {
-            if (mode.bidirectional) {
-                services.push_back(dt::ServiceCategory::DC_BPT);
-            } else {
-                services.push_back(dt::ServiceCategory::DC);
-            }
-        }
-    }
-
-    setup_config.supported_energy_services = services;
-
-    setup_steps_done.set(to_underlying_value(SetupStep::ENERGY_SERVICE));
+    setup_steps_done.set(to_underlying_value(SetupStep::SETUP));
 }
 
 void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
@@ -749,6 +730,62 @@ void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
     if (controller) {
         controller->send_control_event(iso15118::d20::PauseCharging{pause});
     }
+}
+
+void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) {
+    // your code for cmd no_energy_pause_charging goes here
+}
+
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+
+    std::scoped_lock lock(GEL);
+
+    std::vector<dt::ServiceCategory> services;
+
+    for (const auto& mode : supported_energy_transfer_modes) {
+        switch (mode) {
+        case types::iso15118::EnergyTransferMode::AC_single_phase_core:
+        case types::iso15118::EnergyTransferMode::AC_two_phase:
+        case types::iso15118::EnergyTransferMode::AC_three_phase_core:
+            services.push_back(dt::ServiceCategory::AC);
+            break;
+        case types::iso15118::EnergyTransferMode::AC_BPT:
+        case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+            services.push_back(dt::ServiceCategory::AC_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::AC_DER:
+            services.push_back(dt::ServiceCategory::AC_DER);
+            break;
+        case types::iso15118::EnergyTransferMode::DC:
+        case types::iso15118::EnergyTransferMode::DC_core:
+        case types::iso15118::EnergyTransferMode::DC_extended:
+        case types::iso15118::EnergyTransferMode::DC_combo_core:
+        case types::iso15118::EnergyTransferMode::DC_unique:
+            services.push_back(dt::ServiceCategory::DC);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_BPT:
+            services.push_back(dt::ServiceCategory::DC_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_ACDP:
+            services.push_back(dt::ServiceCategory::DC_ACDP);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+            services.push_back(dt::ServiceCategory::DC_ACDP_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::WPT:
+            services.push_back(dt::ServiceCategory::WPT);
+            break;
+        }
+    }
+
+    setup_config.supported_energy_services = services;
+
+    if (controller) {
+        controller->update_energy_modes(services);
+    }
+
+    setup_steps_done.set(to_underlying_value(SetupStep::ENERGY_SERVICE));
 }
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {

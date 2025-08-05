@@ -4,6 +4,7 @@
 #include "ISO15118_chargerImpl.hpp"
 #include "log.hpp"
 #include "v2g_ctx.hpp"
+#include <string_view>
 
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
 
@@ -64,10 +65,8 @@ void ISO15118_chargerImpl::init() {
 void ISO15118_chargerImpl::ready() {
 }
 
-void ISO15118_chargerImpl::handle_setup(
-    types::iso15118::EVSEID& evse_id,
-    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
+                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
 
     uint8_t len = evse_id.evse_id.length();
     if (len < iso2_EVSEID_CHARACTER_SIZE) {
@@ -76,59 +75,6 @@ void ISO15118_chargerImpl::handle_setup(
     } else {
         dlog(DLOG_LEVEL_WARNING, "EVSEID_CHARACTER_SIZE exceeded (received: %u, max: %u)", len,
              iso2_EVSEID_CHARACTER_SIZE);
-    }
-
-    if (v2g_ctx->hlc_pause_active != true) {
-        uint16_t& energyArrayLen =
-            (v2g_ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen);
-        iso2_EnergyTransferModeType* energyArray =
-            v2g_ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array;
-        energyArrayLen = 0;
-
-        v2g_ctx->is_dc_charger = true;
-
-        for (const auto& mode : supported_energy_transfer_modes) {
-
-            if (mode.bidirectional) {
-                dlog(DLOG_LEVEL_INFO, "Ignoring bidirectional SupportedEnergyTransferMode");
-                continue;
-            }
-
-            switch (mode.energy_transfer_mode) {
-            case types::iso15118::EnergyTransferMode::AC_single_phase_core:
-                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_AC_single_phase_core;
-                v2g_ctx->is_dc_charger = false;
-                break;
-            case types::iso15118::EnergyTransferMode::AC_three_phase_core:
-                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_AC_three_phase_core;
-                v2g_ctx->is_dc_charger = false;
-                break;
-            case types::iso15118::EnergyTransferMode::DC_core:
-                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_DC_core;
-                break;
-            case types::iso15118::EnergyTransferMode::DC_extended:
-                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_DC_extended;
-                break;
-            case types::iso15118::EnergyTransferMode::DC_combo_core:
-                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_DC_combo_core;
-                break;
-            case types::iso15118::EnergyTransferMode::DC_unique:
-                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_DC_unique;
-                break;
-            default:
-                if (energyArrayLen == 0) {
-
-                    dlog(DLOG_LEVEL_WARNING, "Unable to configure SupportedEnergyTransferMode %s",
-                         types::iso15118::energy_transfer_mode_to_string(mode.energy_transfer_mode).c_str());
-                }
-                break;
-            }
-        }
-
-        if (mod->config.supported_DIN70121 == true and v2g_ctx->is_dc_charger == false) {
-            v2g_ctx->supported_protocols &= ~(1 << V2G_PROTO_DIN70121);
-            dlog(DLOG_LEVEL_WARNING, "Removed DIN70121 from the list of supported protocols as AC is enabled");
-        }
     }
 
     v2g_ctx->debugMode = debug_mode;
@@ -143,21 +89,44 @@ void ISO15118_chargerImpl::handle_setup(
 
         if (sae_j2847_mode == BidiMode::V2H) {
             sae_service.ServiceID = 28472;
-            const std::string service_name = "SAE J2847/2 V2H";
-            memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
-                   service_name.length());
+            const std::string_view service_name = "SAE J2847/2 V2H";
+            memcpy(sae_service.ServiceName.characters, service_name.data(), service_name.length());
             sae_service.ServiceName.charactersLen = service_name.length();
             sae_service.ServiceName_isUsed = true;
         } else {
             sae_service.ServiceID = 28473;
-            const std::string service_name = "SAE J2847/2 V2G";
-            memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
-                   service_name.length());
+            const std::string_view service_name = "SAE J2847/2 V2G";
+            memcpy(sae_service.ServiceName.characters, service_name.data(), service_name.length());
             sae_service.ServiceName.charactersLen = service_name.length();
             sae_service.ServiceName_isUsed = true;
         }
 
         add_service_to_service_list(v2g_ctx, sae_service);
+    }
+}
+
+void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
+    if (physical_values.ac_nominal_voltage.has_value()) {
+        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_nominal_voltage,
+                                      physical_values.ac_nominal_voltage.value(), 1, iso2_unitSymbolType_V);
+    }
+
+    if (physical_values.dc_current_regulation_tolerance.has_value()) {
+        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_current_regulation_tolerance,
+                                      physical_values.dc_current_regulation_tolerance.value(), 1,
+                                      iso2_unitSymbolType_A);
+        v2g_ctx->evse_v2g_data.evse_current_regulation_tolerance_is_used = 1;
+    }
+
+    if (physical_values.dc_peak_current_ripple.has_value()) {
+        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_peak_current_ripple,
+                                      physical_values.dc_peak_current_ripple.value(), 1, iso2_unitSymbolType_A);
+    }
+
+    if (physical_values.dc_energy_to_be_delivered.has_value()) {
+        populate_physical_value(&v2g_ctx->evse_v2g_data.evse_energy_to_be_delivered,
+                                physical_values.dc_energy_to_be_delivered.value(), iso2_unitSymbolType_Wh);
+        v2g_ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used = 1;
     }
 }
 
@@ -298,29 +267,76 @@ void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
     EVLOG_warning << "Pause initialized by the charger is not supported in DIN70121 and ISO15118-2";
 }
 
-void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
+void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) {
 
-    if (physical_values.ac_nominal_voltage.has_value()) {
-        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_nominal_voltage,
-                                      physical_values.ac_nominal_voltage.value(), 1, iso2_unitSymbolType_V);
+    switch (mode) {
+    case types::iso15118::NoEnergyPauseMode::PauseAfterPrecharge:
+        v2g_ctx->evse_v2g_data.no_energy_pause = NoEnergyPauseStatus::AfterCableCheckPreCharge;
+        break;
+
+    case types::iso15118::NoEnergyPauseMode::PauseBeforeCableCheck:
+        v2g_ctx->evse_v2g_data.no_energy_pause = NoEnergyPauseStatus::BeforeCableCheck;
+        break;
+
+    case types::iso15118::NoEnergyPauseMode::AllowEvToIgnorePause:
+        v2g_ctx->evse_v2g_data.no_energy_pause = NoEnergyPauseStatus::AllowEvToIgnorePause;
+        break;
     }
+}
 
-    if (physical_values.dc_current_regulation_tolerance.has_value()) {
-        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_current_regulation_tolerance,
-                                      physical_values.dc_current_regulation_tolerance.value(), 1,
-                                      iso2_unitSymbolType_A);
-        v2g_ctx->evse_v2g_data.evse_current_regulation_tolerance_is_used = 1;
-    }
+void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
+    std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+    if (v2g_ctx->hlc_pause_active != true) {
+        uint16_t& energyArrayLen =
+            (v2g_ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen);
+        iso2_EnergyTransferModeType* energyArray =
+            v2g_ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array;
+        energyArrayLen = 0;
 
-    if (physical_values.dc_peak_current_ripple.has_value()) {
-        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_peak_current_ripple,
-                                      physical_values.dc_peak_current_ripple.value(), 1, iso2_unitSymbolType_A);
-    }
+        v2g_ctx->is_dc_charger = true;
 
-    if (physical_values.dc_energy_to_be_delivered.has_value()) {
-        populate_physical_value(&v2g_ctx->evse_v2g_data.evse_energy_to_be_delivered,
-                                physical_values.dc_energy_to_be_delivered.value(), iso2_unitSymbolType_Wh);
-        v2g_ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used = 1;
+        for (const auto& mode : supported_energy_transfer_modes) {
+
+            switch (mode) {
+            case types::iso15118::EnergyTransferMode::AC_single_phase_core:
+                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_AC_single_phase_core;
+                v2g_ctx->is_dc_charger = false;
+                break;
+            case types::iso15118::EnergyTransferMode::AC_three_phase_core:
+                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_AC_three_phase_core;
+                v2g_ctx->is_dc_charger = false;
+                break;
+            case types::iso15118::EnergyTransferMode::DC_core:
+                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_DC_core;
+                break;
+            case types::iso15118::EnergyTransferMode::DC_extended:
+                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_DC_extended;
+                break;
+            case types::iso15118::EnergyTransferMode::DC_combo_core:
+                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_DC_combo_core;
+                break;
+            case types::iso15118::EnergyTransferMode::DC_unique:
+                energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_DC_unique;
+                break;
+            case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+            case types::iso15118::EnergyTransferMode::AC_BPT:
+            case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+            case types::iso15118::EnergyTransferMode::DC_BPT:
+                dlog(DLOG_LEVEL_INFO, "Ignoring bidirectional SupportedEnergyTransferMode");
+            default:
+                if (energyArrayLen == 0) {
+
+                    dlog(DLOG_LEVEL_WARNING, "Unable to configure SupportedEnergyTransferMode %s",
+                         types::iso15118::energy_transfer_mode_to_string(mode).c_str());
+                }
+                break;
+            }
+        }
+
+        if (mod->config.supported_DIN70121 == true and v2g_ctx->is_dc_charger == false) {
+            v2g_ctx->supported_protocols &= ~(1 << V2G_PROTO_DIN70121);
+            dlog(DLOG_LEVEL_WARNING, "Removed DIN70121 from the list of supported protocols as AC is enabled");
+        }
     }
 }
 
