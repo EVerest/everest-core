@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-everestrs = { workspace=true  }
+everestrs = { workspace=true }
 anyhow = "1.0.75"
-zvt = { git="https://github.com/Everest/zvt.git", rev="fab0659255778b418cd2a67179d96400e20c6386" }
-zvt_feig_terminal = { git="https://github.com/Everest/zvt.git", rev="fab0659255778b418cd2a67179d96400e20c6386" }
+zvt = { git = "https://github.com/Everest/zvt.git", rev = "25d34c54b405a8b29930cd52dd266bb3c00e4be5" }
+zvt_feig_terminal = { git = "https://github.com/Everest/zvt.git", rev = "25d34c54b405a8b29930cd52dd266bb3c00e4be5" }
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "net", "sync"] }
 log = "0.4.20"
 mockall = { version = "0.12.1", optional = true }
