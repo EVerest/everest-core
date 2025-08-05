@@ -48,11 +48,13 @@ void RpcApi::init() {
     // Create the request handler
     m_request_handler = std::make_unique<RpcApiRequestHandler>(data, r_evse_manager, r_evse_energy_sink);
 
-    m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port, config.websocket_interface);
+    m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port,
+                                                                   config.websocket_interface);
     // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
     transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-    m_rpc_handler = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data, std::move(m_request_handler), config.max_decimal_places_other);
+    m_rpc_handler = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data,
+                                                      std::move(m_request_handler), config.max_decimal_places_other);
 
     subscribe_global_errors();
 }
@@ -64,10 +66,11 @@ void RpcApi::ready() {
     invoke_ready(*p_main);
 }
 
-void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data, const types::evse_manager::SessionEvent& session_event) {
+void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data,
+                                      const types::evse_manager::SessionEvent& session_event) {
     // store the session info in the data store
     types::json_rpc_api::EVSEStateEnum evse_state =
-    types::json_rpc_api::evse_manager_session_event_to_evse_state(session_event);
+        types::json_rpc_api::evse_manager_session_event_to_evse_state(session_event);
     evse_data.evsestatus.set_state(evse_state);
     evse_data.sessioninfo.update_state(session_event);
 
@@ -110,7 +113,7 @@ void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data, const type
                 evse_data.sessioninfo.end_energy_export_wh_was_set = false;
             }
         }
-        evse_data.evsestatus.set_charged_energy_wh(evse_data.sessioninfo.get_charged_energy_wh()); 
+        evse_data.evsestatus.set_charged_energy_wh(evse_data.sessioninfo.get_charged_energy_wh());
         evse_data.evsestatus.set_discharged_energy_wh(evse_data.sessioninfo.get_discharged_energy_wh());
         evse_data.evsestatus.set_charging_duration_s(evse_data.sessioninfo.get_charging_duration_s().count());
         evse_data.evsestatus.set_charging_allowed(false);
@@ -136,19 +139,17 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     });
     evse_manager->subscribe_hw_capabilities(
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
-        // there is only one connector supported currently
-        this->hwcaps_var_to_datastore(hwcaps, evse_data.hardwarecapabilities);
-    });
-    evse_manager->subscribe_evse_id(
-        [this, &evse_data](const std::string& evse_id) {
+            // there is only one connector supported currently
+            this->hwcaps_var_to_datastore(hwcaps, evse_data.hardwarecapabilities);
+        });
+    evse_manager->subscribe_evse_id([this, &evse_data](const std::string& evse_id) {
         // set the EVSE id in the data store
         evse_data.evseinfo.set_id(evse_id);
     });
-    //TODO: get bidi charging support info from interface
+    // TODO: get bidi charging support info from interface
     evse_data.evseinfo.set_bidi_charging(false);
 
-    evse_manager->subscribe_session_event(
-        [this, &evse_data](types::evse_manager::SessionEvent session_event) {
+    evse_manager->subscribe_session_event([this, &evse_data](types::evse_manager::SessionEvent session_event) {
         check_evse_session_event(evse_data, session_event);
     });
     evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
@@ -156,16 +157,15 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
     });
 
-    evse_manager->subscribe_limits(
-        [this, &evse_data](const types::evse_manager::Limits& limits) {
-            // set the external limits in the data store
-            auto tmp = evse_data.evsestatus.get_ac_charge_param();
-            if (!tmp.has_value()) {
-                tmp.emplace();
-            }
-            tmp->evse_max_current = limits.max_current;
-            tmp->evse_max_phase_count = limits.nr_of_phases_available;
-            evse_data.evsestatus.set_ac_charge_param(tmp);
+    evse_manager->subscribe_limits([this, &evse_data](const types::evse_manager::Limits& limits) {
+        // set the external limits in the data store
+        auto tmp = evse_data.evsestatus.get_ac_charge_param();
+        if (!tmp.has_value()) {
+            tmp.emplace();
+        }
+        tmp->evse_max_current = limits.max_current;
+        tmp->evse_max_phase_count = limits.nr_of_phases_available;
+        evse_data.evsestatus.set_ac_charge_param(tmp);
     });
 }
 
@@ -174,7 +174,8 @@ void RpcApi::subscribe_evse_energy(const std::unique_ptr<energyIntf>& evse_energ
         if (request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.has_value() &&
             request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value() != 0) {
             RPCDataTypes::ACChargeStatusObj ac_charge_status;
-            ac_charge_status.evse_active_phase_count = request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value();
+            ac_charge_status.evse_active_phase_count =
+                request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value();
             evse_data.evsestatus.set_ac_charge_status(ac_charge_status);
         }
     });
@@ -194,7 +195,7 @@ void RpcApi::subscribe_global_errors() {
 }
 
 void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
-                                          data::MeterDataStore& meter_data) {
+                                        data::MeterDataStore& meter_data) {
     types::json_rpc_api::MeterDataObj meter_data_new; // default initialized
     if (meter_data.get_data().has_value()) {
         // initialize with existing values
@@ -308,7 +309,7 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
 }
 
 void RpcApi::hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
-                                           data::HardwareCapabilitiesStore& hw_caps_data) {
+                                     data::HardwareCapabilitiesStore& hw_caps_data) {
     types::json_rpc_api::HardwareCapabilitiesObj hw_caps_data_new; // default initialized
     if (hw_caps_data.get_data().has_value()) {
         // initialize with existing values
@@ -334,8 +335,7 @@ void RpcApi::hwcaps_var_to_datastore(const types::evse_board_support::HardwareCa
 bool RpcApi::check_evse_mapping() {
     // Interate over the configured EVSE mapping and configure the data store accordingly
     if (r_evse_manager.size() != this->data.evses.size()) {
-        throw std::runtime_error(
-            "The number of EVSE managers does not match the number of EVSE data stores. ");
+        throw std::runtime_error("The number of EVSE managers does not match the number of EVSE data stores.");
     }
     // As long as the EvseManager only supports one statically configured connector, we extract the
     // connector id from the mapping. Only the connector type is retrieved from the EvseManager.
@@ -345,7 +345,7 @@ bool RpcApi::check_evse_mapping() {
         auto& evse_data = this->data.evses[idx++];
         // Initialize connector id for the case of no mapping information
         types::json_rpc_api::ConnectorInfoObj connector;
-        connector.id = 1; // default connector id
+        connector.id = 1;                                                 // default connector id
         connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
         evse_data->evseinfo.set_available_connector(connector);
         evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
@@ -359,19 +359,21 @@ bool RpcApi::check_evse_mapping() {
                 types::evse_manager::Evse evse = evse_manager->call_get_evse();
                 if (!evse.connectors.empty() && evse.connectors[0].type.has_value()) {
                     try {
-                        connector.type = types::json_rpc_api::string_to_connector_type_enum(types::evse_manager::connector_type_enum_to_string(evse.connectors[0].type.value()));//evse.connectors[0].type; // use the first connector type
+                        connector.type = types::json_rpc_api::string_to_connector_type_enum(
+                            types::evse_manager::connector_type_enum_to_string(
+                                evse.connectors[0]
+                                    .type.value())); // evse.connectors[0].type; // use the first connector type
                     } catch (const std::out_of_range& e) {
                         EVLOG_debug << "Unknown connector type for connector id " << connector.id;
                     }
-                }
-                else {
+                } else {
                     EVLOG_debug << "Unknown connector type for connector id " << connector.id;
                 }
                 evse_data->evseinfo.set_available_connector(connector);
                 evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
-            }
-            else {
-                EVLOG_debug << "No connector id configured in the evse mapping, using default connector id " << connector.id;
+            } else {
+                EVLOG_debug << "No connector id configured in the evse mapping, using default connector id "
+                            << connector.id;
             }
         } else {
             return false;
