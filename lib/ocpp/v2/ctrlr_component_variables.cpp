@@ -27,7 +27,6 @@ const Component SecurityCtrlr = {"SecurityCtrlr"};
 const Component SmartChargingCtrlr = {"SmartChargingCtrlr"};
 const Component TariffCostCtrlr = {"TariffCostCtrlr"};
 const Component TxCtrlr = {"TxCtrlr"};
-const Component V2XChargingCtrlr = {"V2XChargingCtrlr"};
 } // namespace ControllerComponents
 
 namespace StandardizedVariables {
@@ -1203,126 +1202,12 @@ const RequiredComponentVariable TxStopPoint = {
     }),
 };
 
-const ComponentVariable V2XChargingCtrlrAvailable = {
-    ControllerComponents::V2XChargingCtrlr,
-    std::optional<Variable>({
-        "Available",
-    }),
-};
-
-const RequiredComponentVariable V2XChargingCtrlrEnabled = {ControllerComponents::V2XChargingCtrlr,
-                                                           std::optional<Variable>({
-                                                               "Enabled",
-                                                           }),
-                                                           std::nullopt,
-                                                           {OcppProtocolVersion::v21}};
-
-const RequiredComponentVariable V2XChargingCtrlrSupportedEnergyTransferModes = {ControllerComponents::V2XChargingCtrlr,
-                                                                                std::optional<Variable>({
-                                                                                    "SupportedEnergyTransferModes",
-                                                                                }),
-                                                                                std::nullopt,
-                                                                                {OcppProtocolVersion::v21}};
-
-const RequiredComponentVariable V2XChargingCtrlrSupportedOperationModes = {ControllerComponents::V2XChargingCtrlr,
-                                                                           std::optional<Variable>({
-                                                                               "SupportedOperationModes",
-                                                                           }),
-                                                                           std::nullopt,
-                                                                           {OcppProtocolVersion::v21}};
-
-const ComponentVariable V2XSampledDataTxStartedMeasurands = {
-    ControllerComponents::V2XChargingCtrlr,
-    std::optional<Variable>({
-        "TxStartedMeasurands",
-    }),
-};
-
-const ComponentVariable V2XSampledDataTxEndedMeasurands = {
-    ControllerComponents::V2XChargingCtrlr,
-    std::optional<Variable>({
-        "TxEndedMeasurands",
-    }),
-};
-
-const ComponentVariable V2XSampledDataTxEndedInterval = {
-    ControllerComponents::V2XChargingCtrlr,
-    std::optional<Variable>({
-        "TxEndedInterval",
-    }),
-};
-
-const ComponentVariable V2XSampledDataTxUpdatedMeasurands = {
-    ControllerComponents::V2XChargingCtrlr,
-    std::optional<Variable>({
-        "TxUpdatedMeasurands",
-    }),
-};
-
-const ComponentVariable V2XSampledDataTxUpdatedInterval = {
-    ControllerComponents::V2XChargingCtrlr,
-    std::optional<Variable>({
-        "TxUpdatedInterval",
-    }),
-};
-
 const ComponentVariable ISO15118CtrlrAvailable = {
     ControllerComponents::ISO15118Ctrlr,
     std::optional<Variable>({
         "Available",
     }),
 };
-
-const ComponentVariable ISO15118CtrlrEnabled = {
-    ControllerComponents::ISO15118Ctrlr,
-    std::optional<Variable>({
-        "Enabled",
-    }),
-};
-
-const ComponentVariable ISO15118CtrlrServiceRenegotiationSupport = {
-    ControllerComponents::ISO15118Ctrlr,
-    std::optional<Variable>({
-        "ServiceRenegotiationSupport",
-    }),
-};
-
-const ComponentVariable ISO15118CtrlrProtocolSupported = {
-    ControllerComponents::ISO15118Ctrlr,
-    std::optional<Variable>({
-        "ProtocolSupported",
-    }),
-};
-
-ComponentVariable get_v2x_tx_started_measurands(const OperationModeEnum& mode) {
-    ComponentVariable cv = ControllerComponentVariables::V2XSampledDataTxStartedMeasurands;
-    cv.variable.value().instance = conversions::operation_mode_enum_to_string(mode);
-    return cv;
-}
-
-ComponentVariable get_v2x_tx_ended_measurands(const OperationModeEnum& mode) {
-    ComponentVariable cv = ControllerComponentVariables::V2XSampledDataTxEndedMeasurands;
-    cv.variable.value().instance = conversions::operation_mode_enum_to_string(mode);
-    return cv;
-}
-
-ComponentVariable get_v2x_tx_ended_interval(const OperationModeEnum& mode) {
-    ComponentVariable cv = ControllerComponentVariables::V2XSampledDataTxEndedInterval;
-    cv.variable.value().instance = conversions::operation_mode_enum_to_string(mode);
-    return cv;
-}
-
-ComponentVariable get_v2x_tx_updated_measurands(const OperationModeEnum& mode) {
-    ComponentVariable cv = ControllerComponentVariables::V2XSampledDataTxUpdatedMeasurands;
-    cv.variable.value().instance = conversions::operation_mode_enum_to_string(mode);
-    return cv;
-}
-
-ComponentVariable get_v2x_tx_updated_interval(const OperationModeEnum& mode) {
-    ComponentVariable cv = ControllerComponentVariables::V2XSampledDataTxUpdatedInterval;
-    cv.variable.value().instance = conversions::operation_mode_enum_to_string(mode);
-    return cv;
-}
 
 } // namespace ControllerComponentVariables
 
@@ -1362,6 +1247,78 @@ ComponentVariable get_component_variable(const int32_t evse_id, const int32_t co
     return component_variable;
 }
 } // namespace ConnectorComponentVariables
+
+namespace V2xComponentVariables {
+
+const Variable Available = {"Available"};
+const Variable Enabled = {"Enabled"};
+const Variable SupportedEnergyTransferModes = {"SupportedEnergyTransferModes"};
+const Variable SupportedOperationModes = {"SupportedOperationModes"};
+const Variable TxStartedMeasurands = {"TxStartedMeasurands"};
+const Variable TxEndedMeasurands = {"TxEndedMeasurands"};
+const Variable TxEndedInterval = {"TxEndedInterval"};
+const Variable TxUpdatedMeasurands = {"TxUpdatedMeasurands"};
+const Variable TxUpdatedInterval = {"TxUpdatedInterval"};
+
+Variable get_v2x_tx_started_measurands(const OperationModeEnum& mode) {
+    Variable cv = V2xComponentVariables::TxStartedMeasurands;
+    cv.instance = conversions::operation_mode_enum_to_string(mode);
+    return cv;
+}
+
+Variable get_v2x_tx_ended_measurands(const OperationModeEnum& mode) {
+    Variable cv = V2xComponentVariables::TxEndedMeasurands;
+    cv.instance = conversions::operation_mode_enum_to_string(mode);
+    return cv;
+}
+
+Variable get_v2x_tx_ended_interval(const OperationModeEnum& mode) {
+    Variable cv = V2xComponentVariables::TxEndedInterval;
+    cv.instance = conversions::operation_mode_enum_to_string(mode);
+    return cv;
+}
+
+Variable get_v2x_tx_updated_measurands(const OperationModeEnum& mode) {
+    Variable cv = V2xComponentVariables::TxUpdatedMeasurands;
+    cv.instance = conversions::operation_mode_enum_to_string(mode);
+    return cv;
+}
+
+Variable get_v2x_tx_updated_interval(const OperationModeEnum& mode) {
+    Variable cv = V2xComponentVariables::TxUpdatedInterval;
+    cv.instance = conversions::operation_mode_enum_to_string(mode);
+    return cv;
+}
+
+ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable) {
+    EVSE evse = {evse_id};
+    Component component = {"V2XChargingCtrlr", evse};
+    ComponentVariable component_variable;
+    component_variable.component = component;
+    component_variable.variable = variable;
+    return component_variable;
+}
+} // namespace V2xComponentVariables
+
+namespace ISO15118ComponentVariables {
+
+const Variable Available = {"Available"};
+const Variable Enabled = {"Enabled"};
+const Variable ServiceRenegotiationSupport = {"ServiceRenegotiationSupport"};
+const Variable ProtocolSupported = {"ProtocolSupported"};
+const Variable SeccId = {"SeccId"};
+const Variable CountryName = {"CountryName"};
+const Variable OrganizationName = {"OrganizationName"};
+
+ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable) {
+    EVSE evse = {evse_id};
+    Component component = {"ISO15118Ctrlr", evse};
+    ComponentVariable component_variable;
+    component_variable.component = component;
+    component_variable.variable = variable;
+    return component_variable;
+}
+} // namespace ISO15118ComponentVariables
 
 namespace ConnectedEvComponentVariables {
 
@@ -1415,11 +1372,7 @@ const std::vector<std::pair<ComponentVariable, std::vector<RequiredComponentVari
         {ControllerComponentVariables::DisplayMessageCtrlrAvailable,
          {ControllerComponentVariables::NumberOfDisplayMessages,
           ControllerComponentVariables::DisplayMessageSupportedFormats,
-          ControllerComponentVariables::DisplayMessageSupportedPriorities}},
-        {ControllerComponentVariables::V2XChargingCtrlrAvailable,
-         {ControllerComponentVariables::V2XChargingCtrlrEnabled,
-          ControllerComponentVariables::V2XChargingCtrlrSupportedEnergyTransferModes,
-          ControllerComponentVariables::V2XChargingCtrlrSupportedOperationModes}}};
+          ControllerComponentVariables::DisplayMessageSupportedPriorities}}};
 
 const std::vector<RequiredComponentVariable> required_variables{
     ControllerComponentVariables::AlignedDataInterval,
@@ -1490,5 +1443,8 @@ const std::vector<Variable> required_connector_variables{
     ConnectorComponentVariables::Available, ConnectorComponentVariables::AvailabilityState,
     ConnectorComponentVariables::SupplyPhases, ConnectorComponentVariables::Type};
 
+const std::vector<Variable> required_v2x_variables{V2xComponentVariables::Available, V2xComponentVariables::Enabled,
+                                                   V2xComponentVariables::SupportedEnergyTransferModes,
+                                                   V2xComponentVariables::SupportedOperationModes};
 } // namespace v2
 } // namespace ocpp

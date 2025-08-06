@@ -57,6 +57,7 @@ void ocpp::v2::Bidirectional::handle_notify_allowed_energy_transfer(
         this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     }
+    // TODO(mlitre): Check if evse supports v2x
 
     const auto selected_protocol = this->context.device_model.get_optional_value<std::string>(
         ConnectedEvComponentVariables::get_component_variable(evse_id.value(),
@@ -67,7 +68,8 @@ void ocpp::v2::Bidirectional::handle_notify_allowed_energy_transfer(
 
     const bool service_renegotiation_supported =
         this->context.device_model
-            .get_optional_value<bool>(ControllerComponentVariables::ISO15118CtrlrServiceRenegotiationSupport)
+            .get_optional_value<bool>(ISO15118ComponentVariables::get_component_variable(
+                evse_id.value(), ISO15118ComponentVariables::ServiceRenegotiationSupport))
             .value_or(false);
 
     if (service_renegotiation_supported and is_15118_20 and this->notify_allowed_energy_transfer_callback.has_value()) {

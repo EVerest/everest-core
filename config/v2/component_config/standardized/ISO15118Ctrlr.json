@@ -4,6 +4,21 @@
   "name": "ISO15118Ctrlr",
   "type": "object",
   "properties": {
+    "ISO15118CtrlrAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": true
+        }
+      ],
+      "type": "boolean"
+    },
     "ISO15118CtrlrEnabled": {
       "variable_name": "Enabled",
       "characteristics": {

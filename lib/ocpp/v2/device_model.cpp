@@ -575,6 +575,23 @@ void DeviceModel::check_integrity(const std::map<int32_t, int32_t>& evse_connect
                 throw DeviceModelError("maxLimit of 'Power' not set");
             }
 
+            Component v2x_component;
+            v2x_component.name = "V2XChargingCtrlr";
+            v2x_component.evse = evse;
+            if (this->device_model_map.count(v2x_component) and
+                std::any_of(evse_connector_structure.begin(), evse_connector_structure.end(),
+                            [this](const auto& entry) {
+                                const auto& [evse, connectors] = entry;
+                                return get_optional_value<bool>(V2xComponentVariables::get_component_variable(
+                                                                    evse, V2xComponentVariables::Available))
+                                    .value_or(false);
+                            })) {
+                for (const auto& required_variable : required_v2x_variables) {
+                    const auto& variable = V2xComponentVariables::get_component_variable(evse_id, required_variable);
+                    check_variable_has_value(variable);
+                }
+            }
+
             for (size_t connector_id = 1; connector_id <= nr_of_connectors; connector_id++) {
                 evse_component.name = "Connector";
                 evse_component.evse.value().connectorId = connector_id;

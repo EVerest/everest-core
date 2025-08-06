@@ -31,10 +31,13 @@ struct Callbacks {
     /// \brief Function to check if the callback struct is completely filled. All std::functions should hold a function,
     ///       all std::optional<std::functions> should either be empty or hold a function.
     /// \param device_model The device model, to check if certain modules are enabled / available.
+    /// \param evse_connector_structure The evse_connector_structure is used to check variables for specific evse and/or
+    /// connector
     ///
     /// \retval false if any of the normal callbacks are nullptr or any of the optional ones are filled with a nullptr
     ///        true otherwise
-    bool all_callbacks_valid(std::shared_ptr<DeviceModel> device_model) const;
+    bool all_callbacks_valid(std::shared_ptr<DeviceModel> device_model,
+                             const std::map<int32_t, int32_t>& evse_connector_structure) const;
 
     ///
     /// \brief Callback if reset is allowed. If evse_id has a value, reset only applies to the given evse id. If it has

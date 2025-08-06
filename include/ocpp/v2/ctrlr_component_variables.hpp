@@ -62,6 +62,11 @@ extern const std::vector<Variable> required_evse_variables;
 ///
 extern const std::vector<Variable> required_connector_variables;
 
+///
+/// \brief Required variables of a V2X component.
+///
+extern const std::vector<Variable> required_v2x_variables;
+
 namespace ControllerComponents {
 extern const Component InternalCtrlr;
 extern const Component AlignedDataCtrlr;
@@ -303,24 +308,7 @@ extern const RequiredComponentVariable StopTxOnInvalidId;
 extern const ComponentVariable TxBeforeAcceptedEnabled;
 extern const RequiredComponentVariable TxStartPoint;
 extern const RequiredComponentVariable TxStopPoint;
-extern const ComponentVariable V2XChargingCtrlrAvailable;
-extern const RequiredComponentVariable V2XChargingCtrlrEnabled;
-extern const RequiredComponentVariable V2XChargingCtrlrSupportedEnergyTransferModes;
-extern const RequiredComponentVariable V2XChargingCtrlrSupportedOperationModes;
-extern const ComponentVariable V2XSampledDataTxStartedMeasurands;
-extern const ComponentVariable V2XSampledDataTxEndedMeasurands;
-extern const ComponentVariable V2XSampledDataTxEndedInterval;
-extern const ComponentVariable V2XSampledDataTxUpdatedMeasurands;
-extern const ComponentVariable V2XSampledDataTxUpdatedInterval;
 extern const ComponentVariable ISO15118CtrlrAvailable;
-extern const ComponentVariable ISO15118CtrlrEnabled;
-extern const ComponentVariable ISO15118CtrlrServiceRenegotiationSupport;
-extern const ComponentVariable ISO15118CtrlrProtocolSupported;
-ComponentVariable get_v2x_tx_started_measurands(const OperationModeEnum& mode);
-ComponentVariable get_v2x_tx_ended_measurands(const OperationModeEnum& mode);
-ComponentVariable get_v2x_tx_ended_interval(const OperationModeEnum& mode);
-ComponentVariable get_v2x_tx_updated_measurands(const OperationModeEnum& mode);
-ComponentVariable get_v2x_tx_updated_interval(const OperationModeEnum& mode);
 } // namespace ControllerComponentVariables
 
 namespace EvseComponentVariables {
@@ -341,6 +329,35 @@ extern const Variable Type;
 extern const Variable SupplyPhases;
 ComponentVariable get_component_variable(const int32_t evse_id, const int32_t connector_id, const Variable& variable);
 } // namespace ConnectorComponentVariables
+
+namespace V2xComponentVariables {
+extern const Variable Available;
+extern const Variable Enabled;
+extern const Variable SupportedEnergyTransferModes;
+extern const Variable SupportedOperationModes;
+extern const Variable TxStartedMeasurands;
+extern const Variable TxEndedMeasurands;
+extern const Variable TxEndedInterval;
+extern const Variable TxUpdatedMeasurands;
+extern const Variable TxUpdatedInterval;
+Variable get_v2x_tx_started_measurands(const OperationModeEnum& mode);
+Variable get_v2x_tx_ended_measurands(const OperationModeEnum& mode);
+Variable get_v2x_tx_ended_interval(const OperationModeEnum& mode);
+Variable get_v2x_tx_updated_measurands(const OperationModeEnum& mode);
+Variable get_v2x_tx_updated_interval(const OperationModeEnum& mode);
+ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable);
+} // namespace V2xComponentVariables
+
+namespace ISO15118ComponentVariables {
+extern const Variable Enabled;
+extern const Variable ServiceRenegotiationSupport;
+extern const Variable ProtocolSupported;
+// These variables are defined again here as it is possible to have either a global variable or evse specific
+extern const Variable SeccId;
+extern const Variable CountryName;
+extern const Variable OrganizationName;
+ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable);
+} // namespace ISO15118ComponentVariables
 
 namespace ConnectedEvComponentVariables {
 extern const Variable Available;

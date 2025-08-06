@@ -69,7 +69,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     }
 
     // Make sure the received callback struct is completely filled early before we actually start running
-    if (!this->callbacks.all_callbacks_valid(this->device_model)) {
+    if (!this->callbacks.all_callbacks_valid(this->device_model, evse_connector_structure)) {
         EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
     }
 
@@ -589,16 +589,23 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
         this->callbacks.stop_transaction_callback, this->registration_status, this->upload_log_status,
         this->upload_log_status_id);
 
-    if (device_model->get_optional_value<bool>(ControllerComponentVariables::V2XChargingCtrlrAvailable)
-            .value_or(false)) {
+    bool v2x_available =
+        std::any_of(evse_connector_structure.begin(), evse_connector_structure.end(), [this](const auto& entry) {
+            const auto& [evse, connectors] = entry;
+            return this->device_model
+                ->get_optional_value<bool>(
+                    V2xComponentVariables::get_component_variable(evse, V2xComponentVariables::Available))
+                .value_or(false);
+        });
+
+    if (v2x_available) {
         this->bidirectional = std::make_unique<Bidirectional>(
             *this->functional_block_context, this->callbacks.update_allowed_energy_transfer_modes_callback);
     }
 
-    Component ocpp_comm_ctrlr = {"OCPPCommCtrlr"};
     Variable field_length = {"FieldLength"};
     field_length.instance = "Get15118EVCertificateResponse.exiResponse";
-    this->device_model->set_value(ocpp_comm_ctrlr, field_length, AttributeEnum::Actual,
+    this->device_model->set_value(ControllerComponents::OCPPCommCtrlr, field_length, AttributeEnum::Actual,
                                   std::to_string(ISO15118_GET_EV_CERTIFICATE_EXI_RESPONSE_SIZE),
                                   VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL, true);
 }
