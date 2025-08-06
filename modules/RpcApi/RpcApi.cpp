@@ -365,21 +365,21 @@ bool RpcApi::check_evse_mapping() {
                                 evse.connectors[0]
                                     .type.value())); // evse.connectors[0].type; // use the first connector type
                     } catch (const std::out_of_range& e) {
-                        EVLOG_debug << "Unknown connector type for connector id " << connector.id;
+                        EVLOG_debug << "Unknown connector type for connector ID " << connector.id;
                     }
                 } else {
-                    EVLOG_debug << "Unknown connector type for connector id " << connector.id;
+                    EVLOG_debug << "No connector type determined for connector ID " << connector.id;
                 }
                 evse_data->evseinfo.set_available_connector(connector);
                 evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
             } else {
-                EVLOG_debug << "No connector id configured in the EVSE mapping, using default connector id "
+                EVLOG_debug << "No connector id configured in the EVSE mapping, using default connector ID "
                             << connector.id;
             }
         } else {
             // FIXME no mapping may be incorrect
             EVLOG_warning << "No mapping found for EVSE manager no. " << idx << ", using index " << idx
-                          << " and connector id " << connector.id;
+                          << " and connector ID " << connector.id;
             evse_data->evseinfo.set_index(idx);
         }
     }
