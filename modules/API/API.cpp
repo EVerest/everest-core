@@ -68,7 +68,6 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
         external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
     } else {
         external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
-        target_entry.limits_to_leaves.total_power_W = {6000, API_MODULE_SOURCE};
         external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     }
     return external_limits;
