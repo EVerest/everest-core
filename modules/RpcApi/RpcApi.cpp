@@ -343,7 +343,7 @@ bool RpcApi::check_evse_mapping() {
     // Iterate over all over the mapping of the EVSE's and configure the data store accordingly
     for (std::size_t idx = 0; idx < r_evse_manager.size(); idx++) {
         const auto& evse_manager = r_evse_manager[idx];
-        const auto& evse_data = this->data.evses[idx++];
+        const auto& evse_data = this->data.evses[idx];
         // Initialize connector id for the case of no mapping information
         types::json_rpc_api::ConnectorInfoObj connector;
         connector.id = 1;                                                 // default connector id
@@ -373,11 +373,14 @@ bool RpcApi::check_evse_mapping() {
                 evse_data->evseinfo.set_available_connector(connector);
                 evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
             } else {
-                EVLOG_debug << "No connector id configured in the evse mapping, using default connector id "
+                EVLOG_debug << "No connector id configured in the EVSE mapping, using default connector id "
                             << connector.id;
             }
         } else {
-            return false;
+            // FIXME no mapping may be incorrect
+            EVLOG_warning << "No mapping found for EVSE manager no. " << idx << ", using index " << idx
+                          << " and connector id " << connector.id;
+            evse_data->evseinfo.set_index(idx);
         }
     }
     return true;
