@@ -84,7 +84,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: be765477b7d44bd758dc43bf15aca4d566cce366 # todo(AC_BPT): merge unscrambled priority list fix
+  git_tag: aa1496a4f4feb34d6bfc4aee872996fce1da40ed # todo(AC_BPT): merge unscrambled priority list fix
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # everest-testing and ev-dev-tools
 everest-utils:
