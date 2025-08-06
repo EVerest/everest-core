@@ -6892,3 +6892,48 @@ async def test_signed_update_firmware(
         "SignedFirmwareStatusNotification",
         call.SignedFirmwareStatusNotification(FirmwareStatus.installed, 1),
     )
+
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP16ConfigAdjustment(
+        [("Security", "AdditionalRootCertificateCheck", False),
+         ("Security", "CertificateSignedMaxChainSize", 10),
+         ("Security", "CertificateStoreMaxLength", 20),
+         ("Security", "CpoName", "EVerest"),
+         ("Security", "SecurityProfile", 1),
+         ("Security", "DisableSecurityEventNotifications", False),
+         ("FirmwareManagement", "SupportedFileTransferProtocols", "FTP")])
+)
+@pytest.mark.asyncio
+async def test_get_security_configuration_keys(
+    test_config: OcppTestConfiguration,
+    charge_point_v16: ChargePoint16,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
+    logging.info(
+        "######### test_get_security_configuration_keys #########")
+
+    response = await charge_point_v16.get_configuration_req(key=[
+        "AdditionalRootCertificateCheck",
+        "CertificateSignedMaxChainSize",
+        "CertificateStoreMaxLength",
+        "CpoName",
+        "SecurityProfile",
+        "DisableSecurityEventNotifications",
+        "SupportedFileTransferProtocols"
+    ])
+    
+    assert response.configuration_key[0]["key"] == "AdditionalRootCertificateCheck"
+    assert response.configuration_key[0]["value"] == "false"
+    assert response.configuration_key[1]["key"] == "CertificateSignedMaxChainSize"
+    assert response.configuration_key[1]["value"] == "10"
+    assert response.configuration_key[2]["key"] == "CertificateStoreMaxLength"
+    assert response.configuration_key[2]["value"] == "20"
+    assert response.configuration_key[3]["key"] == "CpoName"
+    assert response.configuration_key[3]["value"] == "EVerest"
+    assert response.configuration_key[4]["key"] == "SecurityProfile"
+    assert response.configuration_key[4]["value"] == "1"
+    assert response.configuration_key[5]["key"] == "DisableSecurityEventNotifications"
+    assert response.configuration_key[5]["value"] == "false"
+    assert response.configuration_key[6]["key"] == "SupportedFileTransferProtocols"
+    assert response.configuration_key[6]["value"] == "FTP"
