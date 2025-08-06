@@ -86,7 +86,7 @@ bool Websocket::send(const std::string& message) {
 }
 
 void Websocket::set_websocket_ping_interval(int32_t ping_interval_s, int32_t pong_interval_s) {
-    this->logging->sys("WebsocketPingInterval changed");
+    this->logging->sys("WebSocketPingInterval changed");
     this->websocket->set_websocket_ping_interval(ping_interval_s, pong_interval_s);
 }
 

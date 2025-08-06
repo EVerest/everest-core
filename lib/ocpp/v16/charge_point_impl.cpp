@@ -1917,7 +1917,7 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
                 } else if (call.msg.key == "TransactionMessageRetryInterval") {
                     this->message_queue->update_transaction_message_retry_interval(
                         this->configuration->getTransactionMessageRetryInterval());
-                } else if (call.msg.key == "WebsocketPingInterval") {
+                } else if (call.msg.key == "WebSocketPingInterval") {
                     auto websocket_ping_interval_option = this->configuration->getWebsocketPingInterval();
 
                     if (websocket_ping_interval_option.has_value()) {

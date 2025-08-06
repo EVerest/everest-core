@@ -1870,15 +1870,15 @@ KeyValue ChargePointConfiguration::getUnlockConnectorOnEVSideDisconnectKeyValue(
 // Core Profile - optional
 std::optional<int32_t> ChargePointConfiguration::getWebsocketPingInterval() {
     std::optional<int32_t> websocket_ping_interval = std::nullopt;
-    if (this->config["Core"].contains("WebsocketPingInterval")) {
-        websocket_ping_interval.emplace(this->config["Core"]["WebsocketPingInterval"]);
+    if (this->config["Core"].contains("WebSocketPingInterval")) {
+        websocket_ping_interval.emplace(this->config["Core"]["WebSocketPingInterval"]);
     }
     return websocket_ping_interval;
 }
 void ChargePointConfiguration::setWebsocketPingInterval(int32_t websocket_ping_interval) {
     if (this->getWebsocketPingInterval() != std::nullopt) {
-        this->config["Core"]["WebsocketPingInterval"] = websocket_ping_interval;
-        this->setInUserConfig("Core", "WebsocketPingInterval", websocket_ping_interval);
+        this->config["Core"]["WebSocketPingInterval"] = websocket_ping_interval;
+        this->setInUserConfig("Core", "WebSocketPingInterval", websocket_ping_interval);
     }
 }
 std::optional<KeyValue> ChargePointConfiguration::getWebsocketPingIntervalKeyValue() {
@@ -1886,7 +1886,7 @@ std::optional<KeyValue> ChargePointConfiguration::getWebsocketPingIntervalKeyVal
     auto websocket_ping_interval = this->getWebsocketPingInterval();
     if (websocket_ping_interval != std::nullopt) {
         KeyValue kv;
-        kv.key = "WebsocketPingInterval";
+        kv.key = "WebSocketPingInterval";
         kv.readonly = false;
         kv.value.emplace(std::to_string(websocket_ping_interval.value()));
         websocket_ping_interval_kv.emplace(kv);
@@ -1921,6 +1921,30 @@ std::optional<KeyValue> ChargePointConfiguration::getIFaceKeyValue() {
 }
 
 // Core Profile end
+
+// Firmware Management Profile
+std::optional<std::string> ChargePointConfiguration::getSupportedFileTransferProtocols() {
+    std::optional<std::string> supported_file_transfer_protocols = std::nullopt;
+    if (this->config["FirmwareManagement"].contains("SupportedFileTransferProtocols")) {
+        supported_file_transfer_protocols.emplace(this->config["FirmwareManagement"]["SupportedFileTransferProtocols"]);
+    }
+    return supported_file_transfer_protocols;
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getSupportedFileTransferProtocolsKeyValue() {
+    std::optional<KeyValue> supported_file_transfer_protocols_kv = std::nullopt;
+    auto supported_file_transfer_protocols = this->getSupportedFileTransferProtocols();
+    if (supported_file_transfer_protocols != std::nullopt) {
+        KeyValue kv;
+        kv.key = "SupportedFileTransferProtocols";
+        kv.readonly = true;
+        kv.value.emplace(supported_file_transfer_protocols.value());
+        supported_file_transfer_protocols_kv.emplace(kv);
+    }
+    return supported_file_transfer_protocols_kv;
+}
+
+// Firmware Managet Profile end
 
 int32_t ChargePointConfiguration::getChargeProfileMaxStackLevel() {
     return this->config["SmartCharging"]["ChargeProfileMaxStackLevel"];
@@ -2179,8 +2203,8 @@ std::optional<KeyValue> ChargePointConfiguration::getAuthorizationKeyKeyValue() 
 // Security profile - optional
 std::optional<int32_t> ChargePointConfiguration::getCertificateSignedMaxChainSize() {
     std::optional<int32_t> certificate_max_chain_size = std::nullopt;
-    if (this->config["Core"].contains("CertificateMaxChainSize")) {
-        certificate_max_chain_size.emplace(this->config["Security"]["CertificateMaxChainSize"]);
+    if (this->config["Security"].contains("CertificateSignedMaxChainSize")) {
+        certificate_max_chain_size.emplace(this->config["Security"]["CertificateSignedMaxChainSize"]);
     }
     return certificate_max_chain_size;
 }
@@ -2190,7 +2214,7 @@ std::optional<KeyValue> ChargePointConfiguration::getCertificateSignedMaxChainSi
     auto certificate_max_chain_size = this->getCertificateSignedMaxChainSize();
     if (certificate_max_chain_size != std::nullopt) {
         KeyValue kv;
-        kv.key = "CertificateMaxChainSize";
+        kv.key = "CertificateSignedMaxChainSize";
         kv.readonly = true;
         kv.value.emplace(std::to_string(certificate_max_chain_size.value()));
         certificate_max_chain_size_kv.emplace(kv);
@@ -2201,7 +2225,7 @@ std::optional<KeyValue> ChargePointConfiguration::getCertificateSignedMaxChainSi
 // Security profile - optional
 std::optional<int32_t> ChargePointConfiguration::getCertificateStoreMaxLength() {
     std::optional<int32_t> certificate_store_max_length = std::nullopt;
-    if (this->config["Core"].contains("CertificateStoreMaxLength")) {
+    if (this->config["Security"].contains("CertificateStoreMaxLength")) {
         certificate_store_max_length.emplace(this->config["Security"]["CertificateStoreMaxLength"]);
     }
     return certificate_store_max_length;
@@ -3314,10 +3338,6 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "AuthorizationCacheEnabled") {
         return this->getAuthorizationCacheEnabledKeyValue();
     }
-    // we should not return an AuthorizationKey because it's readonly
-    // if (key == "AuthorizationKey") {
-    //     return this->getAuthorizationKeyKeyValue();
-    // }
     if (key == "AuthorizeRemoteTxRequests") {
         return this->getAuthorizeRemoteTxRequestsKeyValue();
     }
@@ -3335,9 +3355,6 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "ConnectorPhaseRotationMaxLength") {
         return this->getConnectorPhaseRotationMaxLengthKeyValue();
-    }
-    if (key == "CpoName") {
-        return this->getCpoNameKeyValue();
     }
     if (key == "GetConfigurationMaxKeys") {
         return this->getGetConfigurationMaxKeysKeyValue();
@@ -3384,12 +3401,6 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "ResetRetries") {
         return this->getResetRetriesKeyValue();
     }
-    if (key == "SecurityProfile") {
-        return this->getSecurityProfileKeyValue();
-    }
-    if (key == "DisableSecurityEventNotifications") {
-        return this->getDisableSecurityEventNotificationsKeyValue();
-    }
     if (key == "StopTransactionOnEVSideDisconnect") {
         return this->getStopTransactionOnEVSideDisconnectKeyValue();
     }
@@ -3423,8 +3434,15 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "UnlockConnectorOnEVSideDisconnect") {
         return this->getUnlockConnectorOnEVSideDisconnectKeyValue();
     }
-    if (key == "WebsocketPingInterval") {
+    if (key == "WebSocketPingInterval") {
         return this->getWebsocketPingIntervalKeyValue();
+    }
+
+    // Firmware Management
+    if (this->supported_feature_profiles.count(SupportedFeatureProfiles::FirmwareManagement)) {
+        if (key == "SupportedFileTransferProtocols") {
+            return this->getSupportedFileTransferProtocolsKeyValue();
+        }
     }
 
     // PnC
@@ -3462,6 +3480,32 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
         }
         if (key == "MaxChargingProfilesInstalled") {
             return this->getMaxChargingProfilesInstalledKeyValue();
+        }
+    }
+
+    // Security (always added as supported feature profile)
+    if (this->supported_feature_profiles.count(SupportedFeatureProfiles::Security)) {
+        if (key == "AdditionalRootCertificateCheck") {
+            return this->getAdditionalRootCertificateCheckKeyValue();
+        }
+        // we should not return an AuthorizationKey because it's readonly
+        // if (key == "AuthorizationKey") {
+        //     return this->getAuthorizationKeyKeyValue();
+        // }
+        if (key == "CertificateSignedMaxChainSize") {
+            return this->getCertificateSignedMaxChainSizeKeyValue();
+        }
+        if (key == "CertificateStoreMaxLength") {
+            return this->getCertificateStoreMaxLengthKeyValue();
+        }
+        if (key == "CpoName") {
+            return this->getCpoNameKeyValue();
+        }
+        if (key == "SecurityProfile") {
+            return this->getSecurityProfileKeyValue();
+        }
+        if (key == "DisableSecurityEventNotifications") {
+            return this->getDisableSecurityEventNotificationsKeyValue();
         }
     }
 
@@ -3888,7 +3932,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
             return ConfigurationStatus::Rejected;
         }
     }
-    if (key == "WebsocketPingInterval") {
+    if (key == "WebSocketPingInterval") {
         if (this->getWebsocketPingInterval() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         }

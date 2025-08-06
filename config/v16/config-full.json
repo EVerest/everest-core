@@ -97,7 +97,7 @@
         "TransactionMessageAttempts": 1,
         "TransactionMessageRetryInterval": 10,
         "UnlockConnectorOnEVSideDisconnect": true,
-        "WebsocketPingInterval": 10
+        "WebSocketPingInterval": 10
     },
     "LocalAuthListManagement": {
         "LocalAuthListEnabled": true,
@@ -129,10 +129,8 @@
     "PnC": {
         "ISO15118PnCEnabled": true,
         "CentralContractValidationAllowed": true,
-        "CertificateSignedMaxChainSize": 10000,
         "CertSigningWaitMinimum": 30,
         "CertSigningRepeatTimes": 2,
-        "CertificateStoreMaxLength": 1000,
         "ContractValidationOffline": true
     },
     "CostAndPrice": {
