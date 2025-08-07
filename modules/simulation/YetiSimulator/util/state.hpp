@@ -234,7 +234,7 @@ struct ModuleState {
     int64_t powermeter_sim_last_time_stamp = 0L;
 
     double ev_max_current = 0.0;
-    int ev_three_phases = 3;
+    int ev_phases = 3;
 
     bool republish_state = false;
 };

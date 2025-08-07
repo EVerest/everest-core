@@ -15,8 +15,8 @@
 namespace module::stub {
 
 struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
-    ISO15118_chargerImplStub(ModuleAdapterStub& adapter) : ISO15118_chargerImplBase(&adapter, "EvseV2G") {};
-    ISO15118_chargerImplStub(ModuleAdapterStub* adapter) : ISO15118_chargerImplBase(adapter, "EvseV2G") {};
+    ISO15118_chargerImplStub(ModuleAdapterStub& adapter) : ISO15118_chargerImplBase(&adapter, "EvseV2G"){};
+    ISO15118_chargerImplStub(ModuleAdapterStub* adapter) : ISO15118_chargerImplBase(adapter, "EvseV2G"){};
 
     virtual void init() {
     }

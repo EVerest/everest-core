@@ -294,7 +294,7 @@ private:
         // set to true if auth is from PnC, otherwise to false (EIM)
         bool authorized_pnc;
         bool matching_started;
-        float max_current; // positive value means charging EV, negative means discharging EV
+        float max_current;
         std::chrono::time_point<date::utc_clock> max_current_valid_until;
         float max_current_cable{0.};
         bool transaction_active;

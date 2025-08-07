@@ -349,15 +349,13 @@ void YetiSimulator::read_from_car() {
         }
     }
 
-    const auto amps1 = (module_state->relais_on and module_state->ev_three_phases > 0) ? amps : 0.0;
+    const auto amps1 = (module_state->relais_on and module_state->ev_phases > 0) ? amps : 0.0;
     const auto amps2 =
-        (module_state->relais_on and module_state->ev_three_phases > 1 and module_state->use_three_phases_confirmed)
-            ? amps
-            : 0.0;
+        (module_state->relais_on and module_state->ev_phases > 1 and module_state->use_three_phases_confirmed) ? amps
+                                                                                                               : 0.0;
     const auto amps3 =
-        (module_state->relais_on and module_state->ev_three_phases > 2 and module_state->use_three_phases_confirmed)
-            ? amps
-            : 0.0;
+        (module_state->relais_on and module_state->ev_phases > 2 and module_state->use_three_phases_confirmed) ? amps
+                                                                                                               : 0.0;
 
     if (module_state->pwm_running) {
         module_state->pwm_voltage_hi = module_state->simulation_data.cp_voltage;
