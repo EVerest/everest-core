@@ -303,6 +303,10 @@ void ChargePointImpl::init_websocket() {
             not this->configuration->getIgnoredProfilePurposesOffline().empty()) {
             this->signal_set_charging_profiles_callback();
         }
+        // Reupdate ws connection options once connected so that after upgrading security profile we use the real config
+        // values. Prior we would continue using only 1 connection attempt
+        auto connection_options = this->get_ws_connection_options();
+        this->websocket->set_connection_options(connection_options);
     });
     this->websocket->register_disconnected_callback([this]() {
         if (this->connection_state_changed_callback != nullptr) {
