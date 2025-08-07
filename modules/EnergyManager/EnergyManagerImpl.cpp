@@ -10,8 +10,6 @@
 #include "BrokerFastCharging.hpp"
 #include "Market.hpp"
 
-using namespace std::literals::chrono_literals;
-
 namespace module {
 
 static BrokerFastCharging::Switch1ph3phMode to_switch_1ph3ph_mode(const std::string& m) {
@@ -185,8 +183,6 @@ std::vector<types::energy::EnforcedLimits> EnergyManagerImpl::run_optimizer(type
         const auto sold_energy = local_market.get_sold_energy();
 
         if (sold_energy.size() > 0) {
-            using namespace std::chrono;
-
             types::energy::EnforcedLimits l;
             l.uuid = local_market.energy_flow_request.uuid;
             l.valid_for = config.update_interval * 10;
