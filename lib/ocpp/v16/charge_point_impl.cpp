@@ -1676,7 +1676,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         // send initial StatusNotification.req
         this->status->trigger_status_notifications();
 
-        if (this->is_pnc_enabled()) {
+        if (this->is_iso15118_certificate_management_enabled()) {
             this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
             this->v2g_certificate_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
         }
@@ -1686,7 +1686,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
             this->client_certificate_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
         }
 
-        if (this->is_pnc_enabled()) {
+        if (this->is_iso15118_certificate_management_enabled()) {
             this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
         }
 
@@ -1930,7 +1930,7 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
 
                         this->websocket->set_websocket_ping_interval(websocket_ping_interval, websocket_pong_timeout);
                     }
-                } else if (call.msg.key == "ISO15118PnCEnabled") {
+                } else if (call.msg.key == "ISO15118CertificateManagementEnabled") {
                     if (ocpp::conversions::string_to_bool(call.msg.value.get())) {
                         this->ocsp_request_timer->stop();
                         this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
@@ -1941,7 +1941,7 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
                         this->v2g_certificate_timer->stop();
                     }
                 } else if (call.msg.key == "OcspRequestInterval") {
-                    if (this->is_pnc_enabled()) {
+                    if (this->is_iso15118_certificate_management_enabled()) {
                         this->ocsp_request_timer->stop();
                         this->ocsp_request_timer->interval(
                             std::chrono::seconds(this->configuration->getOcspRequestInterval()));
@@ -2031,9 +2031,9 @@ void ChargePointImpl::handleDataTransferRequest(ocpp::Call<DataTransferRequest> 
     // first try the callbacks that are explicitly registered for a vendorId or messageId
     {
         std::lock_guard<std::mutex> lock(data_transfer_callbacks_mutex);
-        if (vendorId == ISO15118_PNC_VENDOR_ID and !this->is_pnc_enabled()) {
+        if (vendorId == ISO15118_PNC_VENDOR_ID and !this->is_iso15118_certificate_management_enabled()) {
             response.status = DataTransferStatus::UnknownVendorId;
-        } else if (vendorId == ISO15118_PNC_VENDOR_ID and this->is_pnc_enabled()) {
+        } else if (vendorId == ISO15118_PNC_VENDOR_ID and this->is_iso15118_certificate_management_enabled()) {
             if (this->data_transfer_pnc_callbacks.count(messageId)) {
                 // there is a ISO15118 PnC callback registered for this vendorId and messageId
                 const auto callback = this->data_transfer_pnc_callbacks[messageId];
@@ -3596,6 +3596,11 @@ ChargePointImpl::get_all_enhanced_composite_charging_schedules(const int32_t dur
 bool ChargePointImpl::is_pnc_enabled() {
     return this->configuration->getSupportedFeatureProfilesSet().count(SupportedFeatureProfiles::PnC) and
            this->configuration->getISO15118PnCEnabled();
+}
+
+bool ChargePointImpl::is_iso15118_certificate_management_enabled() {
+    return this->configuration->getSupportedFeatureProfilesSet().count(SupportedFeatureProfiles::PnC) and
+           this->configuration->getISO15118CertificateManagementEnabled();
 }
 
 ocpp::v2::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(

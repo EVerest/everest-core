@@ -69,7 +69,7 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config, co
             EVLOG_debug << "Using a charge point configuration without default values.";
         } else {
             // extend config with default values
-            EVLOG_debug << "Adding the following default values to the charge point configuration: " << patch;
+            EVLOG_info << "Adding the following default values to the charge point configuration: " << patch;
             auto patched_config = this->config.patch(patch);
             this->config = patched_config;
         }
@@ -2354,6 +2354,25 @@ KeyValue ChargePointConfiguration::getSendLocalListMaxLengthKeyValue() {
     return kv;
 }
 
+// PnC Profile
+bool ChargePointConfiguration::getISO15118CertificateManagementEnabled() {
+    return this->config["PnC"]["ISO15118CertificateManagementEnabled"];
+}
+
+void ChargePointConfiguration::setISO15118CertificateManagementEnabled(
+    const bool iso15118_certificate_management_enabled) {
+    this->config["PnC"]["ISO15118CertificateManagementEnabled"] = iso15118_certificate_management_enabled;
+    this->setInUserConfig("PnC", "ISO15118CertificateManagementEnabled", iso15118_certificate_management_enabled);
+}
+
+KeyValue ChargePointConfiguration::getISO15118CertificateManagementEnabledKeyValue() {
+    KeyValue kv;
+    kv.key = "ISO15118CertificateManagementEnabled";
+    kv.readonly = false;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getISO15118CertificateManagementEnabled()));
+    return kv;
+}
+
 bool ChargePointConfiguration::getISO15118PnCEnabled() {
     return this->config["PnC"]["ISO15118PnCEnabled"];
 }
@@ -3447,6 +3466,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
 
     // PnC
     if (this->supported_feature_profiles.count(SupportedFeatureProfiles::PnC)) {
+        if (key == "ISO15118CertificateManagementEnabled") {
+            return this->getISO15118CertificateManagementEnabledKeyValue();
+        }
         if (key == "ISO15118PnCEnabled") {
             return this->getISO15118PnCEnabledKeyValue();
         }
@@ -3754,6 +3776,9 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         } catch (const std::out_of_range& e) {
             return ConfigurationStatus::Rejected;
         }
+    }
+    if (key == "ISO15118CertificateManagementEnabled") {
+        this->setISO15118CertificateManagementEnabled(ocpp::conversions::string_to_bool(value.get()));
     }
     if (key == "ISO15118PnCEnabled") {
         this->setISO15118PnCEnabled(ocpp::conversions::string_to_bool(value.get()));

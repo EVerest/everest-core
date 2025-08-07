@@ -418,6 +418,10 @@ public:
     KeyValue getSendLocalListMaxLengthKeyValue();
 
     // PnC
+    bool getISO15118CertificateManagementEnabled();
+    void setISO15118CertificateManagementEnabled(const bool iso15118_certificate_management_enabled);
+    KeyValue getISO15118CertificateManagementEnabledKeyValue();
+
     bool getISO15118PnCEnabled();
     void setISO15118PnCEnabled(const bool iso15118_pnc_enabled);
     KeyValue getISO15118PnCEnabledKeyValue();

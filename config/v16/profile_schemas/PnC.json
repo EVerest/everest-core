@@ -4,9 +4,15 @@
   "type": "object",
   "required": ["ISO15118PnCEnabled", "ContractValidationOffline"],
   "properties": {
+    "ISO15118CertificateManagementEnabled": {
+      "type": "boolean",
+      "description": "If this variable set to true, then the Charge Point supports ISO 15118 plug and charge messages via the DataTransfer mechanism as described in the application note. It also enables the mechanism to trigger SECC leaf certificate updates if the existing certificate is about to expire.",
+      "readOnly": false,
+      "default": false
+    },
     "ISO15118PnCEnabled": {
       "type": "boolean",
-      "description": "If this variable set to true, then the Charge Point supports ISO 15118 plug and charge messages via the DataTransfer mechanism as described in this application note.",
+      "description": "If this variable set to true, then the Charge Point supports ISO 15118 plug and charge authorization via contract certificates.",
       "readOnly": false
     },
     "CentralContractValidationAllowed": {

@@ -309,6 +309,7 @@ private:
     void handleClearChargingProfileRequest(Call<ClearChargingProfileRequest> call);
 
     // plug&charge for 1.6 whitepaper
+    bool is_iso15118_certificate_management_enabled();
     bool is_pnc_enabled();
     void data_transfer_pnc_sign_certificate();
     void data_transfer_pnc_get_certificate_status(const ocpp::v2::OCSPRequestData& ocsp_request_data);

@@ -127,6 +127,7 @@
         "DisableSecurityEventNotifications": false
     },
     "PnC": {
+        "ISO15118CertificateManagementEnabled": true,
         "ISO15118PnCEnabled": true,
         "CentralContractValidationAllowed": true,
         "CertSigningWaitMinimum": 30,
