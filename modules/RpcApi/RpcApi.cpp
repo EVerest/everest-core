@@ -29,7 +29,8 @@ void RpcApi::init() {
     check_evse_mapping();
 
     // Subscribe to all EVSE energy interfaces
-    for (const auto& evse_energy : r_energy_listener) {
+    for (std::size_t idx = 0; idx < r_energy_listener.size(); idx++) {
+        const auto& evse_energy = r_energy_listener.at(idx);
         if (evse_energy->get_mapping().has_value()) {
             // Write EVSE index and connector id to the datastore
             const auto evse_index = evse_energy->get_mapping().value().evse;
@@ -41,8 +42,15 @@ void RpcApi::init() {
             }
             this->subscribe_evse_energy(evse_energy, *evse_store);
         } else {
-            this->subscribe_evse_energy(evse_energy, *this->data.evses.at(0)); // only one EVSE is supported
-            EVLOG_warning << "EVSE index not set in energy interface mapping, using first EVSE index 0";
+            std::size_t evse_index = idx;
+            EVLOG_warning << "Energy interface no. " << idx << " does not have an EVSE mapping, guessing the EVSE index";
+            if (this->data.evses.size() < r_energy_listener.size()) {
+                EVLOG_warning << "Number of EVSEs " << this->data.evses.size()
+                              << " does not match with number of energy interfaces " << r_energy_listener.size()
+                              << ", using first EVSE index 0";
+                evse_index = 0;
+            }
+            this->subscribe_evse_energy(evse_energy, *this->data.evses.at(evse_index));
         }
     }
 
