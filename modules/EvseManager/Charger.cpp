@@ -1082,7 +1082,7 @@ bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::stea
     if (c >= 0.0 and c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
 
         // is it still valid?
-        if (validUntil > steady_clock::now()) {
+        if (validUntil > std::chrono::steady_clock::now()) {
             {
                 Everest::scoped_lock_timeout lock(state_machine_mutex,
                                                   Everest::MutexDescription::Charger_set_max_current);
