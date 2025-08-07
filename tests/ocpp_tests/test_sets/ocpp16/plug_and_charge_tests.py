@@ -997,6 +997,7 @@ async def test_set_connector_evse_ids(
             "SeccLeafSubjectCommonName",
             "SeccLeafSubjectOrganization",
             "SeccLeafSubjectCountry",
+            "ISO15118CertificateManagementEnabled"
         ]
     )
     assert await wait_for_and_validate(
@@ -1024,6 +1025,44 @@ async def test_set_connector_evse_ids(
                     "key": "SeccLeafSubjectCountry",
                     "readonly": False,
                     "value": valid_country,
+                },
+                {
+                    "key": "ISO15118CertificateManagementEnabled",
+                    "readonly": False,
+                    "value": "true",
+                },
+            ]
+        ),
+    )
+
+    test_utility.messages.clear()
+
+    await charge_point_v16.change_configuration_req(
+        key="ISO15118CertificateManagementEnabled", value="false"
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ChangeConfiguration",
+        call_result.ChangeConfiguration(ConfigurationStatus.accepted),
+    )
+
+    await charge_point_v16.get_configuration_req(
+        key=[
+            "ISO15118CertificateManagementEnabled"
+        ]
+    )
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "GetConfiguration",
+        call_result.GetConfiguration(
+            [
+                {
+                    "key": "ISO15118CertificateManagementEnabled",
+                    "readonly": False,
+                    "value": "false",
                 },
             ]
         ),
