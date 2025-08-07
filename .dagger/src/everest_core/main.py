@@ -238,8 +238,8 @@ class EverestCore:
 
         self._outputs = (
             dag.directory()
-            .with_new_directory("artifacts")
-            .with_new_directory("cache")
+            .with_new_directory("artifacts", permissions=0o751)
+            .with_new_directory("cache", permissions=0o751)
         )
         self._outputs_mutex = asyncio.Lock()
 
