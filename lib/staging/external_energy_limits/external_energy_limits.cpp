@@ -35,7 +35,7 @@ get_evse_sink_by_evse_id(const std::vector<std::unique_ptr<external_energy_limit
             return *evse_sink;
         }
     }
-    throw std::runtime_error("No mapping configured for evse");
+    throw std::runtime_error("No mapping configured for evse_id: " + std::to_string(evse_id));
 }
 
 } // namespace external_energy_limits
