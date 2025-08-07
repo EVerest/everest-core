@@ -35,7 +35,6 @@ types::energy::ExternalLimits get_external_limits(int32_t phases) {
     return external_limits;
 }
 
-
 // This function is used to get the external limits for AC charging based on the current or power value.
 types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power = false) {
     const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
@@ -189,11 +188,17 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging(const int32_t evse_index, bool
 template <typename T>
 ErrorResObj RpcApiRequestHandler::set_external_limit(const int32_t evse_index, T value,
                                                      std::function<types::energy::ExternalLimits(T)> make_limits) {
-    ErrorResObj res {};
+    ErrorResObj res{};
 
-    if (external_energy_limits::is_evse_sink_configured(evse_energy_sink, evse_index)) {
-        auto& energy_sink =
-            external_energy_limits::get_evse_sink_by_evse_id(evse_energy_sink, evse_index);
+    bool is_sink_configured;
+    try {
+        is_sink_configured = external_energy_limits::is_evse_sink_configured(evse_energy_sink, evse_index);
+    } catch (const std::runtime_error&) {
+        is_sink_configured = false;
+    }
+
+    if (is_sink_configured) {
+        auto& energy_sink = external_energy_limits::get_evse_sink_by_evse_id(evse_energy_sink, evse_index);
         try {
             const auto external_limits = make_limits(value);
             energy_sink.call_set_external_limits(external_limits);
@@ -203,7 +208,7 @@ ErrorResObj RpcApiRequestHandler::set_external_limit(const int32_t evse_index, T
         }
     } else {
         res.error = ResponseErrorEnum::ErrorInvalidEVSEIndex;
-        EVLOG_warning << "No evse energy sink configured for evse_index: " << evse_index
+        EVLOG_warning << "No EVSE energy sink configured for evse_index: " << evse_index
                       << ". This module does therefore not allow control of amps or power limits for this EVSE";
     }
 
