@@ -44,6 +44,7 @@ void ocpp::v2::Bidirectional::handle_notify_allowed_energy_transfer(
     }
     ocpp::v21::NotifyAllowedEnergyTransferResponse response;
     response.status = NotifyAllowedEnergyTransferStatusEnum::Accepted;
+
     const auto evse_id =
         this->context.evse_manager.get_transaction_evseid(notify_allowed_energy_transfer.msg.transactionId);
     if (!evse_id.has_value()) {
@@ -57,7 +58,21 @@ void ocpp::v2::Bidirectional::handle_notify_allowed_energy_transfer(
         this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     }
-    // TODO(mlitre): Check if evse supports v2x
+
+    if (!this->context.device_model
+             .get_optional_value<bool>(
+                 V2xComponentVariables::get_component_variable(evse_id.value(), V2xComponentVariables::Enabled))
+             .value_or(false)) {
+        response.status = NotifyAllowedEnergyTransferStatusEnum::Rejected;
+        ocpp::v2::StatusInfo status_info;
+        status_info.reasonCode = "InvalidValue";
+        status_info.additionalInfo = "EVSE does not support V2X or V2X is disabled.";
+        response.statusInfo = status_info;
+        ocpp::CallResult<v21::NotifyAllowedEnergyTransferResponse> call_result(response,
+                                                                               notify_allowed_energy_transfer.uniqueId);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
+        return;
+    }
 
     const auto selected_protocol = this->context.device_model.get_optional_value<std::string>(
         ConnectedEvComponentVariables::get_component_variable(evse_id.value(),
@@ -65,25 +80,47 @@ void ocpp::v2::Bidirectional::handle_notify_allowed_energy_transfer(
     const bool is_15118_20 = selected_protocol.has_value()
                                  ? selected_protocol.value().find("urn:iso:std:iso:15118:-20") != std::string::npos
                                  : false;
+    if (!is_15118_20) {
+        response.status = NotifyAllowedEnergyTransferStatusEnum::Rejected;
+        ocpp::v2::StatusInfo status_info;
+        status_info.reasonCode = "UnsupportedRequest";
+        status_info.additionalInfo = "Impossible to trigger service renegotiation due to the ISO15118 version that "
+                                     "does not support it. Ignoring command.";
+        response.statusInfo = status_info;
+        ocpp::CallResult<v21::NotifyAllowedEnergyTransferResponse> call_result(response,
+                                                                               notify_allowed_energy_transfer.uniqueId);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
+        return;
+    }
 
     const bool service_renegotiation_supported =
         this->context.device_model
             .get_optional_value<bool>(ISO15118ComponentVariables::get_component_variable(
                 evse_id.value(), ISO15118ComponentVariables::ServiceRenegotiationSupport))
             .value_or(false);
-
-    if (service_renegotiation_supported and is_15118_20 and this->notify_allowed_energy_transfer_callback.has_value()) {
-        // sanity check on callback being set, but should always be set, checked in callback verification
-        this->notify_allowed_energy_transfer_callback.value()(notify_allowed_energy_transfer.msg.allowedEnergyTransfer,
-                                                              notify_allowed_energy_transfer.msg.transactionId);
-    } else {
+    if (!service_renegotiation_supported) {
         response.status = NotifyAllowedEnergyTransferStatusEnum::Rejected;
         ocpp::v2::StatusInfo status_info;
         status_info.reasonCode = "UnsupportedRequest";
         status_info.additionalInfo =
-            (service_renegotiation_supported
-                 ? "Impossible to trigger service renegotiation since it is not supported."
-                 : "Impossible to trigger service renegotiation due to the ISO15118 version that does not support it.");
+            "Impossible to trigger service renegotiation since it is not supported. Ignoring command.";
+        response.statusInfo = status_info;
+        ocpp::CallResult<v21::NotifyAllowedEnergyTransferResponse> call_result(response,
+                                                                               notify_allowed_energy_transfer.uniqueId);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
+        return;
+    }
+
+    bool update_result = this->notify_allowed_energy_transfer_callback.has_value()
+                             ? this->notify_allowed_energy_transfer_callback.value()(
+                                   notify_allowed_energy_transfer.msg.allowedEnergyTransfer,
+                                   notify_allowed_energy_transfer.msg.transactionId)
+                             : false;
+    if (!update_result) {
+        response.status = NotifyAllowedEnergyTransferStatusEnum::Rejected;
+        ocpp::v2::StatusInfo status_info;
+        status_info.reasonCode = "InternalError";
+        status_info.additionalInfo = "Update of allowed energy transfer and/or service renegotiation was unsuccessful.";
         response.statusInfo = status_info;
     }
     ocpp::CallResult<v21::NotifyAllowedEnergyTransferResponse> call_result(response,
