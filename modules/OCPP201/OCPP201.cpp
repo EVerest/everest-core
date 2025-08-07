@@ -1033,7 +1033,12 @@ void OCPP201::ready() {
 
         extension->subscribe_ev_info([this, extensions_id](const types::iso15118::EvInformation& ev_info) {
             // TODO(mlitre): Update device model
-            update_evcc_id_token(extensions_id, ev_info.evcc_id);
+            const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
+            if (mapping.has_value()) {
+                update_evcc_id_token(mapping->evse, ev_info.evcc_id);
+            } else {
+                EVLOG_warning << "ISO15118 Extension interface mapping not set! Not retrieving 'EV Info'!";
+            }
         });
 
         extensions_id++;
