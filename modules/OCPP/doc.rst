@@ -386,7 +386,7 @@ certificate by sending a certificate signing request to CSMS.
 
 For the CSMS Leaf certificate, this process is only triggered if SecurityProfile 3 is used.
 
-For the SECC Leaf certificate, this process is only triggered if Plug&Charge is enabled by setting the **ISO15118PnCEnabled** to **true**.
+For the SECC Leaf certificate, this process is only triggered if Plug&Charge is enabled by setting the **ISO15118CertificateManagementEnabled** to **true**.
 
 If a certificate has expired is then periodically checked every 12 hours.
 
