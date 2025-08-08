@@ -3041,7 +3041,8 @@ void ChargePointImpl::signed_firmware_update_status_notification(FirmwareStatusE
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 
     if (status == FirmwareStatusEnumType::InvalidSignature) {
-        this->securityEventNotification(ocpp::security_events::INVALIDFIRMWARESIGNATURE, std::nullopt, true);
+        // Force critical status to send event to comply with TC_081_CS
+        this->securityEventNotification(ocpp::security_events::INVALIDFIRMWARESIGNATURE, std::nullopt, true, true);
     }
 
     if (this->firmware_update_is_pending) {
