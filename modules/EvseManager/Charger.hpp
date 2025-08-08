@@ -98,7 +98,6 @@ public:
 
     // external input to charger: update max_current and new validUntil
     bool set_max_current(float ampere, std::chrono::time_point<date::utc_clock> validUntil);
-    float get_max_current();
 
     sigslot::signal<float> signal_max_current;
 
