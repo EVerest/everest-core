@@ -1417,7 +1417,8 @@ EvseSecurity::get_full_leaf_certificate_info_internal(const CertificateQueryPara
         auto leaf_certificates = X509CertificateBundle(cert_dir, EncodingFormat::PEM);
 
         if (leaf_certificates.empty()) {
-            EVLOG_warning << "Could not find any key pair";
+            EVLOG_warning << "Could not find any " << conversions::leaf_certificate_type_to_string(certificate_type)
+                          << " leaf certificate key pair at path: " << cert_dir;
             result.status = GetCertificateInfoStatus::NotFound;
             return result;
         }
@@ -1553,7 +1554,7 @@ EvseSecurity::get_full_leaf_certificate_info_internal(const CertificateQueryPara
 
             // None were found
             if (leaf_single == nullptr && leaf_fullchain == nullptr) {
-                EVLOG_error << "Could not find any leaf certificate for:"
+                EVLOG_error << "Could not find any leaf certificate for: "
                             << conversions::leaf_certificate_type_to_string(certificate_type);
                 // Move onto next valid leaf, and attempt a search there
                 continue;
