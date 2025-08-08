@@ -221,19 +221,21 @@ impl PaymentTerminalModule {
         let read_card_loop = || -> Result<CardInfo> {
             loop {
                 if let Err(inner) = self.feig.configure() {
+                    log::warn!("Failed to configure: {inner:?}");
                     publishers.payment_terminal.raise_error(inner.into())
                 } else {
                     // TODO: use the clear all interface when it is implemented in the framework
-                    publishers
-                        .payment_terminal
-                        .clear_error(PTError::PaymentTerminal(
-                            PaymentTerminalError::TerminalIdNotSet,
-                        ));
-                    publishers
-                        .payment_terminal
-                        .clear_error(PTError::PaymentTerminal(
-                            PaymentTerminalError::GenericPaymentTerminalError,
-                        ));
+                    const ALL_PAYMENT_TERMINAL_ERRORS: [PaymentTerminalError; 3] = [
+                        PaymentTerminalError::TerminalIdNotSet,
+                        PaymentTerminalError::IncorrectDeviceId,
+                        PaymentTerminalError::GenericPaymentTerminalError,
+                    ];
+
+                    for error in ALL_PAYMENT_TERMINAL_ERRORS {
+                        publishers
+                            .payment_terminal
+                            .clear_error(PTError::PaymentTerminal(error));
+                    }
                 }
                 if !self.has_everything_enabled() && !self.is_enabled() {
                     log::debug!("Reading is disabled, waiting...");
@@ -380,6 +382,9 @@ impl From<anyhow::Error> for PTError {
             Some(inner) => match inner {
                 Error::TidMismatch => {
                     PTError::PaymentTerminal(PaymentTerminalError::TerminalIdNotSet)
+                }
+                Error::IncorrectDeviceId { .. } => {
+                    PTError::PaymentTerminal(PaymentTerminalError::IncorrectDeviceId)
                 }
                 _ => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
             },
