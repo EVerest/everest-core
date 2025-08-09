@@ -365,6 +365,9 @@ provides:
   random_delay:
     description: Provides control over UK smart charging regulation random delay feature
     interface: uk_random_delay
+  dc_external_derate:
+    description: Provides DC external derating capabilities
+    interface: dc_external_derate
 requires:
   bsp:
     interface: evse_board_support

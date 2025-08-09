@@ -12,6 +12,7 @@
 
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
+#include <generated/interfaces/dc_external_derate/Implementation.hpp>
 #include <generated/interfaces/energy/Implementation.hpp>
 #include <generated/interfaces/evse_manager/Implementation.hpp>
 #include <generated/interfaces/uk_random_delay/Implementation.hpp>
@@ -120,8 +121,9 @@ public:
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
-                std::unique_ptr<uk_random_delayImplBase> p_random_delay, std::unique_ptr<evse_board_supportIntf> r_bsp,
-                std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd,
+                std::unique_ptr<uk_random_delayImplBase> p_random_delay,
+                std::unique_ptr<dc_external_derateImplBase> p_dc_external_derate,
+                std::unique_ptr<evse_board_supportIntf> r_bsp, std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd,
                 std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock,
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side,
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side,
@@ -137,6 +139,7 @@ public:
         p_energy_grid(std::move(p_energy_grid)),
         p_token_provider(std::move(p_token_provider)),
         p_random_delay(std::move(p_random_delay)),
+        p_dc_external_derate(std::move(p_dc_external_derate)),
         r_bsp(std::move(r_bsp)),
         r_ac_rcd(std::move(r_ac_rcd)),
         r_connector_lock(std::move(r_connector_lock)),
@@ -156,6 +159,7 @@ public:
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
     const std::unique_ptr<uk_random_delayImplBase> p_random_delay;
+    const std::unique_ptr<dc_external_derateImplBase> p_dc_external_derate;
     const std::unique_ptr<evse_board_supportIntf> r_bsp;
     const std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd;
     const std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock;
@@ -234,10 +238,8 @@ public:
     std::atomic<std::chrono::seconds> random_delay_max_duration;
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
 
-    types::power_supply_DC::Capabilities get_powersupply_capabilities() {
-        std::scoped_lock lock(powersupply_capabilities_mutex);
-        return powersupply_capabilities;
-    }
+    types::power_supply_DC::Capabilities get_powersupply_capabilities();
+    void set_external_derating(types::dc_external_derate::ExternalDerating d);
 
     void update_powersupply_capabilities(types::power_supply_DC::Capabilities caps) {
         std::scoped_lock lock(powersupply_capabilities_mutex);
@@ -280,6 +282,8 @@ private:
     // insert your private definitions here
     std::mutex powersupply_capabilities_mutex;
     types::power_supply_DC::Capabilities powersupply_capabilities;
+    std::mutex dc_external_derate_mutex;
+    types::dc_external_derate::ExternalDerating dc_external_derate;
 
     Everest::timed_mutex_traceable power_mutex;
     types::powermeter::Powermeter latest_powermeter_data_billing;
