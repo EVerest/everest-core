@@ -33,7 +33,7 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_set_external_capabilities(std::string& capabilities) override;
+    virtual void handle_set_external_derating(types::dc_external_derate::ExternalDerating& derate) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

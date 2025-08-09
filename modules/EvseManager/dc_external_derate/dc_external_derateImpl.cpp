@@ -12,8 +12,9 @@ void dc_external_derateImpl::init() {
 void dc_external_derateImpl::ready() {
 }
 
-void dc_external_derateImpl::handle_set_external_capabilities(std::string& capabilities) {
+void dc_external_derateImpl::handle_set_external_derating(types::dc_external_derate::ExternalDerating& derate) {
     // your code for cmd set_external_capabilities goes here
+    mod->set_external_derating(derate);
 }
 
 } // namespace dc_external_derate
