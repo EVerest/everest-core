@@ -9,6 +9,8 @@
 #include <generated/interfaces/kvs/Interface.hpp>
 #include <utils/date.hpp>
 
+using everest::staging::helpers::is_equal_case_insensitive;
+
 namespace module {
 
 static types::reservation::ReservationResult
@@ -356,9 +358,9 @@ std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std
     if (evse_id.has_value()) {
         if (this->evse_reservations.count(evse_id.value())) {
             const types::reservation::Reservation& reservation = this->evse_reservations[evse_id.value()];
-            if (reservation.id_token == id_token ||
+            if (is_equal_case_insensitive(reservation.id_token, id_token) ||
                 (parent_id_token.has_value() && reservation.parent_id_token.has_value() &&
-                 parent_id_token.value() == reservation.parent_id_token.value())) {
+                 is_equal_case_insensitive(parent_id_token.value(), reservation.parent_id_token.value()))) {
                 EVLOG_debug << "There is a reservation (" << reservation.reservation_id << ") for evse "
                             << evse_id.value() << " and the token matches";
                 return reservation.reservation_id;
@@ -372,9 +374,9 @@ std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std
     // If evse_id == 0 or there is no reservation found with the given evse id, search globally for reservation with
     // this token.
     for (const auto& reservation : global_reservations) {
-        if (reservation.id_token == id_token ||
+        if (is_equal_case_insensitive(reservation.id_token, id_token) ||
             (parent_id_token.has_value() && reservation.parent_id_token.has_value() &&
-             parent_id_token.value() == reservation.parent_id_token.value())) {
+             is_equal_case_insensitive(parent_id_token.value(), reservation.parent_id_token.value()))) {
             EVLOG_debug << "There is a reservation for the token, reservation id: " << reservation.reservation_id;
             return reservation.reservation_id;
         }

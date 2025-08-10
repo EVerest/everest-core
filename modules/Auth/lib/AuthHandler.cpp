@@ -7,6 +7,8 @@
 #include <everest/staging/helpers/helpers.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
 
+using everest::staging::helpers::is_equal_case_insensitive;
+
 namespace module {
 
 /// \brief helper method to intersect referenced_connectors (from ProvidedIdToken) with connectors that are listed
@@ -427,11 +429,12 @@ int AuthHandler::used_for_transaction(const std::vector<int>& evse_ids, const st
         if (this->evses.at(evse_id)->identifier.has_value()) {
             const auto& identifier = this->evses.at(evse_id)->identifier.value();
             // check against id_token
-            if (identifier.id_token.value == token) {
+            if (is_equal_case_insensitive(identifier.id_token.value, token)) {
                 return evse_id;
             }
             // check against parent_id_token
-            else if (identifier.parent_id_token.has_value() && identifier.parent_id_token.value().value == token) {
+            else if (identifier.parent_id_token.has_value() &&
+                     is_equal_case_insensitive(identifier.parent_id_token.value().value, token)) {
                 return evse_id;
             }
         }
@@ -449,7 +452,8 @@ bool AuthHandler::is_token_already_in_process(const ProvidedIdToken& provided_id
         // check if id_token was already used to authorize evse but no transaction has been started yet
         for (const auto evse_id : referenced_evses) {
             const auto& evse = this->evses.at(evse_id);
-            if (evse->identifier.has_value() && evse->identifier.value().id_token == provided_id_token.id_token &&
+            if (evse->identifier.has_value() &&
+                is_equal_case_insensitive(evse->identifier.value().id_token, provided_id_token.id_token) &&
                 !evse->transaction_active) {
                 return true;
             }
@@ -491,7 +495,7 @@ bool AuthHandler::equals_master_pass_group_id(const std::optional<types::authori
         return false;
     }
 
-    return parent_id_token.value().value == this->master_pass_group_id.value();
+    return is_equal_case_insensitive(parent_id_token.value().value, this->master_pass_group_id.value());
 }
 
 int AuthHandler::get_latest_plugin(const std::vector<int>& evse_ids) {
@@ -577,8 +581,8 @@ bool does_withdraw_request_match(const WithdrawAuthorizationRequest& withdraw_re
                          selected_evses.end());
 
     // Check if the ID token matches or is absent
-    const bool id_token_matches =
-        not withdraw_request.id_token.has_value() or (withdraw_request.id_token.value() == id_token);
+    const bool id_token_matches = not withdraw_request.id_token.has_value() or
+                                  (is_equal_case_insensitive(withdraw_request.id_token.value(), id_token));
 
     return id_token_matches and (not has_evse_id or is_evse_in_selected);
 }
@@ -983,7 +987,8 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
         const auto evse_id = request.evse_id.value();
         const auto id_token = request.id_token.value();
         const auto& evse = this->evses.at(evse_id);
-        if (evse->identifier.has_value() && request.id_token.value() == evse->identifier.value().id_token) {
+        if (evse->identifier.has_value() &&
+            is_equal_case_insensitive(request.id_token.value(), evse->identifier.value().id_token)) {
             withdraw_authorization_or_stop_transaction(*evse);
             result = WithdrawAuthorizationResult::Accepted;
         }
@@ -1002,7 +1007,7 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
         // find if there is a granted authorization for id_token
         for (const auto& evse : this->evses) {
             if (evse.second->identifier.has_value() &&
-                request.id_token.value() == evse.second->identifier.value().id_token) {
+                is_equal_case_insensitive(request.id_token.value(), evse.second->identifier.value().id_token)) {
                 withdraw_authorization_or_stop_transaction(*evse.second);
                 result = WithdrawAuthorizationResult::Accepted;
             }
