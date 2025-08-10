@@ -29,6 +29,25 @@ types::authorization::ProvidedIdToken redact(const types::authorization::Provide
     return redacted_token;
 }
 
+bool is_equal_case_insensitive(const std::string& str1, const std::string& str2) {
+    if (str1.length() != str2.length()) {
+        return false;
+    }
+    return std::equal(str1.begin(), str1.end(), str2.begin(),
+                      [](char a, char b) { return std::tolower(a) == std::tolower(b); });
+}
+
+bool is_equal_case_insensitive(const types::authorization::IdToken& token1,
+                               const types::authorization::IdToken& token2) {
+    return is_equal_case_insensitive(token1.value, token2.value) && token1.type == token2.type;
+}
+
+bool is_equal_case_insensitive(const types::authorization::ProvidedIdToken& token1,
+                               const types::authorization::ProvidedIdToken& token2) {
+    return is_equal_case_insensitive(token1.id_token.value, token2.id_token.value) &&
+           token1.id_token.type == token2.id_token.type;
+}
+
 std::string get_uuid() {
     return boost::uuids::to_string(boost::uuids::random_generator()()); // 36 characters
 }
