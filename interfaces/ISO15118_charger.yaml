@@ -319,6 +319,20 @@ vars:
     type: number
     minimum: 0
     maximum: 400
+  ac_ev_power_limits:
+    description: >-
+      Ac charge & discharge power values supported and allowed by the EV
+    type: object
+    $ref: /iso15118#/AcEvPowerLimits
+  ac_ev_present_powers:
+    description: Present active and reactive power measured from the EV
+    type: object
+    $ref: /iso15118#/AcEvPresentPowerValues
+  ac_ev_dynamic_control_mode:
+    description: >-
+      The parameters the EVCC offers and sets for ac dynamic control mode
+    type: object
+    $ref: /iso15118#/AcEvDynamicModeValues
   dc_ev_energy_capacity:
     description: "Optional: [Wh] Energy capacity of the EV"
     type: number

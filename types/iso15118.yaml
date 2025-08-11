@@ -1548,6 +1548,79 @@ types:
         description: Minimum ac discharge power the EVSE can deliver
         type: object
         $ref: /units#/Power
+  AcEvPowerLimits:
+    description: Ac charge & discharge power values supported and allowed by the EV
+    type: object
+    additionalProperties: false
+    properties:
+      max_charge_power:
+        description: Maximum power supported by the EV
+        type: object
+        $ref: /units#/Power
+      min_charge_power:
+        description: Minimum power supported by the EV
+        type: object
+        $ref: /units#/Power
+      max_discharge_power:
+        description: Maximum discharge power supported by the EV
+        type: object
+        $ref: /units#/Power
+      min_discharge_power:
+        description: Minimum discharge power supported by the EV
+        type: object
+        $ref: /units#/Power
+  AcEvPresentPowerValues:
+    description: Present active and reactive power measured from the EV
+    type: object
+    additionalProperties: false
+    required:
+      - present_active_power
+    properties:
+      present_active_power:
+        description: Present active power measured from the EV
+        type: object
+        $ref: /units#/Power
+      present_reactive_power:
+        description: Present reactive power measured from the EV
+        type: object
+        $ref: /units#/Power
+  AcEvDynamicModeValues:
+    description: Parameters for ac ev dynamic control mode
+    type: object
+    additionalProperties: false
+    required:
+      - target_energy_request
+      - max_energy_request
+      - min_energy_request
+    properties:
+      departure_time:
+        description: The time when the EV wants to finish charging
+        type: number
+        minimum: 0
+      target_energy_request:
+        description: Energy request to fulfil the target SoC
+        type: number
+        minimum: 0
+      max_energy_request:
+        description: Maximum acceptable energy level of the EV
+        type: number
+        minimum: 0
+      min_energy_request:
+        description: Energy request to fulfil the minimum SoC
+        type: number
+        minimum: 0
+      max_v2x_energy_request:
+        description: >-
+          Energy which may be charged until the PresentSOC has left the range
+          dedicated for cycling activity.
+        type: number
+        minimum: 0
+      min_v2x_energy_request:
+        description: >-
+          Energy which needs to be charged until the PresentSOC has left the
+          range dedicated for cycling activity.
+        type: number
+        minimum: 0
   AcTargetValues:
     description: Target ac values requested by the EVSE
     type: object

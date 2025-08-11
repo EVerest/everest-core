@@ -43,7 +43,7 @@ config:
   supported_d20_energy_services:
     description: >-
       The supported ISO15118-20 energy services (DC, DC_BPT, AC, AC_BPT) the EV supports. There is a very high chance
-      that the first entry will be selected. The servies should be Separated with ,
+      that the first entry will be selected. The servies should be separated with ,
     type: string
     default: "DC, DC_BPT"
 provides:  

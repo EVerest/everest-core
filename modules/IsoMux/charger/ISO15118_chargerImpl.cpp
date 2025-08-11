@@ -249,6 +249,24 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
+    mod->r_iso20->subscribe_ac_ev_power_limits([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_ac_ev_power_limits(o);
+        }
+    });
+
+    mod->r_iso20->subscribe_ac_ev_present_powers([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_ac_ev_present_powers(o);
+        }
+    });
+
+    mod->r_iso20->subscribe_ac_ev_dynamic_control_mode([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_ac_ev_dynamic_control_mode(o);
+        }
+    });
+
     mod->r_iso2->subscribe_dc_ev_energy_capacity([this](const auto o) {
         if (not mod->selected_iso20()) {
             publish_dc_ev_energy_capacity(o);
