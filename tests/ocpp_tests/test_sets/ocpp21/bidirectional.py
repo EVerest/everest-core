@@ -29,11 +29,10 @@ log = logging.getLogger("bidirectionalTest")
 def validate_notify_ev_charging_needs(meta_data, msg, expected):
     # Q01.FR.03
     return (
-        msg.payload["evseId"] == 1
-        and msg.payload["chargingNeeds"]["requestedEnergyTransfer"]
-        and msg.payload["chargingNeeds"]["availableEnergyTransfer"]
+        msg.payload["evseId"] == expected["evseId"]
+        and msg.payload["chargingNeeds"]["requestedEnergyTransfer"] == expected["requestedEnergyTransfer"]
         and msg.payload["chargingNeeds"]["v2xChargingParameters"]
-        and msg.payload["chargingNeeds"]["controlMode"]
+        and msg.payload["chargingNeeds"]["controlMode"] == expected["controlMode"]
     )
 
 
@@ -107,7 +106,8 @@ async def test_q01(
             assert result['attribute_value'] == 'true'
         elif result['variable']['name'] == 'SupportedOperationModes':
             # Q01.FR.31
-            # TODO update to check for the min requirements once they are supported
+            # TODO(mlitre) update to check for the min requirements once they are supported
+            # Notably we need: ChargingOnly, CentralSetpoint and CentralFrequency
             assert result['attribute_value']
         elif result['variable']['name'] == 'SupportedEnergyTransferModes':
             # Q01.FR.32, we just check that it is not empty
@@ -156,7 +156,7 @@ async def test_q01(
         test_utility,
         charge_point_v21,
         "NotifyEVChargingNeeds",
-        {"evseId": 1, "requestedEnergyTransfer": "DC_BPT",
+        {"evseId": 1, "requestedEnergyTransfer": "DC",
             "controlMode": "DynamicControl", "mobilityNeedsMode": "EVCC"},
         validate_notify_ev_charging_needs
     )
@@ -173,12 +173,12 @@ async def test_q01(
                                              variable=VariableType(
         name="ProtocolAgreed"),
         attribute_type=AttributeEnumType.actual)
-    ev_protocol_supported_by_ev = GetVariableDataType(component=ComponentType(name="ConnectedEV", evse=EVSEType(id=1)),
-                                                      variable=VariableType(
+    ev_protocol_supported_by_ev1 = GetVariableDataType(component=ComponentType(name="ConnectedEV", evse=EVSEType(id=1)),
+                                                       variable=VariableType(
         name="ProtocolSupportedByEV", instance="1"),
         attribute_type=AttributeEnumType.actual)
     list_of_vars = [ev_available, ev_vehicle_id,
-                    ev_protocol_agreed, ev_protocol_supported_by_ev]
+                    ev_protocol_agreed, ev_protocol_supported_by_ev1]
     r: call_result21.GetVariables = await charge_point_v21.get_variables_req(get_variable_data=list_of_vars)
     # TODO(mlitre): Add check on VehicleCertificate when it is supported
 
@@ -190,28 +190,26 @@ async def test_q01(
         elif result['variable']['name'] == 'VehicleId':
             assert result['attribute_value']
         elif result['variable']['name'] == 'ProtocolAgreed':
-            # TODO(mlitre): We should check for specific value sent in auth
-            assert result['attribute_value']
+            assert result['attribute_value'] == 'urn:iso:std:iso:15118:-20:DC,1,0'
         elif result['variable']['name'] == 'ProtocolSupportedByEV':
             # TODO(mlitre): How many should we check?
             assert result['attribute_value']
 
-    """ TODO(mlitre): Make the session go through correctly
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v21,
         "TransactionEvent",
         {"eventType": "Updated", "transactionInfo": {"chargingState": "Charging"}},
     )
+
     test_controller.swipe(id_token.id_token)
-    # TODO(mlitre): Check that idToken.additionalInfo.additionalIdToken has type EVCCID + the correct value, Q01.FR.02
+
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v21,
         "TransactionEvent",
         {"eventType": "Ended", "idToken": {"additionalInfo": {"type": "EVCCID"}}},
     )
-    """
 
 
 @pytest.mark.xdist_group(name="ISO15118")
@@ -230,7 +228,7 @@ async def test_q01(
         ]
     )
 )
-async def test_q01_rejected(
+async def test_rejected_q01(
     central_system_v21: CentralSystem,
     test_controller: TestController,
     test_utility: TestUtility,
@@ -343,7 +341,8 @@ async def test_q01_rejected(
         test_utility,
         charge_point_v21,
         "NotifyEVChargingNeeds",
-        {},
+        {"evseId": 1, "requestedEnergyTransfer": "DC",
+            "controlMode": "DynamicControl", "mobilityNeedsMode": "EVCC"},
         validate_notify_ev_charging_needs
     )
     # Check variables after NotifyEVChargingNeeds, so that we don't have to guess when the variables have been updated
@@ -376,8 +375,7 @@ async def test_q01_rejected(
             # TODO(mlitre): Do we know the value before hand to check?
             assert result['attribute_value']
         elif result['variable']['name'] == 'ProtocolAgreed':
-            # TODO(mlitre): We should check for specific value sent in auth
-            assert result['attribute_value']
+            assert result['attribute_value'] == 'urn:iso:std:iso:15118:-20:DC,1,0'
         elif result['variable']['name'] == 'ProtocolSupportedByEV':
             # TODO(mlitre): How many should we check?
             assert result['attribute_value']
@@ -470,7 +468,9 @@ async def test_q02_no_service_renegotiation(
         test_utility,
         charge_point_v21,
         "NotifyEVChargingNeeds",
-        {"evseId": 1}
+        {"evseId": 1, "requestedEnergyTransfer": "DC",
+            "controlMode": "DynamicControl", "mobilityNeedsMode": "EVCC"},
+        validate_notify_ev_charging_needs
     )
     r: call_result21.NotifyAllowedEnergyTransfer = await charge_point_v21.notify_allowed_energy_transfer_request(allowed_energy_transfer=[EnergyTransferModeEnumType.dc_bpt], transaction_id=transaction.transaction_id)
     # TODO(mlitre): Once service renegotiation is supported expect Accepted instead of rejected
