@@ -69,7 +69,7 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config, co
             EVLOG_debug << "Using a charge point configuration without default values.";
         } else {
             // extend config with default values
-            EVLOG_info << "Adding the following default values to the charge point configuration: " << patch;
+            EVLOG_debug << "Adding the following default values to the charge point configuration: " << patch;
             auto patched_config = this->config.patch(patch);
             this->config = patched_config;
         }
