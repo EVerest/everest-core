@@ -4173,7 +4173,7 @@
         "bzlTransitiveDigest": "0aE92G9z87P2ty8Ik4pXnKVoBMGz3DvWx6vFWObtqeo=",
         "usagesDigest": "JxrpvVRaIOhEszHpvzd30AMmCsYJSzZyvT0LZoiv5ug=",
         "recordedFileInputs": {
-          "@@//modules/Cargo.lock": "82b73167eeab2433a9f2f867bb2c788757af2cb71d8f92b21eca357a057fb979",
+          "@@//modules/Cargo.lock": "7f3e12f57fa70693c0d750ed78bac7285cc3d84ccbce212809ab25b36af8d6b1",
           "@@//modules/Cargo.toml": "848aec3acae76cd6d51b2c99bb90c7b8485a4dc61433f914fe71554217558881",
           "@@//modules/RsIskraMeter/Cargo.toml": "07b548f805834833bddf48ca9945b5559cc1a6f16a2986cf75492564288e1971",
           "@@//modules/RsPaymentTerminal/Cargo.toml": "085ec1c9a2d5beff17d9deb066ca71771224cf632fde798b68a689363ae6bc48",
