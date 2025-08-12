@@ -197,7 +197,9 @@ void ChargePoint::on_transaction_started(
     // This allows us to move from "Reserved" to "Occupied". We dont need to check if a reservation was placed since if
     // a transaction starts, it is always consumed and just sets the reserved flag to false and triggers a
     // StatusNotifcation. It does not trigger a StatusNotification when already in "Occupied"
-    this->reservation->on_reservation_cleared(evse_id, connector_id);
+    if (this->reservation != nullptr) {
+        this->reservation->on_reservation_cleared(evse_id, connector_id);
+    }
     this->transaction->on_transaction_started(evse_id, connector_id, session_id, timestamp, trigger_reason, meter_start,
                                               id_token, group_id_token, reservation_id, remote_start_id,
                                               charging_state);
