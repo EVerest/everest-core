@@ -42,7 +42,7 @@ use generated::{
     Context, Module, ModulePublisher, OnReadySubscriber, PaymentTerminalServiceSubscriber,
     SessionCostClientSubscriber,
 };
-
+use std::cmp::min;
 use std::collections::HashMap;
 use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
 use std::time::Duration;
@@ -202,20 +202,38 @@ impl PaymentTerminalModule {
     /// don't flag the token as pre-validated to allow the consumers to add
     /// custom validation steps on top.
     fn begin_transaction(&self, publishers: &ModulePublisher) -> Result<()> {
-        // Get a valid invoice token.
-        let token = {
-            match publishers.bank_session_token_slots.get(0) {
-                None => None,
-                Some(publisher) => {
-                    let invoice_token = publisher.get_bank_session_token()?;
-                    if invoice_token.token.is_none() {
-                        anyhow::bail!("No token received")
+        let token: Option<String> = None;
+
+        // Wait for the card.
+        let read_card_loop = || -> Result<CardInfo> {
+            let mut timeout = std::time::Instant::now();
+            let mut backoff_seconds = 1;
+
+            loop {
+                // Attempting to get an invoice token from the backend
+                if token.is_none() {
+                    if timeout.elapsed() > Duration::from_secs(0) {
+                        let token = {
+                            match publishers.bank_session_token_slots.get(0) {
+                                None => None,
+                                Some(publisher) => publisher.get_bank_session_token()?.token,
+                            }
+                        };
+
+                        // Poor man's backoff to avoid spamming the backend
+                        const MAX_BACKOFF_SECONDS: u64 = 60;
+                        if token.is_none() {
+                            backoff_seconds = min(backoff_seconds * 2, MAX_BACKOFF_SECONDS);
+                            timeout = std::time::Instant::now()
+                                + Duration::from_secs(backoff_seconds * 2);
+                            log::info!(
+                                "Failed to receive token, retrying in {backoff_seconds} seconds"
+                            );
+                        } else {
+                            log::info!("Received the BankSessionToken {token:?}");
+                        }
                     }
-                    invoice_token.token
                 }
-            }
-        };
-        log::info!("Received the BankSessionToken {token:?}");
 
         // Wait for the card.
         let read_card_loop = || -> Result<CardInfo> {
@@ -270,9 +288,10 @@ impl PaymentTerminalModule {
         if let Some(provided_token) = match card_info {
             CardInfo::Bank => {
                 let credit_card_connectors = self.connectors_for_card_type(CardType::BankCard);
-                if (!self.has_everything_enabled() && credit_card_connectors.is_empty())
-                    || token.is_none()
-                {
+                if !self.has_everything_enabled() && credit_card_connectors.is_empty() {
+                    None
+                } else if token.is_none() {
+                    log::info!("No invoice token provided, ignoring bank card");
                     None
                 } else {
                     self.feig.begin_transaction(token.as_ref().unwrap())?;
