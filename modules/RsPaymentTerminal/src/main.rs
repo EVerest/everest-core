@@ -202,10 +202,10 @@ impl PaymentTerminalModule {
     /// don't flag the token as pre-validated to allow the consumers to add
     /// custom validation steps on top.
     fn begin_transaction(&self, publishers: &ModulePublisher) -> Result<()> {
-        let token: Option<String> = None;
+        let mut token: Option<String> = None;
 
         // Wait for the card.
-        let read_card_loop = || -> Result<CardInfo> {
+        let mut read_card_loop = || -> Result<CardInfo> {
             let mut timeout = std::time::Instant::now();
             let mut backoff_seconds = 1;
 
@@ -213,7 +213,7 @@ impl PaymentTerminalModule {
                 // Attempting to get an invoice token from the backend
                 if token.is_none() {
                     if timeout.elapsed() > Duration::from_secs(0) {
-                        let token = {
+                        token = {
                             match publishers.bank_session_token_slots.get(0) {
                                 None => None,
                                 Some(publisher) => publisher.get_bank_session_token()?.token,
@@ -227,10 +227,10 @@ impl PaymentTerminalModule {
                             timeout = std::time::Instant::now()
                                 + Duration::from_secs(backoff_seconds * 2);
                             log::info!(
-                                "Failed to receive token, retrying in {backoff_seconds} seconds"
+                                "Failed to receive invoice token, retrying in {backoff_seconds} seconds"
                             );
                         } else {
-                            log::info!("Received the BankSessionToken {token:?}");
+                            log::info!("Received the invoice token {token:?}");
                         }
                     }
                 }
