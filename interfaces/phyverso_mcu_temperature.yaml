@@ -1,6 +1,0 @@
-description: Temperatures from MCU
-vars:
-  MCUTemperatures:
-    description: Temperatures
-    type: object
-    $ref: /phyverso_mcu_temperature#/MCUTemperatures
