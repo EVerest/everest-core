@@ -546,7 +546,6 @@ mod tests {
         // When the token is None, we still expect membership card to work
         let card_info = CardInfo::MembershipCard("my membership token".to_string());
         let expected_token = "my membership token";
-        let expected_transaction = false;
         let mut everest_mock = ModulePublisher::default();
         let mut feig_mock = SyncFeig::default();
 
