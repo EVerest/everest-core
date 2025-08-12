@@ -235,9 +235,6 @@ impl PaymentTerminalModule {
                     }
                 }
 
-        // Wait for the card.
-        let read_card_loop = || -> Result<CardInfo> {
-            loop {
                 if let Err(inner) = self.feig.configure() {
                     publishers.payment_terminal.raise_error(inner.into())
                 } else {
