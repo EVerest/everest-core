@@ -63,6 +63,20 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config, co
     }
 
     try {
+        const auto core_schema_path = schemas_path / "Core.json";
+        if (fs::exists(core_schema_path)) {
+            std::ifstream ifs(core_schema_path.c_str());
+            std::string core_schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+            const auto core_schema = json::parse(core_schema_file);
+            this->core_schema_unlock_connector_on_ev_side_disconnect_ro_value =
+                core_schema["properties"]["UnlockConnectorOnEVSideDisconnect"]["readOnly"];
+        }
+    } catch (const json::parse_error& e) {
+        EVLOG_error << "Error while parsing Core.json file.";
+        EVLOG_AND_THROW(e);
+    }
+
+    try {
         auto patch = schemas.get_validator()->validate(this->config);
         if (patch.is_null()) {
             // no defaults substituted
@@ -1862,7 +1876,7 @@ void ChargePointConfiguration::setUnlockConnectorOnEVSideDisconnect(bool unlock_
 KeyValue ChargePointConfiguration::getUnlockConnectorOnEVSideDisconnectKeyValue() {
     KeyValue kv;
     kv.key = "UnlockConnectorOnEVSideDisconnect";
-    kv.readonly = false;
+    kv.readonly = this->core_schema_unlock_connector_on_ev_side_disconnect_ro_value;
     kv.value.emplace(ocpp::conversions::bool_to_string(this->getUnlockConnectorOnEVSideDisconnect()));
     return kv;
 }
@@ -3951,7 +3965,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         }
     }
     if (key == "UnlockConnectorOnEVSideDisconnect") {
-        if (isBool(value.get())) {
+        if (isBool(value.get()) and !this->getUnlockConnectorOnEVSideDisconnectKeyValue().readonly) {
             this->setUnlockConnectorOnEVSideDisconnect(ocpp::conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::Rejected;

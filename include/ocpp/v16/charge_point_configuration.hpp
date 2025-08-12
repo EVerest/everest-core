@@ -20,6 +20,7 @@ private:
     json config;
     json custom_schema;
     json internal_schema;
+    bool core_schema_unlock_connector_on_ev_side_disconnect_ro_value;
     fs::path user_config_path;
 
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
