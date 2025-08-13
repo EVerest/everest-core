@@ -355,26 +355,31 @@ void OCPP201::init() {
     this->init_evse_maps();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
-        this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
-            if (ready) {
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
-            }
-        });
-        this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
-            if (ready) {
-                EVLOG_info << "EVSE " << evse_id << " ready.";
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
-            }
-        });
         this->r_evse_manager.at(evse_id - 1)
-            ->subscribe_hw_capabilities(
-                [this, evse_id](const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
-                    this->evse_hardware_capabilities_map[evse_id] = hw_capabilities;
-                });
+            ->subscribe_waiting_for_external_ready([&evse_ready_mutex = evse_ready_mutex,
+                                                    &evse_ready_map = evse_ready_map, &evse_ready_cv = evse_ready_cv,
+                                                    evse_id](bool ready) {
+                std::lock_guard<std::mutex> lk(evse_ready_mutex);
+                if (ready) {
+                    evse_ready_map[evse_id] = true;
+                    evse_ready_cv.notify_one();
+                }
+            });
+        this->r_evse_manager.at(evse_id - 1)
+            ->subscribe_ready([&evse_ready_mutex = evse_ready_mutex, &evse_ready_map = evse_ready_map,
+                               &evse_ready_cv = evse_ready_cv, evse_id](bool ready) {
+                std::lock_guard<std::mutex> lk(evse_ready_mutex);
+                if (ready) {
+                    EVLOG_info << "EVSE " << evse_id << " ready.";
+                    evse_ready_map[evse_id] = true;
+                    evse_ready_cv.notify_one();
+                }
+            });
+        this->r_evse_manager.at(evse_id - 1)
+            ->subscribe_hw_capabilities([&evse_hardware_capabilities_map = evse_hardware_capabilities_map, evse_id](
+                                            const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
+                evse_hardware_capabilities_map[evse_id] = hw_capabilities;
+            });
         this->r_evse_manager.at(evse_id - 1)
             ->subscribe_supported_energy_transfer_modes(
                 [this](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
@@ -393,18 +398,16 @@ void OCPP201::ready() {
         const auto config_device_model_path = fs::path(this->config.DeviceModelDatabasePath);
         if (config_device_model_path.is_relative()) {
             return this->ocpp_share_path / config_device_model_path;
-        } else {
-            return config_device_model_path;
         }
+        return config_device_model_path;
     }();
 
     const auto everest_device_model_database_path = [&]() {
         const auto config_everest_device_model_path = fs::path(this->config.EverestDeviceModelDatabasePath);
         if (config_everest_device_model_path.is_relative()) {
             return this->ocpp_share_path / config_everest_device_model_path;
-        } else {
-            return config_everest_device_model_path;
         }
+        return config_everest_device_model_path;
     }();
 
     const auto device_model_database_migration_path = [&]() {
@@ -412,18 +415,16 @@ void OCPP201::ready() {
             fs::path(this->config.DeviceModelDatabaseMigrationPath);
         if (config_device_model_database_migration_path.is_relative()) {
             return this->ocpp_share_path / config_device_model_database_migration_path;
-        } else {
-            return config_device_model_database_migration_path;
         }
+        return config_device_model_database_migration_path;
     }();
 
     const auto device_model_config_path = [&]() {
         const auto config_device_model_config_path = fs::path(this->config.DeviceModelConfigPath);
         if (config_device_model_config_path.is_relative()) {
             return this->ocpp_share_path / config_device_model_config_path;
-        } else {
-            return config_device_model_config_path;
         }
+        return config_device_model_config_path;
     }();
 
     if (!fs::exists(this->config.MessageLogPath)) {
@@ -436,7 +437,7 @@ void OCPP201::ready() {
 
     ocpp::v2::Callbacks callbacks;
     callbacks.is_reset_allowed_callback = [this](const std::optional<const int32_t> evse_id,
-                                                 const ocpp::v2::ResetEnum& type) {
+                                                 const ocpp::v2::ResetEnum&) {
         if (evse_id.has_value()) {
             return false; // Reset of EVSE is currently not supported
         }
@@ -500,30 +501,32 @@ void OCPP201::ready() {
         return ocpp::v2::RequestStartStopStatusEnum::Accepted;
     };
 
-    callbacks.stop_transaction_callback = [this](const int32_t evse_id, const ocpp::v2::ReasonEnum& stop_reason) {
-        if (evse_id <= 0 or evse_id > this->r_evse_manager.size()) {
+    callbacks.stop_transaction_callback = [&r_evse_manager = r_evse_manager](const int32_t evse_id,
+                                                                             const ocpp::v2::ReasonEnum& stop_reason) {
+        if (evse_id <= 0 or evse_id > r_evse_manager.size()) {
             return ocpp::v2::RequestStartStopStatusEnum::Rejected;
         }
 
         types::evse_manager::StopTransactionRequest req;
         req.reason = conversions::to_everest_stop_transaction_reason(stop_reason);
 
-        return this->r_evse_manager.at(evse_id - 1)->call_stop_transaction(req)
+        return r_evse_manager.at(evse_id - 1)->call_stop_transaction(req)
                    ? ocpp::v2::RequestStartStopStatusEnum::Accepted
                    : ocpp::v2::RequestStartStopStatusEnum::Rejected;
     };
 
-    callbacks.pause_charging_callback = [this](const int32_t evse_id) {
-        if (evse_id > 0 && evse_id <= this->r_evse_manager.size()) {
-            this->r_evse_manager.at(evse_id - 1)->call_pause_charging();
+    callbacks.pause_charging_callback = [&r_evse_manager = r_evse_manager](const int32_t evse_id) {
+        if (evse_id > 0 && evse_id <= r_evse_manager.size()) {
+            r_evse_manager.at(evse_id - 1)->call_pause_charging();
         }
     };
 
-    callbacks.unlock_connector_callback = [this](const int32_t evse_id, const int32_t connector_id) {
+    callbacks.unlock_connector_callback = [&r_evse_manager = r_evse_manager](const int32_t evse_id,
+                                                                             const int32_t connector_id) {
         // FIXME: This needs to properly handle different connectors
         ocpp::v2::UnlockConnectorResponse response;
-        if (evse_id > 0 && evse_id <= this->r_evse_manager.size()) {
-            if (this->r_evse_manager.at(evse_id - 1)->call_force_unlock(connector_id)) {
+        if (evse_id > 0 && evse_id <= r_evse_manager.size()) {
+            if (r_evse_manager.at(evse_id - 1)->call_force_unlock(connector_id)) {
                 response.status = ocpp::v2::UnlockStatusEnum::Unlocked;
             } else {
                 response.status = ocpp::v2::UnlockStatusEnum::UnlockFailed;
@@ -629,26 +632,25 @@ void OCPP201::ready() {
     };
 
     callbacks.validate_network_profile_callback =
-        [this](const int32_t configuration_slot, const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
+        [](const int32_t /*configuration_slot*/, const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
             auto ws_uri = ocpp::uri(network_connection_profile.ocppCsmsUrl.get());
 
             if (ws_uri.get_valid()) {
                 return ocpp::v2::SetNetworkProfileStatusEnum::Accepted;
-            } else {
-                return ocpp::v2::SetNetworkProfileStatusEnum::Rejected;
             }
+            return ocpp::v2::SetNetworkProfileStatusEnum::Rejected;
             // TODO(piet): Add further validation of the NetworkConnectionProfile
         };
 
-    callbacks.configure_network_connection_profile_callback =
-        [this](const int32_t configuration_slot, const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
-            std::promise<ocpp::v2::ConfigNetworkResult> promise;
-            std::future<ocpp::v2::ConfigNetworkResult> future = promise.get_future();
-            ocpp::v2::ConfigNetworkResult result;
-            result.success = true;
-            promise.set_value(result);
-            return future;
-        };
+    callbacks.configure_network_connection_profile_callback = [](const int32_t /*configuration_slot*/,
+                                                                 const ocpp::v2::NetworkConnectionProfile&) {
+        std::promise<ocpp::v2::ConfigNetworkResult> promise;
+        std::future<ocpp::v2::ConfigNetworkResult> future = promise.get_future();
+        ocpp::v2::ConfigNetworkResult result;
+        result.success = true;
+        promise.set_value(result);
+        return future;
+    };
 
     callbacks.all_connectors_unavailable_callback = [this]() {
         EVLOG_info << "All connectors unavailable, proceed with firmware installation";
@@ -685,9 +687,10 @@ void OCPP201::ready() {
         };
 
     callbacks.set_display_message_callback =
-        [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v2::SetDisplayMessageResponse {
+        [&r_display_message = r_display_message](
+            const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v2::SetDisplayMessageResponse {
         ocpp::v2::SetDisplayMessageResponse response;
-        if (this->r_display_message.empty()) {
+        if (r_display_message.empty()) {
             response.status = ocpp::v2::DisplayMessageStatusEnum::Rejected;
             return response;
         }
@@ -699,22 +702,22 @@ void OCPP201::ready() {
         }
 
         const types::display_message::SetDisplayMessageResponse display_message_response =
-            this->r_display_message.at(0)->call_set_display_message(display_messages);
+            r_display_message.at(0)->call_set_display_message(display_messages);
         response = conversions::to_ocpp_set_display_message_response(display_message_response);
 
         return response;
     };
 
     callbacks.get_display_message_callback =
-        [this](const ocpp::v2::GetDisplayMessagesRequest& request) -> std::vector<ocpp::DisplayMessage> {
-        if (this->r_display_message.empty()) {
+        [&r_display_message = r_display_message](
+            const ocpp::v2::GetDisplayMessagesRequest& request) -> std::vector<ocpp::DisplayMessage> {
+        if (r_display_message.empty()) {
             return {};
         }
         types::display_message::GetDisplayMessageRequest get_request;
 
-        types::display_message::GetDisplayMessageResponse response =
-            this->r_display_message.at(0)->call_get_display_messages(
-                conversions::to_everest_display_message_request(request));
+        types::display_message::GetDisplayMessageResponse response = r_display_message.at(0)->call_get_display_messages(
+            conversions::to_everest_display_message_request(request));
 
         if (!response.messages.has_value() || response.messages.value().empty()) {
             return {};
@@ -729,15 +732,16 @@ void OCPP201::ready() {
     };
 
     callbacks.clear_display_message_callback =
-        [this](const ocpp::v2::ClearDisplayMessageRequest& request) -> ocpp::v2::ClearDisplayMessageResponse {
-        if (this->r_display_message.empty()) {
+        [&r_display_message = r_display_message](
+            const ocpp::v2::ClearDisplayMessageRequest& request) -> ocpp::v2::ClearDisplayMessageResponse {
+        if (r_display_message.empty()) {
             ocpp::v2::ClearDisplayMessageResponse response;
             response.status = ocpp::v2::ClearMessageStatusEnum::Unknown;
             return response;
         }
 
         types::display_message::ClearDisplayMessageResponse response =
-            this->r_display_message.at(0)->call_clear_display_message(
+            r_display_message.at(0)->call_clear_display_message(
                 conversions::to_everest_clear_display_message_request(request));
         return conversions::to_ocpp_clear_display_message_response(response);
     };
@@ -763,11 +767,12 @@ void OCPP201::ready() {
     }
 
     if (!this->r_data_transfer.empty()) {
-        callbacks.data_transfer_callback = [this](const ocpp::v2::DataTransferRequest& request) {
+        callbacks.data_transfer_callback = [&r_data_transfer =
+                                                r_data_transfer](const ocpp::v2::DataTransferRequest& request) {
             types::ocpp::DataTransferRequest data_transfer_request =
                 conversions::to_everest_data_transfer_request(request);
             types::ocpp::DataTransferResponse data_transfer_response =
-                this->r_data_transfer.at(0)->call_data_transfer(data_transfer_request);
+                r_data_transfer.at(0)->call_data_transfer(data_transfer_request);
             ocpp::v2::DataTransferResponse response =
                 conversions::to_ocpp_data_transfer_response(data_transfer_response);
             return response;
@@ -898,12 +903,11 @@ void OCPP201::ready() {
 
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";
-        this->mqtt.subscribe(connect_topic,
-                             [this](const std::string& data) { this->charge_point->connect_websocket(); });
+        this->mqtt.subscribe(connect_topic, [this](const std::string&) { this->charge_point->connect_websocket(); });
 
         const std::string disconnect_topic = "everest_api/ocpp/cmd/disconnect";
         this->mqtt.subscribe(disconnect_topic,
-                             [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
+                             [this](const std::string&) { this->charge_point->disconnect_websocket(); });
     }
 
     std::set<TxStartStopPoint> tx_start_points;
