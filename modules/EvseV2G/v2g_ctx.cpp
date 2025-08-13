@@ -118,6 +118,8 @@ void v2g_ctx_init_charging_state(struct v2g_context* const ctx, bool is_connecti
     ctx->selected_protocol = V2G_UNKNOWN_PROTOCOL;
     ctx->session.renegotiation_required = false;
     ctx->session.is_charging = false;
+    ctx->evse_v2g_data.evse_notification = (uint8_t)0;
+    remove_service_from_service_list_if_exists(ctx, V2G_SERVICE_ID_CERTIFICATE);
 }
 
 void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
