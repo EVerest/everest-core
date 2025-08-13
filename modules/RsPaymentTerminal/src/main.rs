@@ -210,7 +210,7 @@ impl PaymentTerminalModule {
             let mut backoff_seconds = 1;
 
             loop {
-                // Attempting to get an invoice
+                // Attempting to get an invoice token
                 if token.is_none() {
                     if timeout.elapsed() > Duration::from_secs(0) {
                         token = {
