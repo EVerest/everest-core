@@ -210,7 +210,7 @@ impl PaymentTerminalModule {
             let mut backoff_seconds = 1;
 
             loop {
-                // Attempting to get an invoice token from the backend
+                // Attempting to get an invoice
                 if token.is_none() {
                     if timeout.elapsed() > Duration::from_secs(0) {
                         token = {
@@ -220,12 +220,12 @@ impl PaymentTerminalModule {
                             }
                         };
 
-                        // Poor man's backoff to avoid spamming the backend
+                        // Poor man's backoff to avoid a busy loop
                         const MAX_BACKOFF_SECONDS: u64 = 60;
                         if token.is_none() {
                             backoff_seconds = min(backoff_seconds * 2, MAX_BACKOFF_SECONDS);
                             timeout = std::time::Instant::now()
-                                + Duration::from_secs(backoff_seconds * 2);
+                                + Duration::from_secs(backoff_seconds);
                             log::info!(
                                 "Failed to receive invoice token, retrying in {backoff_seconds} seconds"
                             );
@@ -536,9 +536,7 @@ mod tests {
             connector_to_card_type: Mutex::new(HashMap::new()),
         };
 
-        let res = pt_module.begin_transaction(&everest_mock);
-        println!("res: {res:?}");
-        assert!(res.is_err());
+        assert!(pt_module.begin_transaction(&everest_mock).is_err());
     }
 
     #[test]
