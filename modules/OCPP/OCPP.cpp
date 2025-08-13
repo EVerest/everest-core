@@ -38,13 +38,15 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
     const auto error_type = error.type;
     const auto uuid = error.uuid.uuid;
 
-    auto mrec_it = std::find_if(MREC_ERROR_MAP.begin(), MREC_ERROR_MAP.end(),
-                                [&](const auto& entry) { return error_type.find(entry.first) != std::string::npos; });
+    auto mrec_it = std::find_if(MREC_ERROR_MAP.begin(), MREC_ERROR_MAP.end(), [&error_type](const auto& entry) {
+        return error_type.find(entry.first) != std::string::npos;
+    });
 
     // is MREC error
     if (mrec_it != MREC_ERROR_MAP.end()) {
         // lambda to create MREC error info
-        auto make_mrec_error_info = [&](ocpp::v16::ChargePointErrorCode code, const std::string& vendor_error_code) {
+        auto make_mrec_error_info = [&uuid](ocpp::v16::ChargePointErrorCode code,
+                                            const std::string& vendor_error_code) {
             return ocpp::v16::ErrorInfo{uuid, code, false, std::nullopt, CHARGE_X_MREC_VENDOR_ID, vendor_error_code};
         };
         return make_mrec_error_info(mrec_it->second.first, mrec_it->second.second);
@@ -56,7 +58,7 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
     // is OCPP error
     if (ocpp_it != OCPP_ERROR_MAP.end()) {
         // lambda to create OCPP error info
-        auto make_ocpp_error_info = [&](ocpp::v16::ChargePointErrorCode code) {
+        auto make_ocpp_error_info = [&uuid](ocpp::v16::ChargePointErrorCode code) {
             return ocpp::v16::ErrorInfo{uuid, code, false, std::nullopt};
         };
         return make_ocpp_error_info(ocpp_it->second);
@@ -280,7 +282,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
 
 void OCPP::init_evse_subscriptions() {
     int32_t evse_id = 1;
-    for (auto& evse : this->r_evse_manager) {
+    for (const auto& evse : this->r_evse_manager) {
         evse->subscribe_powermeter([this, evse_id](types::powermeter::Powermeter powermeter) {
             ocpp::Measurement measurement;
             measurement.power_meter = conversions::to_ocpp_power_meter(powermeter);
@@ -294,9 +296,9 @@ void OCPP::init_evse_subscriptions() {
             this->charge_point->on_meter_values(evse_id, measurement);
         });
 
-        evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
+        evse->subscribe_ev_info([&evse_soc_map = evse_soc_map, evse_id](const types::evse_manager::EVInfo& ev_info) {
             if (ev_info.soc.has_value()) {
-                this->evse_soc_map[evse_id] = ev_info.soc.value();
+                evse_soc_map[evse_id] = ev_info.soc;
             }
         });
 
@@ -336,7 +338,7 @@ void OCPP::init_evse_subscriptions() {
     }
 
     int32_t extensions_id = 1;
-    for (auto& extension : this->r_extensions_15118) {
+    for (const auto& extension : this->r_extensions_15118) {
         extension->subscribe_iso15118_certificate_request(
             [this, extensions_id](types::iso15118::RequestExiStreamSchema request) {
                 this->charge_point->data_transfer_pnc_get_15118_ev_certificate(
@@ -494,27 +496,33 @@ void OCPP::init() {
     this->init_evse_maps();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
-        this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
-            if (ready) {
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
-            }
-        });
+        this->r_evse_manager.at(evse_id - 1)
+            ->subscribe_waiting_for_external_ready([&evse_ready_map = evse_ready_map,
+                                                    &evse_ready_mutex = evse_ready_mutex,
+                                                    &evse_ready_cv = evse_ready_cv, evse_id](bool ready) {
+                std::lock_guard<std::mutex> lk(evse_ready_mutex);
+                if (ready) {
+                    evse_ready_map[evse_id] = true;
+                    evse_ready_cv.notify_one();
+                }
+            });
 
         // also use the the ready signal, TODO(kai): maybe warn about it's usage here`
-        this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
-            if (ready) {
-                if (!this->evse_ready_map[evse_id]) {
-                    EVLOG_error << "Received EVSE ready without receiving waiting_for_external_ready first, this is "
-                                   "probably a bug in your evse_manager implementation / configuration. evse_id: "
-                                << evse_id;
+        this->r_evse_manager.at(evse_id - 1)
+            ->subscribe_ready([&evse_ready_map = evse_ready_map, &evse_ready_mutex = evse_ready_mutex,
+                               &evse_ready_cv = evse_ready_cv, evse_id](bool ready) {
+                std::lock_guard<std::mutex> lk(evse_ready_mutex);
+                if (ready) {
+                    if (!evse_ready_map[evse_id]) {
+                        EVLOG_error
+                            << "Received EVSE ready without receiving waiting_for_external_ready first, this is "
+                               "probably a bug in your evse_manager implementation / configuration. evse_id: "
+                            << evse_id;
+                    }
+                    evse_ready_map[evse_id] = true;
+                    evse_ready_cv.notify_one();
                 }
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
-            }
-        });
+            });
     }
 
     this->ocpp_share_path = this->info.paths.share;
@@ -604,25 +612,28 @@ void OCPP::ready() {
         }
         return false;
     });
-    this->charge_point->register_stop_transaction_callback([this](int32_t connector, ocpp::v16::Reason reason) {
-        if (this->connector_evse_index_map.count(connector)) {
-            types::evse_manager::StopTransactionRequest req;
-            req.reason = conversions::to_everest_stop_transaction_reason(reason);
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_stop_transaction(req);
-        }
-        return false;
-    });
+    this->charge_point->register_stop_transaction_callback(
+        [&connector_evse_index_map = connector_evse_index_map,
+         &r_evse_manager = r_evse_manager](int32_t connector, ocpp::v16::Reason reason) {
+            if (connector_evse_index_map.count(connector)) {
+                types::evse_manager::StopTransactionRequest req;
+                req.reason = conversions::to_everest_stop_transaction_reason(reason);
+                return r_evse_manager.at(connector_evse_index_map.at(connector))->call_stop_transaction(req);
+            }
+            return false;
+        });
 
-    this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
-        if (this->connector_evse_index_map.count(connector)) {
-            EVLOG_info << "Executing unlock connector callback";
-            // UnlockStatus::Failed is currently not supported by EVerest
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_force_unlock(1)
-                       ? ocpp::v16::UnlockStatus::Unlocked
-                       : ocpp::v16::UnlockStatus::NotSupported;
-        }
-        return ocpp::v16::UnlockStatus::NotSupported;
-    });
+    this->charge_point->register_unlock_connector_callback(
+        [&r_evse_manager = r_evse_manager, &connector_evse_index_map = connector_evse_index_map](int32_t connector) {
+            if (connector_evse_index_map.count(connector)) {
+                EVLOG_info << "Executing unlock connector callback";
+                // UnlockStatus::Failed is currently not supported by EVerest
+                return r_evse_manager.at(connector_evse_index_map.at(connector))->call_force_unlock(1)
+                           ? ocpp::v16::UnlockStatus::Unlocked
+                           : ocpp::v16::UnlockStatus::NotSupported;
+            }
+            return ocpp::v16::UnlockStatus::NotSupported;
+        });
 
     // int32_t reservation_id, CiString<20> auth_token, DateTime expiry_time,
     // std::string parent_id
@@ -778,40 +789,39 @@ void OCPP::ready() {
             this->p_auth_provider->publish_provided_token(provided_token);
         });
 
-    this->charge_point->register_disable_evse_callback([this](int32_t connector) {
-        if (this->connector_evse_index_map.count(connector)) {
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))
-                ->call_enable_disable(
-                    0, {types::evse_manager::Enable_source::CSMS, types::evse_manager::Enable_state::Disable, 5000});
-        } else {
+    this->charge_point->register_disable_evse_callback(
+        [&connector_evse_index_map = connector_evse_index_map, &r_evse_manager = r_evse_manager](int32_t connector) {
+            if (connector_evse_index_map.count(connector)) {
+                return r_evse_manager.at(connector_evse_index_map.at(connector))
+                    ->call_enable_disable(0, {types::evse_manager::Enable_source::CSMS,
+                                              types::evse_manager::Enable_state::Disable, 5000});
+            }
             return false;
-        }
-    });
+        });
 
     this->charge_point->register_set_system_time_callback(
         [this](const std::string& system_time) { this->r_system->call_set_system_time(system_time); });
 
-    this->charge_point->register_enable_evse_callback([this](int32_t connector) {
-        if (this->connector_evse_index_map.count(connector)) {
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))
-                ->call_enable_disable(
-                    0, {types::evse_manager::Enable_source::CSMS, types::evse_manager::Enable_state::Enable, 5000});
-        } else {
+    this->charge_point->register_enable_evse_callback(
+        [&connector_evse_index_map = connector_evse_index_map, &r_evse_manager = r_evse_manager](int32_t connector) {
+            if (connector_evse_index_map.count(connector)) {
+                return r_evse_manager.at(connector_evse_index_map.at(connector))
+                    ->call_enable_disable(
+                        0, {types::evse_manager::Enable_source::CSMS, types::evse_manager::Enable_state::Enable, 5000});
+            }
             return false;
-        }
-    });
+        });
 
     this->charge_point->register_cancel_reservation_callback(
         [this](int32_t reservation_id) { return this->r_reservation->call_cancel_reservation(reservation_id); });
 
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";
-        this->mqtt.subscribe(connect_topic,
-                             [this](const std::string& data) { this->charge_point->connect_websocket(); });
+        this->mqtt.subscribe(connect_topic, [this](const std::string&) { this->charge_point->connect_websocket(); });
 
         const std::string disconnect_topic = "everest_api/ocpp/cmd/disconnect";
         this->mqtt.subscribe(disconnect_topic,
-                             [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
+                             [this](const std::string&) { this->charge_point->disconnect_websocket(); });
     }
 
     this->charge_point->register_is_token_reserved_for_connector_callback(
@@ -873,8 +883,9 @@ void OCPP::ready() {
         [this](bool is_connected) { this->p_ocpp_generic->publish_is_connected(is_connected); });
 
     this->charge_point->register_get_15118_ev_certificate_response_callback(
-        [this](const int32_t connector_id, const ocpp::v2::Get15118EVCertificateResponse& certificate_response,
-               const ocpp::v2::CertificateActionEnum& certificate_action) {
+        [&r_extensions_15118 = r_extensions_15118](const int32_t connector_id,
+                                                   const ocpp::v2::Get15118EVCertificateResponse& certificate_response,
+                                                   const ocpp::v2::CertificateActionEnum& certificate_action) {
             types::iso15118::ResponseExiStreamStatus response;
             response.status = conversions::to_everest_iso15118_status(certificate_response.status);
             response.certificate_action = conversions::to_everest_certificate_action_enum(certificate_action);
@@ -883,7 +894,7 @@ void OCPP::ready() {
                 response.exi_response.emplace(certificate_response.exiResponse.get());
             }
 
-            this->r_extensions_15118.at(connector_id - 1)->call_set_get_certificate_response(response);
+            r_extensions_15118.at(connector_id - 1)->call_set_get_certificate_response(response);
         });
 
     this->charge_point->register_security_event_callback([this](const std::string& type, const std::string& tech_info) {
@@ -965,9 +976,10 @@ void OCPP::ready() {
         });
 
     this->charge_point->register_set_display_message_callback(
-        [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
+        [&r_display_message =
+             r_display_message](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
             ocpp::v16::DataTransferResponse response;
-            if (this->r_display_message.empty()) {
+            if (r_display_message.empty()) {
                 EVLOG_warning << "No display message handler registered, dropping data transfer display message";
                 response.status = ocpp::v16::DataTransferStatus::Rejected;
                 return response;
@@ -979,27 +991,28 @@ void OCPP::ready() {
             }
 
             const types::display_message::SetDisplayMessageResponse display_message_response =
-                this->r_display_message.at(0)->call_set_display_message(display_messages);
+                r_display_message.at(0)->call_set_display_message(display_messages);
             response = conversions::to_ocpp_data_transfer_response(display_message_response);
 
             return response;
         });
 
     if (!this->r_data_transfer.empty()) {
-        this->charge_point->register_data_transfer_callback([this](const ocpp::v16::DataTransferRequest& request) {
-            types::ocpp::DataTransferRequest data_transfer_request;
-            data_transfer_request.vendor_id = request.vendorId.get();
-            if (request.messageId.has_value()) {
-                data_transfer_request.message_id = request.messageId.value().get();
-            }
-            data_transfer_request.data = request.data;
-            types::ocpp::DataTransferResponse data_transfer_response =
-                this->r_data_transfer.at(0)->call_data_transfer(data_transfer_request);
-            ocpp::v16::DataTransferResponse response;
-            response.status = conversions::to_ocpp_data_transfer_status(data_transfer_response.status);
-            response.data = data_transfer_response.data;
-            return response;
-        });
+        this->charge_point->register_data_transfer_callback(
+            [&r_data_transfer = r_data_transfer](const ocpp::v16::DataTransferRequest& request) {
+                types::ocpp::DataTransferRequest data_transfer_request;
+                data_transfer_request.vendor_id = request.vendorId.get();
+                if (request.messageId.has_value()) {
+                    data_transfer_request.message_id = request.messageId.value().get();
+                }
+                data_transfer_request.data = request.data;
+                types::ocpp::DataTransferResponse data_transfer_response =
+                    r_data_transfer.at(0)->call_data_transfer(data_transfer_request);
+                ocpp::v16::DataTransferResponse response;
+                response.status = conversions::to_ocpp_data_transfer_status(data_transfer_response.status);
+                response.data = data_transfer_response.data;
+                return response;
+            });
     }
 
     // We must wait for EVSEs to be marked as ready before initializing ocpp since we will potentially update the
