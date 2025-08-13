@@ -194,7 +194,6 @@ provides:
   phyverso_mcu_temperature:
     interface: phyverso_mcu_temperature
     description: Temperatures from MCU
-enable_external_mqtt: true
 enable_telemetry: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
