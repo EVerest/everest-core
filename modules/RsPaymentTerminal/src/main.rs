@@ -42,7 +42,7 @@ use generated::{
     Context, Module, ModulePublisher, OnReadySubscriber, PaymentTerminalServiceSubscriber,
     SessionCostClientSubscriber,
 };
-
+use std::cmp::min;
 use std::collections::HashMap;
 use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
 use std::time::Duration;
@@ -202,24 +202,39 @@ impl PaymentTerminalModule {
     /// don't flag the token as pre-validated to allow the consumers to add
     /// custom validation steps on top.
     fn begin_transaction(&self, publishers: &ModulePublisher) -> Result<()> {
-        // Get a valid invoice token.
-        let token = {
-            match publishers.bank_session_token_slots.get(0) {
-                None => None,
-                Some(publisher) => {
-                    let invoice_token = publisher.get_bank_session_token()?;
-                    if invoice_token.token.is_none() {
-                        anyhow::bail!("No token received")
-                    }
-                    invoice_token.token
-                }
-            }
-        };
-        log::info!("Received the BankSessionToken {token:?}");
+        let mut token: Option<String> = None;
 
         // Wait for the card.
-        let read_card_loop = || -> Result<CardInfo> {
+        let mut read_card_loop = || -> Result<CardInfo> {
+            let mut timeout = std::time::Instant::now();
+            let mut backoff_seconds = 1;
+
             loop {
+                // Attempting to get an invoice token
+                if token.is_none() {
+                    if timeout.elapsed() > Duration::from_secs(0) {
+                        token = {
+                            match publishers.bank_session_token_slots.get(0) {
+                                None => None,
+                                Some(publisher) => publisher.get_bank_session_token()?.token,
+                            }
+                        };
+
+                        // Poor man's backoff to avoid a busy loop
+                        const MAX_BACKOFF_SECONDS: u64 = 60;
+                        if token.is_none() {
+                            backoff_seconds = min(backoff_seconds * 2, MAX_BACKOFF_SECONDS);
+                            timeout = std::time::Instant::now()
+                                + Duration::from_secs(backoff_seconds);
+                            log::info!(
+                                "Failed to receive invoice token, retrying in {backoff_seconds} seconds"
+                            );
+                        } else {
+                            log::info!("Received the invoice token {token:?}");
+                        }
+                    }
+                }
+
                 if let Err(inner) = self.feig.configure() {
                     log::warn!("Failed to configure: {inner:?}");
                     publishers.payment_terminal.raise_error(inner.into())
@@ -272,9 +287,10 @@ impl PaymentTerminalModule {
         if let Some(provided_token) = match card_info {
             CardInfo::Bank => {
                 let credit_card_connectors = self.connectors_for_card_type(CardType::BankCard);
-                if (!self.has_everything_enabled() && credit_card_connectors.is_empty())
-                    || token.is_none()
-                {
+                if !self.has_everything_enabled() && credit_card_connectors.is_empty() {
+                    None
+                } else if token.is_none() {
+                    log::info!("No invoice token provided, ignoring bank card");
                     None
                 } else {
                     self.feig.begin_transaction(token.as_ref().unwrap())?;
@@ -497,43 +513,87 @@ mod tests {
     use zvt_feig_terminal::feig::TransactionSummary;
 
     #[test]
+    fn payment_terminal_module__begin_transaction_failure_when_token_is_err() {
+        // Test first the case where we receive an error from the bank session token provider.
+        let token = Err(::everestrs::Error::InvalidArgument("oh no"));
+
+        let mut everest_mock = ModulePublisher::default();
+        everest_mock
+            .bank_session_token_slots
+            .push(BankSessionTokenProviderClientPublisher::default());
+        everest_mock.bank_session_token_slots[0]
+            .expect_get_bank_session_token()
+            .times(1)
+            .return_once(|| token);
+        everest_mock
+            .payment_terminal
+            .expect_clear_error()
+            .times(0)
+            .return_const(());
+
+        let mut feig = SyncFeig::default();
+        feig.expect_configure().times(0).return_once(|| Ok(()));
+        let (tx, _) = channel();
+
+        let pt_module = PaymentTerminalModule {
+            tx,
+            feig,
+            connector_to_card_type: Mutex::new(HashMap::new()),
+        };
+
+        assert!(pt_module.begin_transaction(&everest_mock).is_err());
+    }
+
+    #[test]
+    fn payment_terminal_module__begin_transaction_test() {
+        // When the token is None, we still expect membership card to work
+        let card_info = CardInfo::MembershipCard("my membership token".to_string());
+        let expected_token = "my membership token";
+        let mut everest_mock = ModulePublisher::default();
+        let mut feig_mock = SyncFeig::default();
+
+        feig_mock
+            .expect_read_card()
+            .times(1)
+            .return_once(|| Ok(card_info));
+
+        everest_mock
+            .payment_terminal
+            .expect_clear_error()
+            .times(2)
+            .return_const(());
+        everest_mock
+            .bank_session_token_slots
+            .push(BankSessionTokenProviderClientPublisher::default());
+        everest_mock.bank_session_token_slots[0]
+            .expect_get_bank_session_token()
+            .times(1)
+            .return_once(|| Ok(BankSessionToken { token: None }));
+
+        everest_mock
+            .token_provider
+            .expect_provided_token()
+            .times(1)
+            .withf(|arg| arg.id_token.value == expected_token.to_string())
+            .return_once(|_| Ok(()));
+
+        feig_mock.expect_configure().times(1).return_once(|| Ok(()));
+
+        let (tx, _) = channel();
+
+        let pt_module = PaymentTerminalModule {
+            tx,
+            feig: feig_mock,
+            connector_to_card_type: Mutex::new(HashMap::new()),
+        };
+
+        assert!(pt_module.begin_transaction(&everest_mock).is_ok());
+    }
+
+    #[test]
     /// Unit tests for the `PaymentTerminalModule::begin_transaction`.
-    fn payment_terminal_module__begin_transaction() {
-        // Test first the case where we don't receive token.
-        let parameters = [
-            Err(::everestrs::Error::InvalidArgument("oh no")),
-            Ok(BankSessionToken { token: None }),
-        ];
-
-        for input in parameters {
-            let mut everest_mock = ModulePublisher::default();
-            everest_mock
-                .bank_session_token_slots
-                .push(BankSessionTokenProviderClientPublisher::default());
-            everest_mock.bank_session_token_slots[0]
-                .expect_get_bank_session_token()
-                .times(1)
-                .return_once(|| input);
-            everest_mock
-                .payment_terminal
-                .expect_clear_error()
-                .times(0)
-                .return_const(());
-
-            let mut feig = SyncFeig::default();
-            feig.expect_configure().times(0).return_once(|| Ok(()));
-            let (tx, _) = channel();
-
-            let pt_module = PaymentTerminalModule {
-                tx,
-                feig,
-                connector_to_card_type: Mutex::new(HashMap::new()),
-            };
-
-            assert!(pt_module.begin_transaction(&everest_mock).is_err());
-        }
-
-        // Now test the successful execution.
+    fn payment_terminal_module__begin_transaction_success() {
+        // Test the successful execution with BankCard.
         let parameters = [
             (CardInfo::Bank, "my bank token", true),
             (
@@ -600,6 +660,7 @@ mod tests {
             assert!(pt_module.begin_transaction(&everest_mock).is_ok());
         }
     }
+
     #[test]
     /// Unit tests for the `PaymentTerminalModule::begin_transaction` with credit card acceptance.
     fn payment_terminal_module__begin_transaction_credit_cards_accepted() {
