@@ -67,7 +67,7 @@ struct Callbacks {
 
     std::function<void(const dt::ServiceCategory&, const std::optional<dt::AcConnector>&, const dt::ControlMode&,
                        const dt::MobilityNeedsMode&, const EvseTransferLimits&, const EvTransferLimits&,
-                       const EvSEControlMode&)>
+                       const EvSEControlMode&, const std::vector<message_20::datatypes::ServiceCategory>&)>
         notify_ev_charging_needs;
     std::function<void(const d20::SelectedServiceParameters&)> selected_service_parameters;
     std::function<void(const d20::EVInformation&)> ev_information;
@@ -92,7 +92,8 @@ public:
     void notify_ev_charging_needs(const dt::ServiceCategory&, const std::optional<dt::AcConnector>&,
                                   const dt::ControlMode&, const dt::MobilityNeedsMode&,
                                   const feedback::EvseTransferLimits&, const feedback::EvTransferLimits&,
-                                  const feedback::EvSEControlMode&) const;
+                                  const feedback::EvSEControlMode&,
+                                  const std::vector<message_20::datatypes::ServiceCategory>&) const;
     void selected_service_parameters(const d20::SelectedServiceParameters&) const;
     void ev_information(const d20::EVInformation&) const;
     std::optional<dt::ServiceParameterList> get_vas_parameters(uint16_t) const;
