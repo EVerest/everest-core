@@ -3,9 +3,21 @@ requires:
   errors_multiple:
     interface: errors_multiple
 provides:
+  duplicate:
+    interface: errors_duplicate
+    description: Duplicated errors
   multiple:
     interface: errors_multiple
     description: Multiple errors
+  selected:
+    interface: errors_selected
+    description: Selected errors
+  none:
+    interface: errors_none
+    description: No errors defined
+  empty:
+    interface: empty
+    description: An empty interface
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

@@ -75,6 +75,10 @@ impl {{trait.name | title }}ServicePublisher {
     pub(crate) fn clear_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error) {
         self.runtime.clear_error(self.implementation_id, error, true);
     }
+
+    pub(crate) fn clear_all_errors(&self) {
+        self.runtime.clear_error(self.implementation_id, "", true);
+    }
 {%- endif %}
 }
 

@@ -507,7 +507,13 @@ impl Runtime {
         clear_all: bool,
     ) {
         let error_string = serde_yaml::to_string(&error).unwrap_or_default();
-        let error_string = error_string.strip_suffix("\n").unwrap_or(&error_string);
+        let mut error_string = error_string.strip_suffix("\n").unwrap_or(&error_string);
+
+        // The yaml conversion changes empty strings into a string containing two
+        // single quotes which we catch and convert to an actual empty string
+        if error_string == "''" {
+            error_string = "";
+        }
 
         debug!("Clearing the {error_string} from {error:?}");
         self.cpp_module
