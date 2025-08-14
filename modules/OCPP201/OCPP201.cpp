@@ -153,6 +153,8 @@ void OCPP201::init_evse_maps() {
         this->evse_ready_map[evse_id] = false;
         this->evse_soc_map[evse_id] = std::nullopt;
         this->evse_hardware_capabilities_map[evse_id] = types::evse_board_support::HardwareCapabilities{};
+        this->evse_supported_energy_transfer_modes[evse_id] = {};
+        this->evse_service_renegotiation_supported[evse_id] = false;
     }
 }
 
@@ -377,8 +379,9 @@ void OCPP201::init() {
                 });
         this->r_evse_manager.at(evse_id - 1)
             ->subscribe_supported_energy_transfer_modes(
-                [this](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
-                    // TODO(mlitre): Update device model
+                [this,
+                 evse_id](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+                    this->evse_supported_energy_transfer_modes[evse_id] = supported_energy_transfer_modes;
                 });
     }
 }
@@ -841,6 +844,18 @@ void OCPP201::ready() {
         return this->r_reservation.at(0)->call_cancel_reservation(reservation_id);
     };
 
+    callbacks.update_allowed_energy_transfer_modes_callback =
+        [this](const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes,
+               const ocpp::CiString<36>& transaction_id) -> bool {
+        const int evse_id = transaction_handler->get_evse_id(transaction_id);
+        if (evse_id != -1 and this->r_evse_manager[evse_id] != nullptr) {
+            return this->r_evse_manager[evse_id]->call_update_allowed_energy_transfer_modes(
+                       conversions::to_everest_allowed_energy_transfer_modes(allowed_energy_transfer_modes)) ==
+                   types::evse_manager::UpdateAllowedEnergyTransferModesResult::Accepted;
+        }
+        return false;
+    };
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
@@ -851,8 +866,9 @@ void OCPP201::ready() {
 
     // initialize everest device model
     this->everest_device_model_storage = std::make_shared<device_model::EverestDeviceModelStorage>(
-        r_evse_manager, this->evse_hardware_capabilities_map, everest_device_model_database_path,
-        device_model_database_migration_path, get_config_service_client());
+        r_evse_manager, r_extensions_15118, this->evse_hardware_capabilities_map,
+        this->evse_supported_energy_transfer_modes, this->evse_service_renegotiation_supported,
+        everest_device_model_database_path, device_model_database_migration_path, get_config_service_client());
 
     // initialize composed device model, this will be provided to the ChargePoint constructor
     auto composed_device_model_storage = std::make_unique<module::device_model::ComposedDeviceModelStorage>();
@@ -969,6 +985,7 @@ void OCPP201::ready() {
             }
             if (ev_info.evcc_id.has_value()) {
                 update_evcc_id_token(evse_id, ev_info.evcc_id.value());
+                this->everest_device_model_storage->update_connected_ev_vehicle_id(evse_id, ev_info.evcc_id.value());
             }
         });
 
@@ -1010,8 +1027,6 @@ void OCPP201::ready() {
             const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
             if (mapping.has_value()) {
                 try {
-                    // TODO(mlitre): if requested energy transfer is not what was allowed should we stop charging or
-                    // renegotiate or ignore?
                     ocpp::v2::NotifyEVChargingNeedsRequest charge_needs;
                     charge_needs.chargingNeeds = conversions::to_ocpp_charging_needs(charging_needs);
                     charge_needs.evseId = mapping.value().evse;
@@ -1028,11 +1043,16 @@ void OCPP201::ready() {
 
         extension->subscribe_service_renegotiation_supported(
             [this, extensions_id](bool service_renegotiation_supported) {
-                // TODO(mlitre): Update device model
+                const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
+                if (mapping.has_value()) {
+                    this->evse_service_renegotiation_supported[mapping->evse] = service_renegotiation_supported;
+                } else {
+                    EVLOG_warning << "ISO15118 Extension interface mapping not set! Not retrieving 'Service "
+                                     "Renegotiation Supported'!";
+                }
             });
 
         extension->subscribe_ev_info([this, extensions_id](const types::iso15118::EvInformation& ev_info) {
-            // TODO(mlitre): Update device model
             const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
             if (mapping.has_value()) {
                 update_evcc_id_token(mapping->evse, ev_info.evcc_id);
@@ -1266,7 +1286,9 @@ void OCPP201::process_session_started(const int32_t evse_id, const int32_t conne
     if (session_started.reason == types::evse_manager::StartSessionReason::EVConnected) {
         this->charge_point->on_session_started(evse_id, connector_id);
     }
-    // TODO(mlitre): Update ConnectedEV device model to update available
+    if (tx_event == TxEvent::EV_CONNECTED) {
+        this->everest_device_model_storage->update_connected_ev_available(evse_id, true);
+    }
 }
 
 void OCPP201::process_session_finished(const int32_t evse_id, const int32_t connector_id,
@@ -1281,7 +1303,7 @@ void OCPP201::process_session_finished(const int32_t evse_id, const int32_t conn
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::EV_DISCONNECTED);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
     this->charge_point->on_session_finished(evse_id, connector_id);
-    // TODO(mlitre): Update ConnectedEV device model to clear info and update available
+    this->everest_device_model_storage->update_connected_ev_available(evse_id, false);
 }
 
 void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t connector_id,
@@ -1300,6 +1322,7 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
         this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
         tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::EV_CONNECTED);
         this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
+        this->everest_device_model_storage->update_connected_ev_available(evse_id, true);
         return;
     }
 
@@ -1338,6 +1361,9 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
     transaction_data->trigger_reason = trigger_reason;
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, tx_event);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
+    if (tx_event == TxEvent::EV_CONNECTED) {
+        this->everest_device_model_storage->update_connected_ev_available(evse_id, true);
+    }
 }
 
 void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t connector_id,
@@ -1600,7 +1626,6 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>
 }
 
 void OCPP201::update_evcc_id_token(const int& evse_id, const std::string& evcc_id) {
-    // TODO(mlitre): Update ConnectedEVVehicleId DeviceModel
     if (evse_id == 0) {
         return;
     }
@@ -1608,6 +1633,7 @@ void OCPP201::update_evcc_id_token(const int& evse_id, const std::string& evcc_i
     if (tx_data == nullptr) {
         return;
     }
+    // TODO(mlitre): Add check to prevent updating if v2.0.1
     if (tx_data->id_token.has_value()) {
         auto info_vector = tx_data->id_token->additionalInfo.has_value() ? tx_data->id_token->additionalInfo.value()
                                                                          : std::vector<ocpp::v2::AdditionalInfo>{};
