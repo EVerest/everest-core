@@ -856,12 +856,6 @@ void Charger::process_event(CPEvent cp_event) {
         break;
     }
 
-    if (cp_event == CPEvent::PowerOn) {
-        contactors_closed = true;
-    } else if (cp_event == CPEvent::PowerOff) {
-        contactors_closed = false;
-    }
-
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_process_event);
 
     run_state_machine();
