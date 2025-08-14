@@ -560,7 +560,7 @@ mod tests {
         everest_mock
             .payment_terminal
             .expect_clear_error()
-            .times(2)
+            .times(3)
             .return_const(());
         everest_mock
             .bank_session_token_slots
