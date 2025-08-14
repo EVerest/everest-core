@@ -1202,13 +1202,14 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         res->SAScheduleList_isUsed = (unsigned int)1; //  The SECC shall only omit the parameter 'SAScheduleList' in
                                                       //  case EVSEProcessing is set to 'Ongoing'.
 
-        if (conn->ctx->service_hpc1_enabled) { // V2G2-PnC-CharIN-022
-            req->MaxEntriesSAScheduleTuple_isUsed = (unsigned int)0;
+        if (conn->ctx->service_hpc1_enabled and conn->ctx->is_dc_charger) {
+            // V2G2-PnC-CharIN-022
             dlog(DLOG_LEVEL_INFO, "Ignored MaxEntriesSAScheduleTuple parameter, because HPC1 is enabled");
-        }
-        if ((req->MaxEntriesSAScheduleTuple_isUsed == (unsigned int)1) &&
-            (req->MaxEntriesSAScheduleTuple < res->SAScheduleList.SAScheduleTuple.arrayLen)) {
-            dlog(DLOG_LEVEL_WARNING, "EV's max. SA-schedule-tuple entries exceeded");
+        } else {
+            if ((req->MaxEntriesSAScheduleTuple_isUsed == (unsigned int)1) &&
+                (req->MaxEntriesSAScheduleTuple < res->SAScheduleList.SAScheduleTuple.arrayLen)) {
+                dlog(DLOG_LEVEL_WARNING, "EV's max. SA-schedule-tuple entries exceeded");
+            }
         }
     } else {
         res->EVSEProcessing = iso2_EVSEProcessingType_Ongoing;
@@ -1222,7 +1223,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                                      "values 1 to 255"); // [V2G2-773]  The SECC shall use the values 1 to 255 for the
                                                          // parameter SAScheduleTupleID.
         }
-        if (conn->ctx->service_hpc1_enabled) {
+        if (conn->ctx->service_hpc1_enabled and conn->ctx->is_dc_charger) {
             res->SAScheduleList.SAScheduleTuple.array[idx].SalesTariff_isUsed = false; // V2G2-PnC-CharIN-024
         }
     }
@@ -1271,7 +1272,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                         dlog(DLOG_LEVEL_WARNING,
                              "Provided SA-schedule-list doesn't match with the physical value limits");
                     }
-                    if (conn->ctx->service_hpc1_enabled && idx2 >= 1) {
+                    if (conn->ctx->service_hpc1_enabled and conn->ctx->is_dc_charger and idx2 >= 1) {
                         break; // V2G2-PnC-CharIN-019
                     }
                 }
@@ -1458,10 +1459,11 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
         break;
 
     case iso2_chargeProgressType_Renegotiate:
-        if (not conn->ctx->service_hpc1_enabled) {
+        if (conn->ctx->service_hpc1_enabled and conn->ctx->is_dc_charger) {
             // ignore renegotiation request if HPC1 is enabled
-            conn->ctx->session.renegotiation_required = true;
+            break;
         }
+        conn->ctx->session.renegotiation_required = true;
         break;
 
     default:
@@ -1502,7 +1504,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
             conn->ctx->session.sa_schedule_tuple_id = req->SAScheduleTupleID;
             break;
         }
-        if (conn->ctx->service_hpc1_enabled) { // V2G2-PnC-CharIN-023
+        if (conn->ctx->service_hpc1_enabled and conn->ctx->is_dc_charger) { // V2G2-PnC-CharIN-023
             break;
         }
     }
@@ -1527,7 +1529,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
-    if ((req->ChargeProgress == iso2_chargeProgressType_Renegotiate && not conn->ctx->service_hpc1_enabled) &&
+    if ((req->ChargeProgress == iso2_chargeProgressType_Renegotiate and not (conn->ctx->service_hpc1_enabled and conn->ctx->is_dc_charger)) &&
         ((conn->ctx->last_v2g_msg == V2G_CURRENT_DEMAND_MSG) || (conn->ctx->last_v2g_msg == V2G_CHARGING_STATUS_MSG))) {
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY; // [V2G-813]
 
