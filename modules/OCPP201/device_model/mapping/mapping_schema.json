@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ComponentVariable to ConfigurationParameterIdentifier Mapping",
+  "type": "object",
+  "properties": {
+    "mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ocpp": {
+            "type": "object",
+            "properties": {
+              "component": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "instance": { "type": "string" },
+                  "evse": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "connectorId": { "type": "integer" }
+                    },
+                    "required": ["id"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+              },
+              "variable": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "instance": { "type": "string" }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["component", "variable"],
+            "additionalProperties": false
+          },
+          "everest": {
+            "type": "object",
+            "properties": {
+              "module_id": { "type": "string" },
+              "configuration_parameter_name": { "type": "string" },
+              "module_implementation_id": { "type": "string" }
+            },
+            "required": ["module_id", "configuration_parameter_name"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["ocpp", "everest"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["mappings"],
+  "additionalProperties": false
+}
