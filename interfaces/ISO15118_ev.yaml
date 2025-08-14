@@ -36,6 +36,8 @@ cmds:
         $ref: /iso15118#/DcEvBPTParameters
   enable_sae_j2847_v2g_v2h:
     description: Enable the SAE J2847 2 V2H V2G
+  enable_service_hpc1:
+    description: Enable the service for HPC1 as defined in CharIN Guide ISO 15118 Service HPC1 V1.3
 vars:
   v2g_session_finished:
     description: The v2g session between the charger and the car is finished
