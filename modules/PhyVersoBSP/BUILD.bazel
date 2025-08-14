@@ -7,7 +7,6 @@ IMPLS = [
   "rcd_2",
   "connector_lock_1",
   "connector_lock_2",
-  "phyverso_mcu_temperature",
 ]
 
 cc_everest_module(

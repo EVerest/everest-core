@@ -191,9 +191,6 @@ provides:
   connector_lock_2:
     interface: connector_lock
     description: Lock interface
-  phyverso_mcu_temperature:
-    interface: phyverso_mcu_temperature
-    description: Temperatures from MCU
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:
