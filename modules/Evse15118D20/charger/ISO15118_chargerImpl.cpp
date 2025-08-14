@@ -439,7 +439,7 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                const dt::ControlMode& control_mode, const dt::MobilityNeedsMode& mobility_needs_mode,
                const feedback::EvseTransferLimits& evse_limits, const feedback::EvTransferLimits& ev_limits,
                const feedback::EvSEControlMode& ev_control_mode,
-               const std::vector<iso15118::message_20::datatypes::ServiceCategory>& ev_energy_services) {
+               const std::vector<dt::ServiceCategory>& ev_energy_services) {
             // Everest types sent to OCPP
             using namespace types::iso15118;
 
