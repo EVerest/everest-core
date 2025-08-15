@@ -109,6 +109,7 @@ struct Conf {
     bool central_contract_validation_allowed;
     bool contract_certificate_installation_enabled;
     bool inoperative_error_use_vendor_id;
+    bool mcs_enabled;
     std::string session_id_type;
     bool zero_power_ignore_pause;
     bool zero_power_allow_ev_to_ignore_pause;
@@ -255,7 +256,6 @@ public:
         evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_export_voltage_V;
         evse_min_limits.evse_minimum_power_limit =
             evse_min_limits.evse_minimum_current_limit * evse_min_limits.evse_minimum_voltage_limit;
-        r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
         // energy management first. Those limits will be applied in energy_grid implementation when requesting

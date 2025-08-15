@@ -326,6 +326,11 @@ config:
       When raising evse_manager/Inoperative use the vendor ID from the original cause
     type: boolean
     default: false
+  mcs_enabled:
+    description: >-
+      Enables Megawatt charging feature
+    type: boolean
+    default: false
   session_id_type:
     description: >-
       Type to use for generation of session ids.

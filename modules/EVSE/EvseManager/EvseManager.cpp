@@ -78,7 +78,7 @@ void EvseManager::init() {
     slac_enabled = not r_slac.empty();
 
     // if hlc is disabled in config, disable slac even if requirement is connected
-    if (not(config.ac_hlc_enabled or config.ac_with_soc or config.charge_mode == "DC")) {
+    if (not(config.ac_hlc_enabled or config.ac_with_soc or config.charge_mode == "DC") or config.mcs_enabled) {
         slac_enabled = false;
     }
 
@@ -89,17 +89,24 @@ void EvseManager::init() {
         });
     }
 
+    if (config.mcs_enabled)
+        EVLOG_info << "MCS enabled";
+
     hlc_enabled = not r_hlc.empty();
-    if (not slac_enabled)
+    if (not (slac_enabled or config.mcs_enabled))
         hlc_enabled = false;
 
-    if (config.charge_mode == "DC" and (not hlc_enabled or not slac_enabled or r_powersupply_DC.empty())) {
-        EVLOG_error << "DC mode requires slac, HLC and powersupply DCDC to be connected";
-        exit(255);
+    if (config.charge_mode == "DC" and not config.mcs_enabled and
+        (not hlc_enabled or not slac_enabled or r_powersupply_DC.empty())) {
+        throw std::runtime_error("DC mode requires slac, HLC and powersupply DCDC to be connected");
     }
 
     if (config.charge_mode == "DC" and r_imd.empty()) {
         EVLOG_warning << "DC mode without isolation monitoring configured, please check your national regulations.";
+    }
+
+    if (config.charge_mode == "AC" and config.mcs_enabled) {
+        throw std::runtime_error("MCS mode requires DC charge_mode");
     }
 
     pnc_enabled = config.payment_enable_contract;
@@ -123,10 +130,21 @@ void EvseManager::init() {
             // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
             r_powersupply_DC[0]->subscribe_capabilities([this](const auto& caps) {
                 update_powersupply_capabilities(caps);
-                const bool dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
-                bool dc_bpt_was_updated =
-                    caps.bidirectional ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT)
-                                       : false;
+                bool dc_was_updated = false;
+                bool dc_bpt_was_updated = false;
+
+                if (not config.mcs_enabled) {
+                    dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+                    dc_bpt_was_updated =
+                        caps.bidirectional ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT)
+                                        : false;
+                } else {
+                    dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::MCS);
+                    dc_bpt_was_updated =
+                        caps.bidirectional ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::MCS_BPT)
+                                        : false;
+                }
+
                 if (dc_was_updated || dc_bpt_was_updated) {
                     this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
                 }
@@ -241,21 +259,28 @@ void EvseManager::ready() {
             session_log.evse(true, "D-LINK_ERROR.req");
             // Inform charger
             charger->dlink_error();
-            // Inform SLAC layer, it will leave the logical network
-            r_slac[0]->call_dlink_error();
+            if (slac_enabled) {
+                // Inform SLAC layer, it will leave the logical network
+                r_slac[0]->call_dlink_error();
+            }
         });
 
         r_hlc[0]->subscribe_dlink_pause([this] {
             // tell charger (it will disable PWM)
             session_log.evse(true, "D-LINK_PAUSE.req");
             charger->dlink_pause();
-            r_slac[0]->call_dlink_pause();
+
+            if (slac_enabled) {
+                r_slac[0]->call_dlink_pause();
+            }
         });
 
         r_hlc[0]->subscribe_dlink_terminate([this] {
             session_log.evse(true, "D-LINK_TERMINATE.req");
             charger->dlink_terminate();
-            r_slac[0]->call_dlink_terminate();
+            if (slac_enabled) {
+                r_slac[0]->call_dlink_terminate();
+            }
         });
 
         r_hlc[0]->subscribe_v2g_setup_finished([this] { charger->set_hlc_charging_active(); });
@@ -270,11 +295,12 @@ void EvseManager::ready() {
             charger->set_hlc_allow_close_contactor(false);
         });
 
-        // Trigger SLAC restart
-        charger->signal_slac_start.connect([this] { r_slac[0]->call_enter_bcd(); });
-        // Trigger SLAC reset
-        charger->signal_slac_reset.connect([this] { r_slac[0]->call_reset(false); });
-
+        if (slac_enabled) {
+            // Trigger SLAC restart
+            charger->signal_slac_start.connect([this] { r_slac[0]->call_enter_bcd(); });
+            // Trigger SLAC reset
+            charger->signal_slac_reset.connect([this] { r_slac[0]->call_reset(false); });
+        }
         // Ask HLC to stop charging session
         charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });
         charger->signal_hlc_pause_charging.connect([this] { r_hlc[0]->call_pause_charging(true); });
@@ -310,15 +336,25 @@ void EvseManager::ready() {
             update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core);
 
         } else if (config.charge_mode == "DC") {
-            transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
-            update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+            if (not config.mcs_enabled) {
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+            } else {
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::MCS);
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::MCS);
+            }
 
             const auto caps = get_powersupply_capabilities();
             update_powersupply_capabilities(caps);
 
             if (caps.bidirectional) {
-                transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
-                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
+                if (not config.mcs_enabled) {
+                    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
+                    update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
+                } else {
+                    transfer_modes.push_back(types::iso15118::EnergyTransferMode::MCS_BPT);
+                    update_supported_energy_transfers(types::iso15118::EnergyTransferMode::MCS_BPT);
+                }
             }
 
             // Set present measurements on HLC to sane defaults

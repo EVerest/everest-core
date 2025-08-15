@@ -837,6 +837,10 @@ ocpp::v2::EnergyTransferModeEnum to_ocpp_energy_transfer_mode(const types::iso15
         return ocpp::v2::EnergyTransferModeEnum::DC_ACDP_BPT;
     case types::iso15118::EnergyTransferMode::WPT:
         return ocpp::v2::EnergyTransferModeEnum::WPT;
+    case types::iso15118::EnergyTransferMode::MCS:
+        return ocpp::v2::EnergyTransferModeEnum::MCS;
+    case types::iso15118::EnergyTransferMode::MCS_BPT:
+        return ocpp::v2::EnergyTransferModeEnum::MCS_BPT;
     }
 
     throw std::out_of_range("Could not convert EnergyTransferMode");
@@ -1799,6 +1803,10 @@ to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& 
         return types::iso15118::EnergyTransferMode::DC_ACDP_BPT;
     case ocpp::v2::EnergyTransferModeEnum::WPT:
         return types::iso15118::EnergyTransferMode::WPT;
+    case ocpp::v2::EnergyTransferModeEnum::MCS:
+        return types::iso15118::EnergyTransferMode::MCS;
+    case ocpp::v2::EnergyTransferModeEnum::MCS_BPT:
+        return types::iso15118::EnergyTransferMode::MCS_BPT;
     }
     throw std::out_of_range("Could not convert EnergyTransferModeEnum");
 }
