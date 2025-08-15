@@ -765,7 +765,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         [this](const dt::ServiceCategory& service_category, const std::optional<dt::AcConnector>& ac_connector,
                const dt::ControlMode& control_mode, const dt::MobilityNeedsMode& mobility_needs_mode,
                const feedback::EvseTransferLimits& evse_limits, const feedback::EvTransferLimits& ev_limits,
-               const feedback::EvSEControlMode& ev_control_mode) {
+               const feedback::EvSEControlMode& ev_control_mode,
+               const std::vector<dt::ServiceCategory>& ev_energy_services) {
             // Everest types sent to OCPP
             using namespace types::iso15118;
 
