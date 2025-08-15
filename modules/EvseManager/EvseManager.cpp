@@ -71,7 +71,7 @@ void EvseManager::init() {
     slac_enabled = not r_slac.empty();
 
     // if hlc is disabled in config, disable slac even if requirement is connected
-    if (not(config.ac_hlc_enabled or config.ac_with_soc or config.charge_mode == "DC")) {
+    if (not(config.ac_hlc_enabled or config.ac_with_soc or config.charge_mode == "DC") or config.mcs_enable) {
         slac_enabled = false;
     }
 
@@ -83,16 +83,22 @@ void EvseManager::init() {
     }
 
     hlc_enabled = not r_hlc.empty();
-    if (not slac_enabled)
+    if (not (slac_enabled or config.mcs_enable))
         hlc_enabled = false;
 
-    if (config.charge_mode == "DC" and (not hlc_enabled or not slac_enabled or r_powersupply_DC.empty())) {
+    if (config.charge_mode == "DC" and not config.mcs_enable and
+        (not hlc_enabled or not slac_enabled or r_powersupply_DC.empty())) {
         EVLOG_error << "DC mode requires slac, HLC and powersupply DCDC to be connected";
         exit(255);
     }
 
     if (config.charge_mode == "DC" and r_imd.empty()) {
         EVLOG_warning << "DC mode without isolation monitoring configured, please check your national regulations.";
+    }
+
+    if (config.charge_mode == "AC" and config.mcs_enable) {
+        EVLOG_error << "MCS mode requires DC charge_mode";
+        exit(255);
     }
 
     pnc_enabled = config.payment_enable_contract;
@@ -635,7 +641,7 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, config.mcs_enable);
 
         // reset error flags
         r_hlc[0]->call_reset_error();
@@ -1161,7 +1167,7 @@ void EvseManager::setup_fake_DC_mode() {
 
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
-    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, config.mcs_enable);
 }
 
 void EvseManager::setup_AC_mode() {
@@ -1188,7 +1194,7 @@ void EvseManager::setup_AC_mode() {
     constexpr auto sae_mode = types::iso15118::SaeJ2847BidiMode::None;
 
     if (hlc_enabled) {
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, config.mcs_enable);
     }
 }
 
