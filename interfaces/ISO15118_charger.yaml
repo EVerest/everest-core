@@ -26,6 +26,9 @@ cmds:
       debug_mode:
         description: Enable/Disable debug mode
         type: boolean
+      mcs_enable:
+        description: Enable/Disable mcs feature
+        type: boolean
   set_charging_parameters:
     description: >-
       At startup, set the the charging parameters at least once. May be updated later on.

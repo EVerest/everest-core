@@ -109,6 +109,7 @@ struct Conf {
     bool central_contract_validation_allowed;
     bool contract_certificate_installation_enabled;
     bool inoperative_error_use_vendor_id;
+    bool mcs_enable;
 };
 
 class EvseManager : public Everest::ModuleBase {
