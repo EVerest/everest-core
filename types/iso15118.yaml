@@ -27,6 +27,8 @@ types:
       - DC_ACDP
       - DC_ACDP_BPT
       - WPT
+      - MCS
+      - MCS_BPT
   IsolationStatus:
     description: The different charger isolation status
     type: string
