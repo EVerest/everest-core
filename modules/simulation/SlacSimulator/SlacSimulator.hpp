@@ -26,11 +26,10 @@ struct Conf {};
 class SlacSimulator : public Everest::ModuleBase {
 public:
     SlacSimulator() = delete;
-    SlacSimulator(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<slacImplBase> p_evse,
-                  std::unique_ptr<ev_slacImplBase> p_ev, Conf& config) :
-        ModuleBase(info), mqtt(mqtt_provider), p_evse(std::move(p_evse)), p_ev(std::move(p_ev)), config(config){};
+    SlacSimulator(const ModuleInfo& info, std::unique_ptr<slacImplBase> p_evse, std::unique_ptr<ev_slacImplBase> p_ev,
+                  Conf& config) :
+        ModuleBase(info), p_evse(std::move(p_evse)), p_ev(std::move(p_ev)), config(config){};
 
-    Everest::MqttProvider& mqtt;
     const std::unique_ptr<slacImplBase> p_evse;
     const std::unique_ptr<ev_slacImplBase> p_ev;
     const Conf& config;
