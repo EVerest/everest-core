@@ -780,6 +780,12 @@ types:
     enum:
       - GridFollowing
       - GridForming
+  GridCodeIslandingDetectionMethod:
+    description: Islanding detection method
+    type: string
+    enum:
+      - Active
+      - Passive
   V2XChargingParameters:
     description: >-
       Charging parameters for ISO 15118-20, also supporting V2X charging/discharging.
@@ -1505,6 +1511,8 @@ types:
     additionalProperties: false
     required:
       - nominal_frequency
+      - nominal_voltage
+      - connectors
     properties:
       nominal_frequency:
         description: Nominal frequency supported by the EVSE
@@ -1518,6 +1526,17 @@ types:
         description: Limitation of the power variation in %/min
         type: number
         minimum: 0
+      nominal_voltage:
+        description: Nominal voltage supported by the EVSE
+        type: number
+        minimum: 0
+      connectors:
+        description: Supported ac connectors from the EVSE
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/Connector
+        minItems: 1
   AcEvseMaximumPower:
     description: Maximum ac power values (charge and discharge) the EVSE can deliver
     type: object
@@ -1681,6 +1700,27 @@ types:
         description: The selected generator mode by the EV
         type: string
         $ref: /iso15118#/GeneratorMode
+  BptSetup:
+    description: The required parameters for a BPT setup
+    type: object
+    additionalProperties: false
+    required:
+      - bpt_channel
+      - generator_mode
+    properties:
+      bpt_channel:
+        description: The supported bpt channel by the EVSE
+        type: string
+        $ref: /iso15118#/BptChannel
+      generator_mode:
+        description: The supported generator mode by the EVSE
+        type: string
+        $ref: /iso15118#/GeneratorMode
+      grid_code_detection:
+        description: >-
+          The supported grid code detection method supported by the EVSE
+        type: string
+        $ref: /iso15118#/GridCodeIslandingDetectionMethod
 # EV Side
   DcEvParameters:
     description: Target settings for dc charging

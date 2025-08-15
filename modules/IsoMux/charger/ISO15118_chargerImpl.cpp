@@ -508,6 +508,13 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
                                     central_contract_validation_allowed);
 }
 
+
+void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_config) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_bpt_setup(bpt_config);
+    }
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {

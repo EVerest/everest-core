@@ -42,6 +42,9 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
                                                types::authorization::CertificateStatus& certificate_status) {
         std::cout << "ISO15118_chargerImplBase::handle_authorization_response called" << std::endl;
     }
+    virtual void handle_bpt_setup(types::iso15118::BptSetup& config) {
+        std::cout << "ISO15118_chargerImplBase::handle_bpt_setup called" << std::endl;
+    }
     virtual void handle_ac_contactor_closed(bool& status) {
         std::cout << "ISO15118_chargerImplBase::handle_ac_contactor_closed called" << std::endl;
     }

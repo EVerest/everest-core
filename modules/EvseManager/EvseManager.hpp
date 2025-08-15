@@ -113,6 +113,9 @@ struct Conf {
     std::string session_id_type;
     bool zero_power_ignore_pause;
     bool zero_power_allow_ev_to_ignore_pause;
+    std::string bpt_channel;
+    std::string bpt_generator_mode;
+    std::string bpt_grid_code_island_method;
 };
 
 class EvseManager : public Everest::ModuleBase {

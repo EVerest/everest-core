@@ -48,6 +48,14 @@ cmds:
           Indicates if the vehicle contract may be forwarded to and validated by a CSMS in case
           local validation was not successful
         type: boolean
+  bpt_setup:
+    description: >-
+      At startup, set the bpt setup for ISO15118-20 at least once. May be updated later on.
+    arguments:
+      bpt_config:
+        description: The required parameters for a BPT setup
+        type: object
+        $ref: /iso15118#/BptSetup
 # Response messages to vars:
   authorization_response:
     description: >-

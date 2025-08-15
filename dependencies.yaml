@@ -47,7 +47,7 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: 833b69e8f1b7f3294db85b51372f60d4468baea6
+  git_tag: 9628198b33e60edd6e3bca8cae5e1a5397bfd58f
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
@@ -84,7 +84,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: aa1496a4f4feb34d6bfc4aee872996fce1da40ed # todo(AC_BPT): merge unscrambled priority list fix
+  git_tag: e4970d729f556d71624dfd4f82f881e3ea2d9261
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # everest-testing and ev-dev-tools
 everest-utils:

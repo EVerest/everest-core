@@ -40,6 +40,9 @@ active_modules:
       session_logging_xml: false
       switch_3ph1ph_delay_s: 5
       switch_3ph1ph_cp_state: X1
+      bpt_channel: Unified
+      bpt_generator_mode: GridFollowing
+      bpt_grid_code_island_method: Passive
     connections:
       bsp:
         - module_id: connector_1_powerpath

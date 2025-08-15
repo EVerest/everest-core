@@ -361,8 +361,12 @@ void EvseManager::ready() {
             });
             r_hlc[0]->call_update_ac_minimum_limits(ac_minimum_power);
 
-            r_hlc[0]->call_update_ac_parameters(
-                {50, std::nullopt, std::nullopt}); // TODO(sl): Getting nominal frequency
+            std::vector<types::iso15118::Connector> ac_connectors{types::iso15118::Connector::SinglePhase};
+            if (get_hw_capabilities().max_phase_count_import == 3) {
+                ac_connectors.push_back(types::iso15118::Connector::ThreePhase);
+            }
+            r_hlc[0]->call_update_ac_parameters({50, static_cast<float>(config.ac_nominal_voltage), ac_connectors,
+                                                 std::nullopt, std::nullopt}); // TODO(sl): Getting nominal frequency
 
             r_hlc[0]->subscribe_ac_eamount([this](double e) {
                 // FIXME send only on change / throttle messages
@@ -777,6 +781,23 @@ void EvseManager::ready() {
         r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
         r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
 
+        if ((config.bpt_channel == "Unified" or config.bpt_channel == "Separated") and
+            (config.bpt_generator_mode == "GridFollowing" or config.bpt_generator_mode == "GridForming")) {
+            types::iso15118::BptSetup bpt_setup_config{};
+
+            bpt_setup_config.bpt_channel = config.bpt_channel == "Unified" ? types::iso15118::BptChannel::Unified
+                                                                           : types::iso15118::BptChannel::Separated;
+            bpt_setup_config.generator_mode = config.bpt_generator_mode == "GridFollowing"
+                                                  ? types::iso15118::GeneratorMode::GridFollowing
+                                                  : types::iso15118::GeneratorMode::GridForming;
+
+            if (config.bpt_grid_code_island_method == "Active" or config.bpt_grid_code_island_method == "Passive") {
+                bpt_setup_config.grid_code_detection = config.bpt_grid_code_island_method == "Active"
+                                                           ? types::iso15118::GridCodeIslandingDetectionMethod::Active
+                                                           : types::iso15118::GridCodeIslandingDetectionMethod::Passive;
+            }
+            r_hlc[0]->call_bpt_setup(bpt_setup_config);
+        }
         // reset error flags
         r_hlc[0]->call_reset_error();
 

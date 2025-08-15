@@ -184,6 +184,10 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
     v2g_ctx->evse_v2g_data.central_contract_validation_allowed = central_contract_validation_allowed;
 }
 
+void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_config) {
+    // your code for cmd bpt_setup goes here
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {

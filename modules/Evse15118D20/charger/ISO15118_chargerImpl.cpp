@@ -1102,7 +1102,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 }
 
 void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
-                                        types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+                                        [[maybe_unused]] types::iso15118::SaeJ2847BidiMode& sae_j2847_mode,
+                                        [[maybe_unused]] bool& debug_mode) {
 
     std::scoped_lock lock(GEL);
     setup_config.evse_id = evse_id.evse_id; // TODO(SL): Check format for d20
@@ -1116,7 +1117,7 @@ void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::Setup
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
                                                 bool& supported_certificate_service,
-                                                bool& central_contract_validation_allowed) {
+                                                [[maybe_unused]] bool& central_contract_validation_allowed) {
     std::scoped_lock lock(GEL);
 
     std::vector<dt::Authorization> auth_services;
@@ -1136,9 +1137,29 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
     setup_steps_done.set(to_underlying_value(SetupStep::AUTH_SETUP));
 }
 
+void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_config) {
+    std::scoped_lock lock(GEL);
+
+    // Exisiting values in bpt_setup_config will be overwritten
+    auto& bpt_setup = setup_config.bpt_setup_config.emplace();
+
+    bpt_setup.bpt_channel = bpt_config.bpt_channel == types::iso15118::BptChannel::Unified ? dt::BptChannel::Unified
+                                                                                           : dt::BptChannel::Separated;
+    bpt_setup.generator_mode = bpt_config.generator_mode == types::iso15118::GeneratorMode::GridFollowing
+                                   ? dt::GeneratorMode::GridFollowing
+                                   : dt::GeneratorMode::GridForming;
+
+    if (bpt_config.grid_code_detection.has_value()) {
+        bpt_setup.grid_code_detection_method =
+            bpt_config.grid_code_detection.value() == types::iso15118::GridCodeIslandingDetectionMethod::Active
+                ? dt::GridCodeIslandingDetectionMethod::Active
+                : dt::GridCodeIslandingDetectionMethod::Passive;
+    }
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
-    types::authorization::CertificateStatus& certificate_status) {
+    [[maybe_unused]] types::authorization::CertificateStatus& certificate_status) {
 
     std::scoped_lock lock(GEL);
     // Todo(sl): Currently PnC is not supported
@@ -1259,6 +1280,17 @@ void ISO15118_chargerImpl::handle_update_ac_parameters(types::iso15118::AcParame
         convert_from_optional<dt::RationalNumber>(ac_parameters.max_power_asymmetry);
     setup_config.ac_limits.power_ramp_limitation =
         convert_from_optional<dt::RationalNumber>(ac_parameters.power_ramp_limitation);
+
+    // Exisiting values in ac_setup_config will be overwritten
+    auto& ac_setup_config = setup_config.ac_setup_config.emplace();
+    ac_setup_config.voltage = static_cast<uint32_t>(ac_parameters.nominal_voltage);
+    for (const auto& connector : ac_parameters.connectors) {
+        if (connector == types::iso15118::Connector::SinglePhase) {
+            ac_setup_config.connectors.emplace_back(dt::AcConnector::SinglePhase);
+        } else if (connector == types::iso15118::Connector::ThreePhase) {
+            ac_setup_config.connectors.emplace_back(dt::AcConnector::ThreePhase);
+        }
+    }
 
     if (controller) {
         controller->update_ac_limits(setup_config.ac_limits);

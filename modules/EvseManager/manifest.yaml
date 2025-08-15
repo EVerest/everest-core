@@ -356,6 +356,30 @@ config:
       the session. This is not standard compliant!
     type: boolean
     default: false
+  bpt_channel:
+    description: Type of installed/uninstalled power transfer channel
+    type: string
+    enum:
+      - None
+      - Unified
+      - Separated
+    default: None
+  bpt_generator_mode:
+    description: Power converter behavior
+    type: string
+    enum:
+      - None
+      - GridFollowing
+      - GridForming
+    default: None
+  bpt_grid_code_island_method:
+    description: Active/inactive islanding detection method. Only for AC.
+    type: string
+    enum:
+      - None
+      - Active
+      - Passive
+    default: None
 provides:
   evse:
     interface: evse_manager

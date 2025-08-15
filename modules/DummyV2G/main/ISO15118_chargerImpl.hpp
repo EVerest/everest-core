@@ -39,6 +39,7 @@ protected:
     virtual void handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
                                       bool& supported_certificate_service,
                                       bool& central_contract_validation_allowed) override;
+    virtual void handle_bpt_setup(types::iso15118::BptSetup& bpt_config) override;
     virtual void handle_authorization_response(types::authorization::AuthorizationStatus& authorization_status,
                                                types::authorization::CertificateStatus& certificate_status) override;
     virtual void handle_ac_contactor_closed(bool& status) override;
