@@ -67,4 +67,13 @@ types::iso15118::HashAlgorithm convert_to_hash_algorithm(const types::evse_secur
  */
 std::vector<types::iso15118::CertificateHashDataInfo>
 convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPRequestDataList& ocsp_request_data_list);
+
+/**
+ * \brief Convert binary data to a colon-separated uppercase hexadecimal string.
+ * \param data pointer to the binary buffer. May be nullptr if \p datalen is zero
+ * \param datalen count of bytes in data buffer
+ * \return std::string containing the formatted hexadecimal representation
+ */
+std::string hexify(const uint8_t* data, size_t datalen);
+
 #endif /* TOOLS_H */
