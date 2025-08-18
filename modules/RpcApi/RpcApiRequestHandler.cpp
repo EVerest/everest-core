@@ -203,7 +203,7 @@ ErrorResObj RpcApiRequestHandler::set_external_limit(const int32_t evse_index, T
             const auto external_limits = make_limits(value);
             energy_sink.call_set_external_limits(external_limits);
         } catch (const std::invalid_argument& e) {
-            EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+            EVLOG_warning << "Invalid limit: No conversion of given input could be performed: " << e.what();
             res.error = ResponseErrorEnum::ErrorInvalidParameter;
         }
     } else {

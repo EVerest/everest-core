@@ -101,9 +101,8 @@ MethodHandle get_handle(ReturnType (T::*method)(ParamTypes...), T& instance, int
     };
 }
 
-// RpcHandler just needs just a tranport interface array
 RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
-                        DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler, int precision)
+                       DataStoreCharger& dataobj, std::unique_ptr<request_interface::RequestHandlerInterface> request_handler, int precision)
     : m_data_store(dataobj),
       m_transport_interfaces(std::move(transport_interfaces)),
       m_methods_api(dataobj),
