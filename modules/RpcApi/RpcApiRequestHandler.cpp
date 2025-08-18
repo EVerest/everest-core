@@ -122,8 +122,17 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
             limit = 999.9f; // Default maximum current
             is_power_limit = false;
         }
-        auto result = set_external_limit(evse_index, limit, std::function<types::energy::ExternalLimits(float)>(
-                        [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
+        ErrorResObj result;
+        try {
+            result = set_external_limit(
+                evse_index, limit,
+                std::function<types::energy::ExternalLimits(float)>(
+                    [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
+        } catch (const std::out_of_range& e) {
+            EVLOG_error << "Failed to set power/current limit: " << e.what();
+            result.error = ResponseErrorEnum::ErrorOutOfRange;
+        }
+
         if (result.error != ResponseErrorEnum::NoError) {
             EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
                           << " with error: " << result.error;
@@ -218,15 +227,29 @@ ErrorResObj RpcApiRequestHandler::set_external_limit(const int32_t evse_index, T
 ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_index, float max_current) {
     configured_limits.is_current_set = true;
     configured_limits.evse_limit = max_current;
-    return set_external_limit(evse_index, max_current,
-                              std::function<types::energy::ExternalLimits(float)>(
-                                  [this](float value) { return get_external_limits(value); }));
+    ErrorResObj res;
+    try {
+        res = set_external_limit(evse_index, max_current,
+                                 std::function<types::energy::ExternalLimits(float)>(
+                                     [this](float value) { return get_external_limits(value); }));
+    } catch (const std::out_of_range& e) {
+        EVLOG_error << "Failed to set AC charging limit: " << e.what();
+        res.error = ResponseErrorEnum::ErrorOutOfRange;
+    }
+    return res;
 }
 
 ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
-    return set_external_limit(evse_index, phase_count,
-                              std::function<types::energy::ExternalLimits(int)>(
-                                  [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
+    ErrorResObj res;
+    try {
+        res = set_external_limit(evse_index, phase_count,
+                                 std::function<types::energy::ExternalLimits(int)>(
+                                     [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
+    } catch (const std::out_of_range& e) {
+        EVLOG_error << "Failed to set AC charging phase count: " << e.what();
+        res.error = ResponseErrorEnum::ErrorOutOfRange;
+    }
+    return res;
 }
 
 ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool charging_allowed, float max_power) {
@@ -239,8 +262,16 @@ ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool
 ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index, float max_power) {
     configured_limits.is_current_set = false;
     configured_limits.evse_limit = max_power;
-    return set_external_limit(evse_index, max_power, std::function<types::energy::ExternalLimits(float)>(
-                                [this](float value) { return get_external_limits(value, true); }));
+    ErrorResObj res;
+    try {
+        res = set_external_limit(evse_index, max_power,
+                                 std::function<types::energy::ExternalLimits(float)>(
+                                     [this](float value) { return get_external_limits(value, true); }));
+    } catch (const std::out_of_range& e) {
+        EVLOG_error << "Failed to set DC charging limit: " << e.what();
+        res.error = ResponseErrorEnum::ErrorOutOfRange;
+    }
+    return res;
 }
 
 ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int connector_id, bool enable, int priority) {
