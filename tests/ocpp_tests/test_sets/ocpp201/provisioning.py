@@ -1371,6 +1371,8 @@ async def test_B04(
         validate_status_notification_201,
     )
 
+    await asyncio.sleep(2)
+
     # Simulate connection loss
     test_controller.disconnect_websocket()
 
