@@ -28,7 +28,6 @@ void PhyVersoBSP::init() {
     invoke_init(*p_rcd_2);
     invoke_init(*p_connector_lock_1);
     invoke_init(*p_connector_lock_2);
-    invoke_init(*p_phyverso_mcu_temperature);
 
     serial.signal_config_request.connect([&]() {
         serial.send_config();
@@ -46,7 +45,6 @@ void PhyVersoBSP::ready() {
     invoke_ready(*p_rcd_2);
     invoke_ready(*p_connector_lock_1);
     invoke_ready(*p_connector_lock_2);
-    invoke_ready(*p_phyverso_mcu_temperature);
 
     if (not serial.is_open()) {
         auto err = p_connector_1->error_factory->create_error("evse_board_support/CommunicationFault", "",
