@@ -1575,6 +1575,7 @@ bool Charger::enable_disable(int connector_id, const types::evse_manager::Enable
             signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
         }
     }
+    bsp->enable(is_enabled);
 
     return is_enabled;
 }
