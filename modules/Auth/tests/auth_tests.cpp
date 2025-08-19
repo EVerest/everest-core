@@ -6,6 +6,7 @@
 #include <thread>
 
 #include <everest/logging.hpp>
+#include <everest/staging/helpers/helpers.hpp>
 #include <utils/date.hpp>
 
 #include <AuthHandler.hpp>
@@ -114,10 +115,11 @@ protected:
             result_1.authorization_status = AuthorizationStatus::Invalid;
 
             ValidationResult result_2;
-            if (id_token == VALID_TOKEN_1 || id_token == VALID_TOKEN_3) {
+            if (everest::staging::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_1) ||
+                everest::staging::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_3)) {
                 result_2.authorization_status = AuthorizationStatus::Accepted;
                 result_2.parent_id_token = {PARENT_ID_TOKEN, types::authorization::IdTokenType::ISO14443};
-            } else if (id_token == VALID_TOKEN_2) {
+            } else if (everest::staging::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_2)) {
                 result_2.authorization_status = AuthorizationStatus::Accepted;
             } else {
                 result_2.authorization_status = AuthorizationStatus::Invalid;
@@ -1895,6 +1897,218 @@ TEST_F(AuthTest, test_token_swipe_race_with_timeout) {
     ASSERT_TRUE(timeout_triggered);
     ASSERT_EQ(result, TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+}
+
+/// \brief Test case-insensitive token comparison for authorization
+TEST_F(AuthTest, test_case_insensitive_authorization) {
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    std::vector<int32_t> connectors{1};
+    // Lowercase token for provided token
+    ProvidedIdToken provided_token = get_provided_token("valid_rfid_1", connectors);
+
+    // Validation callback returns uppercase VALID_TOKEN_1
+    ProvidedIdToken expected = provided_token;
+    expected.parent_id_token = {PARENT_ID_TOKEN, types::authorization::IdTokenType::ISO14443};
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::Accepted));
+
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test case-insensitive token comparison for stopping transactions
+TEST_F(AuthTest, test_case_insensitive_stop_transaction) {
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+    // Create a token with different case for stopping the transaction
+    ProvidedIdToken stop_token = get_provided_token("VALID_rfid_1", connectors);
+
+    SessionEvent session_event1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    SessionEvent session_event2 = get_transaction_started_event(provided_token);
+
+    this->auth_handler->handle_session_event(1, session_event1);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing))
+        .Times(1);
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted))
+        .Times(1);
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, stop_token.id_token), TokenValidationStatus::Processing))
+        .Times(1);
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, stop_token.id_token), TokenValidationStatus::Accepted))
+        .Times(1);
+
+    auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
+    this->auth_handler->handle_session_event(1, session_event2);
+
+    result = this->auth_handler->on_token(stop_token);
+    ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+}
+
+/// \brief Test case-insensitive parent ID token comparison for stopping transactions
+TEST_F(AuthTest, test_case_insensitive_parent_id_stop_transaction) {
+    TokenHandlingResult result;
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
+    // Use different case for parent ID token
+    ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_3, connectors);
+
+    SessionEvent session_event1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event1);
+
+    SessionEvent session_event2 = get_transaction_started_event(provided_token_1);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
+
+    // Start transaction with VALID_TOKEN_1
+    result = this->auth_handler->on_token(provided_token_1);
+    this->auth_handler->handle_session_event(1, session_event2);
+
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
+    // Stop transaction with VALID_TOKEN_3 (has same parent ID as VALID_TOKEN_1)
+    result = this->auth_handler->on_token(provided_token_2);
+
+    ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+}
+
+/// \brief Test case-insensitive comparison with master pass group ID
+TEST_F(AuthTest, test_case_insensitive_master_pass_group_id) {
+    // Set master group id with different case than what will be returned in validation
+    this->auth_handler->set_master_pass_group_id("parent_rfid"); // lowercase
+    this->auth_handler->set_prioritize_authorization_over_stopping_transaction(false);
+
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    // Test with a token that would have master group ID as parent - should be rejected initially
+    auto provided_token = get_provided_token("PARENT_RFID"); // uppercase
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Rejected));
+
+    auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::REJECTED);
+
+    // Start a transaction with a valid token
+    provided_token = get_provided_token(VALID_TOKEN_2);
+    provided_token.parent_id_token = std::nullopt;
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+
+    result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+
+    SessionEvent session_event2 = get_transaction_started_event(provided_token);
+    this->auth_handler->handle_session_event(1, session_event2);
+
+    // Test if master group id token can stop transactions (case insensitive)
+    // Use a token that gets validated and returns a parent_id_token matching master group ID (different case)
+    provided_token.id_token = {VALID_TOKEN_1, types::authorization::IdTokenType::ISO14443};
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+
+    result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+}
+
+/// \brief Test case-insensitive withdraw authorization
+TEST_F(AuthTest, test_case_insensitive_withdraw_authorization) {
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(0)).Times(1);
+
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
+    // Test withdraw with different case
+    types::authorization::WithdrawAuthorizationRequest withdraw_request;
+    withdraw_request.evse_id = 1;
+    withdraw_request.id_token = {"valid_RFID_1", types::authorization::IdTokenType::ISO14443};
+
+    auto withdraw_result = this->auth_handler->handle_withdraw_authorization(withdraw_request);
+
+    ASSERT_EQ(withdraw_result, WithdrawAuthorizationResult::Accepted);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+}
+
+/// \brief Test case-insensitive reservation matching
+TEST_F(AuthTest, test_case_insensitive_reservation_matching) {
+    TokenHandlingResult result;
+
+    Reservation reservation;
+    reservation.evse_id = 1;
+    reservation.id_token = "VALID_rfid_2"; // Different case
+    reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
+    reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
+
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
+    ASSERT_EQ(reservation_result, ReservationResult::Accepted);
+
+    SessionEvent session_event_1;
+    session_event_1.event = SessionEventEnum::ReservationStart;
+    this->auth_handler->handle_session_event(1, session_event_1);
+
+    SessionEvent session_event_2 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event_2);
+
+    std::vector<int32_t> connectors{1, 2};
+    // Use different case for token comparison
+    ProvidedIdToken provided_token = get_provided_token("valid_RFID_2", connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+
+    result = this->auth_handler->on_token(provided_token);
+
+    ASSERT_EQ(result, TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
 } // namespace module
