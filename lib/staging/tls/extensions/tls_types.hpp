@@ -26,7 +26,7 @@ private:
         last = trusted_ca_keys,
     };
 
-    everest::staging::util::AtomicEnumFlags<flags_t, std::uint8_t> flags;
+    everest::staging::util::AtomicEnumFlags<flags_t> flags;
 
 public:
     void status_request_received() {

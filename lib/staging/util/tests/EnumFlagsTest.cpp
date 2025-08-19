@@ -39,17 +39,17 @@ enum class BspErrors : std::uint8_t {
 using namespace everest::staging::util;
 
 TEST(AtomicEnumFlagsTest, init) {
-    AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
+    AtomicEnumFlags<ErrorHandlingFlags> flags;
     EXPECT_TRUE(flags.all_reset());
 }
 
 TEST(AtomicEnumFlagsTest, init_large) {
-    AtomicEnumFlags<BspErrors, std::uint32_t> flags;
+    AtomicEnumFlags<BspErrors> flags;
     EXPECT_TRUE(flags.all_reset());
 }
 
 TEST(AtomicEnumFlagsTest, set_reset_one) {
-    AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
+    AtomicEnumFlags<ErrorHandlingFlags> flags;
     EXPECT_TRUE(flags.all_reset());
 
     flags.set(ErrorHandlingFlags::all_errors_cleared);
@@ -59,7 +59,7 @@ TEST(AtomicEnumFlagsTest, set_reset_one) {
 }
 
 TEST(AtomicEnumFlagsTest, set_reset_two) {
-    AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
+    AtomicEnumFlags<ErrorHandlingFlags> flags;
     EXPECT_TRUE(flags.all_reset());
 
     flags.set(ErrorHandlingFlags::all_errors_cleared);
@@ -73,7 +73,7 @@ TEST(AtomicEnumFlagsTest, set_reset_two) {
 }
 
 TEST(AtomicEnumFlagsTest, set_reset_three) {
-    AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
+    AtomicEnumFlags<ErrorHandlingFlags> flags;
     EXPECT_TRUE(flags.all_reset());
 
     flags.set(ErrorHandlingFlags::all_errors_cleared);
