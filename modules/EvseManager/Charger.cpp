@@ -1877,17 +1877,17 @@ void Charger::dlink_error() {
 
     // Is PWM on at the moment?
     if (not shared_context.pwm_running) {
-        // [V2G3-M07-04]: With receiving a D-LINK_ERROR.request from HLE in X1 state, the EVSE’s
+        // [V2G3-M07-04]: With receiving a D-LINK_ERROR.request from HLE in X1 state, the EVSE's
         // communication node shall perform a state X1 to state E/F to state X1 or X2 transition.
     } else {
-        // [V2G3-M07-05]: With receiving a D-LINK_ERROR.request in X2 state from HLE, the EVSE’s
+        // [V2G3-M07-05]: With receiving a D-LINK_ERROR.request in X2 state from HLE, the EVSE's
         // communication node shall perform a state X2 to X1 to state E/F to state X1 or X2 transition.
 
         // Are we in 5% mode or not?
         if (hlc_use_5percent_current_session) {
             // [V2G3-M07-06] Within the control pilot state X1, the communication node shall leave the
             // logical network and change the matching state to "Unmatched". [V2G3-M07-07] With reaching the
-            // state “Unmatched”, the EVSE shall switch to state E/F.
+            // state "Unmatched", the EVSE shall switch to state E/F.
 
             // FIXME: We don't wait for SLAC to go to UNMATCHED in X1 for now but just do a normal 3 seconds
             // t_step_X1 instead. This should be more then sufficient for the SLAC module to reset.
@@ -2044,6 +2044,8 @@ void Charger::clear_errors_on_unplug() {
     error_handling->clear_internal_error();
     error_handling->clear_powermeter_transaction_start_failed_error();
     error_handling->clear_authorization_timeout_error();
+    error_handling->clear_isolation_resistance_fault();
+    error_handling->clear_cable_check_fault();
 }
 
 types::evse_manager::EnableDisableSource Charger::get_last_enable_disable_source() {
