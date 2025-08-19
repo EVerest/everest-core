@@ -33,7 +33,6 @@ message McuToEverest {
   FanState fan_state = 9;
   LockState lock_state = 10;
   BootConfigRequest config_request = 11;
-  Temperature temperature = 12;
  }
  int32 connector = 6; // 0: None, 1: Connector 1, 2: Connector 2
 }
@@ -133,11 +132,6 @@ enum MotorLockType {
   MOTOR_LOCK_UNKNOWN = 0;
   MOTOR_LOCK_QWELLO = 1;
   MOTOR_LOCK_DEBUG_VALEO_HVAC = 2;
-}
-
-message Temperature {
-  // The temperature readings
-  repeated uint32 temp = 1;
 }
 
 message RcdCommand {
