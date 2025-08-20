@@ -1014,6 +1014,15 @@ void OCPP::ready() {
 
     this->init_module_configuration();
 
+    // if charger information interface is connected, override only these specific properties
+    // which were loaded from configuration file(s)
+    if (!this->r_charger_information.empty()) {
+        auto ci = this->r_charger_information.at(0)->call_get_charger_information();
+
+        this->charge_point->update_chargepoint_information(ci.vendor, ci.model, ci.chargepoint_serial,
+                                                           ci.chargebox_serial, ci.firmware_version);
+    }
+
     // we can now call init(), which initializes the charge points state machine. It reads the connector availability
     // from the internal database and potentially triggers enable/disable callbacks at the evse.
     if (this->charge_point->init({}, this->resuming_session_ids)) {
