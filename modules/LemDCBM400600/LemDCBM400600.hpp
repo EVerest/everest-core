@@ -22,6 +22,7 @@ namespace module {
 struct Conf {
     std::string ip_address;
     int port;
+    std::string interface;
     std::string meter_tls_certificate;
     std::string ntp_server_1_ip_addr;
     int ntp_server_1_port;

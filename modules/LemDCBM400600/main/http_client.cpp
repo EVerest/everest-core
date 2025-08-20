@@ -144,6 +144,12 @@ CURL* HttpClient::create_curl_handle_and_setup_url(const std::string& path) cons
         throw std::runtime_error(std::string("Could not set supported protocol to ") + protocol +
                                  ", is it enabled in libcurl?");
     }
+    if (!this->network_interface.empty()) {
+        if (curl_easy_setopt(connection, CURLOPT_INTERFACE, this->network_interface.c_str()) != CURLE_OK) {
+            throw std::runtime_error("Could not bind to the specified network interface: " + this->network_interface);
+        }
+    }
+
     return connection;
 }
 

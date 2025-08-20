@@ -29,7 +29,8 @@ class HttpClient : public HttpClientInterface {
 public:
     HttpClient() = delete;
 
-    HttpClient(const std::string& host_arg, int port_arg, const std::string& tls_certificate) {
+    HttpClient(const std::string& host_arg, int port_arg, const std::string& tls_certificate,
+               const std::string& network_interface = "") {
         // initialize libcurl - this is safe to do multiple times, if there are multiple HttpClients
         // Note: This is only thread-safe after libcurl 7.84.0, but we use 8.4.0, so it should be fine
         curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -39,7 +40,9 @@ public:
         dcbm_tls_certificate = tls_certificate;
         tls_enabled = !dcbm_tls_certificate.empty();
         fixup_tls_certificate(dcbm_tls_certificate);
+        this->network_interface = network_interface;
     }
+
     ~HttpClient() override {
         // release the libcurl resources - this must be done once for every call to curl_global_init().
         // Note: This is only thread-safe after libcurl 7.84.0, but we use 8.4.0, so it should be fine
@@ -59,6 +62,7 @@ private:
     bool tls_enabled;
     std::string dcbm_tls_certificate;
     int command_timeout_ms = 5000; // default timeout in milliseconds
+    std::string network_interface; // New member variable for the network interface
 
     [[nodiscard]] CURL* create_curl_handle_and_setup_url(const std::string& path) const;
     HttpResponse perform_request(CURL* connection, const std::string& request_body, const char* method_name,
