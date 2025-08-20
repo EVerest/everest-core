@@ -1,0 +1,6 @@
+add_subdirectory(EV)
+add_subdirectory(EVSE)
+add_subdirectory(NfcReaders)
+add_subdirectory(Payment)
+add_subdirectory(PowerMeters)
+add_subdirectory(PowerSupplies)
