@@ -9,7 +9,7 @@ cmds:
         description: Requests to make a reservation
     result:
       description: >-
-        Returns Accepted if reservation was succesful or specifies error code.
+        Returns Accepted if reservation was successful or specifies error code.
       type: string
       $ref: /reservation#/ReservationResult
   cancel_reservation:

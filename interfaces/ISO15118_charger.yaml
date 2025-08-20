@@ -53,7 +53,7 @@ cmds:
     description: >-
       This message is an async response to a previously published require_auth_eim
       or require_auth_pnc. The SECC informs the EVCC whether the authorization
-      is accecpted or not.
+      is accepted or not.
     arguments:
       authorization_status:
         description: Authorization status of the ID Token
@@ -188,7 +188,7 @@ cmds:
         $ref: /powermeter#/Powermeter
 # Error handling
   send_error:
-    description: An error has happend. Send this error to inform the EV.
+    description: An error has happened. Send this error to inform the EV.
     arguments:
       error:
         description: The EVSE error enum
@@ -198,7 +198,7 @@ cmds:
     description: Reset all errors
 vars:
   require_auth_eim:
-    description: An EIM authorization is requiered
+    description: An EIM authorization is required
     type: "null"
   require_auth_pnc:
     description: >-
