@@ -62,7 +62,7 @@ private:
     bool tls_enabled;
     std::string dcbm_tls_certificate;
     int command_timeout_ms = 5000; // default timeout in milliseconds
-    std::string network_interface; // New member variable for the network interface
+    std::string network_interface; // network interface
 
     [[nodiscard]] CURL* create_curl_handle_and_setup_url(const std::string& path) const;
     HttpResponse perform_request(CURL* connection, const std::string& request_body, const char* method_name,
