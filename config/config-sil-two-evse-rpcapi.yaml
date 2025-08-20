@@ -1,0 +1,212 @@
+active_modules:
+  rpc_api:
+    module: RpcApi
+    config_module:
+      websocket_port: 8080
+    connections:
+      evse_manager:
+        - module_id: evse_manager_1
+          implementation_id: evse
+        - module_id: evse_manager_2
+          implementation_id: evse
+      energy_listener:
+        - module_id: evse_manager_1
+          implementation_id: energy_grid
+        - module_id: evse_manager_2
+          implementation_id: energy_grid
+      evse_energy_sink:
+        - module_id: grid_connection_point
+          implementation_id: external_limits
+        - module_id: evse_manager_1_api_sink
+          implementation_id: external_limits
+        - module_id: evse_manager_2_api_sink
+          implementation_id: external_limits
+  iso15118_charger:
+    module: EvseV2G
+    config_module:
+      device: auto
+      tls_security: allow
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
+  iso15118_car:
+    module: PyEvJosev
+    config_module:
+      device: auto
+      supported_ISO15118_2: true
+  evse_manager_1:
+    module: EvseManager
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      connector_id: 1
+      evse_id: DE*PNX*E12345*1
+      session_logging: true
+      session_logging_xml: false
+      session_logging_path: /tmp/everest-logs
+      ac_hlc_enabled: true
+      ac_hlc_use_5percent: false
+      ac_enforce_hlc: false
+    connections:
+      bsp:
+        - module_id: yeti_driver_1
+          implementation_id: board_support
+      powermeter_grid_side:
+        - module_id: yeti_driver_1
+          implementation_id: powermeter
+      slac:
+        - module_id: slac
+          implementation_id: evse
+      hlc:
+        - module_id: iso15118_charger
+          implementation_id: charger
+  evse_manager_2:
+    module: EvseManager
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      connector_id: 2
+      evse_id: DE*PNX*E12345*2
+      session_logging: true
+      session_logging_xml: false
+      session_logging_path: /tmp
+      ac_hlc_enabled: false
+      ac_hlc_use_5percent: false
+      ac_enforce_hlc: false
+    connections:
+      bsp:
+        - module_id: yeti_driver_2
+          implementation_id: board_support
+      powermeter_grid_side:
+        - module_id: yeti_driver_2
+          implementation_id: powermeter
+  evse_manager_1_api_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_1
+          implementation_id: energy_grid
+  evse_manager_2_api_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2
+          implementation_id: energy_grid
+  yeti_driver_1:
+    module: YetiSimulator
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      connector_id: 1
+  yeti_driver_2:
+    module: YetiSimulator
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      connector_id: 2
+  slac:
+    module: SlacSimulator
+  ev_manager_1:
+    module: EvManager
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+    connections:
+      ev_board_support:
+        - module_id: yeti_driver_1
+          implementation_id: ev_board_support
+      ev:
+        - module_id: iso15118_car
+          implementation_id: ev
+      slac:
+        - module_id: slac
+          implementation_id: ev
+  ev_manager_2:
+    module: EvManager
+    config_module:
+      connector_id: 2
+      auto_enable: true
+      auto_exec: false
+    connections:
+      ev_board_support:
+        - module_id: yeti_driver_2
+          implementation_id: ev_board_support
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 10
+      selection_algorithm: FindFirst
+    connections:
+      token_provider:
+        - module_id: token_provider_1
+          implementation_id: main
+      token_validator:
+        - module_id: token_validator
+          implementation_id: main
+      evse_manager:
+        - module_id: evse_manager_1
+          implementation_id: evse
+        - module_id: evse_manager_2
+          implementation_id: evse
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
+  token_provider_1:
+    module: DummyTokenProviderManual
+  token_validator:
+    module: DummyTokenValidator
+    config_implementation:
+      main:
+        validation_result: Accepted
+        validation_reason: Token seems valid
+        sleep: 0.25
+  energy_manager:
+    module: EnergyManager
+    connections:
+      energy_trunk:
+        - module_id: grid_connection_point
+          implementation_id: energy_grid
+  grid_connection_point:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 0
+    config_module:
+      fuse_limit_A: 40.0
+      phase_count: 3
+    connections:
+      price_information: []
+      energy_consumer:
+        - module_id: evse_manager_1_api_sink
+          implementation_id: energy_grid
+        - module_id: evse_manager_2_api_sink
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver_1
+          implementation_id: powermeter
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db
+x-module-layout: {}
