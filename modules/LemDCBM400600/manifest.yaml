@@ -7,6 +7,10 @@ config:
     description: Port of the power meter API.
     type: integer
     default: 80
+  interface:
+    description: Bind to a specific network interface. If left empty, the module will bind to all interfaces.
+    type: string
+    default: ""
   meter_tls_certificate:
     description: The DCBM's HTTPS certificate, in PEM format. If provided, HTTPS will be used. If left empty, regular HTTP will be used. Note that this does not affect the default port - specify a port explicitly if you wish to use a port other than 80.
     type: string

@@ -13,8 +13,8 @@ namespace module::main {
 void powermeterImpl::init() {
     // Dependency injection pattern: Create the HTTP client first,
     // then move it into the controller as a constructor argument
-    auto http_client =
-        std::make_unique<HttpClient>(mod->config.ip_address, mod->config.port, mod->config.meter_tls_certificate);
+    auto http_client = std::make_unique<HttpClient>(mod->config.ip_address, mod->config.port,
+                                                    mod->config.meter_tls_certificate, mod->config.interface);
 
     auto ntp_server_spec =
         module::main::ntp_server_spec{mod->config.ntp_server_1_ip_addr, mod->config.ntp_server_1_port,
