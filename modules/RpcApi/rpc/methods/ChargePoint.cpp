@@ -29,12 +29,8 @@ RPCDataTypes::ChargePointGetEVSEInfosResObj ChargePoint::getEVSEInfos() {
 RPCDataTypes::ChargePointGetActiveErrorsResObj ChargePoint::getActiveErrors() {
     RPCDataTypes::ChargePointGetActiveErrorsResObj res{};
 
-    if (m_dataobj.chargererrors.get_data().has_value()) {
-        res.active_errors = m_dataobj.chargererrors.get_data().value();
-        res.error = RPCDataTypes::ResponseErrorEnum::NoError;
-    } else {
-        res.error = RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable;
-    }
+    res.active_errors = m_dataobj.chargererrors.get_data().value_or(std::vector<types::json_rpc_api::ErrorObj>{});
+    res.error = RPCDataTypes::ResponseErrorEnum::NoError;
 
     return res;
 }
