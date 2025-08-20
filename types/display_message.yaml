@@ -97,7 +97,7 @@ types:
           The type of 'identifier_id'. If omitted, type will be session id.
         type: string
         $ref: /display_message#/IdentifierType
-      message:  
+      message:
         type: object
         description: The message to show
         $ref: /text_message#/MessageContent
@@ -141,7 +141,7 @@ types:
         $ref: /display_message#/MessageStateEnum
         type: string
   GetDisplayMessageResponse:
-    description: Reponse on the 'get display message' request. Will return the requested display messages.
+    description: Response on the 'get display message' request. Will return the requested display messages.
     type: object
     properties:
       status_info:
