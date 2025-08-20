@@ -1,5 +1,5 @@
 description: >-
-  This interface is the internal energy management inteface between nodes.
+  This interface is the internal energy management interface between nodes.
 cmds:
   enforce_limits:
     description: The EnergyManager enforces a limit using this command.

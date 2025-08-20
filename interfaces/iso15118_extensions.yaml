@@ -3,7 +3,7 @@ cmds:
   set_get_certificate_response:
     description: >-
       CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
-      and the corresponding encrypted private key. Should be forwared to EVCC.
+      and the corresponding encrypted private key. Should be forwarded to EVCC.
       This is an async response to a previously published iso15118_certificate_request
     arguments:
       certificate_response:
