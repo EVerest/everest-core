@@ -3,7 +3,10 @@ description: >-
   MQTT connection.
 config:
   charger_information_file:
-    description: Path to a file containing information about the charger like its serial number
+    description: >-
+      Path to a file containing information about the charger like its serial number.
+      The content of this file is not used, when the optional dependency `charger_information`
+      is used.
     type: string
     default: ""
   powermeter_energy_import_decimal_places:
@@ -173,6 +176,10 @@ provides:
     description: EVerest API
     interface: empty
 requires:
+  charger_information:
+    interface: charger_information
+    min_connections: 0
+    max_connections: 1
   evse_manager:
     interface: evse_manager
     min_connections: 1
