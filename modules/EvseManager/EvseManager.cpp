@@ -3,6 +3,7 @@
 #include "EvseManager.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <fmt/color.h>
 #include <fmt/core.h>
 
@@ -1105,7 +1106,7 @@ void EvseManager::ready() {
 
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
-    charger->set_max_current(0.0F, date::utc_clock::now() + std::chrono::seconds(120));
+    charger->set_max_current(0.0F, steady_clock::now() + std::chrono::seconds(120));
     this->p_evse->publish_waiting_for_external_ready(config.external_ready_to_start_charging);
     if (not config.external_ready_to_start_charging) {
         // immediately ready, otherwise delay until we get the external signal

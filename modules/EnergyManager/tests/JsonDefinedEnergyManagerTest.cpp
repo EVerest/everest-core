@@ -3,6 +3,7 @@
 
 #include "JsonDefinedEnergyManagerTest.hpp"
 #include "EnergyManagerConfigJson.hpp"
+#include "everest/logging.hpp"
 
 #include <fstream>
 
