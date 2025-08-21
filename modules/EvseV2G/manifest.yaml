@@ -89,8 +89,6 @@ provides:
 requires:
   security:
     interface: evse_security
-
-enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

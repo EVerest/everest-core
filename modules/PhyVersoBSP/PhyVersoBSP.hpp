@@ -64,13 +64,12 @@ struct Conf {
 class PhyVersoBSP : public Everest::ModuleBase {
 public:
     PhyVersoBSP() = delete;
-    PhyVersoBSP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
+    PhyVersoBSP(const ModuleInfo& info, Everest::TelemetryProvider& telemetry,
                 std::unique_ptr<evse_board_supportImplBase> p_connector_1,
                 std::unique_ptr<evse_board_supportImplBase> p_connector_2, std::unique_ptr<ac_rcdImplBase> p_rcd_1,
                 std::unique_ptr<ac_rcdImplBase> p_rcd_2, std::unique_ptr<connector_lockImplBase> p_connector_lock_1,
                 std::unique_ptr<connector_lockImplBase> p_connector_lock_2, Conf& config) :
         ModuleBase(info),
-        mqtt(mqtt_provider),
         telemetry(telemetry),
         p_connector_1(std::move(p_connector_1)),
         p_connector_2(std::move(p_connector_2)),
@@ -82,7 +81,6 @@ public:
         serial(verso_config),
         gpio(verso_config){};
 
-    Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
     const std::unique_ptr<evse_board_supportImplBase> p_connector_1;
     const std::unique_ptr<evse_board_supportImplBase> p_connector_2;

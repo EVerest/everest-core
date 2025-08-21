@@ -21,7 +21,6 @@ provides:
     interface: ev_board_support
     description: provides the board support Interface to low level control control pilot, relais, rcd
 enable_telemetry: true
-enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
