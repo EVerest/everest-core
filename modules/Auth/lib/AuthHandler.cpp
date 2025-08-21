@@ -11,7 +11,7 @@ using everest::staging::helpers::is_equal_case_insensitive;
 
 namespace module {
 
-/// \brief helper method to intersect referenced_connectors (from ProvidedIdToken) with connectors that are listed
+/// \brief helper method to intersect referenced_connectors (from ProvidedIdToken) with evses that are listed
 /// within ValidationResult
 std::vector<int> intersect(std::vector<int>& a, std::vector<int>& b) {
     std::vector<int> result;
@@ -131,7 +131,7 @@ void AuthHandler::handle_token_validation_result_update(const ValidationResultUp
     std::unique_lock<std::mutex> lk(this->event_mutex);
     auto connector_id = validation_result_update.connector_id;
     if (this->evses.find(connector_id) != this->evses.end() and this->evses.at(connector_id)->identifier.has_value()) {
-        EVLOG_info << "Updating validation result on connector: " << connector_id;
+        EVLOG_info << "Updating validation result on evse#" << connector_id; // old OCPP "connector" is now "EVSE"
         // Currently we only support updating the parent id token
         this->evses.at(connector_id)->identifier->authorization_status =
             validation_result_update.validation_result.authorization_status;
@@ -146,8 +146,8 @@ void AuthHandler::handle_token_validation_result_update(const ValidationResultUp
         this->publish_token_validation_status_callback(provided_token,
                                                        types::authorization::TokenValidationStatus::Accepted);
     } else {
-        EVLOG_error << "Unknown connector " << connector_id
-                    << " or unknown authorization identifier on the connector for validation result update.";
+        EVLOG_error << "Unknown evse#" << connector_id
+                    << " or unknown authorization identifier on the evse for validation result update.";
     }
 }
 
@@ -164,7 +164,8 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
             req.reason = StopTransactionReason::Local;
             req.id_tag.emplace(provided_token);
             this->stop_transaction_callback(this->evses.at(evse_used_for_transaction)->evse_index, req);
-            EVLOG_info << "Transaction was stopped because id_token was used for transaction";
+            EVLOG_info << "Transaction was stopped because id_token was used for transaction for evse#"
+                       << evse_used_for_transaction;
             if (this->evses.at(evse_used_for_transaction)->identifier->parent_id_token.has_value()) {
                 provided_token.parent_id_token =
                     this->evses.at(evse_used_for_transaction)->identifier->parent_id_token.value();
@@ -363,12 +364,12 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                     EVLOG_debug << "Evse is reserved. Checking if token matches...";
 
                     if (reservation_id.has_value()) {
-                        EVLOG_info << "Evse is reserved and token is valid for this reservation";
+                        EVLOG_info << "Evse#" << evse_id << " is reserved and token is valid for this reservation";
                         this->reservation_handler.on_reservation_used(reservation_id.value());
                         authorized = true;
                         validation_result.reservation_id = reservation_id.value();
                     } else {
-                        EVLOG_info << "Evse is reserved but token is not valid for this reservation";
+                        EVLOG_info << "Evse#" << evse_id << " is reserved but token is not valid for this reservation";
                         validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;
                     }
                 }
@@ -739,7 +740,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     // When connector id is not specified, it is assumed to be '1'.
     const int32_t connector_id = event.connector_id.value_or(1);
     if (evse_id <= 0) {
-        EVLOG_error << "Handle session event: Evse id is <= 0>: That should not be possible.";
+        EVLOG_error << "Handle session event: Evse id is <= 0: That should not be possible.";
         return;
     }
 
@@ -764,6 +765,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
             this->plug_in_queue.push_back(evse_id);
             this->cv.notify_all();
             this->evses.at(evse_id)->plugged_in = true;
+            EVLOG_info << "Plug In event for evse#" << evse_id << ", starting auth";
 
             this->evses.at(evse_id)->timeout_timer.timeout(
                 [this, evse_id]() {
