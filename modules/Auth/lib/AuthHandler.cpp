@@ -11,7 +11,7 @@ using everest::staging::helpers::is_equal_case_insensitive;
 
 namespace module {
 
-/// \brief helper method to intersect referenced_connectors (from ProvidedIdToken) with connectors that are listed
+/// \brief helper method to intersect referenced_connectors (from ProvidedIdToken) with evses that are listed
 /// within ValidationResult
 std::vector<int> intersect(std::vector<int>& a, std::vector<int>& b) {
     std::vector<int> result;
@@ -131,7 +131,7 @@ void AuthHandler::handle_token_validation_result_update(const ValidationResultUp
     std::unique_lock<std::mutex> lk(this->event_mutex);
     auto connector_id = validation_result_update.connector_id;
     if (this->evses.find(connector_id) != this->evses.end() and this->evses.at(connector_id)->identifier.has_value()) {
-        EVLOG_info << "Updating validation result on connector: " << connector_id;
+        EVLOG_info << "Updating validation result on evse#" << connector_id; // old OCPP "connector" is now "EVSE"
         // Currently we only support updating the parent id token
         this->evses.at(connector_id)->identifier->authorization_status =
             validation_result_update.validation_result.authorization_status;
@@ -146,8 +146,8 @@ void AuthHandler::handle_token_validation_result_update(const ValidationResultUp
         this->publish_token_validation_status_callback(provided_token,
                                                        types::authorization::TokenValidationStatus::Accepted);
     } else {
-        EVLOG_error << "Unknown connector " << connector_id
-                    << " or unknown authorization identifier on the connector for validation result update.";
+        EVLOG_error << "Unknown evse#" << connector_id
+                    << " or unknown authorization identifier on the evse for validation result update.";
     }
 }
 
