@@ -66,6 +66,13 @@ void EvseV2G::init() {
             }
         });
 
+    if (config.enable_service_hpc1) {
+        dlog(DLOG_LEVEL_INFO, "HPC1 service is enabled");
+    } else {
+        dlog(DLOG_LEVEL_INFO, "HPC1 service is disabled");
+    }
+    v2g_ctx->service_hpc1_enabled = config.enable_service_hpc1;
+
     invoke_init(*p_charger);
     invoke_init(*p_extensions);
 }
