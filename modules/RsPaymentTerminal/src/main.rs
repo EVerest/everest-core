@@ -801,7 +801,7 @@ mod tests {
             everest_mock.bank_session_token_slots[0]
                 .expect_get_bank_session_token()
                 .times(if expected_invoice_token { 1 } else { 0 })
-                .return_once(move || {
+                .return_once(|| {
                     Ok(BankSessionToken {
                         token: Some(BANK_TOKEN.to_string()),
                     })
