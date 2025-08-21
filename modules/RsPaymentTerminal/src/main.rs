@@ -522,12 +522,19 @@ mod tests {
     #[test]
     fn payment_terminal_module__begin_transaction_failure_when_token_is_err() {
         // Test first the case where we receive an error from the bank session token provider.
-        let token = Err(::everestrs::Error::InvalidArgument("oh no"));
+        let mut feig_mock = SyncFeig::default();
+        feig_mock.expect_configure().times(1).return_once(|| Ok(()));
 
         let mut everest_mock = ModulePublisher::default();
         everest_mock
+            .payment_terminal
+            .expect_clear_error()
+            .times(3)
+            .return_const(());
+        everest_mock
             .bank_session_token_slots
             .push(BankSessionTokenProviderClientPublisher::default());
+        let token = Err(::everestrs::Error::InvalidArgument("oh no"));
         everest_mock.bank_session_token_slots[0]
             .expect_get_bank_session_token()
             .times(1)
@@ -538,13 +545,11 @@ mod tests {
             .times(0)
             .return_const(());
 
-        let mut feig = SyncFeig::default();
-        feig.expect_configure().times(0).return_once(|| Ok(()));
         let (tx, _) = channel();
 
         let pt_module = PaymentTerminalModule {
             tx,
-            feig,
+            feig: feig_mock,
             connector_to_card_type: Mutex::new(HashMap::new()),
         };
 
@@ -671,47 +676,108 @@ mod tests {
     #[test]
     /// Unit tests for the `PaymentTerminalModule::begin_transaction` with credit card acceptance.
     fn payment_terminal_module__begin_transaction_credit_cards_accepted() {
+        struct ExpectedToken {
+            token_id: String,
+            connectors: Option<Vec<i64>>,
+        }
+
+        const BANK_TOKEN: &str = "my bank token";
+        const RIFD_TOKEN: &str = "my rfid token";
+
         // Now test the successful execution.
         let parameters = [
-            (CardInfo::Bank, "my bank token", true, HashMap::new(), None),
+            // The case where we don't have any constraints.
             (
                 CardInfo::Bank,
-                "my bank token",
                 true,
+                true,
+                ExpectedToken {
+                    token_id: BANK_TOKEN.to_string(),
+                    connectors: None,
+                },
+                HashMap::new(),
+            ),
+            // The case where we allow only bank cards and receive a bank card.
+            // We expect that we can issue a bank token.
+            (
+                CardInfo::Bank,
+                true,
+                true,
+                ExpectedToken {
+                    token_id: BANK_TOKEN.to_string(),
+                    connectors: Some(vec![1, 2]),
+                },
                 HashMap::from([
                     (1 as i64, vec![CardType::BankCard]),
                     (2 as i64, vec![CardType::BankCard]),
                 ]),
-                Some(vec![1, 2]),
             ),
+            // The case where we only allow Rfid cards but receive a bank card.
+            // We issue an invalid token.
             (
                 CardInfo::Bank,
-                "my bank token",
                 false,
+                false,
+                ExpectedToken {
+                    token_id: "INVALID".to_string(),
+                    connectors: Some(Vec::new()),
+                },
                 HashMap::from([
                     (1 as i64, vec![CardType::RfidCard]),
                     (2 as i64, vec![CardType::RfidCard]),
                 ]),
-                None,
             ),
+            // The case where we contraint the bank card to only one connector.
             (
                 CardInfo::Bank,
-                "my bank token",
                 true,
+                true,
+                ExpectedToken {
+                    token_id: BANK_TOKEN.to_string(),
+                    connectors: Some(vec![1]),
+                },
                 HashMap::from([
                     (1 as i64, vec![CardType::BankCard]),
                     (2 as i64, vec![CardType::RfidCard]),
                 ]),
-                Some(vec![1]),
+            ),
+            // The case where we allow only bank cards and receive a rfid card.
+            // We issue an invalid token.
+            (
+                CardInfo::MembershipCard(RIFD_TOKEN.to_string()),
+                true,
+                false,
+                ExpectedToken {
+                    token_id: RIFD_TOKEN.to_string(),
+                    connectors: Some(Vec::new()),
+                },
+                HashMap::from([
+                    (1 as i64, vec![CardType::BankCard]),
+                    (2 as i64, vec![CardType::BankCard]),
+                ]),
+            ),
+            // The case where we contraint the rfid card to only one connector.
+            (
+                CardInfo::MembershipCard(RIFD_TOKEN.to_string()),
+                true,
+                false,
+                ExpectedToken {
+                    token_id: RIFD_TOKEN.to_string(),
+                    connectors: Some(vec![2]),
+                },
+                HashMap::from([
+                    (1 as i64, vec![CardType::BankCard]),
+                    (2 as i64, vec![CardType::RfidCard]),
+                ]),
             ),
         ];
 
         for (
             card_info,
-            expected_token,
+            expected_invoice_token,
             expected_transaction,
+            expected_token,
             connector_to_card_type,
-            expected_connectors,
         ) in parameters
         {
             let mut everest_mock = ModulePublisher::default();
@@ -726,29 +792,26 @@ mod tests {
             everest_mock
                 .bank_session_token_slots
                 .push(BankSessionTokenProviderClientPublisher::default());
-            everest_mock
-                .bank_session_token_slots
-                .push(BankSessionTokenProviderClientPublisher::default());
 
+            // let expected_token_clone = expected_token.clone();
             everest_mock.bank_session_token_slots[0]
                 .expect_get_bank_session_token()
-                .times(1)
-                .return_once(|| {
+                .times(if expected_invoice_token { 1 } else { 0 })
+                .return_once(move || {
                     Ok(BankSessionToken {
-                        token: Some("my bank token".to_string()),
+                        token: Some(BANK_TOKEN.to_string()),
                     })
                 });
-            if expected_transaction {
-                everest_mock
-                    .token_provider
-                    .expect_provided_token()
-                    .times(1)
-                    .withf(move |arg| {
-                        arg.id_token.value == expected_token.to_string()
-                            && arg.connectors == expected_connectors
-                    })
-                    .return_once(|_| Ok(()));
-            }
+
+            everest_mock
+                .token_provider
+                .expect_provided_token()
+                .times(1)
+                .withf(move |arg| {
+                    arg.id_token.value == expected_token.token_id
+                        && arg.connectors == expected_token.connectors
+                })
+                .return_once(|_| Ok(()));
 
             feig_mock
                 .expect_read_card()
