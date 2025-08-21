@@ -164,7 +164,8 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
             req.reason = StopTransactionReason::Local;
             req.id_tag.emplace(provided_token);
             this->stop_transaction_callback(this->evses.at(evse_used_for_transaction)->evse_index, req);
-            EVLOG_info << "Transaction was stopped because id_token was used for transaction";
+            EVLOG_info << "Transaction was stopped because id_token was used for transaction for evse#"
+                       << evse_used_for_transaction;
             if (this->evses.at(evse_used_for_transaction)->identifier->parent_id_token.has_value()) {
                 provided_token.parent_id_token =
                     this->evses.at(evse_used_for_transaction)->identifier->parent_id_token.value();
@@ -363,12 +364,12 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                     EVLOG_debug << "Evse is reserved. Checking if token matches...";
 
                     if (reservation_id.has_value()) {
-                        EVLOG_info << "Evse is reserved and token is valid for this reservation";
+                        EVLOG_info << "Evse#" << evse_id << " is reserved and token is valid for this reservation";
                         this->reservation_handler.on_reservation_used(reservation_id.value());
                         authorized = true;
                         validation_result.reservation_id = reservation_id.value();
                     } else {
-                        EVLOG_info << "Evse is reserved but token is not valid for this reservation";
+                        EVLOG_info << "Evse#" << evse_id << " is reserved but token is not valid for this reservation";
                         validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;
                     }
                 }
