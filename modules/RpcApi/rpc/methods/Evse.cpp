@@ -121,8 +121,36 @@ RPCDataTypes::ErrorResObj Evse::set_ac_charging_phase_count(const int32_t evse_i
         res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex;
         return res;
     }
-    return m_request_handler_ptr->set_ac_charging_phase_count(evse_index, phase_count);
 
+    // Check if the requested phase count is equal to the current active phase count
+    // If so, we can return a success response without making any changes. Phase switching is not
+    // necessary in this case.
+    auto evse_status = evse->evsestatus.get_data();
+    if(evse_status.has_value() && evse_status.value().ac_charge_status.has_value()) {
+        if (evse_status.value().ac_charge_status.value().evse_active_phase_count == phase_count) {
+            res.error = RPCDataTypes::ResponseErrorEnum::NoError;
+            return res;
+        }
+    }
+
+    // If phase switching must be performed and the hardware capabilities do not allow it
+    // we return an error response.
+    auto hardwarecapabilities = evse->hardwarecapabilities.get_data();
+    if (hardwarecapabilities.has_value() &&
+        hardwarecapabilities.value().phase_switch_during_charging == false) {
+        res.error = RPCDataTypes::ResponseErrorEnum::ErrorOperationNotSupported;
+        return res;
+    }
+
+    // Check if the requested phase count is within the allowed range
+    if (hardwarecapabilities.has_value() &&
+        phase_count < hardwarecapabilities.value().min_phase_count_export ||
+        phase_count > hardwarecapabilities.value().max_phase_count_export) {
+        res.error = RPCDataTypes::ResponseErrorEnum::ErrorOutOfRange;
+        return res;
+    }
+
+    return m_request_handler_ptr->set_ac_charging_phase_count(evse_index, phase_count);
 }
 
 RPCDataTypes::ErrorResObj Evse::set_dc_charging(const int32_t evse_index, bool charging_allowed, float max_power) {

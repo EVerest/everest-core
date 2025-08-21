@@ -600,6 +600,19 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     evse_status.ac_charge_param->evse_max_current = 12.3;
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
+    RPCDataTypes::EVSEGetHardwareCapabilitiesResObj hw_cap;
+    hw_cap.error = RPCDataTypes::ResponseErrorEnum::NoError;
+    hw_cap.hardware_capabilities.max_current_A_export = 32.0;
+    hw_cap.hardware_capabilities.max_current_A_import = 16.0;
+    hw_cap.hardware_capabilities.max_phase_count_export = 3;
+    hw_cap.hardware_capabilities.max_phase_count_import = 3;
+    hw_cap.hardware_capabilities.min_current_A_export = 6.0;
+    hw_cap.hardware_capabilities.min_current_A_import = 6.0;
+    hw_cap.hardware_capabilities.min_phase_count_export = 1;
+    hw_cap.hardware_capabilities.min_phase_count_import = 1;
+    hw_cap.hardware_capabilities.phase_switch_during_charging = true;
+    data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
+
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
@@ -610,12 +623,70 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetACChargingPhaseCount request with valid ID
     send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_valid_id, expected_response);
-    // Check if the EVSE status is updated
-    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().has_value());
-    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
-
     // Send EVSE.SetACChargingPhaseCount request with invalid ID
     send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+}
+
+// Test: Connect to WebSocket server and send EVSE.SetACChargingPhaseCount request with invalid phases and disabled phase switching
+TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReqBadCases) {
+    WebSocketTestClient client("localhost", test_port);
+    ASSERT_TRUE(client.connect());
+    ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
+
+    // Set up requests
+    nlohmann::json evse_set_ac_charging_phase_count_req_valid_phase_count = create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 1}}, 1);
+    nlohmann::json evse_set_ac_charging_phase_count_req_invalid_phase_count = create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 2}}, 1);
+    nlohmann::json evse_set_ac_charging_phase_count_req_out_of_range = create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 3}}, 1);
+
+    // Set up the data store with test data
+    RPCDataTypes::EVSEInfoObj evse_info;
+    evse_info.index = 1;
+    data_store.evses[0]->evseinfo.set_data(evse_info);
+
+    RPCDataTypes::EVSEStatusObj evse_status;
+    evse_status.available = false;
+    evse_status.ac_charge_param.emplace();
+    evse_status.ac_charge_param->evse_max_current = 12.3;
+    evse_status.ac_charge_status.emplace();
+    evse_status.ac_charge_status->evse_active_phase_count = 1;
+    data_store.evses[0]->evsestatus.set_data(evse_status);
+
+    RPCDataTypes::EVSEGetHardwareCapabilitiesResObj hw_cap;
+    hw_cap.error = RPCDataTypes::ResponseErrorEnum::NoError;
+    hw_cap.hardware_capabilities.max_current_A_export = 32.0;
+    hw_cap.hardware_capabilities.max_current_A_import = 16.0;
+    hw_cap.hardware_capabilities.max_phase_count_export = 1;
+    hw_cap.hardware_capabilities.max_phase_count_import = 1;
+    hw_cap.hardware_capabilities.min_current_A_export = 6.0;
+    hw_cap.hardware_capabilities.min_current_A_import = 6.0;
+    hw_cap.hardware_capabilities.min_phase_count_export = 1;
+    hw_cap.hardware_capabilities.min_phase_count_import = 1;
+    hw_cap.hardware_capabilities.phase_switch_during_charging = false;
+    data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
+
+    // Set up the expected responses
+    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
+    nlohmann::json expected_no_error = create_json_rpc_response(result, 1);
+    nlohmann::json expected_invalid_param = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidParameter)}};
+    nlohmann::json expected_error_out_of_range = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorOutOfRange)}};
+    nlohmann::json expected_error_operation_not_supported = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorOperationNotSupported)}};
+
+    // Send Api.Hello request
+    client.send_api_hello_req();
+    client.wait_for_data(std::chrono::seconds(1));
+    // Send EVSE.SetACChargingPhaseCount request with phase count. This should not lead to an error, because
+    // an initialization of the phase count should be still possible.
+    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_valid_phase_count, expected_no_error);
+
+    // Try to switch phase count although phase switching is not allowed (phase_switch_during_charging == false)
+    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_phase_count, expected_error_operation_not_supported, is_key_value_in_json_rpc_result);
+
+    // Send EVSE.SetACChargingPhaseCount request with phase count out of range
+    // Enable phase switching, because otherwise it returns an ErrorOperationNotSupported error
+    hw_cap.hardware_capabilities.phase_switch_during_charging = true;
+    data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
+    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_out_of_range, expected_error_out_of_range, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_phase_count, expected_invalid_param, is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.SetDCCharging request with valid and invalid index

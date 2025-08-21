@@ -11,6 +11,7 @@ types:
     - ErrorInvalidEVSEIndex
     - ErrorInvalidConnectorID
     - ErrorNoDataAvailable
+    - ErrorOperationNotSupported
     - ErrorUnknownError
   ChargeProtocolEnum:
     description: Charge protocol
