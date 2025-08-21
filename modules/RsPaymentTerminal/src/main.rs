@@ -202,7 +202,7 @@ impl PaymentTerminalModule {
     /// don't flag the token as pre-validated to allow the consumers to add
     /// custom validation steps on top.
     fn begin_transaction(&self, publishers: &ModulePublisher) -> Result<()> {
-        const CARD_DISABLED: Option<Vec<i64>> = Some(Vec::new());
+        const NO_CONNECTORS: Option<Vec<i64>> = Some(Vec::new());
         let mut token: Option<String> = None;
 
         // Wait for the card.
@@ -229,11 +229,11 @@ impl PaymentTerminalModule {
                     }
                 }
 
-                let is_enabled_for_rfid_card = self.is_enabled_for(CardType::RfidCard);
-                let is_enabled_for_bank_card = self.is_enabled_for(CardType::BankCard);
+                let get_connectors_for_rfid_card = self.get_connectors_for(CardType::RfidCard);
+                let get_connectors_for_bank_card = self.get_connectors_for(CardType::BankCard);
 
-                if is_enabled_for_rfid_card == CARD_DISABLED
-                    && is_enabled_for_bank_card == CARD_DISABLED
+                if get_connectors_for_rfid_card == NO_CONNECTORS
+                    && get_connectors_for_bank_card == NO_CONNECTORS
                 {
                     log::debug!("Reading is disabled, waiting...");
                     std::thread::sleep(Duration::from_secs(1));
@@ -241,7 +241,7 @@ impl PaymentTerminalModule {
                 }
 
                 // Attempting to get an invoice token
-                if token.is_none() && is_enabled_for_bank_card != CARD_DISABLED {
+                if token.is_none() && get_connectors_for_bank_card != NO_CONNECTORS {
                     if let Some(publisher) = publishers.bank_session_token_slots.get(0) {
                         if timeout.elapsed() > Duration::from_secs(0) {
                             token = publisher.get_bank_session_token()?.token;
@@ -290,18 +290,18 @@ impl PaymentTerminalModule {
 
         let provided_token = match card_info {
             CardInfo::Bank => {
-                let mut is_enabled_for_bank_card = self.is_enabled_for(CardType::BankCard);
-                if is_enabled_for_bank_card == CARD_DISABLED {
+                let mut get_connectors_for_bank_card = self.get_connectors_for(CardType::BankCard);
+                if get_connectors_for_bank_card == NO_CONNECTORS {
                     log::info!("Bank cards disabled, ignoring");
                 } else if token.is_none() {
                     log::info!("No invoice token provided, ignoring bank card");
-                    is_enabled_for_bank_card = CARD_DISABLED;
+                    get_connectors_for_bank_card = NO_CONNECTORS;
                 }
 
-                if is_enabled_for_bank_card != CARD_DISABLED {
+                if get_connectors_for_bank_card != NO_CONNECTORS {
                     if let Err(err) = self.feig.begin_transaction(token.as_ref().unwrap()) {
                         log::warn!("Failed to start a transaction: {err:?}");
-                        is_enabled_for_bank_card = CARD_DISABLED;
+                        get_connectors_for_bank_card = NO_CONNECTORS;
                     }
                 }
 
@@ -310,15 +310,19 @@ impl PaymentTerminalModule {
                 ProvidedIdToken::new(
                     token.unwrap_or("INVALID".to_string()),
                     AuthorizationType::BankCard,
-                    is_enabled_for_bank_card,
+                    get_connectors_for_bank_card,
                 )
             }
             CardInfo::MembershipCard(id_token) => {
-                let is_enabled_for_rfid_card = self.is_enabled_for(CardType::RfidCard);
-                if is_enabled_for_rfid_card == CARD_DISABLED {
+                let get_connectors_for_rfid_card = self.get_connectors_for(CardType::RfidCard);
+                if get_connectors_for_rfid_card == NO_CONNECTORS {
                     log::info!("Rfid cards disabled, ignoring");
                 }
-                ProvidedIdToken::new(id_token, AuthorizationType::RFID, is_enabled_for_rfid_card)
+                ProvidedIdToken::new(
+                    id_token,
+                    AuthorizationType::RFID,
+                    get_connectors_for_rfid_card,
+                )
             }
         };
         publishers.token_provider.provided_token(provided_token)?;
@@ -372,7 +376,7 @@ impl PaymentTerminalModule {
     /// Following the token convention Some(Vec::new()) means disabled and
     /// `None` means enabled for all. A non-empty list enabled the card-type
     /// only for specific connectors.
-    fn is_enabled_for(&self, card_type: CardType) -> Option<Vec<i64>> {
+    fn get_connectors_for(&self, card_type: CardType) -> Option<Vec<i64>> {
         let map_guard = self.connector_to_card_type.lock().unwrap();
         let mut v: Vec<i64> = map_guard
             .iter()
