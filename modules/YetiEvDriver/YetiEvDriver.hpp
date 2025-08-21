@@ -29,15 +29,10 @@ struct Conf {
 class YetiEvDriver : public Everest::ModuleBase {
 public:
     YetiEvDriver() = delete;
-    YetiEvDriver(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
+    YetiEvDriver(const ModuleInfo& info, Everest::TelemetryProvider& telemetry,
                  std::unique_ptr<ev_board_supportImplBase> p_ev_board_support, Conf& config) :
-        ModuleBase(info),
-        mqtt(mqtt_provider),
-        telemetry(telemetry),
-        p_ev_board_support(std::move(p_ev_board_support)),
-        config(config){};
+        ModuleBase(info), telemetry(telemetry), p_ev_board_support(std::move(p_ev_board_support)), config(config){};
 
-    Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
     const std::unique_ptr<ev_board_supportImplBase> p_ev_board_support;
     const Conf& config;

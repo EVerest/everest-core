@@ -191,7 +191,6 @@ provides:
   connector_lock_2:
     interface: connector_lock
     description: Lock interface
-enable_external_mqtt: true
 enable_telemetry: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

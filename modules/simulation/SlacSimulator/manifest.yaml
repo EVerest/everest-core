@@ -6,7 +6,6 @@ provides:
   ev:
     interface: ev_slac
     description: SLAC interface implementation for EV side
-enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
