@@ -764,6 +764,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
             this->plug_in_queue.push_back(evse_id);
             this->cv.notify_all();
             this->evses.at(evse_id)->plugged_in = true;
+            EVLOG_info << "Plug In event for evse#" << evse_id << ", starting auth";
 
             this->evses.at(evse_id)->timeout_timer.timeout(
                 [this, evse_id]() {
