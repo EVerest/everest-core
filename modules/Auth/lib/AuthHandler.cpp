@@ -739,7 +739,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     // When connector id is not specified, it is assumed to be '1'.
     const int32_t connector_id = event.connector_id.value_or(1);
     if (evse_id <= 0) {
-        EVLOG_error << "Handle session event: Evse id is <= 0>: That should not be possible.";
+        EVLOG_error << "Handle session event: Evse id is <= 0: That should not be possible.";
         return;
     }
 
