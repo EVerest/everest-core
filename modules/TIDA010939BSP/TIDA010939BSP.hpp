@@ -47,7 +47,7 @@ public:
         p_board_support(std::move(p_board_support)),
         p_rcd(std::move(p_rcd)),
         p_connector_lock(std::move(p_connector_lock)),
-        config(config) {};
+        config(config){};
 
     const std::unique_ptr<evse_board_supportImplBase> p_board_support;
     const std::unique_ptr<ac_rcdImplBase> p_rcd;

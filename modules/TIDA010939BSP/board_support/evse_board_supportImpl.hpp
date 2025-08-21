@@ -25,7 +25,7 @@ class evse_board_supportImpl : public evse_board_supportImplBase {
 public:
     evse_board_supportImpl() = delete;
     evse_board_supportImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<TIDA010939BSP>& mod, Conf& config) :
-        evse_board_supportImplBase(ev, "board_support"), mod(mod), config(config) {};
+        evse_board_supportImplBase(ev, "board_support"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

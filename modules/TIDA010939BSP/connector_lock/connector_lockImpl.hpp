@@ -25,7 +25,7 @@ class connector_lockImpl : public connector_lockImplBase {
 public:
     connector_lockImpl() = delete;
     connector_lockImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<TIDA010939BSP>& mod, Conf& config) :
-        connector_lockImplBase(ev, "connector_lock"), mod(mod), config(config) {};
+        connector_lockImplBase(ev, "connector_lock"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
