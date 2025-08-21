@@ -12,4 +12,3 @@ metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Holger Rapp
-enable_external_mqtt: false
