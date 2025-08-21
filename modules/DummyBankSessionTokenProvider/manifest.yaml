@@ -13,7 +13,6 @@ provides:
         type: boolean
         default: false
 requires: {}
-enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

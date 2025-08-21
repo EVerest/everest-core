@@ -42,7 +42,6 @@ provides:
   main:
     description: Implementation of the evse_security interface
     interface: evse_security 
-enable_external_mqtt: false
 enable_telemetry: false
 metadata:
   license: https://spdx.org/licenses/Apache-2.0.html
