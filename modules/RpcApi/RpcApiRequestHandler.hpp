@@ -31,6 +31,7 @@ public:
 private:
     // Add any private member variables or methods here
     data::DataStoreCharger& data_store;
+    types::json_rpc_api::ErrorResObj check_active_phases_and_set_limits(const int32_t evse_index, const float phy_value, const bool is_power);
     template <typename T>
     types::json_rpc_api::ErrorResObj set_external_limit(int32_t evse_index, T value,
                                                         std::function<types::energy::ExternalLimits(T)> make_limits);
