@@ -1,5 +1,5 @@
 active_modules:
-  rpc_api:
+  api:
     module: RpcApi
     config_module:
       websocket_port: 8080
@@ -209,4 +209,3 @@ active_modules:
     config_implementation:
       error_history:
         database_path: /tmp/error_history.db
-x-module-layout: {}
