@@ -131,11 +131,6 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
                             evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEV);
     float phy_limit = 0.0f;
     bool is_power_limit = configured_limits.is_current_set;
-    int phases = 0;
-
-    if (evse_store->evsestatus.get_data().has_value()) {
-        phases = evse_store->evsestatus.get_data()->ac_charge_status.has_value() ? evse_store->evsestatus.get_data()->ac_charge_status.value().evse_active_phase_count : 0;
-    }
 
     if (charging_allowed) {
         // first we need to determine which limits to apply. If the limit (current or power) is already set, we will use that.
@@ -148,22 +143,8 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
             is_power_limit = false;
         }
 
-        ErrorResObj result;
         // If the phases are not set, we assume DC charging. This means there is no need to apply phase limits.
-        if (phases == 0) {
-            result = set_external_limit(
-                evse_index, phy_limit,
-                std::function<types::energy::ExternalLimits(float)>(
-                    [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
-        }
-        else {
-            result = set_external_limit(
-                evse_index, phy_limit,
-                std::function<types::energy::ExternalLimits(float)>(
-                    [this, is_power_limit, phases](float value) {
-                        return get_external_limits(value, is_power_limit, phases);
-                    }));
-        }
+        ErrorResObj result = check_active_phases_and_set_limits(evse_index, phy_limit, is_power_limit);
 
         if (result.error != ResponseErrorEnum::NoError) {
             EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
@@ -269,7 +250,7 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_ind
 }
 
 ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
-    ErrorResObj res;
+    ErrorResObj res{};
     res = set_external_limit(evse_index, phase_count,
                              std::function<types::energy::ExternalLimits(int)>(
                                  [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
@@ -277,7 +258,7 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse
 }
 
 ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool charging_allowed, float max_power) {
-    ErrorResObj res {};
+    ErrorResObj res{};
     res.error = ResponseErrorEnum::ErrorValuesNotApplied;
     // TODO: Currently not implemented.
     return res;
@@ -286,7 +267,7 @@ ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool
 ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index, float max_power) {
     configured_limits.is_current_set = false;
     configured_limits.evse_limit = max_power;
-    ErrorResObj res {};
+    ErrorResObj res{};
     res = set_external_limit(evse_index, max_power,
                              std::function<types::energy::ExternalLimits(float)>(
                                  [this](float value) { return get_external_limits(value, true); }));
@@ -294,7 +275,7 @@ ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index
 }
 
 ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int connector_id, bool enable, int priority) {
-    ErrorResObj res {};
+    ErrorResObj res{};
 
     const auto it = std::find_if(evse_managers.begin(), evse_managers.end(),
                                  [&evse_index](const auto& manager) {
@@ -327,6 +308,32 @@ ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int
         res.error = ResponseErrorEnum::ErrorValuesNotApplied;
         EVLOG_warning << "Failed to enable/disable connector " << connector_id
                       << " on EVSE index: " << evse_index;
+    }
+
+    return res;
+}
+
+types::json_rpc_api::ErrorResObj RpcApiRequestHandler::check_active_phases_and_set_limits(const int32_t evse_index,
+                                                                                         const float phy_value,
+                                                                                         const bool is_power) {
+    ErrorResObj res{};
+    int phases{0};
+    auto evse_store = data_store.get_evse_store(evse_index);
+
+    if (evse_store->evsestatus.get_data().has_value()) {
+        phases = evse_store->evsestatus.get_data()->ac_charge_status.has_value() ? evse_store->evsestatus.get_data()->ac_charge_status.value().evse_active_phase_count : 0;
+    }
+
+    if (phases == 0) {
+        res = set_external_limit(
+            evse_index, phy_value,
+            std::function<types::energy::ExternalLimits(float)>(
+                [this, is_power](float phy_value) { return get_external_limits(phy_value, is_power); }));
+    } else {
+        res = set_external_limit(
+            evse_index, phy_value,
+            std::function<types::energy::ExternalLimits(float)>(
+                [this, is_power, phases](float phy_value) { return get_external_limits(phy_value, is_power, phases); }));
     }
 
     return res;
