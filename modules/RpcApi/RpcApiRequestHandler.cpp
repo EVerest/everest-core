@@ -20,15 +20,6 @@ types::energy::ExternalLimits get_external_limits(int32_t phases) {
     zero_entry.timestamp = timestamp;
     zero_entry.limits_to_leaves.total_power_W = {0, RPCAPI_MODULE_SOURCE};
 
-    // check if phases are 1 or 3, otherwise throw an exception
-    if (phases == 1 || phases == 3) {
-        target_entry.limits_to_leaves.ac_max_phase_count = {phases};
-        target_entry.limits_to_leaves.ac_min_phase_count = {phases};
-    } else {
-        std::string error_msg = "Invalid phase count " + std::to_string(phases) + ". Only 1 or 3 phases are supported.";
-        throw std::out_of_range(error_msg);
-    }
-
     external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
 
@@ -158,25 +149,20 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
         }
 
         ErrorResObj result;
-        try {
-            // If the phases are not set, we assume DC charging. This means there is no need to apply phase limits.
-            if (phases == 0) {
-                result = set_external_limit(
-                    evse_index, phy_limit,
-                    std::function<types::energy::ExternalLimits(float)>(
-                        [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
-            }
-            else {
-                result = set_external_limit(
-                    evse_index, phy_limit,
-                    std::function<types::energy::ExternalLimits(float)>(
-                        [this, is_power_limit, phases](float value) {
-                            return get_external_limits(value, is_power_limit, phases);
-                        }));
-            }
-        } catch (const std::out_of_range& e) {
-            EVLOG_error << "Failed to set power/current limit: " << e.what();
-            result.error = ResponseErrorEnum::ErrorOutOfRange;
+        // If the phases are not set, we assume DC charging. This means there is no need to apply phase limits.
+        if (phases == 0) {
+            result = set_external_limit(
+                evse_index, phy_limit,
+                std::function<types::energy::ExternalLimits(float)>(
+                    [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
+        }
+        else {
+            result = set_external_limit(
+                evse_index, phy_limit,
+                std::function<types::energy::ExternalLimits(float)>(
+                    [this, is_power_limit, phases](float value) {
+                        return get_external_limits(value, is_power_limit, phases);
+                    }));
         }
 
         if (result.error != ResponseErrorEnum::NoError) {
@@ -205,14 +191,9 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
         float max_power = 0.0f;
 
         ErrorResObj result;
-        try {
-            result = set_external_limit(evse_index, max_power,
-                                        std::function<types::energy::ExternalLimits(float)>(
-                                            [this](float value) { return get_external_limits(value, true); }));
-        } catch (const std::out_of_range& e) {
-            EVLOG_error << "Failed to set charging limit: " << e.what();
-            result.error = ResponseErrorEnum::ErrorOutOfRange;
-        }
+        result = set_external_limit(evse_index, max_power,
+                                    std::function<types::energy::ExternalLimits(float)>(
+                                        [this](float value) { return get_external_limits(value, true); }));
 
         if (result.error != ResponseErrorEnum::NoError) {
             EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
@@ -281,27 +262,17 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_ind
     configured_limits.is_current_set = true;
     configured_limits.evse_limit = max_current;
     ErrorResObj res;
-    try {
-        res = set_external_limit(evse_index, max_current,
-                                 std::function<types::energy::ExternalLimits(float)>(
-                                     [this](float value) { return get_external_limits(value); }));
-    } catch (const std::out_of_range& e) {
-        EVLOG_error << "Failed to set AC charging limit: " << e.what();
-        res.error = ResponseErrorEnum::ErrorOutOfRange;
-    }
+    res = set_external_limit(evse_index, max_current,
+                             std::function<types::energy::ExternalLimits(float)>(
+                                 [this](float value) { return get_external_limits(value); }));
     return res;
 }
 
 ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
     ErrorResObj res;
-    try {
-        res = set_external_limit(evse_index, phase_count,
-                                 std::function<types::energy::ExternalLimits(int)>(
-                                     [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
-    } catch (const std::out_of_range& e) {
-        EVLOG_error << "Failed to set AC charging phase count: " << e.what();
-        res.error = ResponseErrorEnum::ErrorOutOfRange;
-    }
+    res = set_external_limit(evse_index, phase_count,
+                             std::function<types::energy::ExternalLimits(int)>(
+                                 [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
     return res;
 }
 
@@ -315,15 +286,10 @@ ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool
 ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index, float max_power) {
     configured_limits.is_current_set = false;
     configured_limits.evse_limit = max_power;
-    ErrorResObj res;
-    try {
-        res = set_external_limit(evse_index, max_power,
-                                 std::function<types::energy::ExternalLimits(float)>(
-                                     [this](float value) { return get_external_limits(value, true); }));
-    } catch (const std::out_of_range& e) {
-        EVLOG_error << "Failed to set DC charging limit: " << e.what();
-        res.error = ResponseErrorEnum::ErrorOutOfRange;
-    }
+    ErrorResObj res {};
+    res = set_external_limit(evse_index, max_power,
+                             std::function<types::energy::ExternalLimits(float)>(
+                                 [this](float value) { return get_external_limits(value, true); }));
     return res;
 }
 

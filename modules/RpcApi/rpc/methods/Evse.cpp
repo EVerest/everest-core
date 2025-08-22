@@ -150,6 +150,12 @@ RPCDataTypes::ErrorResObj Evse::set_ac_charging_phase_count(const int32_t evse_i
         return res;
     }
 
+    // Check if phases are 1 or 3, otherwise return an error
+    if (phase_count != 1 && phase_count != 3) {
+        res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidParameter;
+        return res;
+    }
+
     return m_request_handler_ptr->set_ac_charging_phase_count(evse_index, phase_count);
 }
 

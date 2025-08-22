@@ -686,6 +686,10 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReqBadCases) {
     hw_cap.hardware_capabilities.phase_switch_during_charging = true;
     data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
     send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_out_of_range, expected_error_out_of_range, is_key_value_in_json_rpc_result);
+    
+    // Invalid phase count error occurs when phase_count is configured to 2
+    hw_cap.hardware_capabilities.max_phase_count_export = 3;
+    data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
     send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_phase_count, expected_invalid_param, is_key_value_in_json_rpc_result);
 }
 
