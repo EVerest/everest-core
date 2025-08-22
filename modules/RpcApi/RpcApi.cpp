@@ -17,7 +17,7 @@ void RpcApi::init() {
         // subscribe to evse_manager interface variables
         this->subscribe_evse_manager(evse_manager, *evse_data);
     }
-    // no info available until we get the new charger_information interface, see
+    // FIXME: use the new charger_information interface introduced in 2025.7.0
     // https://github.com/EVerest/everest-core/pull/1109
     this->data.chargerinfo.set_unknown();
 
@@ -338,7 +338,6 @@ void RpcApi::hwcaps_var_to_datastore(const types::evse_board_support::HardwareCa
     hw_caps_data_new.min_phase_count_export = hwcaps.min_phase_count_export;
     hw_caps_data_new.min_phase_count_import = hwcaps.min_phase_count_import;
     hw_caps_data_new.phase_switch_during_charging = hwcaps.supports_changing_phases_during_charging;
-    // FIXME: the interface variable's connector_type is covered elsewhere?
 
     // submit changes
     hw_caps_data.set_data(hw_caps_data_new);
