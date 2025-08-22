@@ -20,6 +20,9 @@ types::energy::ExternalLimits get_external_limits(int32_t phases) {
     zero_entry.timestamp = timestamp;
     zero_entry.limits_to_leaves.total_power_W = {0, RPCAPI_MODULE_SOURCE};
 
+    target_entry.limits_to_leaves.ac_max_phase_count = {phases};
+    target_entry.limits_to_leaves.ac_min_phase_count = {phases};
+
     external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
 
@@ -213,6 +216,7 @@ template <typename T>
 ErrorResObj RpcApiRequestHandler::set_external_limit(const int32_t evse_index, T value,
                                                      std::function<types::energy::ExternalLimits(T)> make_limits) {
     ErrorResObj res{};
+    res.error = ResponseErrorEnum::NoError;
 
     bool is_sink_configured;
     try {
