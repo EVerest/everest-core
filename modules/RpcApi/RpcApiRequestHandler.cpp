@@ -242,10 +242,8 @@ ErrorResObj RpcApiRequestHandler::set_external_limit(const int32_t evse_index, T
 ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_index, float max_current) {
     configured_limits.is_current_set = true;
     configured_limits.evse_limit = max_current;
-    ErrorResObj res;
-    res = set_external_limit(evse_index, max_current,
-                             std::function<types::energy::ExternalLimits(float)>(
-                                 [this](float value) { return get_external_limits(value); }));
+    ErrorResObj res{};
+    res = check_active_phases_and_set_limits(evse_index, max_current, false);
     return res;
 }
 
