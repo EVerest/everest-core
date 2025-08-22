@@ -7,3 +7,4 @@ workspace.yaml
 /modules/target
 CMakeLists.txt.user
 .idea/
+MODULE.bazel.lock
