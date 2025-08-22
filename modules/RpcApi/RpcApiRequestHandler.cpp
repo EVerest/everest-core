@@ -203,23 +203,22 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
 
         // Additionally, if charging is not allowed, we set the external limits to zero.
         float max_power = 0.0f;
-        if (!charging_allowed) { // FIXME: always true?
-            ErrorResObj result;
-            try {
-                result = set_external_limit(evse_index, max_power,
-                                            std::function<types::energy::ExternalLimits(float)>(
-                                                [this](float value) { return get_external_limits(value, true); }));
-            } catch (const std::out_of_range& e) {
-                EVLOG_error << "Failed to set AC charging limit: " << e.what();
-                result.error = ResponseErrorEnum::ErrorOutOfRange;
-            }
 
-            if (result.error != ResponseErrorEnum::NoError) {
-                EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
-                              << " with error: " << result.error;
-                res.error = result.error;
-                return res;
-            }
+        ErrorResObj result;
+        try {
+            result = set_external_limit(evse_index, max_power,
+                                        std::function<types::energy::ExternalLimits(float)>(
+                                            [this](float value) { return get_external_limits(value, true); }));
+        } catch (const std::out_of_range& e) {
+            EVLOG_error << "Failed to set charging limit: " << e.what();
+            result.error = ResponseErrorEnum::ErrorOutOfRange;
+        }
+
+        if (result.error != ResponseErrorEnum::NoError) {
+            EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
+                          << " with error: " << result.error;
+            res.error = result.error;
+            return res;
         }
     }
 
