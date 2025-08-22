@@ -43,7 +43,8 @@ void RpcApi::init() {
             this->subscribe_evse_energy(evse_energy, *evse_store);
         } else {
             std::size_t evse_index = idx;
-            EVLOG_warning << "Energy interface no. " << idx << " does not have an EVSE mapping, guessing the EVSE index";
+            EVLOG_warning << "Energy interface with module_id \"" << evse_energy->module_id
+                          << "\" does not have an EVSE mapping, guessing the EVSE index: " << idx;
             if (this->data.evses.size() < r_energy_listener.size()) {
                 EVLOG_warning << "Number of EVSEs " << this->data.evses.size()
                               << " does not match with number of energy interfaces " << r_energy_listener.size()
@@ -388,9 +389,11 @@ bool RpcApi::check_evse_mapping() {
             }
         } else {
             // FIXME no mapping may be incorrect
-            EVLOG_warning << "No mapping found for EVSE manager no. " << idx << ", using index " << idx
-                          << " and connector ID " << connector.id;
-            evse_data->evseinfo.set_index(idx);
+            // begin with index 1, as 0 should be reserved for the complete charger
+            const auto evse_index = idx + 1;
+            EVLOG_warning << "No mapping found for EVSE manager with module_id \"" << evse_manager->module_id
+                          << "\", assigning index " << evse_index << " and connector ID " << connector.id;
+            evse_data->evseinfo.set_index(evse_index);
         }
     }
     return true;
