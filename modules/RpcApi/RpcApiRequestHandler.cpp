@@ -62,6 +62,35 @@ types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power
     return external_limits;
 }
 
+types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power, int32_t phases) {
+    const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    types::energy::ExternalLimits external_limits;
+    types::energy::ScheduleReqEntry target_entry;
+    target_entry.timestamp = timestamp;
+
+    types::energy::ScheduleReqEntry zero_entry;
+    zero_entry.timestamp = timestamp;
+    zero_entry.limits_to_leaves.total_power_W = {0, RPCAPI_MODULE_SOURCE};
+
+    target_entry.limits_to_leaves.ac_max_phase_count = {phases};
+    target_entry.limits_to_leaves.ac_min_phase_count = {phases};
+
+    if (is_power) {
+        target_entry.limits_to_leaves.total_power_W = {phy_value, RPCAPI_MODULE_SOURCE};
+    } else {
+        target_entry.limits_to_leaves.ac_max_current_A = {phy_value, RPCAPI_MODULE_SOURCE};
+    }
+
+    if (phy_value > 0) {
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+    } else {
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+        external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
+    }
+
+    return external_limits;
+}
+
 RpcApiRequestHandler::RpcApiRequestHandler(
     data::DataStoreCharger& dataobj,
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_managers,
@@ -109,25 +138,42 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
     bool is_charging = (evse_state == types::json_rpc_api::EVSEStateEnum::Charging);
     bool is_charging_paused = (evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEVSE ||
                             evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEV);
-    float limit = 0.0f;
+    float phy_limit = 0.0f;
     bool is_power_limit = configured_limits.is_current_set;
+    int phases = 0;
+
+    if (evse_store->evsestatus.get_data().has_value()) {
+        phases = evse_store->evsestatus.get_data()->ac_charge_status.has_value() ? evse_store->evsestatus.get_data()->ac_charge_status.value().evse_active_phase_count : 0;
+    }
 
     if (charging_allowed) {
         // first we need to determine which limits to apply. If the limit (current or power) is already set, we will use that.
         if (configured_limits.evse_limit.has_value()) {
             // If current is set, use the configured current limit
-            limit = configured_limits.evse_limit.value();
+            phy_limit = configured_limits.evse_limit.value();
         } else {
             // If no limits are set, use the default values. TODO: It would be better to get the default values from the EVSE manager.
-            limit = 999.9f; // Default maximum current
+            phy_limit = 999.9f; // Default maximum current
             is_power_limit = false;
         }
+
         ErrorResObj result;
         try {
-            result = set_external_limit(
-                evse_index, limit,
-                std::function<types::energy::ExternalLimits(float)>(
-                    [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
+            // If the phases are not set, we assume DC charging. This means there is no need to apply phase limits.
+            if (phases == 0) {
+                result = set_external_limit(
+                    evse_index, phy_limit,
+                    std::function<types::energy::ExternalLimits(float)>(
+                        [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
+            }
+            else {
+                result = set_external_limit(
+                    evse_index, phy_limit,
+                    std::function<types::energy::ExternalLimits(float)>(
+                        [this, is_power_limit, phases](float value) {
+                            return get_external_limits(value, is_power_limit, phases);
+                        }));
+            }
         } catch (const std::out_of_range& e) {
             EVLOG_error << "Failed to set power/current limit: " << e.what();
             result.error = ResponseErrorEnum::ErrorOutOfRange;
