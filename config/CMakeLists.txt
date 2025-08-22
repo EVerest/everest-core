@@ -1,5 +1,7 @@
 generate_config_run_script(CONFIG sil)
+generate_config_run_script(CONFIG sil-rpcapi)
 generate_config_run_script(CONFIG sil-two-evse)
+generate_config_run_script(CONFIG sil-two-evse-rpcapi)
 generate_config_run_script(CONFIG sil-ocpp)
 generate_config_run_script(CONFIG sil-ocpp201)
 generate_config_run_script(CONFIG sil-dc)
