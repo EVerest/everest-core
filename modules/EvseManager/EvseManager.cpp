@@ -1831,14 +1831,14 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             // now also limit with the limits given by the energymanager.
             // FIXME: dont do this for now, see if the car reduces if we supply new limits.
 
-            session_log.evse(false, fmt::format("BPT HACK: DC power supply set: {}V/{}A, requested was {}V/{}A.",
+            session_log.evse(false, fmt::format("BPT HACK: DC power supply set: {:.2f}V/{:.2f}A, requested was {:.2f}V/{:.2f}A.",
                                                 voltage, current, _voltage, _current));
 
             // set the new limits for the DC output
             r_powersupply_DC[0]->call_setImportVoltageCurrent(voltage, current);
             return true;
         }
-        EVLOG_critical << fmt::format("DC voltage/current out of limits requested: Voltage {} Current {}.", voltage,
+        EVLOG_critical << fmt::format("DC voltage/current out of limits requested: Voltage {:.2f} Current {:.2f}.", voltage,
                                       current);
         return false;
 
@@ -1866,14 +1866,14 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             // now also limit with the limits given by the energymanager.
             // FIXME: dont do this for now, see if the car reduces if we supply new limits.
 
-            session_log.evse(false, fmt::format("DC power supply set: {}V/{}A, requested was {}V/{}A.", voltage,
+            session_log.evse(false, fmt::format("DC power supply set: {:.2f}V/{:.2f}A, requested was {:.2f}V/{:.2f}A.", voltage,
                                                 current, _voltage, _current));
 
             // set the new limits for the DC output
             r_powersupply_DC[0]->call_setExportVoltageCurrent(voltage, current);
             return true;
         }
-        EVLOG_critical << fmt::format("DC voltage/current out of limits requested: Voltage {} Current {}.", voltage,
+        EVLOG_critical << fmt::format("DC voltage/current out of limits requested: Voltage {:.2f} Current {:.2f}.", voltage,
                                       current);
         return false;
     }
