@@ -118,6 +118,7 @@ class JsonRpcWebSocketClient:
 
         self.refresh_saved_calls()
 
+    # Logging functions
     def log(self, message):
         timestamp = int(time.time() * 1000)
         formatted = f"[{timestamp}] {message}\n"
@@ -129,14 +130,26 @@ class JsonRpcWebSocketClient:
         msg_obj = json.loads(message)
         method = msg_obj.get("method")
         if method:
+            is_new_method = method not in self.all_notifications
             self.all_notifications.add(method)
-            self.update_filter_checkboxes()
+            if is_new_method:
+                self.add_filter_checkbox(method)
             if method not in self.notification_filters:
                 formatted = f"[{timestamp}] {message}\n"
                 self.notification_text.insert(tk.END, formatted)
                 if self.notification_autoscroll.get():
                     self.notification_text.see(tk.END)
 
+    # Add only new checkbox
+    def add_filter_checkbox(self, method):
+        var = tk.BooleanVar(value=(method not in self.notification_filters))
+        cb = ttk.Checkbutton(self.filter_frame, text=method, variable=var)
+        cb.var = var
+        cb.method = method
+        cb.config(command=self.update_filters)
+        cb.pack(side=tk.LEFT)
+
+    # UI utility functions
     def clear_notification_text(self):
         self.notification_text.delete('1.0', tk.END)
 
@@ -149,23 +162,13 @@ class JsonRpcWebSocketClient:
     def show_rr_text_menu(self, event):
         self.rr_text_menu.tk_popup(event.x_root, event.y_root)
 
-    def update_filter_checkboxes(self):
-        for widget in self.filter_frame.winfo_children():
-            widget.destroy()
-        for method in sorted(self.all_notifications):
-            var = tk.BooleanVar(value=(method not in self.notification_filters))
-            cb = ttk.Checkbutton(self.filter_frame, text=method, variable=var)
-            cb.var = var
-            cb.method = method
-            cb.config(command=self.update_filters)
-            cb.pack(side=tk.LEFT)
-
     def update_filters(self):
         self.notification_filters = set()
         for cb in self.filter_frame.winfo_children():
             if not cb.var.get():
                 self.notification_filters.add(cb.method)
 
+    # Settings & calls persistence
     def load_settings(self):
         if os.path.exists(SETTINGS_FILE):
             with open(SETTINGS_FILE, "r") as f:
@@ -221,6 +224,7 @@ class JsonRpcWebSocketClient:
         self.save_calls()
         self.refresh_saved_calls()
 
+    # JSON-RPC call
     def send_custom_call(self):
         if not self.connected or not self.ws:
             self.log("Not connected")
@@ -237,6 +241,7 @@ class JsonRpcWebSocketClient:
         except json.JSONDecodeError:
             self.log("Invalid JSON in params")
 
+    # Connection management
     def connect_or_disconnect(self):
         if self.ws and self.connected:
             self.connect_button.state(['disabled'])
