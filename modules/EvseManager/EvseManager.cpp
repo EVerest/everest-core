@@ -543,6 +543,20 @@ void EvseManager::ready() {
                 EVLOG_info << "Received EV maximum limits: " << l;
                 Everest::scoped_lock_timeout lock(ev_info_mutex,
                                                   Everest::MutexDescription::EVSE_subscribe_dc_ev_maximum_limits);
+
+                if (ev_info.present_voltage.has_value()) {
+                    const auto actual_voltage = ev_info.present_voltage.value();
+                    // IEC61851_23 CC.6.2:
+                    // The d.c. supply shall trigger a d.c. supply initiated emergency shutdown according to CC.3.4
+                    // in order to prevent overvoltage at the battery, if output voltage exceeds maximum voltage limit
+                    // sent by the vehicle
+                    if (actual_voltage > l.dc_ev_maximum_voltage_limit) {
+                        charger->set_hlc_error();
+                        r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
+                        return;
+                    }
+                }
+
                 ev_info.maximum_current_limit = l.dc_ev_maximum_current_limit;
                 ev_info.maximum_power_limit = l.dc_ev_maximum_power_limit;
                 ev_info.maximum_voltage_limit = l.dc_ev_maximum_voltage_limit;
