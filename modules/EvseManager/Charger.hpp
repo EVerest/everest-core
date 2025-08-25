@@ -347,7 +347,6 @@ private:
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
-    std::atomic_bool contactors_closed{false};
     std::atomic<float> soft_over_current_tolerance_percent{10.};
     std::atomic<float> soft_over_current_measurement_noise_A{0.5};
     // HLC uses 5 percent signalling. Used both for AC and DC modes.
