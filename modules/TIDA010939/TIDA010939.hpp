@@ -41,8 +41,8 @@ class TIDA010939 : public Everest::ModuleBase {
 public:
     TIDA010939() = delete;
     TIDA010939(const ModuleInfo& info, std::unique_ptr<evse_board_supportImplBase> p_board_support,
-                  std::unique_ptr<ac_rcdImplBase> p_rcd, std::unique_ptr<connector_lockImplBase> p_connector_lock,
-                  Conf& config) :
+               std::unique_ptr<ac_rcdImplBase> p_rcd, std::unique_ptr<connector_lockImplBase> p_connector_lock,
+               Conf& config) :
         ModuleBase(info),
         p_board_support(std::move(p_board_support)),
         p_rcd(std::move(p_rcd)),
