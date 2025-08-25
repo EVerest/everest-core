@@ -12,7 +12,7 @@ cc_everest_module(
     deps = [
         "@pugixml//:libpugixml",
         "@sigslot//:sigslot",
-        "//lib/staging/helpers",
+        "//lib/everest/helpers",
     ],
     impls = IMPLS,
     srcs = glob(

@@ -26,7 +26,7 @@ PRIVATE
     date::date
     date::date-tz
     everest::framework
-    everest::staging::helpers
+    everest::helpers
 )
 
 # needs c++ 14

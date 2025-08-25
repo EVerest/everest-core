@@ -5,8 +5,8 @@
 #include <memory>
 #include <thread>
 
+#include <everest/helpers/helpers.hpp>
 #include <everest/logging.hpp>
-#include <everest/staging/helpers/helpers.hpp>
 #include <utils/date.hpp>
 
 #include <AuthHandler.hpp>
@@ -115,11 +115,11 @@ protected:
             result_1.authorization_status = AuthorizationStatus::Invalid;
 
             ValidationResult result_2;
-            if (everest::staging::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_1) ||
-                everest::staging::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_3)) {
+            if (everest::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_1) ||
+                everest::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_3)) {
                 result_2.authorization_status = AuthorizationStatus::Accepted;
                 result_2.parent_id_token = {PARENT_ID_TOKEN, types::authorization::IdTokenType::ISO14443};
-            } else if (everest::staging::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_2)) {
+            } else if (everest::helpers::is_equal_case_insensitive(id_token, VALID_TOKEN_2)) {
                 result_2.authorization_status = AuthorizationStatus::Accepted;
             } else {
                 result_2.authorization_status = AuthorizationStatus::Invalid;

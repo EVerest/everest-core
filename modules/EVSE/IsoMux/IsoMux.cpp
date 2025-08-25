@@ -7,7 +7,7 @@
 #include "log.hpp"
 #include "sdp.hpp"
 
-#include <openssl_util.hpp>
+#include <everest/tls/openssl_util.hpp>
 namespace {
 void log_handler(openssl::log_level_t level, const std::string& str) {
     switch (level) {

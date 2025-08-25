@@ -3,7 +3,7 @@
 #ifndef RUNAPPLICATIONSTUB_HPP
 #define RUNAPPLICATIONSTUB_HPP
 
-#include <everest/staging/run_application/run_application.hpp>
+#include <everest/run_application/run_application.hpp>
 
 #include <map>
 #include <string>
@@ -14,7 +14,7 @@ class RunApplication {
 public:
     static RunApplication* active_p;
 
-    std::map<std::string, everest::staging::run_application::CmdOutput> results;
+    std::map<std::string, everest::run_application::CmdOutput> results;
     bool signal_poll_called;
     bool psk_called;
     bool sae_password_called;
@@ -27,12 +27,11 @@ public:
     RunApplication();
     virtual ~RunApplication();
 
-    virtual everest::staging::run_application::CmdOutput run_application(const std::string& name,
-                                                                         std::vector<std::string> args);
+    virtual everest::run_application::CmdOutput run_application(const std::string& name, std::vector<std::string> args);
 };
 
 } // namespace stub
-namespace everest::staging::run_application {
+namespace everest::run_application {
 CmdOutput run_application(const std::string& name, std::vector<std::string> args,
                           const std::function<CmdControl(const std::string& output_line)> output_callback);
 }
