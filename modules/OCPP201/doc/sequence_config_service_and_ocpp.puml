@@ -1,5 +1,5 @@
 @startuml
-'https://plantuml.com/sequence-diagram
+
 !pragma teoz true
 participant CSMS order 10
 participant libocpp order 20
@@ -7,40 +7,27 @@ participant ComposedDeviceModel order 30
 database DeviceModelStorageSqlite order 40
 database EverestDeviceModelStorage order 50
 
-autonumber "<b><font color=red>"
-skinparam sequenceArrowThickness 2
+autonumber
 
-== Get Device Model at startup == 
-
-ComposedDeviceModel->ComposedDeviceModel: Initialize device model based on component config
-libocpp->ComposedDeviceModel: get_device_model
-loop For each variable defined in component config
-    alt internally managed variable
-        ComposedDeviceModel->InternalStorage: get_value
-        InternalStorage->ComposedDeviceModel: get_value response
-    else externally managed variable
-        ComposedDeviceModel->ExternalStorage: get_value
-        ExternalStorage->ComposedDeviceModel: get_value response
+== Get Device Model at startup ==
+libocpp -> ComposedDeviceModel: get_device_model()
+loop for each variable
+    alt libocpp source
+        ComposedDeviceModel -> DeviceModelStorageSqlite: get_value()
+    else everest source
+        ComposedDeviceModel -> EverestDeviceModelStorage: get_value()
     end
 end
-ComposedDeviceModel->libocpp: get_device_model response
+ComposedDeviceModel --> libocpp: return model
 
-== SetVariables.req by CSMS ==
-CSMS->libocpp: SetVariables.req
-loop For each SetVariable request
-    libocpp->libocpp: Logical internal validation
-    libocpp->libocpp: Device Model validation
-    alt request is valid
-        libocpp->ComposedDeviceModel: set_value
-        alt internally managed variable
-            ComposedDeviceModel->InternalStorage: set_value
-            InternalStorage->ComposedDeviceModel: set_value response
-        else externally managed variable
-            ComposedDeviceModel->ExternalStorage: set_value
-            ExternalStorage->ComposedDeviceModel: set_value response
-        end
-        ComposedDeviceModel->libocpp: set_value response
-    end
+== SetVariable.req ==
+CSMS -> libocpp: SetVariable.req
+libocpp -> ComposedDeviceModel: set_value()
+alt libocpp source
+    ComposedDeviceModel -> DeviceModelStorageSqlite: set_value()
+else everest source
+    ComposedDeviceModel -> EverestDeviceModelStorage: set_value()
 end
+ComposedDeviceModel --> libocpp: return status
 
 @enduml
