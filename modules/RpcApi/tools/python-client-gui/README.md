@@ -1,6 +1,6 @@
 # JSON-RPC WebSocket Client GUI
 
-A simple Python-based GUI application to connect to the EVerest JSON-RPC API.  
+A simple Python-based GUI application to connect to the EVerest JSON-RPC API.
 Designed for debugging, development, and manual interaction with JSON-RPC services.
 
 ---

@@ -86,12 +86,9 @@ types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power
 }
 
 RpcApiRequestHandler::RpcApiRequestHandler(
-    data::DataStoreCharger& dataobj,
-    const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_managers,
-    const std::vector<std::unique_ptr<external_energy_limitsIntf>>& r_evse_energy_sink)
-    : data_store(dataobj),
-      evse_managers(r_evse_managers),
-      evse_energy_sink(r_evse_energy_sink) {
+    data::DataStoreCharger& dataobj, const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_managers,
+    const std::vector<std::unique_ptr<external_energy_limitsIntf>>& r_evse_energy_sink) :
+    data_store(dataobj), evse_managers(r_evse_managers), evse_energy_sink(r_evse_energy_sink) {
 }
 
 RpcApiRequestHandler::~RpcApiRequestHandler() {
@@ -99,15 +96,13 @@ RpcApiRequestHandler::~RpcApiRequestHandler() {
 }
 
 ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index, bool charging_allowed) {
-    ErrorResObj res {};
-    bool success {true};
+    ErrorResObj res{};
+    bool success{true};
 
     // find the EVSE manager for the given index
-    const auto it = std::find_if(evse_managers.begin(), evse_managers.end(),
-                                 [&evse_index](const auto& manager) {
-                                     return (manager->get_mapping().has_value() &&
-                                     (manager->get_mapping().value().evse == evse_index));
-                                 });
+    const auto it = std::find_if(evse_managers.begin(), evse_managers.end(), [&evse_index](const auto& manager) {
+        return (manager->get_mapping().has_value() && (manager->get_mapping().value().evse == evse_index));
+    });
 
     if (it == evse_managers.end()) {
         res.error = ResponseErrorEnum::ErrorInvalidEVSEIndex;
@@ -131,17 +126,19 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
     auto evse_state = evse_store->evsestatus.get_state();
     bool is_charging = (evse_state == types::json_rpc_api::EVSEStateEnum::Charging);
     bool is_charging_paused = (evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEVSE ||
-                            evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEV);
+                               evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEV);
     float phy_limit = 0.0f;
     bool is_power_limit = configured_limits.is_current_set;
 
     if (charging_allowed) {
-        // first we need to determine which limits to apply. If the limit (current or power) is already set, we will use that.
+        // first we need to determine which limits to apply. If the limit (current or power) is already set, we will use
+        // that.
         if (configured_limits.evse_limit.has_value()) {
             // If current is set, use the configured current limit
             phy_limit = configured_limits.evse_limit.value();
         } else {
-            // If no limits are set, use the default values. TODO: It would be better to get the default values from the EVSE manager.
+            // If no limits are set, use the default values. TODO: It would be better to get the default values from the
+            // EVSE manager.
             phy_limit = 999.9f; // Default maximum current
             is_power_limit = false;
         }
@@ -161,8 +158,7 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
                 EVLOG_warning << "Failed to resume charging for EVSE index: " << evse_index;
             }
         }
-    }
-    else {
+    } else {
         if (is_charging) {
             // If charging is not allowed, we need to pause the charging process
             if (!evse_manager->call_pause_charging()) {
@@ -204,7 +200,8 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::set_ac_charging(const int32_t evse_index, bool charging_allowed, bool max_current, std::optional<int> phase_count) {
+ErrorResObj RpcApiRequestHandler::set_ac_charging(const int32_t evse_index, bool charging_allowed, bool max_current,
+                                                  std::optional<int> phase_count) {
     ErrorResObj res{};
     res.error = ResponseErrorEnum::ErrorValuesNotApplied;
     // TODO: Currently not implemented.
@@ -252,10 +249,10 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_ind
 }
 
 ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
-    ErrorResObj res = set_external_limit(
-        evse_index, phase_count,
-        std::function<types::energy::ExternalLimits(int)>(
-            [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
+    ErrorResObj res = set_external_limit(evse_index, phase_count,
+                                         std::function<types::energy::ExternalLimits(int)>([this](int value) {
+                                             return get_external_limits(static_cast<int32_t>(value));
+                                         }));
     return res;
 }
 
@@ -270,19 +267,18 @@ ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index
     configured_limits.is_current_set = false;
     configured_limits.evse_limit = max_power;
     ErrorResObj res = set_external_limit(evse_index, max_power,
-                             std::function<types::energy::ExternalLimits(float)>(
-                                 [this](float value) { return get_external_limits(value, true); }));
+                                         std::function<types::energy::ExternalLimits(float)>(
+                                             [this](float value) { return get_external_limits(value, true); }));
     return res;
 }
 
-ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int connector_id, bool enable, int priority) {
+ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int connector_id, bool enable,
+                                                   int priority) {
     ErrorResObj res{};
 
-    const auto it = std::find_if(evse_managers.begin(), evse_managers.end(),
-                                 [&evse_index](const auto& manager) {
-                                     return (manager->get_mapping().has_value() &&
-                                     (manager->get_mapping().value().evse == evse_index));
-                                 });
+    const auto it = std::find_if(evse_managers.begin(), evse_managers.end(), [&evse_index](const auto& manager) {
+        return (manager->get_mapping().has_value() && (manager->get_mapping().value().evse == evse_index));
+    });
 
     if (it == evse_managers.end()) {
         res.error = ResponseErrorEnum::ErrorInvalidEVSEIndex;
@@ -294,47 +290,48 @@ ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int
 
     types::evse_manager::EnableDisableSource cmd_source;
     cmd_source.enable_source = types::evse_manager::Enable_source::LocalAPI;
-    cmd_source.enable_state = enable ? types::evse_manager::Enable_state::Enable
-                                      : types::evse_manager::Enable_state::Disable;
+    cmd_source.enable_state =
+        enable ? types::evse_manager::Enable_state::Enable : types::evse_manager::Enable_state::Disable;
     cmd_source.enable_priority = priority;
 
-    const bool result_enabled =  evse_manager->call_enable_disable(connector_id, cmd_source);
+    const bool result_enabled = evse_manager->call_enable_disable(connector_id, cmd_source);
 
     if (result_enabled == enable) {
         res.error = ResponseErrorEnum::NoError;
-        EVLOG_debug << "Connector " << connector_id << " on EVSE index: " << evse_index
-                    << " has been " << (enable ? "enabled" : "disabled") << " with priority: "
-                    << priority;
+        EVLOG_debug << "Connector " << connector_id << " on EVSE index: " << evse_index << " has been "
+                    << (enable ? "enabled" : "disabled") << " with priority: " << priority;
     } else {
         res.error = ResponseErrorEnum::ErrorValuesNotApplied;
-        EVLOG_warning << "Failed to enable/disable connector " << connector_id
-                      << " on EVSE index: " << evse_index;
+        EVLOG_warning << "Failed to enable/disable connector " << connector_id << " on EVSE index: " << evse_index;
     }
 
     return res;
 }
 
 types::json_rpc_api::ErrorResObj RpcApiRequestHandler::check_active_phases_and_set_limits(const int32_t evse_index,
-                                                                                         const float phy_value,
-                                                                                         const bool is_power) {
+                                                                                          const float phy_value,
+                                                                                          const bool is_power) {
     ErrorResObj res{};
     int phases{0};
     auto evse_store = data_store.get_evse_store(evse_index);
 
     if (evse_store->evsestatus.get_data().has_value()) {
-        phases = evse_store->evsestatus.get_data()->ac_charge_status.has_value() ? evse_store->evsestatus.get_data()->ac_charge_status.value().evse_active_phase_count : 0;
+        phases = evse_store->evsestatus.get_data()->ac_charge_status.has_value()
+                     ? evse_store->evsestatus.get_data()->ac_charge_status.value().evse_active_phase_count
+                     : 0;
     }
 
     if (phases == 0) {
-        res = set_external_limit(
-            evse_index, phy_value,
-            std::function<types::energy::ExternalLimits(float)>(
-                [this, is_power](float phy_value) { return get_external_limits(phy_value, is_power); }));
+        res = set_external_limit(evse_index, phy_value,
+                                 std::function<types::energy::ExternalLimits(float)>([this, is_power](float phy_value) {
+                                     return get_external_limits(phy_value, is_power);
+                                 }));
     } else {
         res = set_external_limit(
             evse_index, phy_value,
-            std::function<types::energy::ExternalLimits(float)>(
-                [this, is_power, phases](float phy_value) { return get_external_limits(phy_value, is_power, phases); }));
+            std::function<types::energy::ExternalLimits(float)>([this, is_power, phases](float phy_value) {
+                return get_external_limits(phy_value, is_power, phases);
+            }));
     }
 
     return res;

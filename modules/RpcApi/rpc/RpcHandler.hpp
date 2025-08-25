@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../helpers/LimitDecimalPlaces.hpp"
 #include "../server/TransportInterface.hpp"
 #include "RequestHandlerInterface.hpp"
 #include "methods/Api.hpp"
@@ -28,7 +29,6 @@
 #include "methods/Evse.hpp"
 #include "notifications/ChargePoint.hpp"
 #include "notifications/Evse.hpp"
-#include "../helpers/LimitDecimalPlaces.hpp"
 
 using namespace server;
 using namespace jsonrpccxx;

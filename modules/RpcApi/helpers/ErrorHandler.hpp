@@ -7,7 +7,7 @@
 #include "../data/DataStore.hpp"
 
 namespace helpers {
-    void handle_error_raised(data::DataStoreCharger& data, const types::json_rpc_api::ErrorObj& error);
-    void handle_error_cleared(data::DataStoreCharger& data, const types::json_rpc_api::ErrorObj& error);
-}
+void handle_error_raised(data::DataStoreCharger& data, const types::json_rpc_api::ErrorObj& error);
+void handle_error_cleared(data::DataStoreCharger& data, const types::json_rpc_api::ErrorObj& error);
+} // namespace helpers
 #endif // ERROR_HANDLER_HPP

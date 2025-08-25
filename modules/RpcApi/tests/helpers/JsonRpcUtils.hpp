@@ -1,8 +1,8 @@
 #ifndef JSON_RPC_UTILS_HPP
 #define JSON_RPC_UTILS_HPP
 
-#include <nlohmann/json.hpp>
 #include "../../helpers/LimitDecimalPlaces.hpp"
+#include <nlohmann/json.hpp>
 
 namespace json_rpc_utils {
 
@@ -43,7 +43,8 @@ inline bool is_key_value_in_json_rpc_result(const nlohmann::json& json_obj, cons
     // Check if the JSON object contains the key-value pair in the result object of the JSON-RPC response
     if (json_obj.contains("result") && json_obj["result"].is_object()) {
         const auto& result_obj = json_obj["result"];
-        if (result_obj.contains(json_key_value.begin().key()) && result_obj[json_key_value.begin().key()] == json_key_value.begin().value()) {
+        if (result_obj.contains(json_key_value.begin().key()) &&
+            result_obj[json_key_value.begin().key()] == json_key_value.begin().value()) {
             return true;
         }
     }

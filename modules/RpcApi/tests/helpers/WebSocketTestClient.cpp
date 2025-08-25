@@ -6,13 +6,10 @@
 
 using namespace json_rpc_utils;
 
-WebSocketTestClient::WebSocketTestClient(const std::string& address, int port)
-    : m_address(address), m_port(port), m_context(nullptr), m_wsi(nullptr), m_connected(false) {
+WebSocketTestClient::WebSocketTestClient(const std::string& address, int port) :
+    m_address(address), m_port(port), m_context(nullptr), m_wsi(nullptr), m_connected(false) {
 
-    struct lws_protocols protocols[] = {
-        { "EVerestRpcApi", callback, 0, 0, 0, NULL, 0 },
-        LWS_PROTOCOL_LIST_TERM
-    };
+    struct lws_protocols protocols[] = {{"EVerestRpcApi", callback, 0, 0, 0, NULL, 0}, LWS_PROTOCOL_LIST_TERM};
 
     struct lws_context_creation_info info = {};
     info.port = CONTEXT_PORT_NO_LISTEN; /* client */
@@ -48,31 +45,31 @@ int WebSocketTestClient::callback(struct lws* wsi, enum lws_callback_reasons rea
     }
 
     switch (reason) {
-        case LWS_CALLBACK_CLIENT_ESTABLISHED:
-            client->m_connected = true;
+    case LWS_CALLBACK_CLIENT_ESTABLISHED:
+        client->m_connected = true;
+        client->m_cv.notify_all();
+        break;
+    case LWS_CALLBACK_CLIENT_RECEIVE: {
+        std::lock_guard<std::mutex> lock(client->m_cv_mutex);
+        try {
+            client->m_received_data.assign(static_cast<char*>(in), len);
             client->m_cv.notify_all();
-            break;
-        case LWS_CALLBACK_CLIENT_RECEIVE: {
-            std::lock_guard<std::mutex> lock(client->m_cv_mutex);
-            try {
-                client->m_received_data.assign(static_cast<char*>(in), len);
-                client->m_cv.notify_all();
-            } catch (const std::exception& e) {
-                EVLOG_error << "Exception occurred while handling data available: " << e.what();
-            }
-            break;
+        } catch (const std::exception& e) {
+            EVLOG_error << "Exception occurred while handling data available: " << e.what();
         }
-        case LWS_CALLBACK_CLIENT_CLOSED:
-        case LWS_CALLBACK_CLOSED_CLIENT_HTTP: {
-            client->m_connected = false;
-            EVLOG_info << "Client closed connection: " << (in ? (char*)in : "(null)") << " reason: " << reason;
-            break;
-        }
-        case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-            EVLOG_error << "Client connection error: " << (in ? (char*)in : "(null)");
-            break;
-        default:
-            break;
+        break;
+    }
+    case LWS_CALLBACK_CLIENT_CLOSED:
+    case LWS_CALLBACK_CLOSED_CLIENT_HTTP: {
+        client->m_connected = false;
+        EVLOG_info << "Client closed connection: " << (in ? (char*)in : "(null)") << " reason: " << reason;
+        break;
+    }
+    case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
+        EVLOG_error << "Client connection error: " << (in ? (char*)in : "(null)");
+        break;
+    default:
+        break;
     }
     return 0;
 }
@@ -128,7 +125,8 @@ bool WebSocketTestClient::is_connected() {
 }
 
 void WebSocketTestClient::send(const std::string& message) {
-    if (!m_connected) return;
+    if (!m_connected)
+        return;
 
     try {
         std::vector<unsigned char> buf(LWS_PRE + message.size());
@@ -158,7 +156,7 @@ void WebSocketTestClient::close() {
         m_wsi = nullptr;
 
         if (m_lws_service_thread.joinable()) {
-            m_lws_service_thread.join();  // Wait for client thread to finish
+            m_lws_service_thread.join(); // Wait for client thread to finish
         }
     }
     if (m_context) {
@@ -175,4 +173,3 @@ void WebSocketTestClient::send_api_hello_req() {
 
     send(apiHelloReq.dump());
 }
-

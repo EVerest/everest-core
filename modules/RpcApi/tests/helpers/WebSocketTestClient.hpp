@@ -1,16 +1,16 @@
 #ifndef WEBSOCKETTESTCLIENT_HPP
 #define WEBSOCKETTESTCLIENT_HPP
 
-#include <libwebsockets.h>
-#include <string>
-#include <thread>
 #include <atomic>
-#include <iostream>
-#include <vector>
+#include <condition_variable>
 #include <cstring>
 #include <everest/logging.hpp>
-#include <condition_variable>
+#include <iostream>
+#include <libwebsockets.h>
 #include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 class WebSocketTestClient {
 public:
@@ -37,11 +37,12 @@ public:
         std::unique_lock<std::mutex> lock(m_cv_mutex);
 
         bool received = m_cv.wait_for(lock, timeout, [this, is_result]() {
-            if (m_received_data.empty()) return false;
+            if (m_received_data.empty())
+                return false;
             if (is_result) {
                 // Check string for "result" and "id" keys if is_result is true
                 bool has_result = m_received_data.find("\"result\"") != std::string::npos;
-                bool has_id     = m_received_data.find("\"id\"")     != std::string::npos;
+                bool has_id = m_received_data.find("\"id\"") != std::string::npos;
                 return has_result && has_id;
             }
             return true; // For regular responses, we just check if we have data
@@ -77,13 +78,13 @@ private:
     struct lws_context* m_context;
     struct lws_client_connect_info m_ccinfo {};
     struct lws* m_wsi;
-    std::atomic<bool> m_connected {false};
-    std::atomic<bool> m_lws_service_running {false};
+    std::atomic<bool> m_connected{false};
+    std::atomic<bool> m_lws_service_running{false};
     std::thread m_lws_service_thread;
     std::string m_received_data;
 
 public:
-    //Condition variable to wait for response
+    // Condition variable to wait for response
     std::condition_variable m_cv;
     std::mutex m_cv_mutex;
 };

@@ -1,6 +1,6 @@
+#include <everest/logging.hpp>
 #include <gtest/gtest.h>
 #include <thread>
-#include <everest/logging.hpp>
 
 #include "../helpers/WebSocketTestClient.hpp"
 #include "../server/WebsocketServer.hpp"
@@ -16,7 +16,8 @@ protected:
         ws_server = std::make_unique<WebSocketServer>(false, test_port, "");
         lws_set_log_level(LLL_ERR | LLL_WARN, NULL);
 
-        ws_server->on_client_connected = [this](const TransportInterface::ClientId& client_id, const server::TransportInterface::Address& address) {
+        ws_server->on_client_connected = [this](const TransportInterface::ClientId& client_id,
+                                                const server::TransportInterface::Address& address) {
             // Handle client connected logic here
             std::lock_guard<std::mutex> lock(cv_mutex);
             try {
@@ -30,18 +31,20 @@ protected:
             // Handle client disconnected logic here
             std::lock_guard<std::mutex> lock(cv_mutex);
             try {
-                connected_clients.erase(std::remove(connected_clients.begin(), connected_clients.end(), client_id), connected_clients.end());
+                connected_clients.erase(std::remove(connected_clients.begin(), connected_clients.end(), client_id),
+                                        connected_clients.end());
             } catch (const std::exception& e) {
                 EVLOG_error << "Exception occurred while handling client disconnected: " << e.what();
             }
         };
 
-        ws_server->on_data_available = [this](const TransportInterface::ClientId& client_id, const server::TransportInterface::Data& data) {
+        ws_server->on_data_available = [this](const TransportInterface::ClientId& client_id,
+                                              const server::TransportInterface::Data& data) {
             // Handle data available logic here
             std::lock_guard<std::mutex> lock(cv_mutex);
             try {
-            received_data[client_id] = std::string(data.begin(), data.end());
-            cv.notify_all();
+                received_data[client_id] = std::string(data.begin(), data.end());
+                cv.notify_all();
             } catch (const std::exception& e) {
                 EVLOG_error << "Exception occurred while handling data available: " << e.what();
             }
@@ -55,14 +58,14 @@ protected:
         return connected_clients;
     }
 
-    //Connected client id's
+    // Connected client id's
     std::vector<TransportInterface::ClientId> connected_clients;
 
-    //Condition variable to wait requests
+    // Condition variable to wait requests
     std::condition_variable cv;
     std::mutex cv_mutex;
 
-    //Reveived data with client id
+    // Received data with client id
     std::unordered_map<TransportInterface::ClientId, std::string> received_data;
 
     void TearDown() override {

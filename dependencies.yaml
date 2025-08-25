@@ -42,7 +42,7 @@ libfsm:
 # RpcApi module
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
-  git_tag: v4.3.3  
+  git_tag: v4.3.3
   options:
     - CMAKE_POLICY_DEFAULT_CMP0077 NEW
     - LWS_ROLE_RAW_FILE OFF

@@ -3,9 +3,9 @@
 #include <thread>
 
 #include "../data/DataStore.hpp"
+#include "../helpers/ErrorHandler.hpp"
 #include "../helpers/JsonRpcUtils.hpp"
 #include "../helpers/RequestHandlerDummy.hpp"
-#include "../helpers/ErrorHandler.hpp"
 #include "../helpers/WebSocketTestClient.hpp"
 #include "../rpc/RpcHandler.hpp"
 #include "../server/WebsocketServer.hpp"
@@ -26,7 +26,8 @@ protected:
         std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
         request_handler = std::make_unique<RequestHandlerDummy>();
         transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
-        m_rpc_handler = std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store, std::move(request_handler));
+        m_rpc_handler =
+            std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store, std::move(request_handler));
         m_rpc_handler->start_server();
         initialize_data_store();
     }
@@ -48,9 +49,9 @@ protected:
         data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
     }
 
-    void send_req_and_validate_res(
-        WebSocketTestClient& client, const nlohmann::json& request, const nlohmann::json& expected_response,
-        bool (*cmp_f)(const nlohmann::json&, const nlohmann::json&) = nullptr) {
+    void send_req_and_validate_res(WebSocketTestClient& client, const nlohmann::json& request,
+                                   const nlohmann::json& expected_response,
+                                   bool (*cmp_f)(const nlohmann::json&, const nlohmann::json&) = nullptr) {
         // Send the request
         client.send(request.dump());
         // Wait for the response
@@ -77,7 +78,7 @@ protected:
     std::unique_ptr<server::WebSocketServer> m_websocket_server;
     std::unique_ptr<rpc::RpcHandler> m_rpc_handler;
 
-    //Condition variable to wait for response
+    // Condition variable to wait for response
     std::condition_variable cv;
     std::mutex cv_mutex;
 
@@ -114,11 +115,7 @@ TEST_F(RpcHandlerTest, ApiHelloReq) {
     result.charger_info = data_store.chargerinfo.get_data().value();
     result.everest_version = data_store.everest_version;
 
-    nlohmann::json expected_response = {
-        {"jsonrpc", "2.0"},
-        {"result", result},
-        {"id", 1}
-    };
+    nlohmann::json expected_response = {{"jsonrpc", "2.0"}, {"result", result}, {"id", 1}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
@@ -158,13 +155,15 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
 
     // Set up request and expected response
     nlohmann::json charge_point_get_evse_infos_req = create_json_rpc_request("ChargePoint.GetEVSEInfos", {}, 1);
-    nlohmann::json expected_error_no_data = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
+    nlohmann::json expected_error_no_data = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send ChargePoint.GetEVSEInfos request and validate response, no data available
-    send_req_and_validate_res(client, charge_point_get_evse_infos_req, expected_error_no_data, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, charge_point_get_evse_infos_req, expected_error_no_data,
+                              is_key_value_in_json_rpc_result);
     // Set up the data store with test data
     data_store.evses[0]->evseinfo.set_data(evse_info);
     result.infos.push_back(evse_info);
@@ -287,10 +286,10 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     ASSERT_TRUE(client.connect());
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
-     // Set up requests
-     nlohmann::json evse_get_evse_infos_req_1 = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 1}}, 1);
-     nlohmann::json evse_get_evse_infos_req_2 = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 2}}, 1);
-     nlohmann::json evse_get_infos_req_invalid_id = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 99}}, 1);
+    // Set up requests
+    nlohmann::json evse_get_evse_infos_req_1 = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 1}}, 1);
+    nlohmann::json evse_get_evse_infos_req_2 = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 2}}, 1);
+    nlohmann::json evse_get_infos_req_invalid_id = create_json_rpc_request("EVSE.GetInfo", {{"evse_index", 99}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -327,7 +326,8 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     nlohmann::json expected_response_index_2 = create_json_rpc_response(result_2, 1);
 
     // Expected error object in case of invalid ID
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
@@ -370,21 +370,25 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     RPCDataTypes::EVSEGetStatusResObj res_valid_id;
     res_valid_id.status = evse_status;
     res_valid_id.error = RPCDataTypes::ResponseErrorEnum::NoError;
-    nlohmann::json expected_error_no_data = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
-    nlohmann::json res_obj_invalid_index = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error_no_data = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
+    nlohmann::json res_obj_invalid_index = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
     nlohmann::json expected_response = create_json_rpc_response(res_valid_id, 1);
 
     // Send Api.Hello request
     client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.GetStatus request with valid ID, but no data available
-    send_req_and_validate_res(client, evse_get_status_req_valid_id, expected_error_no_data, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_get_status_req_valid_id, expected_error_no_data,
+                              is_key_value_in_json_rpc_result);
     // Set the EVSE status in the data store
     data_store.evses[0]->evsestatus.set_data(evse_status);
     // Send EVSE.GetStatus request with valid ID
     send_req_and_validate_res(client, evse_get_status_req_valid_id, expected_response);
     // Send EVSE.GetStatus request with invalid ID
-    send_req_and_validate_res(client, evse_get_status_req_invalid_id, res_obj_invalid_index, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_get_status_req_invalid_id, res_obj_invalid_index,
+                              is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.GetHardwareCapabilities request with valid and invalid index
@@ -394,8 +398,10 @@ TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_get_hardware_capabilities_req_valid_id = create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_index", 1}}, 1);
-    nlohmann::json evse_get_hardware_capabilities_req_invalid_id = create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_index", 99}}, 1);
+    nlohmann::json evse_get_hardware_capabilities_req_valid_id =
+        create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_index", 1}}, 1);
+    nlohmann::json evse_get_hardware_capabilities_req_invalid_id =
+        create_json_rpc_request("EVSE.GetHardwareCapabilities", {{"evse_index", 99}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -416,21 +422,25 @@ TEST_F(RpcHandlerTest, EvseGetHardwareCapabilitiesReq) {
 
     // Set up the expected responses
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error_no_data =  {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
-    nlohmann::json expected_error_invalid_index =  {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error_no_data = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
+    nlohmann::json expected_error_invalid_index = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
 
     // Send EVSE.GetHardwareCapabilities request with valid ID, but no hardware capabilities available
-    send_req_and_validate_res(client, evse_get_hardware_capabilities_req_valid_id, expected_error_no_data, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_get_hardware_capabilities_req_valid_id, expected_error_no_data,
+                              is_key_value_in_json_rpc_result);
     // Set the hardware capabilities in the data store
     data_store.evses[0]->hardwarecapabilities.set_data(result.hardware_capabilities);
     // Send EVSE.GetHardwareCapabilities request with valid ID
     send_req_and_validate_res(client, evse_get_hardware_capabilities_req_valid_id, expected_response);
     // Send EVSE.GetHardwareCapabilities request with invalid ID
-    send_req_and_validate_res(client, evse_get_hardware_capabilities_req_invalid_id, expected_error_invalid_index, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_get_hardware_capabilities_req_invalid_id, expected_error_invalid_index,
+                              is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.SetChargingAllowed request with valid and invalid index
@@ -440,8 +450,10 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_charging_allowed_req_valid_id = create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 1}, {"charging_allowed", true}}, 1);
-    nlohmann::json evse_set_charging_allowed_req_invalid_id = create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 99}, {"charging_allowed", true}}, 1);
+    nlohmann::json evse_set_charging_allowed_req_valid_id =
+        create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 1}, {"charging_allowed", true}}, 1);
+    nlohmann::json evse_set_charging_allowed_req_invalid_id =
+        create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 99}, {"charging_allowed", true}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -453,9 +465,10 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
     // Set up the expected responses
-    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
@@ -467,7 +480,8 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
 
     // Send EVSE.SetChargingAllowed request with invalid ID
-    send_req_and_validate_res(client, evse_set_charging_allowed_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_set_charging_allowed_req_invalid_id, expected_error,
+                              is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.MeterData request with valid and invalid index
@@ -478,7 +492,8 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
 
     // Set up requests
     nlohmann::json evse_meter_data_req_valid_id = create_json_rpc_request("EVSE.GetMeterData", {{"evse_index", 1}}, 1);
-    nlohmann::json evse_meter_data_req_invalid_id = create_json_rpc_request("EVSE.GetMeterData", {{"evse_index", 99}}, 1);
+    nlohmann::json evse_meter_data_req_invalid_id =
+        create_json_rpc_request("EVSE.GetMeterData", {{"evse_index", 99}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -486,21 +501,24 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
     // Configure meter data, but do not set it in the data store
-    RPCDataTypes::MeterDataObj meter_data {};
+    RPCDataTypes::MeterDataObj meter_data{};
     meter_data.energy_Wh_import.total = 123.45;
     meter_data.timestamp = "2025-06-10T09:51:56Z";
 
     // Set up the expected responses
-    types::json_rpc_api::EVSEGetMeterDataResObj result {{meter_data}, RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::EVSEGetMeterDataResObj result{{meter_data}, RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response_no_error = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error_no_data = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
-    nlohmann::json expected_error_invalid_index = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error_no_data = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
+    nlohmann::json expected_error_invalid_index = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.MeterData request with valid ID, but no meter data available
-    send_req_and_validate_res(client, evse_meter_data_req_valid_id, expected_error_no_data, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_meter_data_req_valid_id, expected_error_no_data,
+                              is_key_value_in_json_rpc_result);
 
     // Set the meter data in the data store
     data_store.evses[0]->meterdata.set_data(meter_data);
@@ -509,7 +527,8 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
     send_req_and_validate_res(client, evse_meter_data_req_valid_id, expected_response_no_error);
 
     // Send EVSE.MeterData request with invalid ID
-    send_req_and_validate_res(client, evse_meter_data_req_invalid_id, expected_error_invalid_index, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_meter_data_req_invalid_id, expected_error_invalid_index,
+                              is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.SetACCharging request with valid and invalid index
@@ -519,11 +538,9 @@ TEST_F(RpcHandlerTest, EvseSetACChargingReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_ac_charging_req_valid_id = create_json_rpc_request("EVSE.SetACCharging",
-        {{"evse_index", 1},
-         {"charging_allowed", true},
-         {"max_current", 12.3},
-         {"phase_count", 3}}, 1);
+    nlohmann::json evse_set_ac_charging_req_valid_id = create_json_rpc_request(
+        "EVSE.SetACCharging",
+        {{"evse_index", 1}, {"charging_allowed", true}, {"max_current", 12.3}, {"phase_count", 3}}, 1);
 
     // As long as the method is not implemented, we expect an error response that the method is not implemented
     nlohmann::json expected_res = create_json_rpc_error_response(-32601, "method not found: EVSE.SetACCharging", 1);
@@ -547,8 +564,10 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_ac_charging_current_req_valid_id = create_json_rpc_request("EVSE.SetACChargingCurrent", {{"evse_index", 1}, {"max_current", 12.3}}, 1);
-    nlohmann::json evse_set_ac_charging_current_req_invalid_id = create_json_rpc_request("EVSE.SetACChargingCurrent", {{"evse_index", 99}, {"max_current", 12.3}}, 1);
+    nlohmann::json evse_set_ac_charging_current_req_valid_id =
+        create_json_rpc_request("EVSE.SetACChargingCurrent", {{"evse_index", 1}, {"max_current", 12.3}}, 1);
+    nlohmann::json evse_set_ac_charging_current_req_invalid_id =
+        create_json_rpc_request("EVSE.SetACChargingCurrent", {{"evse_index", 99}, {"max_current", 12.3}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -562,9 +581,10 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
     // Set up the expected responses
-    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
@@ -576,7 +596,8 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
     ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
 
     // Send EVSE.SetACChargingCurrent request with invalid ID
-    send_req_and_validate_res(client, evse_set_ac_charging_current_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_set_ac_charging_current_req_invalid_id, expected_error,
+                              is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.SetACChargingPhaseCount request with valid and invalid index
@@ -586,8 +607,10 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_ac_charging_phase_count_req_valid_id = create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 3}}, 1);
-    nlohmann::json evse_set_ac_charging_phase_count_req_invalid_id = create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 99}, {"phase_count", 3}}, 1);
+    nlohmann::json evse_set_ac_charging_phase_count_req_valid_id =
+        create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 3}}, 1);
+    nlohmann::json evse_set_ac_charging_phase_count_req_invalid_id =
+        create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 99}, {"phase_count", 3}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -614,9 +637,10 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
 
     // Set up the expected responses
-    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
@@ -624,19 +648,24 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     // Send EVSE.SetACChargingPhaseCount request with valid ID
     send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_valid_id, expected_response);
     // Send EVSE.SetACChargingPhaseCount request with invalid ID
-    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_id, expected_error,
+                              is_key_value_in_json_rpc_result);
 }
 
-// Test: Connect to WebSocket server and send EVSE.SetACChargingPhaseCount request with invalid phases and disabled phase switching
+// Test: Connect to WebSocket server and send EVSE.SetACChargingPhaseCount request with invalid phases and disabled
+// phase switching
 TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReqBadCases) {
     WebSocketTestClient client("localhost", test_port);
     ASSERT_TRUE(client.connect());
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_ac_charging_phase_count_req_valid_phase_count = create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 1}}, 1);
-    nlohmann::json evse_set_ac_charging_phase_count_req_invalid_phase_count = create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 2}}, 1);
-    nlohmann::json evse_set_ac_charging_phase_count_req_out_of_range = create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 3}}, 1);
+    nlohmann::json evse_set_ac_charging_phase_count_req_valid_phase_count =
+        create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 1}}, 1);
+    nlohmann::json evse_set_ac_charging_phase_count_req_invalid_phase_count =
+        create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 2}}, 1);
+    nlohmann::json evse_set_ac_charging_phase_count_req_out_of_range =
+        create_json_rpc_request("EVSE.SetACChargingPhaseCount", {{"evse_index", 1}, {"phase_count", 3}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -665,11 +694,14 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReqBadCases) {
     data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
 
     // Set up the expected responses
-    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_no_error = create_json_rpc_response(result, 1);
-    nlohmann::json expected_invalid_param = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidParameter)}};
-    nlohmann::json expected_error_out_of_range = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorOutOfRange)}};
-    nlohmann::json expected_error_operation_not_supported = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorOperationNotSupported)}};
+    nlohmann::json expected_invalid_param = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidParameter)}};
+    nlohmann::json expected_error_out_of_range = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorOutOfRange)}};
+    nlohmann::json expected_error_operation_not_supported = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorOperationNotSupported)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
@@ -679,18 +711,21 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReqBadCases) {
     send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_valid_phase_count, expected_no_error);
 
     // Try to switch phase count although phase switching is not allowed (phase_switch_during_charging == false)
-    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_phase_count, expected_error_operation_not_supported, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_phase_count,
+                              expected_error_operation_not_supported, is_key_value_in_json_rpc_result);
 
     // Send EVSE.SetACChargingPhaseCount request with phase count out of range
     // Enable phase switching, because otherwise it returns an ErrorOperationNotSupported error
     hw_cap.hardware_capabilities.phase_switch_during_charging = true;
     data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
-    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_out_of_range, expected_error_out_of_range, is_key_value_in_json_rpc_result);
-    
+    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_out_of_range, expected_error_out_of_range,
+                              is_key_value_in_json_rpc_result);
+
     // Invalid phase count error occurs when phase_count is configured to 2
     hw_cap.hardware_capabilities.max_phase_count_export = 3;
     data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
-    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_phase_count, expected_invalid_param, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_set_ac_charging_phase_count_req_invalid_phase_count, expected_invalid_param,
+                              is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.SetDCCharging request with valid and invalid index
@@ -700,7 +735,8 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_dc_charging_req_valid_id = create_json_rpc_request("EVSE.SetDCCharging", {{"evse_index", 1}, {"charging_allowed", true}, {"max_power", 12.3}}, 1);
+    nlohmann::json evse_set_dc_charging_req_valid_id = create_json_rpc_request(
+        "EVSE.SetDCCharging", {{"evse_index", 1}, {"charging_allowed", true}, {"max_power", 12.3}}, 1);
 
     // As long as the method is not implemented, we expect an error response that the method is not implemented
     nlohmann::json expected_res = create_json_rpc_error_response(-32601, "method not found: EVSE.SetDCCharging", 1);
@@ -716,7 +752,6 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingReq) {
     ASSERT_EQ(response, expected_res);
 }
 
-
 // Test: Connect to WebSocket server and send EVSE.SetDCChargingPower request with valid and invalid index
 TEST_F(RpcHandlerTest, EvseSetDCChargingPowerReq) {
     WebSocketTestClient client("localhost", test_port);
@@ -724,8 +759,10 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingPowerReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_set_dc_charging_power_req_valid_id = create_json_rpc_request("EVSE.SetDCChargingPower", {{"evse_index", 1}, {"max_power", 12.3}}, 1);
-    nlohmann::json evse_set_dc_charging_power_req_invalid_id = create_json_rpc_request("EVSE.SetDCChargingPower", {{"evse_index", 99}, {"max_power", 12.3}}, 1);
+    nlohmann::json evse_set_dc_charging_power_req_valid_id =
+        create_json_rpc_request("EVSE.SetDCChargingPower", {{"evse_index", 1}, {"max_power", 12.3}}, 1);
+    nlohmann::json evse_set_dc_charging_power_req_invalid_id =
+        create_json_rpc_request("EVSE.SetDCChargingPower", {{"evse_index", 99}, {"max_power", 12.3}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -738,9 +775,10 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingPowerReq) {
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
     // Set up the expected responses
-    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
@@ -748,7 +786,8 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingPowerReq) {
     // Send EVSE.SetDCChargingPower request with valid ID
     send_req_and_validate_res(client, evse_set_dc_charging_power_req_valid_id, expected_response);
     // Send EVSE.SetDCChargingPower request with invalid ID
-    send_req_and_validate_res(client, evse_set_dc_charging_power_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_set_dc_charging_power_req_invalid_id, expected_error,
+                              is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.EnableConnector request with valid and invalid index
@@ -758,15 +797,20 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_enable_connector_req_valid_id = create_json_rpc_request("EVSE.EnableConnector", {{"evse_index", 1}, {"enable", true}, {"priority", 1}, {"connector_id", 1}}, 1);
-    nlohmann::json evse_enable_connector_req_invalid_id = create_json_rpc_request("EVSE.EnableConnector", {{"evse_index", 99}, {"enable", true}, {"priority", 1}, {"connector_id", 1}}, 1);
-    nlohmann::json evse_enable_connector_req_invalid_connector_id = create_json_rpc_request("EVSE.EnableConnector", {{"evse_index", 1}, {"enable", true}, {"priority", 1}, {"connector_id", 99}}, 1);
+    nlohmann::json evse_enable_connector_req_valid_id = create_json_rpc_request(
+        "EVSE.EnableConnector", {{"evse_index", 1}, {"enable", true}, {"priority", 1}, {"connector_id", 1}}, 1);
+    nlohmann::json evse_enable_connector_req_invalid_id = create_json_rpc_request(
+        "EVSE.EnableConnector", {{"evse_index", 99}, {"enable", true}, {"priority", 1}, {"connector_id", 1}}, 1);
+    nlohmann::json evse_enable_connector_req_invalid_connector_id = create_json_rpc_request(
+        "EVSE.EnableConnector", {{"evse_index", 1}, {"enable", true}, {"priority", 1}, {"connector_id", 99}}, 1);
 
     // Set up the expected responses
-    types::json_rpc_api::ErrorResObj result {RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
-    nlohmann::json expected_error_invalid_connector_id = {{"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorID)}};
+    nlohmann::json expected_error = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error_invalid_connector_id = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorID)}};
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -786,9 +830,11 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
     // Send EVSE.EnableConnector request with valid ID
     send_req_and_validate_res(client, evse_enable_connector_req_valid_id, expected_response);
     // Send EVSE.EnableConnector request with invalid ID
-    send_req_and_validate_res(client, evse_enable_connector_req_invalid_id, expected_error, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_enable_connector_req_invalid_id, expected_error,
+                              is_key_value_in_json_rpc_result);
     // Send EVSE.EnableConnector request with invalid connector ID
-    send_req_and_validate_res(client, evse_enable_connector_req_invalid_connector_id, expected_error_invalid_connector_id, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_enable_connector_req_invalid_connector_id,
+                              expected_error_invalid_connector_id, is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send invalid request

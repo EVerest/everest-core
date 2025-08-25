@@ -3,9 +3,9 @@
 
 #include "LimitDecimalPlaces.hpp"
 
+#include <cmath>
 #include <iomanip>
 #include <sstream>
-#include <cmath>
 
 namespace helpers {
 

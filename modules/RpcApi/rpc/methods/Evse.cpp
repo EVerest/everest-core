@@ -8,7 +8,7 @@ namespace RPCDataTypes = types::json_rpc_api;
 namespace methods {
 
 RPCDataTypes::EVSEGetInfoResObj Evse::get_info(const int32_t evse_index) {
-    RPCDataTypes::EVSEGetInfoResObj res {};
+    RPCDataTypes::EVSEGetInfoResObj res{};
 
     auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -27,7 +27,7 @@ RPCDataTypes::EVSEGetInfoResObj Evse::get_info(const int32_t evse_index) {
 }
 
 RPCDataTypes::EVSEGetStatusResObj Evse::get_status(const int32_t evse_index) {
-    RPCDataTypes::EVSEGetStatusResObj res {};
+    RPCDataTypes::EVSEGetStatusResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -46,7 +46,7 @@ RPCDataTypes::EVSEGetStatusResObj Evse::get_status(const int32_t evse_index) {
 }
 
 RPCDataTypes::EVSEGetHardwareCapabilitiesResObj Evse::get_hardware_capabilities(const int32_t evse_index) {
-    RPCDataTypes::EVSEGetHardwareCapabilitiesResObj res {};
+    RPCDataTypes::EVSEGetHardwareCapabilitiesResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -64,7 +64,7 @@ RPCDataTypes::EVSEGetHardwareCapabilitiesResObj Evse::get_hardware_capabilities(
 }
 
 RPCDataTypes::ErrorResObj Evse::set_charging_allowed(const int32_t evse_index, bool charging_allowed) {
-    RPCDataTypes::ErrorResObj res {};
+    RPCDataTypes::ErrorResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -75,7 +75,7 @@ RPCDataTypes::ErrorResObj Evse::set_charging_allowed(const int32_t evse_index, b
 }
 
 RPCDataTypes::EVSEGetMeterDataResObj Evse::get_meter_data(const int32_t evse_index) {
-    RPCDataTypes::EVSEGetMeterDataResObj res {};
+    RPCDataTypes::EVSEGetMeterDataResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -91,8 +91,9 @@ RPCDataTypes::EVSEGetMeterDataResObj Evse::get_meter_data(const int32_t evse_ind
     return res;
 }
 
-RPCDataTypes::ErrorResObj Evse::set_ac_charging(const int32_t evse_index, bool charging_allowed, float max_current, std::optional<int> phase_count) {
-    RPCDataTypes::ErrorResObj res {};
+RPCDataTypes::ErrorResObj Evse::set_ac_charging(const int32_t evse_index, bool charging_allowed, float max_current,
+                                                std::optional<int> phase_count) {
+    RPCDataTypes::ErrorResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -103,7 +104,7 @@ RPCDataTypes::ErrorResObj Evse::set_ac_charging(const int32_t evse_index, bool c
 }
 
 RPCDataTypes::ErrorResObj Evse::set_ac_charging_current(const int32_t evse_index, float max_current) {
-    RPCDataTypes::ErrorResObj res {};
+    RPCDataTypes::ErrorResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -114,7 +115,7 @@ RPCDataTypes::ErrorResObj Evse::set_ac_charging_current(const int32_t evse_index
 }
 
 RPCDataTypes::ErrorResObj Evse::set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
-    RPCDataTypes::ErrorResObj res {};
+    RPCDataTypes::ErrorResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -126,7 +127,7 @@ RPCDataTypes::ErrorResObj Evse::set_ac_charging_phase_count(const int32_t evse_i
     // If so, we can return a success response without making any changes. Phase switching is not
     // necessary in this case.
     auto evse_status = evse->evsestatus.get_data();
-    if(evse_status.has_value() && evse_status.value().ac_charge_status.has_value()) {
+    if (evse_status.has_value() && evse_status.value().ac_charge_status.has_value()) {
         if (evse_status.value().ac_charge_status.value().evse_active_phase_count == phase_count) {
             res.error = RPCDataTypes::ResponseErrorEnum::NoError;
             return res;
@@ -136,15 +137,13 @@ RPCDataTypes::ErrorResObj Evse::set_ac_charging_phase_count(const int32_t evse_i
     // If phase switching must be performed and the hardware capabilities do not allow it
     // we return an error response.
     auto hardwarecapabilities = evse->hardwarecapabilities.get_data();
-    if (hardwarecapabilities.has_value() &&
-        hardwarecapabilities.value().phase_switch_during_charging == false) {
+    if (hardwarecapabilities.has_value() && hardwarecapabilities.value().phase_switch_during_charging == false) {
         res.error = RPCDataTypes::ResponseErrorEnum::ErrorOperationNotSupported;
         return res;
     }
 
     // Check if the requested phase count is within the allowed range
-    if (hardwarecapabilities.has_value() &&
-        phase_count < hardwarecapabilities.value().min_phase_count_export ||
+    if (hardwarecapabilities.has_value() && phase_count < hardwarecapabilities.value().min_phase_count_export ||
         phase_count > hardwarecapabilities.value().max_phase_count_export) {
         res.error = RPCDataTypes::ResponseErrorEnum::ErrorOutOfRange;
         return res;
@@ -160,7 +159,7 @@ RPCDataTypes::ErrorResObj Evse::set_ac_charging_phase_count(const int32_t evse_i
 }
 
 RPCDataTypes::ErrorResObj Evse::set_dc_charging(const int32_t evse_index, bool charging_allowed, float max_power) {
-    RPCDataTypes::ErrorResObj res {};
+    RPCDataTypes::ErrorResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -171,7 +170,7 @@ RPCDataTypes::ErrorResObj Evse::set_dc_charging(const int32_t evse_index, bool c
 }
 
 RPCDataTypes::ErrorResObj Evse::set_dc_charging_power(const int32_t evse_index, float max_power) {
-    RPCDataTypes::ErrorResObj res {};
+    RPCDataTypes::ErrorResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -181,8 +180,9 @@ RPCDataTypes::ErrorResObj Evse::set_dc_charging_power(const int32_t evse_index, 
     return m_request_handler_ptr->set_dc_charging_power(evse_index, max_power);
 }
 
-RPCDataTypes::ErrorResObj Evse::enable_connector(const int32_t evse_index, int connector_id, bool enable, int priority) {
-    RPCDataTypes::ErrorResObj res {};
+RPCDataTypes::ErrorResObj Evse::enable_connector(const int32_t evse_index, int connector_id, bool enable,
+                                                 int priority) {
+    RPCDataTypes::ErrorResObj res{};
 
     const auto evse = m_dataobj.get_evse_store(evse_index);
     if (!evse) {
@@ -192,7 +192,7 @@ RPCDataTypes::ErrorResObj Evse::enable_connector(const int32_t evse_index, int c
     // Iterate through the connectors to find the one with the given ID
     const auto connectors = evse->evseinfo.get_available_connectors();
     auto it = std::find_if(connectors.begin(), connectors.end(),
-        [connector_id](const auto& connector) { return connector.id == connector_id; });
+                           [connector_id](const auto& connector) { return connector.id == connector_id; });
     // If not found, return an error
     if (it == connectors.end()) {
         res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorID;

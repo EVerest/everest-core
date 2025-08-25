@@ -22,7 +22,8 @@ public:
     // Deleting the default constructor to ensure the class is always initialized with a DataStoreCharger object
     ChargePoint() = delete;
     // This needs to take a copy of rpc_server for reference counting, not a reference to it
-    ChargePoint(std::shared_ptr<rpc::JsonRpc2ServerWithClient> rpc_server, data::DataStoreCharger& dataobj, int precision = 3);
+    ChargePoint(std::shared_ptr<rpc::JsonRpc2ServerWithClient> rpc_server, data::DataStoreCharger& dataobj,
+                int precision = 3);
     ~ChargePoint() = default;
 
     // Notifications

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte and Contributors to EVerest
 
-// Description: This file defines the SessionInfoStore class, which is used to manage session information for EV charging sessions.
-// It includes methods to update session state, set energy readings, and calculate charged and discharged energy.
-// The code of SessionInfoStore class is mostly a copy of the EVerest API module.
+// Description: This file defines the SessionInfoStore class, which is used to manage session information for EV
+// charging sessions. It includes methods to update session state, set energy readings, and calculate charged and
+// discharged energy. The code of SessionInfoStore class is mostly a copy of the EVerest API module.
 
 #ifndef SESSIONINFO_HPP
 #define SESSIONINFO_HPP
@@ -13,9 +13,9 @@
 #include <generated/types/uk_random_delay.hpp>
 
 // insert your custom include headers here
-#include <mutex>
 #include <date/date.h>
 #include <date/tz.h>
+#include <mutex>
 
 namespace data {
 
@@ -93,6 +93,6 @@ private:
     int active_enable_disable_priority{0};
     bool permanent_fault{false};
 };
-} // namespace module
+} // namespace data
 
 #endif // SESSIONINFO_HPP

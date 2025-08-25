@@ -156,7 +156,7 @@ void SessionInfoStore::set_uk_random_delay_remaining(const types::uk_random_dela
 }
 
 void SessionInfoStore::set_enable_disable_source(const std::string& active_source, const std::string& active_state,
-                                            const int active_priority) {
+                                                 const int active_priority) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->active_enable_disable_source = active_source;
     this->active_enable_disable_state = active_state;
@@ -184,4 +184,4 @@ std::chrono::seconds SessionInfoStore::get_charging_duration_s() const {
 
     return std::chrono::duration_cast<std::chrono::seconds>(this->end_time_point - this->start_time_point);
 }
-} // namespace module
+} // namespace data
