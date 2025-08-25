@@ -37,10 +37,10 @@ struct Conf {
     bool has_socket;
 };
 
-class TIDA010939BSP : public Everest::ModuleBase {
+class TIDA010939 : public Everest::ModuleBase {
 public:
-    TIDA010939BSP() = delete;
-    TIDA010939BSP(const ModuleInfo& info, std::unique_ptr<evse_board_supportImplBase> p_board_support,
+    TIDA010939() = delete;
+    TIDA010939(const ModuleInfo& info, std::unique_ptr<evse_board_supportImplBase> p_board_support,
                   std::unique_ptr<ac_rcdImplBase> p_rcd, std::unique_ptr<connector_lockImplBase> p_connector_lock,
                   Conf& config) :
         ModuleBase(info),

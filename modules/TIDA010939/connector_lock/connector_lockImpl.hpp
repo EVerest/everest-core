@@ -10,7 +10,7 @@
 
 #include <generated/interfaces/connector_lock/Implementation.hpp>
 
-#include "../TIDA010939BSP.hpp"
+#include "../TIDA010939.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -24,7 +24,7 @@ struct Conf {};
 class connector_lockImpl : public connector_lockImplBase {
 public:
     connector_lockImpl() = delete;
-    connector_lockImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<TIDA010939BSP>& mod, Conf& config) :
+    connector_lockImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<TIDA010939>& mod, Conf& config) :
         connector_lockImplBase(ev, "connector_lock"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
@@ -41,7 +41,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<TIDA010939BSP>& mod;
+    const Everest::PtrContainer<TIDA010939>& mod;
     const Conf& config;
 
     virtual void init() override;

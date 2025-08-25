@@ -34,5 +34,5 @@ target_sources(${MODULE_NAME}
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
-# install(FILES firmware.bin DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/TIDA010939BSP/firmware)
+# install(FILES firmware.bin DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/TIDA010939/firmware)
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

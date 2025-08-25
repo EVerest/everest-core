@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#include "TIDA010939BSP.hpp"
+#include "TIDA010939.hpp"
 #include <fmt/core.h>
 #include <utils/date.hpp>
 
 namespace module {
 
-void TIDA010939BSP::init() {
+void TIDA010939::init() {
 
     // initialize serial driver
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
@@ -19,7 +19,7 @@ void TIDA010939BSP::init() {
     invoke_init(*p_rcd);
 }
 
-void TIDA010939BSP::ready() {
+void TIDA010939::ready() {
     serial.run();
 
     if (!serial.reset(config.reset_gpio_chip, config.reset_gpio)) {
@@ -42,7 +42,7 @@ void TIDA010939BSP::ready() {
     }
 }
 
-void TIDA010939BSP::clear_errors_on_unplug() {
+void TIDA010939::clear_errors_on_unplug() {
     if (error_MREC2GroundFailure) {
         p_board_support->clear_error("evse_board_support/MREC2GroundFailure");
     }
@@ -54,7 +54,7 @@ void TIDA010939BSP::clear_errors_on_unplug() {
     error_MREC1ConnectorLockFailure = false;
 }
 
-void TIDA010939BSP::error_handling(ErrorFlags e) {
+void TIDA010939::error_handling(ErrorFlags e) {
 
     if (e.diode_fault and not last_error_flags.diode_fault) {
         Everest::error::Error error_object = p_board_support->error_factory->create_error(
