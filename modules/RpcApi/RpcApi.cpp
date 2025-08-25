@@ -17,9 +17,6 @@ void RpcApi::init() {
         // subscribe to evse_manager interface variables
         this->subscribe_evse_manager(evse_manager, *evse_data);
     }
-    // FIXME: use the new charger_information interface introduced in 2025.7.0
-    // https://github.com/EVerest/everest-core/pull/1109
-    this->data.chargerinfo.set_unknown();
 
     if (r_evse_energy_sink.empty()) {
         EVLOG_warning << "No EVSE energy sinks configured. Configuration of EVSE external limits will not be possible.";
@@ -70,6 +67,39 @@ void RpcApi::init() {
 }
 
 void RpcApi::ready() {
+    // get charger information (cmd not available during init())
+    if (r_charger_information.size() > 0) {
+        types::json_rpc_api::ChargerInfoObj charger_info;
+        auto info = r_charger_information[0]->call_get_charger_information();
+        // mandatory members
+        charger_info.vendor = info.vendor;
+        charger_info.model = info.model;
+        charger_info.serial = info.chargepoint_serial.value_or("unknown");
+        charger_info.firmware_version = info.firmware_version.value_or("unknown");
+        // optional members
+        if (info.friendly_name.has_value()) {
+            charger_info.friendly_name = info.friendly_name.value();
+        }
+        if (info.manufacturer.has_value()) {
+            charger_info.manufacturer = info.manufacturer.value();
+        }
+        if (info.manufacturer_url.has_value()) {
+            charger_info.manufacturer_url = info.manufacturer_url.value();
+        }
+        if (info.model_number.has_value()) {
+            charger_info.model_no = info.model_number.value();
+        }
+        if (info.model_revision.has_value()) {
+            charger_info.revision = info.model_revision.value();
+        }
+        if (info.board_revision.has_value()) {
+            charger_info.board_revision = info.board_revision.value();
+        }
+        this->data.chargerinfo.set_data(charger_info);
+    } else {
+        this->data.chargerinfo.set_unknown();
+    }
+
     // Start server instances
     m_rpc_handler->start_server();
 
