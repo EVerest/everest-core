@@ -1500,11 +1500,6 @@ bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
 
     const bool overwrite_reservation = (this->reservation_id == id);
 
-    if (reserved && this->reservation_id != -1) {
-        EVLOG_info << "Rejecting reservation because evse is already reserved for reservation id "
-                   << this->reservation_id;
-    }
-
     // Check if this evse is not already reserved, or overwrite reservation if it is for the same reservation id.
     if (not reserved || this->reservation_id == -1 || overwrite_reservation) {
         EVLOG_debug << "Make the reservation with id " << id;
@@ -1525,6 +1520,9 @@ bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
         }
 
         return true;
+    } else {
+        EVLOG_info << "Rejecting reservation because evse is already reserved for reservation id "
+                   << this->reservation_id;
     }
 
     return false;
