@@ -62,3 +62,6 @@ To generate the C code nanopb is used:
 The output should also be manually copied to TIDA010939 Firmware to ensure the same
 definition is used on both sides when making changes.
 
+References
+============
+`Official website https://www.ti.com/tool/TIDA-010939 <https://www.ti.com/tool/TIDA-010939>`_
