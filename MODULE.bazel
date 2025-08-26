@@ -87,10 +87,10 @@ everest_core_crate_index.from_cargo(
     cargo_lockfile = "@everest-core//modules:Cargo.lock",
     manifests = [
         "@everest-core//modules:Cargo.toml",
-        "@everest-core//modules/RsIskraMeter:Cargo.toml",
-        "@everest-core//modules/RsPaymentTerminal:Cargo.toml",
-        "@everest-core//modules/rust_examples/RsExample:Cargo.toml",
-        "@everest-core//modules/rust_examples/RsExampleUser:Cargo.toml",
+        "@everest-core//modules/HardwareDrivers/PowerMeters/RsIskraMeter:Cargo.toml",
+        "@everest-core//modules/HardwareDrivers/Payment/RsPaymentTerminal:Cargo.toml",
+        "@everest-core//modules/Examples/RustExamples/RsExample:Cargo.toml",
+        "@everest-core//modules/Examples/RustExamples/RsExampleUser:Cargo.toml",
     ],   
 )
 everest_core_crate_index.annotation(
