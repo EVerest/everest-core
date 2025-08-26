@@ -200,24 +200,41 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
 
     evse_manager->subscribe_limits([this, &evse_data](const types::evse_manager::Limits& limits) {
         // set the external limits in the data store
-        auto tmp = evse_data.evsestatus.get_ac_charge_param();
-        if (!tmp.has_value()) {
-            tmp.emplace();
+        if (evse_data.evseinfo.get_is_ac_transfer_mode()) {
+            auto tmp = evse_data.evsestatus.get_ac_charge_param();
+            if (!tmp.has_value()) {
+                tmp.emplace();
+            }
+            tmp->evse_max_current = limits.max_current;
+            tmp->evse_max_phase_count = limits.nr_of_phases_available;
+            evse_data.evsestatus.set_ac_charge_param(tmp);
         }
-        tmp->evse_max_current = limits.max_current;
-        tmp->evse_max_phase_count = limits.nr_of_phases_available;
-        evse_data.evsestatus.set_ac_charge_param(tmp);
+        else {
+            evse_data.evsestatus.set_ac_charge_param(std::nullopt);
+        }
+    });
+
+    evse_manager->subscribe_supported_energy_transfer_modes([this, &evse_data](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+        // convert to rpc type
+        bool is_ac_transfer_mode = false;
+        auto rpc_supported_energy_transfer_modes = types::json_rpc_api::iso15118_energy_transfer_modes_to_json_rpc_api(supported_energy_transfer_modes, is_ac_transfer_mode);
+        evse_data.evseinfo.set_supported_energy_transfer_modes(rpc_supported_energy_transfer_modes);
+        evse_data.evseinfo.set_is_ac_transfer_mode(is_ac_transfer_mode);
     });
 }
 
 void RpcApi::subscribe_evse_energy(const std::unique_ptr<energyIntf>& evse_energy, data::DataStoreEvse& evse_data) {
     evse_energy->subscribe_energy_flow_request([this, &evse_data](const types::energy::EnergyFlowRequest& request) {
-        if (request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.has_value() &&
+        if (evse_data.evseinfo.get_is_ac_transfer_mode() &&
+            request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.has_value() &&
             request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value() != 0) {
             RPCDataTypes::ACChargeStatusObj ac_charge_status;
             ac_charge_status.evse_active_phase_count =
                 request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value();
             evse_data.evsestatus.set_ac_charge_status(ac_charge_status);
+        }
+        else {
+            evse_data.evsestatus.set_ac_charge_status(std::nullopt);
         }
     });
 }
