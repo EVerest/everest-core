@@ -37,12 +37,6 @@ struct Conf {
     std::string websocket_interface;
     bool websocket_tls_enabled;
     bool authentication_required;
-    std::string charger_information_file;
-    int max_decimal_places_power;
-    int max_decimal_places_energy;
-    int max_decimal_places_current;
-    int max_decimal_places_voltage;
-    int max_decimal_places_frequency;
     int max_decimal_places_other;
 };
 

@@ -17,44 +17,15 @@ config:
     type: string
     default: ""
   websocket_tls_enabled:
-    description: Enable TLS for the websocket server.
+    description: Enable TLS for the websocket server. Currently not implemented.
     type: boolean
     default: false
   authentication_required:
-    description: Require authentication for API requests.
+    description: Require authentication for API requests. Currently not implemented.
     type: boolean
     default: false
-  charger_information_file:
-    description: Path to a file containing information about the charger like its serial number
-    type: string
-    default: ""
-  max_decimal_places_power:
-    description: Maximum number of decimal places for power values. Ignored if value is 0.
-    type: integer
-    default: 2
-    minimum: 0
-  max_decimal_places_energy:
-    description: Maximum number of decimal places for energy values. Ignored if value is 0.
-    type: integer
-    default: 2
-    minimum: 0
-  max_decimal_places_current:
-    description: Maximum number of decimal places for current values. Ignored if value is 0.
-    type: integer
-    default: 2
-    minimum: 0
-  max_decimal_places_voltage:
-    description: Maximum number of decimal places for voltage values. Ignored if value is 0.
-    type: integer
-    default: 2
-    minimum: 0
-  max_decimal_places_frequency:
-    description: Maximum number of decimal places for frequency values. Ignored if value is 0.
-    type: integer
-    default: 2
-    minimum: 0
   max_decimal_places_other:
-    description: Maximum number of decimal places for temperature values. Ignored if value is 0.
+    description: Maximum number of decimal places for all floating point values. Ignored if value is 0.
     type: integer
     default: 2
     minimum: 0
