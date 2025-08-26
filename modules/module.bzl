@@ -16,7 +16,7 @@ def cc_everest_module(
         deps: List of dependencies. Libraries that are required to build the 
             module.
         impls: List of implementations that the module has. It should match the
-            content of mainifest.yaml file.
+            content of manifest.yaml file.
     """
     impl_srcs = native.glob([
         "{}/*.cpp".format(impl)
@@ -33,6 +33,8 @@ def cc_everest_module(
 
     binary = name + "__binary"
     manifest = native.glob(["manifest.y*ml"], allow_empty = False)[0]
+
+    prefix = native.package_name().replace("modules/", "").replace(name, "")
 
     native.genrule(
         name = "ld-ev",
@@ -58,8 +60,8 @@ def cc_everest_module(
         --schemas-dir `dirname $(location @everest-framework//:dependencies.yaml)`/schemas \
         --disable-clang-format \
         --output-dir `dirname $(location generated/modules/{module_name}/ld-ev.hpp)`/.. \
-        {module_name}
-    """.format(module_name = name)
+        {prefix}{module_name}
+    """.format(module_name = name, prefix = prefix)
     )
 
     native.cc_binary(

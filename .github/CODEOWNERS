@@ -24,28 +24,28 @@
 
 # modules
 /modules/API/ @hikinggrass @pietfried @corneliusclaussen
-/modules/Auth/ @pietfried @corneliusclaussen @hikinggrass @mlitre
-/modules/Energymanager/ @corneliusclaussen @hikinggrass @pietfried
-/modules/EnergyNode/ @corneliusclaussen @hikinggrass @pietfried
-/modules/ErrorHistory/ @corneliusclaussen @hikinggrass @pietfried @andistorm
-/modules/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried @mlitre
-/modules/EvManager/ @SebaLukas @pietfried @MarzellT
-/modules/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen @pietfried @hikinggrass @MarzellT
-/modules/EvseSecurity/ @AssemblyJohn @pietfried @hikinggrass
-/modules/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc @pietfried @hikinggrass @MarzellT
-/modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas @pietfried @hikinggrass
-/modules/OCPP/ @hikinggrass @pietfried @mlitre
-/modules/OCPP201/ @hikinggrass @pietfried @mlitre
-/modules/PacketSniffer/ @corneliusclaussen @SebaLukas @hikinggrass
-/modules/PhyVersoBSP/ @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
-/modules/PyEvJosev/ @SebaLukas @corneliusclaussen @pietfried
-/modules/Setup/ @hikinggrass @corneliusclaussen @pietfried
-/modules/YetiDriver/ @corneliusclaussen @hikinggrass
-/modules/examples/error-framework/ @corneliusclaussen @hikinggrass @pietfried @andistorm
-/modules/simulation/ @SebaLukas @pietfried @hikinggrass
-/modules/simulation/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
-/modules/simulation/YetiSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
-/modules/rust_examples/ @SirVer @dorezyuk
+/modules/EnergyManagement/Energymanager/ @corneliusclaussen @hikinggrass @pietfried
+/modules/EnergyManagement/EnergyNode/ @corneliusclaussen @hikinggrass @pietfried
+/modules/EV/EvManager/ @SebaLukas @pietfried @MarzellT
+/modules/EV/PyEvJosev/ @SebaLukas @corneliusclaussen @pietfried
+/modules/EVSE/Auth/ @pietfried @corneliusclaussen @hikinggrass @mlitre
+/modules/EVSE/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen @pietfried @hikinggrass @MarzellT
+/modules/EVSE/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried @mlitre
+/modules/EVSE/EvseSecurity/ @AssemblyJohn @pietfried @hikinggrass
+/modules/EVSE/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas @pietfried @hikinggrass
+/modules/EVSE/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc @pietfried @hikinggrass @MarzellT
+/modules/EVSE/OCPP/ @hikinggrass @pietfried @mlitre
+/modules/EVSE/OCPP201/ @hikinggrass @pietfried @mlitre
+/modules/Examples/CppExamples/error-framework/ @corneliusclaussen @hikinggrass @pietfried @andistorm
+/modules/Examples/RustExamples/ @SirVer @dorezyuk
+/modules/HardwareDrivers/EVSE/PhyVersoBSP/ @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
+/modules/HardwareDrivers/EVSE/YetiDriver/ @corneliusclaussen @hikinggrass
+/modules/Misc/ErrorHistory/ @corneliusclaussen @hikinggrass @pietfried @andistorm
+/modules/Misc/PacketSniffer/ @corneliusclaussen @SebaLukas @hikinggrass
+/modules/Misc/Setup/ @hikinggrass @corneliusclaussen @pietfried
+/modules/Simulation/ @SebaLukas @pietfried @hikinggrass
+/modules/Simulation/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
+/modules/Simulation/YetiSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
 **/Cargo.toml @SirVer @dorezyuk @pietfried @hikinggrass
 **/Cargo.lock @SirVer @dorezyuk @pietfried @hikinggrass
 
