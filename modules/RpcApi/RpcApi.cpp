@@ -189,8 +189,6 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         // set the EVSE id in the data store
         evse_data.evseinfo.set_id(evse_id);
     });
-    // TODO: get bidi charging support info from interface
-    evse_data.evseinfo.set_bidi_charging(false);
 
     evse_manager->subscribe_session_event([this, &evse_data](types::evse_manager::SessionEvent session_event) {
         check_evse_session_event(evse_data, session_event);

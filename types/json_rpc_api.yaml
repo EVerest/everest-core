@@ -66,6 +66,27 @@ types:
     - wResonant
     - Undetermined
     - Unknown
+  EnergyTransferModeEnum:
+    description: >-
+      Possible energy transfer modes. The modes AC_single_phase_core to DC_unique apply to DIN70121 and ISO15118-2.
+      The other modes DC to WPT apply to ISO15118-20.
+    type: string
+    enum:
+      - AC_single_phase_core
+      - AC_two_phase
+      - AC_three_phase_core
+      - DC_core
+      - DC_extended
+      - DC_combo_core
+      - DC_unique
+      - DC
+      - AC_BPT
+      - AC_BPT_DER
+      - AC_DER
+      - DC_BPT
+      - DC_ACDP
+      - DC_ACDP_BPT
+      - WPT
   Severity:
     description: Severity of an error
     type: string
@@ -423,7 +444,7 @@ types:
       - index
       - id
       - available_connectors
-      - bidi_charging
+      - supported_energy_transfer_modes
     properties:
       index:
         description: Unique index of the EVSE, used for identifying it
@@ -441,9 +462,11 @@ types:
           description: Connector infomation object
           type: object
           $ref: /json_rpc_api#/ConnectorInfoObj
-      bidi_charging:
-        description: Whether bidirectional charging is supported
-        type: boolean
+      supported_energy_transfer_modes:
+        description: Supported energy transfer modes of the EVSE
+        type: array
+        items:
+          $ref: /json_rpc_api#/EnergyTransferModeEnum
   EVSEStatusObj:
     description: All information about the current status of a charge point EVSE
     type: object

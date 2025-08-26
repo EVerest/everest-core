@@ -49,9 +49,9 @@ void ChargerErrorsStore::clear_error(const types::json_rpc_api::ErrorObj& error)
     }
 }
 
-void EVSEInfoStore::set_bidi_charging(bool enabled) {
+void EVSEInfoStore::set_supported_energy_transfer_modes(std::vector<types::json_rpc_api::EnergyTransferModeEnum> supported_energy_transfer_modes) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
-    this->dataobj.bidi_charging = enabled;
+    this->dataobj.supported_energy_transfer_modes = supported_energy_transfer_modes;
 }
 void EVSEInfoStore::set_index(int32_t index) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
@@ -80,10 +80,20 @@ void EVSEInfoStore::set_available_connector(types::json_rpc_api::ConnectorInfoOb
     this->dataobj.available_connectors.push_back(available_connector);
 }
 
+bool EVSEInfoStore::get_is_ac_transfer_mode() const {
+    std::unique_lock<std::mutex> data_lock(this->data_mutex);
+    return this->is_ac_transfer_mode;
+}
+
 int32_t EVSEInfoStore::get_index() {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     return this->dataobj.index;
 }
+
+void EVSEInfoStore::set_is_ac_transfer_mode(bool is_ac) {
+    this->is_ac_transfer_mode = is_ac;
+}
+
 std::vector<types::json_rpc_api::ConnectorInfoObj> EVSEInfoStore::get_available_connectors() {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     return this->dataobj.available_connectors;

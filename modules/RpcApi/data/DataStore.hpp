@@ -6,6 +6,7 @@
 #include "GenericInfoStore.hpp"
 #include "SessionInfo.hpp"
 #include <everest/logging.hpp>
+#include <atomic>
 
 namespace data {
 
@@ -40,13 +41,18 @@ public:
 
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {
 public:
-    void set_bidi_charging(bool enabled);
+    void set_supported_energy_transfer_modes(std::vector<types::json_rpc_api::EnergyTransferModeEnum> supported_energy_transfer_modes);
     void set_index(int32_t index);
     void set_id(const std::string& id);
     void set_available_connectors(const std::vector<RPCDataTypes::ConnectorInfoObj>& connectors);
     void set_available_connector(types::json_rpc_api::ConnectorInfoObj& available_connector);
+    void set_is_ac_transfer_mode(bool is_ac);
+    bool get_is_ac_transfer_mode() const;
     int32_t get_index();
     std::vector<types::json_rpc_api::ConnectorInfoObj> get_available_connectors();
+
+private:
+    std::atomic<bool> is_ac_transfer_mode;
 };
 
 class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {
