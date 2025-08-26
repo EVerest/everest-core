@@ -40,6 +40,7 @@ types:
     - Finished
     - FinishedEVSE
     - FinishedEV
+    - SwitchingPhases
   ConnectorTypeEnum:
     description: Enumerator of connector types
     type: string

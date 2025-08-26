@@ -50,6 +50,8 @@ EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::Sess
     case Event::ReservationEnd:
     case Event::SessionFinished:
         return State::Unplugged;
+    case Event::SwitchingPhases:
+        return State::SwitchingPhases;
     case Event::ReplugStarted:
     case Event::ReplugFinished:
     default:
