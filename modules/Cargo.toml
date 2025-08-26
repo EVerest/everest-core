@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-   "RsIskraMeter",
-   "RsPaymentTerminal",
-   "rust_examples/RsExample",
-   "rust_examples/RsExampleUser",
+   "HardwareDrivers/PowerMeters/RsIskraMeter",
+   "HardwareDrivers/Payment/RsPaymentTerminal",
+   "Examples/RustExamples/RsExample",
+   "Examples/RustExamples/RsExampleUser",
 ]
 
 [workspace.dependencies]

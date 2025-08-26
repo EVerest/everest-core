@@ -9,7 +9,7 @@ cmds:
     description: >-
       Resets the RCD after a trigger. May not be supported by actual hardware.
     result:
-      description: 'True: Reset successfull, False: Reset failed.'
+      description: 'True: Reset successful, False: Reset failed.'
       type: boolean
 vars:
   rcd_current_mA:
