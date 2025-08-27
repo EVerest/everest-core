@@ -9,7 +9,7 @@ types:
     - ErrorOutOfRange
     - ErrorValuesNotApplied
     - ErrorInvalidEVSEIndex
-    - ErrorInvalidConnectorID
+    - ErrorInvalidConnectorIndex
     - ErrorNoDataAvailable
     - ErrorOperationNotSupported
     - ErrorUnknownError
@@ -195,10 +195,10 @@ types:
     type: object
     additionalProperties: false
     required:
-      - id
+      - index
       - type
     properties:
-      id:
+      index:
         description: Unique identifier
         type: integer
       type:
@@ -478,7 +478,7 @@ types:
       - charging_duration_s
       - charging_allowed
       - available
-      - active_connector_id
+      - active_connector_index
       - error_present
       - charge_protocol
       - state
@@ -498,8 +498,8 @@ types:
       available:
         description: available
         type: boolean
-      active_connector_id:
-        description: active_connector_id
+      active_connector_index:
+        description: active_connector_index
         type: integer
       error_present:
         description: error_present

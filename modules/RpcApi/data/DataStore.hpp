@@ -11,7 +11,7 @@
 namespace data {
 
 enum class EVSEStatusField {
-    ActiveConnectorId,
+    ActiveConnectorIndex,
     ChargingAllowed,
     State,
     ErrorPresent,
@@ -64,8 +64,8 @@ private:
 public:
     EVSEStatusStore();
 
-    // Example set method using the enum
-    void set_active_connector_id(int32_t active_connector_id);
+    // Set the active connector index
+    void set_active_connector_index(int32_t active_connector_index);
     // set the charging allowed flag
     void set_charging_allowed(bool charging_allowed);
     // set the EVSE state

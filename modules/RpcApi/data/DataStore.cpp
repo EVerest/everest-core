@@ -69,14 +69,14 @@ void EVSEInfoStore::set_available_connectors(const std::vector<RPCDataTypes::Con
 
 void EVSEInfoStore::set_available_connector(types::json_rpc_api::ConnectorInfoObj& available_connector) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
-    // Interate through the vector and set the connector with the given id
+    // Interate through the vector and set the connector with the given index
     for (auto& connector : this->dataobj.available_connectors) {
-        if (connector.id == available_connector.id) {
+        if (connector.index == available_connector.index) {
             connector = available_connector; // Update the existing connector
             return;
         }
     }
-    // If the connector with the given id is not found, add it to the vector
+    // If the connector with the given index is not found, add it to the vector
     this->dataobj.available_connectors.push_back(available_connector);
 }
 
@@ -118,7 +118,7 @@ void EVSEStatusStore::update_data_is_valid() {
 EVSEStatusStore::EVSEStatusStore() {
     // Initialize field_status map with all fields set to false
     field_status = {
-        {EVSEStatusField::ActiveConnectorId, false},
+        {EVSEStatusField::ActiveConnectorIndex, false},
         {EVSEStatusField::ChargingAllowed, false},
         {EVSEStatusField::State, false},
         {EVSEStatusField::ErrorPresent, false},
@@ -139,13 +139,13 @@ EVSEStatusStore::EVSEStatusStore() {
 }
 
 // Example set method using the enum
-void EVSEStatusStore::set_active_connector_id(int32_t active_connector_id) {
+void EVSEStatusStore::set_active_connector_index(int32_t active_connector_index) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex); // check if data has changed
-    field_status[EVSEStatusField::ActiveConnectorId] = true;  // Mark field as set
+    field_status[EVSEStatusField::ActiveConnectorIndex] = true;  // Mark field as set
     update_data_is_valid();
     // check if data has changed
-    if (this->dataobj.active_connector_id != active_connector_id) {
-        this->dataobj.active_connector_id = active_connector_id;
+    if (this->dataobj.active_connector_index != active_connector_index) {
+        this->dataobj.active_connector_index = active_connector_index;
         data_lock.unlock();
         this->notify_data_changed();
     }

@@ -180,7 +180,7 @@ RPCDataTypes::ErrorResObj Evse::set_dc_charging_power(const int32_t evse_index, 
     return m_request_handler_ptr->set_dc_charging_power(evse_index, max_power);
 }
 
-RPCDataTypes::ErrorResObj Evse::enable_connector(const int32_t evse_index, int connector_id, bool enable,
+RPCDataTypes::ErrorResObj Evse::enable_connector(const int32_t evse_index, int connector_index, bool enable,
                                                  int priority) {
     RPCDataTypes::ErrorResObj res{};
 
@@ -192,13 +192,13 @@ RPCDataTypes::ErrorResObj Evse::enable_connector(const int32_t evse_index, int c
     // Iterate through the connectors to find the one with the given ID
     const auto connectors = evse->evseinfo.get_available_connectors();
     auto it = std::find_if(connectors.begin(), connectors.end(),
-                           [connector_id](const auto& connector) { return connector.id == connector_id; });
+                           [connector_index](const auto& connector) { return connector.index == connector_index; });
     // If not found, return an error
     if (it == connectors.end()) {
-        res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorID;
+        res.error = RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorIndex;
         return res;
     }
-    return m_request_handler_ptr->enable_connector(evse_index, connector_id, enable, priority);
+    return m_request_handler_ptr->enable_connector(evse_index, connector_index, enable, priority);
 }
 
 } // namespace methods

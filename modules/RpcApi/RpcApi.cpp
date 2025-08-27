@@ -400,19 +400,19 @@ bool RpcApi::check_evse_mapping() {
     for (std::size_t idx = 0; idx < r_evse_manager.size(); idx++) {
         const auto& evse_manager = r_evse_manager[idx];
         const auto& evse_data = this->data.evses[idx];
-        // Initialize connector id for the case of no mapping information
+        // Initialize connector index for the case of no mapping information
         types::json_rpc_api::ConnectorInfoObj connector;
-        connector.id = 1;                                                 // default connector id
+        connector.index = 1;                                                 // default connector id
         connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
         evse_data->evseinfo.set_available_connector(connector);
-        evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
+        evse_data->evsestatus.set_active_connector_index(connector.index); // TODO: support multiple connectors
         // create one DataStore object per EVSE sink
         if (evse_manager->get_mapping().has_value()) {
-            // Write EVSE index and connector id to the datastore
+            // Write EVSE index and connector index to the datastore
             evse_data->evseinfo.set_index(evse_manager->get_mapping().value().evse);
             if (evse_manager->get_mapping().value().connector.has_value()) {
-                // Initialize connector id
-                connector.id = evse_manager->get_mapping().value().connector.value();
+                // Initialize connector index
+                connector.index = evse_manager->get_mapping().value().connector.value();
                 types::evse_manager::Evse evse = evse_manager->call_get_evse();
                 if (!evse.connectors.empty() && evse.connectors[0].type.has_value()) {
                     try {
@@ -421,23 +421,23 @@ bool RpcApi::check_evse_mapping() {
                                 evse.connectors[0]
                                     .type.value())); // evse.connectors[0].type; // use the first connector type
                     } catch (const std::out_of_range& e) {
-                        EVLOG_debug << "Unknown connector type for connector ID " << connector.id;
+                        EVLOG_debug << "Unknown connector type for connector index " << connector.index;
                     }
                 } else {
-                    EVLOG_debug << "No connector type determined for connector ID " << connector.id;
+                    EVLOG_debug << "No connector type determined for connector index " << connector.index;
                 }
                 evse_data->evseinfo.set_available_connector(connector);
-                evse_data->evsestatus.set_active_connector_id(connector.id); // TODO: support multiple connectors
+                evse_data->evsestatus.set_active_connector_index(connector.index); // TODO: support multiple connectors
             } else {
-                EVLOG_debug << "No connector id configured in the EVSE mapping, using default connector ID "
-                            << connector.id;
+                EVLOG_debug << "No connector index configured in the EVSE mapping, using default connector index "
+                            << connector.index;
             }
         } else {
             // FIXME no mapping may be incorrect
             // begin with index 1, as 0 should be reserved for the complete charger
             const auto evse_index = idx + 1;
             EVLOG_warning << "No mapping found for EVSE manager with module_id \"" << evse_manager->module_id
-                          << "\", assigning index " << evse_index << " and connector ID " << connector.id;
+                          << "\", assigning index " << evse_index << " and connector index " << connector.index;
             evse_data->evseinfo.set_index(evse_index);
         }
     }
