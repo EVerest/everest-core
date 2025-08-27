@@ -328,7 +328,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
                 }
                 this->publish_token_validation_status_callback(provided_token,
-                                                               types::authorization::TokenValidationStatus::Accepted);
+                                                               types::authorization::TokenValidationStatus::Validated);
                 /* although validator accepts the authorization request, the Auth module still needs to
                     - select the evse for the authorization request
                     - process it against placed reservations
