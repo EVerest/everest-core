@@ -641,7 +641,7 @@ void YetiSimulator::publish_keepalive() {
             .dump());
 }
 
-void YetiSimulator::drawPower(const int l1, const int l2, const int l3, const int n) const {
+void YetiSimulator::drawPower(const double l1, const double l2, const double l3, const double n) const {
     module_state->simdata_setting.currents.L1 = l1;
     module_state->simdata_setting.currents.L2 = l2;
     module_state->simdata_setting.currents.L3 = l3;
