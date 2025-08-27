@@ -401,6 +401,8 @@ static void* connection_handle_tcp(void* data) {
 
     dlog(DLOG_LEVEL_INFO, "Started new TCP connection thread");
 
+    remove_service_from_service_list_if_exists(conn->ctx, V2G_SERVICE_ID_CERTIFICATE);
+
     /* check if the v2g-session is already running in another thread, if not, handle v2g-connection */
     if (conn->ctx->state == 0) {
         int rv2 = v2g_handle_connection(conn);

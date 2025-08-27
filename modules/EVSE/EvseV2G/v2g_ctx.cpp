@@ -119,7 +119,6 @@ void v2g_ctx_init_charging_state(struct v2g_context* const ctx, bool is_connecti
     ctx->session.renegotiation_required = false;
     ctx->session.is_charging = false;
     ctx->evse_v2g_data.evse_notification = (uint8_t)0;
-    remove_service_from_service_list_if_exists(ctx, V2G_SERVICE_ID_CERTIFICATE);
 }
 
 void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
@@ -157,7 +156,6 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     }
     ctx->meter_info.meter_info_is_used = false;
 
-    ctx->evse_v2g_data.evse_service_list.clear();
     memset(&ctx->evse_v2g_data.service_parameter_list, 0,
            sizeof(struct iso2_ServiceParameterListType) * iso2_ServiceType_8_ARRAY_SIZE);
 
@@ -197,6 +195,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
         ctx->evse_v2g_data.payment_option_list_len = (uint8_t)1; // One option must be set
 
+        ctx->evse_v2g_data.evse_service_list.clear();
         ctx->evse_v2g_data.evse_service_list.reserve(iso2_ServiceType_8_ARRAY_SIZE);
     }
 
@@ -267,6 +266,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     memset(ctx->session.gen_challenge, 0, sizeof(ctx->session.gen_challenge));
 
     ctx->session.authorization_rejected = false;
+
+    remove_service_from_service_list_if_exists(ctx, V2G_SERVICE_ID_CERTIFICATE);
 
     initialize_once = true;
 }
