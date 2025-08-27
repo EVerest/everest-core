@@ -1,5 +1,3 @@
-ev_add_module(RpcApi)
-
 add_subdirectory(API)
 add_subdirectory(EnergyManagement)
 add_subdirectory(EV)
