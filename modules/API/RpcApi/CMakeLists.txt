@@ -55,7 +55,6 @@ target_compile_options(${MODULE_NAME}
     PRIVATE
         -Wimplicit-fallthrough
 #        -Werror=switch-enum
-#        -DAPI_VERSION=\"0.0.1\"
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
