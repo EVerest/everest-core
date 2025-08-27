@@ -34,6 +34,8 @@ std::string token_handling_result_to_string(const TokenHandlingResult& result) {
         return "REJECTED";
     case TokenHandlingResult::TIMEOUT:
         return "TIMEOUT";
+    case TokenHandlingResult::USED_TO_START_TRANSACTION:
+        return "USED_TO_START_TRANSACTION";
     case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
         return "USED_TO_STOP_TRANSACTION";
     case TokenHandlingResult::WITHDRAWN:
@@ -112,8 +114,9 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     case TokenHandlingResult::REJECTED:
         this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Rejected);
         break;
+    case TokenHandlingResult::USED_TO_START_TRANSACTION:
     case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Accepted);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Used);
         break;
     case TokenHandlingResult::WITHDRAWN:
         this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Withdrawn);
@@ -328,7 +331,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
                 }
                 this->publish_token_validation_status_callback(provided_token,
-                                                               types::authorization::TokenValidationStatus::Validated);
+                                                               types::authorization::TokenValidationStatus::Accepted);
                 /* although validator accepts the authorization request, the Auth module still needs to
                     - select the evse for the authorization request
                     - process it against placed reservations
@@ -387,7 +390,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
             i++;
         }
         if (authorized) {
-            return TokenHandlingResult::ACCEPTED;
+            return TokenHandlingResult::USED_TO_START_TRANSACTION;
         } else {
             EVLOG_debug << "id_token could not be validated by any validator";
             // in case the validation was not successful, we need to notify the evse and transmit the validation result.
