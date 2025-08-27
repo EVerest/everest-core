@@ -89,6 +89,10 @@ provides:
 requires:
   security:
     interface: evse_security
+  iso15118_vas:
+    interface: ISO15118_vas
+    min_connections: 0
+    max_connections: 128
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

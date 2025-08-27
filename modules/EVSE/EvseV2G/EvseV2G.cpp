@@ -35,8 +35,14 @@ struct v2g_context* v2g_ctx = nullptr;
 namespace module {
 
 void EvseV2G::init() {
+
+    std::vector<ISO15118_vasIntf*> r_vas;
+    r_vas.reserve(r_iso15118_vas.size());
+    for (const auto& vas : r_iso15118_vas) {
+        r_vas.emplace_back(vas.get());
+    }
     /* create v2g context */
-    v2g_ctx = v2g_ctx_create(&(*p_charger), &(*p_extensions), &(*r_security));
+    v2g_ctx = v2g_ctx_create(p_charger.get(), p_extensions.get(), r_security.get(), r_vas);
 
     if (v2g_ctx == nullptr)
         return;

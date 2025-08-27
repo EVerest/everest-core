@@ -5,6 +5,7 @@
 #define V2G_H
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
+#include <generated/interfaces/ISO15118_vas/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
@@ -181,6 +182,7 @@ struct v2g_context {
     std::atomic_bool shutdown;
 
     evse_securityIntf* r_security;
+    std::vector<ISO15118_vasIntf*> r_vas;
     ISO15118_chargerImplBase* p_charger;
     iso15118_extensionsImplBase* p_extensions;
 
@@ -259,8 +261,8 @@ struct v2g_context {
         struct v2g_evse_id evse_id;
         unsigned int date_time_now_is_used;
         struct iso2_ChargeServiceType charge_service;
-        std::vector<iso2_ServiceType> evse_service_list{};
-        struct iso2_ServiceParameterListType service_parameter_list[iso2_ServiceType_8_ARRAY_SIZE];
+        std::vector<iso2_ServiceType> evse_service_list;
+        std::map<uint16_t, iso2_ServiceParameterListType> service_parameter_list;
 
         struct iso2_SAScheduleListType evse_sa_schedule_list;
         bool evse_sa_schedule_list_is_used;
@@ -345,6 +347,8 @@ struct v2g_context {
     } ev_v2g_data;
 
     bool hlc_pause_active;
+
+    std::vector<std::vector<uint16_t>> supported_vas_services_per_provider;
 };
 
 enum mqtt_dlink_action {
