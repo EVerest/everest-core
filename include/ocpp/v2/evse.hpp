@@ -249,44 +249,44 @@ public:
 
     virtual ~Evse();
 
-    int32_t get_id() const;
+    int32_t get_id() const override;
 
-    uint32_t get_number_of_connectors() const;
+    uint32_t get_number_of_connectors() const override;
     bool does_connector_exist(const CiString<20> connector_type) const override;
     std::optional<ConnectorStatusEnum> get_connector_status(std::optional<CiString<20>> connector_type) override;
 
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                           const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                           const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
-                          const ChargingStateEnum charging_state);
-    void close_transaction(const DateTime& timestamp, const MeterValue& meter_stop, const ReasonEnum& reason);
+                          const ChargingStateEnum charging_state) override;
+    void close_transaction(const DateTime& timestamp, const MeterValue& meter_stop, const ReasonEnum& reason) override;
 
     /// \brief Start checking if the max energy on invalid id has exceeded.
     ///        Will call pause_charging_callback when that happens.
-    void start_checking_max_energy_on_invalid_id();
+    void start_checking_max_energy_on_invalid_id() override;
 
-    bool has_active_transaction() const;
-    bool has_active_transaction(const int32_t connector_id) const;
-    void release_transaction();
-    std::unique_ptr<EnhancedTransaction>& get_transaction();
+    bool has_active_transaction() const override;
+    bool has_active_transaction(const int32_t connector_id) const override;
+    void release_transaction() override;
+    std::unique_ptr<EnhancedTransaction>& get_transaction() override;
 
-    void submit_event(const int32_t connector_id, ConnectorEvent event);
+    void submit_event(const int32_t connector_id, ConnectorEvent event) override;
 
-    void on_meter_value(const MeterValue& meter_value);
-    MeterValue get_meter_value();
+    void on_meter_value(const MeterValue& meter_value) override;
+    MeterValue get_meter_value() override;
 
-    MeterValue get_idle_meter_value();
-    void clear_idle_meter_values();
+    MeterValue get_idle_meter_value() override;
+    void clear_idle_meter_values() override;
 
-    Connector* get_connector(int32_t connector_id) const;
+    Connector* get_connector(int32_t connector_id) const override;
 
-    OperationalStatusEnum get_effective_operational_status();
-    void set_evse_operative_status(OperationalStatusEnum new_status, bool persist);
-    void set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status, bool persist);
-    void restore_connector_operative_status(int32_t connector_id);
+    OperationalStatusEnum get_effective_operational_status() override;
+    void set_evse_operative_status(OperationalStatusEnum new_status, bool persist) override;
+    void set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status, bool persist) override;
+    void restore_connector_operative_status(int32_t connector_id) override;
     OperationalStatusEnum get_connector_effective_operational_status(const int32_t connector_id) override;
 
-    CurrentPhaseType get_current_phase_type();
+    CurrentPhaseType get_current_phase_type() override;
 
     ///
     /// \brief Set pricing triggers to send the meter value.
@@ -300,7 +300,7 @@ public:
         std::optional<double> trigger_metervalue_on_power_kw, std::optional<double> trigger_metervalue_on_energy_kwh,
         std::optional<DateTime> trigger_metervalue_at_time,
         std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function,
-        boost::asio::io_context& io_context);
+        boost::asio::io_context& io_context) override;
 };
 
 } // namespace v2
