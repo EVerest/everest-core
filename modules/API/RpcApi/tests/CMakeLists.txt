@@ -3,6 +3,7 @@ set(TEST_TARGET_NAME ${PROJECT_NAME}_rpcapi_tests)
 set(TEST_SOURCES
     ../data/DataStore.cpp
     ../data/SessionInfo.cpp
+    ../helpers/Conversions.cpp
     ../helpers/ErrorHandler.cpp
     ../helpers/LimitDecimalPlaces.cpp
     ../rpc/RpcHandler.cpp
@@ -50,6 +51,7 @@ target_link_libraries(${TEST_TARGET_NAME}
         GTest::gtest_main
         date::date
         date::date-tz
+        everest::framework
         everest::log
         json-rpc-cxx
         nlohmann_json::nlohmann_json
