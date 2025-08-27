@@ -63,6 +63,7 @@ class LocalCentralSystem(CentralSystem):
         self.chargepoint = None
         self.chargepoint_set_event = asyncio.Event()
         self.function_overrides = []
+        self.skip_validation = []
 
     async def on_connect(self, websocket):
         """ For every new charge point that connects, create a ChargePoint
@@ -103,6 +104,8 @@ class LocalCentralSystem(CentralSystem):
             for override in self.function_overrides:
                 setattr(self.chargepoint, override[0], override[1])
             self.chargepoint.route_map = create_route_map(self.chargepoint)
+            for action in self.skip_validation:
+                self.chargepoint.route_map[action]["_skip_schema_validation"] = True
 
             self.chargepoint_set_event.set()
             await self.chargepoint.start()
