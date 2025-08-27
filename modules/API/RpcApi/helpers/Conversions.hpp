@@ -6,7 +6,7 @@
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/json_rpc_api.hpp>
 
-#include "ld-ev.hpp"
+#include <utils/error.hpp>
 
 namespace types {
 namespace json_rpc_api {
