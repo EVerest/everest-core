@@ -156,9 +156,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     }
     ctx->meter_info.meter_info_is_used = false;
 
-    memset(&ctx->evse_v2g_data.service_parameter_list, 0,
-           sizeof(struct iso2_ServiceParameterListType) * iso2_ServiceType_8_ARRAY_SIZE);
-
+    ctx->evse_v2g_data.service_parameter_list.clear();
     if (initialize_once == false) {
         ctx->evse_v2g_data.charge_service.FreeService = 0;
         std::string evse_id = std::string("DE*CBY*ETE1*234");
@@ -273,7 +271,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
 }
 
 struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
-                                   iso15118_extensionsImplBase* p_extensions, evse_securityIntf* r_security) {
+                                   iso15118_extensionsImplBase* p_extensions, evse_securityIntf* r_security,
+                                   std::vector<ISO15118_vasIntf*> r_vas) {
     struct v2g_context* ctx;
 
     // TODO There are c++ objects within v2g_context and calloc doesn't call initialisers.
@@ -283,6 +282,7 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
         return NULL;
 
     ctx->r_security = r_security;
+    ctx->r_vas = std::move(r_vas);
     ctx->p_charger = p_chargerImplBase;
     ctx->p_extensions = p_extensions;
 
@@ -480,8 +480,12 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_
 
     // Configure parameter-set-id if requiered
     for (uint8_t idx = 0; idx < parameter_set_id_len; idx++) {
-        configure_parameter_set(&v2g_ctx->evse_v2g_data.service_parameter_list[write_idx], parameter_set_id[idx],
-                                evse_service.ServiceID);
+        iso2_ServiceParameterListType parameter_list{};
+        init_iso2_ServiceParameterListType(&parameter_list);
+        v2g_ctx->evse_v2g_data.service_parameter_list.try_emplace(evse_service.ServiceID, parameter_list);
+
+        configure_parameter_set(v2g_ctx->evse_v2g_data.service_parameter_list.at(evse_service.ServiceID),
+                                parameter_set_id[idx], evse_service.ServiceID);
     }
 
     return true;
@@ -494,61 +498,61 @@ void remove_service_from_service_list_if_exists(struct v2g_context* v2g_ctx, uin
                        service_list.end());
 }
 
-void configure_parameter_set(struct iso2_ServiceParameterListType* parameterSetList, int16_t parameterSetId,
+void configure_parameter_set(iso2_ServiceParameterListType& parameterSetList, int16_t parameterSetId,
                              uint16_t serviceId) {
 
     bool parameter_set_id_found = false;
     uint8_t write_idx = 0;
-    for (uint8_t idx = 0; idx < parameterSetList->ParameterSet.arrayLen; idx++) {
-        if (parameterSetList->ParameterSet.array[idx].ParameterSetID == parameterSetId) {
+    for (uint8_t idx = 0; idx < parameterSetList.ParameterSet.arrayLen; idx++) {
+        if (parameterSetList.ParameterSet.array[idx].ParameterSetID == parameterSetId) {
             parameter_set_id_found = true;
             write_idx = idx;
             break;
         }
     }
     if ((parameter_set_id_found == false) &&
-        (parameterSetList->ParameterSet.arrayLen < iso2_ParameterSetType_5_ARRAY_SIZE)) {
-        write_idx = parameterSetList->ParameterSet.arrayLen;
-        parameterSetList->ParameterSet.arrayLen++;
-    } else if (parameterSetList->ParameterSet.arrayLen == iso2_ParameterSetType_5_ARRAY_SIZE) {
+        (parameterSetList.ParameterSet.arrayLen < iso2_ParameterSetType_5_ARRAY_SIZE)) {
+        write_idx = parameterSetList.ParameterSet.arrayLen;
+        parameterSetList.ParameterSet.arrayLen++;
+    } else if (parameterSetList.ParameterSet.arrayLen == iso2_ParameterSetType_5_ARRAY_SIZE) {
         dlog(DLOG_LEVEL_ERROR, "Maximum parameter-set list size reached. Unable to add parameter-set-ID %d",
              parameterSetId);
         return;
     }
 
     /* Get an free parameter-set-entry */
-    struct iso2_ParameterSetType* parameterSet = &parameterSetList->ParameterSet.array[write_idx];
-    parameterSet->ParameterSetID = parameterSetId;
+    auto& parameterSet = parameterSetList.ParameterSet.array[write_idx];
+    parameterSet.ParameterSetID = parameterSetId;
     if (serviceId == 2) {
         /* Configure parameter-set-ID of the certificate service */
         /* Service to install a Contract Certificate (Ref. Table 106 —
          * ServiceParameterList for certificate service) */
-        if (parameterSet->ParameterSetID == 1) {
+        if (parameterSet.ParameterSetID == 1) {
             /* Configure parameter name */
-            strcpy(parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].Name.characters, "Service");
-            parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].Name.charactersLen =
-                std::string(parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].Name.characters).size();
+            strcpy(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters, "Service");
+            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.charactersLen =
+                std::string(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters).size();
             /* Configure parameter value */
-            strcpy(parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].stringValue.characters,
+            strcpy(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters,
                    "Installation");
-            parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].stringValue.charactersLen =
-                std::string(parameterSet->Parameter.array[write_idx].stringValue.characters).size();
-            parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].stringValue_isUsed = 1;
-            parameterSet->Parameter.arrayLen = 1;
+            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.charactersLen =
+                std::string(parameterSet.Parameter.array[write_idx].stringValue.characters).size();
+            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue_isUsed = 1;
+            parameterSet.Parameter.arrayLen = 1;
         }
         /* Service to update a Contract Certificate */
-        else if (parameterSet->ParameterSetID == 2) {
+        else if (parameterSet.ParameterSetID == 2) {
             /* Configure parameter name */
-            strcpy(parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].Name.characters, "Service");
-            parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].Name.charactersLen =
-                std::string(parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].Name.characters).size();
+            strcpy(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters, "Service");
+            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.charactersLen =
+                std::string(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters).size();
             /* Configure parameter value */
-            strcpy(parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].stringValue.characters, "Update");
-            parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].stringValue.charactersLen =
-                std::string(parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].stringValue.characters)
+            strcpy(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters, "Update");
+            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.charactersLen =
+                std::string(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters)
                     .size();
-            parameterSet->Parameter.array[parameterSet->Parameter.arrayLen].stringValue_isUsed = 1;
-            parameterSet->Parameter.arrayLen = 1;
+            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue_isUsed = 1;
+            parameterSet.Parameter.arrayLen = 1;
         }
     } else {
         dlog(DLOG_LEVEL_WARNING, "Parameter-set-ID of service ID %u is not supported", serviceId);
