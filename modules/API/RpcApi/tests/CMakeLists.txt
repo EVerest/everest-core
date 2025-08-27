@@ -1,17 +1,17 @@
 set(TEST_TARGET_NAME ${PROJECT_NAME}_rpcapi_tests)
 
 set(TEST_SOURCES
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/data/DataStore.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/data/SessionInfo.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/helpers/ErrorHandler.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/helpers/LimitDecimalPlaces.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/RpcHandler.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/methods/Api.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/methods/ChargePoint.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/methods/Evse.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/notifications/Evse.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc/notifications/ChargePoint.cpp
-    ${PROJECT_SOURCE_DIR}/modules/RpcApi/server/WebsocketServer.cpp
+    ../data/DataStore.cpp
+    ../data/SessionInfo.cpp
+    ../helpers/ErrorHandler.cpp
+    ../helpers/LimitDecimalPlaces.cpp
+    ../rpc/RpcHandler.cpp
+    ../rpc/methods/Api.cpp
+    ../rpc/methods/ChargePoint.cpp
+    ../rpc/methods/Evse.cpp
+    ../rpc/notifications/Evse.cpp
+    ../rpc/notifications/ChargePoint.cpp
+    ../server/WebsocketServer.cpp
     server/WebsocketServerTests.cpp
     rpc/RpcHandlerTests.cpp
 )
@@ -26,9 +26,9 @@ if (RPCAPI_COMPILE_DEFINITIONS)
 endif()
 
 set(INCLUDE_DIR
-    "${PROJECT_SOURCE_DIR}/modules/RpcApi/server"
-    "${PROJECT_SOURCE_DIR}/modules/RpcApi/rpc"
-    "${PROJECT_SOURCE_DIR}/modules/RpcApi/data"
+    "../server"
+    "../rpc"
+    "../data"
 )
 
 target_sources(${TEST_TARGET_NAME}
