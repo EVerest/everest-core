@@ -58,6 +58,15 @@ ev_define_dependency(
     OUTPUT_VARIABLE_SUFFIX LIBNFC_NCI
     DEPENDENT_MODULES_LIST PN7160TokenProvider)
 
+ev_define_dependency(
+    DEPENDENCY_NAME websockets_shared
+    DEPENDENT_MODULES_LIST RpcApi)
+
+ev_define_dependency(
+    DEPENDENCY_NAME json-rpc-cxx
+    OUTPUT_VARIABLE_SUFFIX JSON_RPC_CXX
+    DEPENDENT_MODULES_LIST RpcApi)
+
 if(NOT everest-gpio IN_LIST EVEREST_EXCLUDE_DEPENDENCIES)
     set(EVEREST_DEPENDENCY_ENABLED_EVEREST_GPIO ON)
 else()
