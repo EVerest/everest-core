@@ -133,13 +133,6 @@ void v2g_ctx_init_charging_state(struct v2g_context* const ctx, bool is_connecti
     ctx->session.renegotiation_required = false;
     ctx->session.is_charging = false;
     ctx->evse_v2g_data.evse_notification = (uint8_t)0;
-    remove_service_from_service_list_if_exists(ctx, V2G_SERVICE_ID_CERTIFICATE);
-
-    /* Reset timer */
-    if (ctx->com_setup_timeout != NULL) {
-        event_free(ctx->com_setup_timeout);
-        ctx->com_setup_timeout = NULL;
-    }
 }
 
 void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
@@ -285,6 +278,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     memset(ctx->session.gen_challenge, 0, sizeof(ctx->session.gen_challenge));
 
     ctx->session.authorization_rejected = false;
+
+    remove_service_from_service_list_if_exists(ctx, V2G_SERVICE_ID_CERTIFICATE);
 
     initialize_once = true;
 }
