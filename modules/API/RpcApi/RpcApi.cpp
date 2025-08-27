@@ -208,19 +208,21 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             tmp->evse_max_current = limits.max_current;
             tmp->evse_max_phase_count = limits.nr_of_phases_available;
             evse_data.evsestatus.set_ac_charge_param(tmp);
-        }
-        else {
+        } else {
             evse_data.evsestatus.set_ac_charge_param(std::nullopt);
         }
     });
 
-    evse_manager->subscribe_supported_energy_transfer_modes([this, &evse_data](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
-        // convert to rpc type
-        bool is_ac_transfer_mode = false;
-        auto rpc_supported_energy_transfer_modes = types::json_rpc_api::iso15118_energy_transfer_modes_to_json_rpc_api(supported_energy_transfer_modes, is_ac_transfer_mode);
-        evse_data.evseinfo.set_supported_energy_transfer_modes(rpc_supported_energy_transfer_modes);
-        evse_data.evseinfo.set_is_ac_transfer_mode(is_ac_transfer_mode);
-    });
+    evse_manager->subscribe_supported_energy_transfer_modes(
+        [this, &evse_data](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+            // convert to rpc type
+            bool is_ac_transfer_mode = false;
+            auto rpc_supported_energy_transfer_modes =
+                types::json_rpc_api::iso15118_energy_transfer_modes_to_json_rpc_api(supported_energy_transfer_modes,
+                                                                                    is_ac_transfer_mode);
+            evse_data.evseinfo.set_supported_energy_transfer_modes(rpc_supported_energy_transfer_modes);
+            evse_data.evseinfo.set_is_ac_transfer_mode(is_ac_transfer_mode);
+        });
 }
 
 void RpcApi::subscribe_evse_energy(const std::unique_ptr<energyIntf>& evse_energy, data::DataStoreEvse& evse_data) {
@@ -232,8 +234,7 @@ void RpcApi::subscribe_evse_energy(const std::unique_ptr<energyIntf>& evse_energ
             ac_charge_status.evse_active_phase_count =
                 request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value();
             evse_data.evsestatus.set_ac_charge_status(ac_charge_status);
-        }
-        else {
+        } else {
             evse_data.evsestatus.set_ac_charge_status(std::nullopt);
         }
     });
@@ -402,7 +403,7 @@ bool RpcApi::check_evse_mapping() {
         const auto& evse_data = this->data.evses[idx];
         // Initialize connector index for the case of no mapping information
         types::json_rpc_api::ConnectorInfoObj connector;
-        connector.index = 1;                                                 // default connector id
+        connector.index = 1;                                              // default connector id
         connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
         evse_data->evseinfo.set_available_connector(connector);
         evse_data->evsestatus.set_active_connector_index(connector.index); // TODO: support multiple connectors

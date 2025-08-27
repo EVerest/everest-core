@@ -11,8 +11,8 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <everest/logging.hpp>
 
-#include "../helpers/LimitDecimalPlaces.hpp"
 #include "../helpers/Conversions.hpp" // For to_json() for nlohmann::json
+#include "../helpers/LimitDecimalPlaces.hpp"
 
 namespace rpc {
 

@@ -49,7 +49,8 @@ void ChargerErrorsStore::clear_error(const types::json_rpc_api::ErrorObj& error)
     }
 }
 
-void EVSEInfoStore::set_supported_energy_transfer_modes(std::vector<types::json_rpc_api::EnergyTransferModeEnum> supported_energy_transfer_modes) {
+void EVSEInfoStore::set_supported_energy_transfer_modes(
+    std::vector<types::json_rpc_api::EnergyTransferModeEnum> supported_energy_transfer_modes) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     this->dataobj.supported_energy_transfer_modes = supported_energy_transfer_modes;
 }
@@ -140,8 +141,8 @@ EVSEStatusStore::EVSEStatusStore() {
 
 // Example set method using the enum
 void EVSEStatusStore::set_active_connector_index(int32_t active_connector_index) {
-    std::unique_lock<std::mutex> data_lock(this->data_mutex); // check if data has changed
-    field_status[EVSEStatusField::ActiveConnectorIndex] = true;  // Mark field as set
+    std::unique_lock<std::mutex> data_lock(this->data_mutex);   // check if data has changed
+    field_status[EVSEStatusField::ActiveConnectorIndex] = true; // Mark field as set
     update_data_is_valid();
     // check if data has changed
     if (this->dataobj.active_connector_index != active_connector_index) {

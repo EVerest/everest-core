@@ -117,66 +117,68 @@ types::json_rpc_api::ErrorObj everest_error_to_rpc_error(const Everest::error::E
     return rpc_error;
 }
 
-std::vector<types::json_rpc_api::EnergyTransferModeEnum> iso15118_energy_transfer_modes_to_json_rpc_api(const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes, bool& is_ac_transfer_mode) {
+std::vector<types::json_rpc_api::EnergyTransferModeEnum> iso15118_energy_transfer_modes_to_json_rpc_api(
+    const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes,
+    bool& is_ac_transfer_mode) {
     std::vector<types::json_rpc_api::EnergyTransferModeEnum> tmp{};
     is_ac_transfer_mode = false;
 
     for (const auto& mode : supported_energy_transfer_modes) {
         switch (mode) {
-            case types::iso15118::EnergyTransferMode::AC_single_phase_core:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_single_phase_core);
-                is_ac_transfer_mode = true;
-                break;
-            case types::iso15118::EnergyTransferMode::AC_two_phase:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_two_phase);
-                is_ac_transfer_mode = true;
-                break;
-            case types::iso15118::EnergyTransferMode::AC_three_phase_core:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_three_phase_core);
-                is_ac_transfer_mode = true;
-                break;
-            case types::iso15118::EnergyTransferMode::DC_core:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_core);
-                break;
-            case types::iso15118::EnergyTransferMode::DC_extended:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_extended);
-                break;
-            case types::iso15118::EnergyTransferMode::DC_combo_core:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_combo_core);
-                break;
-            case types::iso15118::EnergyTransferMode::DC_unique:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_unique);
-                break;
-            case types::iso15118::EnergyTransferMode::DC:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC);
-                break;
-            case types::iso15118::EnergyTransferMode::AC_BPT:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_BPT);
-                is_ac_transfer_mode = true;
-                break;
-            case types::iso15118::EnergyTransferMode::AC_BPT_DER:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_BPT_DER);
-                is_ac_transfer_mode = true;
-                break;
-            case types::iso15118::EnergyTransferMode::AC_DER:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_DER);
-                is_ac_transfer_mode = true;
-                break;
-            case types::iso15118::EnergyTransferMode::DC_BPT:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_BPT);
-                break;
-            case types::iso15118::EnergyTransferMode::DC_ACDP:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_ACDP);
-                break;
-            case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_ACDP_BPT);
-                break;
-            case types::iso15118::EnergyTransferMode::WPT:
-                tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::WPT);
-                is_ac_transfer_mode = true; // TBD
-                break;
-            default:
-                throw std::invalid_argument("Unsupported energy transfer mode");
+        case types::iso15118::EnergyTransferMode::AC_single_phase_core:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_single_phase_core);
+            is_ac_transfer_mode = true;
+            break;
+        case types::iso15118::EnergyTransferMode::AC_two_phase:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_two_phase);
+            is_ac_transfer_mode = true;
+            break;
+        case types::iso15118::EnergyTransferMode::AC_three_phase_core:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_three_phase_core);
+            is_ac_transfer_mode = true;
+            break;
+        case types::iso15118::EnergyTransferMode::DC_core:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_core);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_extended:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_extended);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_combo_core:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_combo_core);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_unique:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_unique);
+            break;
+        case types::iso15118::EnergyTransferMode::DC:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC);
+            break;
+        case types::iso15118::EnergyTransferMode::AC_BPT:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_BPT);
+            is_ac_transfer_mode = true;
+            break;
+        case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_BPT_DER);
+            is_ac_transfer_mode = true;
+            break;
+        case types::iso15118::EnergyTransferMode::AC_DER:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::AC_DER);
+            is_ac_transfer_mode = true;
+            break;
+        case types::iso15118::EnergyTransferMode::DC_BPT:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_ACDP:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_ACDP);
+            break;
+        case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::DC_ACDP_BPT);
+            break;
+        case types::iso15118::EnergyTransferMode::WPT:
+            tmp.push_back(types::json_rpc_api::EnergyTransferModeEnum::WPT);
+            is_ac_transfer_mode = true; // TBD
+            break;
+        default:
+            throw std::invalid_argument("Unsupported energy transfer mode");
         }
     }
 
