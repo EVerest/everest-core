@@ -143,12 +143,11 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     RPCDataTypes::EVSEInfoObj evse_info;
     evse_info.index = 1;
     evse_info.available_connectors.emplace_back();
-    evse_info.available_connectors[0].id = 1;
+    evse_info.available_connectors[0].index = 1;
     evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
     evse_info.available_connectors.emplace_back();
-    evse_info.available_connectors[1].id = 2;
+    evse_info.available_connectors[1].index = 2;
     evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
-    evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
     evse_info.description = "Test EVSE 1";
 
     result.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
@@ -187,9 +186,8 @@ TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
     RPCDataTypes::EVSEInfoObj evse_info;
     evse_info.index = 1; ///< Unique identifier
     evse_info.available_connectors.emplace_back();
-    evse_info.available_connectors[0].id = 1;
+    evse_info.available_connectors[0].index = 1;
     evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
-    evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
     evse_info.description = "Test EVSE 1";
     data_store.evses[0]->evseinfo.set_data(evse_info);
     // Add a second EVSE with a different index
@@ -295,12 +293,11 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     RPCDataTypes::EVSEInfoObj evse_info;
     evse_info.index = 1; ///< Unique identifier
     evse_info.available_connectors.emplace_back();
-    evse_info.available_connectors[0].id = 1;
+    evse_info.available_connectors[0].index = 1;
     evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
     evse_info.available_connectors.emplace_back();
-    evse_info.available_connectors[1].id = 2;
+    evse_info.available_connectors[1].index = 2;
     evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
-    evse_info.bidi_charging = false; ///< Whether bidirectional charging is supported
     evse_info.description = "Test EVSE 1";
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
@@ -360,7 +357,7 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     evse_status.charging_duration_s = 600;
     evse_status.charging_allowed = true;
     evse_status.available = true;
-    evse_status.active_connector_id = 1;
+    evse_status.active_connector_index = 1;
     evse_status.error_present = false;
     evse_status.charge_protocol = types::json_rpc_api::ChargeProtocolEnum::ISO15118; ///< charge_protocol
     evse_status.state = types::json_rpc_api::EVSEStateEnum::Charging;
@@ -801,7 +798,7 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
         "EVSE.EnableConnector", {{"evse_index", 1}, {"enable", true}, {"priority", 1}, {"connector_id", 1}}, 1);
     nlohmann::json evse_enable_connector_req_invalid_id = create_json_rpc_request(
         "EVSE.EnableConnector", {{"evse_index", 99}, {"enable", true}, {"priority", 1}, {"connector_id", 1}}, 1);
-    nlohmann::json evse_enable_connector_req_invalid_connector_id = create_json_rpc_request(
+    nlohmann::json evse_enable_connector_req_invalid_connector_index = create_json_rpc_request(
         "EVSE.EnableConnector", {{"evse_index", 1}, {"enable", true}, {"priority", 1}, {"connector_id", 99}}, 1);
 
     // Set up the expected responses
@@ -809,14 +806,14 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
     nlohmann::json expected_error = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
-    nlohmann::json expected_error_invalid_connector_id = {
-        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorID)}};
+    nlohmann::json expected_error_invalid_connector_index = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidConnectorIndex)}};
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
     evse_info.index = 1;
     evse_info.available_connectors.emplace_back();
-    evse_info.available_connectors[0].id = 1;
+    evse_info.available_connectors[0].index = 1;
     evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
@@ -833,8 +830,8 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
     send_req_and_validate_res(client, evse_enable_connector_req_invalid_id, expected_error,
                               is_key_value_in_json_rpc_result);
     // Send EVSE.EnableConnector request with invalid connector ID
-    send_req_and_validate_res(client, evse_enable_connector_req_invalid_connector_id,
-                              expected_error_invalid_connector_id, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_enable_connector_req_invalid_connector_index,
+                              expected_error_invalid_connector_index, is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send invalid request
