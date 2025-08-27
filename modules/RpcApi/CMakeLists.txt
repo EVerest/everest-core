@@ -11,7 +11,7 @@ ev_setup_cpp_module()
 # insert your custom targets and additional config variables here
 
 target_compile_definitions(${MODULE_NAME} PRIVATE
-    API_VERSION=\"0.0.1\"
+    API_VERSION=\"1.0.0\"
 )
 
 target_compile_features(${MODULE_NAME} PRIVATE cxx_std_17)
