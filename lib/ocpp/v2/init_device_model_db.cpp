@@ -710,7 +710,7 @@ void InitDeviceModelDb::insert_variable_monitor(const VariableMonitoringMeta& mo
     insert_stmt->bind_double(6, monitor.monitor.value);
 
     if (monitor.monitor.type == MonitorEnum::Delta && !monitor.reference_value.has_value()) {
-        throw InitDeviceModelDbError("Delta monitors must have a reference value set:" + variable_id);
+        throw InitDeviceModelDbError("Delta monitors must have a reference value set:" + std::to_string(variable_id));
     }
 
     if (monitor.reference_value.has_value()) {
@@ -720,7 +720,7 @@ void InitDeviceModelDb::insert_variable_monitor(const VariableMonitoringMeta& mo
     }
 
     if (insert_stmt->step() != SQLITE_DONE) {
-        throw InitDeviceModelDbError("Can not insert monitor for variable id:" + variable_id);
+        throw InitDeviceModelDbError("Can not insert monitor for variable id:" + std::to_string(variable_id));
     }
 }
 
@@ -757,7 +757,7 @@ void InitDeviceModelDb::update_variable_monitor(const VariableMonitoringMeta& ne
     update_stmt->bind_int(7, db_monitor.monitor.id);
 
     if (update_stmt->step() != SQLITE_DONE) {
-        throw InitDeviceModelDbError("Can not update monitor for variable id:" + variable_id);
+        throw InitDeviceModelDbError("Can not update monitor for variable id:" + std::to_string(variable_id));
     }
 }
 
