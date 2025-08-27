@@ -30,6 +30,7 @@ types:
     type: string
     enum:
       - Processing
+      - Validated
       - Accepted
       - Rejected
       # Occurs when the token has been authorized but no connector is selected within connection_timeout seconds
