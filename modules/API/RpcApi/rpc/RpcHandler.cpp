@@ -148,7 +148,7 @@ void RpcHandler::init_rpc_api() {
                       {"evse_index", "max_power"});
     m_rpc_server->Add(methods::METHOD_EVSE_ENABLE_CONNECTOR,
                       get_handle(&methods::Evse::enable_connector, m_methods_evse, m_precision),
-                      {"evse_index", "connector_id", "enable", "priority"});
+                      {"evse_index", "connector_index", "enable", "priority"});
 }
 
 void RpcHandler::init_transport_interfaces() {
