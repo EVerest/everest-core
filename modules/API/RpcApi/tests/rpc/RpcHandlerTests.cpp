@@ -334,7 +334,8 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     // Send EVSE.GetEVSEInfos request 2 and validate response
     send_req_and_validate_res(client, evse_get_evse_infos_req_2, expected_response_index_2);
     // Send EVSE.GetEVSEInfos request with invalid ID and validate response
-    send_req_and_validate_res(client, evse_get_infos_req_invalid_index, expected_error, is_key_value_in_json_rpc_result);
+    send_req_and_validate_res(client, evse_get_infos_req_invalid_index, expected_error,
+                              is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send Evse.GetStatusReq request with valid and invalid index
@@ -344,7 +345,8 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
     // Set up the requests
     nlohmann::json evse_get_status_req_valid_index = create_json_rpc_request("EVSE.GetStatus", {{"evse_index", 1}}, 1);
-    nlohmann::json evse_get_status_req_invalid_index = create_json_rpc_request("EVSE.GetStatus", {{"evse_index", 99}}, 1);
+    nlohmann::json evse_get_status_req_invalid_index =
+        create_json_rpc_request("EVSE.GetStatus", {{"evse_index", 99}}, 1);
 
     // Set up the data store with test data
     RPCDataTypes::EVSEInfoObj evse_info;
@@ -488,7 +490,8 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
     ASSERT_TRUE(client.wait_until_connected(std::chrono::milliseconds(100)));
 
     // Set up requests
-    nlohmann::json evse_meter_data_req_valid_index = create_json_rpc_request("EVSE.GetMeterData", {{"evse_index", 1}}, 1);
+    nlohmann::json evse_meter_data_req_valid_index =
+        create_json_rpc_request("EVSE.GetMeterData", {{"evse_index", 1}}, 1);
     nlohmann::json evse_meter_data_req_invalid_index =
         create_json_rpc_request("EVSE.GetMeterData", {{"evse_index", 99}}, 1);
 
