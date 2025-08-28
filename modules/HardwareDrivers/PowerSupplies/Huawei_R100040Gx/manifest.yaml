@@ -1,0 +1,42 @@
+description: >-
+  Driver for Huawei_R100040Gx ACDC power supply. Supports multiple stacked modules.
+  This module never exits. If communication is lost to the power supply, a CommunicationFault is raised.
+  The error is cleared once communication is back up again.
+  The Linux can device (e.g. can0) should ideally be present and correctly configured when the module is started,
+  but it also works if the device comes up later. Once it was up once, it should not disappear again.
+  The PSU may be appear or disappear on the CAN bus itself any time.
+config:
+  can_device:
+    description: CAN interface name
+    type: string
+    default: can0
+  module_addresses:
+    description: >-
+      Module Addresses to use. Set to "" for auto detect (Uses all modules that reply to broadcast requests on this CAN bus).
+      If multiple hardware addresses are listed (e.g. "120,121"), only those will be used. Current will be shared between them.
+    type: string
+    default: ""
+  max_export_current_A:
+    description: >-
+      Maximum current that the PSU module can deliver. When using multiple PSUs in parallel, this refers to the total current capability of all modules.
+      Set to 0 to use hardware defaults.
+    type: integer
+    default: 0
+  max_export_power_W:
+    description: >-
+      Maximum power that the PSU module can deliver. When using multiple PSUs in parallel, this refers to the total power capability of all modules.
+      Set to 0 to use hardware defaults.
+    type: integer
+    default: 0
+provides:
+  main:
+    description: Main interface
+    interface: power_supply_DC
+    config: {}
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Andreas Heinrich
+    - Cornelius Claussen
+    - Florin Mihut
+    - Jan Christoph Habig
