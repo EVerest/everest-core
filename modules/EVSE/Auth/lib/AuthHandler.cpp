@@ -24,8 +24,6 @@ std::vector<int> intersect(std::vector<int>& a, std::vector<int>& b) {
 namespace conversions {
 std::string token_handling_result_to_string(const TokenHandlingResult& result) {
     switch (result) {
-    case TokenHandlingResult::ACCEPTED:
-        return "ACCEPTED";
     case TokenHandlingResult::ALREADY_IN_PROCESS:
         return "ALREADY_IN_PROCESS";
     case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
@@ -104,8 +102,6 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         break;
     case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
         this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::TimedOut);
-        break;
-    case TokenHandlingResult::ACCEPTED: // Handled in handle_token internally
         break;
     case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
     case TokenHandlingResult::REJECTED:

@@ -41,7 +41,6 @@ inline bool operator<(const ProvidedIdToken& lhs, const ProvidedIdToken& rhs) {
 namespace module {
 
 enum class TokenHandlingResult {
-    ACCEPTED,
     ALREADY_IN_PROCESS,
     REJECTED,
     USED_TO_START_TRANSACTION,
