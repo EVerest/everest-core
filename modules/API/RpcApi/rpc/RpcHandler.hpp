@@ -63,8 +63,8 @@ public:
     }
 
 private:
-    std::vector<std::shared_ptr<TransportInterface>>& transport_interfaces;
     std::unordered_map<TransportInterface::ClientId, bool>& hello_received;
+    std::vector<std::shared_ptr<TransportInterface>>& transport_interfaces;
 };
 // Members
 

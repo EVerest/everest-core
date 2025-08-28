@@ -12,7 +12,7 @@ static const std::string NOTIFICATION_CHARGEPOINT_ACTIVE_ERRORS_CHANGED = "Charg
 
 ChargePoint::ChargePoint(std::shared_ptr<rpc::JsonRpc2ServerWithClient> rpc_server, data::DataStoreCharger& dataobj,
                          int precision) :
-    m_rpc_server(std::move(rpc_server)), m_dataobj(dataobj), m_precision(precision) {
+    m_dataobj(dataobj), m_rpc_server(std::move(rpc_server)), m_precision(precision) {
     // Register notification callbacks for the charger errors
     m_dataobj.chargererrors.register_notification_callback(
         [this](const std::vector<types::json_rpc_api::ErrorObj>& active_errors) {

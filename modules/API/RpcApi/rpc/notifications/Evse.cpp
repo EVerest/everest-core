@@ -13,7 +13,7 @@ static const std::string NOTIFICATION_EVSE_STATUS_CHANGED = "EVSE.StatusChanged"
 static const std::string NOTIFICATION_EVSE_METER_DATA_CHANGED = "EVSE.MeterDataChanged";
 
 Evse::Evse(std::shared_ptr<rpc::JsonRpc2ServerWithClient> rpc_server, data::DataStoreCharger& dataobj, int precision) :
-    m_rpc_server(std::move(rpc_server)), m_dataobj(dataobj), m_precision(precision) {
+    m_dataobj(dataobj), m_rpc_server(std::move(rpc_server)), m_precision(precision) {
     for (const auto& evse : m_dataobj.evses) {
         const int32_t index = evse->evseinfo.get_index();
         evse->hardwarecapabilities.register_notification_callback(

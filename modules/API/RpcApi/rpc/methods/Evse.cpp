@@ -143,7 +143,7 @@ RPCDataTypes::ErrorResObj Evse::set_ac_charging_phase_count(const int32_t evse_i
     }
 
     // Check if the requested phase count is within the allowed range
-    if (hardwarecapabilities.has_value() && phase_count < hardwarecapabilities.value().min_phase_count_export ||
+    if ((hardwarecapabilities.has_value() && phase_count < hardwarecapabilities.value().min_phase_count_export) ||
         phase_count > hardwarecapabilities.value().max_phase_count_export) {
         res.error = RPCDataTypes::ResponseErrorEnum::ErrorOutOfRange;
         return res;
