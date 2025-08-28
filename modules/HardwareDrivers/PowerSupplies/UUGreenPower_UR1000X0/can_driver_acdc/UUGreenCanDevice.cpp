@@ -244,50 +244,6 @@ std::ostream& operator<<(std::ostream& out, const UUGreenCanDevice::Telemetry& s
     out << "\n------------------------------------------------\nTelemetry\n---------\n";
 
     out << "DC output: " << std::to_string(self.voltage) << "V / " << std::to_string(self.current) << "A" << std::endl;
-    /*
-        out << "AC line: AB:" << std::to_string(self.ac_ab_line_voltage)
-            << " BC: " << std::to_string(self.ac_bc_line_voltage) << " CA: " << std::to_string(self.ac_ca_line_voltage)
-            << std::endl;
-
-        out << "AC Phase Voltages: V_A:" << std::to_string(self.ac_phase_a_voltage)
-            << " V_B: " << std::to_string(self.ac_phase_b_voltage) << " V_C: " <<
-       std::to_string(self.ac_phase_c_voltage)
-            << std::endl;
-
-        out << "AC Phase Currents: I_A:" << std::to_string(self.ac_phase_a_current)
-            << " I_B: " << std::to_string(self.ac_phase_b_current) << " I_C: " <<
-       std::to_string(self.ac_phase_c_current)
-            << std::endl;
-
-        out << "AC Active power: Total: " << std::to_string(self.ac_total_active_ower)
-            << "P_A:" << std::to_string(self.ac_phase_a_active_power)
-            << " P_B: " << std::to_string(self.ac_phase_b_active_power)
-            << " P_C: " << std::to_string(self.ac_phase_c_active_power) << std::endl;
-
-        out << "AC Re-Active power: Total: " << std::to_string(self.ac_total_reactive_ower)
-            << "P_A:" << std::to_string(self.ac_phase_a_reactive_power)
-            << " P_B: " << std::to_string(self.ac_phase_b_reactive_power)
-            << " P_C: " << std::to_string(self.ac_phase_c_reactive_power) << std::endl;
-
-        out << "AC Apparent power: Total: " << std::to_string(self.ac_total_apparent_ower)
-            << "P_A:" << std::to_string(self.ac_phase_a_apparent_power)
-            << " P_B: " << std::to_string(self.ac_phase_b_apparent_power)
-            << " P_C: " << std::to_string(self.ac_phase_c_apparent_power) << std::endl;
-
-        out << "AC frequency: " << self.ac_frequency << std::endl;
-        out << "Ambient temperature: " << self.ambient_temperature << std::endl;
-
-        out << "DC High Voltage side: Voltage: " << std::to_string(self.dc_high_side_voltage)
-            << " Current: " << std::to_string(self.dc_high_side_current) << std::endl;
-
-        out << "Capabilities: dc_min: " << self.dc_min_output_voltage << "V dc_max: " << self.dc_max_output_voltage
-            << "V dc_max_current: " << self.dc_max_output_current << "A max_watt: " << self.dc_rated_output_power << "W
-       "
-            << std::endl;
-
-        out << self.status << std::endl;
-        out << self.voltage << std::endl << self.current << std::endl;
-    */
     out << "------------------------------------------------\n";
 
     return out;
