@@ -1,0 +1,5 @@
+add_subdirectory(base)
+add_subdirectory(server)
+add_subdirectory(client)
+add_subdirectory(ssl)
+add_subdirectory(registers)
