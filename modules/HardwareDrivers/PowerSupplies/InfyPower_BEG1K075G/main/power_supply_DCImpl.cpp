@@ -59,43 +59,6 @@ void power_supply_DCImpl::init() {
                 firsttime = false;
             }
 
-            // Publish fault bit changes
-            /*types::power_supply_DC::FaultCode fc;
-            fc = types::power_supply_DC::FaultCode::NoError;
-
-            if (status.communication_interrupt_alarm) {
-                fc = types::power_supply_DC::FaultCode::CommunicationFailure;
-            } else if (status.output_short_current) {
-                fc = types::power_supply_DC::FaultCode::OverCurrentDC;
-            } else if (status.output_over_voltage_alarm) {
-                fc = types::power_supply_DC::FaultCode::OverVoltageDC;
-            } else if (status.over_temperature_alarm) {
-                fc = types::power_supply_DC::FaultCode::OverTemperature;
-            } else if (status.input_low_voltage_alarm) {
-                fc = types::power_supply_DC::FaultCode::UnderVoltageAC;
-            } else if (status.input_over_voltage_protection) {
-                fc = types::power_supply_DC::FaultCode::OverVoltageAC;
-            } else if (status.input_phase_lost_alarm) {
-                fc = types::power_supply_DC::FaultCode::WrongCabling;
-            } else if (status.discharge_abnormal) {
-                fc = types::power_supply_DC::FaultCode::OverCurrentDC;
-            } else if (status.fan_fault_alarm) {
-                fc = types::power_supply_DC::FaultCode::HardwareFault;
-            } else if (status.fault_alarm) {
-                fc = types::power_supply_DC::FaultCode::HardwareFault;
-            } else if (status.load_sharing_alarm) {
-                fc = types::power_supply_DC::FaultCode::HardwareFault;
-            } else if (status.protection_alarm) {
-                fc = types::power_supply_DC::FaultCode::HardwareFault;
-            }
-
-            if (last_publish_fault_code != fc || firsttime) {
-                publish_fault_code(fc);
-                if (fc != types::power_supply_DC::FaultCode::NoError)
-                    EVLOG_error << "ACDC FAULT CODE: " << types::power_supply_DC::fault_code_to_string(fc);
-                last_publish_fault_code = fc;
-                firsttime = false;
-            }*/
         });
 
     mod->acdc.switch_on_off(false);
