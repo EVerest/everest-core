@@ -6,6 +6,7 @@
 #include <mutex>
 
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/iso15118_extensions/Interface.hpp>
 #include <generated/types/evse_board_support.hpp>
 #include <generated/types/powermeter.hpp>
 
@@ -18,8 +19,11 @@ class EverestDeviceModelStorage : public ocpp::v2::DeviceModelStorageInterface {
 public:
     EverestDeviceModelStorage(
         const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager,
+        const std::vector<std::unique_ptr<iso15118_extensionsIntf>>& r_extensions_15118,
         const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map,
-        const std::filesystem::path& db_path, const std::filesystem::path& migration_files_path,
+        const std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>>& evse_supported_energy_transfers,
+        const std::map<int32_t, bool>& evse_service_renegotiation_supported, const std::filesystem::path& db_path,
+        const std::filesystem::path& migration_files_path,
         std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client);
     virtual ~EverestDeviceModelStorage() override = default;
     virtual ocpp::v2::DeviceModelMap get_device_model() override;
@@ -47,8 +51,15 @@ public:
     /// \brief Updates the actual value of the EVSE Power variable to the given \p total_power_active_import value
     void update_power(const int32_t evse_id, const float total_power_active_import);
 
+    /// \bried Updates the Available variable for the ConnectedEV component
+    void update_connected_ev_available(const int32_t evse_id, const bool connected);
+
+    /// \bried Updates the VehicleId variable for the ConnectedEV component
+    void update_connected_ev_vehicle_id(const int32_t evse_id, const std::string& vehicle_id);
+
 private:
     const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_manager;
+    const std::vector<std::unique_ptr<iso15118_extensionsIntf>>& r_extensions_15118;
     std::mutex device_model_mutex;
     std::unique_ptr<ocpp::v2::DeviceModelStorageSqlite> device_model_storage;
     std::set<ocpp::v2::ComponentVariable> stored_in_everest_config_service;
@@ -56,10 +67,21 @@ private:
     std::map<Everest::config::ModuleIdType, everest::config::ModuleConfigurationParameters> module_configs;
     std::map<std::string, ModuleTierMappings> mappings;
 
-    void init_hw_capabilities(
-        const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map);
+    void init_evse_components_and_variables(
+        const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map,
+        const std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>>& evse_supported_energy_transfers);
     void update_hw_capabilities(const ocpp::v2::Component& evse_component,
                                 const types::evse_board_support::HardwareCapabilities& hw_capabilities);
+    void update_supported_energy_transfers(
+        const ocpp::v2::Component& evse_component,
+        const std::vector<types::iso15118::EnergyTransferMode>& evse_supported_energy_transfers);
+    void
+    update_supported_operation_modes(const ocpp::v2::Component& evse_component,
+                                     const std::vector<ocpp::v2::OperationModeEnum>& evse_supported_operation_modes);
+    void update_service_renegotiation_supported(const ocpp::v2::Component& iso15118_component,
+                                                const bool& service_renegotiation_supported);
+    void update_connected_ev_information(const ocpp::v2::Component& connected_ev_component,
+                                         const types::iso15118::EvInformation& ev_information);
     void init_everest_config();
 };
 } // namespace module::device_model

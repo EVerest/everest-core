@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <algorithm>
 #include <transaction_handler.hpp>
 
 namespace module {
@@ -59,6 +60,15 @@ std::shared_ptr<TransactionData> TransactionHandler::get_transaction_data(const 
         throw std::out_of_range("Attempt to get transaction_data for invalid evse_id");
     }
     return this->evse_id_transaction_data_map[evse_id];
+}
+
+int TransactionHandler::get_evse_id(const std::string& transaction_id) {
+    const auto& found =
+        std::find_if(this->evse_id_transaction_data_map.cbegin(), this->evse_id_transaction_data_map.cend(),
+                     [transaction_id](const std::pair<const int, std::shared_ptr<module::TransactionData>>& it) {
+                         return it.second != nullptr and it.second->session_id == transaction_id;
+                     });
+    return found != this->evse_id_transaction_data_map.cend() ? found->first : -1;
 }
 
 void TransactionHandler::reset_transaction_data(const int32_t evse_id) {

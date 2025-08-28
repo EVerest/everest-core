@@ -109,3 +109,116 @@ const VariableCharacteristics SupplyPhases = [] {
 }();
 } // namespace Characteristics
 } // namespace ConnectorDefinitions
+
+namespace V2XDefinitions {
+namespace Characteristics {
+const VariableCharacteristics Available = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::boolean;
+    var.supportsMonitoring = false;
+    return var;
+}();
+
+const VariableCharacteristics Enabled = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::boolean;
+    var.supportsMonitoring = false;
+    return var;
+}();
+
+const VariableCharacteristics SupportedEnergyTransferModes = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::MemberList;
+    var.supportsMonitoring = false;
+    var.valuesList =
+        "AC_single_phase,AC_two_phase,AC_three_phase,DC,AC_BPT,AC_BPT_DER,AC_DER,DC_BPT,DC_ACDP,DC_ACDP_BPT,WPT";
+    return var;
+}();
+
+const VariableCharacteristics SupportedOperationModes = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::MemberList;
+    var.supportsMonitoring = false;
+    var.valuesList = "Idle,ChargingOnly,CentralSetpoint,ExternalSetpoint,ExternalLimits,CentralFrequency,"
+                     "LocalFrequency,LocalLoadBalancing";
+    return var;
+}();
+
+} // namespace Characteristics
+} // namespace V2XDefinitions
+
+namespace ISO15118Definitions {
+namespace Characteristics {
+const VariableCharacteristics Enabled = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::boolean;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics ServiceRenegotiationSupport = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::boolean;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics ProtocolSupported = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::string;
+    var.supportsMonitoring = false;
+    return var;
+}();
+} // namespace Characteristics
+} // namespace ISO15118Definitions
+
+namespace ConnectedEVDefinitions {
+namespace Characteristics {
+const VariableCharacteristics Available = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::boolean;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics VehicleId = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::string;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics ProtocolAgreed = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::string;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics VehicleCertificateLeaf = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::string;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics VehicleCertificateSubCa1 = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::string;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics VehicleCertificateSubCa2 = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::string;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics VehicleCertificateRoot = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::string;
+    var.supportsMonitoring = false;
+    return var;
+}();
+const VariableCharacteristics ProtocolSupportedByEV = [] {
+    VariableCharacteristics var;
+    var.dataType = DataEnum::string;
+    var.supportsMonitoring = false;
+    return var;
+}();
+} // namespace Characteristics
+} // namespace ConnectedEVDefinitions
