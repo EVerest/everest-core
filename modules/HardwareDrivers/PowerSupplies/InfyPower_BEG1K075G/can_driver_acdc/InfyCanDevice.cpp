@@ -26,8 +26,6 @@ void InfyCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payl
     }
 
     if (can_packet_acdc::command_number_from_can_id(can_id) == can_packet_acdc::CMD_WRITE) {
-        // std::cout << "Infy: Write reply, command number: " << std::hex
-        //           << (uint16_t)can_packet_acdc::command_number_from_can_id(can_id) << std::endl;
         switch (can_packet_acdc::error_code_from_can_id(can_id)) {
         case 0x02:
             std::cout << "Infy: ERROR: Command invalid." << std::endl;
@@ -44,15 +42,11 @@ void InfyCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payl
 
     // is it a reply to a read command?
     if (can_packet_acdc::command_number_from_can_id(can_id) != can_packet_acdc::CMD_READ) {
-        // std::cout << "Infy: Not a reply to a read command, command number: " << std::hex
-        //           << (uint16_t)can_packet_acdc::command_number_from_can_id(can_id) << std::endl;
         return;
     }
 
     // is it for us?
     if (can_packet_acdc::destination_address_from_can_id(can_id) != 0xF0) {
-        // std::cout << "Infy: Not for us: " << std::hex
-        //           << (uint16_t)can_packet_acdc::destination_address_from_can_id(can_id) << std::endl;
         return;
     }
 
@@ -66,30 +60,25 @@ void InfyCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payl
     switch (packet_type) {
     case 0x1001: {
         telemetry.voltage = payload;
-        // std::cout << telemetry.voltage << std::endl;
     } break;
 
     case 0x1002: {
         telemetry.current = payload;
-        // std::cout << telemetry.current << std::endl;
         signalVoltageCurrent(telemetry.voltage.volt, telemetry.current.ampere);
     } break;
 
     case 0x1010: {
         can_packet_acdc::PowerModuleNumber n(payload);
-        // std::cout << n << std::endl;
     } break;
 
     case 0x1110: {
         can_packet_acdc::PowerModuleStatus s(payload);
         telemetry.status = s;
-        // std::cout << s << std::endl;
     } break;
 
     case 0x1111: {
         can_packet_acdc::InverterStatus s(payload);
         signalModuleStatus(telemetry.status, s);
-        // std::cout << s << std::endl;
     } break;
 
     case 0x1103: {
