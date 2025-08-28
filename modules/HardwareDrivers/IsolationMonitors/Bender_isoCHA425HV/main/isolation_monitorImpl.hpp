@@ -372,7 +372,7 @@ private:
         TestType test{TestType::NoTest};
         UnitType unit{UnitType::Invalid};
         ValidType valid{ValidType::Invalid};
-        ChannelDescription description;
+        ChannelDescription description{ChannelDescription::Undefined};
     };
 
     MeasurementValue read_register(const ImdRegisters start_register);
