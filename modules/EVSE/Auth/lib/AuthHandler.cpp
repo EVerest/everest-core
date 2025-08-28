@@ -857,6 +857,10 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     case SessionEventEnum::ReplugFinished:
         [[fallthrough]];
     case SessionEventEnum::PluginTimeout:
+        [[fallthrough]];
+    case SessionEventEnum::SwitchingPhases:
+        [[fallthrough]];
+    case SessionEventEnum::SessionResumed:
         break;
     }
 

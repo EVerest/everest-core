@@ -52,6 +52,19 @@ void YetiEvDriver::ready() {
             EVLOG_info << "BspEvent::Disconnected";
             bspe.event = types::board_support_common::Event::Disconnected;
             break;
+        /// explicitly fall through all the Event_InterfaceEvent values we are not handling
+        case Event_InterfaceEvent::Event_InterfaceEvent_E:
+            [[fallthrough]];
+        case Event_InterfaceEvent::Event_InterfaceEvent_F:
+            [[fallthrough]];
+        case Event_InterfaceEvent::Event_InterfaceEvent_EF:
+            [[fallthrough]];
+        case Event_InterfaceEvent::Event_InterfaceEvent_ERROR_RELAIS:
+            [[fallthrough]];
+        case Event_InterfaceEvent::Event_InterfaceEvent_RELAIS_ON:
+            [[fallthrough]];
+        case Event_InterfaceEvent::Event_InterfaceEvent_RELAIS_OFF:
+            break;
         }
 
         p_ev_board_support->publish_bsp_event(bspe);
