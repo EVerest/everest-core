@@ -429,7 +429,7 @@ bool powermeterImpl::process_response(
 
     int16_t exponent = 0;
     if (exponent_message) {
-        exponent_message->get().value.value()[0];
+        exponent = exponent_message->get().value.value().at(0);
     }
 
     if (register_data.type == ENERGY_WH_IMPORT_TOTAL) {
