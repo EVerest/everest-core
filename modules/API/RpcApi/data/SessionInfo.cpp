@@ -54,11 +54,16 @@ void SessionInfoStore::update_state(const types::evse_manager::SessionEvent even
         this->state = State::AuthRequired;
         break;
     case Event::PrepareCharging:
+        [[fallthrough]];
     case Event::SessionStarted:
+        [[fallthrough]];
+    case Event::SessionResumed:
+        [[fallthrough]];
     case Event::TransactionStarted:
         this->state = State::Preparing;
         break;
     case Event::ChargingResumed:
+        [[fallthrough]];
     case Event::ChargingStarted:
         this->state = State::Charging;
         break;
@@ -92,11 +97,21 @@ void SessionInfoStore::update_state(const types::evse_manager::SessionEvent even
         this->state = State::Reserved;
         break;
     case Event::ReservationEnd:
+        [[fallthrough]];
     case Event::SessionFinished:
         this->state = State::Unplugged;
         break;
+    /// explicitly fall through all the SessionEventEnum values we are not handling
     case Event::ReplugStarted:
+        [[fallthrough]];
     case Event::ReplugFinished:
+        [[fallthrough]];
+    case Event::Authorized:
+        [[fallthrough]];
+    case Event::Deauthorized:
+        [[fallthrough]];
+    case Event::SwitchingPhases:
+        [[fallthrough]];
     default:
         break;
     }
