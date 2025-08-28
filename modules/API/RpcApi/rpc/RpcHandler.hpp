@@ -53,7 +53,7 @@ public:
         const std::vector<uint8_t> notif_char_array{notification.begin(), notification.end()};
         for (const auto& interface : transport_interfaces) {
             // FIXME: hello_received changes with client connects and disconnects, so requires a mutex
-            for (const auto rec : hello_received) {
+            for (const auto& rec : hello_received) {
                 if (rec.second) {
                     interface->send_data(rec.first, notif_char_array);
                 }

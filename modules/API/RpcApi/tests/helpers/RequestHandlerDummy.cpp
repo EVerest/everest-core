@@ -15,7 +15,7 @@ types::json_rpc_api::ErrorResObj RequestHandlerDummy::set_ac_charging(const int3
 }
 types::json_rpc_api::ErrorResObj RequestHandlerDummy::set_ac_charging_current(const int32_t evse_index,
                                                                               float max_current) {
-    types::json_rpc_api::ErrorResObj res{res.error = types::json_rpc_api::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj res{types::json_rpc_api::ResponseErrorEnum::NoError};
     return res;
 }
 types::json_rpc_api::ErrorResObj RequestHandlerDummy::set_ac_charging_phase_count(const int32_t evse_index,
