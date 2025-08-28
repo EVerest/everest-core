@@ -19,7 +19,6 @@ int main(int argc, char** argv) {
 
     while (true) {
         usleep(50000);
-        // std::cout << can.telemetry;
     }
 
     can.close_device();

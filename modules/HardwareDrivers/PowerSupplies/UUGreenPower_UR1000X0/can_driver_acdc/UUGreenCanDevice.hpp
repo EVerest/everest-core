@@ -59,41 +59,6 @@ public:
     sigslot::signal<int, const std::string&> signal_serial_number;
 
     struct Telemetry {
-        /*
-        float ac_ab_line_voltage{0.};
-        float ac_bc_line_voltage{0.};
-        float ac_ca_line_voltage{0.};
-        float ambient_temperature{0.};
-        float dc_max_output_voltage{0.};
-        float dc_min_output_voltage{0.};
-        float dc_max_output_current{0.};
-        float dc_rated_output_power{0.};
-        float ac_phase_a_current{0.};
-        float ac_phase_b_current{0.};
-        float ac_phase_c_current{0.};
-        float ac_phase_a_voltage{0.};
-        float ac_phase_b_voltage{0.};
-        float ac_phase_c_voltage{0.};
-        float ac_frequency{0.};
-        float ac_phase_a_active_power{0.};
-        float ac_phase_b_active_power{0.};
-        float ac_phase_c_active_power{0.};
-        float ac_total_active_ower{0.};
-
-        float ac_phase_a_reactive_power{0.};
-        float ac_phase_b_reactive_power{0.};
-        float ac_phase_c_reactive_power{0.};
-        float ac_total_reactive_ower{0.};
-
-        float ac_phase_a_apparent_power{0.};
-        float ac_phase_b_apparent_power{0.};
-        float ac_phase_c_apparent_power{0.};
-        float ac_total_apparent_ower{0.};
-
-        float dc_high_side_voltage{0.};
-        float dc_high_side_current{0.};
-        */
-
         float voltage{0.};
         float current{0.};
     };
