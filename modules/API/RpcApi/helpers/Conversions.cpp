@@ -18,10 +18,15 @@ EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::Sess
     case Event::AuthRequired:
         return State::AuthRequired;
     case Event::PrepareCharging:
+        [[fallthrough]];
     case Event::SessionStarted:
+        [[fallthrough]];
+    case Event::SessionResumed:
+        [[fallthrough]];
     case Event::TransactionStarted:
         return State::Preparing;
     case Event::ChargingResumed:
+        [[fallthrough]];
     case Event::ChargingStarted:
         return State::Charging;
     case Event::ChargingPausedEV:
@@ -48,12 +53,19 @@ EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::Sess
     case Event::ReservationStart:
         return State::Reserved;
     case Event::ReservationEnd:
+        [[fallthrough]];
     case Event::SessionFinished:
         return State::Unplugged;
     case Event::SwitchingPhases:
         return State::SwitchingPhases;
     case Event::ReplugStarted:
+        [[fallthrough]];
     case Event::ReplugFinished:
+        [[fallthrough]];
+    case Event::Authorized:
+        [[fallthrough]];
+    case Event::Deauthorized:
+        [[fallthrough]];
     default:
         return State::Unknown;
     }
