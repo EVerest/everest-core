@@ -20,6 +20,9 @@ active_modules:
       tls_active: true
   evse_manager:
     module: EvseManager
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
       evse_id: DE*PNX*E12345*1
@@ -33,6 +36,9 @@ active_modules:
       bsp:
         - module_id: yeti_driver
           implementation_id: board_support
+      powermeter_grid_side:
+        - module_id: yeti_driver
+          implementation_id: powermeter
       powermeter_car_side:
         - module_id: powersupply_dc
           implementation_id: powermeter
@@ -48,40 +54,15 @@ active_modules:
       imd:
         - module_id: imd
           implementation_id: main
-  connector_2:
-    module: EvseManager
-    config_module:
-      connector_id: 2
-      has_ventilation: true
-      evse_id: "2"
-      session_logging: true
-      session_logging_xml: false
-      ac_hlc_enabled: false
-      ac_hlc_use_5percent: false
-      ac_enforce_hlc: false
-    connections:
-      bsp:
-        - module_id: yeti_driver_2
-          implementation_id: board_support
-      powermeter_grid_side:
-        - module_id: yeti_driver_2
-          implementation_id: powermeter
-      slac:
-        - module_id: slac
-          implementation_id: evse
-      hlc:
-        - module_id: iso15118_charger
-          implementation_id: charger
   powersupply_dc:
     module: DCSupplySimulator
   yeti_driver:
     module: YetiSimulator
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
-  yeti_driver_2:
-    module: YetiSimulator
-    config_module:
-      connector_id: 2
   slac:
     module: SlacSimulator
   imd:
@@ -116,8 +97,6 @@ active_modules:
       evse_manager:
         - module_id: evse_manager
           implementation_id: evse
-        - module_id: connector_2
-          implementation_id: evse
       auth:
         - module_id: auth
           implementation_id: main
@@ -130,9 +109,26 @@ active_modules:
       reservation:
         - module_id: auth
           implementation_id: reservation
+      evse_energy_sink:
+        - module_id: grid_connection_point
+          implementation_id: external_limits
+        - module_id: evse_manager_1_ocpp_sink
+          implementation_id: external_limits
       extensions_15118:
         - module_id: iso15118_charger
           implementation_id: extensions
+  evse_manager_1_ocpp_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager
+          implementation_id: energy_grid
   system:
     module: System
   token_provider:
@@ -170,13 +166,16 @@ active_modules:
           implementation_id: energy_grid
   grid_connection_point:
     module: EnergyNode
+    mapping:
+      module:
+        evse: 0
     config_module:
       fuse_limit_A: 40.0
       phase_count: 3
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager
+        - module_id: evse_manager_1_ocpp_sink
           implementation_id: energy_grid
       powermeter:
         - module_id: yeti_driver

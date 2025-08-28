@@ -79,7 +79,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.30.0
+  git_tag: 098cf786c6776cb2e357b36ccb1418f2ed2235df
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -89,7 +89,7 @@ Josev:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.6.0
+  git_tag: b88ca4e896fde9b0d305c3701ac99edfe298d030
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
