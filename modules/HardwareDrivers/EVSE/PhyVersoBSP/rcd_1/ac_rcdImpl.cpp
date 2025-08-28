@@ -8,7 +8,7 @@ namespace rcd_1 {
 
 void ac_rcdImpl::init() {
     mod->serial.signal_error_flags.connect([this](int connector, ErrorFlags error_flags) {
-        if ((connector == 1)) {
+        if (connector == 1) {
             if (error_flags.rcd_triggered and not last_error_flags.rcd_triggered) {
                 Everest::error::Error error_object = this->error_factory->create_error(
                     "ac_rcd/DC", "", "Port 1 RDC-MD triggered", Everest::error::Severity::High);
