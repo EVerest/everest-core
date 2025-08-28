@@ -1,4 +1,5 @@
 {%- for name, errors in involved_errors | items  %}
+    #[allow(clippy::enum_variant_names)]
     pub mod {{ name | snake }} {
         use everestrs::serde as __serde;
     {%- for error_group in errors %}
