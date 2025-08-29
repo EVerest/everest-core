@@ -15,7 +15,7 @@
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 #include <atomic>
 
-#include <gpio.hpp>
+#include <everest/gpio/gpio.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {

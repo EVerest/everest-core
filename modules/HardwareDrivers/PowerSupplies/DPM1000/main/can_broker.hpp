@@ -10,7 +10,7 @@
 #include <string>
 #include <thread>
 
-#include <can/protocol/dpm1000.hpp>
+#include <everest/can/protocol/dpm1000.hpp>
 
 struct CanRequest {
     enum class State {
