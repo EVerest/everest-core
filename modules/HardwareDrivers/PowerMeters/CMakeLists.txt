@@ -1,3 +1,4 @@
+ev_add_module(DZG_GSH01)
 ev_add_module(GenericPowermeter)
 ev_add_module(IsabellenhuetteIemDcr)
 ev_add_module(LemDCBM400600)
