@@ -16,6 +16,7 @@ pub struct Manifest {
     // This is just here, so that we do not crash for deny_unknown_fields,
     // this is never used in Rust code.
     #[allow(dead_code)]
+    #[serde(default)]
     enable_external_mqtt: bool,
 
     #[serde(default)]
