@@ -53,13 +53,18 @@ void RpcApi::init() {
     }
 
     // Create the request handler
-    m_request_handler = std::make_unique<RpcApiRequestHandler>(data, r_evse_manager, r_evse_energy_sink);
-
-    m_websocket_server = std::make_unique<server::WebSocketServer>(config.websocket_tls_enabled, config.websocket_port,
-                                                                   config.websocket_interface);
-    // Create RpcHandler instance. Move the transport interfaces to the RpcHandler
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
-    transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
+
+    if (config.websocket_enabled) {
+        m_websocket_server = std::make_unique<server::WebSocketServer>(
+            config.websocket_tls_enabled, config.websocket_port, config.websocket_interface);
+        transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
+    }
+
+    if (transport_interfaces.empty()) {
+        throw std::runtime_error("No other transports currently available, please enable websocket transport");
+    }
+
     m_rpc_handler = std::make_unique<rpc::RpcHandler>(std::move(transport_interfaces), data,
                                                       std::move(m_request_handler), config.max_decimal_places_other);
 
