@@ -112,15 +112,20 @@ is not part of this specification and must be specified during client and server
 
 Tools
 ~~~~~
-The tools subdirectory contains a Python-based JSON-RPC GUI client. This client allows testing of the
-interface implementation and is highly recommended as a reference example for developing your own client.
+The *tools* subdirectory contains a Python-based JSON-RPC GUI client. This client allows testing of the
+interface implementation and can serve as a reference example for developing your own client.
 
 API Methods and Notifications
 -----------------------------
 
 General
 ~~~~~~~
-Hierarchy of methods & notifications:
+The JSON API is generated from the json_rpc_api.yaml specification. This YAML file serves as the primary
+reference for all available methods and notifications. It also defines which parameters are required
+and which are optional.
+
+Hierarchy of methods & notifications
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * **API** – general methods, no effect on charge point
 * **ChargePoint** – affects the entire charging station
@@ -245,6 +250,8 @@ This method is used to obtain general information about an EVSE.
 .. _example-json-rpc-request-with-params:
 
 **Example JSON RPC Request:**
+
+.. code-block:: json
 
 {"jsonrpc": "2.0", "method": "EVSE.GetInfo", "id": 1, "params": {"evse_index": 1}}
 
