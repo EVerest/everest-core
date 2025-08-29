@@ -1,0 +1,5 @@
+add_executable(unsolicitated_decoder unsolicitated_decoder.cpp)
+target_link_libraries(unsolicitated_decoder fusion_charger_modbus_extensions)
+
+add_executable(real_hw_first_test real_hw_first_test.cpp)
+target_link_libraries(real_hw_first_test fusion_charger_modbus_driver fusion_charger_goose_driver)
