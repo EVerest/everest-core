@@ -1,4 +1,13 @@
-description: JSON RPC API types
+description: >-
+  JSON RPC API and its types. These types specify the exact definition of
+  the format of the JSON RPC API's Requests - including Notifications - and
+  Responses. They also specify which keys are optional, and the complete
+  range of enums.
+
+  This is version 1.0.0 of the JSON RPC API.
+
+  Changes to this definition need to be done with care, to take
+  compatibility into consideration.  Bump the version as necessary.
 types:
   ResponseErrorEnum:
     description: Enumeration to differentiate between the various error cases that can occur after a method request
