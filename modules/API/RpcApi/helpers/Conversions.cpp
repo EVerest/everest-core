@@ -71,7 +71,7 @@ EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::Sess
     }
 }
 
-ChargeProtocolEnum evse_manager_protocol_to_charge_protocol(std::string protocol) {
+ChargeProtocolEnum evse_manager_protocol_to_charge_protocol(const std::string& protocol) {
     if (protocol == "IEC61851-1") {
         return ChargeProtocolEnum::IEC61851;
     } else if (protocol == "DIN70121") {
