@@ -27,6 +27,7 @@ target_link_libraries(${MODULE_NAME}
         date::date
         date::date-tz
         everest::external_energy_limits
+        everest::staging::helpers
         json-rpc-cxx
         nlohmann_json::nlohmann_json
         websockets_shared

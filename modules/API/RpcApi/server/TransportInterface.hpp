@@ -4,7 +4,6 @@
 #ifndef TRANSPORTINTERFACE_H
 #define TRANSPORTINTERFACE_H
 
-#include <boost/uuid/uuid.hpp>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -13,23 +12,11 @@
 #include <string>
 #include <vector>
 
-// FIXME migrate to everest::staging::helpers::get_uuid() as introduced in everest-core 2025.5.0
-namespace std {
-template <> struct hash<boost::uuids::uuid> {
-    std::size_t operator()(const boost::uuids::uuid& u) const {
-        // Combine the two 64-bit parts of the UUID into one 128-bit integer
-        uint64_t part1 = *reinterpret_cast<const uint64_t*>(&u.data[0]);
-        uint64_t part2 = *reinterpret_cast<const uint64_t*>(&u.data[8]);
-        return std::hash<uint64_t>()(part1) ^ (std::hash<uint64_t>()(part2) << 1); // Combine the two parts
-    }
-};
-} // namespace std
-
 namespace server {
 
 class TransportInterface {
 public:
-    using ClientId = boost::uuids::uuid;
+    using ClientId = std::string;
     using Address = std::string;
     using Data = std::vector<uint8_t>;
 

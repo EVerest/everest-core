@@ -3,9 +3,8 @@
 
 #include "WebsocketServer.hpp"
 
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <everest/logging.hpp>
+#include <everest/staging/helpers/helpers.hpp>
 #include <iostream>
 #include <unordered_map>
 
@@ -41,7 +40,7 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
     switch (reason) {
     case LWS_CALLBACK_ESTABLISHED: {
         // Generate a random UUID for the client
-        boost::uuids::uuid client_id = boost::uuids::random_generator()();
+        std::string client_id = everest::staging::helpers::get_uuid();
         server->m_clients[client_id] = wsi;
 
         char ip_address_buf[INET6_ADDRSTRLEN]{0};
@@ -55,7 +54,7 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
         lock.unlock();                                      // Unlock before calling the callback
         server->on_client_connected(client_id, ip_address); // Call the on_client_connected callback
         lock.lock();                                        // Lock again after the callback
-        EVLOG_info << "Client " << boost::uuids::to_string(client_id) << " connected"
+        EVLOG_info << "Client " << client_id << " connected"
                    << (ip_address.empty() ? "" : (" from " + ip_address));
         break;
     }
