@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#ifndef CRC16_HPP
-#define CRC16_HPP
+#ifndef CRC_HPP
+#define CRC_HPP
 #include <stdint.h>
 #include <vector>
 
