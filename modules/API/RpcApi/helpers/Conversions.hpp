@@ -11,7 +11,7 @@
 namespace types {
 namespace json_rpc_api {
 EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::SessionEvent state);
-ChargeProtocolEnum evse_manager_protocol_to_charge_protocol(std::string protocol);
+ChargeProtocolEnum evse_manager_protocol_to_charge_protocol(const std::string& protocol);
 types::json_rpc_api::ErrorObj everest_error_to_rpc_error(const Everest::error::Error& error_object);
 std::vector<types::json_rpc_api::EnergyTransferModeEnum> iso15118_energy_transfer_modes_to_json_rpc_api(
     const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes, bool& is_ac_transfer_mode);
