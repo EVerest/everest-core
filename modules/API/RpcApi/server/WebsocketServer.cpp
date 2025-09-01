@@ -3,8 +3,8 @@
 
 #include "WebsocketServer.hpp"
 
-#include <everest/logging.hpp>
 #include <everest/helpers/helpers.hpp>
+#include <everest/logging.hpp>
 #include <iostream>
 #include <unordered_map>
 
