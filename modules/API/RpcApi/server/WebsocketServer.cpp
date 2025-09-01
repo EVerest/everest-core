@@ -54,8 +54,7 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
         lock.unlock();                                      // Unlock before calling the callback
         server->on_client_connected(client_id, ip_address); // Call the on_client_connected callback
         lock.lock();                                        // Lock again after the callback
-        EVLOG_info << "Client " << client_id << " connected"
-                   << (ip_address.empty() ? "" : (" from " + ip_address));
+        EVLOG_info << "Client " << client_id << " connected" << (ip_address.empty() ? "" : (" from " + ip_address));
         break;
     }
     case LWS_CALLBACK_CLOSED: {
