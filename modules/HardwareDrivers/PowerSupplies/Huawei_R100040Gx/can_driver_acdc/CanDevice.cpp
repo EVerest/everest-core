@@ -138,7 +138,6 @@ bool CanDevice::_tx(uint32_t can_id, const std::vector<uint8_t>& payload) {
         return false;
     }
 
-    // std::cout << "CAN frame TX" << std::endl;
     struct can_frame frame;
     if (payload.size() > sizeof(frame.data)) {
         return false;
