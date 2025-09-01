@@ -11,13 +11,13 @@
 #include "generated/types/ocpp.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v16/types.hpp"
+#include <everest/conversions/ocpp/ocpp_conversions.hpp>
 #include <fmt/core.h>
-#include <ocpp_conversions.hpp>
 
 #include <conversions.hpp>
 #include <error_mapping.hpp>
-#include <evse_security_ocpp.hpp>
-#include <external_energy_limits.hpp>
+#include <everest/conversions/ocpp/evse_security_ocpp.hpp>
+#include <everest/external_energy_limits/external_energy_limits.hpp>
 
 namespace module {
 

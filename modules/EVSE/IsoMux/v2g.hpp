@@ -12,8 +12,8 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
-#include <openssl_util.hpp>
-#include <tls.hpp>
+#include <everest/tls/openssl_util.hpp>
+#include <everest/tls/tls.hpp>
 
 #include <cbv2g/app_handshake/appHand_Datatypes.h>
 #include <cbv2g/common/exi_basetypes.h>

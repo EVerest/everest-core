@@ -18,7 +18,7 @@
 #include <everest/3rd_party/nanopb/pb_decode.h>
 #include <everest/3rd_party/nanopb/pb_encode.h>
 
-#include <gpio.hpp>
+#include <everest/gpio/gpio.hpp>
 
 #include "yeti.pb.h"
 

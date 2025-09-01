@@ -29,3 +29,33 @@ extern const VariableCharacteristics ConnectorType;
 extern const VariableCharacteristics SupplyPhases;
 } // namespace Characteristics
 } // namespace ConnectorDefinitions
+
+namespace V2XDefinitions {
+namespace Characteristics {
+extern const VariableCharacteristics Available;
+extern const VariableCharacteristics Enabled;
+extern const VariableCharacteristics SupportedEnergyTransferModes;
+extern const VariableCharacteristics SupportedOperationModes;
+} // namespace Characteristics
+} // namespace V2XDefinitions
+
+namespace ISO15118Definitions {
+namespace Characteristics {
+extern const VariableCharacteristics Enabled;
+extern const VariableCharacteristics ServiceRenegotiationSupport;
+extern const VariableCharacteristics ProtocolSupported;
+} // namespace Characteristics
+} // namespace ISO15118Definitions
+
+namespace ConnectedEVDefinitions {
+namespace Characteristics {
+extern const VariableCharacteristics Available;
+extern const VariableCharacteristics VehicleId;
+extern const VariableCharacteristics ProtocolAgreed;
+extern const VariableCharacteristics VehicleCertificateLeaf;
+extern const VariableCharacteristics VehicleCertificateSubCa1;
+extern const VariableCharacteristics VehicleCertificateSubCa2;
+extern const VariableCharacteristics VehicleCertificateRoot;
+extern const VariableCharacteristics ProtocolSupportedByEV;
+} // namespace Characteristics
+} // namespace ConnectedEVDefinitions

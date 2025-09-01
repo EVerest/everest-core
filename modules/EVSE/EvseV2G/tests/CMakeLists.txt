@@ -2,7 +2,7 @@ get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_I
 find_package(libevent)
 find_package(OpenSSL 3)
 
-set(LIB_STAGING_TLS_TESTS_DIR "${PROJECT_SOURCE_DIR}/lib/staging/tls/tests")
+set(LIB_EVEREST_TLS_TESTS_DIR "${PROJECT_SOURCE_DIR}/lib/everest/tls/tests")
 set(TESTS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/tests/include")
 
 set(TLS_TEST_FILES
@@ -17,7 +17,7 @@ add_custom_command(
     OUTPUT ${TLS_TEST_FILES}
     COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/pki
     COMMAND cd pki && cp ${TLS_TEST_FILES} ${CMAKE_CURRENT_BINARY_DIR}/
-    WORKING_DIRECTORY ${LIB_STAGING_TLS_TESTS_DIR}
+    WORKING_DIRECTORY ${LIB_EVEREST_TLS_TESTS_DIR}
 )
 
 add_custom_target(v2g_test_files_target
@@ -41,7 +41,7 @@ target_compile_definitions(${TLS_GTEST_NAME} PRIVATE
 )
 
 target_sources(${TLS_GTEST_NAME} PRIVATE
-    ${LIB_STAGING_TLS_TESTS_DIR}/gtest_main.cpp
+    ${LIB_EVEREST_TLS_TESTS_DIR}/gtest_main.cpp
     log.cpp
     openssl_test.cpp
     ../crypto/crypto_openssl.cpp

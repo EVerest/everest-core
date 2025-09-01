@@ -91,7 +91,7 @@ private:
     void publish_powermeter();
     void publish_telemetry();
     void publish_keepalive();
-    void drawPower(int l1, int l2, int l3, int n) const;
+    void drawPower(const double l1, const double l2, const double l3, const double n) const;
     void powerOn();
     void powerOff();
     void reset_powermeter() const;

@@ -57,6 +57,8 @@ void auth_token_providerImpl::new_rfid_token_callback(char* uid, size_t length, 
             return types::authorization::IdTokenType::ISO15693;
         case NfcHandler::Protocol::MIFARE:
             return types::authorization::IdTokenType::ISO14443;
+        case NfcHandler::Protocol::UNKNOWN:
+            return types::authorization::IdTokenType::Local;
         }
 
         // FIXME (aw): default would be unknown, what to do here?
