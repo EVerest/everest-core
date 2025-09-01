@@ -21,7 +21,7 @@ class ChargePoint {
 public:
     // Constructor and Destructor
     ChargePoint() = delete;
-    ChargePoint(DataStoreCharger& dataobj) : m_dataobj(dataobj){};
+    explicit ChargePoint(DataStoreCharger& dataobj) : m_dataobj(dataobj){};
 
     ~ChargePoint() = default;
 

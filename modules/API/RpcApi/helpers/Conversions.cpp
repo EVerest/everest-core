@@ -87,8 +87,6 @@ ChargeProtocolEnum evse_manager_protocol_to_charge_protocol(const std::string& p
 }
 
 ErrorObj everest_error_to_rpc_error(const Everest::error::Error& error_object) {
-    std::vector<ErrorObj> rpc_errors;
-
     ErrorObj rpc_error;
     rpc_error.type = error_object.type;
     rpc_error.description = error_object.description;

@@ -42,7 +42,7 @@ public:
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {
 public:
     void set_supported_energy_transfer_modes(
-        std::vector<types::json_rpc_api::EnergyTransferModeEnum> supported_energy_transfer_modes);
+        const std::vector<types::json_rpc_api::EnergyTransferModeEnum>& supported_energy_transfer_modes);
     void set_index(int32_t index);
     void set_id(const std::string& id);
     void set_available_connectors(const std::vector<RPCDataTypes::ConnectorInfoObj>& connectors);
