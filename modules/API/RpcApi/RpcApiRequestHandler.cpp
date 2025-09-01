@@ -127,10 +127,10 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
     bool is_charging = (evse_state == types::json_rpc_api::EVSEStateEnum::Charging);
     bool is_charging_paused = (evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEVSE ||
                                evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEV);
-    float phy_limit = 0.0f;
     bool is_power_limit = configured_limits.is_current_set;
 
     if (charging_allowed) {
+        float phy_limit{0.0f};
         // first we need to determine which limits to apply. If the limit (current or power) is already set, we will use
         // that.
         if (configured_limits.evse_limit.has_value()) {
