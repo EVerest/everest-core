@@ -63,7 +63,7 @@ python3 everest-json-rpc-api.py
 
 | GUI Version | JSON-RPC Server API Version | Notes                    |
 |-------------|-----------------------------|--------------------------|
-| `0.0.1`     | `0.0.1`                     | Initial stable version   |
+| `1.0.0`     | `1.0.0`                     | Initial stable version   |
 
 ---
 
