@@ -257,7 +257,7 @@ void from_json(const json& j, ExternalLimits& k) {
 void to_json(json& j, EnforcedLimits const& k) noexcept {
     j = json{
         {"uuid", k.uuid},
-        {"valid_until", k.valid_until},
+        {"valid_for", k.valid_for},
         {"limits_root_side", k.limits_root_side},
         {"schedule", k.schedule},
     };
@@ -265,7 +265,7 @@ void to_json(json& j, EnforcedLimits const& k) noexcept {
 
 void from_json(const json& j, EnforcedLimits& k) {
     k.uuid = j.at("uuid");
-    k.valid_until = j.at("valid_until");
+    k.valid_for = j.at("valid_for");
     k.limits_root_side = j.at("limits_root_side");
     for (auto val : j.at("schedule")) {
         k.schedule.push_back(val);

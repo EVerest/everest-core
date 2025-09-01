@@ -82,7 +82,7 @@ struct ExternalLimits {
 
 struct EnforcedLimits {
     std::string uuid;
-    std::string valid_until;
+    int32_t valid_for;
     LimitsRes limits_root_side;
     std::vector<ScheduleResEntry> schedule;
 };

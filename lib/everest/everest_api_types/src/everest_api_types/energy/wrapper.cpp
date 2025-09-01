@@ -235,7 +235,7 @@ ExternalLimits_External toExternalApi(ExternalLimits_Internal const& val) {
 EnforcedLimits_Internal toInternalApi(EnforcedLimits_External const& val) {
     EnforcedLimits_Internal result;
     result.uuid = val.uuid;
-    result.valid_until = val.valid_until;
+    result.valid_for = val.valid_for;
     result.limits_root_side = toInternalApi(val.limits_root_side);
     result.schedule = vecToInternal(val.schedule);
     return result;
@@ -244,7 +244,7 @@ EnforcedLimits_Internal toInternalApi(EnforcedLimits_External const& val) {
 EnforcedLimits_External toExternalApi(EnforcedLimits_Internal const& val) {
     EnforcedLimits_External result;
     result.uuid = val.uuid;
-    result.valid_until = val.valid_until;
+    result.valid_for = val.valid_for;
     result.limits_root_side = toExternalApi(val.limits_root_side);
     result.schedule = vecToExternal(val.schedule);
     return result;
