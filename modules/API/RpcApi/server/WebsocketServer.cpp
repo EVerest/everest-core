@@ -4,7 +4,7 @@
 #include "WebsocketServer.hpp"
 
 #include <everest/logging.hpp>
-#include <everest/staging/helpers/helpers.hpp>
+#include <everest/helpers/helpers.hpp>
 #include <iostream>
 #include <unordered_map>
 
@@ -40,7 +40,7 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
     switch (reason) {
     case LWS_CALLBACK_ESTABLISHED: {
         // Generate a random UUID for the client
-        std::string client_id = everest::staging::helpers::get_uuid();
+        std::string client_id = everest::helpers::get_uuid();
         server->m_clients[client_id] = wsi;
 
         char ip_address_buf[INET6_ADDRSTRLEN]{0};
