@@ -20,6 +20,7 @@ class JsonRpcWebSocketClient:
         self.root.title(f"EVerest JSON-RPC WebSocket Client v{APP_VERSION}")
         self.ws = None
         self.connected = False
+        self.loop = None
         self.connect_button_label = tk.StringVar(value="Connect")
         self.notification_filters = set()
         self.all_notifications = set()
@@ -236,7 +237,8 @@ class JsonRpcWebSocketClient:
             if params.strip():
                 parsed = json.loads(params)
                 msg["params"] = parsed
-            asyncio.run_coroutine_threadsafe(self.ws.send(json.dumps(msg)), self.loop)
+            if self.loop:
+                asyncio.run_coroutine_threadsafe(self.ws.send(json.dumps(msg)), self.loop)
             self.log(f"Sent: {json.dumps(msg)}")
         except json.JSONDecodeError:
             self.log("Invalid JSON in params")
@@ -245,7 +247,8 @@ class JsonRpcWebSocketClient:
     def connect_or_disconnect(self):
         if self.ws and self.connected:
             self.connect_button.state(['disabled'])
-            asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
+            if self.loop:
+                asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
             self.log("Disconnected")
             self.connect_button.state(['!disabled'])
         else:
