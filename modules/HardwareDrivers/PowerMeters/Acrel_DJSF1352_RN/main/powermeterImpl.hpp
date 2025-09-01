@@ -90,7 +90,6 @@ private:
     void init_default_values();
     void read_powermeter_values();
     void process_power_data_message(const types::serial_comm_hub_requests::Result message);
-    void process_current_rate_message(const types::serial_comm_hub_requests::Result message);
     void output_error_with_content(const types::serial_comm_hub_requests::Result& response);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };

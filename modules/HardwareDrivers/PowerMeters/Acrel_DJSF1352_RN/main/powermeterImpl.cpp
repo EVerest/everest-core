@@ -41,7 +41,6 @@ void powermeterImpl::init_default_values() {
     this->pm_last_values.meter_id = std::string(this->mod->info.id);
 
     this->pm_last_values.energy_Wh_import.total = 0.0f;
-    // this->pm_last_values.energy_Wh_export.total = 0.0f;
 
     types::units::Power pwr;
     pwr.total = 0.0f;
@@ -63,11 +62,6 @@ void powermeterImpl::read_powermeter_values() {
     process_power_data_message(power_data_response);
 
     this->pm_last_values.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-
-    // // read "current rate": "sharp", "peak", "shoulder", "off-peak"
-    // types::serial_comm_hub_requests::Result current_rate_response =
-    // mod->r_serial_comm_hub->call_modbus_read_holding_registers(config.powermeter_device_id, 0x0021, 4, 0);
-    // process_current_rate_message(current_rate_response);
 
     this->publish_powermeter(this->pm_last_values);
 }
@@ -102,15 +96,6 @@ void powermeterImpl::process_power_data_message(const types::serial_comm_hub_req
         output_error_with_content(message);
     }
 }
-
-// void powermeterImpl::process_current_rate_message(const types::serial_comm_hub_requests::Result message) {
-//     if (message.status_code == types::serial_comm_hub_requests::StatusCodeEnum::Success) {
-
-//     } else {
-//          // error: message sending failed
-//          output_error_with_content(message);
-//     }
-// }
 
 void powermeterImpl::output_error_with_content(const types::serial_comm_hub_requests::Result& response) {
     std::stringstream ss;
