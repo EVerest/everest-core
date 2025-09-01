@@ -70,7 +70,7 @@ private:
 class JsonRpc2ServerWithClient : public JsonRpc2Server, public JsonRpcClient {
 public:
     JsonRpc2ServerWithClient() = delete;
-    JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
+    explicit JsonRpc2ServerWithClient(ClientConnector& i) : JsonRpc2Server(), JsonRpcClient(i, version::v2){};
     // helper to be able to put data object into caller
     // which is something which json-rpc-cxx should be doing
     template <typename T> void CallNotificationWithObject(const std::string& name, const T& in, int precision = 3) {

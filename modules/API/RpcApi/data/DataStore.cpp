@@ -50,7 +50,7 @@ void ChargerErrorsStore::clear_error(const types::json_rpc_api::ErrorObj& error)
 }
 
 void EVSEInfoStore::set_supported_energy_transfer_modes(
-    std::vector<types::json_rpc_api::EnergyTransferModeEnum> supported_energy_transfer_modes) {
+    const std::vector<types::json_rpc_api::EnergyTransferModeEnum>& supported_energy_transfer_modes) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     this->dataobj.supported_energy_transfer_modes = supported_energy_transfer_modes;
 }
@@ -116,9 +116,9 @@ void EVSEStatusStore::update_data_is_valid() {
     this->data_is_valid = true;
 }
 
-EVSEStatusStore::EVSEStatusStore() {
-    // Initialize field_status map with all fields set to false
-    field_status = {
+EVSEStatusStore::EVSEStatusStore() :
+    field_status({
+        // Initialize field_status map with all fields set to false
         {EVSEStatusField::ActiveConnectorIndex, false},
         {EVSEStatusField::ChargingAllowed, false},
         {EVSEStatusField::State, false},
@@ -128,7 +128,7 @@ EVSEStatusStore::EVSEStatusStore() {
         {EVSEStatusField::ChargedEnergyWh, false},
         {EVSEStatusField::DischargedEnergyWh, false},
         {EVSEStatusField::Available, false},
-    };
+    }) {
 
     // Initialize data store with default values
     set_charging_duration_s(0);

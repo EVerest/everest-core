@@ -15,7 +15,6 @@ public:
     RpcApiRequestHandler(data::DataStoreCharger& data_store,
                          const std::vector<std::unique_ptr<evse_managerIntf>>& r_evse_managers,
                          const std::vector<std::unique_ptr<external_energy_limitsIntf>>& r_evse_energy_sink);
-    ~RpcApiRequestHandler();
 
     types::json_rpc_api::ErrorResObj set_charging_allowed(const int32_t evse_index, bool charging_allowed) override;
     types::json_rpc_api::ErrorResObj set_ac_charging(const int32_t evse_index, bool charging_allowed, bool max_current,

@@ -91,10 +91,6 @@ RpcApiRequestHandler::RpcApiRequestHandler(
     data_store(dataobj), evse_managers(r_evse_managers), evse_energy_sink(r_evse_energy_sink) {
 }
 
-RpcApiRequestHandler::~RpcApiRequestHandler() {
-    // Destructor implementation
-}
-
 ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index, bool charging_allowed) {
     ErrorResObj res{};
     bool success{true};

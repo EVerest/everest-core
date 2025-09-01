@@ -24,13 +24,13 @@ void roundFloatsInJson(nlohmann::json& j, int precision) {
     if (precision == 0) {
         return; // No rounding needed if precision is 0
     }
-    double step = std::pow(10.0, -precision);
     if (j.is_object() || j.is_array()) {
         for (auto& el : j) {
             roundFloatsInJson(el, precision);
         }
     } else if (j.is_number_float()) {
-        double value = j.get<double>();
+        const double step = std::pow(10.0, -precision);
+        const double value = j.get<double>();
         j = formatAndRoundDouble(value, step, precision);
     }
 }
