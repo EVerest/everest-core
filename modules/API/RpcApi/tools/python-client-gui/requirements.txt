@@ -1,1 +1,1 @@
-websockets
+websockets~=15.0.1
