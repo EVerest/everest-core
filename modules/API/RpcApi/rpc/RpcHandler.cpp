@@ -8,7 +8,6 @@
 #include <jsonrpccxx/server.hpp>
 #include <jsonrpccxx/typemapper.hpp>
 
-#include <boost/uuid/uuid_io.hpp>
 #include <everest/logging.hpp>
 
 #include "../helpers/Conversions.hpp" // For to_json() for nlohmann::json

@@ -5,7 +5,6 @@
 #define RPCHANDLER_H
 
 #include <atomic>
-#include <boost/uuid/uuid.hpp>
 #include <condition_variable>
 #include <cstdint>
 #include <deque>

@@ -53,6 +53,7 @@ target_link_libraries(${TEST_TARGET_NAME}
         date::date-tz
         everest::framework
         everest::log
+        everest::staging::helpers
         json-rpc-cxx
         nlohmann_json::nlohmann_json
         websockets_shared
