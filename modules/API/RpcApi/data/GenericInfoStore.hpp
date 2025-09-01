@@ -73,9 +73,6 @@ public:
         }
     }
 
-    // TBD: Do we need to be able to return an error if we cannot set the data?
-    // virtual void set_data(const nlohmann::json& in) = 0;
-
     // register a callback which is triggered when any data in the associated data store changes
     void register_notification_callback(const std::function<void(const T&)>& callback) {
         this->notification_callback = callback;
