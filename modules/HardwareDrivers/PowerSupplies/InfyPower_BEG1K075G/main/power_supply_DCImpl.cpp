@@ -58,7 +58,6 @@ void power_supply_DCImpl::init() {
                 last_publish_mode = mode;
                 firsttime = false;
             }
-
         });
 
     mod->acdc.switch_on_off(false);
