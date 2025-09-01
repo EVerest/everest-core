@@ -32,7 +32,7 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
     ${CMAKE_DL_LIBS}
     everest::log
     everest::framework
-    everest::staging::helpers
+    everest::helpers
     pthread
     nlohmann_json::nlohmann_json
     date::date

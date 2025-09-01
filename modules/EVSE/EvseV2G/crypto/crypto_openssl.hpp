@@ -8,7 +8,7 @@
 #include <string>
 
 #include "crypto_common.hpp"
-#include <openssl_util.hpp>
+#include <everest/tls/openssl_util.hpp>
 
 /**
  * \file OpenSSL implementation

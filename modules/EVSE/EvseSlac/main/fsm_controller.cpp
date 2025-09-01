@@ -2,7 +2,7 @@
 // Copyright 2023 - 2023 Pionix GmbH and Contributors to EVerest
 #include "fsm_controller.hpp"
 
-#include <slac/fsm/evse/states/others.hpp>
+#include <everest/slac/fsm/evse/states/others.hpp>
 
 FSMController::FSMController(slac::fsm::evse::Context& context) : ctx(context){};
 

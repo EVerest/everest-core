@@ -7,11 +7,11 @@
 #include <fstream>
 #include <locale>
 
-#include <everest/staging/run_application/run_application.hpp>
+#include <everest/run_application/run_application.hpp>
 
 #include <fmt/core.h>
 
-using namespace everest::staging::run_application;
+using namespace everest::run_application;
 
 namespace module {
 

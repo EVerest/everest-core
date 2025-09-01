@@ -3,7 +3,7 @@
 
 #include "auth_token_providerImpl.hpp"
 
-#include <everest/staging/helpers/helpers.hpp>
+#include <everest/helpers/helpers.hpp>
 
 namespace module {
 namespace main {
@@ -20,7 +20,7 @@ void auth_token_providerImpl::init() {
             }
             token.parent_id_token = {config.token, types::authorization::IdTokenType::ISO14443};
 
-            EVLOG_info << "Publishing new dummy token: " << everest::staging::helpers::redact(token);
+            EVLOG_info << "Publishing new dummy token: " << everest::helpers::redact(token);
             publish_provided_token(token);
         }
     });

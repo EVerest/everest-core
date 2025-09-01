@@ -1,0 +1,22 @@
+cc_library(
+    name = "evse_security_conversions",
+    srcs = [
+        "src/conversions.cpp",
+    ],
+    hdrs = [
+        "include/everest/conversions/evse_security/conversions.hpp",
+    ],
+    copts = [
+        "-std=c++17",
+        "-Wimplicit-fallthrough",
+        "-Werror=switch-enum",
+    ],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@everest-framework//:framework",
+        "@libevse-security//:libevse-security",
+        "//interfaces:interfaces_lib",
+    ],
+)
+

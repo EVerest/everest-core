@@ -5,7 +5,7 @@
 
 #include <utility>
 
-using namespace everest::staging::run_application;
+using namespace everest::run_application;
 
 namespace stub {
 
@@ -96,7 +96,7 @@ CmdOutput RunApplication::run_application(const std::string& name, std::vector<s
 
 } // namespace stub
 
-namespace everest::staging::run_application {
+namespace everest::run_application {
 CmdOutput run_application(const std::string& name, std::vector<std::string> args,
                           const std::function<CmdControl(const std::string& output_line)> output_callback) {
     CmdOutput result = {{}, {}, -1};
@@ -105,4 +105,4 @@ CmdOutput run_application(const std::string& name, std::vector<std::string> args
     }
     return result;
 }
-} // namespace everest::staging::run_application
+} // namespace everest::run_application

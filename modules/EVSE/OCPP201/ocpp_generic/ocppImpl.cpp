@@ -3,7 +3,7 @@
 
 #include "ocppImpl.hpp"
 #include <conversions.hpp>
-#include <ocpp_conversions.hpp>
+#include <everest/conversions/ocpp/ocpp_conversions.hpp>
 
 namespace module {
 namespace ocpp_generic {

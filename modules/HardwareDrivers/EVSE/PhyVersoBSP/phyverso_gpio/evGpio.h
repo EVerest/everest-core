@@ -7,7 +7,7 @@
 #include "evConfig.h"
 #include <atomic>
 #include <chrono>
-#include <gpio.hpp>
+#include <everest/gpio/gpio.hpp>
 #include <sigslot/signal.hpp>
 #include <stdexcept>
 #include <stdint.h>

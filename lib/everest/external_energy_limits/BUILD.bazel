@@ -1,0 +1,16 @@
+cc_library(
+    name = "external_energy_limits",
+    srcs = [
+        "src/external_energy_limits.cpp",
+    ],
+    hdrs = [
+        "include/everest/external_energy_limits/external_energy_limits.hpp",
+    ],
+    copts = ["-std=c++17"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@everest-framework//:framework",
+        "//interfaces:interfaces_lib",
+    ],
+)

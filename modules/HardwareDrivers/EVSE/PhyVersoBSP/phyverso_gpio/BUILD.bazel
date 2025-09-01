@@ -2,7 +2,7 @@ cc_library(
     name = "phyverso_gpio",
     deps = [
         "//modules/HardwareDrivers/EVSE/PhyVersoBSP/phyverso_mcu_comms",
-        "//lib/staging/gpio",
+        "//lib/everest/gpio",
         "@sigslot//:sigslot",
     ],
     srcs = glob([

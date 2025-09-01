@@ -13,9 +13,9 @@
 
 #include <utils/date.hpp>
 
-#include <everest/staging/run_application/run_application.hpp>
+#include <everest/run_application/run_application.hpp>
 
-using namespace everest::staging::run_application;
+using namespace everest::run_application;
 
 namespace module {
 namespace main {

@@ -1,0 +1,30 @@
+cc_library(
+    name = "tls",
+    srcs = [
+        "extensions/helpers.cpp",
+        "extensions/status_request.cpp",
+        "extensions/trusted_ca_keys.cpp",
+        "src/openssl_conv.cpp",
+        "src/openssl_util.cpp",
+        "src/tls.cpp",
+    ],
+    hdrs = [
+        "extensions/helpers.hpp",
+        "extensions/status_request.hpp",
+        "extensions/trusted_ca_keys.hpp",
+        "include/everest/tls/openssl_conv.hpp",
+        "include/everest/tls/openssl_util.hpp",
+        "include/everest/tls/tls.hpp",
+        "include/everest/tls/tls_types.hpp"
+    ],
+    copts = ["-std=c++17"],
+    includes = [".", "include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/everest/util",
+        "@everest-framework//:framework",
+        "@libevse-security//:libevse-security",
+        "@openssl//:crypto",
+        "@openssl//:ssl",
+    ],
+)

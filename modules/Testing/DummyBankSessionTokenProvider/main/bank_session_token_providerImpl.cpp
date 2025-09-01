@@ -3,7 +3,7 @@
 
 #include "bank_session_token_providerImpl.hpp"
 
-#include <everest/staging/helpers/helpers.hpp>
+#include <everest/helpers/helpers.hpp>
 
 namespace module {
 namespace main {
@@ -19,7 +19,7 @@ types::payment_terminal::BankSessionToken bank_session_token_providerImpl::handl
     bank_session_token.token = config.token;
 
     if (config.randomize) {
-        bank_session_token.token = everest::staging::helpers::get_uuid();
+        bank_session_token.token = everest::helpers::get_uuid();
     }
     return bank_session_token;
 }

@@ -3,7 +3,7 @@
 #ifndef EVSE_SLAC_FSM_CONTROLLER_HPP
 #define EVSE_SLAC_FSM_CONTROLLER_HPP
 
-#include <slac/fsm/evse/fsm.hpp>
+#include <everest/slac/fsm/evse/fsm.hpp>
 
 #include <condition_variable>
 #include <mutex>

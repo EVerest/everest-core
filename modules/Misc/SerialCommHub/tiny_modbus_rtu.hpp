@@ -13,8 +13,8 @@
 #include <stdint.h>
 #include <termios.h>
 
+#include <everest/gpio/gpio.hpp>
 #include <everest/logging.hpp>
-#include <gpio.hpp>
 
 namespace tiny_modbus {
 

@@ -4,7 +4,7 @@
 #ifndef _EVSEMANAGER_UTILS_H_
 #define _EVSEMANAGER_UTILS_H_
 
-#include <everest/staging/helpers/helpers.hpp>
+#include <everest/helpers/helpers.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/powermeter.hpp>
 #include <vector>
@@ -30,11 +30,11 @@ inline SessionIdType get_session_id_type_from_string(const std::string& type) {
 
 inline std::string generate_session_id(SessionIdType type = SessionIdType::UUID) {
     if (type == SessionIdType::SHORT_BASE64) {
-        return everest::staging::helpers::get_base64_id();
+        return everest::helpers::get_base64_id();
     } else if (type == SessionIdType::UUID_BASE64) {
-        return everest::staging::helpers::get_base64_uuid();
+        return everest::helpers::get_base64_uuid();
     }
-    return everest::staging::helpers::get_uuid();
+    return everest::helpers::get_uuid();
 }
 
 inline types::powermeter::OCMFIdentificationType

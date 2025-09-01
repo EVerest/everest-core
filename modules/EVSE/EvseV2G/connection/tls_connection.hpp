@@ -5,7 +5,7 @@
 #define TLS_CONNECTION_HPP_
 
 #include <cstddef>
-#include <tls.hpp>
+#include <everest/tls/tls.hpp>
 #include <unistd.h>
 
 struct v2g_context;

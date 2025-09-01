@@ -10,10 +10,10 @@
 #include <conversions.hpp>
 #include <device_model/composed_device_model_storage.hpp>
 #include <error_handling.hpp>
-#include <evse_security_ocpp.hpp>
-#include <external_energy_limits.hpp>
+#include <everest/conversions/ocpp/evse_security_ocpp.hpp>
+#include <everest/conversions/ocpp/ocpp_conversions.hpp>
+#include <everest/external_energy_limits/external_energy_limits.hpp>
 #include <ocpp/v2/utils.hpp>
-#include <ocpp_conversions.hpp>
 
 namespace {
 void update_evcc_id_token(ocpp::v2::IdToken& id_token, const std::string& evcc_id,

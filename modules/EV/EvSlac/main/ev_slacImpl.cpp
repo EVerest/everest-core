@@ -4,7 +4,7 @@
 
 #include <fmt/core.h>
 
-#include <slac/io.hpp>
+#include <everest/slac/io.hpp>
 
 #include "fsm_controller.hpp"
 

@@ -5,9 +5,9 @@
 
 #include <future>
 
+#include <everest/slac/io.hpp>
 #include <fmt/core.h>
 #include <slac/channel.hpp>
-#include <slac/io.hpp>
 
 #include "fsm_controller.hpp"
 
