@@ -44,16 +44,19 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
         boost::uuids::uuid client_id = boost::uuids::random_generator()();
         server->m_clients[client_id] = wsi;
 
-        char ip_address[INET6_ADDRSTRLEN]{0};
-        if (lws_get_peer_simple(wsi, ip_address, sizeof(ip_address)) == NULL) {
+        char ip_address_buf[INET6_ADDRSTRLEN]{0};
+        if (lws_get_peer_simple(wsi, ip_address_buf, sizeof(ip_address_buf)) == NULL) {
+            ip_address_buf[0] = '\0'; // ensure empty string
             EVLOG_warning << "Failed to get client IP address";
         }
+
+        std::string ip_address(ip_address_buf, strnlen(ip_address_buf, sizeof(ip_address_buf)));
 
         lock.unlock();                                      // Unlock before calling the callback
         server->on_client_connected(client_id, ip_address); // Call the on_client_connected callback
         lock.lock();                                        // Lock again after the callback
         EVLOG_info << "Client " << boost::uuids::to_string(client_id) << " connected"
-                   << (strlen(ip_address) > 0 ? (" from " + std::string(ip_address)) : "");
+                   << (ip_address.empty() ? "" : (" from " + ip_address));
         break;
     }
     case LWS_CALLBACK_CLOSED: {
