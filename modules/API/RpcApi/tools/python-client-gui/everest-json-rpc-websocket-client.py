@@ -12,12 +12,12 @@ import websockets
 
 SETTINGS_FILE = "settings.json"
 CALLS_FILE = "saved_calls.json"
-
+APP_VERSION = "1.0.0"
 
 class JsonRpcWebSocketClient:
     def __init__(self, root):
         self.root = root
-        self.root.title("EVerest JSON-RPC WebSocket Client")
+        self.root.title(f"EVerest JSON-RPC WebSocket Client v{APP_VERSION}")
         self.ws = None
         self.connected = False
         self.connect_button_label = tk.StringVar(value="Connect")
