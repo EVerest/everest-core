@@ -3412,7 +3412,7 @@ void ChargePointImpl::status_notification(const int32_t connector, const ChargeP
     request.connectorId = connector;
     request.errorCode = errorCode;
     request.status = status;
-    request.timestamp = timestamp;
+    request.timestamp = ocpp::DateTime();
     request.info = info;
     request.vendorId = vendor_id;
     request.vendorErrorCode = vendor_error_code;
