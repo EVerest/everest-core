@@ -93,7 +93,7 @@ void CanDevice::rx_thread() {
 }
 
 void CanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payload) {
-    EVLOG_debug << "CAN frame received" ;
+    EVLOG_debug << "CAN frame received";
 }
 
 bool CanDevice::_tx(uint32_t can_id, const std::vector<uint8_t>& payload) {
