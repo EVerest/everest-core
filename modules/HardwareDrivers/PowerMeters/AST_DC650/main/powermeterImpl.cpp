@@ -189,7 +189,6 @@ void powermeterImpl::read_device_data() {
         std::vector<uint8_t> get_total_stop_export_energy_cmd{};
         app_layer.create_command_get_total_stop_export_energy(get_total_stop_export_energy_cmd);
 
-
         std::vector<uint8_t> get_ocmf_stats_cmd{};
         app_layer.create_command_get_ocmf_stats(get_ocmf_stats_cmd);
 

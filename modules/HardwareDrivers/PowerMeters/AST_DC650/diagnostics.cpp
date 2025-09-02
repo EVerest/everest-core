@@ -29,27 +29,6 @@ void to_json(json& j, const DeviceData& k) {
     j["status"] = module::conversions::to_bin_string(k.ab_status);
 }
 
-void from_json(const json& j, DeviceData& k) {
-    // k.utc_time_s = j.at("");
-    // k.gmt_offset_quarterhours = j.at("");
-    // k.total_start_import_energy_Wh = j.at("");
-    // k.total_stop_import_energy_Wh = j.at("");
-    // k.total_start_export_energy_Wh = j.at("");
-    // k.total_stop_export_energy_Wh = j.at("");
-    // k.total_transaction_duration_s = j.at("");
-    // k.ocmf_stats.number_transactions = j.at("");
-    // k.ocmf_stats.timestamp_first_transaction = j.at("");
-    // k.ocmf_stats.timestamp_last_transaction = j.at("");
-    // k.ocmf_stats.max_number_of_transactions = j.at("");
-    // k.last_ocmf_transaction = j.at("");
-    // k.ocmf_info.gateway_id = j.at("");
-    // k.ocmf_info.manufacturer = j.at("");
-    // k.ocmf_info.model = j.at("");
-    // k.total_dev_import_energy_Wh = j.at("");
-    // k.total_dev_export_energy_Wh = j.at("");
-    EVLOG_error << "[DeviceData][from_json()] not implemented";
-}
-
 std::ostream& operator<<(std::ostream& os, const DeviceData& k) {
     os << json(k).dump(4);
     return os;

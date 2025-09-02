@@ -19,7 +19,7 @@ struct OcmfStats {
     uint32_t number_transactions{};
     uint32_t timestamp_first_transaction{};
     uint32_t timestamp_last_transaction{};
-    uint32_t max_number_of_transactions{}; // ???
+    uint32_t max_number_of_transactions{};
 };
 
 struct OcmfInfo {
@@ -46,7 +46,6 @@ struct DeviceData {
 };
 
 void to_json(json& j, const DeviceData& k);
-void from_json(const json& j, DeviceData& k);
 std::ostream& operator<<(std::ostream& os, const DeviceData& k);
 
 struct LogStats {
@@ -117,7 +116,6 @@ void from_json(const json& j, Logging& k);
 std::ostream& operator<<(std::ostream& os, const Logging& k);
 
 namespace conversions {
-
 
 template <typename T> static std::string to_bin_string(const T& num) {
     std::stringstream ss{};
