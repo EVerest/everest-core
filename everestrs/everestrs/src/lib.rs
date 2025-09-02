@@ -25,18 +25,34 @@ static INIT_RUNTIME_ONCE: OnceLock<Pin<Arc<Runtime>>> = OnceLock::new();
 // Reexport everything so the clients can use it.
 pub use serde;
 pub use serde_json;
+pub use log;
 // TODO(ddo) Drop this again - its only there as a MVP for the enum support
 // of errors.
 pub use serde_yaml;
 
-#[derive(Error, Debug)]
+/// Errors matching the exceptions defined under `exceptions.hpp`.
+///
+/// The tags must match the tags defined under `conversions.hpp`.
+#[derive(Error, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "__everest__error_type", content = "__everest__error_msg")]
 pub enum Error {
-    #[error("missing argument to command call: '{0}'")]
-    MissingArgument(&'static str),
-    #[error("invalid argument to command call: '{0}'")]
-    InvalidArgument(&'static str),
-    #[error("Mismatched type: Variant contains '{0}'")]
-    MismatchedType(String),
+    #[error("Message Parsing Error: {0}")]
+    MessageParsingError(String),
+
+    #[error("Schema Validation Error: {0}")]
+    SchemaValidationError(String),
+
+    #[error("Hanlder Exception: {0}")]
+    HandlerException(String),
+
+    #[error("Command Timeout: {0}")]
+    CmdTimeout(String),
+
+    #[error("Shutdown: {0}")]
+    Shutdown(String),
+
+    #[error("Not Ready: {0}")]
+    NotReady(String),
 }
 
 pub type Result<T> = ::std::result::Result<T, Error>;
@@ -421,13 +437,16 @@ impl Runtime {
     fn handle_command(&self, impl_id: &str, name: &str, json: ffi::JsonBlob) -> ffi::JsonBlob {
         debug!("handle_command: {impl_id}, {name}, '{:?}'", json.as_bytes());
         let parameters: Option<HashMap<String, serde_json::Value>> = json.deserialize();
-        let blob = self
+        let retval = self
             .sub_impl
             .get()
             .unwrap()
-            .handle_command(impl_id, name, parameters.unwrap_or_default())
-            .unwrap();
-        ffi::JsonBlob::from_vec(serde_json::to_vec(&blob).unwrap())
+            .handle_command(impl_id, name, parameters.unwrap_or_default());
+
+        match retval {
+            Ok(blob) => ffi::JsonBlob::from_vec(serde_json::to_vec(&blob).unwrap()),
+            Err(err) => ffi::JsonBlob::from_vec(serde_json::to_vec(&err).unwrap())
+        }
     }
 
     fn handle_variable(&self, impl_id: &str, index: usize, name: &str, json: ffi::JsonBlob) {
@@ -435,15 +454,18 @@ impl Runtime {
             "handle_variable: {impl_id}, {name}, '{:?}'",
             json.as_bytes()
         );
-        self.sub_impl
-            .get()
-            .unwrap()
-            .handle_variable(impl_id, index, name, json.deserialize())
-            .unwrap();
+        if let Err(err) =
+            self.sub_impl
+                .get()
+                .unwrap()
+                .handle_variable(impl_id, index, name, json.deserialize())
+        {
+            log::error!("`handle_variable` failed: {err:?}");
+        }
     }
 
     fn handle_on_error(&self, impl_id: &str, index: usize, error: ffi::ErrorType, raised: bool) {
-        debug!("handle_error_raised: {impl_id}, {index}");
+        debug!("handle_on_error: {impl_id}, index {index}, raised {raised}");
 
         // We want to split the error type into the group and the remainder.
         self.sub_impl
@@ -470,12 +492,18 @@ impl Runtime {
         index: usize,
         name: &str,
         args: &T,
-    ) -> R {
+    ) -> Result<R> {
         let blob = ffi::JsonBlob::from_vec(
             serde_json::to_vec(args).expect("Serialization of data cannot fail."),
         );
         let return_value = (self.cpp_module).call_command(impl_id, index, name, blob);
-        serde_json::from_slice(&return_value.data).unwrap()
+        match serde_json::from_slice(&return_value.data) {
+            Ok(ok) => Ok(ok),
+            Err(_) => match serde_json::from_slice::<Error>(&return_value.data) {
+                Ok(err) => Err(err),
+                Err(err) => Err(Error::MessageParsingError(format!("{err:?}")))
+            }
+        }
     }
 
     /// Called from the generated code.
@@ -635,7 +663,7 @@ impl TryFrom<&Config> for bool {
     fn try_from(value: &Config) -> std::result::Result<Self, Self::Error> {
         match value {
             Config::Boolean(value) => Ok(*value),
-            _ => Err(Error::MismatchedType(format!("{:?}", value))),
+            _ => Err(Error::MessageParsingError(format!("{:?}", value))),
         }
     }
 }
@@ -645,7 +673,7 @@ impl TryFrom<&Config> for String {
     fn try_from(value: &Config) -> std::result::Result<Self, Self::Error> {
         match value {
             Config::String(value) => Ok(value.clone()),
-            _ => Err(Error::MismatchedType(format!("{:?}", value))),
+            _ => Err(Error::MessageParsingError(format!("{:?}", value))),
         }
     }
 }
@@ -655,7 +683,7 @@ impl TryFrom<&Config> for f64 {
     fn try_from(value: &Config) -> std::result::Result<Self, Self::Error> {
         match value {
             Config::Number(value) => Ok(*value),
-            _ => Err(Error::MismatchedType(format!("{:?}", value))),
+            _ => Err(Error::MessageParsingError(format!("{:?}", value))),
         }
     }
 }
@@ -665,7 +693,7 @@ impl TryFrom<&Config> for i64 {
     fn try_from(value: &Config) -> std::result::Result<Self, Self::Error> {
         match value {
             Config::Integer(value) => Ok(*value),
-            _ => Err(Error::MismatchedType(format!("{:?}", value))),
+            _ => Err(Error::MessageParsingError(format!("{:?}", value))),
         }
     }
 }

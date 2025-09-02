@@ -18,16 +18,16 @@ fn dispatch_variable_to_{{ trait.name | snake }}(
    name: &str,
    value: __serde_json::Value,
 ) -> ::everestrs::Result<()> {
-   match name {
+    match name {
 {%- for var in trait.vars %}
-   "{{ var.name }}" => {
-   let v: {{ var.data_type.name }} = __serde_json::from_value(value)
-         .map_err(|_| ::everestrs::Error::InvalidArgument("{{ var.name }}"))?;
-         client_subscriber.on_{{ var.name | snake }}(context, v);
-                Ok(())
-    },
+        "{{ var.name }}" => {
+            let v: {{ var.data_type.name }} = __serde_json::from_value(value)
+                .map_err(|e| ::everestrs::Error::MessageParsingError(format!("Failed to deserialize variable `{{ var.name }}`: {e:?})")))?;
+            client_subscriber.on_{{ var.name | snake }}(context, v);
+            Ok(())
+        },
 {%- endfor %}
-     _ => Err(::everestrs::Error::InvalidArgument("Unknown variable received.")),
+        other => Err(::everestrs::Error::MessageParsingError(format!("Unknown variable {other} received.").to_string())),
    }
 }
 
@@ -40,7 +40,7 @@ fn dispatch_error_to_{{ trait.name | snake }} (
 {%- if trait.errors %}
     // The type is crate::generated::errors::{{ trait.name | snake }}::Error
     let Ok(v) = __serde_yaml::from_str(&error.error_type) else {
-        eprintln!("Failed to deserialize {}", error.error_type);
+        everestrs::log::error!("Failed to deserialize error `{}`", error.error_type);
         return;
     };
     if raised {
@@ -88,9 +88,7 @@ impl {{trait.name | title }}ClientPublisher {
             "{{arg.name}}": {{arg.name | identifier}},
 {%- endfor %}
         });
-        let blob = self.runtime.call_command(self.implementation_id, self.index, "{{ cmd.name }}", &args);
-        __serde_json::from_value(blob).map_err(|_| ::everestrs::Error::InvalidArgument("return_value"))
-
+        self.runtime.call_command(self.implementation_id, self.index, "{{ cmd.name }}", &args)
       }
 {% endfor %}
 

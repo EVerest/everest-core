@@ -33,21 +33,21 @@ fn dispatch_command_to_{{ trait.name | snake }}(
 {%- for cmd in trait.cmds %}
    "{{ cmd.name }}" => {
 {%- for arg in cmd.arguments %}
-      let {{ arg.name | identifier }}: {{ arg.data_type.name }} = __serde_json::from_value(
-         parameters.remove("{{ arg.name }}")
-            .ok_or(::everestrs::Error::MissingArgument("{{ arg.name }}"))?,
-          )
-          .map_err(|_| ::everestrs::Error::InvalidArgument("{{ arg.name }}"))?;
+            let {{ arg.name | identifier }}: {{ arg.data_type.name }} = __serde_json::from_value(
+                parameters.remove("{{ arg.name }}")
+                    .ok_or(::everestrs::Error::MessageParsingError("Argument `{{ arg.name }}` not provided".to_string()))?,
+            )
+            .map_err(|e| ::everestrs::Error::MessageParsingError(format!("Failed to deserialize argument `{{ arg.name }}`: {e:?}")))?;
 {%- endfor %}
-       let retval = service.{{ cmd.name }}(context,
+            let retval = service.{{ cmd.name }}(context,
 {%- for arg in cmd.arguments %}
-            {{ arg.name | identifier }},
+                {{ arg.name | identifier }},
 {%- endfor %}
-       )?;
-       __serde_json::to_value(retval).map_err(|e| ::everestrs::Error::MismatchedType("Failed to dispatch".to_string()))
+            )?;
+            __serde_json::to_value(retval).map_err(|e| ::everestrs::Error::MessageParsingError(format!("Failed to serialize result: {e:?}")))
     },
 {%- endfor %}
-      _ => Err(::everestrs::Error::InvalidArgument("Unknown command called.")),
+        other => Err(::everestrs::Error::MessageParsingError(format!("Unknown command `{other}` called."))),
    }
 }
 

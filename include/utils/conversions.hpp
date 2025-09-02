@@ -85,8 +85,14 @@ template <typename T> nlohmann::json variant_to_json(T variant) {
 }
 
 namespace conversions {
-std::string cmd_event_to_string(CmdEvent cmd_event);
-CmdEvent string_to_cmd_event(const std::string& cmd_event_string);
+/// The json tag for the error type.
+constexpr auto ERROR_TYPE = "__everest__error_type";
+
+/// The json tag for the error message.
+constexpr auto ERROR_MSG = "__everest__error_msg";
+
+std::string cmd_error_type_to_string(CmdErrorType cmd_error_type);
+CmdErrorType string_to_cmd_error_type(const std::string& cmd_error_string);
 } // namespace conversions
 
 void to_json(nlohmann::json& j, const CmdResultError& e);

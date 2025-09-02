@@ -2,9 +2,10 @@
 #include "everestrs/src/lib.rs.h"
 
 #include <everest/logging.hpp>
+#include <utils/conversions.hpp>
 #include <utils/error/error_manager_impl.hpp>
 #include <utils/error/error_manager_req.hpp>
-
+#include <utils/exceptions.hpp>
 #include <utils/types.hpp>
 
 #include <cstdlib>
@@ -132,9 +133,32 @@ void Module::signal_ready(const Runtime& rt) const {
 }
 
 void Module::provide_command(const Runtime& rt, rust::String implementation_id, rust::String name) const {
+    using namespace Everest;
     handle_->provide_cmd(std::string(implementation_id), std::string(name), [&rt, implementation_id, name](json args) {
         JsonBlob blob = rt.handle_command(implementation_id, name, json2blob(args));
-        return json::parse(blob.data.begin(), blob.data.end());
+        const auto retval = json::parse(blob.data.begin(), blob.data.end());
+
+        // Check if our command handler failed.
+        if (retval.contains(conversions::ERROR_TYPE)) {
+            const auto error_str = retval.at(conversions::ERROR_TYPE).get<std::string>();
+            const auto error_msg = retval.at(conversions::ERROR_MSG).get<std::string>();
+            const auto error_enm = conversions::string_to_cmd_error_type(error_str);
+            switch (error_enm) {
+            case CmdErrorType::MessageParsingError:
+                throw MessageParsingError(error_msg);
+            case CmdErrorType::SchemaValidationError:
+                throw SchemaValidationError(error_msg);
+            case CmdErrorType::HandlerException:
+                throw HandlerException(error_msg);
+            case CmdErrorType::CmdTimeout:
+                throw CmdTimeout(error_msg);
+            case CmdErrorType::Shutdown:
+                throw Shutdown(error_msg);
+            case CmdErrorType::NotReady:
+                throw NotReady(error_msg);
+            }
+        }
+        return retval;
     });
 }
 
@@ -177,10 +201,25 @@ void Module::subscribe_all_errors(const Runtime& rt) const {
 }
 
 JsonBlob Module::call_command(rust::Str implementation_id, std::size_t index, rust::Str name, JsonBlob blob) const {
+    using namespace Everest;
     const auto req = Requirement{std::string(implementation_id), index};
-    json return_value = handle_->call_cmd(req, std::string(name), json::parse(blob.data.begin(), blob.data.end()));
-
-    return json2blob(return_value);
+    json retval;
+    try {
+        retval = handle_->call_cmd(req, std::string(name), json::parse(blob.data.begin(), blob.data.end()));
+    } catch (const MessageParsingError& ex) {
+        to_json(retval, CmdResultError{CmdErrorType::MessageParsingError, ex.what(), nullptr});
+    } catch (const SchemaValidationError& ex) {
+        to_json(retval, CmdResultError{CmdErrorType::SchemaValidationError, ex.what(), nullptr});
+    } catch (const HandlerException& ex) {
+        to_json(retval, CmdResultError{CmdErrorType::HandlerException, ex.what(), nullptr});
+    } catch (const CmdTimeout& ex) {
+        to_json(retval, CmdResultError{CmdErrorType::CmdTimeout, ex.what(), nullptr});
+    } catch (const Shutdown& ex) {
+        to_json(retval, CmdResultError{CmdErrorType::Shutdown, ex.what(), nullptr});
+    } catch (const NotReady& ex) {
+        to_json(retval, CmdResultError{CmdErrorType::NotReady, ex.what(), nullptr});
+    }
+    return json2blob(retval);
 }
 
 void Module::publish_variable(rust::Str implementation_id, rust::Str name, JsonBlob blob) const {

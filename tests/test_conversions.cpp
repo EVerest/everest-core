@@ -6,50 +6,53 @@
 #include <utils/types.hpp>
 
 SCENARIO("Check conversions", "[!throws]") {
-    GIVEN("Valid CmdEvents") {
+    GIVEN("Valid CmdErrors") {
         THEN("It shouldn't throw") {
-            CHECK(Everest::conversions::cmd_event_to_string(Everest::CmdEvent::MessageParsingFailed) ==
-                  "MessageParsingFailed");
+            CHECK(Everest::conversions::cmd_error_type_to_string(Everest::CmdErrorType::MessageParsingError) ==
+                  "MessageParsingError");
 
-            CHECK(Everest::conversions::cmd_event_to_string(Everest::CmdEvent::SchemaValidationFailed) ==
-                  "SchemaValidationFailed");
-            CHECK(Everest::conversions::cmd_event_to_string(Everest::CmdEvent::HandlerException) == "HandlerException");
-            CHECK(Everest::conversions::cmd_event_to_string(Everest::CmdEvent::Timeout) == "Timeout");
-            CHECK(Everest::conversions::cmd_event_to_string(Everest::CmdEvent::Shutdown) == "Shutdown");
-            CHECK(Everest::conversions::cmd_event_to_string(Everest::CmdEvent::NotReady) == "NotReady");
+            CHECK(Everest::conversions::cmd_error_type_to_string(Everest::CmdErrorType::SchemaValidationError) ==
+                  "SchemaValidationError");
+            CHECK(Everest::conversions::cmd_error_type_to_string(Everest::CmdErrorType::HandlerException) ==
+                  "HandlerException");
+            CHECK(Everest::conversions::cmd_error_type_to_string(Everest::CmdErrorType::CmdTimeout) == "CmdTimeout");
+            CHECK(Everest::conversions::cmd_error_type_to_string(Everest::CmdErrorType::Shutdown) == "Shutdown");
+            CHECK(Everest::conversions::cmd_error_type_to_string(Everest::CmdErrorType::NotReady) == "NotReady");
         }
     }
 
-    GIVEN("Invalid CmdEvents") {
+    GIVEN("Invalid CmdErrors") {
         THEN("It should throw") {
-            CHECK_THROWS(Everest::conversions::cmd_event_to_string(static_cast<Everest::CmdEvent>(-1)));
+            CHECK_THROWS(Everest::conversions::cmd_error_type_to_string(static_cast<Everest::CmdErrorType>(-1)));
         }
     }
 
-    GIVEN("Valid CmdEvent strings") {
+    GIVEN("Valid CmdError strings") {
         THEN("It shouldn't throw") {
-            CHECK(Everest::conversions::string_to_cmd_event("MessageParsingFailed") ==
-                  Everest::CmdEvent::MessageParsingFailed);
+            CHECK(Everest::conversions::string_to_cmd_error_type("MessageParsingError") ==
+                  Everest::CmdErrorType::MessageParsingError);
 
-            CHECK(Everest::conversions::string_to_cmd_event("SchemaValidationFailed") ==
-                  Everest::CmdEvent::SchemaValidationFailed);
-            CHECK(Everest::conversions::string_to_cmd_event("HandlerException") == Everest::CmdEvent::HandlerException);
-            CHECK(Everest::conversions::string_to_cmd_event("Timeout") == Everest::CmdEvent::Timeout);
-            CHECK(Everest::conversions::string_to_cmd_event("Shutdown") == Everest::CmdEvent::Shutdown);
-            CHECK(Everest::conversions::string_to_cmd_event("NotReady") == Everest::CmdEvent::NotReady);
+            CHECK(Everest::conversions::string_to_cmd_error_type("SchemaValidationError") ==
+                  Everest::CmdErrorType::SchemaValidationError);
+            CHECK(Everest::conversions::string_to_cmd_error_type("HandlerException") ==
+                  Everest::CmdErrorType::HandlerException);
+            CHECK(Everest::conversions::string_to_cmd_error_type("CmdTimeout") == Everest::CmdErrorType::CmdTimeout);
+            CHECK(Everest::conversions::string_to_cmd_error_type("Shutdown") == Everest::CmdErrorType::Shutdown);
+            CHECK(Everest::conversions::string_to_cmd_error_type("NotReady") == Everest::CmdErrorType::NotReady);
         }
     }
 
-    GIVEN("Invalid CmdEvent strings") {
+    GIVEN("Invalid CmdError strings") {
         THEN("It should throw") {
-            CHECK_THROWS(Everest::conversions::string_to_cmd_event("ThisIsAnInvalidCmdEventString"));
+            CHECK_THROWS(Everest::conversions::string_to_cmd_error_type("ThisIsAnInvalidCmdErrorString"));
         }
     }
 
-    GIVEN("Valid CmdEventError") {
+    GIVEN("Valid CmdErrorError") {
         THEN("It shouldn't throw") {
-            Everest::CmdResultError cmd_result_error = {Everest::CmdEvent::Shutdown, "message", nullptr};
-            json cmd_result_error_json = {{"event", "Shutdown"}, {"msg", "message"}};
+            Everest::CmdResultError cmd_result_error = {Everest::CmdErrorType::Shutdown, "message", nullptr};
+            json cmd_result_error_json = {{Everest::conversions::ERROR_TYPE, "Shutdown"},
+                                          {Everest::conversions::ERROR_MSG, "message"}};
             Everest::CmdResultError cmd_result_error_from_json = cmd_result_error_json;
             CHECK(json(cmd_result_error) == cmd_result_error_json);
             CHECK(json(cmd_result_error_from_json) == cmd_result_error_json);

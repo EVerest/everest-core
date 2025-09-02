@@ -182,8 +182,8 @@ impl ::everestrs::Subscriber for Module {
         dispatch_command_to_{{ provide.interface | snake }}(&context, self.{{ provide.implementation_id | identifier }}.as_ref(), name, parameters)
     },
 {% endfor %}
-            _ => Err(::everestrs::Error::InvalidArgument(
-                "Unknown implementation_id called.",
+            other => Err(::everestrs::Error::MessageParsingError(
+                format!("Unknown implementation_id {other} called."),
             )),
         }
     }
@@ -210,8 +210,8 @@ impl ::everestrs::Subscriber for Module {
     {% endif %}
     },
 {% endfor %}
-      _ => Err(::everestrs::Error::InvalidArgument(
-                  "Unknown variable received.",
+      other => Err(::everestrs::Error::MessageParsingError(
+                  format!("Unknown variable {other} received."),
               ))
         }
     }
@@ -238,7 +238,7 @@ impl ::everestrs::Subscriber for Module {
     {% endif %}
             },
 {% endfor %}
-            _ => eprintln!("Received an unknown error from {implementation_id}"),
+            _ => everestrs::log::error!("Received an unknown error from {implementation_id}"),
         }
     }
 

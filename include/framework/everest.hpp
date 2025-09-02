@@ -37,7 +37,7 @@ using TelemetryEntry = std::variant<std::string, const char*, bool, int32_t, uin
 using TelemetryMap = std::map<std::string, TelemetryEntry>;
 using UnsubscribeToken = std::function<void()>;
 
-enum class CmdEvent;
+enum class CmdErrorType;
 struct CmdResultError;
 struct CmdResult;
 

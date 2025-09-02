@@ -4,58 +4,58 @@
 
 namespace Everest {
 namespace conversions {
-constexpr auto CMD_EVENT_MESSAGE_PARSING_FAILED = "MessageParsingFailed";
-constexpr auto CMD_EVENT_SCHEMA_VALIDATION_FAILED = "SchemaValidationFailed";
-constexpr auto CMD_EVENT_HANDLER_EXCEPTION = "HandlerException";
-constexpr auto CMD_EVENT_TIMEOUT = "Timeout";
-constexpr auto CMD_EVENT_SHUTDOWN = "Shutdown";
-constexpr auto CMD_EVENT_NOT_READY = "NotReady";
+constexpr auto CMD_ERROR_TYPE_MESSAGE_PARSING_ERROR = "MessageParsingError";
+constexpr auto CMD_ERROR_TYPE_SCHEMA_VALIDATION_ERROR = "SchemaValidationError";
+constexpr auto CMD_ERROR_TYPE_HANDLER_EXCEPTION = "HandlerException";
+constexpr auto CMD_ERROR_TYPE_CMD_TIMEOUT = "CmdTimeout";
+constexpr auto CMD_ERROR_TYPE_SHUTDOWN = "Shutdown";
+constexpr auto CMD_ERROR_TYPE_NOT_READY = "NotReady";
 
-std::string cmd_event_to_string(CmdEvent cmd_event) {
-    switch (cmd_event) {
-    case CmdEvent::MessageParsingFailed:
-        return CMD_EVENT_MESSAGE_PARSING_FAILED;
-    case CmdEvent::SchemaValidationFailed:
-        return CMD_EVENT_SCHEMA_VALIDATION_FAILED;
-    case CmdEvent::HandlerException:
-        return CMD_EVENT_HANDLER_EXCEPTION;
-    case CmdEvent::Timeout:
-        return CMD_EVENT_TIMEOUT;
-    case CmdEvent::Shutdown:
-        return CMD_EVENT_SHUTDOWN;
-    case CmdEvent::NotReady:
-        return CMD_EVENT_NOT_READY;
+std::string cmd_error_type_to_string(CmdErrorType cmd_error) {
+    switch (cmd_error) {
+    case CmdErrorType::MessageParsingError:
+        return CMD_ERROR_TYPE_MESSAGE_PARSING_ERROR;
+    case CmdErrorType::SchemaValidationError:
+        return CMD_ERROR_TYPE_SCHEMA_VALIDATION_ERROR;
+    case CmdErrorType::HandlerException:
+        return CMD_ERROR_TYPE_HANDLER_EXCEPTION;
+    case CmdErrorType::CmdTimeout:
+        return CMD_ERROR_TYPE_CMD_TIMEOUT;
+    case CmdErrorType::Shutdown:
+        return CMD_ERROR_TYPE_SHUTDOWN;
+    case CmdErrorType::NotReady:
+        return CMD_ERROR_TYPE_NOT_READY;
     }
 
-    throw std::runtime_error("Unknown CmdEvent");
+    throw std::runtime_error("Unknown CmdError");
 }
 
-CmdEvent string_to_cmd_event(const std::string& cmd_event_string) {
-    if (cmd_event_string == CMD_EVENT_MESSAGE_PARSING_FAILED) {
-        return CmdEvent::MessageParsingFailed;
-    } else if (cmd_event_string == CMD_EVENT_SCHEMA_VALIDATION_FAILED) {
-        return CmdEvent::SchemaValidationFailed;
-    } else if (cmd_event_string == CMD_EVENT_HANDLER_EXCEPTION) {
-        return CmdEvent::HandlerException;
-    } else if (cmd_event_string == CMD_EVENT_TIMEOUT) {
-        return CmdEvent::Timeout;
-    } else if (cmd_event_string == CMD_EVENT_SHUTDOWN) {
-        return CmdEvent::Shutdown;
-    } else if (cmd_event_string == CMD_EVENT_NOT_READY) {
-        return CmdEvent::NotReady;
+CmdErrorType string_to_cmd_error_type(const std::string& cmd_error_string) {
+    if (cmd_error_string == CMD_ERROR_TYPE_MESSAGE_PARSING_ERROR) {
+        return CmdErrorType::MessageParsingError;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_SCHEMA_VALIDATION_ERROR) {
+        return CmdErrorType::SchemaValidationError;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_HANDLER_EXCEPTION) {
+        return CmdErrorType::HandlerException;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_CMD_TIMEOUT) {
+        return CmdErrorType::CmdTimeout;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_SHUTDOWN) {
+        return CmdErrorType::Shutdown;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_NOT_READY) {
+        return CmdErrorType::NotReady;
     }
 
-    throw std::runtime_error("Unknown CmdEvent");
+    throw std::runtime_error("Unknown CmdError");
 }
 } // namespace conversions
 
 void to_json(nlohmann::json& j, const CmdResultError& e) {
-    j = {{"event", conversions::cmd_event_to_string(e.event)}, {"msg", e.msg}};
+    j = {{conversions::ERROR_TYPE, conversions::cmd_error_type_to_string(e.event)}, {conversions::ERROR_MSG, e.msg}};
 }
 
 void from_json(const nlohmann::json& j, CmdResultError& e) {
-    e.event = conversions::string_to_cmd_event(j.at("event"));
-    e.msg = j.at("msg");
+    e.event = conversions::string_to_cmd_error_type(j.at(conversions::ERROR_TYPE));
+    e.msg = j.at(conversions::ERROR_MSG);
 }
 
 } // namespace Everest
