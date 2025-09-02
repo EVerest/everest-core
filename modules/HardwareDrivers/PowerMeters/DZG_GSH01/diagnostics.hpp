@@ -119,7 +119,6 @@ std::ostream& operator<<(std::ostream& os, const Logging& k);
 
 namespace conversions {
 
-
 template <typename T> static std::string to_bin_string(const T& num) {
     std::stringstream ss{};
     for (uint8_t n = 0; n < sizeof(T); n++) {

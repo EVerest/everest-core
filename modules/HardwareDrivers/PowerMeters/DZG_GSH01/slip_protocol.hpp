@@ -13,7 +13,6 @@
 #include <optional>
 #include <stdint.h>
 
-
 namespace slip_protocol {
 
 constexpr int SLIP_START_END_FRAME = 0xC0;

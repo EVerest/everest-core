@@ -468,7 +468,6 @@ void powermeterImpl::readRegisters() {
     std::vector<uint8_t> get_import_energy_cmd{};
     app_layer.create_command_get_total_dev_import_energy(get_import_energy_cmd);
 
-
     // ToDo other instanceous registers: f.i. GET_TOTAL_IMPORT_MAINS_ENERGY
 
     std::vector<uint8_t> slip_msg = std::move(
@@ -500,7 +499,6 @@ app_layer::CommandResult powermeterImpl::process_response(const std::vector<uint
         if ((i + part_len - 1) <= response_size) {
             std::vector<uint8_t> part_data((response_message.begin() + i + 5),
                                            (response_message.begin() + i + part_len));
-
 
             if (part_status != app_layer::CommandResult::OK) {
                 EVLOG_error << "Powermeter at address " << int(dest_addr) << " ("

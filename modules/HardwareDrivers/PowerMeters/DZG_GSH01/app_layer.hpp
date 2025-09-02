@@ -15,7 +15,6 @@
 #include <optional>
 #include <stdint.h>
 
-
 namespace app_layer {
 
 enum class CommandType : std::uint16_t {
