@@ -132,6 +132,7 @@ endif()
 
 # everest python wrapper
 if (EVEREST_ENABLE_PY_SUPPORT)
+    set(PYTHON_MODULE_EXTENSION ".so")
     add_subdirectory(everestpy)
 endif()
 
