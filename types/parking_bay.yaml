@@ -1,0 +1,19 @@
+description: >-
+  Types related to parking bay functionality including occupancy status monitoring.
+types:
+  OccupancyStatus:
+    description: >-
+      Represents the current occupancy status of a parking bay with timestamp and
+      state information.
+    type: object
+    properties:
+      is_occupied:
+        description: Whether the parking bay is currently occupied by a vehicle
+        type: boolean
+      timestamp:
+        description: ISO 8601 timestamp when this occupancy status was recorded
+        type: string
+        format: date-time
+    required:
+      - is_occupied
+      - timestamp
