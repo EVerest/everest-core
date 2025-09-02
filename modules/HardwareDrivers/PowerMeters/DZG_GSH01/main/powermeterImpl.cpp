@@ -213,14 +213,6 @@ void powermeterImpl::get_status_word() {
     this->send_receive(slip_msg);
 }
 
-/*void powermeterImpl::set_device_charge_point_id(app_layer::UserIdType id_type, std::string charge_point_id) {
-    std::vector<uint8_t> set_charge_point_id_cmd{};
-    app_layer.create_command_set_charge_point_id(id_type, charge_point_id, set_charge_point_id_cmd);
-
-    std::vector<uint8_t> slip_msg = std::move(this->slip.package_single(this->config.powermeter_device_id,
-set_charge_point_id_cmd)); this->send_receive(slip_msg);
-}*/
-
 void powermeterImpl::publish_device_data_topic() {
     if (config.publish_device_data) {
         json j;
@@ -459,22 +451,13 @@ void powermeterImpl::init_default_values() {
     types::units::Energy import_device_energy_Wh;
     import_device_energy_Wh.total = 0.0f;
     this->pm_last_values.energy_Wh_import = import_device_energy_Wh;
-    // this->pm_last_values.energy_Wh_import.L1 = 0.0f;
-
-    // types::units::Energy energy_Wh;
-    // energy_Wh.total = 0.0f;
-    // this->pm_last_values.energy_Wh_export = energy_Wh;
-    //  this->pm_last_values.energy_Wh_export.L1 = 0.0f;
-
     types::units::Power import_device_power_W;
     import_device_power_W.total = 0.0f;
     this->pm_last_values.power_W = import_device_power_W;
-    // this->pm_last_values.power_W.L1 = 0.0f;
 
     types::units::Voltage voltage_V;
     voltage_V.DC = 0.0f;
     this->pm_last_values.voltage_V = voltage_V;
-    // this->pm_last_values.voltage_V.L1 = 0.0f;
 
     types::units::Current current_A;
     current_A.DC = 0.0f;
@@ -497,8 +480,6 @@ void powermeterImpl::readRegisters() {
     std::vector<uint8_t> get_import_energy_cmd{};
     app_layer.create_command_get_total_dev_import_energy(get_import_energy_cmd);
 
-    // std::vector<uint8_t> get_total_power_cmd{};
-    // app_layer.create_command_get_total_power(get_total_power_cmd);
 
     // ToDo other instanceous registers: f.i. GET_TOTAL_IMPORT_MAINS_ENERGY
 
@@ -532,13 +513,6 @@ app_layer::CommandResult powermeterImpl::process_response(const std::vector<uint
             std::vector<uint8_t> part_data((response_message.begin() + i + 5),
                                            (response_message.begin() + i + part_len));
 
-            // EVLOG_info << "\n\n"
-            //             << "response received from ID " << int(dest_addr) << ": \n"
-            //             << "   cmd: " << module::conversions::hexdump(part_cmd)
-            //             << "   len: " << part_len
-            //             << "   status: " << (int)part_status
-            //             << "   data: " << ((part_len > 5) ? module::conversions::hexdump(part_data) : "none")
-            //             << "\n\n";
 
             if (part_status != app_layer::CommandResult::OK) {
                 EVLOG_error << "Powermeter at address " << int(dest_addr) << " ("

@@ -6,7 +6,6 @@
 namespace module {
 
 void to_json(json& j, const DeviceData& k) {
-    // EVLOG_error << "[DeviceData][to_json()] start";
     j["UTC"] = module::conversions::u32_epoch_to_rfc3339(k.utc_time_s);
     j["GMT_offset_quarterhours"] = k.gmt_offset_quarterhours;
     j["total_start_import_energy_Wh"] = k.total_start_import_energy_Wh;
@@ -19,24 +18,11 @@ void to_json(json& j, const DeviceData& k) {
     j["OCMF_stats"]["max_number_of_transactions"] = k.ocmf_stats.max_number_of_transactions;
     j["last_ocmf_transaction"] = k.last_ocmf_transaction;
     j["requested_ocmf"] = k.requested_ocmf;
-    //    j["OCMF_info"] = json();
     j["total_dev_import_energy_Wh"] = k.total_dev_import_energy_Wh;
     j["status"] = module::conversions::to_bin_string(k.ab_status);
-    // EVLOG_error << "[DeviceData][to_json()] end";
 }
 
 void from_json(const json& j, DeviceData& k) {
-    // k.utc_time_s = j.at("");
-    // k.gmt_offset_quarterhours = j.at("");
-    // k.total_start_import_energy_Wh = j.at("");
-    // k.total_stop_import_energy_Wh = j.at("");
-    // k.total_transaction_duration_s = j.at("");
-    // k.ocmf_stats.number_transactions = j.at("");
-    // k.ocmf_stats.timestamp_first_transaction = j.at("");
-    // k.ocmf_stats.timestamp_last_transaction = j.at("");
-    // k.ocmf_stats.max_number_of_transactions = j.at("");
-    // k.last_ocmf_transaction = j.at("");
-    // k.total_dev_import_energy_Wh = j.at("");
     EVLOG_error << "[DeviceData][from_json()] not implemented";
 }
 
@@ -46,7 +32,6 @@ std::ostream& operator<<(std::ostream& os, const DeviceData& k) {
 }
 
 void to_json(json& j, const DeviceDiagnostics& k) {
-    // EVLOG_error << "[DeviceDiagnostics][to_json()] start";
     j["charge_point_id"] = k.charge_point_id;
     j["charge_point_id_type"] = k.charge_point_id_type;
     j["log_stats"] = json();
@@ -85,28 +70,9 @@ void to_json(json& j, const DeviceDiagnostics& k) {
             j["ocmf_config_table"][n] = module::conversions::hexdump((uint8_t)k.ocmf_config_table.at(n));
         }
     }
-    // EVLOG_error << "[DeviceDiagnostics][to_json()] end";
 }
 
 void from_json(const json& j, DeviceDiagnostics& k) {
-    // k.charge_point_id = j.at("");
-    // k.log_stats.number_log_entries = j.at("");
-    // k.log_stats.timestamp_first_log = j.at("");
-    // k.log_stats.timestamp_last_log = j.at("");
-    // k.log_stats.max_number_of_logs = j.at("");
-    // k.dev_info.type = j.at("");
-    // k.dev_info.hw_ver = j.at("");
-    // k.dev_info.server_id = j.at("");
-    // k.dev_info.serial_number = j.at("");
-    // k.dev_info.application.mode = j.at("");
-    // k.dev_info.application.fw_ver = j.at("");
-    // k.dev_info.application.fw_crc = j.at("");
-    // k.dev_info.application.fw_hash = j.at("");
-    // k.dev_info.metering.fw_ver = j.at("");
-    // k.dev_info.metering.fw_crc = j.at("");
-    // k.dev_info.metering.mode = j.at("");
-    // k.dev_info.bus_address = j.at("");
-    // k.dev_info.bootl_ver = j.at("");
     EVLOG_error << "[DeviceDiagnostics][from_json()] not implemented";
 }
 
@@ -116,12 +82,10 @@ std::ostream& operator<<(std::ostream& os, const DeviceDiagnostics& k) {
 }
 
 void to_json(json& j, const Logging& k) {
-    // EVLOG_error << "[Logging][to_json()] start";
     j["log"] = json();
     j["log"]["last"] = json();
     j["log"]["last"]["type"] = "" + std::to_string((int)k.last_log.type) + ": " + log_type_to_string(k.last_log.type);
     j["log"]["last"]["second_index"] = k.last_log.second_index;
-    // j["log"]["last"]["utc_time"] = k.last_log.utc_time;
     j["log"]["last"]["utc_time"] = module::conversions::u32_epoch_to_rfc3339(k.last_log.utc_time);
     j["log"]["last"]["utc_offset_quarterhours"] = k.last_log.utc_offset;
     j["log"]["last"]["old_value"] = module::conversions::hexdump(k.last_log.old_value);
@@ -198,7 +162,6 @@ void to_json(json& j, const Logging& k) {
                 .error[n]
                 .counter;
     }
-    // EVLOG_error << "[Logging][to_json()] end";
 }
 
 void from_json(const json& j, Logging& k) {
