@@ -20,7 +20,7 @@
 /lib/everest/gpio/ @corneliusclaussen @hikinggrass @hikinggrass
 /lib/everest/conversions/ @hikinggrass @pietfried @corneliusclaussen @mlitre
 /lib/everest/slac/ @a-w50 @corneliusclaussen @SebaLukas
-/lib/everest/tls/ @james-ctc @mlitre @corneliusclaussen @SebaLukas
+/lib/everest/tls/ @james-ctc @mlitre @corneliusclaussen @SebaLukas @pietfried
 
 # modules
 /modules/API/ @hikinggrass @pietfried @corneliusclaussen
