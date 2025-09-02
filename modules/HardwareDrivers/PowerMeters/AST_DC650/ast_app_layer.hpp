@@ -9,12 +9,11 @@
 
 #include "ld-ev.hpp"
 #include <chrono>
+#include <everest/crc/crc.hpp>
 #include <everest/logging.hpp>
 #include <generated/types/powermeter.hpp>
 #include <optional>
 #include <stdint.h>
-
-#include "crc16.hpp"
 
 namespace ast_app_layer {
 

@@ -11,7 +11,6 @@ ev_setup_cpp_module()
 # insert your custom targets and additional config variables here
 target_sources(${MODULE_NAME}
     PRIVATE
-    crc16.cpp
     slip_protocol.cpp
     serial_device.cpp
     ast_app_layer.cpp
@@ -28,5 +27,8 @@ target_sources(${MODULE_NAME}
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
-target_link_libraries(${MODULE_NAME} PRIVATE everest::framework)
+target_link_libraries(${MODULE_NAME} PRIVATE 
+    everest::framework
+    everest::crc
+)
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
