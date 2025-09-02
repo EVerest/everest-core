@@ -18,6 +18,8 @@
 
 #include "CanDevice.hpp"
 
+#include <everest/logging.hpp>
+
 CanDevice::CanDevice() : exit_rx_thread{false} {
     can_fd = 0;
 }
@@ -91,7 +93,7 @@ void CanDevice::rx_thread() {
 }
 
 void CanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payload) {
-    std::cout << "CAN frame received" << std::endl;
+    EVLOG_debug << "CAN frame received" ;
 }
 
 bool CanDevice::_tx(uint32_t can_id, const std::vector<uint8_t>& payload) {

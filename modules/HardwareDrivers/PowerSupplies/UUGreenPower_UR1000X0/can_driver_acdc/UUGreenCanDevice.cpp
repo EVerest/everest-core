@@ -6,6 +6,8 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <everest/logging.hpp>
+
 UUGreenCanDevice::~UUGreenCanDevice() {
     exit_tx_thread = true;
     exit_cmd_thread = true;
@@ -129,14 +131,14 @@ void UUGreenCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
         return;
     }
 
-    // std::cout << "UUGreen: CAN frame received. ID: 0x" << std::hex << can_id << std::endl;
+    EVLOG_debug << "UUGreen: CAN frame received. ID: 0x" << std::hex << can_id;
 
     // is it for us?
 
     auto monitor_address = UU::monitor_adress_from_can_id(can_id);
 
     if (not(monitor_address == UU::ADDR_BROADCAST or monitor_address == 0x01)) {
-        // std::cout << "UU: Not for us: " << std::endl;
+        EVLOG_debug << "UU: Not for us: ";
         return;
     }
 
@@ -144,7 +146,7 @@ void UUGreenCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
     auto packet = UU::Packet(payload);
 
     uint8_t source_address = UU::module_address_from_can_id(can_id);
-    // std::cout << "RX packet: " << packet << std::endl;
+    EVLOG_debug << "RX packet: " << packet;
 
     if (packet.message_type == UU::MessageType::ReadDataResponse) {
         switch (packet.command_type) {

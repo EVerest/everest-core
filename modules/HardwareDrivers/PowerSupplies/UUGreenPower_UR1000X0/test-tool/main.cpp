@@ -5,6 +5,8 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <everest/logging.hpp>
+
 int main(int argc, char** argv) {
     UUGreenCanDevice can;
 
@@ -12,7 +14,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "CAN device started." << std::endl;
+    EVLOG_debug << "CAN device started.";
 
     can.switch_on(true);
     can.set_voltage_current(200, 10);
