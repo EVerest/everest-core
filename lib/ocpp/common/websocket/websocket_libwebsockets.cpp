@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include <evse_security/crypto/openssl/openssl_provider.hpp>
 #include <ocpp/common/websocket/websocket_libwebsockets.hpp>
 
@@ -751,7 +751,7 @@ void WebsocketLibwebsockets::thread_websocket_client_loop(std::shared_ptr<Connec
                 ocpp_versions += conversions::ocpp_protocol_version_to_string(version);
             }
 
-            // TODO: No idea who releases the strdup?
+            // memory allocated by strdup will be freed at the end of this block
             i.context = local_data->lws_ctx.get();
             i.port = uri.get_port();
             i.address = strdup(uri.get_hostname().c_str()); // Base address, as resolved by getnameinfo
@@ -806,6 +806,10 @@ void WebsocketLibwebsockets::thread_websocket_client_loop(std::shared_ptr<Connec
             // After this point no minimal_callback can be called, we have finished
             // using the connection information and we will recreate it if required
             local_data->reset_connection_data();
+            // free memory allocated by strdup() earlier on
+            free(const_cast<char*>(i.address));
+            free(const_cast<char*>(i.path));
+            free(const_cast<char*>(i.protocol));
         } // End init connection
 
         long reconnect_delay = 0;
