@@ -6,7 +6,6 @@
 namespace module {
 
 void to_json(json& j, const DeviceData& k) {
-    // EVLOG_error << "[DeviceData][to_json()] start";
     j["UTC"] = module::conversions::u32_epoch_to_rfc3339(k.utc_time_s);
     j["GMT_offset_quarterhours"] = k.gmt_offset_quarterhours;
     j["total_start_import_energy_Wh"] = k.total_start_import_energy_Wh;
@@ -28,7 +27,6 @@ void to_json(json& j, const DeviceData& k) {
     j["total_dev_import_energy_Wh"] = k.total_dev_import_energy_Wh;
     j["total_dev_export_energy_Wh"] = k.total_dev_export_energy_Wh;
     j["status"] = module::conversions::to_bin_string(k.ab_status);
-    // EVLOG_error << "[DeviceData][to_json()] end";
 }
 
 void from_json(const json& j, DeviceData& k) {
@@ -58,7 +56,6 @@ std::ostream& operator<<(std::ostream& os, const DeviceData& k) {
 }
 
 void to_json(json& j, const DeviceDiagnostics& k) {
-    // EVLOG_error << "[DeviceDiagnostics][to_json()] start";
     j["charge_point_id"] = k.charge_point_id;
     j["charge_point_id_type"] = k.charge_point_id_type;
     j["log_stats"] = json();
@@ -94,7 +91,6 @@ void to_json(json& j, const DeviceDiagnostics& k) {
             j["ocmf_config_table"][n] = module::conversions::hexdump((uint8_t)k.ocmf_config_table.at(n));
         }
     }
-    // EVLOG_error << "[DeviceDiagnostics][to_json()] end";
 }
 
 void from_json(const json& j, DeviceDiagnostics& k) {
@@ -122,12 +118,10 @@ std::ostream& operator<<(std::ostream& os, const DeviceDiagnostics& k) {
 }
 
 void to_json(json& j, const Logging& k) {
-    // EVLOG_error << "[Logging][to_json()] start";
     j["log"] = json();
     j["log"]["last"] = json();
     j["log"]["last"]["type"] = "" + std::to_string((int)k.last_log.type) + ": " + log_type_to_string(k.last_log.type);
     j["log"]["last"]["second_index"] = k.last_log.second_index;
-    // j["log"]["last"]["utc_time"] = k.last_log.utc_time;
     j["log"]["last"]["utc_time"] = module::conversions::u32_epoch_to_rfc3339(k.last_log.utc_time);
     j["log"]["last"]["utc_offset_quarterhours"] = k.last_log.utc_offset;
     j["log"]["last"]["old_value"] = module::conversions::hexdump(k.last_log.old_value);
@@ -206,7 +200,6 @@ void to_json(json& j, const Logging& k) {
                 .error[n]
                 .counter;
     }
-    // EVLOG_error << "[Logging][to_json()] end";
 }
 
 void from_json(const json& j, Logging& k) {

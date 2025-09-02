@@ -118,8 +118,6 @@ std::ostream& operator<<(std::ostream& os, const Logging& k);
 
 namespace conversions {
 
-// std::string state_to_string(State e);
-// State string_to_state(const std::string& s);
 
 template <typename T> static std::string to_bin_string(const T& num) {
     std::stringstream ss{};

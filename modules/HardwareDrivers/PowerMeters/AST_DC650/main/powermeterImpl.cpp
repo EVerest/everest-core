@@ -189,8 +189,6 @@ void powermeterImpl::read_device_data() {
         std::vector<uint8_t> get_total_stop_export_energy_cmd{};
         app_layer.create_command_get_total_stop_export_energy(get_total_stop_export_energy_cmd);
 
-        // std::vector<uint8_t> get_total_transaction_duration_cmd{};
-        // app_layer.create_command_get_total_transaction_duration(get_total_transaction_duration_cmd);
 
         std::vector<uint8_t> get_ocmf_stats_cmd{};
         app_layer.create_command_get_ocmf_stats(get_ocmf_stats_cmd);
@@ -408,22 +406,18 @@ void powermeterImpl::init_default_values() {
     this->pm_last_values.meter_id = "AST_Powermeter_addr_" + std::to_string(this->config.powermeter_device_id);
 
     this->pm_last_values.energy_Wh_import.total = 0.0f;
-    // this->pm_last_values.energy_Wh_import.L1 = 0.0f;
 
     types::units::Energy energy_Wh;
     energy_Wh.total = 0.0f;
     this->pm_last_values.energy_Wh_export = energy_Wh;
-    // this->pm_last_values.energy_Wh_export.L1 = 0.0f;
 
     types::units::Power power_W;
     power_W.total = 0.0f;
     this->pm_last_values.power_W = power_W;
-    // this->pm_last_values.power_W.L1 = 0.0f;
 
     types::units::Voltage voltage_V;
     voltage_V.DC = 0.0f;
     this->pm_last_values.voltage_V = voltage_V;
-    // this->pm_last_values.voltage_V.L1 = 0.0f;
 
     types::units::Current current_A;
     current_A.DC = 0.0f;
@@ -477,14 +471,6 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
         if ((i + part_len - 1) <= response_size) {
             std::vector<uint8_t> part_data((response_message.begin() + i + 5),
                                            (response_message.begin() + i + part_len));
-
-            // EVLOG_info << "\n\n"
-            //             << "response received from ID " << int(dest_addr) << ": \n"
-            //             << "   cmd: " << module::conversions::hexdump(part_cmd)
-            //             << "   len: " << part_len
-            //             << "   status: " << (int)part_status
-            //             << "   data: " << ((part_len > 5) ? module::conversions::hexdump(part_data) : "none")
-            //             << "\n\n";
 
             if (part_status != ast_app_layer::CommandResult::OK) {
                 EVLOG_error << "Powermeter at address " << int(dest_addr) << " ("
@@ -630,7 +616,6 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     break;
                 device_diagnostics_obj.pubkey_str16_format = part_data[0];
                 device_diagnostics_obj.pubkey_str16 = module::conversions::hexdump(part_data, 1, 129);
-                // device_diagnostics_obj.pubkey_str16 = module::conversions::hexdump(part_data, 0, 130);
             } break;
 
             case (int)ast_app_layer::CommandType::GET_PUBKEY_ASN1: {
