@@ -1,5 +1,6 @@
 add_subdirectory(can_dpm1000)
 add_subdirectory(conversions)
+add_subdirectory(crc)
 add_subdirectory(external_energy_limits)
 add_subdirectory(helpers)
 add_subdirectory(run_application)
