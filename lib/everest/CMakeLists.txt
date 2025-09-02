@@ -6,7 +6,6 @@ add_subdirectory(helpers)
 add_subdirectory(run_application)
 add_subdirectory(tls)
 add_subdirectory(util)
-add_subdirectory(crc)
 
 if(EVEREST_DEPENDENCY_ENABLED_EVEREST_GPIO)
     add_subdirectory(gpio)

@@ -6,6 +6,7 @@
 #include <cstring>
 #include <endian.h>
 #include <errno.h>
+#include <everest/crc/crc.hpp>
 #include <everest/logging.hpp>
 #include <fcntl.h>
 #include <iostream>
@@ -16,8 +17,6 @@
 #include <sys/time.h>
 
 #include <fmt/core.h>
-
-#include "crc16.hpp"
 
 namespace slip_protocol {
 

@@ -9,12 +9,12 @@
 
 #include "ld-ev.hpp"
 #include <chrono>
+#include <everest/crc/crc.hpp>
 #include <everest/logging.hpp>
 #include <generated/types/powermeter.hpp>
 #include <optional>
 #include <stdint.h>
 
-#include "crc16.hpp"
 
 namespace app_layer {
 
@@ -176,31 +176,6 @@ enum class UserIdType : std::uint8_t {
     PHONE_NUMBER = 80, // international phone number (leading '+' with country code)
     KEY_CODE = 90      // private user key (no fixed format)
 };
-
-/*inline app_layer::UserIdType user_id_type_conversion_everest_to_ast(types::powermeter::UserIdType e) {
-    switch (e) {
-        case types::powermeter::UserIdType::None: return app_layer::UserIdType::NONE;
-        case types::powermeter::UserIdType::Denied: return app_layer::UserIdType::DENIED;
-        case types::powermeter::UserIdType::Undefined: return app_layer::UserIdType::UNDEFINED;
-        case types::powermeter::UserIdType::Iso14443: return app_layer::UserIdType::ISO14443;
-        case types::powermeter::UserIdType::Iso15693: return app_layer::UserIdType::ISO15693;
-        case types::powermeter::UserIdType::Emaid: return app_layer::UserIdType::EMAID;
-        case types::powermeter::UserIdType::Evccid: return app_layer::UserIdType::EVCCID;
-        case types::powermeter::UserIdType::Evcoid: return app_layer::UserIdType::EVCOID;
-        case types::powermeter::UserIdType::Iso7812: return app_layer::UserIdType::ISO7812;
-        case types::powermeter::UserIdType::Card_Tx_Nbr: return app_layer::UserIdType::CAR_TXN_NR;
-        case types::powermeter::UserIdType::Central: return app_layer::UserIdType::CENTRAL;
-        case types::powermeter::UserIdType::Central_1: return app_layer::UserIdType::CENTRAL_1;
-        case types::powermeter::UserIdType::Central_2: return app_layer::UserIdType::CENTRAL_2;
-        case types::powermeter::UserIdType::Local: return app_layer::UserIdType::LOCAL;
-        case types::powermeter::UserIdType::Local_1: return app_layer::UserIdType::LOCAL_1;
-        case types::powermeter::UserIdType::Local_2: return app_layer::UserIdType::LOCAL_2;
-        case types::powermeter::UserIdType::Phone_Number: return app_layer::UserIdType::PHONE_NUMBER;
-        case types::powermeter::UserIdType::Key_Code: return app_layer::UserIdType::KEY_CODE;
-    }
-
-    throw std::out_of_range("No known GSH01 type conversion for provided enum of types::powermeter::UserIdType");
-}*/
 
 enum class ErrorCategory : std::uint8_t {
     LAST = 0,

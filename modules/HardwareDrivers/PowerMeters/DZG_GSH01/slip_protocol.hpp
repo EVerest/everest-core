@@ -8,11 +8,11 @@
 #define SLIP_PROTOCOL
 
 #include "ld-ev.hpp"
+#include <everest/crc/crc.hpp>
 #include <everest/logging.hpp>
 #include <optional>
 #include <stdint.h>
 
-#include "crc16.hpp"
 
 namespace slip_protocol {
 
