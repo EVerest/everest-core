@@ -508,13 +508,6 @@ app_layer::CommandResult powermeterImpl::process_response(const std::vector<uint
                             << " has signaled an error (status: (" << (int)part_status << ") \""
                             << app_layer::command_result_to_string(part_status) << "\") at response "
                             << module::conversions::hexdump(part_cmd) << " !";
-
-                // skip error diagnostics for transaction or error diagnostics related commands,
-                // request detailed error report for others
-                /*if ((part_cmd != (uint16_t)app_layer::CommandType::START_TRANSACTION)  &&
-                    (part_cmd != (uint16_t)app_layer::CommandType::STOP_TRANSACTION)   &&
-                    (part_cmd != (uint16_t)app_layer::CommandType::GET_LAST_LOG_ENTRY) &&
-                    (part_cmd != (uint16_t)app_layer::CommandType::GET_LAST_OCMF))*/
                 {
                     EVLOG_info << "Retrieving diagnostics data for error at command "
                                << module::conversions::hexdump(part_cmd) << "...";

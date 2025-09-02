@@ -18,7 +18,7 @@ struct OcmfStats {
     uint32_t number_transactions{};
     uint32_t timestamp_first_transaction{};
     uint32_t timestamp_last_transaction{};
-    uint32_t max_number_of_transactions{}; // ???
+    uint32_t max_number_of_transactions{};
 };
 
 struct OcmfInfo {
@@ -48,7 +48,7 @@ struct LogStats {
     uint32_t number_log_entries{};
     uint32_t timestamp_first_log{};
     uint32_t timestamp_last_log{};
-    uint32_t max_number_of_logs{}; // ???
+    uint32_t max_number_of_logs{};
 };
 
 struct ApplicationInfo {
