@@ -6,5 +6,5 @@
 #include <stdint.h>
 #include <vector>
 
-uint16_t calculate_xModem_crc16(const std::vector<uint8_t>& message);
+std::uint16_t calculate_xModem_crc16(const std::vector<std::uint8_t>& message);
 #endif
