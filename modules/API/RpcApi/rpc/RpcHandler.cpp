@@ -242,7 +242,7 @@ void RpcHandler::data_available(const std::shared_ptr<server::TransportInterface
 
         auto elapsed = duration_cast<milliseconds>(now - m_last_req_notification);
         if (elapsed >= REQ_COLLECTION_TIMEOUT) {
-            m_last_req_notification = now; // Timer neu starten
+            m_last_req_notification = now; // restart timer
             m_cv_data_available.notify_all();
         }
     } catch (const nlohmann::json::parse_error& e) {
