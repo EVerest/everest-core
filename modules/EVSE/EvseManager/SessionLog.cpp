@@ -8,6 +8,7 @@
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
+#include <everest/helpers/helpers.hpp>
 #include <filesystem>
 #include <optional>
 #include <utils/date.hpp>
@@ -92,7 +93,8 @@ std::optional<std::filesystem::path> SessionLog::startSession(const std::string&
             EVLOG_error << fmt::format("Cannot open {} of {} for writing", fn.string(), fnhtml.string());
             session_active = false;
         }
-        logfile_html << fmt::format("<html><head><title>EVerest log session {}</title>\n", suffix_string);
+        logfile_html << fmt::format("<html><head><title>EVerest log session {}</title>\n",
+                                    everest::helpers::escape_html(suffix_string));
         logfile_html << "<style>"
                         ".log {"
                         "  font-family: Arial, Helvetica, sans-serif;"
