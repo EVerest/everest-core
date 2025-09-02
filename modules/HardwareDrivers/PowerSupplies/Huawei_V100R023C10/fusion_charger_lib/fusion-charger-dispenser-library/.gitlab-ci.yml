@@ -1,0 +1,39 @@
+stages:
+  - build
+  - tests
+
+variables:
+  MODBUS_SERVER_GIT_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/frickly-systems/pionix/amperfied/modbus-server.git
+  GOOSE_LIB_GIT_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/frickly-systems/pionix/amperfied/goose-lib.git
+  FUSION_CHARGER_GIT_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/frickly-systems/pionix/amperfied/huawei-fusioncharge-driver.git
+
+build:
+  stage: build
+  image: ubuntu:noble
+  before_script:
+    - apt update
+    - apt install -y gcovr git cmake g++ make libssl-dev
+
+  script:
+    - cmake -B build -DMODBUS_SERVER_GIT_REPO=${MODBUS_SERVER_GIT_REPO} -DGOOSE_LIB_GIT_REPO=${GOOSE_LIB_GIT_REPO} -DFUSION_CHARGER_GIT_REPO=${FUSION_CHARGER_GIT_REPO}
+    - cd build
+    - make
+# tests:
+#   stage: tests
+#   image: ubuntu:noble
+#   before_script:
+#     - apt update
+#     - apt install -y gcovr git cmake g++ make libssl-dev
+
+#   script:
+#     - cmake -B build -DBUILD_TESTS=ON -DMODBUS_SERVER_GIT_REPO=${MODBUS_SERVER_GIT_REPO} -DGOOSE_LIB_GIT_REPO=${GOOSE_LIB_GIT_REPO} -DFUSION_CHARGER_GIT_REPO=${FUSION_CHARGER_GIT_REPO}
+#     - cd build
+#     - make
+#     - ctest --output-junit results.xml
+
+#   artifacts:
+#     when: always
+#     paths:
+#       - build/results.xml
+#     reports:
+#       junit: build/results.xml

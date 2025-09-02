@@ -1,0 +1,41 @@
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  image: ubuntu:noble
+  before_script:
+    - apt update
+    - apt install -y gcovr git cmake g++ make libssl-dev
+
+  script:
+    - cmake -B build
+    - cd build
+    - make
+
+test:
+  stage: test
+  image: ubuntu:noble
+  before_script:
+    - apt update
+    - apt install -y gcovr git cmake g++ make libssl-dev
+    - cmake -B build -DBUILD_TESTS=ON -DTEST_COVERAGE=ON
+    - cd build
+    - make
+
+  script:
+    - ctest --output-junit results.xml
+    - make coverage
+
+  coverage: /^TOTAL.*\s+(\d+\%)$/
+  artifacts:
+    when: always
+    paths:
+      - build/results.xml
+      - build/coverage.xml
+    reports:
+      junit: build/results.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
