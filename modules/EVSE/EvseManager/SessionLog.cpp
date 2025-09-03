@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "SessionLog.hpp"
 #include "everest/logging.hpp"
 #include "v2gMessage.hpp"
+
+#include <algorithm>
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
+#include <everest/helpers/helpers.hpp>
 #include <filesystem>
+#include <optional>
 #include <utils/date.hpp>
 
 #include <boost/algorithm/string.hpp>
@@ -29,7 +33,7 @@ SessionLog::~SessionLog() {
 }
 
 void SessionLog::setPath(const std::string& path) {
-    logpath_root = path;
+    logpath_root = std::filesystem::weakly_canonical(std::filesystem::path(path));
 }
 
 void SessionLog::setMqtt(const std::function<void(nlohmann::json data)>& mqtt_provider) {
@@ -40,38 +44,57 @@ void SessionLog::enable() {
     enabled = true;
 }
 
-std::optional<std::string> SessionLog::startSession(const std::string& suffix_string) {
+std::optional<std::filesystem::path> SessionLog::startSession(const std::string& suffix_string) {
     if (enabled) {
         if (session_active) {
             stopSession();
         }
 
         // create general log directory if it does not exist
-        if (!std::filesystem::exists(logpath_root))
-            std::filesystem::create_directories(logpath_root);
+        if (!std::filesystem::exists(logpath_root)) {
+            try {
+                std::filesystem::create_directories(logpath_root);
+            } catch (std::filesystem::filesystem_error& e) {
+                EVLOG_error << fmt::format("Cannot create logpath {}: {}", logpath_root.string(), e.what());
+                return std::nullopt;
+            }
+        }
 
         std::string ts = Everest::Date::to_rfc3339(date::utc_clock::now());
-        logpath = fmt::format("{}/{}-{}", logpath_root, ts, suffix_string);
+        auto ts_suffix_string = fmt::format("{}-{}", ts, suffix_string);
+        auto logpath_with_suffix = std::filesystem::weakly_canonical(logpath_root / ts_suffix_string);
+
+        const auto [root_it, suffix_ix] = std::mismatch(logpath_root.begin(), logpath_root.end(),
+                                                        logpath_with_suffix.begin(), logpath_with_suffix.end());
+        if (root_it != logpath_root.end()) {
+            EVLOG_error << fmt::format("Logpath with suffix ({}) is not a subdirectory of logpath root {}",
+                                       logpath_with_suffix.string(), logpath_root.string());
+            return std::nullopt;
+        }
+
+        logpath = logpath_with_suffix;
 
         // create sessionlog directory if it does not exist
-        if (!std::filesystem::exists(logpath))
+        if (!std::filesystem::exists(logpath)) {
             std::filesystem::create_directories(logpath);
+        }
 
         // open new file
-        fn = fmt::format("{}/incomplete-eventlog.csv", logpath);
-        fnhtml = fmt::format("{}/incomplete-eventlog.html", logpath);
-        fn_complete = fmt::format("{}/eventlog.csv", logpath);
-        fnhtml_complete = fmt::format("{}/eventlog.html", logpath);
+        fn = logpath / "incomplete-eventlog.csv";
+        fnhtml = logpath / "incomplete-eventlog.html";
+        fn_complete = logpath / "eventlog.csv";
+        fnhtml_complete = logpath / "eventlog.html";
 
         try {
             logfile_csv.open(fn);
             logfile_html.open(fnhtml);
             session_active = true;
         } catch (const std::ofstream::failure& e) {
-            EVLOG_error << fmt::format("Cannot open {} of {} for writing", fn, fnhtml);
+            EVLOG_error << fmt::format("Cannot open {} of {} for writing", fn.string(), fnhtml.string());
             session_active = false;
         }
-        logfile_html << fmt::format("<html><head><title>EVerest log session {}</title>\n", suffix_string);
+        logfile_html << fmt::format("<html><head><title>EVerest log session {}</title>\n",
+                                    everest::helpers::escape_html(suffix_string));
         logfile_html << "<style>"
                         ".log {"
                         "  font-family: Arial, Helvetica, sans-serif;"
@@ -100,7 +123,7 @@ std::optional<std::string> SessionLog::startSession(const std::string& suffix_st
         return logpath;
     }
 
-    return std::string();
+    return std::nullopt;
 }
 
 void SessionLog::stopSession() {
