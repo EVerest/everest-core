@@ -72,25 +72,6 @@ void to_json(json& j, const DeviceDiagnostics& k) {
     }
 }
 
-void from_json(const json& j, DeviceDiagnostics& k) {
-    // k.charge_point_id = j.at("");
-    // k.log_stats.number_log_entries = j.at("");
-    // k.log_stats.timestamp_first_log = j.at("");
-    // k.log_stats.timestamp_last_log = j.at("");
-    // k.log_stats.max_number_of_logs = j.at("");
-    // k.app_board.type = j.at("");
-    // k.app_board.hw_ver = j.at("");
-    // k.app_board.server_id = j.at("");
-    // k.app_board.mode = j.at("");
-    // k.app_board.serial_number = j.at("");
-    // k.app_board.sw_ver = j.at("");
-    // k.app_board.fw_crc = j.at("");
-    // k.app_board.fw_hash = j.at("");
-    // k.m_board.sw_ver = j.at("");
-    // k.m_board.fw_crc = j.at("");
-    EVLOG_error << "[DeviceDiagnostics][from_json()] not implemented";
-}
-
 std::ostream& operator<<(std::ostream& os, const DeviceDiagnostics& k) {
     os << json(k).dump(4);
     return os;
@@ -179,11 +160,6 @@ void to_json(json& j, const Logging& k) {
                 .error[n]
                 .counter;
     }
-}
-
-void from_json(const json& j, Logging& k) {
-    // n/a
-    EVLOG_error << "[Logging][from_json()] not implemented";
 }
 
 std::ostream& operator<<(std::ostream& os, const Logging& k) {

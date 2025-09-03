@@ -244,19 +244,6 @@ void powermeterImpl::get_device_public_key() {
             {get_device_public_key_cmd, get_device_public_key_asn1_cmd, get_device_public_key_str16_cmd}));
         this->serial_device.tx(slip_msg_get_device_public_keys);
         receive_response();
-
-        // std::vector<uint8_t> get_device_public_key_cmd{};
-        // // TODO (LAD): check which is best / applies to use case
-        // // create_command_get_pubkey_str16()
-        // // create_command_get_pubkey_asn1()
-        // // create_command_get_meter_pubkey()
-        // app_layer.create_command_get_pubkey_str16(get_device_public_key_cmd);
-
-        // std::vector<uint8_t> slip_msg_get_device_public_key =
-        // std::move(this->slip.package_single(this->config.powermeter_device_id, get_device_public_key_cmd));
-
-        // this->serial_device.tx(slip_msg_get_device_public_key);
-        // receive_response();
     }
 }
 

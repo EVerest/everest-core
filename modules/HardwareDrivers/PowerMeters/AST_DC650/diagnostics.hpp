@@ -87,7 +87,6 @@ struct DeviceDiagnostics {
 };
 
 void to_json(json& j, const DeviceDiagnostics& k);
-void from_json(const json& j, DeviceDiagnostics& k);
 std::ostream& operator<<(std::ostream& os, const DeviceDiagnostics& k);
 
 // TODO(LAD): add error data
@@ -112,7 +111,6 @@ struct Logging {
 };
 
 void to_json(json& j, const Logging& k);
-void from_json(const json& j, Logging& k);
 std::ostream& operator<<(std::ostream& os, const Logging& k);
 
 namespace conversions {
