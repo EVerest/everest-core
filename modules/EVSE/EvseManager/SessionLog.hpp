@@ -3,6 +3,7 @@
 #ifndef SESSION_LOG_HPP
 #define SESSION_LOG_HPP
 
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <nlohmann/json_fwd.hpp>
@@ -22,7 +23,7 @@ public:
     void setPath(const std::string& path);
     void setMqtt(const std::function<void(nlohmann::json data)>& mqtt_provider);
     void enable();
-    std::optional<std::string> startSession(const std::string& suffix_string);
+    std::optional<std::filesystem::path> startSession(const std::string& suffix_string);
     void stopSession();
 
     void car(bool iso15118, const std::string& msg);
@@ -44,9 +45,9 @@ private:
     bool xmloutput;
     bool session_active;
     bool enabled;
-    std::string logpath_root;
-    std::string logpath;
-    std::string fn, fnhtml, fn_complete, fnhtml_complete;
+    std::filesystem::path logpath_root;
+    std::filesystem::path logpath;
+    std::filesystem::path fn, fnhtml, fn_complete, fnhtml_complete;
 
     std::ofstream logfile_csv;
     std::ofstream logfile_html;

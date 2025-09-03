@@ -29,6 +29,34 @@ types::authorization::ProvidedIdToken redact(const types::authorization::Provide
     return redacted_token;
 }
 
+std::string escape_html(const std::string& html) {
+    std::string escaped_html;
+    escaped_html.reserve(html.size());
+    for (const auto& character : html) {
+        switch (character) {
+        case '\"':
+            escaped_html.append("&quot;");
+            break;
+        case '\'':
+            escaped_html.append("&apos;");
+            break;
+        case '&':
+            escaped_html.append("&amp;");
+            break;
+        case '<':
+            escaped_html.append("&lt;");
+            break;
+        case '>':
+            escaped_html.append("&gt;");
+            break;
+        default:
+            escaped_html.push_back(character);
+            break;
+        }
+    }
+    return escaped_html;
+}
+
 bool is_equal_case_insensitive(const std::string& str1, const std::string& str2) {
     if (str1.length() != str2.length()) {
         return false;
