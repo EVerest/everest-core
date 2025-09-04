@@ -46,6 +46,21 @@ target_include_directories(${TEST_TARGET_NAME}
         ${GENERATED_INCLUDE_DIR}
 )
 
+if (DISABLE_EDM)
+    list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
+    find_package(json-rpc-cxx REQUIRED)
+    target_include_directories(${TEST_TARGET_NAME}
+        PRIVATE
+            ${json-rpc-cxx_INCLUDE_DIRS}
+    )
+else()
+    message("RpcApi/tests: EDM is ensabled")
+    target_include_directories(${TEST_TARGET_NAME}
+        PRIVATE
+            $<TARGET_PROPERTY:json-rpc-cxx,INTERFACE_INCLUDE_DIRECTORIES>
+    )
+endif()
+
 target_link_libraries(${TEST_TARGET_NAME}
     PRIVATE
         GTest::gtest_main
@@ -54,7 +69,6 @@ target_link_libraries(${TEST_TARGET_NAME}
         everest::framework
         everest::log
         everest::helpers
-        json-rpc-cxx
         nlohmann_json::nlohmann_json
         websockets_shared
 )
