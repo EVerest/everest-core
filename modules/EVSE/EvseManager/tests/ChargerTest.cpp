@@ -793,7 +793,7 @@ void SessionLog::setMqtt(const std::function<void(nlohmann::json data)>& mqtt_pr
 }
 void SessionLog::enable() {
 }
-std::optional<std::string> SessionLog::startSession(const std::string& suffix_string) {
+std::optional<std::filesystem::path> SessionLog::startSession(const std::string& suffix_string) {
     return {};
 }
 void SessionLog::stopSession() {

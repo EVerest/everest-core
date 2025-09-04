@@ -1,0 +1,24 @@
+description: Driver module for powermeters of manufacturer Acrel. Supports DJSF1352.
+provides:
+  main:
+    description: Provides an Acrel DC powermeter
+    interface: powermeter
+    config:
+      powermeter_device_id:
+        description: The powermeter's address on the serial bus
+        type: integer
+        minimum: 0
+        maximum: 255
+        default: 1
+requires:
+  serial_comm_hub:
+    interface: serial_communication_hub
+    min_connections: 1
+    max_connections: 1
+enable_external_mqtt: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - Lars Dieckmann
+  - Jan Christoph Habig
+  - Florin Mihut
