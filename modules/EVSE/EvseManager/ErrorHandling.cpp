@@ -248,14 +248,19 @@ void ErrorHandling::raise_inoperative_error(const Everest::error::Error& caused_
     }
     p_evse->raise_error(error_object);
 
-    signal_error(true);
+    // shutdown based on severity
+    if (caused_by.severity == Everest::error::Severity::High) {
+        signal_error(ErrorHandlingEvents::ForceEmergencyShutdown);
+    } else {
+        signal_error(ErrorHandlingEvents::ForceErrorShutdown);
+    }
 }
 
 void ErrorHandling::clear_inoperative_error() {
     // clear externally
     if (p_evse->error_state_monitor->is_error_active("evse_manager/Inoperative", "")) {
         p_evse->clear_error("evse_manager/Inoperative");
-        signal_error(false);
+        signal_error(ErrorHandlingEvents::AllErrorsPreventingChargingCleared);
     }
 }
 
@@ -309,7 +314,7 @@ void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
 
 void ErrorHandling::raise_isolation_resistance_fault(const std::string& description) {
     Everest::error::Error error_object = p_evse->error_factory->create_error(
-        "evse_manager/MREC22ResistanceFault", "", description, Everest::error::Severity::High);
+        "evse_manager/MREC22ResistanceFault", "", description, Everest::error::Severity::Medium);
     p_evse->raise_error(error_object);
     process_error();
 }
@@ -323,7 +328,7 @@ void ErrorHandling::clear_isolation_resistance_fault() {
 
 void ErrorHandling::raise_cable_check_fault(const std::string& description) {
     Everest::error::Error error_object = p_evse->error_factory->create_error(
-        "evse_manager/MREC11CableCheckFault", "Self test failed", description, Everest::error::Severity::High);
+        "evse_manager/MREC11CableCheckFault", "Self test failed", description, Everest::error::Severity::Medium);
     p_evse->raise_error(error_object);
     process_error();
 }
