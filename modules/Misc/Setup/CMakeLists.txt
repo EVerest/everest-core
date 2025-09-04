@@ -16,7 +16,7 @@ target_sources(${MODULE_NAME}
 
 target_link_libraries(${MODULE_NAME}
     PRIVATE
-        everest::staging::run_application
+        everest::run_application
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 

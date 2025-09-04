@@ -3,8 +3,8 @@
 #ifndef OCPP201_ERROR_HANDLING_HPP
 #define OCPP201_ERROR_HANDLING_HPP
 
+#include <everest/conversions/ocpp/ocpp_conversions.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
-#include <ocpp_conversions.hpp>
 #include <utils/error.hpp>
 
 #include <unordered_map>

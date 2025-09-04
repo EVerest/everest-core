@@ -4,7 +4,7 @@
 #include "ocppImpl.hpp"
 #include "ocpp/v16/messages/ChangeAvailability.hpp"
 
-#include <ocpp_conversions.hpp>
+#include <everest/conversions/ocpp/ocpp_conversions.hpp>
 
 namespace module {
 namespace ocpp_generic {

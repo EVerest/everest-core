@@ -10,7 +10,7 @@
 #include <sigslot/signal.hpp>
 
 #include "umwc.pb.h"
-#include <gpio.hpp>
+#include <everest/gpio/gpio.hpp>
 
 using namespace std::chrono_literals;
 

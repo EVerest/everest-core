@@ -3,11 +3,11 @@
 
 #include <AuthHandler.hpp>
 
+#include <everest/helpers/helpers.hpp>
 #include <everest/logging.hpp>
-#include <everest/staging/helpers/helpers.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
 
-using everest::staging::helpers::is_equal_case_insensitive;
+using everest::helpers::is_equal_case_insensitive;
 
 namespace module {
 
@@ -82,7 +82,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     ProvidedIdToken provided_token_copy = provided_token;
 
     // check if token is already currently processed
-    EVLOG_info << "Received new token: " << everest::staging::helpers::redact(provided_token);
+    EVLOG_info << "Received new token: " << everest::helpers::redact(provided_token);
     const auto referenced_evses = this->get_referenced_evses(provided_token);
 
     if (!this->is_token_already_in_process(provided_token, referenced_evses)) {
@@ -92,7 +92,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         result = this->handle_token(provided_token_copy, lk);
     } else {
         // do nothing if token is currently processed
-        EVLOG_info << "Received token " << everest::staging::helpers::redact(provided_token.id_token.value)
+        EVLOG_info << "Received token " << everest::helpers::redact(provided_token.id_token.value)
                    << " repeatedly while still processing it";
         result = TokenHandlingResult::ALREADY_IN_PROCESS;
     }
@@ -121,7 +121,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         this->tokens_in_process.erase(provided_token);
     }
 
-    EVLOG_info << "Result for token: " << everest::staging::helpers::redact(provided_token.id_token.value) << ": "
+    EVLOG_info << "Result for token: " << everest::helpers::redact(provided_token.id_token.value) << ": "
                << conversions::token_handling_result_to_string(result);
     this->processing_finished_cv.notify_all();
     return result;
@@ -341,7 +341,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
 
                 int evse_id = select_evse_result.evse_id.value();
                 EVLOG_debug << "Selected evse#" << evse_id
-                            << " for token: " << everest::staging::helpers::redact(provided_token.id_token.value);
+                            << " for token: " << everest::helpers::redact(provided_token.id_token.value);
                 std::optional<std::string> parent_id_token;
                 if (validation_result.parent_id_token.has_value()) {
                     parent_id_token = validation_result.parent_id_token.value().value;
@@ -857,6 +857,10 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     case SessionEventEnum::ReplugFinished:
         [[fallthrough]];
     case SessionEventEnum::PluginTimeout:
+        [[fallthrough]];
+    case SessionEventEnum::SwitchingPhases:
+        [[fallthrough]];
+    case SessionEventEnum::SessionResumed:
         break;
     }
 
