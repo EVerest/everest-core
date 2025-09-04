@@ -19,7 +19,18 @@ set_target_properties(${MODULE_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 
 if (DISABLE_EDM)
     find_package(libwebsockets REQUIRED)
+
+    list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
     find_package(json-rpc-cxx REQUIRED)
+    target_include_directories(${MODULE_NAME}
+        PRIVATE
+            ${json-rpc-cxx_INCLUDE_DIRS}
+    )
+else()
+    target_include_directories(${MODULE_NAME}
+        PRIVATE
+            $<TARGET_PROPERTY:json-rpc-cxx,INTERFACE_INCLUDE_DIRECTORIES>
+    )
 endif()
 
 target_link_libraries(${MODULE_NAME}
@@ -28,7 +39,6 @@ target_link_libraries(${MODULE_NAME}
         date::date-tz
         everest::external_energy_limits
         everest::helpers
-        json-rpc-cxx
         nlohmann_json::nlohmann_json
         websockets_shared
 )
