@@ -367,10 +367,9 @@ void EvseManager::ready() {
                     // Are we in charge loop?
                     if (charger->get_current_state() == Charger::EvseState::Charging and
                         not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
-                        charger->set_hlc_error();
+                        // Error shutdown according to IEC61851-23 Table CC.10
                         error_handling->raise_isolation_resistance_fault(
                             fmt::format("Isolation resistance too low during charging: {} Ohm", m.resistance_F_Ohm));
-                        r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
                     }
                     isolation_measurement = m;
                 });
@@ -546,6 +545,7 @@ void EvseManager::ready() {
 
                 if (ev_info.present_voltage.has_value()) {
                     const auto actual_voltage = ev_info.present_voltage.value();
+                    // TODO: Do we still need this part with an OVM?
                     // IEC61851_23 CC.6.2:
                     // The d.c. supply shall trigger a d.c. supply initiated emergency shutdown according to CC.3.4
                     // in order to prevent overvoltage at the battery, if output voltage exceeds maximum voltage limit
@@ -919,7 +919,11 @@ void EvseManager::ready() {
     });
 
     // Cancel reservations if charger is faulted
-    error_handling->signal_error.connect([this](bool prevents_charging) { cancel_reservation(true); });
+    error_handling->signal_error.connect([this](ErrorHandlingEvents event) {
+        if (event == ErrorHandlingEvents::ForceEmergencyShutdown or event == ErrorHandlingEvents::ForceErrorShutdown) {
+            cancel_reservation(true);
+        }
+    });
 
     charger->signal_simple_event.connect([this](types::evse_manager::SessionEventEnum s) {
         if (s == types::evse_manager::SessionEventEnum::SessionFinished) {

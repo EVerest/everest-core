@@ -41,6 +41,20 @@ namespace module {
 
 class EvseManager;
 
+// ErrorHandling events
+enum class ErrorHandlingEvents : std::uint8_t {
+    ForceErrorShutdown,
+    ForceEmergencyShutdown,
+    AllErrorsPreventingChargingCleared,
+    AllErrorCleared
+};
+
+enum class ShutdownType {
+    None,
+    ErrorShutdown,
+    EmergencyShutdown
+};
+
 class ErrorHandling {
 
 public:
@@ -58,7 +72,7 @@ public:
 
     // Signal that error set has changed. Bool argument is true if it is preventing charging at the moment and false if
     // charging can continue.
-    sigslot::signal<bool> signal_error;
+    sigslot::signal<ErrorHandlingEvents> signal_error;
     // Signal that all errors are cleared (both those preventing charging and not)
     sigslot::signal<> signal_all_errors_cleared;
 
