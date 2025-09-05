@@ -1,0 +1,24 @@
+active_modules:
+  bsp_ui:
+    module: BUIsolationMonitor
+    standalone: true
+    connections:
+      imd:
+        - implementation_id: main
+          module_id: iso_monitor
+  iso_monitor:
+    config_implementation:
+      main:
+        imd_device_id: 3
+    connections:
+      serial_comm_hub:
+        - implementation_id: main
+          module_id: comm_hub
+    module: Bender_isoCHA425HV
+  comm_hub:
+    config_implementation:
+      main:
+        serial_port: /dev/ttyS4
+        baudrate: 19200
+        parity: 2
+    module: SerialCommHub
