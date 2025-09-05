@@ -112,6 +112,7 @@ else()
     find_package(pugixml REQUIRED)
     find_package(CURL 7.84.0 REQUIRED)
     find_package(ryml REQUIRED)
+    find_package(nlohmann_json REQUIRED)
 endif()
 
 
