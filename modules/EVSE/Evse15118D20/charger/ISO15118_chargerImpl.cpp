@@ -34,15 +34,15 @@ iso15118::config::TlsNegotiationStrategy convert_tls_negotiation_strategy(const 
 }
 
 template <typename T, typename U> std::optional<T> convert_from_optional(const std::optional<U>& in) {
-    return (in) ? std::make_optional(static_cast<T>(*in)) : std::nullopt;
+    return (in.has_value()) ? std::make_optional(static_cast<T>(*in)) : std::nullopt;
 }
 
 template <> std::optional<float> convert_from_optional(const std::optional<dt::RationalNumber>& in) {
-    return (in) ? std::make_optional(dt::from_RationalNumber(*in)) : std::nullopt;
+    return (in.has_value()) ? std::make_optional(dt::from_RationalNumber(*in)) : std::nullopt;
 }
 
 template <> std::optional<dt::RationalNumber> convert_from_optional(const std::optional<float>& in) {
-    return (in) ? std::make_optional(dt::from_float(*in)) : std::nullopt;
+    return (in.has_value()) ? std::make_optional(dt::from_float(*in)) : std::nullopt;
 }
 
 types::iso15118::DisplayParameters convert_display_parameters(const dt::DisplayParameters& in) {

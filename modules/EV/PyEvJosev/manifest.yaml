@@ -46,7 +46,7 @@ config:
       provided as a prioritized list. The first entry in the list has the highest priority
       and is the most likely to be selected. The services should be separated with commas.
     type: string
-    default: "DC, DC_BPT"
+    default: "DC,DC_BPT"
 provides:  
   ev:
     interface: ISO15118_ev
