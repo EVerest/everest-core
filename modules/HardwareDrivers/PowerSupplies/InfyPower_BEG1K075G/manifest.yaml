@@ -1,0 +1,16 @@
+description: Driver for InfyPower ACDC power supply. Currently supports BEG1K075G
+  with only one module and group dial set to 0.
+config:
+  can_device:
+    description: CAN interface name
+    type: string
+    default: can0
+provides:
+  main:
+    description: Main interface
+    interface: power_supply_DC
+    config: {}
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - Cornelius Claussen
