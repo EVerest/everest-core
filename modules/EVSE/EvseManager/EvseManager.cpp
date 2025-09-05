@@ -1302,40 +1302,24 @@ bool EvseManager::update_local_energy_limit(types::energy::ExternalLimits l) {
     return true;
 }
 
-// Note: deprecated. Only kept for node red compat.
-// This overwrites all other schedules set before.
-void EvseManager::nodered_set_current_limit(float max_current) {
-    std::scoped_lock lock(external_local_limits_mutex);
-    update_max_current_limit(external_local_energy_limits, max_current);
-}
-
-// Note: deprecated. Only kept for node red compat.
-// This overwrites all other schedules set before.
-void EvseManager::nodered_set_watt_limit(float max_watt) {
-    std::scoped_lock lock(external_local_limits_mutex);
-    update_max_watt_limit(external_local_energy_limits, max_watt);
-}
-
 // Helper function to set a watt limit in an ExternalLimits type
-bool EvseManager::update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt) {
+bool EvseManager::update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt_export,
+                                        std::optional<float> max_watt_import) {
     types::energy::ScheduleReqEntry e;
     e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-    if (max_watt >= 0) {
-        e.limits_to_leaves.total_power_W = {max_watt, info.id + "update_max_watt_limit"};
-        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.total_power_W = {0, info.id + "update_max_watt_limit"};
-        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-    } else {
-        e.limits_to_leaves.total_power_W = {-max_watt, info.id + "update_max_watt_limit"};
-        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.total_power_W = {0, info.id + "update_max_watt_limit"};
-        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-    }
+
+    e.limits_to_leaves.total_power_W = {max_watt_export, info.id + " update_max_watt_limit"};
+    limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+
+    e.limits_to_leaves.total_power_W = {max_watt_import.value_or(0.0f), info.id + " update_max_watt_limit"};
+    limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+
     return true;
 }
 
 // Helper function to set a current limit in an ExternalLimits type
-bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits, float max_current) {
+bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits, float max_current_import,
+                                           float max_current_export) {
     if (config.charge_mode == "DC") {
         return false;
     }
@@ -1343,17 +1327,11 @@ bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits
     types::energy::ScheduleReqEntry e;
     e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
-    if (max_current >= 0) {
-        e.limits_to_leaves.ac_max_current_A = {max_current, info.id + "update_max_current_limit"};
-        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.ac_max_current_A = {0, info.id + "update_max_current_limit"};
-        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-    } else {
-        e.limits_to_leaves.ac_max_current_A = {-max_current, info.id + "update_max_current_limit"};
-        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.ac_max_current_A = {0, info.id + "update_max_current_limit"};
-        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-    }
+    e.limits_to_leaves.ac_max_current_A = {max_current_import, info.id + " update_max_current_limit"};
+    limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+
+    e.limits_to_leaves.ac_max_current_A = {max_current_export, info.id + " update_max_current_limit"};
+    limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
 
     return true;
 }
@@ -1996,9 +1974,11 @@ types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
     if (external_local_energy_limits.schedule_import.empty() and external_local_energy_limits.schedule_export.empty()) {
         if (config.charge_mode == "AC") {
             // by default we import energy
-            update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import);
+            update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import,
+                                     get_hw_capabilities().max_current_A_export);
         } else {
-            update_max_watt_limit(active_local_limits, get_powersupply_capabilities().max_export_power_W);
+            update_max_watt_limit(active_local_limits, get_powersupply_capabilities().max_export_power_W,
+                                  get_powersupply_capabilities().max_import_power_W);
         }
     } else {
         // apply external limits if they are lower
