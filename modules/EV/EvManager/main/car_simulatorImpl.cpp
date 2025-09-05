@@ -314,8 +314,7 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
                     phase_count--;
                 }
 
-                // TODO(SL): Getting nominal voltage
-                const auto current = value.target_active_power.value() / (230.0 * phase_count);
+                const auto current = value.target_active_power.value() / (mod->config.ac_nominal_voltage * phase_count);
                 mod->r_ev_board_support->call_set_ac_max_current(current);
             }
             // TODO(SL): Adding missing reactive power

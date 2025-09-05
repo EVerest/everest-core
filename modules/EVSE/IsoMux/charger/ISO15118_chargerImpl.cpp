@@ -443,6 +443,18 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
+    mod->r_iso2->subscribe_selected_service_parameters([this](const auto& param) {
+        if (not mod->selected_iso20()) {
+            publish_selected_service_parameters(param);
+        }
+    });
+
+    mod->r_iso20->subscribe_selected_service_parameters([this](const auto& param) {
+        if (mod->selected_iso20()) {
+            publish_selected_service_parameters(param);
+        }
+    });
+
     mod->r_iso2->subscribe_display_parameters([this](const auto o) {
         if (not mod->selected_iso20()) {
             publish_display_parameters(o);

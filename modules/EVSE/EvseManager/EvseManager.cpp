@@ -1052,29 +1052,9 @@ void EvseManager::ready() {
 
             if (selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC or
                 selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT) {
-                const auto power = get_latest_powermeter_data_billing();
-                if (not power.voltage_V.has_value()) {
-                    return;
-                }
-                const auto voltage_V = power.voltage_V.value();
 
-                types::units::Power target_power{0};
-
-                if (voltage_V.L1.has_value()) {
-                    const auto power = ampere * voltage_V.L1.value();
-                    target_power.total += power;
-                    target_power.L1 = power;
-                }
-                if (voltage_V.L2.has_value()) {
-                    const auto power = ampere * voltage_V.L2.value();
-                    target_power.total += power;
-                    target_power.L2 = power;
-                }
-                if (voltage_V.L3.has_value()) {
-                    const auto power = ampere * voltage_V.L3.value();
-                    target_power.total += power;
-                    target_power.L3 = power;
-                }
+                types::units::Power target_power = {ampere * static_cast<float>(config.ac_nominal_voltage) *
+                                                    hw_capabilities.max_phase_count_import};
 
                 // TODO(SL): Adding target frequency
                 // TODO(SL): Adding reactive power
@@ -2144,7 +2124,6 @@ types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
     // external limits are empty
     if (external_local_energy_limits.schedule_import.empty() and external_local_energy_limits.schedule_export.empty()) {
         if (config.charge_mode == "AC") {
-            // by default we import energy
             update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import,
                                      get_hw_capabilities().max_current_A_export);
         } else {
