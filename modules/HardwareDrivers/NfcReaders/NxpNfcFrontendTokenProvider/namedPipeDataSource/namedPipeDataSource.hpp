@@ -10,12 +10,17 @@
 #include <optional>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 class NamedPipeDataSource {
 public:
     NamedPipeDataSource();
-    NamedPipeDataSource(const std::string& filename);
+    explicit NamedPipeDataSource(const std::string& filename);
+    NamedPipeDataSource(const NamedPipeDataSource&) = delete;
+    NamedPipeDataSource(const NamedPipeDataSource&&) = delete;
+    NamedPipeDataSource operator=(const NamedPipeDataSource&) = delete;
+    NamedPipeDataSource operator=(const NamedPipeDataSource&&) = delete;
     ~NamedPipeDataSource();
 
     void setDetectionCallback(const std::function<void(const std::pair<std::string, std::vector<std::uint8_t>>&)>&);
@@ -24,7 +29,7 @@ public:
 
 private:
     void getLinesForever();
-    std::optional<std::pair<std::string, std::vector<std::uint8_t>>> parseInput(std::string input);
+    std::optional<std::pair<std::string, std::vector<std::uint8_t>>> parseInput(const std::string& input);
 
     std::string m_filename;
 

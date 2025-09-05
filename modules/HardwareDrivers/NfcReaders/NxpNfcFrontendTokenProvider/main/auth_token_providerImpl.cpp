@@ -2,7 +2,6 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "auth_token_providerImpl.hpp"
-
 #include <iomanip>
 #include <sstream>
 
@@ -55,12 +54,6 @@ void auth_token_providerImpl::error_log_callback(const std::string& message) {
 }
 
 void auth_token_providerImpl::init() {
-    stop = false;
-
-    if (config.no_physical_nfc_reader) {
-        return;
-    }
-
     try {
         nxpNfcFrontend = std::make_unique<NxpNfcFrontendDataSource>();
     } catch (const std::exception& e) {
@@ -75,9 +68,6 @@ void auth_token_providerImpl::init() {
 void auth_token_providerImpl::ready() {
     if (nxpNfcFrontend) {
         nxpNfcFrontend->run();
-    }
-    while (not stop) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 

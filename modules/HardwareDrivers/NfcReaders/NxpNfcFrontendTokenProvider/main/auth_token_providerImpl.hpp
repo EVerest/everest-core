@@ -37,7 +37,6 @@ namespace main {
 struct Conf {
     int token_debounce_interval_ms;
     bool debug;
-    bool no_physical_nfc_reader;
 };
 
 class auth_token_providerImpl : public auth_token_providerImplBase {
@@ -71,7 +70,6 @@ private:
     void error_log_callback(const std::string&);
 
     std::unique_ptr<NxpNfcFrontendDataSource> nxpNfcFrontend;
-    std::atomic<bool> stop;
     std::chrono::steady_clock::time_point last_rfid_submit{};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };

@@ -7,62 +7,84 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <stdexcept>
+#include <string_view>
 #include <sys/epoll.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+namespace {
 static bool createdFifo = false;
 
-bool isHexCoded(const std::string&);
-void createFifoFile(const std::string&);
+constexpr mode_t fifo_permissions = 0666;
+
+bool isHexCoded(const std::string& input) {
+    return std::all_of(input.begin(), input.end(), [](unsigned char byte) { return std::isxdigit(byte); });
+}
+
+void createFifoFile(const std::string& pathToNamedPipe) {
+    const std::filesystem::path path = {pathToNamedPipe};
+    if (not std::filesystem::is_fifo(path)) {
+        if (std::filesystem::exists(path)) {
+            throw std::runtime_error("Could not create FIFO at '" + path.string() + "': file exists as non-FIFO");
+        }
+        // Create FIFO:
+        const int ret = mkfifo(pathToNamedPipe.c_str(), fifo_permissions);
+        if (ret == -1) {
+            throw std::runtime_error("Could not create FIFO at '" + path.string() + "': mkfifo returned '-1'");
+        }
+        createdFifo = true;
+    }
+}
 
 class FilePoller {
 public:
-    FilePoller(const std::string& filename) : m_filename(filename) {
+    explicit FilePoller(const std::string_view& filename) : m_filename(filename) {
         openFileAndConfigureEpoll();
     }
+
+    FilePoller(const FilePoller&) = delete;
+    FilePoller(const FilePoller&&) = delete;
+    FilePoller operator=(const FilePoller&) = delete;
+    FilePoller operator=(const FilePoller&&) = delete;
 
     ~FilePoller() {
         closeFileAndEpoll();
     }
 
-    std::pair<int, std::string> wait(int timeout_ms) {
-        struct epoll_event m_epoll_event_buffer[EVENT_BUFFER_SIZE];
-        int eventCount = epoll_wait(m_epoll_list_fd, m_epoll_event_buffer, EVENT_BUFFER_SIZE, 1000);
-        int ret = eventCount;
-        int totalReadCount = 0;
+    std::string wait(int timeout_ms) {
+        std::array<struct epoll_event, EVENT_BUFFER_SIZE> m_epoll_event_buffer{};
+        const int eventCount = epoll_wait(m_epoll_list_fd, m_epoll_event_buffer.data(), EVENT_BUFFER_SIZE, timeout_ms);
         std::string partialLine;
         if (eventCount > 0) {
-            totalReadCount = 0;
-            char buffer[READ_BUFFER_SIZE];
+            std::array<char, READ_BUFFER_SIZE> buffer{};
+
             for (int i = 0; i < eventCount; i++) {
-                if (m_epoll_event_buffer[i].events & EPOLLIN) {
-                    struct epoll_event& event = m_epoll_event_buffer[i];
-                    int readCount = read(event.data.fd, buffer, READ_BUFFER_SIZE - 1);
-                    buffer[readCount] = '\0';
-                    totalReadCount += readCount;
-                    partialLine.append(buffer);
+                if ((m_epoll_event_buffer.at(i).events & EPOLLIN) != 0) {
+                    const struct epoll_event& event = m_epoll_event_buffer.at(i);
+                    const std::size_t readCount = read(event.data.fd, buffer.data(), READ_BUFFER_SIZE - 1);
+                    buffer.at(readCount) = '\0';
+                    partialLine.append(buffer.data());
                 }
             }
             // After treating EPOLLIN (input) events, look for EPOLLHUP (Hang-up) events
             // If the exist, reopen file and reconfigure EPoll,
             // otherwise, HUP will happen forever and use the full CPU
             for (int i = 0; i < eventCount; i++) {
-                if (m_epoll_event_buffer[i].events & EPOLLHUP) {
+                if ((m_epoll_event_buffer.at(i).events & EPOLLHUP) != 0) {
                     reOpenFileAndConfigureEpoll();
                     break;
                 }
             }
         }
-        return std::pair<int, std::string>(totalReadCount, partialLine);
+        return partialLine;
     }
 
 private:
     void openFileAndConfigureEpoll() {
         m_fifo_fd = open(m_filename.c_str(), O_RDONLY | O_NONBLOCK);
 
-        m_epoll_list_fd = epoll_create1(0);
-        struct epoll_event m_epoll_event;
+        m_epoll_list_fd = epoll_create1(EPOLL_CLOEXEC);
+        struct epoll_event m_epoll_event{};
         m_epoll_event.events = EPOLLIN;
         m_epoll_event.data.fd = m_fifo_fd;
 
@@ -74,18 +96,20 @@ private:
         openFileAndConfigureEpoll();
     }
 
-    void closeFileAndEpoll() {
+    void closeFileAndEpoll() const {
         close(m_epoll_list_fd);
         close(m_fifo_fd);
     }
 
     std::string m_filename;
-    int m_fifo_fd;
-    int m_epoll_list_fd;
+    int m_fifo_fd{0};
+    int m_epoll_list_fd{0};
 
     static const std::size_t READ_BUFFER_SIZE = 64;
-    static const size_t EVENT_BUFFER_SIZE = 16;
+    static const std::size_t EVENT_BUFFER_SIZE = 16;
 };
+
+} // namespace
 
 NamedPipeDataSource::NamedPipeDataSource(const std::string& filename) : m_filename(filename) {
     createFifoFile(filename);
@@ -119,19 +143,18 @@ void NamedPipeDataSource::run() {
 }
 
 void NamedPipeDataSource::getLinesForever() {
-    std::string line;
+    constexpr int wait_timeout_ms = 1000;
+    constexpr std::size_t max_line_length = 128;
+    std::string line{};
     FilePoller poller(m_filename);
 
     while (not stopped) {
-        auto [byteCount, partialLine] = poller.wait(1000);
-        if (byteCount == -1) {
-            break;
-        }
+        const std::string partialLine = poller.wait(wait_timeout_ms);
 
-        if (partialLine.size() > 0) {
+        if (not partialLine.empty()) {
             line.append(partialLine);
 
-            size_t cr_pos = line.find('\n');
+            const std::size_t cr_pos = line.find('\n');
             if (cr_pos != std::string::npos) {
                 if (auto result = parseInput(line)) {
                     m_callback(*result);
@@ -141,7 +164,7 @@ void NamedPipeDataSource::getLinesForever() {
 
                 line.clear();
             } else {
-                if (line.size() > 128) {
+                if (line.size() > max_line_length) {
                     line.clear();
                 }
             }
@@ -149,61 +172,44 @@ void NamedPipeDataSource::getLinesForever() {
     }
 }
 
-std::optional<std::pair<std::string, std::vector<std::uint8_t>>> NamedPipeDataSource::parseInput(std::string input) {
-    input.erase(input.find('\n'));
+std::optional<std::pair<std::string, std::vector<std::uint8_t>>>
+NamedPipeDataSource::parseInput(const std::string& input) {
+    constexpr std::size_t protocol_designator_len = 8;
+    constexpr std::size_t iso14443_uid_len = 8;
+    constexpr std::size_t iso15693_uid_len = 16;
 
-    std::size_t expectedStringSize = 8;
-    std::size_t expectedUidSize = 0;
-    std::string protocol;
-
-    if (input.size() < expectedStringSize) {
+    if (input.size() < protocol_designator_len + 1) {
         return std::nullopt;
     }
-    std::string proto_str = input.substr(0, 8);
-    if (proto_str == "ISO14443") {
-        protocol = proto_str;
-        expectedUidSize = 4 * 2;
-        expectedStringSize = 17;
-    } else if (proto_str == "ISO15693") {
-        protocol = proto_str;
-        expectedUidSize = 8 * 2;
-        expectedStringSize = 25;
+
+    const std::string protocol = input.substr(0, protocol_designator_len);
+
+    std::size_t expectedUidSize{0};
+    if (protocol == "ISO14443") {
+        expectedUidSize = iso14443_uid_len;
+    } else if (protocol == "ISO15693") {
+        expectedUidSize = iso15693_uid_len;
     } else {
         return std::nullopt;
     }
+
+    // "+2" accounts for the ':' and '\n'
+    const std::size_t expectedStringSize = protocol_designator_len + expectedUidSize + 2;
+
     if (input.size() != expectedStringSize) {
         return std::nullopt;
     }
-    std::string uid_str = input.substr(9, expectedUidSize);
+    const std::string uid_str = input.substr(9, expectedUidSize - 1);
     if (not isHexCoded(uid_str)) {
         return std::nullopt;
     }
 
     std::vector<std::uint8_t> nfcid;
-    for (size_t i = 0; i < uid_str.length(); i += 2) {
-        std::string single_byte_str = uid_str.substr(i, 2);
-        uint8_t byte = static_cast<uint8_t>(std::stoi(single_byte_str, nullptr, 16));
+    for (std::size_t i = 0; i < uid_str.length(); i += 2) {
+        const std::string single_byte_str = uid_str.substr(i, 2);
+        const std::uint8_t byte = static_cast<std::uint8_t>(std::stoi(single_byte_str, nullptr, 16));
         nfcid.push_back(byte);
     }
 
     return std::make_pair(protocol, nfcid);
-}
-
-bool isHexCoded(const std::string& input) {
-    return std::all_of(input.begin(), input.end(), [](unsigned char c) { return std::isxdigit(c); });
-}
-
-void createFifoFile(const std::string& pathToNamedPipe) {
-    std::filesystem::path path = {pathToNamedPipe};
-    if (not std::filesystem::is_fifo(path)) {
-        if (std::filesystem::exists(path)) {
-            throw std::runtime_error("Could not create FIFO at '" + path.string() + "': file exists as non-FIFO");
-        }
-        // Create FIFO:
-        int ret = mkfifo(pathToNamedPipe.c_str(), 0666);
-        if (ret == -1) {
-            throw std::runtime_error("Could not create FIFO at '" + path.string() + "': mkfifo returned '-1'");
-        }
-        createdFifo = true;
-    }
 }

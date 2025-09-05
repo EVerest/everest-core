@@ -32,7 +32,6 @@ Runtime configuration allows to
 
 * *token_debounce_interval_ms*: select a minimum intervall between publishes
 * *debug*: switch on/off additional debug output
-* *no_physical_nfc_reader*: when built with *NxpNfcRdLib*: disable hardware access, allowing to run the module on every machine, even when the NFC hardware unavailable or not even a SPI/I²C interface exists
 
 See ``manifest.yaml`` for details.
 
