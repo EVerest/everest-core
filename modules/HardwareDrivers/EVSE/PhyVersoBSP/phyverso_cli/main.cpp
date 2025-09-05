@@ -154,6 +154,12 @@ int main(int argc, char* argv[]) {
             case LockState_UNLOCKED:
                 printf(">> Connector %i: Lock State Unlocked\n", connector);
                 break;
+            case LockState_LOCKING:
+                printf(">> Connector %i: Lock State Locking\n", connector);
+                break;
+            case LockState_UNLOCKING:
+                printf(">> Connector %i: Lock State Unlocking\n", connector);
+                break;
             }
         });
 
@@ -165,6 +171,9 @@ int main(int argc, char* argv[]) {
             printf("\tventilation_not_available: %d\n", error_flags.ventilation_not_available);
             printf("\tconnector_lock_failed: %d\n", error_flags.connector_lock_failed);
             printf("\tcp_signal_fault: %d\n", error_flags.cp_signal_fault);
+            printf("\theartbeat_timeout: %d\n", error_flags.heartbeat_timeout);
+            printf("\tcoil_feedback_diverges_ac: %d\n", error_flags.coil_feedback_diverges);
+            printf("\tpp_signal_fault: %d\n", error_flags.pp_signal_fault);
             printf("------------\n");
         });
 
@@ -291,6 +300,7 @@ int main(int argc, char* argv[]) {
                 p.reset_rcd(selected_connector, true);
                 break;
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
     return 0;
