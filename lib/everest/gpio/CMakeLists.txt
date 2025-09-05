@@ -24,7 +24,7 @@ install(TARGETS gpio
     INCLUDES DESTINATION include
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DESTINATION include/everest
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/everest
+    DESTINATION include
     FILES_MATCHING PATTERN "*.hpp"
 )
