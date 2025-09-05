@@ -2,6 +2,9 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "auth_token_providerImpl.hpp"
+
+#include <everest/helpers/helpers.hpp>
+
 #include <iomanip>
 #include <sstream>
 
@@ -36,15 +39,13 @@ void auth_token_providerImpl::detected_rfid_token_callback(
     provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
 
     if (now < last_rfid_submit + debounce_interval) {
-        if (config.debug) {
-            EVLOG_info << "Ignoring rfid/nfc token (debouncing): " << protocol << ": " << nfcidToString(nfcid);
-        }
+        EVLOG_debug << "Ignoring rfid/nfc token (debouncing): " << protocol << ": "
+                    << everest::helpers::redact(provided_token);
         return;
     }
 
-    if (config.debug) {
-        EVLOG_info << "Publishing new rfid/nfc token: " << protocol << ": " << nfcidToString(nfcid);
-    }
+    EVLOG_debug << "Publishing new rfid/nfc token: " << protocol << ": " << everest::helpers::redact(provided_token);
+
     publish_provided_token(provided_token);
     last_rfid_submit = now;
 }

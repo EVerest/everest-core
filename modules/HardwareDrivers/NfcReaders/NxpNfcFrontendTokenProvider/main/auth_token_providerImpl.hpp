@@ -36,7 +36,6 @@ namespace main {
 
 struct Conf {
     int token_debounce_interval_ms;
-    bool debug;
 };
 
 class auth_token_providerImpl : public auth_token_providerImplBase {

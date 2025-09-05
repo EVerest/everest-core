@@ -199,7 +199,8 @@ NamedPipeDataSource::parseInput(const std::string& input) {
     if (input.size() != expectedStringSize) {
         return std::nullopt;
     }
-    const std::string uid_str = input.substr(9, expectedUidSize - 1);
+
+    const std::string uid_str = input.substr(9, expectedUidSize);
     if (not isHexCoded(uid_str)) {
         return std::nullopt;
     }

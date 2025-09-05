@@ -11,11 +11,14 @@ ev_setup_cpp_module()
 
 set(EXTERNAL_NXPNFCRDLIB_ZIP_PATH_${MODULE_NAME} "" CACHE PATH "Set the path to NxpNfcRdLib_Linux_v07.10.00_PUB.zip to enable building the wrapper.")
 
-
 target_include_directories(${MODULE_NAME}
     PRIVATE
-    include/
+        include/
 )
+
+target_link_libraries(${MODULE_NAME}
+    PRIVATE
+        everest::helpers)
 
 # Use either the named pipe implementation as source, or the real-hardware-interfacing NxpNfcFrontend class
 

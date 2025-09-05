@@ -31,7 +31,6 @@ Configuring the module
 Runtime configuration allows to
 
 * *token_debounce_interval_ms*: select a minimum intervall between publishes
-* *debug*: switch on/off additional debug output
 
 See ``manifest.yaml`` for details.
 
