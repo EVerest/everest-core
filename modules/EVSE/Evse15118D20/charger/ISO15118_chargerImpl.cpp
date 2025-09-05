@@ -904,11 +904,13 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                 publish_ac_ev_present_powers(fill_ac_ev_present_power_values(*scheduled_mode));
                 // TODO(SL): publish_scheduled_control_mode
             } else if (const auto* bpt_scheduled_mode = std::get_if<BPT_ScheduleReqControlModeAC>(ac_control_mode)) {
-                if (scheduled_mode->max_charge_power.has_value() or scheduled_mode->max_charge_power_L2.has_value() or
-                    scheduled_mode->max_charge_power_L3.has_value() or scheduled_mode->min_charge_power.has_value() or
-                    scheduled_mode->min_charge_power_L2.has_value() or
-                    scheduled_mode->min_charge_power_L3.has_value()) {
-                    publish_ac_ev_power_limits(fill_ac_ev_power_limits(*scheduled_mode));
+                if (bpt_scheduled_mode->max_charge_power.has_value() or
+                    bpt_scheduled_mode->max_charge_power_L2.has_value() or
+                    bpt_scheduled_mode->max_charge_power_L3.has_value() or
+                    bpt_scheduled_mode->min_charge_power.has_value() or
+                    bpt_scheduled_mode->min_charge_power_L2.has_value() or
+                    bpt_scheduled_mode->min_charge_power_L3.has_value()) {
+                    publish_ac_ev_power_limits(fill_ac_ev_power_limits(*bpt_scheduled_mode));
                 }
                 publish_ac_ev_present_powers(fill_ac_ev_present_power_values(*bpt_scheduled_mode));
                 // TODO(SL): publish_scheduled_control_mode

@@ -44,7 +44,7 @@ config:
     description: >-
       The supported ISO15118-20 energy services (DC, DC_BPT, AC, AC_BPT) the EV supports,
       provided as a prioritized list. The first entry in the list has the highest priority
-      and is the most likely to be selected. The services should be separated with commas.
+      and is the most likely to be selected. The services should be separated only with commas.
     type: string
     default: "DC,DC_BPT"
 provides:  
