@@ -1,0 +1,432 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+#include "evse_manager_consumer_API.hpp"
+#include "basecamp/auth/wrapper.hpp"
+#include "basecamp/evse_board_support/API.hpp"
+#include "basecamp/evse_board_support/codec.hpp"
+#include "basecamp/evse_board_support/json_codec.hpp"
+#include "basecamp/evse_board_support/wrapper.hpp"
+#include "basecamp/evse_manager/API.hpp"
+#include "basecamp/evse_manager/codec.hpp"
+#include "basecamp/evse_manager/json_codec.hpp"
+#include "basecamp/evse_manager/wrapper.hpp"
+#include "basecamp/generic/codec.hpp"
+#include "basecamp/generic/json_codec.hpp"
+#include "basecamp/generic/string.hpp"
+#include "basecamp/iso15118_charger/API.hpp"
+#include "basecamp/iso15118_charger/codec.hpp"
+#include "basecamp/iso15118_charger/json_codec.hpp"
+#include "basecamp/iso15118_charger/wrapper.hpp"
+#include "basecamp/isolation_monitor/API.hpp"
+#include "basecamp/isolation_monitor/codec.hpp"
+#include "basecamp/isolation_monitor/json_codec.hpp"
+#include "basecamp/isolation_monitor/wrapper.hpp"
+#include "basecamp/power_supply_DC/API.hpp"
+#include "basecamp/power_supply_DC/codec.hpp"
+#include "basecamp/power_supply_DC/json_codec.hpp"
+#include "basecamp/power_supply_DC/wrapper.hpp"
+#include "basecamp/powermeter/codec.hpp"
+#include "basecamp/powermeter/wrapper.hpp"
+#include "basecamp/uk_random_delay/API.hpp"
+#include "basecamp/uk_random_delay/codec.hpp"
+#include "basecamp/uk_random_delay/json_codec.hpp"
+#include "basecamp/uk_random_delay/wrapper.hpp"
+#include "basecamp/utilities/codec.hpp"
+#include "companion/asyncapi/AsyncApiRequestReply.hpp"
+#include "everest/logging.hpp"
+
+using namespace basecamp::companion;
+namespace ns_types_ext = basecamp::API::V1_0::types::evse_manager;
+namespace ns_powermeter = basecamp::API::V1_0::types::powermeter;
+namespace ns_iso = basecamp::API::V1_0::types::iso15118_charger;
+namespace ns_evse_bsp = basecamp::API::V1_0::types::evse_board_support;
+namespace ns_imd = basecamp::API::V1_0::types::isolation_monitor;
+namespace ns_dc = basecamp::API::V1_0::types::power_supply_DC;
+namespace ns_random_delay = basecamp::API::V1_0::types::uk_random_delay;
+namespace generic = basecamp::API::V1_0::types::generic;
+
+using basecamp::API::deserialize;
+
+namespace {
+template <class T> T const& toExternalApi(T const& val) {
+    return val;
+}
+} // namespace
+
+namespace module {
+
+void evse_manager_consumer_API::init() {
+    invoke_init(*p_main);
+    topics.setTargetApiModuleID(info.id, "evse_manager_consumer");
+
+    generate_api_cmd_get_evse();
+    generate_api_cmd_enable_disable();
+    generate_api_cmd_authorize_response();
+    generate_api_cmd_withdraw_authorization();
+    generate_api_cmd_reserve();
+    generate_api_cmd_cancel_reservation();
+    generate_api_cmd_pause_charging();
+    generate_api_cmd_resume_charging();
+    generate_api_cmd_stop_transaction();
+    generate_api_cmd_force_unlock();
+    generate_api_cmd_external_ready_to_start_charging();
+    generate_api_cmd_random_delay_enable();
+    generate_api_cmd_random_delay_disable();
+    generate_api_cmd_random_delay_cancel();
+    generate_api_cmd_random_delay_set_duration_s();
+
+    generate_api_var_session_event();
+    generate_api_var_limits();
+    generate_api_var_ev_info();
+    generate_api_var_car_manufacturer();
+    generate_api_var_powermeter();
+    generate_api_var_evse_id();
+    generate_api_var_hw_capabilities();
+    generate_api_var_waiting_for_external_ready();
+    generate_api_var_ready();
+    generate_api_var_selected_protocol();
+    generate_api_var_powermeter_public_key_ocmf();
+
+    generate_api_var_ac_nr_of_phases_available();
+    generate_api_var_ac_pp_ampacity();
+    generate_api_var_dlink_ready();
+    generate_api_var_isolation_measurement();
+    generate_api_var_dc_voltage_current();
+    generate_api_var_dc_mode();
+    generate_api_var_dc_capabilities();
+    generate_api_var_random_delay_countdown();
+}
+
+void evse_manager_consumer_API::ready() {
+    invoke_ready(*p_main);
+
+    comm_check.start(config.cfg_communication_check_to_s);
+    generate_api_var_communication_check();
+
+    setup_heartbeat_generator();
+}
+
+auto evse_manager_consumer_API::forward_api_var(std::string const& var) {
+    using namespace ns_types_ext;
+    using namespace ns_powermeter;
+    using namespace generic;
+    using namespace ns_evse_bsp;
+    using namespace ns_iso;
+    using namespace ns_imd;
+    using namespace ns_dc;
+    using namespace ns_random_delay;
+    auto topic = topics.basecamp_to_extern(var);
+    return [this, topic](auto const& val) {
+        try {
+            auto&& external = toExternalApi(val);
+            auto&& payload = serialize(external);
+            mqtt.publish(topic, payload);
+        } catch (const std::exception& e) {
+            EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
+        } catch (...) {
+            EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
+        }
+    };
+}
+
+void evse_manager_consumer_API::generate_api_cmd_get_evse() {
+    subscribe_api_topic("get_evse", [=](std::string const& data) {
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            auto reply = ns_types_ext::toExternalApi(r_evse_manager->call_get_evse());
+            mqtt.publish(msg.replyTo, serialize(reply));
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_enable_disable() {
+    subscribe_api_topic("enable_disable", [=](std::string const& data) {
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            ns_types_ext::EnableDisableRequest payload;
+            if (deserialize(msg.payload, payload)) {
+                auto reply = r_evse_manager->call_enable_disable(payload.connector_id, toInternalApi(payload.source));
+                mqtt.publish(msg.replyTo, generic::serialize(reply));
+                return true;
+            }
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_authorize_response() {
+    subscribe_api_topic("authorize_response", [=](std::string const& data) {
+        ns_types_ext::AuthorizeResponseArgs payload;
+        if (deserialize(data, payload)) {
+            r_evse_manager->call_authorize_response(toInternalApi(payload.token), toInternalApi(payload.result));
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_withdraw_authorization() {
+    subscribe_api_topic("withdraw_authorization", [=](std::string const&) {
+        r_evse_manager->call_withdraw_authorization();
+        return true;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_reserve() {
+    subscribe_api_topic("reserve", [=](std::string const& data) {
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            int payload;
+            deserialize(msg.payload, payload);
+            auto reply = r_evse_manager->call_reserve(payload);
+            mqtt.publish(msg.replyTo, generic::serialize(reply));
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_cancel_reservation() {
+    subscribe_api_topic("cancel_reservation", [=](std::string const&) {
+        r_evse_manager->call_cancel_reservation();
+        return true;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_pause_charging() {
+    subscribe_api_topic("pause_charging", [=](std::string const& data) {
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            auto result = r_evse_manager->call_pause_charging();
+            mqtt.publish(msg.replyTo, result);
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_resume_charging() {
+    subscribe_api_topic("resume_charging", [=](std::string const& data) {
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            auto result = r_evse_manager->call_resume_charging();
+            mqtt.publish(msg.replyTo, result);
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_stop_transaction() {
+    subscribe_api_topic("stop_transaction", [=](std::string const& data) {
+        auto result = false;
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            ns_types_ext::StopTransactionRequest_External payload;
+            if (deserialize(msg.payload, payload)) {
+                auto payload = ns_types_ext::deserialize<ns_types_ext::StopTransactionRequest_External>(msg.payload);
+                result = r_evse_manager->call_stop_transaction(ns_types_ext::toInternalApi(payload));
+                mqtt.publish(msg.replyTo, result);
+                return true;
+            }
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_force_unlock() {
+    subscribe_api_topic("force_unlock", [=](std::string const& data) {
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            int payload;
+            if ((deserialize)(msg.payload, payload)) {
+                auto result = r_evse_manager->call_force_unlock(payload);
+                mqtt.publish(msg.replyTo, result);
+            }
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_external_ready_to_start_charging() {
+    subscribe_api_topic("external_ready_to_start_charging", [=](std::string const& data) {
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            auto result = r_evse_manager->call_external_ready_to_start_charging();
+            mqtt.publish(msg.replyTo, result);
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::generate_api_cmd_random_delay_enable() {
+    if (not r_random_delay.empty()) {
+        subscribe_api_topic("random_delay_enable", [=](std::string const&) {
+            r_random_delay[0]->call_enable();
+            return true;
+        });
+    }
+}
+
+void evse_manager_consumer_API::generate_api_cmd_random_delay_disable() {
+    if (not r_random_delay.empty()) {
+        subscribe_api_topic("random_delay_disable", [=](std::string const&) {
+            r_random_delay[0]->call_enable();
+            return true;
+        });
+    }
+}
+
+void evse_manager_consumer_API::generate_api_cmd_random_delay_cancel() {
+    if (not r_random_delay.empty()) {
+        subscribe_api_topic("random_delay_cancel", [=](std::string const&) {
+            r_random_delay[0]->call_cancel();
+            return true;
+        });
+    }
+}
+
+void evse_manager_consumer_API::generate_api_cmd_random_delay_set_duration_s() {
+    if (not r_random_delay.empty())
+        subscribe_api_topic("random_delay_set_duration_s", [=](std::string const& data) {
+            int32_t duration;
+            if (deserialize(data, duration)) {
+                r_random_delay[0]->call_set_duration_s(duration);
+                return true;
+            }
+            return false;
+        });
+}
+
+void evse_manager_consumer_API::generate_api_var_session_event() {
+    r_evse_manager->subscribe_session_event(forward_api_var("session_event"));
+}
+
+void evse_manager_consumer_API::generate_api_var_limits() {
+    r_evse_manager->subscribe_limits(forward_api_var("limits"));
+}
+
+void evse_manager_consumer_API::generate_api_var_ev_info() {
+    r_evse_manager->subscribe_ev_info(forward_api_var("ev_info"));
+}
+
+void evse_manager_consumer_API::generate_api_var_car_manufacturer() {
+    r_evse_manager->subscribe_car_manufacturer(forward_api_var("car_manufacturer"));
+}
+
+void evse_manager_consumer_API::generate_api_var_powermeter() {
+    r_evse_manager->subscribe_powermeter(forward_api_var("powermeter"));
+}
+
+void evse_manager_consumer_API::generate_api_var_evse_id() {
+    r_evse_manager->subscribe_evse_id(forward_api_var("evse_id"));
+}
+
+void evse_manager_consumer_API::generate_api_var_hw_capabilities() {
+    r_evse_manager->subscribe_hw_capabilities(forward_api_var("hw_capabilities"));
+}
+
+void evse_manager_consumer_API::generate_api_var_waiting_for_external_ready() {
+    r_evse_manager->subscribe_waiting_for_external_ready(forward_api_var("waiting_for_external_ready"));
+}
+
+void evse_manager_consumer_API::generate_api_var_ready() {
+    r_evse_manager->subscribe_ready(forward_api_var("ready"));
+}
+
+void evse_manager_consumer_API::generate_api_var_selected_protocol() {
+    r_evse_manager->subscribe_selected_protocol(forward_api_var("selected_protocol"));
+}
+
+void evse_manager_consumer_API::generate_api_var_powermeter_public_key_ocmf() {
+    r_evse_manager->subscribe_powermeter_public_key_ocmf(forward_api_var("powermeter_public_key_ocmf"));
+}
+
+void evse_manager_consumer_API::generate_api_var_ac_nr_of_phases_available() {
+    if (not r_evse_bsp.empty()) {
+        r_evse_bsp[0]->subscribe_ac_nr_of_phases_available(forward_api_var("ac_nr_of_phases_available"));
+    }
+}
+
+void evse_manager_consumer_API::generate_api_var_ac_pp_ampacity() {
+    if (not r_evse_bsp.empty()) {
+        r_evse_bsp[0]->subscribe_ac_pp_ampacity(forward_api_var("ac_pp_ampacity"));
+    }
+}
+
+void evse_manager_consumer_API::generate_api_var_dlink_ready() {
+    if (not r_slac.empty()) {
+        r_slac[0]->subscribe_dlink_ready(forward_api_var("dlink_ready"));
+    }
+}
+
+void evse_manager_consumer_API::generate_api_var_isolation_measurement() {
+    if (not r_imd.empty()) {
+        r_imd[0]->subscribe_isolation_measurement(forward_api_var("isolation_measurement"));
+    }
+}
+
+void evse_manager_consumer_API::generate_api_var_dc_voltage_current() {
+    if (not r_ps_dc.empty()) {
+        r_ps_dc[0]->subscribe_voltage_current(forward_api_var("dc_voltage_current"));
+    }
+}
+
+void evse_manager_consumer_API::generate_api_var_dc_mode() {
+    if (not r_ps_dc.empty()) {
+        r_ps_dc[0]->subscribe_mode(forward_api_var("dc_mode"));
+    }
+}
+
+void evse_manager_consumer_API::generate_api_var_dc_capabilities() {
+    if (not r_ps_dc.empty()) {
+        r_ps_dc[0]->subscribe_capabilities(forward_api_var("dc_capabilities"));
+    }
+}
+
+void evse_manager_consumer_API::generate_api_var_random_delay_countdown() {
+    if (not r_random_delay.empty()) {
+        r_random_delay[0]->subscribe_countdown(forward_api_var("random_delay_countdown"));
+    }
+}
+
+void evse_manager_consumer_API::generate_api_var_communication_check() {
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_manager_consumer_API::setup_heartbeat_generator() {
+    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto action = [this, topic]() {
+        mqtt.publish(topic, "{}");
+        return true;
+    };
+    comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
+}
+
+void evse_manager_consumer_API::subscribe_api_topic(const std::string& var,
+                                                    const ParseAndPublishFtor& parse_and_publish) {
+    auto topic = topics.extern_to_basecamp(var);
+    mqtt.subscribe(topic, [=](std::string const& data) {
+        try {
+            if (not parse_and_publish(data)) {
+                EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
+            }
+        } catch (const std::exception& e) {
+            EVLOG_warning << "Cmd/Var: '" << topic << "' failed with -> " << e.what();
+        } catch (...) {
+            EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
+        }
+    });
+}
+} // namespace module

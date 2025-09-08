@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
+#include "display_messageImpl.hpp"
+#include "basecamp/display_message/API.hpp"
+#include "basecamp/display_message/codec.hpp"
+#include "basecamp/display_message/json_codec.hpp"
+#include "basecamp/display_message/wrapper.hpp"
+#include "basecamp/system/wrapper.hpp"
+#include "companion/asyncapi/AsyncApiRequestReply.hpp"
+#include "generated/types/display_message.hpp"
+
+using namespace basecamp::companion;
+namespace ns_types_ext = basecamp::API::V1_0::types::display_message;
+
+namespace module {
+namespace main {
+
+void display_messageImpl::init() {
+    timeout_s = mod->config.cfg_request_reply_to_s;
+}
+
+void display_messageImpl::ready() {
+}
+
+template <class T, class ReqT>
+auto display_messageImpl::generic_request_reply(T const& default_value, ReqT const& request, std::string const& topic) {
+    using namespace ns_types_ext;
+    using ExtT = decltype(toExternalApi(std::declval<T>()));
+    auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
+    if (!result) {
+        return default_value;
+    }
+    return result.value();
+}
+
+types::display_message::SetDisplayMessageResponse
+display_messageImpl::handle_set_display_message(std::vector<types::display_message::DisplayMessage>& request) {
+    static const types::display_message::SetDisplayMessageResponse default_response{
+        types::display_message::DisplayMessageStatusEnum::UnknownTransaction, {}};
+    return generic_request_reply(default_response, request, "set_display_message");
+}
+
+types::display_message::GetDisplayMessageResponse
+display_messageImpl::handle_get_display_messages(types::display_message::GetDisplayMessageRequest& request) {
+    types::display_message::GetDisplayMessageResponse default_response;
+    return generic_request_reply(default_response, request, "get_display_message");
+}
+
+types::display_message::ClearDisplayMessageResponse
+display_messageImpl::handle_clear_display_message(types::display_message::ClearDisplayMessageRequest& request) {
+    types::display_message::ClearDisplayMessageResponse default_response{
+        types::display_message::ClearMessageResponseEnum::Unknown, {}};
+    return generic_request_reply(default_response, request, "clear_display_message");
+}
+
+} // namespace main
+} // namespace module
