@@ -1,0 +1,108 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+#include "error_history_consumer_API.hpp"
+#include "basecamp/error_history/API.hpp"
+#include "basecamp/error_history/codec.hpp"
+#include "basecamp/error_history/wrapper.hpp"
+#include "basecamp/generic/codec.hpp"
+#include "basecamp/utilities/codec.hpp"
+#include "error_wrapper.hpp"
+#include "generated/types/error_history.hpp"
+
+namespace module {
+
+using basecamp::API::deserialize;
+namespace ns_types_ext = basecamp::API::V1_0::types::error_history;
+namespace generic = basecamp::API::V1_0::types::generic;
+
+void error_history_consumer_API::init() {
+    invoke_init(*p_main);
+    topics.setTargetApiModuleID(info.id, "error_history_consumer");
+
+    generate_api_cmd_active_errors();
+    //    generate_api_var_communication_check();
+    generate_api_var_error_events();
+}
+
+void error_history_consumer_API::ready() {
+    invoke_ready(*p_main);
+
+    comm_check.start(config.cfg_communication_check_to_s);
+    generate_api_var_communication_check();
+    setup_heartbeat_generator();
+}
+
+auto error_history_consumer_API::forward_api_var(std::string const& var) {
+    using namespace ns_types_ext;
+    auto topic = topics.basecamp_to_extern(var);
+    return [this, topic](auto const& val) {
+        try {
+            auto&& external = toExternalApi(val);
+            auto&& payload = serialize(external);
+            mqtt.publish(topic, payload);
+        } catch (const std::exception& e) {
+            EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
+        } catch (...) {
+            EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
+        }
+    };
+}
+
+void error_history_consumer_API::generate_api_cmd_active_errors() {
+    using namespace ns_types_ext;
+    subscribe_api_topic("active_errors", [=](std::string const& data) {
+        generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
+            types::error_history::FilterArguments filter;
+            filter.state_filter = types::error_history::State::Active;
+            auto active_errors = r_error_history->call_get_errors(filter);
+            auto reply = toExternalApi(active_errors);
+            mqtt.publish(msg.replyTo, serialize(reply));
+            return true;
+        }
+        return false;
+    });
+}
+
+void error_history_consumer_API::generate_api_var_error_events() {
+    auto convert = [](auto const& ftor) {
+        return [ftor](auto&& elem) { return ftor(basecamp::error_converter::framework_to_internal_api(elem)); };
+    };
+    subscribe_global_all_errors(convert(forward_api_var("error_raised")), convert(forward_api_var("error_cleared")));
+}
+
+void error_history_consumer_API::generate_api_var_communication_check() {
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        auto val = generic::deserialize<bool>(data);
+        comm_check.set_value(val);
+        return true;
+    });
+}
+
+void error_history_consumer_API::setup_heartbeat_generator() {
+    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto action = [this, topic]() {
+        mqtt.publish(topic, "{}");
+        return true;
+    };
+    comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
+}
+
+void error_history_consumer_API::subscribe_api_topic(const std::string& var,
+                                                     const ParseAndPublishFtor& parse_and_publish) {
+    auto topic = topics.extern_to_basecamp(var);
+    mqtt.subscribe(topic, [=](std::string const& data) {
+        try {
+            if (not parse_and_publish(data)) {
+                EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
+            }
+        } catch (const std::exception& e) {
+            EVLOG_warning << "Cmd/Var: '" << topic << "' failed with -> " << e.what();
+        } catch (...) {
+            EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
+        }
+    });
+}
+
+} // namespace module

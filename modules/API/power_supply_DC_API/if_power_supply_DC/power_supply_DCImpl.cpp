@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
+#include "power_supply_DCImpl.hpp"
+#include "basecamp/power_supply_DC/API.hpp"
+#include "basecamp/power_supply_DC/codec.hpp"
+#include "basecamp/power_supply_DC/wrapper.hpp"
+#include "everest/exceptions.hpp"
+#include "everest/logging.hpp"
+#include "framework/ModuleAdapter.hpp"
+#include "generated/types/power_supply_DC.hpp"
+#include "utils/types.hpp"
+#include <optional>
+
+namespace module {
+namespace if_power_supply_DC {
+
+namespace ns_types_int = types::power_supply_DC;
+
+void power_supply_DCImpl::init() {
+}
+
+void power_supply_DCImpl::ready() {
+}
+
+void power_supply_DCImpl::handle_setMode(ns_types_int::Mode& mode, types::power_supply_DC::ChargingPhase& phase) {
+    auto topic = mod->get_topics().basecamp_to_extern("mode");
+    auto mode_ext = ns_types_ext::toExternalApi(mode);
+    auto phase_ext = ns_types_ext::toExternalApi(phase);
+    auto data = ns_types_ext::ModeRequest{mode_ext, phase_ext};
+    mod->mqtt.publish(topic, serialize(data));
+}
+
+void power_supply_DCImpl::handle_setExportVoltageCurrent(double& voltage, double& current) {
+    auto topic = mod->get_topics().basecamp_to_extern("export_voltage_current");
+    auto data = ns_types_ext::VoltageCurrent{static_cast<float>(voltage), static_cast<float>(current)};
+    mod->mqtt.publish(topic, serialize(data));
+}
+
+void power_supply_DCImpl::handle_setImportVoltageCurrent(double& voltage, double& current) {
+    auto topic = mod->get_topics().basecamp_to_extern("import_voltage_current");
+    auto data = ns_types_ext::VoltageCurrent{static_cast<float>(voltage), static_cast<float>(current)};
+    mod->mqtt.publish(topic, serialize(data));
+}
+
+} // namespace if_power_supply_DC
+} // namespace module
