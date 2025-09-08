@@ -1,8 +1,6 @@
 active_modules:
   api:
     module: RpcApi
-    config_module:
-      websocket_port: 8080
     connections:
       evse_manager:
         - module_id: evse_manager_1

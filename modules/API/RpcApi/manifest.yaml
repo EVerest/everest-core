@@ -9,7 +9,7 @@ config:
   websocket_port:
     description: Port for the websocket server to listen on.
     type: integer
-    default: 80
+    default: 8080
   websocket_interface:
     description: >-
       Network interface/device for the websocket server to listen on. E.g. 'lo' or 'eth1'.
