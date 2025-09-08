@@ -1,0 +1,14 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  bsp_1:
+    module: evse_board_support_API
+    config_module:
+      cfg_communication_check_to_s: 0
+  cli:
+    module: BUEvseBoardSupport
+    standalone: true
+    connections:
+      bsp:
+        - module_id: bsp_1
+          implementation_id: main

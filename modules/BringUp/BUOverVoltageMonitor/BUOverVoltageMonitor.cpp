@@ -4,6 +4,7 @@
 #include "BUOverVoltageMonitor.hpp"
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/screen_interactive.hpp"
+#include "ftxui/dom/table.hpp"
 #include <regex>
 
 namespace module {
@@ -57,6 +58,30 @@ void BUOverVoltageMonitor::ready() {
             }
             screen.Post(Event::Custom);
         });
+
+    r_ovm->subscribe_voltage_measurement_V([this, &screen](float v) {
+        std::scoped_lock lock(data_mutex);
+        voltage_measurement_V = fmt::format("{}V", v);
+        screen.Post(Event::Custom);
+    });
+
+    auto vars_renderer = Renderer([&] {
+        std::vector<std::vector<std::string>> table_content;
+        table_content = {{"Voltage measurement", voltage_measurement_V}};
+        auto vars = Table(table_content);
+
+        vars.SelectColumn(0).Border(LIGHT);
+        for (int i = 0; i < table_content.size(); i++) {
+            vars.SelectRow(i).Border(LIGHT);
+        }
+
+        return vbox({
+                   hbox({
+                       window(text("Information"), vbox({vars.Render()})),
+                   }),
+               }) |
+               flex_grow;
+    });
 
     auto msg_component_holder = Container::Horizontal({msg_component});
 
@@ -129,7 +154,7 @@ void BUOverVoltageMonitor::ready() {
                flex_grow;
     });
 
-    auto main_container = Container::Horizontal({action_renderer, msg_component_renderer});
+    auto main_container = Container::Horizontal({action_renderer, msg_component_renderer, vars_renderer});
 
     auto main_renderer = Renderer(main_container, [&] {
         std::scoped_lock lock(data_mutex);
