@@ -51,6 +51,8 @@ void RpcApi::init() {
     }
 
     // Create the request handler
+    m_request_handler = std::make_unique<RpcApiRequestHandler>(data, r_evse_manager, r_evse_energy_sink);
+
     std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
 
     if (config.websocket_enabled) {
