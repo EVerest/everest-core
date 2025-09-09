@@ -12,7 +12,7 @@ The following table shows the current support for the listed EVSE ISO15118-20 fe
 |------------------------------------|--------------------|
 | TCP, TLS 1.2 & 1.3                 | :heavy_check_mark: |
 | DC, DC_BPT                         | :heavy_check_mark: |
-| AC, AC_BPT                         | WIP                |
+| AC, AC_BPT                         | :heavy_check_mark: |
 | MCS (Amd.)                         | :heavy_check_mark: |
 | AC DER (Amd.)                      |                    |
 | WPT                                |                    |
