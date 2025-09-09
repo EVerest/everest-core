@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
+#include <iso15118/d20/state/ac_charge_parameter_discovery.hpp>
 #include <iso15118/d20/state/dc_charge_parameter_discovery.hpp>
 #include <iso15118/d20/state/service_selection.hpp>
 
@@ -194,7 +195,20 @@ Result ServiceSelection::feed(Event ev) {
             m_ctx.feedback.selected_vas_services(req->selected_vas_list.value());
         }
 
-        return m_ctx.create_state<DC_ChargeParameterDiscovery>();
+        const auto selected_energy_service = m_ctx.session.get_selected_services().selected_energy_service;
+
+        if (m_ctx.session.is_ac_charger()) {
+            return m_ctx.create_state<AC_ChargeParameterDiscovery>();
+        }
+        if (m_ctx.session.is_dc_charger()) {
+            return m_ctx.create_state<DC_ChargeParameterDiscovery>();
+        }
+        m_ctx.log("expected selected_energy_service AC, AC_BPT, DC, DC_BPT! But code type id: %d",
+                  static_cast<int>(selected_energy_service));
+
+        m_ctx.session_stopped = true;
+        return {};
+
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
         const auto res = handle_request(*req, m_ctx.session);
 

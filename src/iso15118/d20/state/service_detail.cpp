@@ -109,7 +109,19 @@ message_20::ServiceDetailResponse handle_request(const message_20::ServiceDetail
 
     uint8_t id = 0;
 
-    if (req.service == message_20::to_underlying_value(dt::ServiceCategory::DC)) {
+    if (req.service == message_20::to_underlying_value(dt::ServiceCategory::AC)) {
+        res.service = message_20::to_underlying_value(dt::ServiceCategory::AC);
+        for (auto& parameter_set : config.ac_parameter_list) {
+            session.offered_services.ac_parameter_list[id] = parameter_set;
+            res.service_parameter_list.push_back(dt::ParameterSet(id++, parameter_set));
+        }
+    } else if (req.service == message_20::to_underlying_value(dt::ServiceCategory::AC_BPT)) {
+        res.service = message_20::to_underlying_value(dt::ServiceCategory::AC_BPT);
+        for (auto& parameter_set : config.ac_bpt_parameter_list) {
+            session.offered_services.ac_bpt_parameter_list[id] = parameter_set;
+            res.service_parameter_list.push_back(dt::ParameterSet(id++, parameter_set));
+        }
+    } else if (req.service == message_20::to_underlying_value(dt::ServiceCategory::DC)) {
         res.service = message_20::to_underlying_value(dt::ServiceCategory::DC);
         for (auto& parameter_set : config.dc_parameter_list) {
             session.offered_services.dc_parameter_list[id] = parameter_set;

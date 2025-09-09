@@ -11,6 +11,8 @@
 #include <iso15118/d20/ev_information.hpp>
 #include <iso15118/d20/limits.hpp>
 #include <iso15118/d20/session.hpp>
+#include <iso15118/message/ac_charge_loop.hpp>
+#include <iso15118/message/ac_charge_parameter_discovery.hpp>
 #include <iso15118/message/dc_charge_loop.hpp>
 #include <iso15118/message/dc_charge_parameter_discovery.hpp>
 #include <iso15118/message/schedule_exchange.hpp>
@@ -32,6 +34,8 @@ enum class Signal {
     CHARGE_LOOP_STARTED,
     CHARGE_LOOP_FINISHED,
     DC_OPEN_CONTACTOR,
+    AC_CLOSE_CONTACTOR,
+    AC_OPEN_CONTACTOR,
     DLINK_TERMINATE,
     DLINK_ERROR,
     DLINK_PAUSE,
@@ -48,19 +52,26 @@ using MeterInfoRequested = bool;
 using DcReqControlMode = std::variant<dt::Scheduled_DC_CLReqControlMode, dt::BPT_Scheduled_DC_CLReqControlMode,
                                       dt::Dynamic_DC_CLReqControlMode, dt::BPT_Dynamic_DC_CLReqControlMode>;
 
+using AcReqControlMode = std::variant<dt::Scheduled_AC_CLReqControlMode, dt::BPT_Scheduled_AC_CLReqControlMode,
+                                      dt::Dynamic_AC_CLReqControlMode, dt::BPT_Dynamic_AC_CLReqControlMode>;
+
 using DcChargeLoopReq = std::variant<DcReqControlMode, dt::DisplayParameters, PresentVoltage, MeterInfoRequested>;
 
-// TODO(ioan): preparation for AC limits
-using EvseTransferLimits = std::variant<d20::DcTransferLimits>;
+using EvseTransferLimits = std::variant<d20::DcTransferLimits, d20::AcTransferLimits>;
 
-using EvTransferLimits = std::variant<dt::DC_CPDReqEnergyTransferMode, dt::BPT_DC_CPDReqEnergyTransferMode>;
+using EvTransferLimits = std::variant<dt::DC_CPDReqEnergyTransferMode, dt::BPT_DC_CPDReqEnergyTransferMode,
+                                      dt::AC_CPDReqEnergyTransferMode, dt::BPT_AC_CPDReqEnergyTransferMode>;
 using EvSEControlMode = std::variant<dt::Dynamic_SEReqControlMode, dt::Scheduled_SEReqControlMode>;
+
+using AcChargeLoopReq = std::variant<AcReqControlMode, dt::DisplayParameters, MeterInfoRequested>;
+using AcLimits = std::variant<dt::AC_CPDReqEnergyTransferMode, dt::BPT_AC_CPDReqEnergyTransferMode>;
 
 struct Callbacks {
     std::function<void(Signal)> signal;
     std::function<void(float)> dc_pre_charge_target_voltage;
     std::function<void(const DcChargeLoopReq&)> dc_charge_loop_req;
     std::function<void(const DcMaximumLimits&)> dc_max_limits;
+    std::function<void(const AcChargeLoopReq&)> ac_charge_loop_req;
     std::function<void(const message_20::Type&)> v2g_message;
     std::function<void(const std::string&)> evccid;
     std::function<void(const std::string&)> selected_protocol;
@@ -73,6 +84,7 @@ struct Callbacks {
     std::function<void(const d20::EVInformation&)> ev_information;
     std::function<std::optional<dt::ServiceParameterList>(uint16_t)> get_vas_parameters;
     std::function<void(const dt::VasSelectedServiceList&)> selected_vas_services;
+    std::function<void(const AcLimits&)> ac_limits;
 };
 
 } // namespace feedback
@@ -85,6 +97,7 @@ public:
     void dc_pre_charge_target_voltage(float) const;
     void dc_charge_loop_req(const feedback::DcChargeLoopReq&) const;
     void dc_max_limits(const feedback::DcMaximumLimits&) const;
+    void ac_charge_loop_req(const feedback::AcChargeLoopReq&) const;
     void v2g_message(const message_20::Type&) const;
     void evcc_id(const std::string&) const;
     void selected_protocol(const std::string&) const;
@@ -98,6 +111,7 @@ public:
     void ev_information(const d20::EVInformation&) const;
     std::optional<dt::ServiceParameterList> get_vas_parameters(uint16_t) const;
     void selected_vas_services(const dt::VasSelectedServiceList&) const;
+    void ac_limits(const feedback::AcLimits&) const;
 
 private:
     feedback::Callbacks callbacks;

@@ -96,7 +96,7 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
         return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
-    const auto selected_services = session.get_selected_services();
+    const auto& selected_services = session.get_selected_services();
     const auto selected_control_mode = selected_services.selected_control_mode;
     const auto selected_energy_service = selected_services.selected_energy_service;
     const auto selected_mobility_needs_mode = selected_services.selected_mobility_needs_mode;
@@ -179,9 +179,7 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 
     if (stop) {
         res.status = {0, dt::EvseNotification::Terminate};
-    }
-
-    if (pause) {
+    } else if (pause) {
         const uint16_t notification_max_delay =
             (selected_control_mode == dt::ControlMode::Dynamic) ? 60 : 0; // [V2G20-1850]
         res.status = {notification_max_delay, dt::EvseNotification::Pause};
@@ -192,6 +190,7 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 
 void DC_ChargeLoop::enter() {
     m_ctx.log.enter_state("DC_ChargeLoop");
+    dynamic_parameters = m_ctx.cache_dynamic_mode_parameters.value_or(UpdateDynamicModeParameters{});
 }
 
 Result DC_ChargeLoop::feed(Event ev) {
@@ -220,7 +219,7 @@ Result DC_ChargeLoop::feed(Event ev) {
     const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::PowerDeliveryRequest>()) {
-        const auto res = handle_request(*req, m_ctx.session);
+        const auto res = handle_request(*req, m_ctx.session, false);
 
         m_ctx.respond(res);
 

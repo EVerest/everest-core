@@ -5,6 +5,7 @@
 #include <iso15118/detail/d20/context_helper.hpp>
 #include <iso15118/detail/helper.hpp>
 
+#include <iso15118/message/ac_charge_parameter_discovery.hpp>
 #include <iso15118/message/authorization.hpp>
 #include <iso15118/message/authorization_setup.hpp>
 #include <iso15118/message/dc_cable_check.hpp>
@@ -66,6 +67,9 @@ void send_sequence_error(const message_20::Type req_type, d20::Context& ctx) {
     } else if (req_type == message_20::Type::ServiceSelectionReq) {
         const auto res = handle_sequence_error<message_20::ServiceSelectionResponse>(ctx.session);
         ctx.respond(res);
+    } else if (req_type == message_20::Type::AC_ChargeParameterDiscoveryReq) {
+        const auto res = handle_sequence_error<message_20::AC_ChargeParameterDiscoveryResponse>(ctx.session);
+        ctx.respond(res);
     } else if (req_type == message_20::Type::DC_ChargeParameterDiscoveryReq) {
         const auto res = handle_sequence_error<message_20::DC_ChargeParameterDiscoveryResponse>(ctx.session);
         ctx.respond(res);
@@ -83,6 +87,9 @@ void send_sequence_error(const message_20::Type req_type, d20::Context& ctx) {
         ctx.respond(res);
     } else if (req_type == message_20::Type::DC_ChargeLoopReq) {
         const auto res = handle_sequence_error<message_20::DC_ChargeLoopResponse>(ctx.session);
+        ctx.respond(res);
+    } else if (req_type == message_20::Type::AC_ChargeLoopReq) {
+        const auto res = handle_sequence_error<message_20::AC_ChargeLoopResponse>(ctx.session);
         ctx.respond(res);
     } else if (req_type == message_20::Type::DC_WeldingDetectionReq) {
         const auto res = handle_sequence_error<message_20::DC_WeldingDetectionResponse>(ctx.session);

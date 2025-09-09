@@ -16,12 +16,13 @@ SCENARIO("Service detail state handling") {
     const auto cert_install{false};
     const std::vector<dt::Authorization> auth_services = {dt::Authorization::EIM};
     const d20::DcTransferLimits dc_limits;
+    const d20::AcTransferLimits ac_limits;
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
         {dt::ControlMode::Scheduled, dt::MobilityNeedsMode::ProvidedByEvcc}};
 
     const d20::EvseSetupConfig evse_setup{
-        evse_id,   supported_energy_services, auth_services, vas_services, cert_install,
-        dc_limits, control_mobility_modes};
+        evse_id,   supported_energy_services, auth_services, vas_services, cert_install, dc_limits,
+        ac_limits, control_mobility_modes};
 
     GIVEN("Bad Case - Unknown session") {
 
@@ -378,10 +379,260 @@ SCENARIO("Service detail state handling") {
     }
 
     GIVEN("Good Case - AC Service") {
-    } // TODO(sl): later
+        d20::Session session = d20::Session();
+        session.offered_services.energy_services = {dt::ServiceCategory::AC};
 
-    GIVEN("Good Case - AC_WPT Service") {
-    } // TODO(sl): later
+        auto session_config = d20::SessionConfig(evse_setup);
+        session_config.ac_parameter_list = {{
+            dt::AcConnector::ThreePhase,
+            dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc,
+            230,
+            dt::Pricing::NoPricing,
+        }};
+
+        message_20::ServiceDetailRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::AC);
+
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::AC));
+            REQUIRE(res.service_parameter_list.size() == 1);
+            auto& parameters = res.service_parameter_list[0];
+            REQUIRE(parameters.id == 0);
+            REQUIRE(parameters.parameter.size() == 5);
+
+            // Connector == ThreePhases
+            REQUIRE(parameters.parameter[0].name == "Connector");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[0].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[0].value) == 3);
+            // ControlMode == Scheduled
+            REQUIRE(parameters.parameter[1].name == "ControlMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[1].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[1].value) == 1);
+            // EVSENominalVoltage == 230
+            REQUIRE(parameters.parameter[2].name == "EVSENominalVoltage");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[2].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[2].value) == 230);
+            // MobilityNeedsMode == ProvidedbyEvcc
+            REQUIRE(parameters.parameter[3].name == "MobilityNeedsMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[3].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[3].value) == 1);
+            // Pricing == No Pricing
+            REQUIRE(parameters.parameter[4].name == "Pricing");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[4].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[4].value) == 0);
+        }
+    }
+
+    GIVEN("Good Case - AC_BPT Service") {
+        d20::Session session = d20::Session();
+        session.offered_services.energy_services = {dt::ServiceCategory::AC_BPT};
+
+        auto session_config = d20::SessionConfig(evse_setup);
+        session_config.ac_bpt_parameter_list = {{
+            {
+                dt::AcConnector::ThreePhase,
+                dt::ControlMode::Scheduled,
+                dt::MobilityNeedsMode::ProvidedByEvcc,
+                230,
+                dt::Pricing::NoPricing,
+            },
+            dt::BptChannel::Unified,
+            dt::GeneratorMode::GridFollowing,
+            dt::GridCodeIslandingDetectionMethod::Passive,
+        }};
+
+        message_20::ServiceDetailRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::AC_BPT);
+
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::AC_BPT));
+            REQUIRE(res.service_parameter_list.size() == 1);
+            auto& parameters = res.service_parameter_list[0];
+            REQUIRE(parameters.id == 0);
+            REQUIRE(parameters.parameter.size() == 8);
+
+            // Connector == ThreePhases
+            REQUIRE(parameters.parameter[0].name == "Connector");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[0].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[0].value) == 3);
+            // ControlMode == Scheduled
+            REQUIRE(parameters.parameter[1].name == "ControlMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[1].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[1].value) == 1);
+            // EVSENominalVoltage == 230
+            REQUIRE(parameters.parameter[2].name == "EVSENominalVoltage");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[2].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[2].value) == 230);
+            // MobilityNeedsMode == ProvidedbyEvcc
+            REQUIRE(parameters.parameter[3].name == "MobilityNeedsMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[3].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[3].value) == 1);
+            // Pricing == No Pricing
+            REQUIRE(parameters.parameter[4].name == "Pricing");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[4].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[4].value) == 0);
+            // BPTChannel == Unified
+            REQUIRE(parameters.parameter[5].name == "BPTChannel");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[5].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[5].value) == 1);
+            // GeneratorMode == GridFollowing
+            REQUIRE(parameters.parameter[6].name == "GeneratorMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[6].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[6].value) == 1);
+            // DetectionMethodGridCodeIslanding == Passive
+            REQUIRE(parameters.parameter[7].name == "DetectionMethodGridCodeIslanding");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[7].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[7].value) == 2);
+        }
+    }
+
+    GIVEN("Good Case - 2x AC Services") {
+
+        d20::Session session = d20::Session();
+        session.offered_services.energy_services = {dt::ServiceCategory::AC};
+
+        auto session_config = d20::SessionConfig(evse_setup);
+        session_config.ac_parameter_list = {{
+                                                dt::AcConnector::ThreePhase,
+                                                dt::ControlMode::Scheduled,
+                                                dt::MobilityNeedsMode::ProvidedByEvcc,
+                                                230,
+                                                dt::Pricing::NoPricing,
+                                            },
+                                            {
+                                                dt::AcConnector::ThreePhase,
+                                                dt::ControlMode::Dynamic,
+                                                dt::MobilityNeedsMode::ProvidedBySecc,
+                                                230,
+                                                dt::Pricing::NoPricing,
+                                            }};
+
+        message_20::ServiceDetailRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::AC);
+
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::AC));
+            REQUIRE(res.service_parameter_list.size() == 2);
+            auto& parameters_0 = res.service_parameter_list[0];
+            REQUIRE(parameters_0.id == 0);
+            REQUIRE(parameters_0.parameter.size() == 5);
+
+            // Connector == ThreePhases
+            REQUIRE(parameters_0.parameter[0].name == "Connector");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_0.parameter[0].value));
+            REQUIRE(std::get<int32_t>(parameters_0.parameter[0].value) == 3);
+            // ControlMode == Scheduled
+            REQUIRE(parameters_0.parameter[1].name == "ControlMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_0.parameter[1].value));
+            REQUIRE(std::get<int32_t>(parameters_0.parameter[1].value) == 1);
+            // EVSENominalVoltage == 230
+            REQUIRE(parameters_0.parameter[2].name == "EVSENominalVoltage");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_0.parameter[2].value));
+            REQUIRE(std::get<int32_t>(parameters_0.parameter[2].value) == 230);
+            // MobilityNeedsMode == ProvidedbyEvcc
+            REQUIRE(parameters_0.parameter[3].name == "MobilityNeedsMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_0.parameter[3].value));
+            REQUIRE(std::get<int32_t>(parameters_0.parameter[3].value) == 1);
+            // Pricing == No Pricing
+            REQUIRE(parameters_0.parameter[4].name == "Pricing");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_0.parameter[4].value));
+            REQUIRE(std::get<int32_t>(parameters_0.parameter[4].value) == 0);
+
+            auto& parameters_1 = res.service_parameter_list[1];
+            REQUIRE(parameters_1.id == 1);
+            REQUIRE(parameters_1.parameter.size() == 5);
+
+            // Connector == ThreePhases
+            REQUIRE(parameters_1.parameter[0].name == "Connector");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_1.parameter[0].value));
+            REQUIRE(std::get<int32_t>(parameters_1.parameter[0].value) == 3);
+            // ControlMode == Dynamic
+            REQUIRE(parameters_1.parameter[1].name == "ControlMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_1.parameter[1].value));
+            REQUIRE(std::get<int32_t>(parameters_1.parameter[1].value) == 2);
+            // EVSENominalVoltage == 230
+            REQUIRE(parameters_1.parameter[2].name == "EVSENominalVoltage");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_1.parameter[2].value));
+            REQUIRE(std::get<int32_t>(parameters_1.parameter[2].value) == 230);
+            // MobilityNeedsMode == ProvidedbySecc
+            REQUIRE(parameters_1.parameter[3].name == "MobilityNeedsMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_1.parameter[3].value));
+            REQUIRE(std::get<int32_t>(parameters_1.parameter[3].value) == 2);
+            // Pricing == No Pricing
+            REQUIRE(parameters_1.parameter[4].name == "Pricing");
+            REQUIRE(std::holds_alternative<int32_t>(parameters_1.parameter[4].value));
+            REQUIRE(std::get<int32_t>(parameters_1.parameter[4].value) == 0);
+        }
+    }
+
+    GIVEN("Good Case - AC Service: Scheduled Mode: 1, MobilityNeedsMode: 2 change to 1") {
+
+        d20::Session session = d20::Session();
+        session.offered_services.energy_services = {dt::ServiceCategory::AC};
+
+        auto session_config = d20::SessionConfig(evse_setup);
+
+        session_config.ac_parameter_list = {{
+            dt::AcConnector::ThreePhase,
+            dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedBySecc,
+            230,
+            dt::Pricing::NoPricing,
+        }};
+
+        message_20::ServiceDetailRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+        req.service = message_20::to_underlying_value(dt::ServiceCategory::AC);
+
+        const auto res = d20::state::handle_request(req, session, session_config, std::nullopt);
+
+        THEN("ResponseCode: OK") {
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.service == message_20::to_underlying_value(dt::ServiceCategory::AC));
+            REQUIRE(res.service_parameter_list.size() == 1);
+            auto& parameters = res.service_parameter_list[0];
+            REQUIRE(parameters.id == 0);
+            REQUIRE(parameters.parameter.size() == 5);
+
+            // Connector == ThreePhases
+            REQUIRE(parameters.parameter[0].name == "Connector");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[0].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[0].value) == 3);
+            // ControlMode == Scheduled
+            REQUIRE(parameters.parameter[1].name == "ControlMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[1].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[1].value) == 1);
+            // EVSENominalVoltage == 230
+            REQUIRE(parameters.parameter[2].name == "EVSENominalVoltage");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[2].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[2].value) == 230);
+            // MobilityNeedsMode == ProvidedbyEvcc
+            REQUIRE(parameters.parameter[3].name == "MobilityNeedsMode");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[3].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[3].value) == 1);
+            // Pricing == No Pricing
+            REQUIRE(parameters.parameter[4].name == "Pricing");
+            REQUIRE(std::holds_alternative<int32_t>(parameters.parameter[4].value));
+            REQUIRE(std::get<int32_t>(parameters.parameter[4].value) == 0);
+        }
+    }
 
     GIVEN("Good Case - MCS Service") {
 

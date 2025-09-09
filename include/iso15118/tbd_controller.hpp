@@ -39,6 +39,7 @@ public:
                                        bool cert_install_service);
     void update_dc_limits(const d20::DcTransferLimits&);
     void update_energy_modes(const std::vector<message_20::datatypes::ServiceCategory>&);
+    void update_ac_limits(const d20::AcTransferLimits&);
 
     void update_supported_vas_services(const std::vector<uint16_t>& vas_services);
 

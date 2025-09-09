@@ -10,6 +10,8 @@ function(create_states_test_target NAME)
     catch_discover_tests(test_${NAME})
 endfunction()
 
+create_states_test_target(ac_charge_loop)
+create_states_test_target(ac_charge_parameter_discovery)
 create_states_test_target(authorization_setup)
 create_states_test_target(authorization)
 create_states_test_target(service_discovery)

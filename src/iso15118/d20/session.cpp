@@ -33,6 +33,33 @@ SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_
     selected_connector.emplace<dt::DcConnector>(dc_connector_);
 };
 
+SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::AcConnector ac_connector_,
+                                                     dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_,
+                                                     dt::Pricing pricing_, float nominal_voltage_) :
+    selected_energy_service(energy_service_),
+    selected_control_mode(control_mode_),
+    selected_mobility_needs_mode(mobility_),
+    selected_pricing(pricing_),
+    evse_nominal_voltage(nominal_voltage_) {
+    selected_connector.emplace<dt::AcConnector>(ac_connector_);
+};
+
+SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::AcConnector ac_connector_,
+                                                     dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_,
+                                                     dt::Pricing pricing_, dt::BptChannel channel_,
+                                                     dt::GeneratorMode generator_, float nominal_voltage_,
+                                                     dt::GridCodeIslandingDetectionMethod grid_code_method_) :
+    selected_energy_service(energy_service_),
+    selected_control_mode(control_mode_),
+    selected_mobility_needs_mode(mobility_),
+    selected_pricing(pricing_),
+    selected_bpt_channel(channel_),
+    selected_generator_mode(generator_),
+    evse_nominal_voltage(nominal_voltage_),
+    selected_grid_code_method(grid_code_method_) {
+    selected_connector.emplace<dt::AcConnector>(ac_connector_);
+};
+
 SelectedServiceParameters::SelectedServiceParameters(dt::ServiceCategory energy_service_,
                                                      dt::McsConnector mcs_connector_, dt::ControlMode control_mode_,
                                                      dt::MobilityNeedsMode mobility_, dt::Pricing pricing_) :
@@ -93,6 +120,21 @@ Session::~Session() = default;
 bool Session::find_energy_parameter_set_id(const dt::ServiceCategory service, int16_t id) {
 
     switch (service) {
+    case dt::ServiceCategory::AC:
+
+        if (this->offered_services.ac_parameter_list.find(id) != this->offered_services.ac_parameter_list.end()) {
+            return true;
+        }
+        break;
+
+    case dt::ServiceCategory::AC_BPT:
+
+        if (this->offered_services.ac_bpt_parameter_list.find(id) !=
+            this->offered_services.ac_bpt_parameter_list.end()) {
+            return true;
+        }
+        break;
+
     case dt::ServiceCategory::DC:
 
         if (this->offered_services.dc_parameter_list.find(id) != this->offered_services.dc_parameter_list.end()) {
@@ -117,13 +159,9 @@ bool Session::find_energy_parameter_set_id(const dt::ServiceCategory service, in
             return true;
         }
         break;
-    case dt::ServiceCategory::AC:
-        [[fallthrough]];
     case dt::ServiceCategory::WPT:
         [[fallthrough]];
     case dt::ServiceCategory::DC_ACDP:
-        [[fallthrough]];
-    case dt::ServiceCategory::AC_BPT:
         [[fallthrough]];
     case dt::ServiceCategory::DC_ACDP_BPT:
         [[fallthrough]];
@@ -166,9 +204,33 @@ bool Session::find_vas_parameter_set_id(const uint16_t vas_service, int16_t id) 
 void Session::selected_service_parameters(const dt::ServiceCategory service, const uint16_t id) {
 
     switch (service) {
+    case dt::ServiceCategory::AC:
+        if (this->offered_services.ac_parameter_list.find(id) != this->offered_services.ac_parameter_list.end()) {
+            const auto& parameters = this->offered_services.ac_parameter_list.at(id);
+            this->selected_services = SelectedServiceParameters(dt::ServiceCategory::AC, parameters.connector,
+                                                                parameters.control_mode, parameters.mobility_needs_mode,
+                                                                parameters.pricing, parameters.evse_nominal_voltage);
+        } else {
+            // Todo(sl): Should be not the case -> Raise Error?
+        }
+        break;
+
+    case dt::ServiceCategory::AC_BPT:
+        if (this->offered_services.ac_bpt_parameter_list.find(id) !=
+            this->offered_services.ac_bpt_parameter_list.end()) {
+            const auto& parameters = this->offered_services.ac_bpt_parameter_list.at(id);
+            this->selected_services = SelectedServiceParameters(
+                dt::ServiceCategory::AC_BPT, parameters.connector, parameters.control_mode,
+                parameters.mobility_needs_mode, parameters.pricing, parameters.bpt_channel, parameters.generator_mode,
+                parameters.evse_nominal_voltage, parameters.grid_code_detection_method);
+        } else {
+            // Todo(sl): Should be not the case -> Raise Error?
+        }
+        break;
+
     case dt::ServiceCategory::DC:
         if (this->offered_services.dc_parameter_list.find(id) != this->offered_services.dc_parameter_list.end()) {
-            auto& parameters = this->offered_services.dc_parameter_list.at(id);
+            const auto& parameters = this->offered_services.dc_parameter_list.at(id);
             this->selected_services =
                 SelectedServiceParameters(dt::ServiceCategory::DC, parameters.connector, parameters.control_mode,
                                           parameters.mobility_needs_mode, parameters.pricing);
@@ -183,7 +245,7 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
     case dt::ServiceCategory::DC_BPT:
         if (this->offered_services.dc_bpt_parameter_list.find(id) !=
             this->offered_services.dc_bpt_parameter_list.end()) {
-            auto& parameters = this->offered_services.dc_bpt_parameter_list.at(id);
+            const auto& parameters = this->offered_services.dc_bpt_parameter_list.at(id);
             this->selected_services = SelectedServiceParameters(
                 dt::ServiceCategory::DC_BPT, parameters.connector, parameters.control_mode,
                 parameters.mobility_needs_mode, parameters.pricing, parameters.bpt_channel, parameters.generator_mode);
@@ -225,13 +287,9 @@ void Session::selected_service_parameters(const dt::ServiceCategory service, con
             // Todo(sl): Should be not the case -> Raise Error?
         }
         break;
-    case dt::ServiceCategory::AC:
-        [[fallthrough]];
     case dt::ServiceCategory::WPT:
         [[fallthrough]];
     case dt::ServiceCategory::DC_ACDP:
-        [[fallthrough]];
-    case dt::ServiceCategory::AC_BPT:
         [[fallthrough]];
     case dt::ServiceCategory::DC_ACDP_BPT:
         [[fallthrough]];
@@ -249,7 +307,7 @@ void Session::selected_service_parameters(const uint16_t vas_service, const uint
         if (this->offered_services.internet_parameter_list.find(id) !=
             this->offered_services.internet_parameter_list.end()) {
             this->selected_vas_services.vas_services.push_back(dt::ServiceCategory::Internet);
-            auto& parameters = this->offered_services.internet_parameter_list.at(id);
+            const auto& parameters = this->offered_services.internet_parameter_list.at(id);
             this->selected_vas_services.internet_port = parameters.port;
             this->selected_vas_services.internet_protocol = parameters.protocol;
         }
@@ -257,7 +315,7 @@ void Session::selected_service_parameters(const uint16_t vas_service, const uint
         if (this->offered_services.parking_parameter_list.find(id) !=
             this->offered_services.parking_parameter_list.end()) {
             this->selected_vas_services.vas_services.push_back(dt::ServiceCategory::ParkingStatus);
-            auto& parameters = this->offered_services.parking_parameter_list.at(id);
+            const auto& parameters = this->offered_services.parking_parameter_list.at(id);
             this->selected_vas_services.parking_intended_service = parameters.intended_service;
             this->selected_vas_services.parking_status = parameters.parking_status;
         }

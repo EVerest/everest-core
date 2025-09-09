@@ -19,7 +19,7 @@ SCENARIO("Power delivery state handling") {
         req.processing = dt::Processing::Ongoing;
         req.charge_progress = dt::Progress::Start;
 
-        const auto res = d20::state::handle_request(req, d20::Session());
+        const auto res = d20::state::handle_request(req, d20::Session(), false);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
             REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
@@ -36,7 +36,7 @@ SCENARIO("Power delivery state handling") {
         req.processing = dt::Processing::Ongoing;
         req.charge_progress = dt::Progress::Standby;
 
-        const auto res = d20::state::handle_request(req, session);
+        const auto res = d20::state::handle_request(req, session, false);
 
         // Right now standby ist not supported
 
@@ -61,6 +61,21 @@ SCENARIO("Power delivery state handling") {
     GIVEN("Good case - OK_PowerToleranceConfirmed") {
     } // TODO(sl): Scheduled Mode + Provided PowerTolerance in ScheduleExchangeRes
     GIVEN("Bad case - AC ContactorError") {
+        d20::Session session = d20::Session();
+
+        message_20::PowerDeliveryRequest req;
+        req.header.session_id = session.get_id();
+        req.header.timestamp = 1691411798;
+
+        req.processing = dt::Processing::Ongoing;
+        req.charge_progress = dt::Progress::Start;
+
+        const auto res = d20::state::handle_request(req, session, true);
+
+        THEN("ResponseCode: FAILED_ContactorError, mandatory fields should be set") {
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_ContactorError);
+            REQUIRE(res.status.has_value() == false);
+        }
     } // TODO(sl): AC stuff
 
     // GIVEN("Bad Case - sequence error") {} // TODO(sl): not here

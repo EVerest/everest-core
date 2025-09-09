@@ -21,13 +21,14 @@ SCENARIO("ISO15118-20 supported app protocol state transitions") {
     const auto cert_install{false};
     const std::vector<message_20::datatypes::Authorization> auth_services = {message_20::datatypes::Authorization::EIM};
     const d20::DcTransferLimits dc_limits;
+    const d20::AcTransferLimits ac_limits;
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
         {message_20::datatypes::ControlMode::Scheduled, message_20::datatypes::MobilityNeedsMode::ProvidedByEvcc}};
     const std::string custom_namespace = "urn:iso:std:iso:15118:-20:AABB";
 
     const d20::EvseSetupConfig evse_setup{
-        evse_id,   supported_energy_services, auth_services,   vas_services, cert_install,
-        dc_limits, control_mobility_modes,    custom_namespace};
+        evse_id,   supported_energy_services, auth_services,   vas_services, cert_install, dc_limits,
+        ac_limits, control_mobility_modes,    custom_namespace};
 
     std::optional<d20::PauseContext> pause_ctx{std::nullopt};
 
@@ -108,7 +109,7 @@ SCENARIO("ISO15118-20 supported app protocol state transitions") {
 
         auto& ap_custom = req.app_protocol.emplace_back();
         ap_custom.priority = 1;
-        ap_custom.protocol_namespace = "urn:iso:std:iso:15118:-20:AABB";
+        ap_custom.protocol_namespace = "urn:iso:std:iso:15118:-20:AC";
         ap_custom.schema_id = 3;
         ap_custom.version_number_major = 1;
         ap_custom.version_number_minor = 0;

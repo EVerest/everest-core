@@ -154,6 +154,10 @@ public:
     bool session_stopped{false};
     bool session_paused{false};
 
+    std::optional<UpdateDynamicModeParameters> cache_dynamic_mode_parameters;
+    std::optional<AcTargetPower> cache_ac_target_power;
+    std::optional<AcPresentPower> cache_ac_present_power;
+
 private:
     const std::optional<ControlEvent>& current_control_event;
     MessageExchange& message_exchange;

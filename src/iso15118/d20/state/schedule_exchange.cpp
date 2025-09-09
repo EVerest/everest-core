@@ -3,6 +3,7 @@
 #include <ctime>
 
 #include <iso15118/d20/state/dc_cable_check.hpp>
+#include <iso15118/d20/state/power_delivery.hpp>
 #include <iso15118/d20/state/schedule_exchange.hpp>
 
 #include <iso15118/detail/d20/context_helper.hpp>
@@ -149,22 +150,22 @@ Result ScheduleExchange::feed(Event ev) {
         const auto& selected_services = m_ctx.session.get_selected_services();
         const auto selected_energy_service = selected_services.selected_energy_service;
 
-        if (selected_energy_service == dt::ServiceCategory::DC or
-            selected_energy_service == dt::ServiceCategory::DC_BPT or
-            selected_energy_service == dt::ServiceCategory::MCS or
-            selected_energy_service == dt::ServiceCategory::MCS_BPT) {
+        if (m_ctx.session.is_dc_charger()) {
             max_charge_power = m_ctx.session_config.dc_limits.charge_limits.power.max;
         }
 
-        // We will pass the raw data to the listener, the
-        // listener will construct the full required type
         std::optional<dt::AcConnector> ac_connector{};
         if (std::holds_alternative<dt::AcConnector>(selected_services.selected_connector)) {
             ac_connector = std::get<dt::AcConnector>(selected_services.selected_connector);
         }
 
-        // TODO(ioan): prepare for AC transfer limits
-        const session::feedback::EvseTransferLimits& evse_limits = m_ctx.session_config.dc_limits;
+        session::feedback::EvseTransferLimits evse_limits;
+        if (m_ctx.session.is_ac_charger()) {
+            evse_limits = m_ctx.session_config.ac_limits;
+        } else if (m_ctx.session.is_dc_charger()) {
+            evse_limits = m_ctx.session_config.dc_limits;
+        }
+
         const session::feedback::EvTransferLimits& ev_limits = m_ctx.session_ev_info.ev_transfer_limits;
 
         const auto& control_mode = req->control_mode;
@@ -191,7 +192,19 @@ Result ScheduleExchange::feed(Event ev) {
 
         m_ctx.stop_timeout(d20::TimeoutType::ONGOING);
 
-        return m_ctx.create_state<DC_CableCheck>();
+        if (m_ctx.session.is_ac_charger()) {
+            // For AC move directly to power delivery
+            return m_ctx.create_state<PowerDelivery>();
+        }
+        if (m_ctx.session.is_dc_charger()) {
+            return m_ctx.create_state<DC_CableCheck>();
+        }
+        m_ctx.log("expected selected_energy_service AC, AC_BPT, DC, DC_BPT! But code type id: %d",
+                  static_cast<int>(selected_energy_service));
+
+        m_ctx.session_stopped = true;
+        return {};
+
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
         const auto res = handle_request(*req, m_ctx.session);
 

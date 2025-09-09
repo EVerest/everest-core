@@ -52,6 +52,10 @@ SdpServer::SdpServer(const std::string& interface_name) {
     socket_address.sin6_port = htobe16(v2gtp::SDP_SERVER_PORT);
     memcpy(&socket_address.sin6_addr, &in6addr_any, sizeof(socket_address.sin6_addr));
 
+    char addr_res[INET6_ADDRSTRLEN];
+    inet_ntop(AF_INET6, &socket_address.sin6_addr, addr_res, INET6_ADDRSTRLEN);
+    logf_info("Starting SDP server with address: %s", addr_res);
+
     int enable = 1;
     auto result = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable));
     if (result == -1) {

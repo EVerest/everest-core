@@ -26,6 +26,8 @@ enum class StateID {
     ServiceDetail,
     ServiceDiscovery,
     ServiceSelection,
+    AC_ChargeParameterDiscovery,
+    AC_ChargeLoop,
     DC_ChargeParameterDiscovery,
     DC_PreCharge,
     DC_ChargeLoop,

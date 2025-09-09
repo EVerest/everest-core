@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <optional>
 #include <variant>
 #include <vector>
@@ -25,6 +26,8 @@ struct OfferedServices {
     std::vector<dt::ServiceCategory> energy_services;
     std::vector<uint16_t> vas_services;
 
+    std::map<uint8_t, dt::AcParameterList> ac_parameter_list;
+    std::map<uint8_t, dt::AcBptParameterList> ac_bpt_parameter_list;
     std::map<uint8_t, dt::DcParameterList> dc_parameter_list;
     std::map<uint8_t, dt::DcBptParameterList> dc_bpt_parameter_list;
     std::map<uint8_t, dt::McsParameterList> mcs_parameter_list;
@@ -43,8 +46,13 @@ struct SelectedServiceParameters {
     dt::MobilityNeedsMode selected_mobility_needs_mode;
     dt::Pricing selected_pricing;
 
+    // BPT
     std::optional<dt::BptChannel> selected_bpt_channel;
     std::optional<dt::GeneratorMode> selected_generator_mode;
+
+    // AC specific
+    std::optional<float> evse_nominal_voltage;
+    std::optional<dt::GridCodeIslandingDetectionMethod> selected_grid_code_method;
 
     SelectedServiceParameters() = default;
     SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::DcConnector dc_connector_,
@@ -57,7 +65,19 @@ struct SelectedServiceParameters {
     SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::McsConnector mcs_connector_,
                               dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_, dt::Pricing pricing_,
                               dt::BptChannel channel_, dt::GeneratorMode generator_);
+    SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::AcConnector ac_connector_,
+                              dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_, dt::Pricing pricing_,
+                              float nominal_voltage_);
+    SelectedServiceParameters(dt::ServiceCategory energy_service_, dt::AcConnector ac_connector_,
+                              dt::ControlMode control_mode_, dt::MobilityNeedsMode mobility_, dt::Pricing pricing_,
+                              dt::BptChannel channel_, dt::GeneratorMode generator_, float nominal_voltage_,
+                              dt::GridCodeIslandingDetectionMethod grid_code_method_);
 };
+
+// Todo(sl): missing services
+// WPT -> ControlMode, Pricing
+// DC_ACDP -> ControlMode, MobilityNeedsMode
+// DC_ACDP_BPT -> ControlMode, MobilityNeedsMode, BPTChannel
 
 struct SelectedVasParameter {
     std::vector<dt::ServiceCategory> vas_services;
@@ -100,6 +120,18 @@ public:
 
     auto get_selected_services() const& {
         return selected_services;
+    }
+
+    bool is_ac_charger() const {
+        return selected_services.selected_energy_service == dt::ServiceCategory::AC or
+               selected_services.selected_energy_service == dt::ServiceCategory::AC_BPT;
+    }
+
+    bool is_dc_charger() const {
+        return selected_services.selected_energy_service == dt::ServiceCategory::DC or
+               selected_services.selected_energy_service == dt::ServiceCategory::DC_BPT or
+               selected_services.selected_energy_service == dt::ServiceCategory::MCS or
+               selected_services.selected_energy_service == dt::ServiceCategory::MCS_BPT;
     }
 
     ~Session();

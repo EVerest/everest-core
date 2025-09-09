@@ -6,8 +6,6 @@
 
 #include <iso15118/d20/config.hpp>
 
-#include <iostream>
-
 using namespace iso15118;
 
 namespace dt = message_20::datatypes;
@@ -32,6 +30,7 @@ SCENARIO("DC charge loop state handling") {
     const std::vector<uint16_t> vas_services{};
 
     d20::DcTransferLimits dc_limits;
+    d20::AcTransferLimits ac_limits;
     dc_limits.charge_limits.power.max = {22, 3};
     dc_limits.charge_limits.power.min = {10, 0};
     dc_limits.charge_limits.current.max = {250, 0};
@@ -47,8 +46,8 @@ SCENARIO("DC charge loop state handling") {
         {dt::ControlMode::Dynamic, dt::MobilityNeedsMode::ProvidedBySecc}};
 
     const d20::EvseSetupConfig evse_setup{
-        evse_id,   supported_energy_services, auth_services, vas_services, cert_install,
-        dc_limits, control_mobility_modes};
+        evse_id,   supported_energy_services, auth_services, vas_services, cert_install, dc_limits,
+        ac_limits, control_mobility_modes};
 
     GIVEN("Bad case - Unknown session") {
 

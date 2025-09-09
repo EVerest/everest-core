@@ -3,7 +3,6 @@
 #pragma once
 
 #include <string>
-#include <variant>
 #include <vector>
 
 #include "common_types.hpp"
@@ -22,6 +21,8 @@ struct ParameterSet {
     std::vector<Parameter> parameter;
 
     ParameterSet() = default;
+    ParameterSet(uint16_t _id, const AcParameterList& list);
+    ParameterSet(uint16_t _id, const AcBptParameterList& list);
     ParameterSet(uint16_t _id, const DcParameterList& list);
     ParameterSet(uint16_t _id, const DcBptParameterList& list);
     ParameterSet(uint16_t _id, const McsParameterList& list);

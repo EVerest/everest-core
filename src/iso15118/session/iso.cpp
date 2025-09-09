@@ -159,16 +159,24 @@ TimePoint const& Session::poll() {
     // send all of our queued control events
     while ((active_control_event = control_event_queue.pop()) != std::nullopt) {
 
-        // TODO(sl): Save UpdateDynamicParameters as well for ScheduleExchange
         if (const auto control_data = ctx.get_control_event<d20::DcTransferLimits>()) {
             ctx.session_config.dc_limits = *control_data;
         } else if (const auto control_data = ctx.get_control_event<d20::EnergyServices>()) {
             ctx.session_config.supported_energy_transfer_services = *control_data;
         } else if (const auto control_data = ctx.get_control_event<d20::SupportedVASs>()) {
             ctx.session_config.supported_vas_services = *control_data;
+        } else if (const auto control_data = ctx.get_control_event<d20::AcTransferLimits>()) {
+            ctx.session_config.ac_limits = *control_data;
+        } else if (const auto control_data = ctx.get_control_event<d20::UpdateDynamicModeParameters>()) {
+            ctx.cache_dynamic_mode_parameters.emplace(*control_data);
+        } else if (const auto control_data = ctx.get_control_event<d20::AcTargetPower>()) {
+            ctx.cache_ac_target_power.emplace(*control_data);
+        } else if (const auto control_data = ctx.get_control_event<d20::AcPresentPower>()) {
+            ctx.cache_ac_present_power.emplace(*control_data);
         }
-
-        // TODO(sl): Save UpdateDynamicModeParameters, AcTargetPower,
+        // Save some control events. It can happen that these events are sent before the corresponding state. They are
+        // stored temporarily here.
+        // TODO(sl): Construct ControlEventCache Struct
 
         [[maybe_unused]] const auto res = fsm.feed(d20::Event::CONTROL_MESSAGE);
         // FIXME (aw): check result!

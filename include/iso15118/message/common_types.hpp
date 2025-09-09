@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace iso15118::message_20 {
@@ -164,6 +165,11 @@ enum class GeneratorMode {
     GridForming = 2,
 };
 
+enum class GridCodeIslandingDetectionMethod {
+    Active = 1,
+    Passive = 2,
+};
+
 enum class Protocol {
     Ftp,
     Http,
@@ -208,13 +214,9 @@ struct AcParameterList {
 };
 
 struct AcBptParameterList : AcParameterList {
-    enum class GridCodeIslandingDetectionMethode {
-        Active = 1,
-        Passive = 2,
-    };
     BptChannel bpt_channel;
     GeneratorMode generator_mode;
-    GridCodeIslandingDetectionMethode grid_code_detection_methode;
+    GridCodeIslandingDetectionMethod grid_code_detection_method;
 };
 
 struct DcParameterList {
