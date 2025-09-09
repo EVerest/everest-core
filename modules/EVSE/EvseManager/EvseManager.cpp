@@ -344,7 +344,7 @@ void EvseManager::ready() {
                 apply_new_target_voltage_current();
                 charger->notify_currentdemand_started();
                 if (not r_over_voltage_monitor.empty()) {
-                    r_over_voltage_monitor[0]->call_start(get_over_voltage_threshold());
+                    r_over_voltage_monitor[0]->call_start();
                 }
             });
 
@@ -367,10 +367,9 @@ void EvseManager::ready() {
                     // Are we in charge loop?
                     if (charger->get_current_state() == Charger::EvseState::Charging and
                         not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
-                        charger->set_hlc_error();
+                        // Error shutdown according to IEC61851-23 Table CC.10
                         error_handling->raise_isolation_resistance_fault(
                             fmt::format("Isolation resistance too low during charging: {} Ohm", m.resistance_F_Ohm));
-                        r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
                     }
                     isolation_measurement = m;
                 });
@@ -546,6 +545,7 @@ void EvseManager::ready() {
 
                 if (ev_info.present_voltage.has_value()) {
                     const auto actual_voltage = ev_info.present_voltage.value();
+                    // TODO: Do we still need this part with an OVM?
                     // IEC61851_23 CC.6.2:
                     // The d.c. supply shall trigger a d.c. supply initiated emergency shutdown according to CC.3.4
                     // in order to prevent overvoltage at the battery, if output voltage exceeds maximum voltage limit
@@ -561,6 +561,12 @@ void EvseManager::ready() {
                 ev_info.maximum_power_limit = l.dc_ev_maximum_power_limit;
                 ev_info.maximum_voltage_limit = l.dc_ev_maximum_voltage_limit;
                 p_evse->publish_ev_info(ev_info);
+
+                // Update limits for over voltage monitoring
+                if (not r_over_voltage_monitor.empty()) {
+                    r_over_voltage_monitor[0]->call_set_limits(get_emergency_over_voltage_threshold(),
+                                                               get_error_over_voltage_threshold());
+                }
             });
 
             r_hlc[0]->subscribe_departure_time([this](const std::string& t) {
@@ -913,7 +919,11 @@ void EvseManager::ready() {
     });
 
     // Cancel reservations if charger is faulted
-    error_handling->signal_error.connect([this](bool prevents_charging) { cancel_reservation(true); });
+    error_handling->signal_error.connect([this](ErrorHandlingEvents event) {
+        if (event == ErrorHandlingEvents::ForceEmergencyShutdown or event == ErrorHandlingEvents::ForceErrorShutdown) {
+            cancel_reservation(true);
+        }
+    });
 
     charger->signal_simple_event.connect([this](types::evse_manager::SessionEventEnum s) {
         if (s == types::evse_manager::SessionEventEnum::SessionFinished) {
@@ -1520,7 +1530,7 @@ static double get_cable_check_voltage(double ev_max_cpd, double evse_max_cpd) {
     return cable_check_voltage;
 }
 
-double EvseManager::get_over_voltage_threshold() {
+double EvseManager::get_emergency_over_voltage_threshold() {
 
     float ev_max_voltage = 500.;
 
@@ -1536,16 +1546,33 @@ double EvseManager::get_over_voltage_threshold() {
 
     double ovp = 550.;
 
-    // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
-    if (negotiated_max_voltage > 850) {
+    if (negotiated_max_voltage > 1000) {
+        // IEC 61851-23-3 (DRAFT 2025) Table 202
+        ovp = 1375.;
+    } else if (negotiated_max_voltage > 850) {
+        // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
         ovp = 1100.;
     } else if (negotiated_max_voltage > 750) {
+        // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
         ovp = 935.;
     } else if (negotiated_max_voltage > 500) {
+        // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
         ovp = 825.;
     }
 
     return ovp;
+}
+
+double EvseManager::get_error_over_voltage_threshold() {
+    double ev_max_voltage = 500;
+
+    if (ev_info.maximum_voltage_limit.has_value()) {
+        ev_max_voltage = ev_info.maximum_voltage_limit.value();
+    } else {
+        EVLOG_error << "OverVoltageThreshold: Did not receive EV maximum voltage, falling back to 500V";
+    }
+
+    return ev_max_voltage;
 }
 
 bool EvseManager::cable_check_should_exit() {
