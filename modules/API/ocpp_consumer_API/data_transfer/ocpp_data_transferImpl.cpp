@@ -2,13 +2,13 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "ocpp_data_transferImpl.hpp"
-#include "basecamp/ocpp/codec.hpp"
-#include "basecamp/ocpp/json_codec.hpp"
-#include "basecamp/ocpp/wrapper.hpp"
-#include "companion/asyncapi/AsyncApiRequestReply.hpp"
+#include <everest_api_types/ocpp/codec.hpp>
+#include <everest_api_types/ocpp/json_codec.hpp>
+#include <everest_api_types/ocpp/wrapper.hpp>
+#include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 
-using namespace basecamp::companion;
-namespace ns_types_ext = basecamp::API::V1_0::types::ocpp;
+using namespace everest::lib::API;
+namespace ns_types_ext = everest::lib::API::V1_0::types::ocpp;
 
 namespace module {
 namespace data_transfer {
@@ -24,7 +24,7 @@ template <class T, class ReqT>
 auto ocpp_data_transferImpl::generic_request_reply(T const& default_value, ReqT const& request,
                                                    std::string const& topic) {
     using namespace ns_types_ext;
-    using ExtT = decltype(toExternalApi(std::declval<T>()));
+    using ExtT = decltype(to_external_api(std::declval<T>()));
     auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
     if (!result) {
         return default_value;

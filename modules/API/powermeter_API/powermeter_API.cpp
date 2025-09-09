@@ -2,19 +2,20 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "powermeter_API.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/generic/string.hpp"
-#include "basecamp/powermeter/API.hpp"
-#include "basecamp/powermeter/codec.hpp"
-#include "basecamp/powermeter/wrapper.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/generic/string.hpp>
+#include <everest_api_types/powermeter/API.hpp>
+#include <everest_api_types/powermeter/codec.hpp>
+#include <everest_api_types/powermeter/wrapper.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 #include "everest/logging.hpp"
 
 namespace module {
 
-namespace ns_types_ext = basecamp::API::V1_0::types::powermeter;
-namespace generic = basecamp::API::V1_0::types::generic;
-using basecamp::API::deserialize;
+namespace ns_ev_api = everest::lib::API;
+namespace ns_types_ext = ns_ev_api::V1_0::types::powermeter;
+namespace generic = ns_ev_api::V1_0::types::generic;
+using ns_ev_api::deserialize;
 
 void powermeter_API::init() {
     invoke_init(*p_if_powermeter);
@@ -36,7 +37,7 @@ void powermeter_API::generate_api_var_powermeter_values() {
     subscribe_api_var("powermeter_values", [=](std::string const& data) {
         ns_types_ext::PowermeterValues ext;
         if (deserialize(data, ext)) {
-            auto value = toInternalApi(ext);
+            auto value = to_internal_api(ext);
             p_if_powermeter->publish_powermeter(value);
         }
     });
@@ -59,7 +60,7 @@ void powermeter_API::generate_api_var_communication_check() {
 }
 
 void powermeter_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -68,7 +69,7 @@ void powermeter_API::setup_heartbeat_generator() {
 }
 
 void powermeter_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             parse_and_publish(data);
@@ -81,7 +82,7 @@ void powermeter_API::subscribe_api_var(const std::string& var, const ParseAndPub
     });
 }
 
-const ns_bc::Topics& powermeter_API::get_topics() const {
+const ns_ev_api::Topics& powermeter_API::get_topics() const {
     return topics;
 }
 

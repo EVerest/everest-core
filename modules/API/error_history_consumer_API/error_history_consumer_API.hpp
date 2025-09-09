@@ -23,11 +23,11 @@
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 
-#include "basecamp/error_history/API.hpp"
-#include "companion/paths/Topics.hpp"
-#include "companion/utilities/CommCheckHandler.hpp"
+#include <everest_api_types/error_history/API.hpp>
+#include "everest_api_types/utilities/Topics.hpp"
+#include "everest_api_types/utilities/CommCheckHandler.hpp"
 
-namespace ns_bc = basecamp::companion;
+namespace ns_ev_api = everest::lib::API;
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -83,8 +83,8 @@ private:
 
     void setup_heartbeat_generator();
 
-    ns_bc::Topics topics;
-    ns_bc::CommCheckHandler<generic_errorImplBase> comm_check;
+    ns_ev_api::Topics topics;
+    ns_ev_api::CommCheckHandler<generic_errorImplBase> comm_check;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

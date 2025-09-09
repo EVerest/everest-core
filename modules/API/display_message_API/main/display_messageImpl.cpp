@@ -2,16 +2,16 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "display_messageImpl.hpp"
-#include "basecamp/display_message/API.hpp"
-#include "basecamp/display_message/codec.hpp"
-#include "basecamp/display_message/json_codec.hpp"
-#include "basecamp/display_message/wrapper.hpp"
-#include "basecamp/system/wrapper.hpp"
-#include "companion/asyncapi/AsyncApiRequestReply.hpp"
+#include <everest_api_types/display_message/API.hpp>
+#include <everest_api_types/display_message/codec.hpp>
+#include <everest_api_types/display_message/json_codec.hpp>
+#include <everest_api_types/display_message/wrapper.hpp>
+#include <everest_api_types/system/wrapper.hpp>
+#include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 #include "generated/types/display_message.hpp"
 
-using namespace basecamp::companion;
-namespace ns_types_ext = basecamp::API::V1_0::types::display_message;
+using namespace everest::lib::API;
+namespace ns_types_ext = everest::lib::API::V1_0::types::display_message;
 
 namespace module {
 namespace main {
@@ -26,7 +26,7 @@ void display_messageImpl::ready() {
 template <class T, class ReqT>
 auto display_messageImpl::generic_request_reply(T const& default_value, ReqT const& request, std::string const& topic) {
     using namespace ns_types_ext;
-    using ExtT = decltype(toExternalApi(std::declval<T>()));
+    using ExtT = decltype(to_external_api(std::declval<T>()));
     auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
     if (!result) {
         return default_value;

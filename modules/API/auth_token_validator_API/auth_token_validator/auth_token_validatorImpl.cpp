@@ -2,16 +2,16 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "auth_token_validatorImpl.hpp"
-#include "basecamp/auth/API.hpp"
-#include "basecamp/auth/codec.hpp"
-#include "basecamp/auth/json_codec.hpp"
-#include "basecamp/auth/wrapper.hpp"
-#include "companion/asyncapi/AsyncApiRequestReply.hpp"
+#include <everest_api_types/auth/API.hpp>
+#include <everest_api_types/auth/codec.hpp>
+#include <everest_api_types/auth/json_codec.hpp>
+#include <everest_api_types/auth/wrapper.hpp>
+#include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 #include "generated/types/authorization.hpp"
 #include "nlohmann/json_fwd.hpp"
 
-using namespace basecamp::companion;
-namespace ns_types_ext = basecamp::API::V1_0::types::auth;
+using namespace everest::lib::API;
+namespace ns_types_ext = everest::lib::API::V1_0::types::auth;
 
 namespace module {
 namespace auth_token_validator {
@@ -27,7 +27,7 @@ template <class T, class ReqT>
 auto auth_token_validatorImpl::generic_request_reply(T const& default_value, ReqT const& request,
                                                      std::string const& topic) {
     using namespace ns_types_ext;
-    using ExtT = decltype(toExternalApi(std::declval<T>()));
+    using ExtT = decltype(to_external_api(std::declval<T>()));
     auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
     if (!result) {
         return default_value;
@@ -38,7 +38,7 @@ auto auth_token_validatorImpl::generic_request_reply(T const& default_value, Req
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
     static const types::authorization::ValidationResult default_response{
-        types::authorization::AuthorizationStatus::Invalid, {}, {}, {}, {}, {}, {}};
+        types::authorization::AuthorizationStatus::Invalid, {}, {}, {}, {}, {}, {}, {}};
     return generic_request_reply(default_response, provided_token, "validate_token");
 }
 

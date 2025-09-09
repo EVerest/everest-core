@@ -12,7 +12,7 @@
 #include "utils/error.hpp"
 #include <atomic>
 // headers for provided interface implementations
-#include <companion/paths/Topics.hpp>
+#include <everest_api_types/utilities/Topics.hpp>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -22,10 +22,10 @@
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
-#include "basecamp/generic/API.hpp"
-#include "companion/utilities/CommCheckHandler.hpp"
-namespace ns_bc = basecamp::companion;
-namespace generic = basecamp::API::V1_0::types::generic;
+#include <everest_api_types/generic/API.hpp>
+#include "everest_api_types/utilities/CommCheckHandler.hpp"
+namespace ns_ev_api = everest::lib::API;
+namespace generic = everest::lib::API::V1_0::types::generic;
 
 namespace module {
 
@@ -61,8 +61,8 @@ public:
 
     void setup_heartbeat_generator();
 
-    ns_bc::Topics topics;
-    ns_bc::CommCheckHandler<generic_errorImplBase> comm_check;
+    ns_ev_api::Topics topics;
+    ns_ev_api::CommCheckHandler<generic_errorImplBase> comm_check;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

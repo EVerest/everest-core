@@ -2,18 +2,19 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "isolation_monitor_API.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/generic/string.hpp"
-#include "basecamp/isolation_monitor/API.hpp"
-#include "basecamp/isolation_monitor/codec.hpp"
-#include "basecamp/isolation_monitor/wrapper.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/generic/string.hpp>
+#include <everest_api_types/isolation_monitor/API.hpp>
+#include <everest_api_types/isolation_monitor/codec.hpp>
+#include <everest_api_types/isolation_monitor/wrapper.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 
 namespace module {
 
-namespace ns_types_ext = basecamp::API::V1_0::types::isolation_monitor;
-namespace generic = basecamp::API::V1_0::types::generic;
-using basecamp::API::deserialize;
+namespace ns_ev_api = everest::lib::API;
+namespace ns_types_ext = ns_ev_api::V1_0::types::isolation_monitor;
+namespace generic = ns_ev_api::V1_0::types::generic;
+using ns_ev_api::deserialize;
 
 void isolation_monitor_API::init() {
     invoke_init(*p_if_isolation_monitor);
@@ -37,7 +38,7 @@ void isolation_monitor_API::generate_api_var_isolation_measurement() {
     subscribe_api_var("isolation_measurement", [=](std::string const& data) {
         ns_types_ext::IsolationMeasurement ext;
         if (deserialize(data, ext)) {
-            auto value = toInternalApi(ext);
+            auto value = to_internal_api(ext);
             p_if_isolation_monitor->publish_isolation_measurement(value);
             return true;
         }
@@ -94,7 +95,7 @@ void isolation_monitor_API::generate_api_var_clear_error() {
 }
 
 void isolation_monitor_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -103,7 +104,7 @@ void isolation_monitor_API::setup_heartbeat_generator() {
 }
 
 void isolation_monitor_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {
@@ -123,7 +124,7 @@ std::string isolation_monitor_API::make_error_string(ns_types_ext::Error const& 
     return result;
 }
 
-const ns_bc::Topics& isolation_monitor_API::get_topics() const {
+const ns_ev_api::Topics& isolation_monitor_API::get_topics() const {
     return topics;
 }
 

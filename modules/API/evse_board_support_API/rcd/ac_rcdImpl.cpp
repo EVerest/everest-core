@@ -2,10 +2,10 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "ac_rcdImpl.hpp"
-#include "companion/asyncapi/AsyncApiRequestReply.hpp"
+#include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 
 namespace {
-bool toExternalApi(bool value) {
+bool to_external_api(bool value) {
     return value;
 }
 } // namespace
@@ -13,7 +13,7 @@ bool toExternalApi(bool value) {
 namespace module {
 namespace rcd {
 
-using namespace basecamp::companion;
+using namespace everest::lib::API;
 
 void ac_rcdImpl::init() {
     timeout_s = mod->config.cfg_request_reply_to_s;
@@ -25,7 +25,7 @@ void ac_rcdImpl::ready() {
 template <class T, class ReqT>
 auto ac_rcdImpl::generic_request_reply(T const& default_value, ReqT const& request, std::string const& topic) {
     using namespace ns_types_ext;
-    using ExtT = decltype(toExternalApi(std::declval<T>()));
+    using ExtT = decltype(to_external_api(std::declval<T>()));
     auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
     if (!result) {
         return default_value;
@@ -34,7 +34,7 @@ auto ac_rcdImpl::generic_request_reply(T const& default_value, ReqT const& reque
 }
 
 void ac_rcdImpl::handle_self_test() {
-    auto topic = mod->get_topics().basecamp_to_extern("self_test");
+    auto topic = mod->get_topics().everest_to_extern("self_test");
     mod->mqtt.publish(topic, "");
 }
 

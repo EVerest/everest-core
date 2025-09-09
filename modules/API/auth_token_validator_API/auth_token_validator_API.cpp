@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "auth_token_validator_API.hpp"
-#include "basecamp/auth/API.hpp"
-#include "basecamp/auth/codec.hpp"
-#include "basecamp/auth/wrapper.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/auth/API.hpp>
+#include <everest_api_types/auth/codec.hpp>
+#include <everest_api_types/auth/wrapper.hpp>
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 #include "everest/logging.hpp"
 
 namespace module {
 
-namespace ns_types_ext = basecamp::API::V1_0::types::auth;
-namespace generic = basecamp::API::V1_0::types::generic;
-using basecamp::API::deserialize;
+namespace ns_types_ext = ns_ev_api::V1_0::types::auth;
+namespace generic = ns_ev_api::V1_0::types::generic;
+using ns_ev_api::deserialize;
 
 void auth_token_validator_API::init() {
     invoke_init(*p_auth_token_validator);
@@ -34,7 +34,7 @@ void auth_token_validator_API::generate_api_var_validation_result_update() {
     subscribe_api_var("validate_result_update", [=](std::string const& data) {
         ns_types_ext::ValidationResultUpdate ext;
         if (deserialize(data, ext)) {
-            p_auth_token_validator->publish_validate_result_update(toInternalApi(ext));
+            p_auth_token_validator->publish_validate_result_update(to_internal_api(ext));
             return true;
         }
         return false;
@@ -50,7 +50,7 @@ void auth_token_validator_API::generate_api_var_communication_check() {
 }
 
 void auth_token_validator_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -59,7 +59,7 @@ void auth_token_validator_API::setup_heartbeat_generator() {
 }
 
 void auth_token_validator_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {
@@ -73,7 +73,7 @@ void auth_token_validator_API::subscribe_api_var(const std::string& var, const P
     });
 }
 
-const ns_bc::Topics& auth_token_validator_API::get_topics() const {
+const ns_ev_api::Topics& auth_token_validator_API::get_topics() const {
     return topics;
 }
 

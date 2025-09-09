@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "over_voltage_monitor_API.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/generic/string.hpp"
-#include "basecamp/over_voltage_monitor/API.hpp"
-#include "basecamp/over_voltage_monitor/codec.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/generic/string.hpp>
+#include <everest_api_types/over_voltage_monitor/API.hpp>
+#include <everest_api_types/over_voltage_monitor/codec.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 
 namespace module {
 
-namespace generic = basecamp::API::V1_0::types::generic;
-namespace ns_types_ext = basecamp::API::V1_0::types::over_voltage_monitor;
-using basecamp::API::deserialize;
+namespace ns_ev_api = everest::lib::API;
+namespace generic = ns_ev_api::V1_0::types::generic;
+namespace ns_types_ext = ns_ev_api::V1_0::types::over_voltage_monitor;
+using ns_ev_api::deserialize;
 
 void over_voltage_monitor_API::init() {
     invoke_init(*p_main);
@@ -85,7 +86,7 @@ std::string over_voltage_monitor_API::make_error_string(ns_types_ext::Error cons
 }
 
 void over_voltage_monitor_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -95,7 +96,7 @@ void over_voltage_monitor_API::setup_heartbeat_generator() {
 
 void over_voltage_monitor_API::subscribe_api_topic(const std::string& var,
                                                    const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {
@@ -109,7 +110,7 @@ void over_voltage_monitor_API::subscribe_api_topic(const std::string& var,
     });
 }
 
-const ns_bc::Topics& over_voltage_monitor_API::get_topics() const {
+const ns_ev_api::Topics& over_voltage_monitor_API::get_topics() const {
     return topics;
 }
 

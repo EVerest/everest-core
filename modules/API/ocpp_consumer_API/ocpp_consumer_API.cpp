@@ -2,24 +2,25 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "ocpp_consumer_API.hpp"
-#include "basecamp/generic/API.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/ocpp/API.hpp"
-#include "basecamp/ocpp/codec.hpp"
-#include "basecamp/ocpp/wrapper.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/generic/API.hpp>
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/ocpp/API.hpp>
+#include <everest_api_types/ocpp/codec.hpp>
+#include <everest_api_types/ocpp/wrapper.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 
 namespace {
-template <class T> T const& toExternalApi(T const& val) {
+template <class T> T const& to_external_api(T const& val) {
     return val;
 }
 } // namespace
 
 namespace module {
 
-namespace ns_types_ext = basecamp::API::V1_0::types::ocpp;
-namespace generic = basecamp::API::V1_0::types::generic;
-using basecamp::API::deserialize;
+namespace ns_ev_api = everest::lib::API;
+namespace generic = ns_ev_api::V1_0::types::generic;
+namespace ns_types_ext = ns_ev_api::V1_0::types::ocpp;
+using ns_ev_api::deserialize;
 
 void ocpp_consumer_API::init() {
     invoke_init(*p_main);
@@ -46,10 +47,10 @@ void ocpp_consumer_API::ready() {
 auto ocpp_consumer_API::forward_api_var(std::string const& var) {
     using namespace ns_types_ext;
     using namespace generic;
-    auto topic = topics.basecamp_to_extern(var);
+    auto topic = topics.everest_to_extern(var);
     return [this, topic](auto const& val) {
         try {
-            auto&& external = toExternalApi(val);
+            auto&& external = to_external_api(val);
             auto&& payload = serialize(external);
             mqtt.publish(topic, payload);
         } catch (const std::exception& e) {
@@ -68,8 +69,8 @@ void ocpp_consumer_API::generate_api_cmd_data_transfer() {
             ns_types_ext::DataTransferRequest request;
             auto payload_ok = deserialize(msg.payload, request);
             if (payload_ok) {
-                auto int_reply = r_data_transfer->call_data_transfer(toInternalApi(request));
-                auto reply = toExternalApi(int_reply);
+                auto int_reply = r_data_transfer->call_data_transfer(to_internal_api(request));
+                auto reply = to_external_api(int_reply);
                 mqtt.publish(msg.replyTo, serialize(reply));
                 return true;
             }
@@ -86,8 +87,8 @@ void ocpp_consumer_API::generate_api_cmd_get_variables() {
             ns_types_ext::GetVariableRequestList request;
             auto payload_ok = deserialize(msg.payload, request);
             if (payload_ok) {
-                auto int_reply = r_ocpp->call_get_variables(toInternalApi(request));
-                auto reply = toExternalApi(int_reply);
+                auto int_reply = r_ocpp->call_get_variables(to_internal_api(request));
+                auto reply = to_external_api(int_reply);
                 mqtt.publish(msg.replyTo, serialize(reply));
                 return true;
             }
@@ -104,8 +105,8 @@ void ocpp_consumer_API::generate_api_cmd_set_variables() {
             ns_types_ext::SetVariablesArgs request;
             auto payload_ok = deserialize(msg.payload, request);
             if (payload_ok) {
-                auto int_reply = r_ocpp->call_set_variables(toInternalApi(request.variables), request.source);
-                auto reply = toExternalApi(int_reply);
+                auto int_reply = r_ocpp->call_set_variables(to_internal_api(request.variables), request.source);
+                auto reply = to_external_api(int_reply);
                 mqtt.publish(msg.replyTo, serialize(reply));
                 return true;
             }
@@ -139,7 +140,7 @@ void ocpp_consumer_API::generate_api_var_communication_check() {
 }
 
 void ocpp_consumer_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -148,7 +149,7 @@ void ocpp_consumer_API::setup_heartbeat_generator() {
 }
 
 void ocpp_consumer_API::subscribe_api_topic(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {
@@ -162,7 +163,7 @@ void ocpp_consumer_API::subscribe_api_topic(const std::string& var, const ParseA
     });
 }
 
-const ns_bc::Topics& ocpp_consumer_API::get_topics() const {
+const ns_ev_api::Topics& ocpp_consumer_API::get_topics() const {
     return topics;
 }
 
