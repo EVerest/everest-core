@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "display_message_API.hpp"
-#include "basecamp/display_message/API.hpp"
-#include "basecamp/display_message/codec.hpp"
-#include "basecamp/display_message/wrapper.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/display_message/API.hpp>
+#include <everest_api_types/display_message/codec.hpp>
+#include <everest_api_types/display_message/wrapper.hpp>
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 #include "generated/types/display_message.hpp"
 
 namespace module {
 
-using basecamp::API::deserialize;
-namespace ns_types_ext = basecamp::API::V1_0::types::display_message;
-namespace generic = basecamp::API::V1_0::types::generic;
+namespace ns_types_ext = ns_ev_api::V1_0::types::display_message;
+namespace generic = ns_ev_api::V1_0::types::generic;
 
 void display_message_API::init() {
     invoke_init(*p_main);
@@ -39,7 +38,7 @@ void display_message_API::generate_api_var_communication_check() {
 }
 
 void display_message_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -48,7 +47,7 @@ void display_message_API::setup_heartbeat_generator() {
 }
 
 void display_message_API::subscribe_api_topic(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {
@@ -62,7 +61,7 @@ void display_message_API::subscribe_api_topic(const std::string& var, const Pars
     });
 }
 
-const ns_bc::Topics& display_message_API::get_topics() const {
+const ns_ev_api::Topics& display_message_API::get_topics() const {
     return topics;
 }
 

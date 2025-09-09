@@ -15,7 +15,7 @@
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
 
-#include "basecamp/evse_board_support/API.hpp"
+#include <everest_api_types/evse_board_support/API.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {

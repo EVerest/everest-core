@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "auth_token_provider_API.hpp"
-#include "basecamp/auth/API.hpp"
-#include "basecamp/auth/json_codec.hpp"
-#include "basecamp/auth/wrapper.hpp"
+#include <everest_api_types/auth/API.hpp>
+#include <everest_api_types/auth/json_codec.hpp>
+#include <everest_api_types/auth/wrapper.hpp>
 #include "everest/logging.hpp"
 
 namespace module {
 
-namespace ns_types_ext = basecamp::API::V1_0::types::auth;
+namespace ns_types_ext = ns_ev_api::V1_0::types::auth;
 
 void auth_token_provider_API::init() {
     invoke_init(*p_auth_token_provider);
@@ -36,13 +36,13 @@ void auth_token_provider_API::generate_api_var_communication_check() {
 void auth_token_provider_API::generate_api_var_provided_token() {
     subscribe_api_var("provided_token", [=](const json& data) {
         ns_types_ext::ProvidedIdToken external = data;
-        auto internal = toInternalApi(external);
+        auto internal = to_internal_api(external);
         p_auth_token_provider->publish_provided_token(internal);
     });
 }
 
 void auth_token_provider_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -51,7 +51,7 @@ void auth_token_provider_API::setup_heartbeat_generator() {
 }
 
 void auth_token_provider_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& raw_data) {
         try {
             auto data = json::parse(raw_data);
@@ -64,7 +64,7 @@ void auth_token_provider_API::subscribe_api_var(const std::string& var, const Pa
     });
 }
 
-const ns_bc::Topics& auth_token_provider_API::get_topics() const {
+const ns_ev_api::Topics& auth_token_provider_API::get_topics() const {
     return topics;
 }
 

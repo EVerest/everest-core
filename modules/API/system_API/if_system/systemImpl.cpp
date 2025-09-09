@@ -2,19 +2,19 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "systemImpl.hpp"
-#include "basecamp/system/API.hpp"
-#include "basecamp/system/codec.hpp"
-#include "basecamp/system/json_codec.hpp"
-#include "basecamp/system/wrapper.hpp"
-#include "companion/asyncapi/AsyncApiRequestReply.hpp"
+#include <everest_api_types/system/API.hpp>
+#include <everest_api_types/system/codec.hpp>
+#include <everest_api_types/system/json_codec.hpp>
+#include <everest_api_types/system/wrapper.hpp>
+#include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 #include "everest/exceptions.hpp"
 #include "everest/logging.hpp"
 #include "framework/ModuleAdapter.hpp"
 #include "generated/types/system.hpp"
 #include "nlohmann/json_fwd.hpp"
 
-using namespace basecamp::companion;
-namespace ns_types_ext = basecamp::API::V1_0::types::system;
+using namespace everest::lib::API;
+namespace ns_types_ext = everest::lib::API::V1_0::types::system;
 
 namespace types {
 namespace system {
@@ -28,7 +28,7 @@ void from_json(const json& j, ResetType& k) {
 } // namespace types
 
 namespace {
-bool toExternalApi(bool value) {
+bool to_external_api(bool value) {
     return value;
 }
 } // namespace
@@ -46,7 +46,7 @@ void systemImpl::ready() {
 template <class T, class ReqT>
 auto systemImpl::generic_request_reply(T const& default_value, ReqT const& request, std::string const& topic) {
     using namespace ns_types_ext;
-    using ExtT = decltype(toExternalApi(std::declval<T>()));
+    using ExtT = decltype(to_external_api(std::declval<T>()));
     auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
     if (!result) {
         return default_value;
@@ -62,7 +62,7 @@ systemImpl::handle_update_firmware(types::system::FirmwareUpdateRequest& firmwar
 }
 
 void systemImpl::handle_allow_firmware_installation() {
-    auto topic = mod->get_topics().basecamp_to_extern("allow_firmware_installation");
+    auto topic = mod->get_topics().everest_to_extern("allow_firmware_installation");
     mod->mqtt.publish(topic, "");
 }
 
@@ -79,8 +79,8 @@ bool systemImpl::handle_is_reset_allowed(types::system::ResetType& type) {
 }
 
 void systemImpl::handle_reset(types::system::ResetType& type, bool& scheduled) {
-    auto topic = mod->get_topics().basecamp_to_extern("reset");
-    json args = ns_types_ext::ResetRequest{ns_types_ext::toExternalApi(type), scheduled};
+    auto topic = mod->get_topics().everest_to_extern("reset");
+    json args = ns_types_ext::ResetRequest{ns_types_ext::to_external_api(type), scheduled};
     mod->mqtt.publish(topic, args.dump());
 }
 

@@ -20,16 +20,16 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include "basecamp/over_voltage_monitor/API.hpp"
-#include "companion/utilities/CommCheckHandler.hpp"
-#include <companion/paths/Topics.hpp>
+#include <everest_api_types/over_voltage_monitor/API.hpp>
+#include "everest_api_types/utilities/CommCheckHandler.hpp"
+#include <everest_api_types/utilities/Topics.hpp>
 
 //
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
-namespace ns_types_ext = basecamp::API::V1_0::types::over_voltage_monitor;
-namespace ns_bc = basecamp::companion;
+namespace ns_types_ext = everest::lib::API::V1_0::types::over_voltage_monitor;
+namespace ns_ev_api = everest::lib::API;
 
 struct Conf {
     int cfg_communication_check_to_s;
@@ -54,8 +54,8 @@ public:
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_bc::Topics& get_topics() const;
-    ns_bc::CommCheckHandler<over_voltage_monitorImplBase> comm_check;
+    const ns_ev_api::Topics& get_topics() const;
+    ns_ev_api::CommCheckHandler<over_voltage_monitorImplBase> comm_check;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -81,7 +81,7 @@ private:
     std::string make_error_string(ns_types_ext::Error const& error);
 
     void setup_heartbeat_generator();
-    ns_bc::Topics topics;
+    ns_ev_api::Topics topics;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

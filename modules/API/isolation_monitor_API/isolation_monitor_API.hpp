@@ -16,16 +16,16 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include <companion/paths/Topics.hpp>
+#include <everest_api_types/utilities/Topics.hpp>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic pop
-#include "basecamp/isolation_monitor/API.hpp"
-#include "companion/utilities/CommCheckHandler.hpp"
+#include <everest_api_types/isolation_monitor/API.hpp>
+#include "everest_api_types/utilities/CommCheckHandler.hpp"
 
-namespace ns_bc = basecamp::companion;
-namespace ns_types_ext = basecamp::API::V1_0::types::isolation_monitor;
+namespace ns_ev_api = everest::lib::API;
+namespace ns_types_ext = everest::lib::API::V1_0::types::isolation_monitor;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -54,8 +54,8 @@ public:
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_bc::Topics& get_topics() const;
-    ns_bc::CommCheckHandler<isolation_monitorImplBase> comm_check;
+    const ns_ev_api::Topics& get_topics() const;
+    ns_ev_api::CommCheckHandler<isolation_monitorImplBase> comm_check;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -83,7 +83,7 @@ private:
 
     void setup_heartbeat_generator();
 
-    ns_bc::Topics topics;
+    ns_ev_api::Topics topics;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

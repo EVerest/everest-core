@@ -2,19 +2,19 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "power_supply_DC_API.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/generic/string.hpp"
-#include "basecamp/power_supply_DC/API.hpp"
-#include "basecamp/power_supply_DC/codec.hpp"
-#include "basecamp/power_supply_DC/wrapper.hpp"
-#include "companion/paths/Topics.hpp"
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/generic/string.hpp>
+#include <everest_api_types/power_supply_DC/API.hpp>
+#include <everest_api_types/power_supply_DC/codec.hpp>
+#include <everest_api_types/power_supply_DC/wrapper.hpp>
+#include "everest_api_types/utilities/Topics.hpp"
 #include "everest/logging.hpp"
 #include "utils/error.hpp"
 #include <optional>
 
 namespace module {
 
-namespace generic = basecamp::API::V1_0::types::generic;
+namespace generic = everest::lib::API::V1_0::types::generic;
 using ns_types_ext::deserialize;
 
 void power_supply_DC_API::init() {
@@ -41,7 +41,7 @@ void power_supply_DC_API::ready() {
 void power_supply_DC_API::generate_api_var_mode() {
     subscribe_api_var("mode", [=](const std::string& data) {
         auto ext = deserialize<ns_types_ext::Mode>(data);
-        auto arg = toInternalApi(ext);
+        auto arg = to_internal_api(ext);
         p_if_power_supply_DC->publish_mode(arg);
     });
 }
@@ -49,7 +49,7 @@ void power_supply_DC_API::generate_api_var_mode() {
 void power_supply_DC_API::generate_api_var_voltage_current() {
     subscribe_api_var("voltage_current", [=](const std::string& data) {
         auto ext = deserialize<ns_types_ext::VoltageCurrent>(data);
-        auto arg = toInternalApi(ext);
+        auto arg = to_internal_api(ext);
         p_if_power_supply_DC->publish_voltage_current(arg);
     });
 }
@@ -57,7 +57,7 @@ void power_supply_DC_API::generate_api_var_voltage_current() {
 void power_supply_DC_API::generate_api_var_capabilities() {
     subscribe_api_var("capabilities", [=](const json& data) {
         auto ext = deserialize<ns_types_ext::Capabilities>(data);
-        auto arg = toInternalApi(ext);
+        auto arg = to_internal_api(ext);
         p_if_power_supply_DC->publish_capabilities(arg);
     });
 }
@@ -100,7 +100,7 @@ std::string power_supply_DC_API::make_error_string(ns_types_ext::Error const& er
 }
 
 void power_supply_DC_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -109,7 +109,7 @@ void power_supply_DC_API::setup_heartbeat_generator() {
 }
 
 void power_supply_DC_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             parse_and_publish(data);
@@ -121,7 +121,7 @@ void power_supply_DC_API::subscribe_api_var(const std::string& var, const ParseA
     });
 }
 
-const ns_bc::Topics& power_supply_DC_API::get_topics() const {
+const ns_ev_api::Topics& power_supply_DC_API::get_topics() const {
     return topics;
 }
 

@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "evse_board_support_API.hpp"
-#include "basecamp/evse_board_support/API.hpp"
-#include "basecamp/evse_board_support/codec.hpp"
-#include "basecamp/evse_board_support/wrapper.hpp"
-#include "basecamp/evse_manager/API.hpp"
-#include "basecamp/evse_manager/codec.hpp"
-#include "basecamp/evse_manager/wrapper.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/generic/string.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/evse_board_support/API.hpp>
+#include <everest_api_types/evse_board_support/codec.hpp>
+#include <everest_api_types/evse_board_support/wrapper.hpp>
+#include <everest_api_types/evse_manager/API.hpp>
+#include <everest_api_types/evse_manager/codec.hpp>
+#include <everest_api_types/evse_manager/wrapper.hpp>
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/generic/string.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 #include "utils/error.hpp"
 
 namespace module {
 
-namespace generic = basecamp::API::V1_0::types::generic;
-namespace evse_manager = basecamp::API::V1_0::types::evse_manager;
+namespace generic = ns_ev_api::V1_0::types::generic;
+namespace evse_manager = ns_ev_api::V1_0::types::evse_manager;
 
-using basecamp::API::deserialize;
+using ns_ev_api::deserialize;
 
 void evse_board_support_API::init() {
     invoke_init(*p_board_support);
@@ -51,7 +51,7 @@ void evse_board_support_API::generate_api_var_event() {
     subscribe_api_var("event", [=](std::string const& data) {
         ns_types_ext::BspEvent ext;
         if (deserialize(data, ext)) {
-            p_board_support->publish_event(toInternalApi(ext));
+            p_board_support->publish_event(to_internal_api(ext));
             return true;
         }
         return false;
@@ -70,7 +70,7 @@ void evse_board_support_API::generate_api_var_capabilities() {
     subscribe_api_var("capabilities", [=](std::string const& data) {
         ns_types_ext::HardwareCapabilities ext;
         if (deserialize(data, ext)) {
-            p_board_support->publish_capabilities(toInternalApi(ext));
+            p_board_support->publish_capabilities(to_internal_api(ext));
             return true;
         }
         return false;
@@ -81,7 +81,7 @@ void evse_board_support_API::generate_api_var_ac_pp_ampacity() {
     subscribe_api_var("ac_pp_ampacity", [=](std::string const& data) {
         ns_types_ext::ProximityPilot ext;
         if (deserialize(data, ext)) {
-            p_board_support->publish_ac_pp_ampacity(toInternalApi(ext));
+            p_board_support->publish_ac_pp_ampacity(to_internal_api(ext));
             return true;
         }
         return false;
@@ -92,7 +92,7 @@ void evse_board_support_API::generate_api_var_request_stop_transaction() {
     subscribe_api_var("request_stop_transaction", [=](std::string const& data) {
         evse_manager::StopTransactionRequest ext;
         if (deserialize(data, ext)) {
-            p_board_support->publish_request_stop_transaction(toInternalApi(ext));
+            p_board_support->publish_request_stop_transaction(to_internal_api(ext));
             return true;
         }
         return false;
@@ -140,7 +140,7 @@ void evse_board_support_API::generate_api_var_clear_error() {
 }
 
 void evse_board_support_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -149,7 +149,7 @@ void evse_board_support_API::setup_heartbeat_generator() {
 }
 
 void evse_board_support_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {
@@ -163,7 +163,7 @@ void evse_board_support_API::subscribe_api_var(const std::string& var, const Par
     });
 }
 
-const ns_bc::Topics& evse_board_support_API::get_topics() const {
+const ns_ev_api::Topics& evse_board_support_API::get_topics() const {
     return topics;
 }
 

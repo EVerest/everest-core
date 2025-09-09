@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "external_energy_limits_consumer_API.hpp"
-#include "basecamp/energy/API.hpp"
-#include "basecamp/energy/codec.hpp"
-#include "basecamp/energy/wrapper.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/energy/API.hpp>
+#include <everest_api_types/energy/codec.hpp>
+#include <everest_api_types/energy/wrapper.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 
 namespace module {
-namespace ns_types_ext = basecamp::API::V1_0::types::energy;
-using basecamp::API::deserialize;
+namespace ns_types_ext = everest::lib::API::V1_0::types::energy;
+using ns_ev_api::deserialize;
 
 void external_energy_limits_consumer_API::init() {
     invoke_init(*p_main);
@@ -29,10 +29,10 @@ void external_energy_limits_consumer_API::ready() {
 
 auto external_energy_limits_consumer_API::forward_api_var(std::string const& var) {
     using namespace ns_types_ext;
-    auto topic = topics.basecamp_to_extern(var);
+    auto topic = topics.everest_to_extern(var);
     return [this, topic](auto const& val) {
         try {
-            auto&& external = toExternalApi(val);
+            auto&& external = to_external_api(val);
             auto&& payload = serialize(external);
             mqtt.publish(topic, payload);
         } catch (const std::exception& e) {
@@ -62,7 +62,7 @@ void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits()
     subscribe_api_topic("set_external_limits", [=](std::string const& data) {
         ns_types_ext::ExternalLimits val;
         if (deserialize(data, val)) {
-            r_energy_node->call_set_external_limits(toInternalApi(val));
+            r_energy_node->call_set_external_limits(to_internal_api(val));
             return true;
         }
         return false;
@@ -70,7 +70,7 @@ void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits()
 }
 
 void external_energy_limits_consumer_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -80,7 +80,7 @@ void external_energy_limits_consumer_API::setup_heartbeat_generator() {
 
 void external_energy_limits_consumer_API::subscribe_api_topic(const std::string& var,
                                                               const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {

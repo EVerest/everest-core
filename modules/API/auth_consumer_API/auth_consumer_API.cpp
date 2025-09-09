@@ -2,18 +2,18 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "auth_consumer_API.hpp"
-#include "basecamp/auth/API.hpp"
-#include "basecamp/auth/codec.hpp"
-#include "basecamp/auth/wrapper.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/auth/API.hpp>
+#include <everest_api_types/auth/codec.hpp>
+#include <everest_api_types/auth/wrapper.hpp>
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 
-using basecamp::API::deserialize;
-namespace generic = basecamp::API::V1_0::types::generic;
 
 namespace module {
 
-namespace ns_types_ext = basecamp::API::V1_0::types::auth;
+namespace ns_types_ext = ns_ev_api::V1_0::types::auth;
+namespace generic = ns_ev_api::V1_0::types::generic;
+using ns_ev_api::deserialize;
 
 void auth_consumer_API::init() {
     invoke_init(*p_main);
@@ -33,10 +33,10 @@ void auth_consumer_API::ready() {
 
 auto auth_consumer_API::forward_api_var(std::string const& var) {
     using namespace ns_types_ext;
-    auto topic = topics.basecamp_to_extern(var);
+    auto topic = topics.everest_to_extern(var);
     return [this, topic](auto const& val) {
         try {
-            auto&& external = toExternalApi(val);
+            auto&& external = to_external_api(val);
             auto&& payload = serialize(external);
             mqtt.publish(topic, payload);
         } catch (const std::exception& e) {
@@ -53,9 +53,9 @@ void auth_consumer_API::generate_api_cmd_withdraw_authorization() {
         if (deserialize(data, msg)) {
             ns_types_ext::WithdrawAuthorizationRequest payload;
             if (deserialize(msg.payload, payload)) {
-                auto int_arg = toInternalApi(payload);
+                auto int_arg = to_internal_api(payload);
                 auto int_res = r_auth->call_withdraw_authorization(int_arg);
-                auto ext_res = ns_types_ext::toExternalApi(int_res);
+                auto ext_res = ns_types_ext::to_external_api(int_res);
                 mqtt.publish(msg.replyTo, serialize(ext_res));
                 return true;
             }
@@ -80,7 +80,7 @@ void auth_consumer_API::generate_api_var_communication_check() {
 }
 
 void auth_consumer_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -89,7 +89,7 @@ void auth_consumer_API::setup_heartbeat_generator() {
 }
 
 void auth_consumer_API::subscribe_api_topic(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {

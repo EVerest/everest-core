@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "system_API.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/generic/string.hpp"
-#include "basecamp/system/API.hpp"
-#include "basecamp/system/codec.hpp"
-#include "basecamp/system/wrapper.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/generic/string.hpp>
+#include <everest_api_types/system/API.hpp>
+#include <everest_api_types/system/codec.hpp>
+#include <everest_api_types/system/wrapper.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 #include "everest/logging.hpp"
 
 namespace module {
 
-namespace ns_types_ext = basecamp::API::V1_0::types::system;
-namespace generic = basecamp::API::V1_0::types::generic;
-using basecamp::API::deserialize;
+namespace ns_ev_api = everest::lib::API;
+namespace generic = ns_ev_api::V1_0::types::generic;
+namespace ns_types_ext = ns_ev_api::V1_0::types::system;
+using ns_ev_api::deserialize;
 
 void system_API::init() {
     invoke_init(*p_if_system);
@@ -35,7 +36,7 @@ void system_API::generate_api_var_firmware_update_status() {
     subscribe_api_var("firmware_update_status", [=](std::string const& data) {
         ns_types_ext::FirmwareUpdateStatus ext;
         if (deserialize(data, ext)) {
-            auto value = toInternalApi(ext);
+            auto value = to_internal_api(ext);
             p_if_system->publish_firmware_update_status(value);
         }
     });
@@ -45,7 +46,7 @@ void system_API::generate_api_var_log_status() {
     subscribe_api_var("log_status", [=](std::string const& data) {
         ns_types_ext::LogStatus ext;
         if (deserialize(data, ext)) {
-            auto value = toInternalApi(ext);
+            auto value = to_internal_api(ext);
             p_if_system->publish_log_status(value);
         }
     });
@@ -59,7 +60,7 @@ void system_API::generate_api_var_communication_check() {
 }
 
 void system_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -68,7 +69,7 @@ void system_API::setup_heartbeat_generator() {
 }
 
 void system_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             parse_and_publish(data);
@@ -81,7 +82,7 @@ void system_API::subscribe_api_var(const std::string& var, const ParseAndPublish
     });
 }
 
-const ns_bc::Topics& system_API::get_topics() const {
+const ns_ev_api::Topics& system_API::get_topics() const {
     return topics;
 }
 

@@ -1,54 +1,53 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "evse_manager_consumer_API.hpp"
-#include "basecamp/auth/wrapper.hpp"
-#include "basecamp/evse_board_support/API.hpp"
-#include "basecamp/evse_board_support/codec.hpp"
-#include "basecamp/evse_board_support/json_codec.hpp"
-#include "basecamp/evse_board_support/wrapper.hpp"
-#include "basecamp/evse_manager/API.hpp"
-#include "basecamp/evse_manager/codec.hpp"
-#include "basecamp/evse_manager/json_codec.hpp"
-#include "basecamp/evse_manager/wrapper.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/generic/json_codec.hpp"
-#include "basecamp/generic/string.hpp"
-#include "basecamp/iso15118_charger/API.hpp"
-#include "basecamp/iso15118_charger/codec.hpp"
-#include "basecamp/iso15118_charger/json_codec.hpp"
-#include "basecamp/iso15118_charger/wrapper.hpp"
-#include "basecamp/isolation_monitor/API.hpp"
-#include "basecamp/isolation_monitor/codec.hpp"
-#include "basecamp/isolation_monitor/json_codec.hpp"
-#include "basecamp/isolation_monitor/wrapper.hpp"
-#include "basecamp/power_supply_DC/API.hpp"
-#include "basecamp/power_supply_DC/codec.hpp"
-#include "basecamp/power_supply_DC/json_codec.hpp"
-#include "basecamp/power_supply_DC/wrapper.hpp"
-#include "basecamp/powermeter/codec.hpp"
-#include "basecamp/powermeter/wrapper.hpp"
-#include "basecamp/uk_random_delay/API.hpp"
-#include "basecamp/uk_random_delay/codec.hpp"
-#include "basecamp/uk_random_delay/json_codec.hpp"
-#include "basecamp/uk_random_delay/wrapper.hpp"
-#include "basecamp/utilities/codec.hpp"
-#include "companion/asyncapi/AsyncApiRequestReply.hpp"
+#include <everest_api_types/auth/wrapper.hpp>
+#include <everest_api_types/evse_board_support/API.hpp>
+#include <everest_api_types/evse_board_support/codec.hpp>
+#include <everest_api_types/evse_board_support/json_codec.hpp>
+#include <everest_api_types/evse_board_support/wrapper.hpp>
+#include <everest_api_types/evse_manager/API.hpp>
+#include <everest_api_types/evse_manager/codec.hpp>
+#include <everest_api_types/evse_manager/json_codec.hpp>
+#include <everest_api_types/evse_manager/wrapper.hpp>
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/generic/json_codec.hpp>
+#include <everest_api_types/generic/string.hpp>
+#include <everest_api_types/iso15118_charger/API.hpp>
+#include <everest_api_types/iso15118_charger/codec.hpp>
+#include <everest_api_types/iso15118_charger/json_codec.hpp>
+#include <everest_api_types/iso15118_charger/wrapper.hpp>
+#include <everest_api_types/isolation_monitor/API.hpp>
+#include <everest_api_types/isolation_monitor/codec.hpp>
+#include <everest_api_types/isolation_monitor/json_codec.hpp>
+#include <everest_api_types/isolation_monitor/wrapper.hpp>
+#include <everest_api_types/power_supply_DC/API.hpp>
+#include <everest_api_types/power_supply_DC/codec.hpp>
+#include <everest_api_types/power_supply_DC/json_codec.hpp>
+#include <everest_api_types/power_supply_DC/wrapper.hpp>
+#include <everest_api_types/powermeter/codec.hpp>
+#include <everest_api_types/powermeter/wrapper.hpp>
+#include <everest_api_types/uk_random_delay/API.hpp>
+#include <everest_api_types/uk_random_delay/codec.hpp>
+#include <everest_api_types/uk_random_delay/json_codec.hpp>
+#include <everest_api_types/uk_random_delay/wrapper.hpp>
+#include <everest_api_types/utilities/codec.hpp>
+#include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 #include "everest/logging.hpp"
 
-using namespace basecamp::companion;
-namespace ns_types_ext = basecamp::API::V1_0::types::evse_manager;
-namespace ns_powermeter = basecamp::API::V1_0::types::powermeter;
-namespace ns_iso = basecamp::API::V1_0::types::iso15118_charger;
-namespace ns_evse_bsp = basecamp::API::V1_0::types::evse_board_support;
-namespace ns_imd = basecamp::API::V1_0::types::isolation_monitor;
-namespace ns_dc = basecamp::API::V1_0::types::power_supply_DC;
-namespace ns_random_delay = basecamp::API::V1_0::types::uk_random_delay;
-namespace generic = basecamp::API::V1_0::types::generic;
+namespace ns_types_ext = ns_ev_api::V1_0::types::evse_manager;
+namespace ns_powermeter = ns_ev_api::V1_0::types::powermeter;
+namespace ns_iso = ns_ev_api::V1_0::types::iso15118_charger;
+namespace ns_evse_bsp = ns_ev_api::V1_0::types::evse_board_support;
+namespace ns_imd = ns_ev_api::V1_0::types::isolation_monitor;
+namespace ns_dc = ns_ev_api::V1_0::types::power_supply_DC;
+namespace ns_random_delay = ns_ev_api::V1_0::types::uk_random_delay;
+namespace generic = ns_ev_api::V1_0::types::generic;
 
-using basecamp::API::deserialize;
+using ns_ev_api::deserialize;
 
 namespace {
-template <class T> T const& toExternalApi(T const& val) {
+template <class T> T const& to_external_api(T const& val) {
     return val;
 }
 } // namespace
@@ -115,10 +114,10 @@ auto evse_manager_consumer_API::forward_api_var(std::string const& var) {
     using namespace ns_imd;
     using namespace ns_dc;
     using namespace ns_random_delay;
-    auto topic = topics.basecamp_to_extern(var);
+    auto topic = topics.everest_to_extern(var);
     return [this, topic](auto const& val) {
         try {
-            auto&& external = toExternalApi(val);
+            auto&& external = to_external_api(val);
             auto&& payload = serialize(external);
             mqtt.publish(topic, payload);
         } catch (const std::exception& e) {
@@ -133,7 +132,7 @@ void evse_manager_consumer_API::generate_api_cmd_get_evse() {
     subscribe_api_topic("get_evse", [=](std::string const& data) {
         generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            auto reply = ns_types_ext::toExternalApi(r_evse_manager->call_get_evse());
+            auto reply = ns_types_ext::to_external_api(r_evse_manager->call_get_evse());
             mqtt.publish(msg.replyTo, serialize(reply));
             return true;
         }
@@ -147,7 +146,7 @@ void evse_manager_consumer_API::generate_api_cmd_enable_disable() {
         if (deserialize(data, msg)) {
             ns_types_ext::EnableDisableRequest payload;
             if (deserialize(msg.payload, payload)) {
-                auto reply = r_evse_manager->call_enable_disable(payload.connector_id, toInternalApi(payload.source));
+                auto reply = r_evse_manager->call_enable_disable(payload.connector_id, to_internal_api(payload.source));
                 mqtt.publish(msg.replyTo, generic::serialize(reply));
                 return true;
             }
@@ -160,7 +159,7 @@ void evse_manager_consumer_API::generate_api_cmd_authorize_response() {
     subscribe_api_topic("authorize_response", [=](std::string const& data) {
         ns_types_ext::AuthorizeResponseArgs payload;
         if (deserialize(data, payload)) {
-            r_evse_manager->call_authorize_response(toInternalApi(payload.token), toInternalApi(payload.result));
+            r_evse_manager->call_authorize_response(to_internal_api(payload.token), to_internal_api(payload.result));
             return true;
         }
         return false;
@@ -227,7 +226,7 @@ void evse_manager_consumer_API::generate_api_cmd_stop_transaction() {
             ns_types_ext::StopTransactionRequest_External payload;
             if (deserialize(msg.payload, payload)) {
                 auto payload = ns_types_ext::deserialize<ns_types_ext::StopTransactionRequest_External>(msg.payload);
-                result = r_evse_manager->call_stop_transaction(ns_types_ext::toInternalApi(payload));
+                result = r_evse_manager->call_stop_transaction(ns_types_ext::to_internal_api(payload));
                 mqtt.publish(msg.replyTo, result);
                 return true;
             }
@@ -406,7 +405,7 @@ void evse_manager_consumer_API::generate_api_var_communication_check() {
 }
 
 void evse_manager_consumer_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -416,7 +415,7 @@ void evse_manager_consumer_API::setup_heartbeat_generator() {
 
 void evse_manager_consumer_API::subscribe_api_topic(const std::string& var,
                                                     const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {

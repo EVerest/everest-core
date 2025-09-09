@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "generic_error_raiser_API.hpp"
-#include "basecamp/generic/codec.hpp"
-#include "basecamp/generic/string.hpp"
-#include "basecamp/utilities/codec.hpp"
+#include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/generic/string.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 
 namespace module {
 
-using basecamp::API::deserialize;
+using ns_ev_api::deserialize;
 
 void generic_error_raiser_API::init() {
     invoke_init(*p_main);
@@ -73,7 +73,7 @@ void generic_error_raiser_API::generate_api_var_communication_check() {
 }
 
 void generic_error_raiser_API::setup_heartbeat_generator() {
-    auto topic = topics.basecamp_to_extern("heartbeat");
+    auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
         mqtt.publish(topic, "{}");
         return true;
@@ -83,7 +83,7 @@ void generic_error_raiser_API::setup_heartbeat_generator() {
 
 void generic_error_raiser_API::subscribe_api_topic(const std::string& var,
                                                    const ParseAndPublishFtor& parse_and_publish) {
-    auto topic = topics.extern_to_basecamp(var);
+    auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
             if (not parse_and_publish(data)) {

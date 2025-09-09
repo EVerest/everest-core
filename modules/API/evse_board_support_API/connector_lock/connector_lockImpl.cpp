@@ -15,12 +15,12 @@ void connector_lockImpl::ready() {
 }
 
 void connector_lockImpl::handle_lock() {
-    auto topic = mod->get_topics().basecamp_to_extern("lock");
+    auto topic = mod->get_topics().everest_to_extern("lock");
     mod->mqtt.publish(topic, "");
 }
 
 void connector_lockImpl::handle_unlock() {
-    auto topic = mod->get_topics().basecamp_to_extern("unlock");
+    auto topic = mod->get_topics().everest_to_extern("unlock");
     mod->mqtt.publish(topic, "");
 }
 

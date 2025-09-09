@@ -25,9 +25,8 @@ target_compile_options(${MODULE_NAME}
 
 target_link_libraries(${MODULE_NAME}
   PRIVATE
-  companion
   atomic
-  basecamp_types
+  everest::everest_api_types
 )
 
 
