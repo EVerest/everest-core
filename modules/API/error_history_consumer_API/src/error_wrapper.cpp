@@ -2,9 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "error_wrapper.hpp"
-#include "generated/types/error_history.hpp"
-#include "utils/date.hpp"
-#include "utils/error.hpp"
+#include <utils/date.hpp>
 
 namespace error_converter {
 

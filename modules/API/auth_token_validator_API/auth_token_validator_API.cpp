@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "auth_token_validator_API.hpp"
+
 #include <everest_api_types/auth/API.hpp>
 #include <everest_api_types/auth/codec.hpp>
 #include <everest_api_types/auth/wrapper.hpp>
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
-#include "everest/logging.hpp"
+
+#include <everest/logging.hpp>
 
 namespace module {
 

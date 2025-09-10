@@ -2,10 +2,12 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "auth_token_provider_API.hpp"
+
 #include <everest_api_types/auth/API.hpp>
 #include <everest_api_types/auth/json_codec.hpp>
 #include <everest_api_types/auth/wrapper.hpp>
-#include "everest/logging.hpp"
+
+#include <everest/logging.hpp>
 
 namespace module {
 

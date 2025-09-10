@@ -2,15 +2,14 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "powermeterImpl.hpp"
+
 #include <everest_api_types/powermeter/API.hpp>
 #include <everest_api_types/powermeter/codec.hpp>
 #include <everest_api_types/powermeter/json_codec.hpp>
 #include <everest_api_types/powermeter/wrapper.hpp>
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
-#include "framework/ModuleAdapter.hpp"
-#include "generated/types/powermeter.hpp"
-#include "utils/types.hpp"
-#include <optional>
+
+#include <generated/types/powermeter.hpp>
 
 namespace module {
 namespace main {

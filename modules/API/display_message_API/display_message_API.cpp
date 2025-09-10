@@ -6,7 +6,7 @@
 #include <everest_api_types/display_message/wrapper.hpp>
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
-#include "generated/types/display_message.hpp"
+#include <generated/types/display_message.hpp>
 
 namespace module {
 

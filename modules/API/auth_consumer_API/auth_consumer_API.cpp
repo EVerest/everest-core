@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "auth_consumer_API.hpp"
+
 #include <everest_api_types/auth/API.hpp>
 #include <everest_api_types/auth/codec.hpp>
 #include <everest_api_types/auth/wrapper.hpp>

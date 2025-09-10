@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "isolation_monitor_API.hpp"
+
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/generic/string.hpp>
 #include <everest_api_types/isolation_monitor/API.hpp>

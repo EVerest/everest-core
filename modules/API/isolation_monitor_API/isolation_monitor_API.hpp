@@ -18,7 +18,7 @@
 // insert your custom include headers here
 #include <everest_api_types/utilities/Topics.hpp>
 #include <everest_api_types/isolation_monitor/API.hpp>
-#include "everest_api_types/utilities/CommCheckHandler.hpp"
+#include <everest_api_types/utilities/CommCheckHandler.hpp>
 
 namespace ev_API = everest::lib::API;
 namespace API_types = ev_API::V1_0::types;
