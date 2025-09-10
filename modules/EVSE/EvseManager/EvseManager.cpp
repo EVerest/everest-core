@@ -12,8 +12,10 @@
 #include "Timeout.hpp"
 #include "scoped_lock_timeout.hpp"
 #include "utils.hpp"
+#include <everest/util/comparison.hpp>
 
 using namespace std::literals::chrono_literals;
+using everest::lib::util::min_optional;
 
 namespace {
 static const std::vector<std::unique_ptr<powermeterIntf>> EMPTY_POWERMETER_VECTOR;
@@ -2173,29 +2175,6 @@ void EvseManager::apply_new_target_voltage_current() {
 bool EvseManager::session_is_iso_d20_ac_bpt() {
     return selected_d20_energy_service.has_value() &&
            selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT;
-}
-
-static std::optional<float> min_optional(std::optional<float> a, std::optional<float> b) {
-    // if both a and b have values, return the smaller one.
-    if (a.has_value() and b.has_value()) {
-        return (b.value() < a.value() ? b.value() : a.value());
-    }
-    // if a has a value, return that one.
-    if (a.has_value()) {
-        return a;
-    }
-
-    // else return b. It is either the only value or empty.
-    return b;
-}
-
-static float min_optional(float a, std::optional<float> b) {
-    // if both a and b have values, return the smaller one.
-    if (b.has_value()) {
-        return (b.value() < a ? b.value() : a);
-    }
-    // else return a
-    return a;
 }
 
 types::power_supply_DC::Capabilities EvseManager::get_powersupply_capabilities() {

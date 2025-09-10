@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <date/date.h>
 #include <date/tz.h>
+#include <everest/util/comparison.hpp>
 #include <fmt/core.h>
 #include <string>
 #include <utils/date.hpp>
@@ -15,11 +16,14 @@
 namespace module {
 namespace energy_grid {
 
-// helper to find out if voltage changed (more then noise)
-static bool voltage_changed(float a, float b) {
-    constexpr float noise_voltage = 1;
-    return (fabs(a - b) > noise_voltage);
+template <class T, class U> auto almost_eq(T const& a, U const& b) {
+    return everest::lib::util::almost_eq<1>(a, b);
 }
+
+auto const voltage_changed = [](float val_a, float val_b) {
+    return not everest::lib::util::in_noise_range(val_a, val_b, 1.0F);
+};
+// helper to find out if voltage changed (more then noise)
 
 void energyImpl::init() {
 
@@ -312,20 +316,6 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
 
     publish_energy_flow_request(energy_flow_request);
     // EVLOG_info << "Outgoing request " << energy_flow_request;
-}
-
-static bool almost_eq(float a, float b) {
-    return a > b - 0.1 and a < b + 0.1;
-}
-
-static bool almost_eq(std::optional<float> const& a, std::optional<float> const& b) {
-    if (a.has_value() and b.has_value()) {
-        return almost_eq(a.value(), b.value());
-    }
-    if (not a.has_value() and not b.has_value()) {
-        return true;
-    }
-    return false;
 }
 
 static bool almost_eq(types::power_supply_DC::Capabilities const& lhs,
