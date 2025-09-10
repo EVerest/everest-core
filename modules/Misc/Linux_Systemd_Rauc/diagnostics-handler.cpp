@@ -2,7 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "diagnostics-handler.hpp"
-#include "companion/system/safe-system.hpp"
+#include <everest/lib/system/safe-system.hpp>
 #include <everest/logging.hpp>
 
 #include <fcntl.h>
@@ -64,13 +64,13 @@ DiagnosticsHandler::log_result_t DiagnosticsHandler::collect_logs(int fd, const 
     }
     args.push_back(nullptr);
 
-    const auto res = basecamp::companion::safe_system(fd, cmd, &args);
-    if (res.status != basecamp::companion::CommandExecutionStatus::CMD_SUCCESS || res.code != 0) {
+    const auto res = everest::lib::system::safe_system(fd, cmd, &args);
+    if (res.status != everest::lib::system::CommandExecutionStatus::CMD_SUCCESS || res.code != 0) {
         EVLOG_error << "Unable to extract journal logs from:" << from.value_or("<not specified>")
                     << " to:" << to.value_or("<not specified>") << " ("
-                    << basecamp::companion::cmd_execution_status_to_string(res.status) << ": "
+                    << everest::lib::system::cmd_execution_status_to_string(res.status) << ": "
                     << std::to_string(res.code) << ")";
-        EVLOG_info << "Failed command: '" << basecamp::companion::command_string_repr(cmd, args) << "'";
+        EVLOG_info << "Failed command: '" << everest::lib::system::command_string_repr(cmd, args) << "'";
         result = log_result_t::error_parameter;
     }
 

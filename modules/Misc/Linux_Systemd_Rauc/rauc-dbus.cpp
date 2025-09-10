@@ -6,7 +6,7 @@
 #include <everest/logging.hpp>
 
 namespace module {
-using namespace basecamp::companion::system;
+using namespace everest::lib::system;
 
 void Rauc::configure_handlers() {
     namespace interface = rauc_dbus::interface;

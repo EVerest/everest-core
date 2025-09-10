@@ -4,7 +4,7 @@
 #ifndef RAUC_DBUS_HPP
 #define RAUC_DBUS_HPP
 
-#include <companion/system/rauc-dbus-base.hpp>
+#include <everest/system/rauc-dbus-base.hpp>
 #include <generated/interfaces/rauc_status/Implementation.hpp>
 #include <sigslot/signal.hpp>
 
@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 namespace module {
-namespace rauc_dbus = basecamp::companion::system::rauc_dbus;
+namespace rauc_dbus = everest::lib::system::rauc_dbus;
 
 class Rauc : public rauc_dbus::RaucBaseSync {
 public:
