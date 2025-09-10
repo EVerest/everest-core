@@ -100,7 +100,7 @@ everest::lib::system::CommandResult wait_for_process(int pid, int timeout_s) {
 }
 
 everest::lib::system::CommandResult safe_system_command(int fd, const char* pathname, char* const argv[],
-                                                       int timeout_s) {
+                                                        int timeout_s) {
     using CmdExecStatus = everest::lib::system::CommandExecutionStatus;
 
     pid_t pid = fork();

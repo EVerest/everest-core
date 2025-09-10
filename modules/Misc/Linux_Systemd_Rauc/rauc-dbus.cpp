@@ -25,13 +25,13 @@ void Rauc::configure_handlers() {
                 // We will use this on next boot to signal a Success/Failed Installation
                 signal_store_update_transaction(create_transaction(update_request_id, timeout_us));
                 // The module code should reboot now since we signal InstallRebooting.
-                signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-                    types::system::FirmwareUpdateStatusEnum::InstallRebooting, update_request_id, 0});
+                signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::InstallRebooting,
+                                              update_request_id);
             } else {
                 EVLOG_error << "RAUC: Installation failed with error code: " << i;
                 if (is_installing) {
-                    signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-                        types::system::FirmwareUpdateStatusEnum::InstallVerificationFailed, update_request_id, 0});
+                    signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::InstallVerificationFailed,
+                                                  update_request_id);
                     is_installing = false;
                 }
             }
@@ -65,34 +65,31 @@ void Rauc::configure_handlers() {
                             // Map progress to OCPP structs
 
                             if (r.description.find("Verifying signature done") != std::string::npos) {
-                                signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-                                    types::system::FirmwareUpdateStatusEnum::Downloaded, update_request_id, r.percent});
-                                signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-                                    types::system::FirmwareUpdateStatusEnum::SignatureVerified, update_request_id,
-                                    r.percent});
+                                signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::Downloaded,
+                                                              update_request_id);
+                                signal_firmware_update_status(
+                                    types::system::FirmwareUpdateStatusEnum::SignatureVerified, update_request_id);
                                 signature_verified = true;
 
                             } else if (r.description.find("Verifying signature failed") != std::string::npos) {
-                                signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-                                    types::system::FirmwareUpdateStatusEnum::Downloaded, update_request_id, r.percent});
-                                signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-                                    types::system::FirmwareUpdateStatusEnum::InvalidSignature, update_request_id,
-                                    r.percent});
+                                signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::Downloaded,
+                                                              update_request_id);
+                                signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::InvalidSignature,
+                                                              update_request_id);
                                 signature_verified = true;
 
                                 // If bundle checking failed but we never got to signature verification download must
                                 // have failed
                             } else if (!signature_verified &&
                                        r.description.find("Checking bundle failed") != std::string::npos) {
-                                signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-                                    types::system::FirmwareUpdateStatusEnum::DownloadFailed, update_request_id,
-                                    r.percent});
+                                signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::DownloadFailed,
+                                                              update_request_id);
 
                             } else if (r.description.find("Copying") != std::string::npos &&
                                        r.description.find("done") == std::string::npos) {
                                 is_installing = true;
-                                signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-                                    types::system::FirmwareUpdateStatusEnum::Installing, update_request_id, r.percent});
+                                signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::Installing,
+                                                              update_request_id);
                             }
 
                         } else if (key == property::Operation) {
@@ -135,11 +132,9 @@ void Rauc::check_previous_transaction(UpdateTransaction t) {
     signal_remove_update_transaction();
 
     if (rauc_dbus::RaucBaseSync::check_previous_transaction(t, timeout_us)) {
-        signal_firmware_update_status(
-            types::rauc_status::RaucUpdateStatus{types::system::FirmwareUpdateStatusEnum::Installed, t.request_id, 0});
+        signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::Installed, t.request_id);
     } else {
-        signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-            types::system::FirmwareUpdateStatusEnum::InstallationFailed, t.request_id, 0});
+        signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::InstallationFailed, t.request_id);
     }
 }
 
@@ -151,8 +146,7 @@ rauc_dbus::rauc_messages::CmdResult Rauc::install_bundle(const std::string& file
 
     const auto ret = rauc_dbus::RaucBaseSync::install_bundle(filename, timeout_us);
     if (ret.success) {
-        signal_firmware_update_status(types::rauc_status::RaucUpdateStatus{
-            types::system::FirmwareUpdateStatusEnum::Downloading, update_request_id, 0});
+        signal_firmware_update_status(types::system::FirmwareUpdateStatusEnum::Downloading, update_request_id);
     } else {
         update_request_id = request_id_default;
     }

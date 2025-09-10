@@ -5,8 +5,9 @@
 #define RAUC_DBUS_HPP
 
 #include <everest/system/rauc-dbus-base.hpp>
-#include <generated/interfaces/rauc_status/Implementation.hpp>
 #include <sigslot/signal.hpp>
+
+#include <generated/types/system.hpp>
 
 #include <atomic>
 #include <cstdint>
@@ -48,7 +49,7 @@ public:
         rauc_dbus::RaucBaseSync::mark(mark_s, slot, timeout_us);
     }
 
-    sigslot::signal<types::rauc_status::RaucUpdateStatus> signal_firmware_update_status;
+    sigslot::signal<types::system::FirmwareUpdateStatusEnum, int32_t> signal_firmware_update_status;
     // Emitted when installed update is ready for reboot, the transaction needs to be stored persistently. On next boot,
     // call check_previous_transaction() with this as an argument
     sigslot::signal<UpdateTransaction> signal_store_update_transaction;

@@ -47,29 +47,29 @@ void Linux_Systemd_Rauc::init() {
         r_store->call_delete(store_path);
     });
 
-    rauc.signal_firmware_update_status.connect([this](const auto& s) {
-        EVLOG_info << "Report status to OCPP: "
-                   << types::system::firmware_update_status_enum_to_string(s.firmware_update_status)
-                   << " Request id: " << s.request_id << " Progress: " << s.progress << '%';
-        p_main->publish_firmware_update_status({s.firmware_update_status, s.request_id});
+    rauc.signal_firmware_update_status.connect(
+        [this](const types::system::FirmwareUpdateStatusEnum& status, int32_t request_id) {
+            EVLOG_info << "Report status to OCPP: " << types::system::firmware_update_status_enum_to_string(status)
+                       << " Request id: " << request_id;
+            p_main->publish_firmware_update_status({status, request_id});
 
-        if (s.firmware_update_status == types::system::FirmwareUpdateStatusEnum::InstallRebooting) {
+            if (status == types::system::FirmwareUpdateStatusEnum::InstallRebooting) {
 
-            std::lock_guard<std::recursive_mutex> lock(this->firmware_update_progress_mx);
-            if (this->firmware_update_waiting_for_ocpp_unblocking) {
-                EVLOG_info << "Reboot is blocked by OCPP (waiting for 'allow_firmware_installation' call)";
-                this->firmware_update_reboot_scheduled = true;
-            } else {
-                reboot_after_firmware_update();
+                std::lock_guard<std::recursive_mutex> lock(this->firmware_update_progress_mx);
+                if (this->firmware_update_waiting_for_ocpp_unblocking) {
+                    EVLOG_info << "Reboot is blocked by OCPP (waiting for 'allow_firmware_installation' call)";
+                    this->firmware_update_reboot_scheduled = true;
+                } else {
+                    reboot_after_firmware_update();
+                }
             }
-        }
 
-        if (s.firmware_update_status == types::system::FirmwareUpdateStatusEnum::InstallVerificationFailed) {
-            EVLOG_info << "Resetting firmware update state due to reported 'InstallVerificationFailed' status.";
-            std::unique_lock<std::recursive_mutex> lock(this->firmware_update_progress_mx);
-            this->firmware_update_waiting_for_ocpp_unblocking = false;
-        }
-    });
+            if (status == types::system::FirmwareUpdateStatusEnum::InstallVerificationFailed) {
+                EVLOG_info << "Resetting firmware update state due to reported 'InstallVerificationFailed' status.";
+                std::unique_lock<std::recursive_mutex> lock(this->firmware_update_progress_mx);
+                this->firmware_update_waiting_for_ocpp_unblocking = false;
+            }
+        });
 }
 
 void Linux_Systemd_Rauc::reboot_after_firmware_update() {

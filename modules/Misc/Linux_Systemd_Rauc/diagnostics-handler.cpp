@@ -2,8 +2,8 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "diagnostics-handler.hpp"
-#include <everest/lib/system/safe-system.hpp>
 #include <everest/logging.hpp>
+#include <everest/system/safe-system.hpp>
 
 #include <fcntl.h>
 #include <sys/stat.h>
