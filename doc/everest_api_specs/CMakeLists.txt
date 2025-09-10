@@ -19,10 +19,11 @@ set(SET12 "evse_manager_consumer_API" "EvseManagerConsumerAPI" "evse_manager_con
 set(SET13 "generic_error_raiser_API" "GenericErrorRaiserAPI" "generic_error_raiser_api" "err")
 set(SET14 "over_voltage_monitor_API" "OverVoltageMonitorAPI" "over_voltage_monitor_api" "ovm")
 set(SET15 "external_energy_limits_consumer_API" "ExternalEnergyLimitsConsumerAPI" "external_energy_limits_consumer_api" "eel")
+set(SET16 "dc_external_derate_consumer_API" "DcExternalDerateConsumerAPI" "dc_external_derate_consumer_api" "ded")
 
 
 # create a list to iterate over (for documetation generation and client)
-set(API_SPECS "SET01" "SET02" "SET03" "SET04" "SET05" "SET06" "SET07" "SET08" "SET09" "SET10" "SET11" "SET12" "SET13" "SET14" "SET15")
+set(API_SPECS "SET01" "SET02" "SET03" "SET04" "SET05" "SET06" "SET07" "SET08" "SET09" "SET10" "SET11" "SET12" "SET13" "SET14" "SET15" "SET16")
 
 # Iterate over the list and create the documentation
 if(EVEREST_BUILD_API_DOCS)
