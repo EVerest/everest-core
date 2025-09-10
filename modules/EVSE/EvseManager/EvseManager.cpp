@@ -12,8 +12,10 @@
 #include "Timeout.hpp"
 #include "scoped_lock_timeout.hpp"
 #include "utils.hpp"
+#include <everest/util/comparison.hpp>
 
 using namespace std::literals::chrono_literals;
+using everest::lib::util::min_optional;
 
 namespace {
 static const std::vector<std::unique_ptr<powermeterIntf>> EMPTY_POWERMETER_VECTOR;
@@ -52,11 +54,11 @@ void EvseManager::init() {
 
     store = std::unique_ptr<PersistentStore>(new PersistentStore(r_store, info.id));
 
-    random_delay_enabled = config.uk_smartcharging_random_delay_enable;
-    random_delay_max_duration = std::chrono::seconds(config.uk_smartcharging_random_delay_max_duration);
-    if (random_delay_enabled) {
+    random_delay.enabled = config.uk_smartcharging_random_delay_enable;
+    random_delay.max_duration = std::chrono::seconds(config.uk_smartcharging_random_delay_max_duration);
+    if (random_delay.enabled) {
         EVLOG_info << "UK Smart Charging regulations: enabled random delay with a default of "
-                   << random_delay_max_duration.load().count() << "s.";
+                   << random_delay.max_duration.load().count() << "s.";
     }
 
     session_log.setPath(config.session_logging_path);
@@ -2031,29 +2033,6 @@ void EvseManager::apply_new_target_voltage_current() {
     if (latest_target_voltage > 0) {
         powersupply_DC_set(latest_target_voltage, latest_target_current);
     }
-}
-
-static std::optional<float> min_optional(std::optional<float> a, std::optional<float> b) {
-    // if both a and b have values, return the smaller one.
-    if (a.has_value() and b.has_value()) {
-        return (b.value() < a.value() ? b.value() : a.value());
-    }
-    // if a has a value, return that one.
-    if (a.has_value()) {
-        return a;
-    }
-
-    // else return b. It is either the only value or empty.
-    return b;
-}
-
-static float min_optional(float a, std::optional<float> b) {
-    // if both a and b have values, return the smaller one.
-    if (b.has_value()) {
-        return (b.value() < a ? b.value() : a);
-    }
-    // else return a
-    return a;
 }
 
 types::power_supply_DC::Capabilities EvseManager::get_powersupply_capabilities() {
