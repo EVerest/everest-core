@@ -5,6 +5,7 @@ add_subdirectory(everest_api_types)
 add_subdirectory(external_energy_limits)
 add_subdirectory(helpers)
 add_subdirectory(run_application)
+add_subdirectory(system) # TODO: Make dependent on module Linux_Systemd_Rauc enabled?
 add_subdirectory(tls)
 add_subdirectory(util)
 add_subdirectory(io)
