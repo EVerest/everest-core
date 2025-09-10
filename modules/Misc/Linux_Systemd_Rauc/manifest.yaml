@@ -25,9 +25,6 @@ provides:
   main:
     description: Implements the system interface
     interface: system
-  rauc:
-    description: Implements the rauc_status interface
-    interface: rauc_status
 requires:
   store:
     interface: kvs
