@@ -1934,4 +1934,54 @@ void EvseManager::apply_new_target_voltage_current() {
     }
 }
 
+static std::optional<float> min_optional(std::optional<float> a, std::optional<float> b) {
+    // if both a and b have values, return the smaller one.
+    if (a.has_value() and b.has_value()) {
+        return (b.value() < a.value() ? b.value() : a.value());
+    }
+    // if a has a value, return that one.
+    if (a.has_value()) {
+        return a;
+    }
+
+    // else return b. It is either the only value or empty.
+    return b;
+}
+
+static float min_optional(float a, std::optional<float> b) {
+    // if both a and b have values, return the smaller one.
+    if (b.has_value()) {
+        return (b.value() < a ? b.value() : a);
+    }
+    // else return a
+    return a;
+}
+
+types::power_supply_DC::Capabilities EvseManager::get_powersupply_capabilities() {
+    types::power_supply_DC::Capabilities caps;
+    types::dc_external_derate::ExternalDerating derate;
+
+    {
+        std::scoped_lock lock(powersupply_capabilities_mutex);
+        caps = powersupply_capabilities;
+    }
+    {
+        std::scoped_lock lock(dc_external_derate_mutex);
+        derate = dc_external_derate;
+    }
+
+    // Apply external derating if set
+    caps.max_export_current_A = min_optional(caps.max_export_current_A, derate.max_export_current_A);
+    caps.max_import_current_A = min_optional(caps.max_import_current_A, derate.max_import_current_A);
+    caps.max_export_power_W = min_optional(caps.max_export_power_W, derate.max_export_power_W);
+    caps.max_import_power_W = min_optional(caps.max_import_power_W, derate.max_import_power_W);
+
+    return caps;
+}
+
+void EvseManager::set_external_derating(types::dc_external_derate::ExternalDerating d) {
+    std::scoped_lock lock(dc_external_derate_mutex);
+    dc_external_derate = d;
+}
+
 } // namespace module

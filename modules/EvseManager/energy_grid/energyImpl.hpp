@@ -56,6 +56,7 @@ private:
     float last_enforced_limits_watt{-9999};
     float last_target_voltage{-9999};
     float last_actual_voltage{-9999};
+    types::power_supply_DC::Capabilities last_powersupply_capabilities;
     void clear_import_request_schedule();
     void clear_export_request_schedule();
     void clear_request_schedules();

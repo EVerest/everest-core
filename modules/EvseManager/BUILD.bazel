@@ -5,6 +5,7 @@ IMPLS = [
     "evse",
     "token_provider",
     "random_delay",
+    "dc_external_derate"
 ]
 
 cc_everest_module(
