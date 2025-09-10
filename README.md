@@ -46,7 +46,8 @@ sudo apt update
 sudo apt install -y python3-pip python3-venv git rsync wget cmake doxygen \
   graphviz build-essential clang-tidy cppcheck openjdk-17-jdk npm docker \
   docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev \
-  clang-format curl rfkill libpcap-dev libevent-dev pkg-config libcap-dev
+  clang-format curl rfkill libpcap-dev libevent-dev pkg-config libcap-dev \
+  libsdbus-c++-dev
 ```
 
 ### OpenSuse
