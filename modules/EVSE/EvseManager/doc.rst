@@ -233,7 +233,7 @@ This module subscribes to all errors of the following requirements:
 * power_supply_DC
 * powermeter (if the config option fail_on_powermeter_errors is set true)
 
-A raised error can cause the EvseManager to become Inoperative. This means that charging is not possible until the error is cleared.
+A raised error can cause the EvseManager to stop the charging session and become inoperative. Charging is not possible until the error is cleared.
 If no charging session is currently running, it will prevent sessions from being started. If a charging session is currently running and an error is raised
 this will interrupt the charging session.
 
@@ -244,7 +244,6 @@ evse_manager
 -------------
 
 * evse_manager/Inoperative
-* evse_manager/MREC22ResistanceFault
 * evse_manager/MREC11CableCheckFault
 
 
@@ -282,3 +281,20 @@ Powermeter errors cause the EvseManager to become Inoperative, if fail_on_powerm
 
 * powermeter/CommunicationFault
 
+When a charging session is stopped because of an error, the EvseManager differentiates between **Emergency Shutdowns** and **Error Shutdowns**. The severity of the 
+error influences the type of the shudown. Emergency shutdowns are caused by errors with `Severity::High` and error shutdowns are caused by errors with `Severity::Medium` or `Severity::Low`.
+
+In case of an **Emergency Shutdown** the EvseManager will immediately:
+
+* Signal PWM state F if HLC is not active
+* Turn off the PWM
+* Turn off the DC power supply in case of DC
+* Signal to open the contactor
+
+In case of an **Error Shutdown** the EvseManager will:
+
+* Signal PWM state F if HLC is not active
+* Keep the PWM on if HLC is active
+* Turn off the DC power supply in case of DC
+* Signal to open the contactor
+* Report the error via HLC to the EV (if HLC active)
