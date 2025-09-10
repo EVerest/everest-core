@@ -11,7 +11,6 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/rauc_status/Implementation.hpp>
 #include <generated/interfaces/system/Implementation.hpp>
 
 // headers for required interface implementations
@@ -36,16 +35,11 @@ struct Conf {
 class Linux_Systemd_Rauc : public Everest::ModuleBase {
 public:
     Linux_Systemd_Rauc() = delete;
-    Linux_Systemd_Rauc(const ModuleInfo& info, std::unique_ptr<systemImplBase> p_main,
-                       std::unique_ptr<rauc_statusImplBase> p_rauc, std::unique_ptr<kvsIntf> r_store, Conf& config) :
-        ModuleBase(info),
-        p_main(std::move(p_main)),
-        p_rauc(std::move(p_rauc)),
-        r_store(std::move(r_store)),
-        config(config){};
+    Linux_Systemd_Rauc(const ModuleInfo& info, std::unique_ptr<systemImplBase> p_main, std::unique_ptr<kvsIntf> r_store,
+                       Conf& config) :
+        ModuleBase(info), p_main(std::move(p_main)), r_store(std::move(r_store)), config(config){};
 
     const std::unique_ptr<systemImplBase> p_main;
-    const std::unique_ptr<rauc_statusImplBase> p_rauc;
     const std::unique_ptr<kvsIntf> r_store;
     const Conf& config;
 

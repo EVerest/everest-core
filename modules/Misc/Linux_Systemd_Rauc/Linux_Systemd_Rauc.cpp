@@ -30,7 +30,6 @@ namespace module {
 
 void Linux_Systemd_Rauc::init() {
     invoke_init(*p_main);
-    invoke_init(*p_rauc);
     rauc.configure();
 
     store_path = info.id + "_update_transaction";
@@ -53,7 +52,6 @@ void Linux_Systemd_Rauc::init() {
                    << types::system::firmware_update_status_enum_to_string(s.firmware_update_status)
                    << " Request id: " << s.request_id << " Progress: " << s.progress << '%';
         p_main->publish_firmware_update_status({s.firmware_update_status, s.request_id});
-        p_rauc->publish_rauc_update_status(s);
 
         if (s.firmware_update_status == types::system::FirmwareUpdateStatusEnum::InstallRebooting) {
 
@@ -97,7 +95,6 @@ void Linux_Systemd_Rauc::reboot_after_firmware_update() {
 
 void Linux_Systemd_Rauc::ready() {
     invoke_ready(*p_main);
-    invoke_ready(*p_rauc);
 
     // Check if we are booting directly after an update install,
     // in this case close the update process on the CSMS
