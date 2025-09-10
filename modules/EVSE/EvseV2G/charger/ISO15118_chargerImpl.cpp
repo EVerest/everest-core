@@ -60,6 +60,40 @@ void ISO15118_chargerImpl::init() {
 
     v2g_ctx->session.auth_timeout_eim = mod->config.auth_timeout_eim;
     v2g_ctx->session.auth_timeout_pnc = mod->config.auth_timeout_pnc;
+
+    v2g_ctx->supported_vas_services_per_provider.reserve(mod->r_iso15118_vas.size());
+
+    for (size_t i = 0; i < mod->r_iso15118_vas.size(); i++) {
+        auto& supported_vas_services = v2g_ctx->supported_vas_services_per_provider.emplace_back();
+
+        this->mod->r_iso15118_vas.at(i)->subscribe_offered_vas(
+            [&supported_vas_services](const types::iso15118_vas::OfferedServices& offered_services) {
+                for (auto service_id : offered_services.service_ids) {
+                    const auto id = static_cast<uint16_t>(service_id);
+                    if (id == V2G_SERVICE_ID_CHARGING) {
+                        continue;
+                    }
+                    supported_vas_services.push_back(id);
+
+                    iso2_ServiceType vas_service{};
+                    init_iso2_ServiceType(&vas_service);
+                    vas_service.FreeService = true;
+                    vas_service.ServiceID = id;
+
+                    if (id == V2G_SERVICE_ID_CERTIFICATE) {
+                        vas_service.ServiceCategory = iso2_serviceCategoryType_ContractCertificate;
+                    } else if (id == V2G_SERVICE_ID_INTERNET) {
+                        vas_service.ServiceCategory = iso2_serviceCategoryType_Internet;
+                    } else {
+                        vas_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
+                    }
+
+                    if (not add_service_to_service_list(v2g_ctx, vas_service)) {
+                        break;
+                    }
+                }
+            });
+    }
 }
 
 void ISO15118_chargerImpl::ready() {

@@ -1,0 +1,20 @@
+description: Power supply DC types
+types:
+  ExternalDerating:
+    description: Derate DC power supply Capabilities from an external source.
+    type: object
+    additionalProperties: false
+    properties:
+      max_export_current_A:
+        description: Maximum current that the power supply can output in Ampere
+        type: number
+      max_import_current_A:
+        description: Maximum current that the power supply can sink in Ampere
+        type: number
+      max_export_power_W:
+        description: Maximum export power that the power supply can output in Watt
+        type: number
+      max_import_power_W:
+        description: Maximum import power that the power supply can sink in Watt
+        type: number
+

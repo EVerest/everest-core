@@ -21,6 +21,7 @@
 #include "ModuleAdapterStub.hpp"
 #include "evse_securityIntfStub.hpp"
 #include "iso15118_extensionsImplStub.hpp"
+#include "iso15118_vasIntfStub.hpp"
 
 #include <connection.hpp>
 #include <everest/tls/tls.hpp>
@@ -128,8 +129,9 @@ int main(int argc, char** argv) {
     module::stub::ISO15118_chargerImplStub charger(adapter);
     EvseSecurity security(adapter);
     module::stub::iso15118_extensionsImplStub extensions;
+    module::stub::iso15118_vasIntfStub vas_item(adapter);
 
-    auto* ctx = v2g_ctx_create(&charger, &extensions, &security);
+    auto* ctx = v2g_ctx_create(&charger, &extensions, &security, {&vas_item});
 
     if (ctx == nullptr) {
         std::cerr << "failed to create context" << std::endl;

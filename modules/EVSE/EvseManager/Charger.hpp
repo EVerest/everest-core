@@ -112,7 +112,6 @@ public:
     void enable_disable_initial_state_publish();
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
-    void set_faulted();
     void set_hlc_error();
 
     // Public interface during charging

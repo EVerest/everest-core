@@ -1670,11 +1670,6 @@ void Charger::enable_disable_source_table_update(const types::evse_manager::Enab
     }
 }
 
-void Charger::set_faulted() {
-    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_set_faulted);
-    shared_context.error_prevent_charging_flag = true;
-}
-
 std::string Charger::evse_state_to_string(EvseState s) {
     switch (s) {
     case EvseState::Disabled:

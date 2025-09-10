@@ -55,9 +55,6 @@ void evse_managerImpl::init() {
                                                         types::evse_manager::Enable_state::Disable, 100});
                         });
 
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/faulted", mod->config.connector_id),
-                        [&charger = mod->charger](const std::string& data) { charger->set_faulted(); });
-
     mod->mqtt.subscribe(
         fmt::format("everest_external/nodered/{}/cmd/switch_three_phases_while_charging", mod->config.connector_id),
         [&charger = mod->charger](const std::string& data) {
@@ -400,10 +397,6 @@ bool evse_managerImpl::handle_reserve(int& reservation_id) {
 
 void evse_managerImpl::handle_cancel_reservation() {
     mod->cancel_reservation(true);
-};
-
-void evse_managerImpl::handle_set_faulted() {
-    mod->charger->set_faulted();
 };
 
 bool evse_managerImpl::handle_pause_charging() {
