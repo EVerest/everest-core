@@ -2,7 +2,6 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "Linux_Systemd_Rauc.hpp"
-#include <companion/system/companion_logging.hpp>
 #include <exception>
 #include <string_view>
 #include <type_traits>
@@ -25,12 +24,11 @@ template <typename T> void safe_extract(T& dst, const Object& src, const std::st
 
 #include <stdexcept>
 
-#include "companion/system/safe-system.hpp"
+#include <everest/system/safe-system.hpp>
 
 namespace module {
 
 void Linux_Systemd_Rauc::init() {
-    basecamp::companion::system::everest::configure_everest_logging();
     invoke_init(*p_main);
     invoke_init(*p_rauc);
     rauc.configure();
@@ -84,13 +82,13 @@ void Linux_Systemd_Rauc::reboot_after_firmware_update() {
     EVLOG_error << "-------------- Reboot after installation of update in 10 seconds ---------------";
     sleep(10);
     try {
-        auto [cmd, args] = basecamp::companion::split_command_line(config.RebootCommand);
-        auto res = basecamp::companion::safe_system(cmd, &args);
-        if (res.status != basecamp::companion::CommandExecutionStatus::CMD_SUCCESS || res.code != 0) {
+        auto [cmd, args] = everest::lib::system::split_command_line(config.RebootCommand);
+        auto res = everest::lib::system::safe_system(cmd, &args);
+        if (res.status != everest::lib::system::CommandExecutionStatus::CMD_SUCCESS || res.code != 0) {
             EVLOG_error << "Unable to trigger reboot: ("
-                        << basecamp::companion::cmd_execution_status_to_string(res.status) << ": "
+                        << everest::lib::system::cmd_execution_status_to_string(res.status) << ": "
                         << std::to_string(res.code) << ")";
-            EVLOG_info << "Failed command: '" << basecamp::companion::command_string_repr(cmd, args) << "'";
+            EVLOG_info << "Failed command: '" << everest::lib::system::command_string_repr(cmd, args) << "'";
         }
     } catch (const std::exception& ex) {
         EVLOG_error << "Configured reboot command is invalid: " << ex.what();
