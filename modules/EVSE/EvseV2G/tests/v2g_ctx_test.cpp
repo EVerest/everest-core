@@ -7,6 +7,7 @@
 #include "ModuleAdapterStub.hpp"
 #include "evse_securityIntfStub.hpp"
 #include "iso15118_extensionsImplStub.hpp"
+#include "iso15118_vasIntfStub.hpp"
 #include "utest_log.hpp"
 #include "v2g.hpp"
 
@@ -27,8 +28,9 @@ protected:
     module::stub::ISO15118_chargerImplStub charger;
     module::stub::evse_securityIntfStub security;
     module::stub::iso15118_extensionsImplStub extensions;
+    module::stub::iso15118_vasIntfStub vas_item;
 
-    V2gCtxTest() : charger(adapter), security(adapter) {
+    V2gCtxTest() : charger(adapter), security(adapter), vas_item(adapter) {
     }
 
     void v2g_ctx_init_charging_state_cleared() {
@@ -59,7 +61,7 @@ protected:
     }
 
     void SetUp() override {
-        auto ptr = v2g_ctx_create(&charger, &extensions, &security);
+        auto ptr = v2g_ctx_create(&charger, &extensions, &security, {&vas_item});
         ctx = std::unique_ptr<v2g_context, v2g_contextDeleter>(ptr, v2g_contextDeleter());
         module::stub::clear_logs();
     }
@@ -161,7 +163,9 @@ TEST(valgrind, memcheck) {
     module::stub::ISO15118_chargerImplStub charger(adapter);
     module::stub::evse_securityIntfStub security(adapter);
     module::stub::iso15118_extensionsImplStub extensions;
-    auto ptr = v2g_ctx_create(&charger, &extensions, &security);
+    module::stub::iso15118_vasIntfStub vas_item(adapter);
+
+    auto ptr = v2g_ctx_create(&charger, &extensions, &security, {&vas_item});
     v2g_ctx_free(ptr);
 }
 
