@@ -1,5 +1,4 @@
 use anyhow::Result;
-use rand::Rng;
 
 pub fn to_8_string(input: &[u16]) -> Result<String> {
     let u8_slice = input.iter().flat_map(|&x| u16::to_be_bytes(x)).collect();
@@ -43,20 +42,6 @@ pub fn string_to_vec(input: &str) -> Vec<u16> {
             value
         })
         .collect()
-}
-
-pub fn create_random_meter_session_id() -> String {
-    let start = format!("{:06X}", rand::thread_rng().gen_range(0..=0xFFFFFF));
-    let hex_time = format!(
-        "{:X}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs()
-    );
-    let end = format!("{:06X}", rand::thread_rng().gen_range(0..=0xFFFFFF));
-
-    start + &hex_time + &end
 }
 
 pub fn to_hex_string(input: Vec<u16>) -> String {

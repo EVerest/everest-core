@@ -59,7 +59,7 @@ use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use utils::{
-    correct_signature, counter, create_ocmf, create_random_meter_session_id, from_t5_format,
+    correct_signature, counter, create_ocmf, from_t5_format,
     from_t6_format, string_to_vec, to_8_string, to_hex_string,
 };
 
@@ -693,12 +693,11 @@ impl ReadyState {
 
     fn write_metadata(&self, evse_id: &str, tariff_text: &str) -> Result<()> {
         let mut ocmf_data = self.ocmf_data.clone();
-        let session_id = create_random_meter_session_id();
         // WM3M4 V2 supports OCMF 1.3.0. There we have a dedicated field `TT`
         // for the tariff text. If we implement support for it add logic here
         // to write it into the right field.
         let mut identification_data =
-            std::collections::LinkedList::from([&session_id, tariff_text]);
+            std::collections::LinkedList::from([tariff_text]);
 
         // Overwrite the `charge_point_identification` if needed. Otherwise drop
         // it into the `identification_data`.
@@ -1240,17 +1239,17 @@ mod tests {
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         mock.expect_modbus_write_single_register()
-            .with(eq(205), eq(7056), eq(1234))
+            .with(eq(184), eq(7056), eq(1234))
             .times(1)
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         mock.expect_modbus_read_holding_registers()
-            .with(eq(7100), eq(103), eq(1234))
+            .with(eq(7100), eq(92), eq(1234))
             .times(1)
             .returning(|_, _, _| {
                 Ok(generated::types::serial_comm_hub_requests::Result {
                     status_code: StatusCodeEnum::Success,
-                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 103]),
+                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 92]),
                 })
             });
 
