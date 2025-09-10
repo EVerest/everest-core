@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <date/date.h>
 #include <date/tz.h>
+#include <everest/util/comparison.hpp>
 #include <fmt/core.h>
 #include <string>
 #include <utils/date.hpp>
@@ -15,11 +16,11 @@
 namespace module {
 namespace energy_grid {
 
+auto const almost_eq = everest::lib::util::almost_eq<1, float>;
+auto const voltage_changed = [](float val_a, float val_b) {
+    return not everest::lib::util::in_noise_range(val_a, val_b, 1.0F);
+};
 // helper to find out if voltage changed (more then noise)
-static bool voltage_changed(float a, float b) {
-    constexpr float noise_voltage = 1;
-    return (fabs(a - b) > noise_voltage);
-}
 
 void energyImpl::init() {
 
@@ -311,10 +312,6 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
 
     publish_energy_flow_request(energy_flow_request);
     // EVLOG_info << "Outgoing request " << energy_flow_request;
-}
-
-static bool almost_eq(float a, float b) {
-    return a > b - 0.1 and a < b + 0.1;
 }
 
 // This is the decision logic when limits are changing.
