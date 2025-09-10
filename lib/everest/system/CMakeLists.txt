@@ -13,11 +13,6 @@ target_sources(everest_system
         src/safe-system.cpp
 )
 
-if (BUILD_TESTING)
-    target_compile_definitions(everest_system PUBLIC EVEREST_COVERAGE_ENABLED)
-    add_subdirectory(tests)
-endif()
-
 target_include_directories(everest_system
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -35,3 +30,8 @@ target_compile_definitions(everest_system
     PRIVATE
         SDBUSCPP_MAJOR_VERSION=${sdbus-c++_VERSION_MAJOR}
 )
+
+if (BUILD_TESTING)
+    target_compile_definitions(everest_system PUBLIC EVEREST_COVERAGE_ENABLED)
+    add_subdirectory(tests)
+endif()

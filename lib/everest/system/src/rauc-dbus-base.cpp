@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <everest/logging.hpp>
 #include <everest/system/dbus-base.hpp>
 #include <everest/system/rauc-dbus-base.hpp>
 #include <everest/system/safe-system.hpp>
-#include <everest/logging.hpp>
 
 #include <string>
 #include <string_view>
