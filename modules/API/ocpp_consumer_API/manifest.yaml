@@ -1,15 +1,15 @@
-description: API OCPP (consumer)
+description: API for OCPP (consumer API)
 config:
   cfg_communication_check_to_s:
-    description: "Moximum time between to two communication check events. Values <= 0 disables communication checks"
+    description: "Maximum time between to two communication check events. Values <= 0 disables communication checks."
     type: integer
     default: 5
   cfg_heartbeat_interval_ms:
-    description: "Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat"
+    description: "Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat."
     type: integer
     default: 1000
   cfg_request_reply_to_s:
-    description: "Moximum time between request and reply. After timeout the request is answerd with a default response."
+    description: "Maximum time between request and reply. After timeout the request is answered with a default response."
     type: integer
     default: 550
     minimum: 1
@@ -17,16 +17,17 @@ config:
 
 provides:
   main:
-    interface: generic_error
-    description: "API for using ocpp consumer. Provides generic errors."
-  data_transfer:
     interface: ocpp_data_transfer
-    description: "OCPP data transfer"
+    description: "Allows API clients to provide processed OCPP data transfers to EVerest."
+  generic_error:
+    interface: generic_error
+    description: "Provides errors types for module communication status."
 requires:
   ocpp:
     interface: ocpp
   data_transfer:
     interface: ocpp_data_transfer
+
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

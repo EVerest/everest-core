@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
 #ifndef DISPLAY_MESSAGE_API_HPP
 #define DISPLAY_MESSAGE_API_HPP
 
@@ -23,7 +24,9 @@
 // insert your custom include headers here
 #include "everest_api_types/utilities/CommCheckHandler.hpp"
 #include <everest_api_types/utilities/Topics.hpp>
-namespace ns_ev_api = everest::lib::API;
+
+namespace ev_API = everest::lib::API;
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -54,8 +57,8 @@ public:
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_ev_api::Topics& get_topics() const;
-    ns_ev_api::CommCheckHandler<generic_errorImplBase> comm_check;
+    const ev_API::Topics& get_topics() const;
+    ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -77,7 +80,7 @@ private:
     void generate_api_var_communication_check();
 
     void setup_heartbeat_generator();
-    ns_ev_api::Topics topics;
+    ev_API::Topics topics;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

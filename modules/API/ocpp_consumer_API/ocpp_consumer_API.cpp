@@ -17,13 +17,15 @@ template <class T> T const& to_external_api(T const& val) {
 
 namespace module {
 
-namespace ns_ev_api = everest::lib::API;
-namespace generic = ns_ev_api::V1_0::types::generic;
-namespace ns_types_ext = ns_ev_api::V1_0::types::ocpp;
-using ns_ev_api::deserialize;
+namespace API_types = ev_API::V1_0::types;
+namespace API_types_ext = API_types::ocpp;
+namespace API_generic = API_types::generic;
+using ev_API::deserialize;
 
 void ocpp_consumer_API::init() {
     invoke_init(*p_main);
+    invoke_init(*p_generic_error);
+
     topics.setTargetApiModuleID(info.id, "ocpp_consumer");
 
     generate_api_cmd_data_transfer();
@@ -37,6 +39,7 @@ void ocpp_consumer_API::init() {
 
 void ocpp_consumer_API::ready() {
     invoke_ready(*p_main);
+    invoke_ready(*p_generic_error);
 
     comm_check.start(config.cfg_communication_check_to_s);
     generate_api_var_communication_check();
@@ -45,8 +48,8 @@ void ocpp_consumer_API::ready() {
 }
 
 auto ocpp_consumer_API::forward_api_var(std::string const& var) {
-    using namespace ns_types_ext;
-    using namespace generic;
+    using namespace API_types_ext;
+    using namespace API_generic;
     auto topic = topics.everest_to_extern(var);
     return [this, topic](auto const& val) {
         try {
@@ -62,11 +65,11 @@ auto ocpp_consumer_API::forward_api_var(std::string const& var) {
 }
 
 void ocpp_consumer_API::generate_api_cmd_data_transfer() {
-    using namespace ns_types_ext;
+    using namespace API_types_ext;
     subscribe_api_topic("data_transfer_outgoing", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            ns_types_ext::DataTransferRequest request;
+            DataTransferRequest request;
             auto payload_ok = deserialize(msg.payload, request);
             if (payload_ok) {
                 auto int_reply = r_data_transfer->call_data_transfer(to_internal_api(request));
@@ -80,11 +83,11 @@ void ocpp_consumer_API::generate_api_cmd_data_transfer() {
 }
 
 void ocpp_consumer_API::generate_api_cmd_get_variables() {
-    using namespace ns_types_ext;
+    using namespace API_types_ext;
     subscribe_api_topic("get_variables", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            ns_types_ext::GetVariableRequestList request;
+            GetVariableRequestList request;
             auto payload_ok = deserialize(msg.payload, request);
             if (payload_ok) {
                 auto int_reply = r_ocpp->call_get_variables(to_internal_api(request));
@@ -98,11 +101,11 @@ void ocpp_consumer_API::generate_api_cmd_get_variables() {
 }
 
 void ocpp_consumer_API::generate_api_cmd_set_variables() {
-    using namespace ns_types_ext;
+    using namespace API_types_ext;
     subscribe_api_topic("set_variables", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            ns_types_ext::SetVariablesArgs request;
+            SetVariablesArgs request;
             auto payload_ok = deserialize(msg.payload, request);
             if (payload_ok) {
                 auto int_reply = r_ocpp->call_set_variables(to_internal_api(request.variables), request.source);
@@ -133,7 +136,7 @@ void ocpp_consumer_API::generate_api_var_ocpp_transaction_event() {
 
 void ocpp_consumer_API::generate_api_var_communication_check() {
     subscribe_api_topic("communication_check", [this](const json& data) {
-        auto val = generic::deserialize<bool>(data);
+        auto val = API_generic::deserialize<bool>(data);
         comm_check.set_value(val);
         return true;
     });
@@ -163,7 +166,7 @@ void ocpp_consumer_API::subscribe_api_topic(const std::string& var, const ParseA
     });
 }
 
-const ns_ev_api::Topics& ocpp_consumer_API::get_topics() const {
+const ev_API::Topics& ocpp_consumer_API::get_topics() const {
     return topics;
 }
 

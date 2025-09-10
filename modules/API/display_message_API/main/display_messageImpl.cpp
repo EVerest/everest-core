@@ -10,8 +10,7 @@
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 #include "generated/types/display_message.hpp"
 
-using namespace everest::lib::API;
-namespace ns_types_ext = everest::lib::API::V1_0::types::display_message;
+namespace API_types_ext = ev_API::V1_0::types::display_message;
 
 namespace module {
 namespace main {
@@ -25,9 +24,9 @@ void display_messageImpl::ready() {
 
 template <class T, class ReqT>
 auto display_messageImpl::generic_request_reply(T const& default_value, ReqT const& request, std::string const& topic) {
-    using namespace ns_types_ext;
+    using namespace API_types_ext;
     using ExtT = decltype(to_external_api(std::declval<T>()));
-    auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
+    auto result = ev_API::request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
     if (!result) {
         return default_value;
     }

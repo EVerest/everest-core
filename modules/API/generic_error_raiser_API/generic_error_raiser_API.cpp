@@ -7,10 +7,11 @@
 
 namespace module {
 
-using ns_ev_api::deserialize;
+using ev_API::deserialize;
 
 void generic_error_raiser_API::init() {
     invoke_init(*p_main);
+
     topics.setTargetApiModuleID(info.id, "generic_error_raiser");
 
     generate_api_var_raise_error();

@@ -8,7 +8,7 @@ namespace module {
 namespace main {
 
 using namespace everest::lib::API;
-namespace generic = everest::lib::API::V1_0::types::generic;
+namespace API_generic = API_types::generic;
 
 void over_voltage_monitorImpl::init() {
 }
@@ -18,7 +18,7 @@ void over_voltage_monitorImpl::ready() {
 
 void over_voltage_monitorImpl::handle_start(double& over_voltage_limit_V) {
     auto topic = mod->get_topics().everest_to_extern("start");
-    auto data = generic::serialize(over_voltage_limit_V);
+    auto data = API_generic::serialize(over_voltage_limit_V);
     mod->mqtt.publish(topic, data);
 }
 

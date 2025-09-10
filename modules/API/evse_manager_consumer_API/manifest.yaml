@@ -1,15 +1,15 @@
 description: API for using EVSE manager (consumer API)
 config:
   cfg_communication_check_to_s:
-    description: "Maximum time between to two communication check events. Values <= 0 disables communication checks"
+    description: "Maximum time between to two communication check events. Values <= 0 disables communication checks."
     type: integer
     default: 5
   cfg_heartbeat_interval_ms:
-    description: "Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat"
+    description: "Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat."
     type: integer
     default: 1000
   cfg_request_reply_to_s:
-    description: "Maximum time between request and reply. After timeout the request is answerd with a default response."
+    description: "Maximum time between request and reply. After timeout the request is answered with a default response."
     type: integer
     default: 550
     minimum: 1
@@ -18,7 +18,7 @@ config:
 provides:
   main:
     interface: generic_error
-    description: "API for using evse manager"
+    description: "Provides errors types for module communication status."
 requires:
   evse_manager:
     interface: evse_manager
@@ -42,6 +42,7 @@ requires:
     interface: uk_random_delay
     min_connections: 0
     max_connections: 1
+
 enable_external_mqtt: true
 enable_global_errors: true
 metadata:

@@ -12,17 +12,19 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-
-// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
-// insert your custom include headers here
-#include <everest_api_types/utilities/Topics.hpp>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-function"
 #include <generated/interfaces/powermeter/Implementation.hpp>
 #pragma GCC diagnostic pop
+
+// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
+// insert your custom include headers here
+#include <everest_api_types/utilities/Topics.hpp>
 #include "everest_api_types/utilities/CommCheckHandler.hpp"
-namespace ns_ev_api = everest::lib::API;
+
+namespace ev_API = everest::lib::API;
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -37,24 +39,23 @@ class powermeter_API : public Everest::ModuleBase {
 public:
     powermeter_API() = delete;
     powermeter_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                   std::unique_ptr<powermeterImplBase> p_if_powermeter, Conf& config) :
+                   std::unique_ptr<powermeterImplBase> p_main, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_if_powermeter(std::move(p_if_powermeter)),
+        p_main(std::move(p_main)),
         config(config),
-        comm_check("powermeter/CommunicationFault", "Bridge to implementation connection lost",
-                   this->p_if_powermeter){};
+        comm_check("powermeter/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {
+        };
 
     Everest::MqttProvider& mqtt;
-    const std::shared_ptr<powermeterImplBase> p_if_powermeter;
+    const std::shared_ptr<powermeterImplBase> p_main;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_ev_api::Topics& get_topics() const;
+    const ev_API::Topics& get_topics() const;
 
-    ns_ev_api::CommCheckHandler<powermeterImplBase> comm_check;
-
+    ev_API::CommCheckHandler<powermeterImplBase> comm_check;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -77,8 +78,7 @@ private:
 
     void setup_heartbeat_generator();
 
-    ns_ev_api::Topics topics;
-
+    ev_API::Topics topics;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

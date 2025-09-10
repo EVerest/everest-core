@@ -9,13 +9,12 @@
 
 namespace module {
 
-namespace ns_ev_api = everest::lib::API;
-namespace generic = ns_ev_api::V1_0::types::generic;
-namespace ns_types_ext = ns_ev_api::V1_0::types::over_voltage_monitor;
-using ns_ev_api::deserialize;
+namespace API_generic = ev_API::V1_0::types::generic;
+using ev_API::deserialize;
 
 void over_voltage_monitor_API::init() {
     invoke_init(*p_main);
+
     topics.setTargetApiModuleID(info.id, "over_voltage_monitor");
 
     generate_api_var_raise_error();
@@ -25,6 +24,7 @@ void over_voltage_monitor_API::init() {
 
 void over_voltage_monitor_API::ready() {
     invoke_ready(*p_main);
+
     comm_check.start(config.cfg_communication_check_to_s);
     generate_api_var_communication_check();
 
@@ -33,7 +33,7 @@ void over_voltage_monitor_API::ready() {
 
 void over_voltage_monitor_API::generate_api_var_communication_check() {
     subscribe_api_topic("communication_check", [this](std::string const& data) {
-        auto val = generic::deserialize<bool>(data);
+        auto val = API_generic::deserialize<bool>(data);
         comm_check.set_value(val);
         return true;
     });
@@ -41,7 +41,7 @@ void over_voltage_monitor_API::generate_api_var_communication_check() {
 
 void over_voltage_monitor_API::generate_api_var_raise_error() {
     subscribe_api_topic("raise_error", [=](const std::string& data) {
-        ns_types_ext::Error error;
+        API_types_ext::Error error;
         if (deserialize(data, error)) {
             auto sub_type_str = error.sub_type ? error.sub_type.value() : "";
             auto message_str = error.message ? error.message.value() : "";
@@ -57,7 +57,7 @@ void over_voltage_monitor_API::generate_api_var_raise_error() {
 
 void over_voltage_monitor_API::generate_api_var_clear_error() {
     subscribe_api_topic("clear_error", [=](const std::string& data) {
-        ns_types_ext::Error error;
+        API_types_ext::Error error;
         if (deserialize(data, error)) {
             std::string error_str = make_error_string(error);
             if (error.sub_type) {
@@ -73,14 +73,14 @@ void over_voltage_monitor_API::generate_api_var_clear_error() {
 
 void over_voltage_monitor_API::generate_api_var_voltage_measurement_V() {
     subscribe_api_topic("voltage_measurement_V", [this](std::string const& data) {
-        auto val = generic::deserialize<float>(data);
+        auto val = API_generic::deserialize<float>(data);
         p_main->publish_voltage_measurement_V(val);
         return true;
     });
 }
 
-std::string over_voltage_monitor_API::make_error_string(ns_types_ext::Error const& error) {
-    auto error_str = generic::trimmed(serialize(error.type));
+std::string over_voltage_monitor_API::make_error_string(API_types_ext::Error const& error) {
+    auto error_str = API_generic::trimmed(serialize(error.type));
     auto result = "over_voltage_monitor/" + error_str;
     return result;
 }
@@ -110,7 +110,7 @@ void over_voltage_monitor_API::subscribe_api_topic(const std::string& var,
     });
 }
 
-const ns_ev_api::Topics& over_voltage_monitor_API::get_topics() const {
+const ev_API::Topics& over_voltage_monitor_API::get_topics() const {
     return topics;
 }
 

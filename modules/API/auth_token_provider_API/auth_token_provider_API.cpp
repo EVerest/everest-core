@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
 #include "auth_token_provider_API.hpp"
 #include <everest_api_types/auth/API.hpp>
 #include <everest_api_types/auth/json_codec.hpp>
@@ -8,19 +9,20 @@
 
 namespace module {
 
-namespace ns_types_ext = ns_ev_api::V1_0::types::auth;
+namespace API_types = ev_API::V1_0::types;
+namespace API_types_ext = API_types::auth;
 
 void auth_token_provider_API::init() {
-    invoke_init(*p_auth_token_provider);
+    invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "auth_token_provider");
+    topics.setTargetApiModuleID(info.id, "main");
 
     generate_api_var_communication_check();
     generate_api_var_provided_token();
 }
 
 void auth_token_provider_API::ready() {
-    invoke_ready(*p_auth_token_provider);
+    invoke_ready(*p_main);
 
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();
@@ -35,9 +37,9 @@ void auth_token_provider_API::generate_api_var_communication_check() {
 
 void auth_token_provider_API::generate_api_var_provided_token() {
     subscribe_api_var("provided_token", [=](const json& data) {
-        ns_types_ext::ProvidedIdToken external = data;
+        API_types_ext::ProvidedIdToken external = data;
         auto internal = to_internal_api(external);
-        p_auth_token_provider->publish_provided_token(internal);
+        p_main->publish_provided_token(internal);
     });
 }
 
@@ -64,7 +66,7 @@ void auth_token_provider_API::subscribe_api_var(const std::string& var, const Pa
     });
 }
 
-const ns_ev_api::Topics& auth_token_provider_API::get_topics() const {
+const ev_API::Topics& auth_token_provider_API::get_topics() const {
     return topics;
 }
 

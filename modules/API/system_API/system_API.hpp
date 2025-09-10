@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
 #ifndef SYSTEM_API_HPP
 #define SYSTEM_API_HPP
 
@@ -18,9 +19,12 @@
 #pragma GCC diagnostic pop
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
+// insert your custom include headers here
 #include "everest_api_types/utilities/CommCheckHandler.hpp"
 #include <everest_api_types/utilities/Topics.hpp>
-namespace ns_ev_api = everest::lib::API;
+
+namespace ev_API = everest::lib::API;
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -35,22 +39,22 @@ class system_API : public Everest::ModuleBase {
 public:
     system_API() = delete;
     system_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-               std::unique_ptr<systemImplBase> p_if_system, Conf& config) :
+               std::unique_ptr<systemImplBase> p_main, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_if_system(std::move(p_if_system)),
+        p_main(std::move(p_main)),
         config(config),
-        comm_check("system/CommunicationFault", "Bridge to implementation connection lost", this->p_if_system){};
+        comm_check("system/CommunicationFault", "Bridge to implementation connection lost", this->p_main){};
 
     Everest::MqttProvider& mqtt;
-    const std::shared_ptr<systemImplBase> p_if_system;
+    const std::shared_ptr<systemImplBase> p_main;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_ev_api::Topics& get_topics() const;
+    const ev_API::Topics& get_topics() const;
 
-    ns_ev_api::CommCheckHandler<systemImplBase> comm_check;
+    ev_API::CommCheckHandler<systemImplBase> comm_check;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -76,7 +80,7 @@ private:
 
     void setup_heartbeat_generator();
 
-    ns_ev_api::Topics topics;
+    ev_API::Topics topics;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

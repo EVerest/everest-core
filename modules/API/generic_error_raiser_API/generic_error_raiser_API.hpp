@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
 #ifndef GENERIC_ERROR_RAISER_API_HPP
 #define GENERIC_ERROR_RAISER_API_HPP
 
@@ -21,11 +22,14 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include <everest_api_types/generic/API.hpp>
 #include "everest_api_types/utilities/CommCheckHandler.hpp"
-namespace ns_ev_api = everest::lib::API;
-namespace generic = everest::lib::API::V1_0::types::generic;
+
+namespace ev_API = everest::lib::API;
+namespace ns_ev_api_types = ev_API::V1_0::types;
+namespace generic = ns_ev_api_types::generic;
+
+// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
 
@@ -61,8 +65,8 @@ public:
 
     void setup_heartbeat_generator();
 
-    ns_ev_api::Topics topics;
-    ns_ev_api::CommCheckHandler<generic_errorImplBase> comm_check;
+    ev_API::Topics topics;
+    ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

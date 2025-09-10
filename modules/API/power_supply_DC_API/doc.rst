@@ -19,4 +19,4 @@ power_supply_DC_API
 *******************************************
 
 :ref:`Link <everest_modules_power_supply_DC_API>` to the module's reference.
-API for DC power supllies
+API for DC power supplies

@@ -12,33 +12,34 @@
 
 namespace module {
 
-namespace ns_ev_api = everest::lib::API;
-namespace ns_types_ext = ns_ev_api::V1_0::types::powermeter;
-namespace generic = ns_ev_api::V1_0::types::generic;
-using ns_ev_api::deserialize;
+namespace ev_API_types = ev_API::V1_0::types;
+namespace API_types_ext = ev_API_types::powermeter;
+namespace API_generic = ev_API_types::generic;
+using ev_API::deserialize;
 
 void powermeter_API::init() {
-    invoke_init(*p_if_powermeter);
+    invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "powermeter");
+
     generate_api_var_powermeter_values();
     generate_api_var_public_key_ocmf();
-
     generate_api_var_communication_check();
 }
 
 void powermeter_API::ready() {
-    invoke_ready(*p_if_powermeter);
+    invoke_ready(*p_main);
+
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();
 }
 
 void powermeter_API::generate_api_var_powermeter_values() {
     subscribe_api_var("powermeter_values", [=](std::string const& data) {
-        ns_types_ext::PowermeterValues ext;
+        API_types_ext::PowermeterValues ext;
         if (deserialize(data, ext)) {
             auto value = to_internal_api(ext);
-            p_if_powermeter->publish_powermeter(value);
+            p_main->publish_powermeter(value);
         }
     });
 }
@@ -47,14 +48,14 @@ void powermeter_API::generate_api_var_public_key_ocmf() {
     subscribe_api_var("public_key_ocmf", [=](std::string const& data) {
         std::string ext;
         if (deserialize(data, ext)) {
-            p_if_powermeter->publish_public_key_ocmf(ext);
+            p_main->publish_public_key_ocmf(ext);
         }
     });
 }
 
 void powermeter_API::generate_api_var_communication_check() {
     subscribe_api_var("communication_check", [this](std::string const& data) {
-        auto val = generic::deserialize<bool>(data);
+        auto val = API_generic::deserialize<bool>(data);
         comm_check.set_value(val);
     });
 }
@@ -82,7 +83,7 @@ void powermeter_API::subscribe_api_var(const std::string& var, const ParseAndPub
     });
 }
 
-const ns_ev_api::Topics& powermeter_API::get_topics() const {
+const ev_API::Topics& powermeter_API::get_topics() const {
     return topics;
 }
 
