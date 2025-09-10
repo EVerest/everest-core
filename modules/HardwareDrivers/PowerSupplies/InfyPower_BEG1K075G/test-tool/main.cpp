@@ -5,6 +5,8 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <everest/logging.hpp>
+
 int main(int argc, char** argv) {
     InfyCanDevice can;
 
@@ -12,7 +14,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "CAN device started." << std::endl;
+    EVLOG_debug << "CAN device started.";
     can.switch_on_off(false);
     can.adjust_power_factor(1.0);
     can.set_output_mode(InfyCanDevice::OutputMode::Automatic);
@@ -37,7 +39,7 @@ int main(int argc, char** argv) {
     can.set_generic_setting(0x21, 0x2D, 5 * 1000);
     can.set_generic_setting(0x21, 0x2E, 46 * 1000);
     can.set_generic_setting(0x21, 0x2F, 5 * 1000);
-    std::cout << "Protection settings applied" << std::endl;
+    EVLOG_debug << "Protection settings applied";
 
     can.set_inverter_mode(false);
     can.set_voltage_current(200, 10);
@@ -68,7 +70,7 @@ int main(int argc, char** argv) {
 
         usleep(50000);
 
-        std::cout << can.telemetry;
+        EVLOG_debug << can.telemetry;
     }
 
     can.close_device();

@@ -6,6 +6,8 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <everest/logging.hpp>
+
 InfyCanDevice::InfyCanDevice() {
     // spawn thread that requests some data periodically to keep the connection alive
     exitTxThread = false;
@@ -17,24 +19,24 @@ InfyCanDevice::~InfyCanDevice() {
 }
 
 void InfyCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payload) {
-    // std::cout << "Infy: CAN frame received. ID: 0x" << std::hex << can_id << std::endl;
+    EVLOG_debug << "Infy: CAN frame received. ID: 0x" << std::hex << can_id;
 
     // We only use extended frames here
     if (!(can_id & CAN_EFF_FLAG)) {
-        // std::cout << "Infy: Ignoring, not extended protocol." << std::endl;
+        EVLOG_debug << "Infy: Ignoring, not extended protocol.";
         return;
     }
 
     if (can_packet_acdc::command_number_from_can_id(can_id) == can_packet_acdc::CMD_WRITE) {
         switch (can_packet_acdc::error_code_from_can_id(can_id)) {
         case 0x02:
-            std::cout << "Infy: ERROR: Command invalid." << std::endl;
+            EVLOG_error << "Infy: ERROR: Command invalid.";
             break;
         case 0x03:
-            std::cout << "Infy: ERROR: Data invalid." << std::endl;
+            EVLOG_error << "Infy: ERROR: Data invalid.";
             break;
         case 0x07:
-            std::cout << "Infy: ERROR: In start processing." << std::endl;
+            EVLOG_error << "Infy: ERROR: In start processing.";
             break;
         }
         return;
@@ -53,8 +55,8 @@ void InfyCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payl
     uint16_t packet_type = payload[0] << 8 | payload[1];
 
     if (can_packet_acdc::error_code_from_can_id(can_id) > 0) {
-        std::cout << "Infy: Parsing CAN packet type: " << std::hex << packet_type << " Error code:" << std::hex
-                  << (int)can_packet_acdc::error_code_from_can_id(can_id) << std::endl;
+        EVLOG_debug << "Infy: Parsing CAN packet type: " << std::hex << packet_type << " Error code:" << std::hex
+                    << (int)can_packet_acdc::error_code_from_can_id(can_id);
     }
 
     switch (packet_type) {
@@ -228,7 +230,6 @@ void InfyCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payl
 
     default: {
         can_packet_acdc::GenericSetting s(payload);
-        std::cout << s << std::endl;
     }
     }
 }
@@ -240,9 +241,6 @@ void InfyCanDevice::txThread() {
 
         // request current system DC current. Answer will be processed by RX thread.
         request_rx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::SystemDCCurrent());
-
-        // request power module number. Answer will be processed by RX thread.
-        // request_rx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::PowerModuleNumber());
 
         // request state. Answer will be processed by RX thread.
         request_rx(can_packet_acdc::ADDR_MODULE, can_packet_acdc::PowerModuleStatus());
