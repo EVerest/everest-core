@@ -2,13 +2,14 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "auth_token_validatorImpl.hpp"
+
 #include <everest_api_types/auth/API.hpp>
 #include <everest_api_types/auth/codec.hpp>
 #include <everest_api_types/auth/json_codec.hpp>
 #include <everest_api_types/auth/wrapper.hpp>
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
-#include "generated/types/authorization.hpp"
-#include "nlohmann/json_fwd.hpp"
+
+#include <generated/types/authorization.hpp>
 
 namespace API_types_ext = ev_API::V1_0::types::auth;
 

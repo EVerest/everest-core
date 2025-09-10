@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "evse_board_support_API.hpp"
+
 #include <everest_api_types/evse_board_support/API.hpp>
 #include <everest_api_types/evse_board_support/codec.hpp>
 #include <everest_api_types/evse_board_support/wrapper.hpp>
@@ -10,6 +11,7 @@
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/generic/string.hpp>
 #include <everest_api_types/utilities/codec.hpp>
+
 #include "utils/error.hpp"
 
 namespace module {

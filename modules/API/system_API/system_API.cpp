@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "system_API.hpp"
+
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/generic/string.hpp>
 #include <everest_api_types/system/API.hpp>
 #include <everest_api_types/system/codec.hpp>
 #include <everest_api_types/system/wrapper.hpp>
 #include <everest_api_types/utilities/codec.hpp>
-#include "everest/logging.hpp"
+
+#include <everest/logging.hpp>
 
 namespace module {
 

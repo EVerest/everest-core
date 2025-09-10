@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "evse_manager_consumer_API.hpp"
+
 #include <everest_api_types/auth/wrapper.hpp>
 #include <everest_api_types/evse_board_support/API.hpp>
 #include <everest_api_types/evse_board_support/codec.hpp>
@@ -33,7 +34,8 @@
 #include <everest_api_types/uk_random_delay/wrapper.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
-#include "everest/logging.hpp"
+
+#include <everest/logging.hpp>
 
 namespace {
 template <class T> T const& to_external_api(T const& val) {

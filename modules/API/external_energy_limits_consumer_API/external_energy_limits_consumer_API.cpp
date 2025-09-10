@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "external_energy_limits_consumer_API.hpp"
+
 #include <everest_api_types/energy/API.hpp>
 #include <everest_api_types/energy/codec.hpp>
 #include <everest_api_types/energy/wrapper.hpp>

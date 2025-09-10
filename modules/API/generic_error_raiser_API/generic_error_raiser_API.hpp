@@ -10,8 +10,7 @@
 //
 
 #include "ld-ev.hpp"
-#include "utils/error.hpp"
-#include <atomic>
+
 // headers for provided interface implementations
 #include <everest_api_types/utilities/Topics.hpp>
 #pragma GCC diagnostic push
@@ -23,7 +22,7 @@
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include <everest_api_types/generic/API.hpp>
-#include "everest_api_types/utilities/CommCheckHandler.hpp"
+#include <everest_api_types/utilities/CommCheckHandler.hpp>
 
 namespace ev_API = everest::lib::API;
 namespace ns_ev_api_types = ev_API::V1_0::types;

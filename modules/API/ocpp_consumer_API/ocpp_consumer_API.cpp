@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "ocpp_consumer_API.hpp"
+
 #include <everest_api_types/generic/API.hpp>
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/ocpp/API.hpp>

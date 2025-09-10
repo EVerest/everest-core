@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "over_voltage_monitorImpl.hpp"
+
 #include <everest_api_types/generic/codec.hpp>
 
 namespace module {

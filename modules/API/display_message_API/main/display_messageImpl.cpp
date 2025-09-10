@@ -2,13 +2,15 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "display_messageImpl.hpp"
+
 #include <everest_api_types/display_message/API.hpp>
 #include <everest_api_types/display_message/codec.hpp>
 #include <everest_api_types/display_message/json_codec.hpp>
 #include <everest_api_types/display_message/wrapper.hpp>
 #include <everest_api_types/system/wrapper.hpp>
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
-#include "generated/types/display_message.hpp"
+
+#include <generated/types/display_message.hpp>
 
 namespace API_types_ext = ev_API::V1_0::types::display_message;
 

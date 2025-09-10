@@ -2,15 +2,16 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "power_supply_DC_API.hpp"
+
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/generic/string.hpp>
 #include <everest_api_types/power_supply_DC/API.hpp>
 #include <everest_api_types/power_supply_DC/codec.hpp>
 #include <everest_api_types/power_supply_DC/wrapper.hpp>
-#include "everest_api_types/utilities/Topics.hpp"
-#include "everest/logging.hpp"
+#include <everest_api_types/utilities/Topics.hpp>
+
+#include <everest/logging.hpp>
 #include "utils/error.hpp"
-#include <optional>
 
 namespace module {
 

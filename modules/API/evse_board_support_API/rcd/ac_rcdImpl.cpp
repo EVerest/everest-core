@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "ac_rcdImpl.hpp"
+
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 
 namespace {
