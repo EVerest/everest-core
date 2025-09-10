@@ -8,15 +8,16 @@
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
-
 namespace module {
 
-namespace ns_types_ext = ns_ev_api::V1_0::types::auth;
-namespace generic = ns_ev_api::V1_0::types::generic;
-using ns_ev_api::deserialize;
+namespace API_types = ev_API::V1_0::types;
+namespace API_types_ext = API_types::auth;
+namespace API_generic = API_types::generic;
+using ev_API::deserialize;
 
 void auth_consumer_API::init() {
     invoke_init(*p_main);
+
     topics.setTargetApiModuleID(info.id, "auth_consumer");
 
     generate_api_cmd_withdraw_authorization();
@@ -32,7 +33,7 @@ void auth_consumer_API::ready() {
 }
 
 auto auth_consumer_API::forward_api_var(std::string const& var) {
-    using namespace ns_types_ext;
+    using namespace API_types_ext;
     auto topic = topics.everest_to_extern(var);
     return [this, topic](auto const& val) {
         try {
@@ -49,13 +50,13 @@ auto auth_consumer_API::forward_api_var(std::string const& var) {
 
 void auth_consumer_API::generate_api_cmd_withdraw_authorization() {
     subscribe_api_topic("withdraw_authorization", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            ns_types_ext::WithdrawAuthorizationRequest payload;
+            API_types_ext::WithdrawAuthorizationRequest payload;
             if (deserialize(msg.payload, payload)) {
                 auto int_arg = to_internal_api(payload);
                 auto int_res = r_auth->call_withdraw_authorization(int_arg);
-                auto ext_res = ns_types_ext::to_external_api(int_res);
+                auto ext_res = API_types_ext::to_external_api(int_res);
                 mqtt.publish(msg.replyTo, serialize(ext_res));
                 return true;
             }

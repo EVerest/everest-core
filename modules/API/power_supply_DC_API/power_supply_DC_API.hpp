@@ -8,11 +8,10 @@
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 2
 //
+
 #include "ld-ev.hpp"
-#include "utils/error.hpp"
-#include <atomic>
+
 // headers for provided interface implementations
-#include <everest_api_types/utilities/Topics.hpp>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -21,15 +20,20 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include "utils/error.hpp"
+#include <atomic>
+
+#include <everest_api_types/utilities/Topics.hpp>
+#include <everest_api_types/power_supply_DC/API.hpp>
+#include <everest_api_types/utilities/CommCheckHandler.hpp>
+
+namespace ev_API = everest::lib::API;
+namespace API_types = ev_API::V1_0::types;
+namespace API_types_ext = API_types::power_supply_DC;
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
-#include <everest_api_types/power_supply_DC/API.hpp>
-#include "everest_api_types/utilities/CommCheckHandler.hpp"
-
 namespace module {
-
-namespace ns_ev_api = everest::lib::API;
-namespace ns_types_ext = everest::lib::API::V1_0::types::power_supply_DC;
 
 struct Conf {
     int cfg_communication_check_to_s;
@@ -40,21 +44,21 @@ class power_supply_DC_API : public Everest::ModuleBase {
 public:
     power_supply_DC_API() = delete;
     power_supply_DC_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                        std::unique_ptr<power_supply_DCImplBase> p_if_power_supply_DC, Conf& config) :
+                        std::unique_ptr<power_supply_DCImplBase> p_main, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_if_power_supply_DC(std::move(p_if_power_supply_DC)),
+        p_main(std::move(p_main)),
         config(config),
         comm_check("power_supply_DC/CommunicationFault", "Bridge to implementation connection lost",
-                   this->p_if_power_supply_DC){};
+                   this->p_main){};
 
     Everest::MqttProvider& mqtt;
-    const std::shared_ptr<power_supply_DCImplBase> p_if_power_supply_DC;
+    const std::shared_ptr<power_supply_DCImplBase> p_main;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_ev_api::Topics& get_topics() const;
+    const ev_API::Topics& get_topics() const;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -78,12 +82,12 @@ private:
     void generate_api_var_clear_error();
     void generate_api_var_communication_check();
 
-    std::string make_error_string(ns_types_ext::Error const& error);
+    std::string make_error_string(API_types_ext::Error const& error);
 
     void setup_heartbeat_generator();
 
-    ns_ev_api::Topics topics;
-    ns_ev_api::CommCheckHandler<power_supply_DCImplBase> comm_check;
+    ev_API::Topics topics;
+    ev_API::CommCheckHandler<power_supply_DCImplBase> comm_check;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

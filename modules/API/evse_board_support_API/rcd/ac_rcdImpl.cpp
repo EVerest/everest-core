@@ -24,7 +24,7 @@ void ac_rcdImpl::ready() {
 
 template <class T, class ReqT>
 auto ac_rcdImpl::generic_request_reply(T const& default_value, ReqT const& request, std::string const& topic) {
-    using namespace ns_types_ext;
+    using namespace API_types_ext;
     using ExtT = decltype(to_external_api(std::declval<T>()));
     auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
     if (!result) {

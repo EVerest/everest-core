@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
 #ifndef OVER_VOLTAGE_MONITOR_HPP
 #define OVER_VOLTAGE_MONITOR_HPP
 
@@ -24,12 +25,14 @@
 #include "everest_api_types/utilities/CommCheckHandler.hpp"
 #include <everest_api_types/utilities/Topics.hpp>
 
+namespace ev_API = everest::lib::API;
+namespace API_types = ev_API::V1_0::types;
+namespace API_types_ext = API_types::over_voltage_monitor;
+
 //
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
-namespace ns_types_ext = everest::lib::API::V1_0::types::over_voltage_monitor;
-namespace ns_ev_api = everest::lib::API;
 
 struct Conf {
     int cfg_communication_check_to_s;
@@ -54,8 +57,8 @@ public:
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_ev_api::Topics& get_topics() const;
-    ns_ev_api::CommCheckHandler<over_voltage_monitorImplBase> comm_check;
+    const ev_API::Topics& get_topics() const;
+    ev_API::CommCheckHandler<over_voltage_monitorImplBase> comm_check;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -78,10 +81,10 @@ private:
     void generate_api_var_clear_error();
     void generate_api_var_voltage_measurement_V();
 
-    std::string make_error_string(ns_types_ext::Error const& error);
+    std::string make_error_string(API_types_ext::Error const& error);
 
     void setup_heartbeat_generator();
-    ns_ev_api::Topics topics;
+    ev_API::Topics topics;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

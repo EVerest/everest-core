@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
 #ifndef EVSE_BOARD_SUPPORT_API_HPP
 #define EVSE_BOARD_SUPPORT_API_HPP
 
@@ -22,17 +23,17 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-// #include "API.hpp"
 #include <everest_api_types/evse_board_support/API.hpp>
 #include "everest_api_types/utilities/Topics.hpp"
 #include "everest_api_types/utilities/CommCheckHandler.hpp"
 
+namespace ev_API = everest::lib::API;
+namespace ev_API_v = everest::lib::API::V1_0;
+namespace API_types_ext = ev_API_v::types::evse_board_support;
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
-
-namespace ns_ev_api = everest::lib::API;
-namespace ns_types_ext = ns_ev_api::V1_0::types::evse_board_support;
 
 struct Conf {
     int cfg_communication_check_to_s;
@@ -44,28 +45,28 @@ class evse_board_support_API : public Everest::ModuleBase {
 public:
     evse_board_support_API() = delete;
     evse_board_support_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                           std::unique_ptr<evse_board_supportImplBase> p_board_support,
+                           std::unique_ptr<evse_board_supportImplBase> p_main,
                            std::unique_ptr<ac_rcdImplBase> p_rcd,
                            std::unique_ptr<connector_lockImplBase> p_connector_lock, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_board_support(std::move(p_board_support)),
+        p_main(std::move(p_main)),
         p_rcd(std::move(p_rcd)),
         p_connector_lock(std::move(p_connector_lock)),
         config(config),
         comm_check("evse_board_support/CommunicationFault", "Bridge to implementation connection lost",
-                   this->p_board_support){};
+                   this->p_main){};
 
     Everest::MqttProvider& mqtt;
-    const std::shared_ptr<evse_board_supportImplBase> p_board_support;
+    const std::shared_ptr<evse_board_supportImplBase> p_main;
     const std::unique_ptr<ac_rcdImplBase> p_rcd;
     const std::unique_ptr<connector_lockImplBase> p_connector_lock;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_ev_api::Topics& get_topics() const;
-    ns_ev_api::CommCheckHandler<evse_board_supportImplBase> comm_check;
+    const ev_API::Topics& get_topics() const;
+    ev_API::CommCheckHandler<evse_board_supportImplBase> comm_check;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -101,11 +102,11 @@ private:
     void generate_api_var_raise_error();
     void generate_api_var_clear_error();
 
-    ErrorHandler make_error_handler(ns_types_ext::Error const& error);
+    ErrorHandler make_error_handler(API_types_ext::Error const& error);
 
     void setup_heartbeat_generator();
 
-    ns_ev_api::Topics topics;
+    ev_API::Topics topics;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

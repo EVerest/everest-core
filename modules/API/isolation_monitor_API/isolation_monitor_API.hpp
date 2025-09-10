@@ -17,15 +17,13 @@
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include <everest_api_types/utilities/Topics.hpp>
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic pop
 #include <everest_api_types/isolation_monitor/API.hpp>
 #include "everest_api_types/utilities/CommCheckHandler.hpp"
 
-namespace ns_ev_api = everest::lib::API;
-namespace ns_types_ext = everest::lib::API::V1_0::types::isolation_monitor;
+namespace ev_API = everest::lib::API;
+namespace API_types = ev_API::V1_0::types;
+namespace API_types_ext = API_types::isolation_monitor;
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -40,22 +38,22 @@ class isolation_monitor_API : public Everest::ModuleBase {
 public:
     isolation_monitor_API() = delete;
     isolation_monitor_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                          std::unique_ptr<isolation_monitorImplBase> p_if_isolation_monitor, Conf& config) :
+                          std::unique_ptr<isolation_monitorImplBase> p_main, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_if_isolation_monitor(std::move(p_if_isolation_monitor)),
+        p_main(std::move(p_main)),
         config(config),
         comm_check("isolation_monitor/CommunicationFault", "Bridge to implementation connection lost",
-                   this->p_if_isolation_monitor){};
+                   this->p_main){};
 
     Everest::MqttProvider& mqtt;
-    const std::shared_ptr<isolation_monitorImplBase> p_if_isolation_monitor;
+    const std::shared_ptr<isolation_monitorImplBase> p_main;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    const ns_ev_api::Topics& get_topics() const;
-    ns_ev_api::CommCheckHandler<isolation_monitorImplBase> comm_check;
+    const ev_API::Topics& get_topics() const;
+    ev_API::CommCheckHandler<isolation_monitorImplBase> comm_check;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -79,11 +77,11 @@ private:
     void generate_api_var_clear_error();
     void generate_api_var_communication_check();
 
-    std::string make_error_string(ns_types_ext::Error const& error);
+    std::string make_error_string(API_types_ext::Error const& error);
 
     void setup_heartbeat_generator();
 
-    ns_ev_api::Topics topics;
+    ev_API::Topics topics;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

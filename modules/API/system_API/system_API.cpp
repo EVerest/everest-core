@@ -11,50 +11,51 @@
 
 namespace module {
 
-namespace ns_ev_api = everest::lib::API;
-namespace generic = ns_ev_api::V1_0::types::generic;
-namespace ns_types_ext = ns_ev_api::V1_0::types::system;
-using ns_ev_api::deserialize;
+namespace ev_API_v = ev_API::V1_0;
+namespace API_types_ext = ev_API_v::types::system;
+namespace API_generic = ev_API_v::types::generic;
+using ev_API::deserialize;
 
 void system_API::init() {
-    invoke_init(*p_if_system);
+    invoke_init(*p_main);
+
     topics.setTargetApiModuleID(info.id, "system");
 
     generate_api_var_firmware_update_status();
     generate_api_var_log_status();
-
     generate_api_var_communication_check();
 }
 
 void system_API::ready() {
-    invoke_ready(*p_if_system);
+    invoke_ready(*p_main);
+
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();
 }
 
 void system_API::generate_api_var_firmware_update_status() {
     subscribe_api_var("firmware_update_status", [=](std::string const& data) {
-        ns_types_ext::FirmwareUpdateStatus ext;
+        API_types_ext::FirmwareUpdateStatus ext;
         if (deserialize(data, ext)) {
             auto value = to_internal_api(ext);
-            p_if_system->publish_firmware_update_status(value);
+            p_main->publish_firmware_update_status(value);
         }
     });
 }
 
 void system_API::generate_api_var_log_status() {
     subscribe_api_var("log_status", [=](std::string const& data) {
-        ns_types_ext::LogStatus ext;
+        API_types_ext::LogStatus ext;
         if (deserialize(data, ext)) {
             auto value = to_internal_api(ext);
-            p_if_system->publish_log_status(value);
+            p_main->publish_log_status(value);
         }
     });
 }
 
 void system_API::generate_api_var_communication_check() {
     subscribe_api_var("communication_check", [this](std::string const& data) {
-        auto val = generic::deserialize<bool>(data);
+        auto val = API_generic::deserialize<bool>(data);
         comm_check.set_value(val);
     });
 }
@@ -82,7 +83,7 @@ void system_API::subscribe_api_var(const std::string& var, const ParseAndPublish
     });
 }
 
-const ns_ev_api::Topics& system_API::get_topics() const {
+const ev_API::Topics& system_API::get_topics() const {
     return topics;
 }
 

@@ -24,11 +24,10 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-
-#include "everest_api_types/utilities/Topics.hpp"
 #include "everest_api_types/utilities/CommCheckHandler.hpp"
+#include "everest_api_types/utilities/Topics.hpp"
 
-namespace ns_ev_api = everest::lib::API;
+namespace ev_API = everest::lib::API;
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -44,30 +43,30 @@ class ocpp_consumer_API : public Everest::ModuleBase {
 public:
     ocpp_consumer_API() = delete;
     ocpp_consumer_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                      std::unique_ptr<generic_errorImplBase> p_main,
-                      std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppIntf> r_ocpp,
+                      std::unique_ptr<ocpp_data_transferImplBase> p_main,
+                      std::unique_ptr<generic_errorImplBase> p_generic_error, std::unique_ptr<ocppIntf> r_ocpp,
                       std::unique_ptr<ocpp_data_transferIntf> r_data_transfer, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_main(std::move(p_main)),
-        p_data_transfer((std::move(p_data_transfer))),
+        p_generic_error(std::move(p_generic_error)),
+        p_main((std::move(p_main))),
         r_ocpp(std::move(r_ocpp)),
         r_data_transfer(std::move(r_data_transfer)),
         config(config),
-        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_main){};
+        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_generic_error) {};
 
     Everest::MqttProvider& mqtt;
-    const std::shared_ptr<generic_errorImplBase> p_main;
-    const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
+    const std::shared_ptr<generic_errorImplBase> p_generic_error;
+    const std::unique_ptr<ocpp_data_transferImplBase> p_main;
     const std::unique_ptr<ocppIntf> r_ocpp;
     const std::unique_ptr<ocpp_data_transferIntf> r_data_transfer;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    ns_ev_api::CommCheckHandler<generic_errorImplBase> comm_check;
+    ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
 
-    const ns_ev_api::Topics& get_topics() const;
+    const ev_API::Topics& get_topics() const;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -100,7 +99,7 @@ private:
 
     void setup_heartbeat_generator();
 
-    ns_ev_api::Topics topics;
+    ev_API::Topics topics;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

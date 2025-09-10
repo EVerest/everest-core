@@ -35,17 +35,6 @@
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 #include "everest/logging.hpp"
 
-namespace ns_types_ext = ns_ev_api::V1_0::types::evse_manager;
-namespace ns_powermeter = ns_ev_api::V1_0::types::powermeter;
-namespace ns_iso = ns_ev_api::V1_0::types::iso15118_charger;
-namespace ns_evse_bsp = ns_ev_api::V1_0::types::evse_board_support;
-namespace ns_imd = ns_ev_api::V1_0::types::isolation_monitor;
-namespace ns_dc = ns_ev_api::V1_0::types::power_supply_DC;
-namespace ns_random_delay = ns_ev_api::V1_0::types::uk_random_delay;
-namespace generic = ns_ev_api::V1_0::types::generic;
-
-using ns_ev_api::deserialize;
-
 namespace {
 template <class T> T const& to_external_api(T const& val) {
     return val;
@@ -54,8 +43,20 @@ template <class T> T const& to_external_api(T const& val) {
 
 namespace module {
 
+namespace API_types = everest::lib::API::V1_0::types;
+namespace API_types_ext = API_types::evse_manager;
+namespace API_powermeter = API_types::powermeter;
+namespace API_iso = API_types::iso15118_charger;
+namespace API_evse_bsp = API_types::evse_board_support;
+namespace API_imd = API_types::isolation_monitor;
+namespace API_dc = API_types::power_supply_DC;
+namespace API_random_delay = API_types::uk_random_delay;
+namespace API_generic = API_types::generic;
+using ev_API::deserialize;
+
 void evse_manager_consumer_API::init() {
     invoke_init(*p_main);
+
     topics.setTargetApiModuleID(info.id, "evse_manager_consumer");
 
     generate_api_cmd_get_evse();
@@ -106,14 +107,14 @@ void evse_manager_consumer_API::ready() {
 }
 
 auto evse_manager_consumer_API::forward_api_var(std::string const& var) {
-    using namespace ns_types_ext;
-    using namespace ns_powermeter;
-    using namespace generic;
-    using namespace ns_evse_bsp;
-    using namespace ns_iso;
-    using namespace ns_imd;
-    using namespace ns_dc;
-    using namespace ns_random_delay;
+    using namespace API_types_ext;
+    using namespace API_powermeter;
+    using namespace API_generic;
+    using namespace API_evse_bsp;
+    using namespace API_iso;
+    using namespace API_imd;
+    using namespace API_dc;
+    using namespace API_random_delay;
     auto topic = topics.everest_to_extern(var);
     return [this, topic](auto const& val) {
         try {
@@ -130,9 +131,9 @@ auto evse_manager_consumer_API::forward_api_var(std::string const& var) {
 
 void evse_manager_consumer_API::generate_api_cmd_get_evse() {
     subscribe_api_topic("get_evse", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            auto reply = ns_types_ext::to_external_api(r_evse_manager->call_get_evse());
+            auto reply = API_types_ext::to_external_api(r_evse_manager->call_get_evse());
             mqtt.publish(msg.replyTo, serialize(reply));
             return true;
         }
@@ -142,12 +143,12 @@ void evse_manager_consumer_API::generate_api_cmd_get_evse() {
 
 void evse_manager_consumer_API::generate_api_cmd_enable_disable() {
     subscribe_api_topic("enable_disable", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            ns_types_ext::EnableDisableRequest payload;
+            API_types_ext::EnableDisableRequest payload;
             if (deserialize(msg.payload, payload)) {
                 auto reply = r_evse_manager->call_enable_disable(payload.connector_id, to_internal_api(payload.source));
-                mqtt.publish(msg.replyTo, generic::serialize(reply));
+                mqtt.publish(msg.replyTo, API_generic::serialize(reply));
                 return true;
             }
         }
@@ -157,7 +158,7 @@ void evse_manager_consumer_API::generate_api_cmd_enable_disable() {
 
 void evse_manager_consumer_API::generate_api_cmd_authorize_response() {
     subscribe_api_topic("authorize_response", [=](std::string const& data) {
-        ns_types_ext::AuthorizeResponseArgs payload;
+        API_types_ext::AuthorizeResponseArgs payload;
         if (deserialize(data, payload)) {
             r_evse_manager->call_authorize_response(to_internal_api(payload.token), to_internal_api(payload.result));
             return true;
@@ -175,12 +176,12 @@ void evse_manager_consumer_API::generate_api_cmd_withdraw_authorization() {
 
 void evse_manager_consumer_API::generate_api_cmd_reserve() {
     subscribe_api_topic("reserve", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             int payload;
             deserialize(msg.payload, payload);
             auto reply = r_evse_manager->call_reserve(payload);
-            mqtt.publish(msg.replyTo, generic::serialize(reply));
+            mqtt.publish(msg.replyTo, API_generic::serialize(reply));
             return true;
         }
         return false;
@@ -196,7 +197,7 @@ void evse_manager_consumer_API::generate_api_cmd_cancel_reservation() {
 
 void evse_manager_consumer_API::generate_api_cmd_pause_charging() {
     subscribe_api_topic("pause_charging", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             auto result = r_evse_manager->call_pause_charging();
             mqtt.publish(msg.replyTo, result);
@@ -208,7 +209,7 @@ void evse_manager_consumer_API::generate_api_cmd_pause_charging() {
 
 void evse_manager_consumer_API::generate_api_cmd_resume_charging() {
     subscribe_api_topic("resume_charging", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             auto result = r_evse_manager->call_resume_charging();
             mqtt.publish(msg.replyTo, result);
@@ -221,12 +222,12 @@ void evse_manager_consumer_API::generate_api_cmd_resume_charging() {
 void evse_manager_consumer_API::generate_api_cmd_stop_transaction() {
     subscribe_api_topic("stop_transaction", [=](std::string const& data) {
         auto result = false;
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            ns_types_ext::StopTransactionRequest_External payload;
+            API_types_ext::StopTransactionRequest_External payload;
             if (deserialize(msg.payload, payload)) {
-                auto payload = ns_types_ext::deserialize<ns_types_ext::StopTransactionRequest_External>(msg.payload);
-                result = r_evse_manager->call_stop_transaction(ns_types_ext::to_internal_api(payload));
+                auto payload = API_types_ext::deserialize<API_types_ext::StopTransactionRequest_External>(msg.payload);
+                result = r_evse_manager->call_stop_transaction(API_types_ext::to_internal_api(payload));
                 mqtt.publish(msg.replyTo, result);
                 return true;
             }
@@ -237,10 +238,10 @@ void evse_manager_consumer_API::generate_api_cmd_stop_transaction() {
 
 void evse_manager_consumer_API::generate_api_cmd_force_unlock() {
     subscribe_api_topic("force_unlock", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             int payload;
-            if ((deserialize)(msg.payload, payload)) {
+            if (deserialize(msg.payload, payload)) {
                 auto result = r_evse_manager->call_force_unlock(payload);
                 mqtt.publish(msg.replyTo, result);
             }
@@ -252,7 +253,7 @@ void evse_manager_consumer_API::generate_api_cmd_force_unlock() {
 
 void evse_manager_consumer_API::generate_api_cmd_external_ready_to_start_charging() {
     subscribe_api_topic("external_ready_to_start_charging", [=](std::string const& data) {
-        generic::RequestReply msg;
+        API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             auto result = r_evse_manager->call_external_ready_to_start_charging();
             mqtt.publish(msg.replyTo, result);

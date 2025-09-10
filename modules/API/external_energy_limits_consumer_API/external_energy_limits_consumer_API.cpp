@@ -7,11 +7,13 @@
 #include <everest_api_types/utilities/codec.hpp>
 
 namespace module {
-namespace ns_types_ext = everest::lib::API::V1_0::types::energy;
-using ns_ev_api::deserialize;
+namespace API_types = everest::lib::API::V1_0::types;
+namespace API_types_ext = API_types::energy;
+using ev_API::deserialize;
 
 void external_energy_limits_consumer_API::init() {
     invoke_init(*p_main);
+
     topics.setTargetApiModuleID(info.id, "external_energy_limits_consumer");
 
     generate_api_var_enforced_limits();
@@ -28,7 +30,7 @@ void external_energy_limits_consumer_API::ready() {
 }
 
 auto external_energy_limits_consumer_API::forward_api_var(std::string const& var) {
-    using namespace ns_types_ext;
+    using namespace API_types_ext;
     auto topic = topics.everest_to_extern(var);
     return [this, topic](auto const& val) {
         try {
@@ -60,7 +62,7 @@ void external_energy_limits_consumer_API::generate_api_var_communication_check()
 
 void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits() {
     subscribe_api_topic("set_external_limits", [=](std::string const& data) {
-        ns_types_ext::ExternalLimits val;
+        API_types_ext::ExternalLimits val;
         if (deserialize(data, val)) {
             r_energy_node->call_set_external_limits(to_internal_api(val));
             return true;

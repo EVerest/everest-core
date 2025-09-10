@@ -10,8 +10,9 @@
 
 namespace module {
 
-namespace ns_types_ext = ns_ev_api::V1_0::types::display_message;
-namespace generic = ns_ev_api::V1_0::types::generic;
+namespace API_types = ev_API::V1_0::types;
+namespace API_types_ext = API_types::display_message;
+namespace API_generic = API_types::generic;
 
 void display_message_API::init() {
     invoke_init(*p_main);
@@ -25,13 +26,13 @@ void display_message_API::ready() {
     invoke_ready(*p_generic_error);
 
     comm_check.start(config.cfg_communication_check_to_s);
-    generate_api_var_communication_check();
+    generate_api_var_communication_check();  // TODO(CB): Why not in init()?
     setup_heartbeat_generator();
 }
 
 void display_message_API::generate_api_var_communication_check() {
     subscribe_api_topic("communication_check", [this](std::string const& data) {
-        auto val = generic::deserialize<bool>(data);
+        auto val = API_generic::deserialize<bool>(data);
         comm_check.set_value(val);
         return true;
     });
@@ -61,7 +62,7 @@ void display_message_API::subscribe_api_topic(const std::string& var, const Pars
     });
 }
 
-const ns_ev_api::Topics& display_message_API::get_topics() const {
+const ev_API::Topics& display_message_API::get_topics() const {
     return topics;
 }
 

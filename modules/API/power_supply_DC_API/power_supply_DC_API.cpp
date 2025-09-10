@@ -14,11 +14,11 @@
 
 namespace module {
 
-namespace generic = everest::lib::API::V1_0::types::generic;
-using ns_types_ext::deserialize;
+namespace API_generic = API_types::generic;
+using API_types_ext::deserialize;
 
 void power_supply_DC_API::init() {
-    invoke_init(*p_if_power_supply_DC);
+    invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "power_supply_DC");
 
@@ -31,7 +31,8 @@ void power_supply_DC_API::init() {
 }
 
 void power_supply_DC_API::ready() {
-    invoke_ready(*p_if_power_supply_DC);
+    invoke_ready(*p_main);
+
     comm_check.start(config.cfg_communication_check_to_s);
     generate_api_var_communication_check();
 
@@ -40,61 +41,61 @@ void power_supply_DC_API::ready() {
 
 void power_supply_DC_API::generate_api_var_mode() {
     subscribe_api_var("mode", [=](const std::string& data) {
-        auto ext = deserialize<ns_types_ext::Mode>(data);
+        auto ext = deserialize<API_types_ext::Mode>(data);
         auto arg = to_internal_api(ext);
-        p_if_power_supply_DC->publish_mode(arg);
+        p_main->publish_mode(arg);
     });
 }
 
 void power_supply_DC_API::generate_api_var_voltage_current() {
     subscribe_api_var("voltage_current", [=](const std::string& data) {
-        auto ext = deserialize<ns_types_ext::VoltageCurrent>(data);
+        auto ext = deserialize<API_types_ext::VoltageCurrent>(data);
         auto arg = to_internal_api(ext);
-        p_if_power_supply_DC->publish_voltage_current(arg);
+        p_main->publish_voltage_current(arg);
     });
 }
 
 void power_supply_DC_API::generate_api_var_capabilities() {
     subscribe_api_var("capabilities", [=](const json& data) {
-        auto ext = deserialize<ns_types_ext::Capabilities>(data);
+        auto ext = deserialize<API_types_ext::Capabilities>(data);
         auto arg = to_internal_api(ext);
-        p_if_power_supply_DC->publish_capabilities(arg);
+        p_main->publish_capabilities(arg);
     });
 }
 
 void power_supply_DC_API::generate_api_var_raise_error() {
     subscribe_api_var("raise_error", [=](const std::string& data) {
-        auto error = deserialize<ns_types_ext::Error>(data);
+        auto error = deserialize<API_types_ext::Error>(data);
         auto sub_type_str = error.sub_type ? error.sub_type.value() : "";
         auto message_str = error.message ? error.message.value() : "";
         auto error_str = make_error_string(error);
-        auto ev_error = p_if_power_supply_DC->error_factory->create_error(error_str, sub_type_str, message_str,
+        auto ev_error = p_main->error_factory->create_error(error_str, sub_type_str, message_str,
                                                                           Everest::error::Severity::High);
-        p_if_power_supply_DC->raise_error(ev_error);
+        p_main->raise_error(ev_error);
     });
 }
 
 void power_supply_DC_API::generate_api_var_clear_error() {
     subscribe_api_var("clear_error", [=](const std::string& data) {
-        auto error = deserialize<ns_types_ext::Error>(data);
+        auto error = deserialize<API_types_ext::Error>(data);
         std::string error_str = make_error_string(error);
         if (error.sub_type) {
-            p_if_power_supply_DC->clear_error(error_str, error.sub_type.value());
+            p_main->clear_error(error_str, error.sub_type.value());
         } else {
-            p_if_power_supply_DC->clear_error(error_str);
+            p_main->clear_error(error_str);
         }
     });
 }
 
 void power_supply_DC_API::generate_api_var_communication_check() {
     subscribe_api_var("communication_check", [this](const std::string& data) {
-        auto val = generic::deserialize<bool>(data);
+        auto val = API_generic::deserialize<bool>(data);
         comm_check.set_value(val);
     });
 }
 
-std::string power_supply_DC_API::make_error_string(ns_types_ext::Error const& error) {
-    auto error_str = generic::trimmed(serialize(error.type));
+std::string power_supply_DC_API::make_error_string(API_types_ext::Error const& error) {
+    auto error_str = API_generic::trimmed(serialize(error.type));
     auto result = "power_supply_DC/" + error_str;
     return result;
 }
@@ -121,7 +122,7 @@ void power_supply_DC_API::subscribe_api_var(const std::string& var, const ParseA
     });
 }
 
-const ns_ev_api::Topics& power_supply_DC_API::get_topics() const {
+const ev_API::Topics& power_supply_DC_API::get_topics() const {
     return topics;
 }
 
