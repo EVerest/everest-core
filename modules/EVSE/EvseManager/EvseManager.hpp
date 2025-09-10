@@ -115,6 +115,14 @@ struct Conf {
     bool zero_power_allow_ev_to_ignore_pause;
 };
 
+struct UKRandomDelayStatus {
+    std::atomic_bool enabled{false};
+    std::atomic_bool running{false};
+    std::chrono::time_point<std::chrono::steady_clock> end_time;
+    std::chrono::time_point<date::utc_clock> start_time;
+    std::atomic<std::chrono::seconds> max_duration;
+};
+
 class EvseManager : public Everest::ModuleBase {
 public:
     EvseManager() = delete;
@@ -231,11 +239,13 @@ public:
     std::unique_ptr<ErrorHandling> error_handling;
     std::unique_ptr<PersistentStore> store;
 
-    std::atomic_bool random_delay_enabled{false};
-    std::atomic_bool random_delay_running{false};
-    std::chrono::time_point<std::chrono::steady_clock> random_delay_end_time;
-    std::chrono::time_point<date::utc_clock> random_delay_start_time;
-    std::atomic<std::chrono::seconds> random_delay_max_duration;
+    UKRandomDelayStatus random_delay;
+
+    // std::atomic_bool random_delay_enabled{false};
+    // std::atomic_bool random_delay_running{false};
+    // std::chrono::time_point<std::chrono::steady_clock> random_delay_end_time;
+    // std::chrono::time_point<date::utc_clock> random_delay_start_time;
+    // std::atomic<std::chrono::seconds> random_delay_max_duration;
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
 
     types::power_supply_DC::Capabilities get_powersupply_capabilities();

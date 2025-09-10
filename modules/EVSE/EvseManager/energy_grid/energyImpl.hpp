@@ -21,6 +21,13 @@ namespace energy_grid {
 
 struct Conf {};
 
+struct LastValues {
+    float enforced_limits_ampere{-9999};
+    float enforced_limits_watt{-9999};
+    float target_voltage{-9999};
+    float actual_voltage{-9999};
+};
+
 class energyImpl : public energyImplBase {
 public:
     energyImpl() = delete;
@@ -52,10 +59,7 @@ private:
     // types::energy_price_information::PricePerkWh price_limit;
     // types::energy::OptimizerTarget optimizer_target;
     types::energy::EnergyFlowRequest energy_flow_request;
-    float last_enforced_limits_ampere{-9999};
-    float last_enforced_limits_watt{-9999};
-    float last_target_voltage{-9999};
-    float last_actual_voltage{-9999};
+    LastValues last_values;
     void clear_import_request_schedule();
     void clear_export_request_schedule();
     void clear_request_schedules();

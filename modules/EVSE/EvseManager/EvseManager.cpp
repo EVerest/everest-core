@@ -54,11 +54,11 @@ void EvseManager::init() {
 
     store = std::unique_ptr<PersistentStore>(new PersistentStore(r_store, info.id));
 
-    random_delay_enabled = config.uk_smartcharging_random_delay_enable;
-    random_delay_max_duration = std::chrono::seconds(config.uk_smartcharging_random_delay_max_duration);
-    if (random_delay_enabled) {
+    random_delay.enabled = config.uk_smartcharging_random_delay_enable;
+    random_delay.max_duration = std::chrono::seconds(config.uk_smartcharging_random_delay_max_duration);
+    if (random_delay.enabled) {
         EVLOG_info << "UK Smart Charging regulations: enabled random delay with a default of "
-                   << random_delay_max_duration.load().count() << "s.";
+                   << random_delay.max_duration.load().count() << "s.";
     }
 
     session_log.setPath(config.session_logging_path);
