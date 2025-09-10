@@ -1740,7 +1740,6 @@ void EvseManager::cable_check() {
                 imd_stop();
                 std::ostringstream oss;
                 oss << "Isolation resistance too low: " << m.resistance_F_Ohm << " Ohm";
-                fail_cable_check(oss.str());
                 error_handling->raise_isolation_resistance_fault(oss.str());
                 fail_cable_check(oss.str());
                 return;
