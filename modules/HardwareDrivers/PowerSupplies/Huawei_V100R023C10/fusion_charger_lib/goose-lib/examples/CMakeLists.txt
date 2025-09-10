@@ -1,0 +1,2 @@
+add_executable(ethernet_frame ethernet_frame.cpp)
+target_link_libraries(ethernet_frame goose-ethernet)
