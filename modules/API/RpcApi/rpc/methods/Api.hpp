@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
-#ifndef API_HPP
-#define API_HPP
+#ifndef METHODS_API_HPP
+#define METHODS_API_HPP
 
 #include <optional>
 #include <string>
@@ -45,4 +45,4 @@ private:
 
 } // namespace methods
 
-#endif // API_HPP
+#endif // METHODS_API_HPP

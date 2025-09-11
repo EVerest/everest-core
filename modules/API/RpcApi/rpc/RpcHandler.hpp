@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
-#ifndef RPCHANDLER_H
-#define RPCHANDLER_H
+#ifndef RPCHANDLER_HPP
+#define RPCHANDLER_HPP
 
 #include <atomic>
 #include <condition_variable>
@@ -137,4 +137,4 @@ private:
 };
 } // namespace rpc
 
-#endif // RPCHANDLER_H
+#endif // RPCHANDLER_HPP
