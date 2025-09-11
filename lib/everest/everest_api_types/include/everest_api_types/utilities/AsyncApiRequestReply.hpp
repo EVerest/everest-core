@@ -14,7 +14,9 @@
 #include <optional>
 #include <utility>
 
-namespace everest::lib::companion {
+#include <everest_api_types/utilities/Topics.hpp>
+
+namespace everest::lib::API {
 
 namespace internal {
 template <class T> T to_internal_api(T x) {
@@ -99,4 +101,4 @@ auto request_reply_handler(Everest::MqttProvider& mqtt, Topics const& topic_gene
     return request_reply_handler<ReplyT>(mqtt, topic_generator, internal::empty_payload, topic, timeout_s);
 }
 
-} // namespace everest::lib::companion
+} // namespace everest::lib::API
