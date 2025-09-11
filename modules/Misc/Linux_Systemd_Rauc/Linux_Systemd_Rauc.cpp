@@ -30,7 +30,7 @@ namespace module {
 
 void Linux_Systemd_Rauc::init() {
     invoke_init(*p_main);
-    rauc.configure();
+    rauc.configure(this->config.VerifyUpdateScriptPath);
 
     store_path = info.id + "_update_transaction";
 
