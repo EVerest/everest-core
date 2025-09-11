@@ -56,6 +56,8 @@ void SessionInfoStore::update_state(const types::evse_manager::SessionEvent even
     case Event::AuthRequired:
         this->state = State::AuthRequired;
         break;
+    case Event::Authorized:
+        [[fallthrough]];
     case Event::PrepareCharging:
         [[fallthrough]];
     case Event::SessionStarted:
@@ -108,8 +110,6 @@ void SessionInfoStore::update_state(const types::evse_manager::SessionEvent even
     case Event::ReplugStarted:
         [[fallthrough]];
     case Event::ReplugFinished:
-        [[fallthrough]];
-    case Event::Authorized:
         [[fallthrough]];
     case Event::Deauthorized:
         [[fallthrough]];
