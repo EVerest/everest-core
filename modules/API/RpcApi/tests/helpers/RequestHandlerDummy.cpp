@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
+
 #include "RequestHandlerDummy.hpp"
 
 types::json_rpc_api::ErrorResObj RequestHandlerDummy::set_charging_allowed(const int32_t evse_index,

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright Pionix GmbH and Contributors to EVerest
+// Copyright chargebyte GmbH and Contributors to EVerest
 #ifndef GENERICINFOSTORE_HPP
 #define GENERICINFOSTORE_HPP
 

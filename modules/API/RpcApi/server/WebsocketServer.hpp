@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright chargebyte GmbH and Contributors to EVerest
 #ifndef WEBSOCKETSERVER_H
 #define WEBSOCKETSERVER_H
 

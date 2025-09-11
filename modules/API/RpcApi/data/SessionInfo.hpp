@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright chargebyte and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 // Description: This file defines the SessionInfoStore class, which is used to manage session information for EV
 // charging sessions. It includes methods to update session state, set energy readings, and calculate charged and
