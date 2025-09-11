@@ -124,7 +124,8 @@ RaucBase::RaucBase(sdbus::dont_run_event_loop_thread_t) {
     proxy = dbus::createProxy(defaults::service_domain, defaults::object_path, sdbus::dont_run_event_loop_thread);
 }
 
-void RaucBase::configure() {
+void RaucBase::configure(const std::string& verify_update_script_path) {
+    this->verify_update_script_path = verify_update_script_path;
     try {
         dbus::initialise_handlers(proxy, [this]() { configure_handlers(); });
     } catch (const sdbus::Error& e) {
@@ -204,24 +205,36 @@ RaucBase::slot_info_t RaucBase::convert(slots_t& slots) {
     return result;
 }
 
-int RaucBase::check_system_health() {
+rauc_messages::HealthCheckStatus RaucBase::check_system_health() {
     // checking the success or failure of an OTA update following reboot
-    //
-    //   get_primary_slot() may not be helpfull since it is updated as a result
-    //   of rauc status mark-active and isn't a good indicator that we have
-    //   rebooted into the newly updated partition
-    //
-    //    get_boot_slot() should be more reliable since it indicates the slot
-    //    we booted from. This will change on a successful OTA + reboot
-
-    std::string cmd = "/usr/bin/check_system_health.sh";
-
-    // TODO(james-ctc): should the failure of this prevent the OTA being marked good?
-    const auto res = everest::lib::system::safe_system(cmd, {"check_system_health.sh"});
-    if (res.code != 0) {
-        EVLOG_error << "Unable to run the system check script:" << cmd.c_str();
+    using namespace rauc_messages;
+    if (verify_update_script_path.empty()) {
+        return HealthCheckStatus::ScriptNotSet;
     }
-    return res.code;
+    if (access(verify_update_script_path.c_str(), X_OK) != 0) {
+        EVLOG_error << "Health check script '" << verify_update_script_path << "' not executable";
+        return HealthCheckStatus::ScriptNotExecutable;
+    }
+    const auto res = everest::lib::system::safe_system(verify_update_script_path, {verify_update_script_path});
+    switch (res.status) {
+    case everest::lib::system::CMD_SETUP_FAILED:
+        EVLOG_error << "Health check script '" << verify_update_script_path << "' setup failed, errno: " << res.code;
+        return HealthCheckStatus::SetupFailed;
+    case everest::lib::system::CMD_TERMINATED:
+        EVLOG_error << "Health check script '" << verify_update_script_path << "' terminated by signal: " << res.code;
+        return HealthCheckStatus::ScriptError;
+    case everest::lib::system::CMD_SUCCESS:
+        if (res.code == 0) {
+            EVLOG_debug << "Health check script '" << verify_update_script_path << "' returned success";
+            return HealthCheckStatus::Success;
+        } else {
+            EVLOG_error << "Health check script '" << verify_update_script_path
+                        << "' returned error code: " << res.code;
+            return HealthCheckStatus::ScriptError;
+        }
+    }
+    // Should not reach here
+    return HealthCheckStatus::ScriptError;
 }
 
 sdbus::PendingAsyncCall RaucBase::get_operation(property_cb handler) const {
@@ -245,10 +258,15 @@ sdbus::PendingAsyncCall RaucBase::get_progress(property_cb handler) const {
 }
 
 bool RaucBase::decide_if_good(const rauc_messages::UpdateTransaction& saved, const CurrentState& current) {
-    // by default just check that the boot slot has changed
-    // The return code from /usr/bin/check_system_health.sh could be used to
-    // prevent marking as good
-    return saved.boot_slot != current.boot_slot;
+    // check that the boot slot has changed and update script ran successfully or was not set
+    if (saved.boot_slot == current.boot_slot) {
+        return false;
+    }
+    if (current.system_health_rc != rauc_messages::HealthCheckStatus::Success and
+        current.system_health_rc != rauc_messages::HealthCheckStatus::ScriptNotSet) {
+        return false;
+    }
+    return true;
 }
 
 // ----------------------------------------------------------------------------

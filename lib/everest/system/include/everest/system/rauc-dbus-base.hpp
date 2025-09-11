@@ -67,6 +67,14 @@ struct UpdateTransaction {
     std::string primary_slot;
 };
 
+enum class HealthCheckStatus {
+    Success,
+    ScriptNotSet,
+    ScriptNotExecutable,
+    SetupFailed,
+    ScriptError
+};
+
 Operation string_to_operation(const std::string_view& s);
 // Stream operators are needed for type conversion in sdbus
 sdbus::Message& operator<<(sdbus::Message& msg, const Progress& items);
@@ -84,7 +92,7 @@ public:
     using slot_info_t = std::map<std::string, std::map<std::string, std::string>>;
 
     struct CurrentState {
-        int system_health_rc;
+        rauc_messages::HealthCheckStatus system_health_rc;
         std::string boot_slot;
         std::string primary_slot;
     };
@@ -92,7 +100,7 @@ public:
     RaucBase();
     RaucBase(sdbus::dont_run_event_loop_thread_t);
 
-    void configure();
+    void configure(const std::string& verify_update_script_path = "");
     bool check_previous_transaction(const CurrentState& current, const rauc_messages::UpdateTransaction& saved);
 
     // methods
@@ -109,7 +117,7 @@ protected:
     using slots_t = std::vector<sdbus::Struct<std::string, std::map<std::string, sdbus::Variant>>>;
     static slot_info_t convert(slots_t& slots);
 
-    int check_system_health();
+    rauc_messages::HealthCheckStatus check_system_health();
 
     // methods
     sdbus::PendingAsyncCall get_primary_slot(method_cb handler, uint64_t timeout_us);
@@ -122,6 +130,9 @@ protected:
 
     virtual bool decide_if_good(const rauc_messages::UpdateTransaction& saved, const CurrentState& current);
     virtual void configure_handlers() = 0;
+
+private:
+    std::string verify_update_script_path;
 };
 
 // ----------------------------------------------------------------------------
