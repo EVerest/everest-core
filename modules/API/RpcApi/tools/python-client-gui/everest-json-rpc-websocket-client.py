@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# This code was generated and enhanced with the help of an AI assistant (ChatGPT by OpenAI).
+# Copyright chargebyte GmbH and Contributors to EVerest
 
 import asyncio
 import json
