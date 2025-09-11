@@ -1,36 +1,37 @@
+---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:auth_consumer_API'
+id: 'pionix:de:everest:auth_consumer_API'
 info:
-  title: "Basecamp API definition for auth consumer"
+  title: "EVerest API definition for auth consumer"
   version: 1.0.2-rc1
   description: >-
-    API for basecamp api clients using auth.
+    API to allow EVerest API clients to use the Auth module.
 
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: Auth
 servers:
   default:
-    pathname: 'basecamp/api/1.0/auth_consumer/{module_id}'
+    pathname: 'everest_api/1.0/auth_consumer/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined in the basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   receive_token_validation_status:
-    address: 'b2m/token_validation_status'
+    address: 'e2m/token_validation_status'
     messages:
       receive_token_validation_status:
         $ref: '#/components/messages/receive_token_validation_status'
   send_request_withdraw_authorization:
-    address: 'm2b/withdraw_authorization'
+    address: 'm2e/withdraw_authorization'
     messages:
       send_request_withdraw_authorization:
         $ref: '#/components/messages/send_request_withdraw_authorization'
@@ -41,12 +42,12 @@ channels:
         $ref: '#/components/messages/receive_reply_withdraw_authorization'
 
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -58,7 +59,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_token_validation_status'
-    description: 'Direction: BaseCamp to module'
+    description: 'Direction: EVerest to Module'
   send_request_withdraw_authorization:
     title: Withdraw granted authorization.
     action: send
@@ -119,7 +120,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload: {
               "token": {
               "request_id": 0,
@@ -146,7 +147,7 @@ components:
 
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -156,7 +157,7 @@ components:
             true
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
 

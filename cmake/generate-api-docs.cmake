@@ -1,13 +1,3 @@
-#
-# Licensor: Pionix GmbH, 2024
-# License: BaseCamp - License Version 1.0
-#
-# Licensed under the terms and conditions of the BaseCamp License contained in the "LICENSE" file, also available
-# under: https://pionix.com/pionix-license-terms
-# You may not use this file/code except in compliance with said License.
-#
-#find_program(ASYNCAPI_CMD asyncapi)
-
 function(generate_async_api_docs)
   set(oneValueArgs
     API_PATH
@@ -65,5 +55,5 @@ function(generate_async_api_docs)
     OPTIONAL
   )
 
-  add_dependencies(basecamp_api_docs ${ASYNC_TARGET_NAME})
+  add_dependencies(everest_api_docs ${ASYNC_TARGET_NAME})
 endfunction()

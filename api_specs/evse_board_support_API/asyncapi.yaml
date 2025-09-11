@@ -1,134 +1,134 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:evse_board_support_API'
+id: 'pionix:de:everest:evse_board_support_API'
 info:
-  title: "Basecamp API definition for EVSE board support"
+  title: "EVerest API definition for EVSE board support"
   version: 1.0.3
   description: >-
-    API for basecamp drivers supporting evse board support, AC RCD and connector lock.
+    API for EVerest API clients implementing evse board support, AC RCD and connector lock.
 
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: evse_board_support
     - name: ac_rcd
     - name: connector_lock
 servers:
   default:
-    pathname: 'basecamp/api/1.0/evse_board_support/{module_id}'
+    pathname: 'everest_api/1.0/evse_board_support/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined by the module id in the basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   send_event:
-    address: 'm2b/event'
+    address: 'm2e/event'
     messages:
       send_event:
         $ref: '#/components/messages/send_event'
   send_ac_nr_of_phases:
-    address: 'm2b/ac_nr_of_phases'
+    address: 'm2e/ac_nr_of_phases'
     messages:
       send_ac_nr_of_phases:
         $ref: '#/components/messages/send_ac_nr_of_phases'
   send_capabilities:
-    address: 'm2b/capabilities'
+    address: 'm2e/capabilities'
     messages:
       send_capabilities:
         $ref: '#/components/messages/send_capabilities'
   send_ac_pp_ampacity:
-    address: 'm2b/ac_pp_ampacity'
+    address: 'm2e/ac_pp_ampacity'
     messages:
       send_ac_pp_ampacity:
         $ref: '#/components/messages/send_ac_pp_ampacity'
   send_request_stop_transaction:
-    address: 'm2b/request_stop_transaction'
+    address: 'm2e/request_stop_transaction'
     messages:
       send_ac_pp_ampacity:
         $ref: '#/components/messages/send_request_stop_transaction'
   send_rcd_current:
-    address: 'm2b/rcd_current'
+    address: 'm2e/rcd_current'
     messages:
       send_rcd_current:
         $ref: '#/components/messages/send_rcd_current'
   send_raise_error:
-    address: 'm2b/raise_error'
+    address: 'm2e/raise_error'
     messages:
       send_raise_error:
         $ref: '#/components/messages/send_raise_error'
   send_clear_error:
-    address: 'm2b/clear_error'
+    address: 'm2e/clear_error'
     messages:
       send_clear_error:
         $ref: '#/components/messages/send_clear_error'
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_enable:
-    address: 'b2m/enable'
+    address: 'e2m/enable'
     messages:
       receive_enable:
         $ref: '#/components/messages/receive_enable'
   receive_pwm_on:
-    address: 'b2m/pwm_on'
+    address: 'e2m/pwm_on'
     messages:
       receive_pwm_on:
         $ref: '#/components/messages/receive_pwm_on'
   receive_pwm_off:
-    address: 'b2m/pwm_off'
+    address: 'e2m/pwm_off'
     messages:
       receive_pwm_off:
         $ref: '#/components/messages/receive_pwm_off'
   receive_pwm_F:
-    address: 'b2m/pwm_F'
+    address: 'e2m/pwm_F'
     messages:
       receive_pwm_F:
         $ref: '#/components/messages/receive_pwm_F'
   receive_allow_power_on:
-    address: 'b2m/allow_power_on'
+    address: 'e2m/allow_power_on'
     messages:
       receive_allow_power_on:
         $ref: '#/components/messages/receive_allow_power_on'
   receive_ac_switch_three_phases_while_charging:
-    address: 'b2m/ac_switch_three_phases_while_charging'
+    address: 'e2m/ac_switch_three_phases_while_charging'
     messages:
        receive_ac_switch_three_phases_while_charging:
          $ref: '#/components/messages/receive_ac_switch_three_phases_while_charging'
   receive_evse_replug:
-    address: 'b2m/evse_replug'
+    address: 'e2m/evse_replug'
     messages:
       receive_evse_replug:
         $ref: '#/components/messages/receive_evse_replug'
   receive_ac_overcurrent_limit:
-    address: 'b2m/ac_overcurrent_limit'
+    address: 'e2m/ac_overcurrent_limit'
     messages:
       receive_ac_overcurrent_limit:
         $ref: '#/components/messages/receive_ac_overcurrent_limit'
   receive_lock:
-    address: 'b2m/lock'
+    address: 'e2m/lock'
     messages:
       receive_lock:
         $ref: '#/components/messages/receive_lock'
   receive_unlock:
-    address: 'b2m/unlock'
+    address: 'e2m/unlock'
     messages:
       receive_unlock:
         $ref: '#/components/messages/receive_unlock'
   receive_self_test:
-    address: 'b2m/self_test'
+    address: 'e2m/self_test'
     messages:
       receive_self_test:
         $ref: '#/components/messages/receive_self_test'
   receive_request_ac_pp_ampacity:
-    address: 'b2m/ac_pp_ampacity'
+    address: 'e2m/ac_pp_ampacity'
     messages:
       receive_request_ac_pp_ampacity:
         $ref: '#/components/messages/receive_request_ac_pp_ampacity'
@@ -138,7 +138,7 @@ channels:
       send_reply_ac_pp_ampacity:
         $ref: '#/components/messages/send_reply_ac_pp_ampacity'
   receive_request_reset:
-    address: 'b2m/reset'
+    address: 'e2m/reset'
     messages:
       receive_request_reset:
         $ref: '#/components/messages/receive_request_reset'
@@ -148,7 +148,7 @@ channels:
       send_reply_reset:
         $ref: '#/components/messages/send_reply_reset'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -161,19 +161,19 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_event'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_ac_nr_of_phases:
     title: Send phase count available to car
     action: send
     channel:
       $ref: '#/channels/send_ac_nr_of_phases'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_capabilities:
     title: Send hardware capabilities
     action: send
     channel:
       $ref: '#/channels/send_capabilities'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_ac_pp_ampacity:
     title: Send AC pp ampacity
     action: send
@@ -184,19 +184,19 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_stop_transaction'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_rcd_current:
     title: Send RCD current
     action: send
     channel:
       $ref: '#/channels/send_rcd_current'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_raise_error:
     title: Send raise error
     action: send
     channel:
       $ref: '#/channels/send_raise_error'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_clear_error:
     title: Send clear error
     action: send
@@ -212,49 +212,49 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_enable'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_pwm_on:
     title: Reeive PWM duty cycle
     action: receive
     channel:
       $ref: '#/channels/receive_pwm_on'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_pwm_off:
     title: Receive PWM off
     action: receive
     channel:
       $ref: '#/channels/receive_pwm_off'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_pwm_F:
     title: Receive PWM F
     action: receive
     channel:
       $ref: '#/channels/receive_pwm_F'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_allow_power_on:
     title: Receive permission to switch relaise
     action: receive
     channel:
       $ref: '#/channels/receive_allow_power_on'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_ac_switch_three_phases_while_charging:
     title: Receive command to switch 3 phase and 1 phase mode while charging
     action: receive
     channel:
       $ref: '#/channels/receive_ac_switch_three_phases_while_charging'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_evse_replug:
     title: Receive request for virtual replug sequence
     action: receive
     channel:
       $ref: '#/channels/receive_evse_replug'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_ac_overcurrent_limit:
     title: Receive over current limit
     action: receive
     channel:
       $ref: '#/channels/receive_ac_overcurrent_limit'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_lock:
     title: Receive request to lock
     action: receive
@@ -307,7 +307,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
 
 
 
@@ -396,7 +396,7 @@ components:
             1
     send_raise_error:
       title: Send raise error
-      summary: Signal to BaseCamp that an error happened.
+      summary: Signal to EVerest that an error happened.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -408,7 +408,7 @@ components:
             "message": "string"
     send_clear_error:
       title: Send clear error
-      summary: Signal to BaseCamp that a preciously raised error is no longer active.
+      summary: Signal to EVerest that a previously raised error is no longer active.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -420,7 +420,7 @@ components:
             "message": "string"
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -568,7 +568,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
     send_reply_reset:
       title: Reply to request for RCD reset
       summary: >-
@@ -578,7 +578,7 @@ components:
         $ref: '#/components/schemas/Success'
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
 

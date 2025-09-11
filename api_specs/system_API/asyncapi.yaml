@@ -1,32 +1,32 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:system_API'
+id: 'pionix:de:everest:system_API'
 info:
-  title: "Basecamp API definition for the system module"
+  title: "EVerest API definition for the system module"
   version: 1.0.1
   description: >-
-    API for basecamp to implement the system capabilities OTA update and log upload.
+    API for EVerest API client implementing the system capabilities OTA update and log upload.
 
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: SystemAPI
 servers:
   default:
-    pathname: 'basecamp/api/1.0/system/{module_id}'
+    pathname: 'everest_api/1.0/system/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined in the basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   receive_request_update_firmware:
-    address: 'b2m/update_firmware'
+    address: 'e2m/update_firmware'
     messages:
       receive_request_update_firmware:
         $ref: '#/components/messages/receive_request_update_firmware'
@@ -36,7 +36,7 @@ channels:
       send_reply_update_firmware:
         $ref: '#/components/messages/send_reply_update_firmware'
   receive_request_upload_logs:
-    address: 'b2m/upload_logs'
+    address: 'e2m/upload_logs'
     messages:
       receive_request_upload_logs:
         $ref: '#/components/messages/receive_request_upload_logs'
@@ -51,7 +51,7 @@ channels:
       send_reply_is_reset_allowed:
         $ref: '#/components/messages/send_reply_is_reset_allowed'
   receive_request_is_reset_allowed:
-    address: 'b2m/is_reset_allowed'
+    address: 'e2m/is_reset_allowed'
     messages:
       receive_request_is_reset_allowed:
         $ref: '#/components/messages/receive_request_is_reset_allowed'
@@ -61,7 +61,7 @@ channels:
       send_reply_set_system_time:
         $ref: '#/components/messages/send_reply_set_system_time'
   receive_request_set_system_time:
-    address: 'b2m/set_system_time'
+    address: 'e2m/set_system_time'
     messages:
       receive_request_set_system_time:
         $ref: '#/components/messages/receive_request_set_system_time'
@@ -71,37 +71,37 @@ channels:
       send_reply_get_boot_reason:
         $ref: '#/components/messages/send_reply_get_boot_reason'
   receive_request_get_boot_reason:
-    address: 'b2m/get_boot_reason'
+    address: 'e2m/get_boot_reason'
     messages:
       receive_request_get_boot_reason:
         $ref: '#/components/messages/receive_request_get_boot_reason'
   receive_allow_firmware_installation:
-    address: 'b2m/allow_firmware_installation'
+    address: 'e2m/allow_firmware_installation'
     messages:
       receive_allow_firmware_installation:
         $ref: '#/components/messages/receive_allow_firmware_installation'
   receive_reset:
-    address: 'b2m/reset'
+    address: 'e2m/reset'
     messages:
       receive_reset:
         $ref: '#/components/messages/receive_reset'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
   send_firmware_update_status:
-    address: 'm2b/firmware_update_status'
+    address: 'm2e/firmware_update_status'
     messages:
       send_firmware_update_status:
         $ref: '#/components/messages/send_firmware_update_status'
   send_log_status:
-    address: 'm2b/log_status'
+    address: 'm2e/log_status'
     messages:
       send_log_status:
         $ref: '#/components/messages/send_log_status'
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
@@ -111,7 +111,7 @@ operations:
   send_reply_update_firmware:
     title: Request validate token
     action: send
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     channel:
       $ref: '#/channels/send_reply_update_firmware'
   receive_request_update_firmware:
@@ -119,7 +119,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_request_update_firmware'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -128,7 +128,7 @@ operations:
   send_reply_upload_logs:
     title: Request to upload loads
     action: send
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     channel:
       $ref: '#/channels/send_reply_upload_logs'
   receive_request_upload_logs:
@@ -136,7 +136,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_request_upload_logs'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -147,13 +147,13 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_reply_is_reset_allowed'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_request_is_reset_allowed:
     title: Receive request for is reset allowed
     action: receive
     channel:
       $ref: '#/channels/receive_request_is_reset_allowed'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -164,13 +164,13 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_reply_set_system_time'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_request_set_system_time:
     title: Receive request to set the system time
     action: receive
     channel:
       $ref: '#/channels/receive_request_set_system_time'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -181,13 +181,13 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_reply_get_boot_reason'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_request_get_boot_reason:
     title: Receive request to get the boot reason
     action: receive
     channel:
       $ref: '#/channels/receive_request_get_boot_reason'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -198,13 +198,13 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_allow_firmware_installation'
-      description: 'Direction: BaseCamp to Module'
+      description: 'Direction: EVerest to Module'
   receive_reset:
     title: Call to reset the system immediately
     action: receive
     channel:
       $ref: '#/channels/receive_reset'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_heartbeat:
     title: Receive heatbeat
     action: receive
@@ -215,7 +215,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_firmware_update_status'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_log_status:
     title: Send log upload status
     action: send
@@ -364,7 +364,7 @@ components:
         $ref: '#/components/schemas/ResetRequest'
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
     send_firmware_update_status:
       title: Send firmware update status
@@ -388,7 +388,7 @@ components:
               request_id: 0
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'

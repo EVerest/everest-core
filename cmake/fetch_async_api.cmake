@@ -1,13 +1,4 @@
-#
-# Licensor: Pionix GmbH, 2024
-# License: BaseCamp - License Version 1.0
-#
-# Licensed under the terms and conditions of the BaseCamp License contained in the "LICENSE" file, also available
-# under: https://pionix.com/pionix-license-terms
-# You may not use this file/code except in compliance with said License.
-#
-
-if(BASECAMP_BUILD_DOCS OR BASECAMP_BUILD_API_CLIENTS)
+if(EVEREST_BUILD_DOCS)
   if(asyncapi-cli_DIR)
     message(STATUS "Using asyncapi-cli at this location: ${asyncapi-cli_DIR}")
   else()
@@ -38,7 +29,7 @@ if(BASECAMP_BUILD_DOCS OR BASECAMP_BUILD_API_CLIENTS)
   set(ASYNCAPI_CMD ${asyncapi-cli_DIR}/bin/run)
 endif()
 
-if(BASECAMP_BUILD_DOCS)
+if(EVEREST_BUILD_DOCS)
   find_package(asyncapi-html-template
     COMPONENTS bundling
     PATHS ../asyncapi-html-template

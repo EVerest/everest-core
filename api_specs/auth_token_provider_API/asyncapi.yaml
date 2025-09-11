@@ -1,42 +1,42 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:auth_token_provider_API'
+id: 'pionix:de:everest:auth_token_provider_API'
 info:
-  title: "Basecamp API definition for auth token provider"
+  title: "EVerest API definition for auth token provider"
   version: 1.0.1
   description: >-
-    API for basecamp drivers implementing auth token provider.
+    API for EVerest API clients implementing auth token provider.
 
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: Auth
 servers:
   default:
-    pathname: 'basecamp/api/1.0/auth_token_provider/{module_id}'
+    pathname: 'everest_api/1.0/auth_token_provider/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined in the basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   send_provided_token:
-    address: 'm2b/provided_token'
+    address: 'm2e/provided_token'
     messages:
       provided_token:
         $ref: '#/components/messages/send_provided_token'
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -48,7 +48,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_provided_token'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_communication_check:
     title: Send communication check
     action: send
@@ -78,7 +78,7 @@ components:
               value: "TOKEN"
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -88,7 +88,7 @@ components:
             true
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
 

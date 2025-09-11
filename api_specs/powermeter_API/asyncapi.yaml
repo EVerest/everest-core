@@ -1,34 +1,34 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:powermeter_API'
+id: 'pionix:de:everest:powermeter_API'
 info:
-  title: Basecamp API definition for powermeters
+  title: EVerest API definition for powermeters
   version: 1.0.1
   description: >-
-    This document contains the description of the API for basecamp drivers supporting powermeters.
-    Powermeters with corresponding capabilites have to be installed in the charger. In order to add support for a specific powermeter this API has to be used. It is guaranteed to be stable for the current major release. Additional functionality not breaking existing code may be added with minor releases.
+    API for EVerest API clients implementing powermeter.
+
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: powermeter
 servers:
   default:
-    pathname: 'basecamp/api/1.0/powermeter/{module_id}'
+    pathname: 'everest_api/1.0/powermeter/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module has to be defined by `cfg_target_module_id` in basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 #Channels are addressable components (MQTT topics). They are used (to send or receive) by the customer application.
 #Senders send to channels and receivers receive messages from channels.
 channels:
   receive_request_start_transaction:
-    address: 'b2m/start_transaction'
+    address: 'e2m/start_transaction'
     messages:
       receive_request_start_transaction:
         $ref: '#/components/messages/receive_request_start_transaction'
@@ -39,7 +39,7 @@ channels:
       send_reply_start_transaction:
         $ref: '#/components/messages/send_reply_start_transaction'
   receive_request_stop_transaction:
-    address: 'b2m/stop_transaction'
+    address: 'e2m/stop_transaction'
     messages:
       receive_request_stop_transaction:
         $ref: '#/components/messages/receive_request_stop_transaction'
@@ -51,22 +51,22 @@ channels:
       send_reply_stop_transaction:
         $ref: '#/components/messages/send_reply_stop_transaction'
   send_powermeter_values:
-    address: 'm2b/powermeter_values'
+    address: 'm2e/powermeter_values'
     messages:
       send_powermeter_values:
         $ref: '#/components/messages/send_powermeter_values'
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   send_public_key_ocmf:
-    address: "m2b/public_key_ocmf"
+    address: "m2e/public_key_ocmf"
     messages:
       send_public_key_ocmf:
         $ref: "#/components/messages/send_public_key_ocmf"
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -114,7 +114,7 @@ operations:
       $ref: '#/channels/send_reply_stop_transaction'
   send_powermeter_values:
     title: Send powermeter values
-    summary: 'Direction: Module to BaseCamp'
+    summary: 'Direction: Module to EVerest'
     description: This operation is used to send a dataset of measured values. The timestamp and the imported energy (in Wh) are required. Other values are optional.
     action: send
     channel:
@@ -259,7 +259,7 @@ components:
               L3: 228.47914123535156
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -279,7 +279,7 @@ components:
             "THE_KEY"
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
   schemas:
