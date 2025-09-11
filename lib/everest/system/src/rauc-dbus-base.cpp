@@ -222,7 +222,7 @@ rauc_messages::HealthCheckStatus RaucBase::check_system_health() {
         return HealthCheckStatus::SetupFailed;
     case everest::lib::system::CMD_TERMINATED:
         EVLOG_error << "Health check script '" << verify_update_script_path << "' terminated by signal: " << res.code;
-        return HealthCheckStatus::ScriptError;
+        return HealthCheckStatus::ScriptTerminatedBySignal;
     case everest::lib::system::CMD_SUCCESS:
         if (res.code == 0) {
             EVLOG_debug << "Health check script '" << verify_update_script_path << "' returned success";
@@ -230,11 +230,11 @@ rauc_messages::HealthCheckStatus RaucBase::check_system_health() {
         } else {
             EVLOG_error << "Health check script '" << verify_update_script_path
                         << "' returned error code: " << res.code;
-            return HealthCheckStatus::ScriptError;
+            return HealthCheckStatus::ScriptExitedWithError;
         }
     }
     // Should not reach here
-    return HealthCheckStatus::ScriptError;
+    return HealthCheckStatus::UnknownError;
 }
 
 sdbus::PendingAsyncCall RaucBase::get_operation(property_cb handler) const {

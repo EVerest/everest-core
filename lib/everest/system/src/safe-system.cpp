@@ -138,7 +138,7 @@ std::string cmd_execution_status_to_string(const CommandExecutionStatus& status)
     case CommandExecutionStatus::CMD_SETUP_FAILED:
         return "CMD_SETUP_FAILED";
     default:
-        throw std::runtime_error("No known conversion for the given CommandExecutionStatus");
+        return "CMD_UNKNOWN_STATUS";
     }
 }
 

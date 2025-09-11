@@ -115,14 +115,17 @@ bool Rauc::decide_if_good(const rauc_dbus::rauc_messages::UpdateTransaction& sav
     // as reliable as hoped. A change in boot slot should be more reliable
     // however prior to this change the boot slot wasn't saved
 
-    bool result;
-    if (saved.boot_slot.empty()) {
-        // use the previous approach
-        EVLOG_warning << "OTA: fallback to using primary slot";
-        result = saved.primary_slot == current.primary_slot;
-    } else {
-        // use the new approach
-        result = saved.boot_slot != current.boot_slot;
+    bool result{false};
+
+    if (RaucBase::decide_if_good(saved, current)) {
+        if (saved.boot_slot.empty()) {
+            // use the previous approach
+            EVLOG_warning << "OTA: fallback to using primary slot";
+            result = saved.primary_slot == current.primary_slot;
+        } else {
+            // use the new approach
+            result = saved.boot_slot != current.boot_slot;
+        }
     }
     return result;
 }

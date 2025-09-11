@@ -68,11 +68,13 @@ struct UpdateTransaction {
 };
 
 enum class HealthCheckStatus {
-    Success,
-    ScriptNotSet,
+    ScriptExitedWithError,
     ScriptNotExecutable,
+    ScriptNotSet,
+    ScriptTerminatedBySignal,
     SetupFailed,
-    ScriptError
+    Success,
+    UnknownError
 };
 
 Operation string_to_operation(const std::string_view& s);
