@@ -175,6 +175,12 @@ void to_json(json& j, TokenValidationStatus const& k) noexcept {
     case TokenValidationStatus::Withdrawn:
         j = "Withdrawn";
         return;
+    case TokenValidationStatus::UsedToStart:
+        j = "UsedToStart";
+        return;
+    case TokenValidationStatus::UsedToStop:
+        j = "UsedToStop";
+        return;
     }
     j = "INVALID_VALUE__everest::lib::API::V1_0::types::auth::TokenValidationStatus";
 }
@@ -201,7 +207,14 @@ void from_json(const json& j, TokenValidationStatus& k) {
         k = TokenValidationStatus::Withdrawn;
         return;
     }
-
+    if (s == "UsedToStart") {
+        k = TokenValidationStatus::UsedToStart;
+        return;
+    }
+    if (s == "UsedToStop") {
+        k = TokenValidationStatus::UsedToStop;
+        return;
+    }
     throw std::out_of_range(
         "Provided string " + s +
         " could not be converted to enum of type everest::lib::API::V1_0::types::auth::TokenValidationStatus");
