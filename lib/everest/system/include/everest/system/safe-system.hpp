@@ -68,7 +68,7 @@ inline CommandResult safe_system(std::string_view pathname, std::initializer_lis
 /// @return a vector
 std::pair<std::string, std::vector<std::string>> split_command_line(const std::string& command);
 
-/// @brief update the exit status from a chile process
+/// @brief update the exit status from a child process
 /// @param status - the exit status
 /// @return updated status taking into account signals and other exit conditions
 constexpr int update_exit_status(int status) {
