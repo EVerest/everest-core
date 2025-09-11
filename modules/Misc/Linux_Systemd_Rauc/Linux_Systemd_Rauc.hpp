@@ -30,6 +30,7 @@ struct Conf {
     std::string OCPPLogPath;
     std::string SessionLogPath;
     std::string RebootCommand;
+    std::string VerifyUpdateScriptPath;
 };
 
 class Linux_Systemd_Rauc : public Everest::ModuleBase {

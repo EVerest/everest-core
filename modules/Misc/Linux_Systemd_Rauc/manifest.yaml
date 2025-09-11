@@ -21,6 +21,14 @@ config:
     description: Command to execute for rebooting the system
     type: string
     default: /sbin/reboot
+  VerifyUpdateScriptPath:
+    description: >-
+      Full path to shell script that checks if an OTA update has been successful. The script is executed after 
+      an update and shall verify the success of the update. It shall return 0 in case of success and
+      non-zero in case of failure.
+      If empty no check is performed and the update is considered successful and it is marked as good.
+    type: string
+    default: ""
 provides:
   main:
     description: Implements the system interface
@@ -34,3 +42,4 @@ metadata:
   authors:
     - Piet Gömpel
     - Cornelius Claussen
+    - James Chapman
