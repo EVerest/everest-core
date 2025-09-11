@@ -9,7 +9,6 @@ config:
     description: >-
       Name of the interface which is connected to the internet.
     type: string
-
 provides:
   iso15118_vas:
     interface: ISO15118_vas
@@ -19,7 +18,6 @@ requires:
     interface: evse_manager
     min_connections: 0
     max_connections: 1
-
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

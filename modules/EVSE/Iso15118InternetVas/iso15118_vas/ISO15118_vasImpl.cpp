@@ -11,8 +11,7 @@
 namespace module {
 namespace iso15118_vas {
 
-constexpr int InternetAccessServiceIdD2 = 3;
-// constexpr int InternetAccessServiceIdD20 = 65;
+constexpr int32_t InternetAccessServiceIdD2 = 3;
 const std::string INTERNET_SETUP_SCRIPT = "vas-internet-setup.sh";
 
 constexpr int HTTP_PARAM_SET_ID = 3;
@@ -35,7 +34,6 @@ ISO15118_vasImpl::~ISO15118_vasImpl() {
 
 void ISO15118_vasImpl::init() {
     this->scripts_path = mod->info.paths.libexec;
-    this->internet_service_running = false;
     if (!this->mod->r_evse_manager.empty()) {
         this->mod->r_evse_manager.at(0)->subscribe_session_event(
             [this](types::evse_manager::SessionEvent session_event) {
@@ -48,10 +46,7 @@ void ISO15118_vasImpl::init() {
 }
 
 void ISO15118_vasImpl::ready() {
-    types::iso15118_vas::OfferedServices services;
-    services.service_ids.reserve(1);
-    services.service_ids.emplace_back(InternetAccessServiceIdD2);
-    this->publish_offered_vas(services);
+    this->publish_offered_vas({{InternetAccessServiceIdD2}});
 }
 
 std::vector<types::iso15118_vas::ParameterSet> ISO15118_vasImpl::handle_get_service_parameters(int& service_id) {
@@ -125,7 +120,7 @@ std::vector<int> ISO15118_vasImpl::get_selected_internet_ports(
 }
 
 void ISO15118_vasImpl::handle_selected_services(std::vector<types::iso15118_vas::SelectedService>& selected_services) {
-    std::vector<int> ports_to_open = this->get_selected_internet_ports(selected_services);
+    const auto ports_to_open = this->get_selected_internet_ports(selected_services);
 
     if (!ports_to_open.empty()) {
         std::string ports_str;

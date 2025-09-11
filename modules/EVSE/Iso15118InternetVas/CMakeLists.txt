@@ -22,8 +22,6 @@ target_sources(${MODULE_NAME}
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
-target_compile_features(${MODULE_NAME} PRIVATE cxx_std_17)
-
 # Check for radvd and udhcpd executables
 find_program(RADVD_EXECUTABLE radvd)
 if(NOT RADVD_EXECUTABLE)

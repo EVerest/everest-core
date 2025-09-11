@@ -56,7 +56,7 @@ private:
     get_selected_internet_ports(const std::vector<types::iso15118_vas::SelectedService>& selected_services);
 
     std::filesystem::path scripts_path;
-    std::atomic<bool> internet_service_running;
+    std::atomic<bool> internet_service_running{false};
     std::string active_ports;
     std::thread internet_service_thread;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
