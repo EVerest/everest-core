@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
-#ifndef TRANSPORTINTERFACE_H
-#define TRANSPORTINTERFACE_H
+#ifndef TRANSPORTINTERFACE_HPP
+#define TRANSPORTINTERFACE_HPP
 
 #include <cstdint>
 #include <functional>
@@ -53,4 +53,4 @@ public:
 
 } // namespace server
 
-#endif // TRANSPORTINTERFACE_H
+#endif // TRANSPORTINTERFACE_HPP
