@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright chargebyte GmbH and Contributors to EVerest
+
 #include "../data/DataStore.hpp"
 #include <gtest/gtest.h>
 #include <thread>

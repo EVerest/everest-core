@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
-
 #ifndef LIMIT_DECIMAL_PLACES_HPP
 #define LIMIT_DECIMAL_PLACES_HPP
 

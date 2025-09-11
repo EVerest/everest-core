@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright chargebyte GmbH and Contributors to EVerest
 #ifndef JSON_RPC_UTILS_HPP
 #define JSON_RPC_UTILS_HPP
 
