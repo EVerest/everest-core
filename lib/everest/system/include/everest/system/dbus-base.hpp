@@ -6,7 +6,7 @@
  *
  * The sdbus-c++ library is used to provide a C++ interface to DBus.
  * The functions defined here enable code to compile and run against
- * version 1.6 or version 2.1.0 of sdbus-c++.
+ * version 1.4 or higher of sdbus-c++.
  */
 
 #pragma once
