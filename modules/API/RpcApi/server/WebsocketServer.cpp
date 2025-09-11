@@ -96,10 +96,15 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& 
     // Constructor implementation
     lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG, log_callback);
     m_info.port = port;
-    if (iface != "") {
-        // create a persistent copy
+    // interface: must not be empty (else nothing to do)
+    if (iface.empty()) {
+        throw std::runtime_error("WebSocketServer: parameter 'websocket_interface' must not be empty");
+    }
+    if (iface != "all") {
+        // create a local C-string
         char* iface_ptr = new char[iface.size() + 1];
         std::strcpy(iface_ptr, iface.c_str());
+        // store it persistently in a member, and free the local variable
         m_iface = std::shared_ptr<char>(iface_ptr, [](char* ptr) {
             delete[] ptr; // custom deleter to free the char array
         });

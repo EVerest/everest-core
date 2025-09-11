@@ -12,10 +12,11 @@ config:
     default: 8080
   websocket_interface:
     description: >-
-      Network interface/device for the websocket server to listen on. E.g. 'lo' or 'eth1'.
-      Listen on all interfaces if empty.
+      Network interface/device for the websocket server to listen on, e.g. 'lo' or 'eth1'.
+      Listen on all interfaces if "all".
     type: string
-    default: ""
+    minLength: 1
+    default: "lo"
   websocket_tls_enabled:
     description: Enable TLS for the websocket server. Currently not implemented.
     type: boolean
