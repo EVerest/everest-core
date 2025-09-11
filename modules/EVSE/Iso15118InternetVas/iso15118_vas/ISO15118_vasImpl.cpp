@@ -54,47 +54,51 @@ std::vector<types::iso15118_vas::ParameterSet> ISO15118_vasImpl::handle_get_serv
     if (service_id == InternetAccessServiceIdD2) {
         ret.reserve(2);
 
-        // HTTP
-        types::iso15118_vas::ParameterSet http_params;
-        http_params.set_id = HTTP_PARAM_SET_ID;
-        http_params.parameters.reserve(2);
+        if (this->mod->config.http_support) {
+            // HTTP
+            types::iso15118_vas::ParameterSet http_params;
+            http_params.set_id = HTTP_PARAM_SET_ID;
+            http_params.parameters.reserve(2);
 
-        types::iso15118_vas::Parameter http_param;
-        http_param.name = PARAM_NAME_PROTOCOL;
-        types::iso15118_vas::ParameterValue http_protocol_name;
-        http_protocol_name.finite_string = VALUE_HTTP;
-        http_param.value = http_protocol_name;
+            types::iso15118_vas::Parameter http_param;
+            http_param.name = PARAM_NAME_PROTOCOL;
+            types::iso15118_vas::ParameterValue http_protocol_name;
+            http_protocol_name.finite_string = VALUE_HTTP;
+            http_param.value = http_protocol_name;
 
-        types::iso15118_vas::Parameter http_port;
-        http_port.name = PARAM_NAME_PORT;
-        types::iso15118_vas::ParameterValue http_port_value;
-        http_port_value.int_value = HTTP_PORT;
-        http_port.value = http_port_value;
-        http_params.parameters.emplace_back(http_param);
-        http_params.parameters.emplace_back(http_port);
+            types::iso15118_vas::Parameter http_port;
+            http_port.name = PARAM_NAME_PORT;
+            types::iso15118_vas::ParameterValue http_port_value;
+            http_port_value.int_value = HTTP_PORT;
+            http_port.value = http_port_value;
+            http_params.parameters.emplace_back(http_param);
+            http_params.parameters.emplace_back(http_port);
 
-        ret.emplace_back(http_params);
+            ret.emplace_back(http_params);
+        }
 
-        // HTTPS
-        types::iso15118_vas::ParameterSet https_params;
-        https_params.set_id = HTTPS_PARAM_SET_ID;
-        https_params.parameters.reserve(2);
+        if (this->mod->config.https_support) {
+            // HTTPS
+            types::iso15118_vas::ParameterSet https_params;
+            https_params.set_id = HTTPS_PARAM_SET_ID;
+            https_params.parameters.reserve(2);
 
-        types::iso15118_vas::Parameter https_param;
-        https_param.name = PARAM_NAME_PROTOCOL;
-        types::iso15118_vas::ParameterValue https_protocol_name;
-        https_protocol_name.finite_string = VALUE_HTTPS;
-        https_param.value = https_protocol_name;
+            types::iso15118_vas::Parameter https_param;
+            https_param.name = PARAM_NAME_PROTOCOL;
+            types::iso15118_vas::ParameterValue https_protocol_name;
+            https_protocol_name.finite_string = VALUE_HTTPS;
+            https_param.value = https_protocol_name;
 
-        types::iso15118_vas::Parameter https_port;
-        https_port.name = PARAM_NAME_PORT;
-        types::iso15118_vas::ParameterValue https_port_value;
-        https_port_value.int_value = HTTPS_PORT;
-        https_port.value = https_port_value;
-        https_params.parameters.emplace_back(https_param);
-        https_params.parameters.emplace_back(https_port);
+            types::iso15118_vas::Parameter https_port;
+            https_port.name = PARAM_NAME_PORT;
+            types::iso15118_vas::ParameterValue https_port_value;
+            https_port_value.int_value = HTTPS_PORT;
+            https_port.value = https_port_value;
+            https_params.parameters.emplace_back(https_param);
+            https_params.parameters.emplace_back(https_port);
 
-        ret.emplace_back(https_params);
+            ret.emplace_back(https_params);
+        }
     }
     return ret;
 }
@@ -105,11 +109,11 @@ std::vector<int> ISO15118_vasImpl::get_selected_internet_ports(
 
     for (const auto& service : selected_services) {
         if (service.service_id == InternetAccessServiceIdD2) {
-            if (service.parameter_set_id == HTTP_PARAM_SET_ID) {
+            if (this->mod->config.http_support and service.parameter_set_id == HTTP_PARAM_SET_ID) {
                 if (std::find(selected_ports.begin(), selected_ports.end(), HTTP_PORT) == selected_ports.end()) {
                     selected_ports.push_back(HTTP_PORT);
                 }
-            } else if (service.parameter_set_id == HTTPS_PARAM_SET_ID) {
+            } else if (this->mod->config.https_support and service.parameter_set_id == HTTPS_PARAM_SET_ID) {
                 if (std::find(selected_ports.begin(), selected_ports.end(), HTTPS_PORT) == selected_ports.end()) {
                     selected_ports.push_back(HTTPS_PORT);
                 }

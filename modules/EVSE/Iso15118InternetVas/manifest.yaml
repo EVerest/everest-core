@@ -9,6 +9,14 @@ config:
     description: >-
       Name of the interface which is connected to the internet.
     type: string
+  http_support:
+    description: >-
+      Boolean dictating whether we should let the EV know we support HTTP
+    type: boolean
+  https_support:
+    description: >-
+      Boolean dictating whether we should let the EV know we support HTTPS
+    type: boolean
 provides:
   iso15118_vas:
     interface: ISO15118_vas
