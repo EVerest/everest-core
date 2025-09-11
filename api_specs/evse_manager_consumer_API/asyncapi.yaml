@@ -240,7 +240,11 @@ channels:
       receive_random_delay_countdown:
         $ref: '#/components/messages/receive_random_delay_countdown'
 
-
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
   receive_heartbeat:
     address: 'e2m/heartbeat'
     messages:
@@ -513,6 +517,11 @@ operations:
     channel:
       $ref: '#/channels/receive_random_delay_countdown'
 
+  send_communication_check:
+    title: Send communication check
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
   receive_heartbeat:
     title: Receive heatbeat
     action: receive
@@ -916,6 +925,16 @@ components:
       payload:
          $ref: '#/components/schemas/CountDown'
 
+    send_communication_check:
+      title: Send communication check
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            true
     receive_heartbeat:
       title: Receive heartbeat
       summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
@@ -1621,3 +1640,6 @@ components:
     RandomDelayDuration:
       description: Maximum duration in seconds
       type: integer
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
