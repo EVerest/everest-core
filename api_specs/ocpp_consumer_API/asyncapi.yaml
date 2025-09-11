@@ -1,32 +1,32 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:ocpp_consumer_API'
+id: 'pionix:de:everest:ocpp_consumer_API'
 info:
-  title: "Basecamp API definition for ocpp (consumer)"
+  title: "EVerest API definition for ocpp (consumer)"
   version: 1.0.1
   description: >-
-    API for basecamp drivers implementing occp / ocpp_data_transfer (consumer).
+    API for EVerest API clients implementing occp / ocpp_data_transfer (consumer).
 
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: OCPP
 servers:
   default:
-    pathname: 'basecamp/api/1.0/ocpp_consumer/{module_id}'
+    pathname: 'everest_api/1.0/ocpp_consumer/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined in the basecamp config file
+        description: The ID of the module as defined in the EVerest config file
 defaultContentType: application/json
 
 channels:
   send_request_get_variables:
-    address: 'm2b/get_variables'
+    address: 'm2e/get_variables'
     messages:
       send_request_get_variables:
         $ref: '#/components/messages/send_request_get_variables'
@@ -36,7 +36,7 @@ channels:
       receive_reply_get_variables:
         $ref: '#/components/messages/receive_reply_get_variables'
   send_request_set_variables:
-    address: 'm2b/set_variables'
+    address: 'm2e/set_variables'
     messages:
       send_request_set_variables:
         $ref: '#/components/messages/send_request_set_variables'
@@ -46,7 +46,7 @@ channels:
       receive_reply_set_variables:
         $ref: '#/components/messages/receive_reply_set_variables'
   send_request_data_transfer_outgoing:
-    address: 'm2b/data_transfer_outgoing'
+    address: 'm2e/data_transfer_outgoing'
     messages:
       send_request_data_transfer_outgoing:
         $ref: '#/components/messages/send_request_data_transfer_outgoing'
@@ -56,7 +56,7 @@ channels:
       receive_reply_data_transfer_outgoing:
         $ref: '#/components/messages/receive_reply_data_transfer_outgoing'
   receive_request_data_transfer_incoming:
-    address: 'b2m/data_transfer_incoming'
+    address: 'e2m/data_transfer_incoming'
     messages:
       receive_request_data_transfer_incoming:
         $ref: '#/components/messages/receive_request_data_transfer_incoming'
@@ -67,32 +67,32 @@ channels:
         $ref: '#/components/messages/send_reply_data_transfer_incoming'
 
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
   receive_security_event:
-    address: 'b2m/security_event'
+    address: 'e2m/security_event'
     messages:
       receive_security_event:
         $ref: '#/components/messages/receive_security_event'
   receive_is_connected:
-    address: 'b2m/is_connected'
+    address: 'e2m/is_connected'
     messages:
       receive_is_connected:
         $ref: '#/components/messages/receive_is_connected'
   receive_boot_notification_response:
-    address: 'b2m/boot_notification_response'
+    address: 'e2m/boot_notification_response'
     messages:
       receive_boot_notification_response:
         $ref: '#/components/messages/receive_boot_notification_response'
   receive_ocpp_transaction_event:
-    address: 'b2m/ocpp_transaction_event'
+    address: 'e2m/ocpp_transaction_event'
     messages:
       receive_ocpp_transaction_event:
         $ref: '#/components/messages/receive_ocpp_transaction_event'
@@ -109,7 +109,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_get_variables'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -125,7 +125,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_set_variables'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -141,7 +141,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_data_transfer_outgoing'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -157,7 +157,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_request_data_transfer_incoming'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -216,7 +216,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               items:
               - component_variable:
@@ -255,7 +255,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               variables:
                 items:
@@ -297,7 +297,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               vendor_id: string
               message_id: string
@@ -342,7 +342,7 @@ components:
               data: string
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -352,7 +352,7 @@ components:
             true
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
     receive_security_event:
       title: Receive security event

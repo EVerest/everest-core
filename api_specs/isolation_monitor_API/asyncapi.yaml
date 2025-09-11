@@ -1,72 +1,72 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:isolation_monitor_API'
+id: 'pionix:de:everest:isolation_monitor_API'
 info:
-  title: Basecamp API definition for isolation monitors
+  title: EVerest API definition for isolation monitors
   version: 1.0.1
   description: >-
-    This document contains the description of the API for basecamp drivers supporting isolation monitors.
-    Isolation monitors with corresponding capabilites have to be installed in the charger. In order to add support for a specific isolation monitor this API has to be used. It is guaranteed to be stable for the current major release. Additional functionality not breaking existing code may be added with minor releases.
+    API for EVerest API clients implementing isolation monitoring.
+
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: isolation monitor
 servers:
   default:
-    pathname: 'basecamp/api/1.0/isolation_monitor/{module_id}'
+    pathname: 'everest_api/1.0/isolation_monitor/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined by `cfg_target_module_id` in basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   receive_start:
-    address: 'b2m/receive_start'
+    address: 'e2m/receive_start'
     messages:
       receive_start:
         $ref: '#/components/messages/receive_start'
   receive_stop:
-    address: 'b2m/receive_stop'
+    address: 'e2m/receive_stop'
     messages:
       receive_stop:
         $ref: '#/components/messages/receive_stop'
   receive_start_self_test:
-    address: 'b2m/receive_start_self_test'
+    address: 'e2m/receive_start_self_test'
     messages:
       receive_start_self_test:
         $ref: '#/components/messages/receive_start_self_test'
   send_isolation_measurement:
-    address: 'm2b/isolation_measurement'
+    address: 'm2e/isolation_measurement'
     messages:
       send_isolation_measurement:
         $ref: '#/components/messages/send_isolation_measurement'
   send_self_test_result:
-    address: 'm2b/self_test_result'
+    address: 'm2e/self_test_result'
     messages:
       send_self_test_result:
         $ref: '#/components/messages/send_self_test_result'
   send_raise_error:
-    address: 'm2b/raise_error'
+    address: 'm2e/raise_error'
     messages:
       send_raise_error:
         $ref: '#/components/messages/send_raise_error'
   send_clear_error:
-    address: 'm2b/clear_error'
+    address: 'm2e/clear_error'
     messages:
       send_clear_error:
         $ref: '#/components/messages/send_clear_error'
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -75,35 +75,35 @@ channels:
 operations:
   receive_start:
     title: Receive start command
-    summary: 'Direction: BaseCamp to Module'
+    summary: 'Direction: EVerest to Module'
     description:  By receiving the start command the monitoring of the isolation status should be started. Measurement data should be sent in user dependent interval until the stop command is received.
     action: receive
     channel:
       $ref: '#/channels/receive_start'
   receive_stop:
     title: Receive stop command
-    summary: 'Direction: BaseCamp to Module'
+    summary: 'Direction: EVerest to Module'
     description:  By receiving the stop command the monitoring of the isolation status should be stoped. Measurement data must not be sent until the next start command is received.
     action: receive
     channel:
       $ref: '#/channels/receive_stop'
   receive_start_self_test:
     title: Receive start self test command
-    summary: 'Direction: BaseCamp to Module'
+    summary: 'Direction: EVerest to Module'
     description: The EvseManager will enable a DC voltage to support the testing, but will not enable output relais such that there is no high voltage on the external plug. The "self_test_result" variable must be published once the self testing is done.
     action: receive
     channel:
       $ref: '#/channels/receive_start_self_test'
   send_isolation_measurement:
     title: Send isolation measurement
-    summary: 'Direction: Module to BaseCamp'
+    summary: 'Direction: Module to EVerest'
     description: This operation is used to send a dataset of measured values. The isolation resistance (in Ohm) is required. The voltage is optional.
     action: send
     channel:
       $ref: '#/channels/send_isolation_measurement'
   send_self_test_result:
     title: Send self test result
-    summary: 'Direction: Module to BaseCamp'
+    summary: 'Direction: Module to EVerest'
     description: This operation is used to send the result of the self test.
     action: send
     channel:
@@ -113,7 +113,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_raise_error'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_clear_error:
     title: Send clear error
     action: send
@@ -172,7 +172,7 @@ components:
             true
     send_raise_error:
       title: Send raise error
-      summary: Signal to BaseCamp that an error happened.
+      summary: Signal to EVerest that an error happened.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -184,7 +184,7 @@ components:
             "message": "string"
     send_clear_error:
       title: Send clear error
-      summary: Signal to BaseCamp that a preciously raised error is no longer active.
+      summary: Signal to EVerest that a previously raised error is no longer active.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -196,7 +196,7 @@ components:
             "message": "string"
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -206,7 +206,7 @@ components:
             true
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
 

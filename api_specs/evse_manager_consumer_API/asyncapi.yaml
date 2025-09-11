@@ -1,32 +1,32 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:evse_manager_consumer_API'
+id: 'pionix:de:everest:evse_manager_consumer_API'
 info:
-  title: "Basecamp API definition for the use of the EVSE manager"
+  title: "EVerest API definition for the use of the EVSE manager"
   version: 1.0.3-rc1
   description: >-
-    API for basecamp to use the EVSE manager.
+    API to allow EVerest API clients to use the EvseManager module.
 
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: EVSE manager
 servers:
   default:
-    pathname: 'basecamp/api/1.0/evse_manager_consumer/{module_id}'
+    pathname: 'everest_api/1.0/evse_manager_consumer/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined by `cfg_target_module_id` in basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   send_request_get_evse:
-    address: 'm2b/get_evse'
+    address: 'm2e/get_evse'
     messages:
       send_request_get_evse:
         $ref: '#/components/messages/send_request_get_evse'
@@ -36,7 +36,7 @@ channels:
       receive_reply_get_evse:
         $ref: '#/components/messages/receive_reply_get_evse'
   send_request_enable_disable:
-    address: 'm2b/enable_disable'
+    address: 'm2e/enable_disable'
     messages:
       send_request_enable_disable:
         $ref: '#/components/messages/send_request_enable_disable'
@@ -46,7 +46,7 @@ channels:
       receive_reply_enable_disable:
         $ref: '#/components/messages/receive_reply_enable_disable'
   send_request_reserve:
-    address: 'm2b/reserve'
+    address: 'm2e/reserve'
     messages:
       send_request_reserve:
         $ref: '#/components/messages/send_request_reserve'
@@ -56,7 +56,7 @@ channels:
       receive_reply_reserve:
         $ref: '#/components/messages/receive_reply_reserve'
   send_request_external_ready_to_start_charging:
-    address: 'm2b/external_ready_to_start_charging'
+    address: 'm2e/external_ready_to_start_charging'
     messages:
       send_request_external_ready_to_start_charging:
         $ref: '#/components/messages/send_request_external_ready_to_start_charging'
@@ -67,7 +67,7 @@ channels:
         $ref: '#/components/messages/receive_reply_external_ready_to_start_charging'
 
   send_request_stop_transaction:
-    address: 'm2b/stop_transaction'
+    address: 'm2e/stop_transaction'
     messages:
       send_request_stop_transaction:
         $ref: '#/components/messages/send_request_stop_transaction'
@@ -77,7 +77,7 @@ channels:
       receive_reply_stop_transaction:
         $ref: '#/components/messages/receive_reply_stop_transaction'
   send_request_pause_charging:
-    address: 'm2b/pause_charging'
+    address: 'm2e/pause_charging'
     messages:
       send_request_pause_charging:
         $ref: '#/components/messages/send_request_pause_charging'
@@ -87,7 +87,7 @@ channels:
       receive_reply_pause_charging:
         $ref: '#/components/messages/receive_reply_pause_charging'
   send_request_resume_charging:
-    address: 'm2b/resume_charging'
+    address: 'm2e/resume_charging'
     messages:
       send_request_resume_charging:
         $ref: '#/components/messages/send_request_resume_charging'
@@ -97,7 +97,7 @@ channels:
       receive_reply_resume_charging:
         $ref: '#/components/messages/receive_reply_resume_charging'
   send_request_force_unlock:
-    address: 'm2b/force_unlock'
+    address: 'm2e/force_unlock'
     messages:
       send_request_force_unlock:
         $ref: '#/components/messages/send_request_force_unlock'
@@ -107,142 +107,142 @@ channels:
       receive_reply_force_unlock:
         $ref: '#/components/messages/receive_reply_force_unlock'
   send_authorize_response:
-    address: 'm2b/authorize_response'
+    address: 'm2e/authorize_response'
     messages:
       send_authorize_response:
         $ref: '#/components/messages/send_authorize_response'
   send_withdraw_authorization:
-    address: 'm2b/withdraw_authorization'
+    address: 'm2e/withdraw_authorization'
     messages:
       send_withdraw_authorization:
         $ref: '#/components/messages/send_withdraw_authorization'
   send_cancel_reservation:
-    address: 'm2b/cancel_reservation'
+    address: 'm2e/cancel_reservation'
     messages:
       send_cancel_reservation:
         $ref: '#/components/messages/send_cancel_reservation'
   send_random_delay_enable:
-    address: 'm2b/random_delay_enable'
+    address: 'm2e/random_delay_enable'
     messages:
       send_random_delay_enable:
         $ref: '#/components/messages/send_random_delay_enable'
   send_random_delay_disable:
-    address: 'm2b/random_delay_disable'
+    address: 'm2e/random_delay_disable'
     messages:
       send_random_delay_disable:
         $ref: '#/components/messages/send_random_delay_disable'
   send_random_delay_cancel:
-    address: 'm2b/random_delay_cancel'
+    address: 'm2e/random_delay_cancel'
     messages:
       send_random_delay_enable:
         $ref: '#/components/messages/send_random_delay_cancel'
   send_random_delay_set_duration_s:
-    address: 'm2b/random_delay_set_duration_s'
+    address: 'm2e/random_delay_set_duration_s'
     messages:
       send_random_delay_set_duration_s:
         $ref: '#/components/messages/send_random_delay_set_duration_s'
 
 
   receive_session_event:
-    address: 'b2m/session_event'
+    address: 'e2m/session_event'
     messages:
       receive_session_event:
         $ref: '#/components/messages/receive_session_event'
   receive_limits:
-    address: 'b2m/limits'
+    address: 'e2m/limits'
     messages:
       receive_limits:
         $ref: '#/components/messages/receive_limits'
   receive_ev_info:
-    address: 'b2m/ev_info'
+    address: 'e2m/ev_info'
     messages:
       receive_limits:
         $ref: '#/components/messages/receive_ev_info'
   receive_car_manufacturer:
-    address: 'b2m/car_manufacturer'
+    address: 'e2m/car_manufacturer'
     messages:
       receive_car_manufacturer:
         $ref: '#/components/messages/receive_car_manufacturer'
   receive_powermeter:
-    address: 'b2m/powermeter'
+    address: 'e2m/powermeter'
     messages:
       receive_powermeter:
         $ref: '#/components/messages/receive_powermeter'
   receive_powermeter_public_key_ocmf:
-    address: 'b2m/powermeter_public_key_ocmf'
+    address: 'e2m/powermeter_public_key_ocmf'
     messages:
       receive_powermeter_public_key_ocmf:
         $ref: '#/components/messages/receive_powermeter_public_key_ocmf'
   receive_evse_id:
-    address: 'b2m/evse_id'
+    address: 'e2m/evse_id'
     messages:
       receive_evse_id:
         $ref: '#/components/messages/receive_evse_id'
   receive_hw_capabilities:
-    address: 'b2m/hw_capabilities'
+    address: 'e2m/hw_capabilities'
     messages:
       receive_hw_capabilities:
         $ref: '#/components/messages/receive_hw_capabilities'
   receive_ac_nr_of_phases_available:
-    address: 'b2m/ac_nr_of_phases_available'
+    address: 'e2m/ac_nr_of_phases_available'
     messages:
       receive_ac_nr_of_phases_available:
         $ref: '#/components/messages/receive_ac_nr_of_phases_available'
   receive_ac_pp_ampacity:
-    address: 'b2m/ac_pp_ampacity'
+    address: 'e2m/ac_pp_ampacity'
     messages:
       receive_ac_pp_ampacity:
         $ref: '#/components/messages/receive_ac_pp_ampacity'
   receive_dlink_ready:
-    address: 'b2m/dlink_ready'
+    address: 'e2m/dlink_ready'
     messages:
       receive_dlink_ready:
         $ref: '#/components/messages/receive_dlink_ready'
   receive_isolation_measurement:
-    address: 'b2m/isolation_measurement'
+    address: 'e2m/isolation_measurement'
     messages:
       receive_isolation_measurement:
         $ref: '#/components/messages/receive_isolation_measurement'
   receive_dc_voltage_current:
-    address: 'b2m/dc_voltage_current'
+    address: 'e2m/dc_voltage_current'
     messages:
       receive_dc_voltage_current:
         $ref: '#/components/messages/receive_dc_voltage_current'
   receive_dc_mode:
-    address: 'b2m/dc_mode'
+    address: 'e2m/dc_mode'
     messages:
       receive_dc_mode:
         $ref: '#/components/messages/receive_dc_mode'
   receive_dc_capabilities:
-    address: 'b2m/dc_capabilities'
+    address: 'e2m/dc_capabilities'
     messages:
       receive_dc_capabilities:
         $ref: '#/components/messages/receive_dc_capabilities'
 
   receive_waiting_for_external_ready:
-    address: 'b2m/waiting_for_external_ready'
+    address: 'e2m/waiting_for_external_ready'
     messages:
       receive_waiting_for_external_ready:
         $ref: '#/components/messages/receive_waiting_for_external_ready'
   receive_ready:
-    address: 'b2m/ready'
+    address: 'e2m/ready'
     messages:
       receive_ready:
         $ref: '#/components/messages/receive_ready'
   receive_selected_protocol:
-    address: 'b2m/selected_protocol'
+    address: 'e2m/selected_protocol'
     messages:
       receive_selected_protocol:
         $ref: '#/components/messages/receive_selected_protocol'
   receive_random_delay_countdown:
-    address: 'b2m/random_delay_countdown'
+    address: 'e2m/random_delay_countdown'
     messages:
       receive_random_delay_countdown:
         $ref: '#/components/messages/receive_random_delay_countdown'
 
 
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -261,7 +261,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_get_evse'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -277,7 +277,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_enable_disable'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -293,7 +293,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_reserve'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -309,7 +309,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_external_ready_to_start_charging'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -325,7 +325,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_stop_transaction'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -341,7 +341,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_pause_charging'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -357,7 +357,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_resume_charging'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -373,7 +373,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_force_unlock'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -541,7 +541,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
     receive_reply_get_evse:
       title: Reply to request to get EVSE
       summary: 'Reply to the request to get the EVSE.'
@@ -567,7 +567,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               connector_id: 0
               source:
@@ -601,7 +601,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               0
     receive_reply_reserve:
@@ -631,7 +631,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
     receive_reply_external_ready_to_start_charging:
       title: Reply external ready to start charging
       summary: 'Reply to the request to external ready to start charging'
@@ -658,7 +658,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               reason: "Local"
     receive_reply_stop_transaction:
@@ -684,7 +684,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
     receive_reply_pause_charging:
       title: Reply to pause charging request
       summary: 'Reply to the request to pause charging.'
@@ -708,7 +708,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
     receive_reply_resume_charging:
       title: Reply to resume charging request
       summary: 'Reply to the request to resume charging.'
@@ -734,7 +734,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               0
     receive_reply_force_unlock:
@@ -918,7 +918,7 @@ components:
 
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
 

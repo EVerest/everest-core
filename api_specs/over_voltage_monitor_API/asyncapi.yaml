@@ -1,76 +1,77 @@
+---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:over_voltage_monitor'
+id: 'pionix:de:everest:over_voltage_monitor'
 info:
-  title: "Basecamp API definition for the implementation of over voltage monitoring"
+  title: "EVerest API definition for the implementation of over voltage monitoring"
   version: 1.0.0
   description: >-
-    API for basecamp for over voltage monitoring.
+    API for EVerest API clients implementing over voltage monitoring.
 
-    This BaseCamp API defines an fast over voltage monitoring device according
+    This EVerest API defines an fast over voltage monitoring device according
     to IEC61851-23:2023 6.3.1.106.2 for DC charging. An emergency shutdown needs to be triggered
     if the DC output voltage is above the limit of Table 103 for 9ms. The actual shutdown needs
-    to be handled in a lower layer outside of BaseCamp, but via this API the
+    to be handled in a lower layer outside of EVerest, but via this API the
     correct voltage limit are set at the start of the session and the monitoring is stopped at the
     end of the session. The over voltage error should be reported after the actual
     shutdown was already performed.
     Once an over voltage error was raised, it should only be cleared when the reset_over_voltage_error command is called.
     All other errors should be raised/cleared when they occur/are no longer active immediately.
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: generic errors
 servers:
   default:
-    pathname: 'basecamp/api/1.0/over_voltage_monitor/{module_id}'
+    pathname: 'everest_api/1.0/over_voltage_monitor/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined by by the module id in the basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   receive_start:
-    address: 'b2m/start'
+    address: 'e2m/start'
     messages:
       start:
         $ref: '#/components/messages/receive_start'
   receive_stop:
-    address: 'b2m/stop'
+    address: 'e2m/stop'
     messages:
       start:
         $ref: '#/components/messages/receive_stop'
   receive_reset_over_voltage_error:
-    address: 'b2m/reset_over_voltage_error'
+    address: 'e2m/reset_over_voltage_error'
     messages:
       reset_over_voltage_error:
         $ref: '#/components/messages/receive_reset_over_voltage_error'
   send_raise_error:
-    address: 'm2b/raise_error'
+    address: 'm2e/raise_error'
     messages:
       send_raise_error:
         $ref: '#/components/messages/send_raise_error'
   send_clear_error:
-    address: 'm2b/clear_error'
+    address: 'm2e/clear_error'
     messages:
       send_clear_error:
         $ref: '#/components/messages/send_clear_error'
   send_voltage_measurement_V:
-    address: 'm2b/voltage_measurement_V'
+    address: 'm2e/voltage_measurement_V'
     messages:
       send_voltage_measurement_V:
         $ref: '#/components/messages/send_voltage_measurement_V'
 
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -81,31 +82,31 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_start'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_stop:
     title: Reeive stop over voltage monitoring command
     action: receive
     channel:
       $ref: '#/channels/receive_stop'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_reset_over_voltage_error:
     title: Receive reset command
     action: receive
     channel:
       $ref: '#/channels/receive_reset_over_voltage_error'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   send_voltage_measurement_V:
     title: Send measured voltage in V
     action: send
     channel:
       $ref: '#/channels/send_voltage_measurement_V'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_raise_error:
     title: Send raise error
     action: send
     channel:
       $ref: '#/channels/send_raise_error'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_clear_error:
     title: Send clear error
     action: send
@@ -121,7 +122,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
 
 components:
   messages:
@@ -146,7 +147,7 @@ components:
         If monitoring is still active, it should be stopped.
     send_voltage_measurement_V:
       title: Send voltage measurement
-      summary: Send the current voltage measurement to BaseCamp
+      summary: Send the current voltage measurement to EVerest
       contentType: application/json
       payload:
         $ref: '#/components/schemas/VoltageMeasurementV'
@@ -156,7 +157,7 @@ components:
 
     send_raise_error:
       title: Send raise error
-      summary: Signal to BaseCamp that an error happened.
+      summary: Signal to EVerest that an error happened.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -168,7 +169,7 @@ components:
                 "message": "message"
     send_clear_error:
       title: Send clear error
-      summary: Signal to BaseCamp that a preciously raised error is no longer active.
+      summary: Signal to EVerest that a previously raised error is no longer active.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -180,7 +181,7 @@ components:
                 "message": "message"
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -190,7 +191,7 @@ components:
             True
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
   schemas:

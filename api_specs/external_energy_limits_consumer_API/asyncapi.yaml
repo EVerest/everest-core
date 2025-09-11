@@ -1,47 +1,48 @@
+---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:external_energy_limits_consumer_API'
+id: 'pionix:de:everest:external_energy_limits_consumer_API'
 info:
-  title: "Basecamp API definition for external energy limits"
+  title: "EVerest API definition for external energy limits"
   version: 1.0.1
   description: >-
-    API for basecamp for external energy limits.
+    API to allow EVerest API clients to set energy limits.
 
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: external energy limits
 servers:
   default:
-    pathname: 'basecamp/api/1.0/external_energy_limits_consumer/{module_id}'
+    pathname: 'everest_api/1.0/external_energy_limits_consumer/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined by `cfg_target_module_id` in basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   send_set_external_limits:
-    address: 'm2b/set_external_limits'
+    address: 'm2e/set_external_limits'
     messages:
       send_set_external_limits:
         $ref: '#/components/messages/send_set_external_limits'
   receive_enforced_limits:
-    address: 'b2m/enforced_limits'
+    address: 'e2m/enforced_limits'
     messages:
       receive_enforced_limits:
         $ref: '#/components/messages/receive_enforced_limits'
 
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -225,7 +226,7 @@ components:
         $ref: '#/components/schemas/EnforcedLimits'
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
       examples:
@@ -234,7 +235,7 @@ components:
             true
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
 
   schemas:
     NumberWithSource:

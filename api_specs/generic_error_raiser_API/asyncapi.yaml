@@ -1,45 +1,47 @@
+---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:generic_error_raiser'
+id: 'pionix:de:everest:generic_error_raiser'
 info:
-  title: "Basecamp API definition for raising and clearing generic errors"
+  title: "EVerest API definition for raising and clearing generic errors"
   version: 1.0.1
   description: >-
-    API for basecamp for raising and clearing generic errors.
+    API for EVerest API clients for raising and clearing generic errors.
+
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: generic errors
 servers:
   default:
-    pathname: 'basecamp/api/1.0/generic_error_raiser/{module_id}'
+    pathname: 'everest_api/1.0/generic_error_raiser/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined by by the module id in the basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   send_raise_error:
-    address: 'm2b/raise_error'
+    address: 'm2e/raise_error'
     messages:
       send_raise_error:
         $ref: '#/components/messages/send_raise_error'
   send_clear_error:
-    address: 'm2b/clear_error'
+    address: 'm2e/clear_error'
     messages:
       send_clear_error:
         $ref: '#/components/messages/send_clear_error'
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -50,7 +52,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_raise_error'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_clear_error:
     title: Send clear error
     action: send
@@ -66,13 +68,13 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
 
 components:
   messages:
     send_raise_error:
       title: Send raise error
-      summary: Signal to BaseCamp that an error happened.
+      summary: Signal to EVerest that an error happened.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -84,7 +86,7 @@ components:
                 "message": "message"
     send_clear_error:
       title: Send clear error
-      summary: Signal to BaseCamp that a preciously raised error is no longer active.
+      summary: Signal to EVerest that a previously raised error is no longer active.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -96,7 +98,7 @@ components:
                 "message": "message"
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -106,7 +108,7 @@ components:
             True
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
   schemas:

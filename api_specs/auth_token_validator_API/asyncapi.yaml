@@ -1,42 +1,42 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:auth_token_validator_API'
+id: 'pionix:de:everest:auth_token_validator_API'
 info:
-  title: "Basecamp API definition for auth token validator - CLIENT side (MODULE)"
+  title: "EVerest API definition for auth token validator - CLIENT side (MODULE)"
   version: 1.0.2
   description: >-
-    API for basecamp drivers implementing auth token provider and validator.
+    API for EVerest API clients implementing auth token validator.
 
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: Auth
 servers:
   default:
-    pathname: 'basecamp/api/1.0/auth_token_validator/{module_id}'
+    pathname: 'everest_api/1.0/auth_token_validator/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined in the basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   send_validate_result_update:
-    address: 'm2b/validate_result_update'
+    address: 'm2e/validate_result_update'
     messages:
       send_validate_result_update:
         $ref: '#/components/messages/send_validate_result_update'
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_request_validate_token:
-    address: 'b2m/validate_token'
+    address: 'e2m/validate_token'
     messages:
       receive_request_validate_token:
         $ref: '#/components/messages/receive_request_validate_token'
@@ -46,7 +46,7 @@ channels:
       send_reply_validate_token:
         $ref: '#/components/messages/send_reply_validate_token'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -66,13 +66,13 @@ operations:
   send_reply_validate_token:
     title: Receive request to validate token
     action: send
-    description: 'Direction: Module to Basecamp'
+    description: 'Direction: Module to EVerest'
     channel:
       $ref: '#/channels/send_reply_validate_token'
   receive_request_validate_token:
     title: Request validate token
     action: receive
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
     channel:
       $ref: '#/channels/receive_request_validate_token'
     reply:
@@ -113,7 +113,7 @@ components:
 
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -153,7 +153,7 @@ components:
 
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
 

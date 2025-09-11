@@ -1,78 +1,77 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:basecamp:power_supply_DC_API'
+id: 'pionix:de:everest:power_supply_DC_API'
 info:
-  title: "Basecamp API definition for DC power supplies"
+  title: "EVerest API definition for DC power supplies"
   version: 1.0.1
   description: >-
-    API for basecamp drivers supporting DC power supplies.
+    API for EVerest API clients implementing DC power supplies.
 
-    Basecamp supports fast DC charging and optionally bidirectional charging. DC power supplies with correcsponding capabilites have to be installed in the charger. In order to add support for a spicific DC power supply this API has to be used. It is guaranteed to be stable for the current major release. Additional functionality not breaking existing code may be added with minor releases.
   license:
-    name: BaseCamp - License Version 1.0
-    url: https://www.pionix.de/pionix-license-terms
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
   tags:
-    - name: basecamp
+    - name: EVerest
     - name: DC power supply
 servers:
   default:
-    pathname: 'basecamp/api/1.0/power_supply_DC/{module_id}'
+    pathname: 'everest_api/1.0/power_supply_DC/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
     variables:
       module_id:
-        description: The ID of the module as defined by by the module id in the basecamp config file.
+        description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
 channels:
   send_voltage_current:
-    address: 'm2b/voltage_current'
+    address: 'm2e/voltage_current'
     messages:
       send_voltage_current:
         $ref: '#/components/messages/send_voltage_current'
   send_mode:
-    address: 'm2b/mode'
+    address: 'm2e/mode'
     messages:
       send_mode:
         $ref: '#/components/messages/send_mode'
   send_capabilities:
-    address: 'm2b/capabilities'
+    address: 'm2e/capabilities'
     messages:
       send_capabilities:
         $ref: '#/components/messages/send_capabilities'
   send_raise_error:
-    address: 'm2b/raise_error'
+    address: 'm2e/raise_error'
     messages:
       send_raise_error:
         $ref: '#/components/messages/send_raise_error'
   send_clear_error:
-    address: 'm2b/clear_error'
+    address: 'm2e/clear_error'
     messages:
       send_clear_error:
         $ref: '#/components/messages/send_clear_error'
   send_communication_check:
-    address: 'm2b/communication_check'
+    address: 'm2e/communication_check'
     messages:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   receive_export_voltage_current:
-    address: 'b2m/export_voltage_current'
+    address: 'e2m/export_voltage_current'
     messages:
       receive_export_voltage_current:
         $ref: '#/components/messages/receive_export_voltage_current'
   receive_import_voltage_current:
-    address: 'b2m/import_voltage_current'
+    address: 'e2m/import_voltage_current'
     messages:
       receive_import_voltage_current:
         $ref: '#/components/messages/receive_import_voltage_current'
   receive_mode:
-    address: 'b2m/mode'
+    address: 'e2m/mode'
     messages:
       receive_mode:
         $ref: '#/components/messages/receive_mode'
   receive_heartbeat:
-    address: 'b2m/heartbeat'
+    address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
@@ -84,25 +83,25 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_voltage_current'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_mode:
     title: Send mode
     action: send
     channel:
       $ref: '#/channels/send_mode'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_capabilities:
     title: Send current capabilities
     action: send
     channel:
       $ref: '#/channels/send_capabilities'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_raise_error:
     title: Send raise error
     action: send
     channel:
       $ref: '#/channels/send_raise_error'
-    description: 'Direction: Module to BaseCamp'
+    description: 'Direction: Module to EVerest'
   send_clear_error:
     title: Send clear error
     action: send
@@ -118,25 +117,25 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_export_voltage_current'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_import_voltage_current:
     title: Receive import voltage current
     action: receive
     channel:
       $ref: '#/channels/receive_import_voltage_current'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_mode:
     title: Receive mode
     action: receive
     channel:
       $ref: '#/channels/receive_mode'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
   receive_heartbeat:
     title: Receive heatbeat
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
-    description: 'Direction: BaseCamp to Module'
+    description: 'Direction: EVerest to Module'
 
 components:
   messages:
@@ -187,7 +186,7 @@ components:
             conversion_efficiency_export: 1
     send_raise_error:
       title: Send raise error
-      summary: Signal to BaseCamp that an error happened.
+      summary: Signal to EVerest that an error happened.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -199,7 +198,7 @@ components:
                 "message": "string"
     send_clear_error:
       title: Send clear error
-      summary: Signal to BaseCamp that a preciously raised error is no longer active.
+      summary: Signal to EVerest that a previously raised error is no longer active.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Error'
@@ -211,7 +210,7 @@ components:
                 "message": "string"
     send_communication_check:
       title: Send communication check
-      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
         $ref: '#/components/schemas/CommunicationCheck'
@@ -239,7 +238,7 @@ components:
         $ref: '#/components/schemas/ModeRequest'
     receive_heartbeat:
       title: Receive heartbeat
-      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
 
 
