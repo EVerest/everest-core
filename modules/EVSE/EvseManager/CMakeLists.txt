@@ -27,6 +27,7 @@ target_link_libraries(${MODULE_NAME}
         everest::util
         Pal::Sigslot
         pugixml::pugixml
+        Boost::headers
 )
 
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)

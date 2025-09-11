@@ -17,6 +17,7 @@
 #include <string>
 #include <utils/date.hpp>
 #include <utils/formatter.hpp>
+#include "state_machines/apply_ac_limit.hpp"
 
 namespace module {
 namespace energy_grid {
@@ -181,25 +182,11 @@ void apply_number_of_phase_limit(int active_phasecount, bool supports_changing_p
     }
 }
 
-float apply_AC_watt_limit(std::optional<types::energy::NumberWithSource> const& ac_max_current_A,
-                          std::optional<types::energy::NumberWithSource> const& total_power_W, int ac_nr_phases_active,
-                          double ac_nominal_voltage, std::function<void(float)> const& publish) {
-    float limit = 0.;
-
-    if (ac_max_current_A.has_value()) {
-        limit = ac_max_current_A->value;
-    }
-
-    // apply watt limit
-    if (total_power_W.has_value()) {
-        publish(total_power_W->value);
-
-        auto val = static_cast<float>(total_power_W->value / ac_nominal_voltage / ac_nr_phases_active);
-        if (val < limit) {
-            limit = val;
-        }
-    }
-    return limit;
+float apply_AC_limit(types::energy::LimitsRes const& energy_limits, int ac_nr_phases_active, double ac_nominal_voltage,
+                     std::function<void(float)> const& publish) {
+    fsm::apply_ac_limit_impl::FSM fsm(energy_limits, ac_nr_phases_active, ac_nominal_voltage, publish);
+    fsm.start();
+    return fsm.limit;
 }
 
 bool check_for_random_delay_state(Charger::EvseState charger_state) {
@@ -605,9 +592,9 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
 
         // set enforced AC current limit and apply watt limit
         float limit = 0.;
-        auto enforced_limit = limit = apply_AC_watt_limit(
-            value.limits_root_side.ac_max_current_A, value.limits_root_side.total_power_W, mod->ac_nr_phases_active,
-            mod->config.ac_nominal_voltage, [this](float total_power_W) {
+        auto enforced_limit = limit = apply_AC_limit(
+            value.limits_root_side, mod->ac_nr_phases_active, mod->config.ac_nominal_voltage,
+            [this](float total_power_W) {
                 mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
                                   total_power_W);
             });
