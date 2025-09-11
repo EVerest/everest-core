@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
-#ifndef CHARGEPOINT_HPP
-#define CHARGEPOINT_HPP
+#ifndef METHODS_CHARGEPOINT_HPP
+#define METHODS_CHARGEPOINT_HPP
 
 #include "../../data/DataStore.hpp"
 
@@ -34,4 +34,4 @@ private:
 
 } // namespace methods
 
-#endif // CHARGEPOINT_HPP
+#endif // METHODS_CHARGEPOINT_HPP
