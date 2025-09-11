@@ -111,8 +111,10 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Rejected);
         break;
     case TokenHandlingResult::USED_TO_START_TRANSACTION:
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::UsedToStart);
+        break;
     case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Used);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::UsedToStop);
         break;
     case TokenHandlingResult::WITHDRAWN:
         this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Withdrawn);

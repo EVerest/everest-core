@@ -170,7 +170,7 @@ TEST_F(AuthTest, test_simple_authorization) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
     EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::Accepted));
-    EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::Used));
+    EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::UsedToStart));
 
     const auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_START_TRANSACTION);
@@ -193,7 +193,7 @@ TEST_F(AuthTest, test_two_referenced_connectors) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     const auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_START_TRANSACTION);
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
@@ -239,7 +239,7 @@ TEST_F(AuthTest, test_multiple_referenced_connectors) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Accepted));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::UsedToStart));
 
     TokenHandlingResult result1;
     std::thread t1([this, &result1, provided_token1] { result1 = this->auth_handler->on_token(provided_token1); });
@@ -308,7 +308,7 @@ TEST_F(AuthTest, test_multiple_authorization_requests) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token3.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token3.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token3.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token3.id_token), TokenValidationStatus::TimedOut))
         .Times(0);
@@ -361,8 +361,11 @@ TEST_F(AuthTest, test_stop_transaction) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted))
         .Times(1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used))
-        .Times(2);
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart))
+        .Times(1);
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStop))
+        .Times(1);
     auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_START_TRANSACTION);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
@@ -388,7 +391,7 @@ TEST_F(AuthTest, test_authorize_first) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     TokenHandlingResult result;
 
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
@@ -420,7 +423,7 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut))
         .Times(1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used))
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart))
         .Times(1);
     TokenHandlingResult result1;
     TokenHandlingResult result2;
@@ -482,9 +485,9 @@ TEST_F(AuthTest, test_two_id_tokens) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStart));
     TokenHandlingResult result1;
     TokenHandlingResult result2;
 
@@ -532,9 +535,9 @@ TEST_F(AuthTest, test_two_plugins) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStart));
 
     std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
     std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
@@ -571,7 +574,7 @@ TEST_F(AuthTest, test_authorization_after_plug_in_and_plug_out) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
 
     // Plug-in on connector 2, conntector 2 should be authorized
@@ -609,7 +612,7 @@ TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Rejected));
     t1.join();
@@ -699,11 +702,17 @@ TEST_F(AuthTest, test_transaction_finish) {
         .Times(1);
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used))
-        .Times(2);
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart))
+        .Times(1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used))
-        .Times(2);
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStop))
+        .Times(1);
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStart))
+        .Times(1);
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStop))
+        .Times(1);
 
     std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
     std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
@@ -759,9 +768,9 @@ TEST_F(AuthTest, test_parent_id_finish) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStop));
     // swipe VALID_TOKEN_1
     std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
     std::thread t3([this, session_event2]() { this->auth_handler->handle_session_event(1, session_event2); });
@@ -811,9 +820,9 @@ TEST_F(AuthTest, test_parent_id_no_finish) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStart));
     // swipe VALID_TOKEN_1
     std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
 
@@ -865,9 +874,9 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStop));
 
     // swipe VALID_TOKEN_1
     std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
@@ -922,9 +931,9 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector_2) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStop));
 
     // swipe VALID_TOKEN_1
     std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
@@ -1027,7 +1036,7 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStart));
     // this token is not valid for the reservation
     std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
     t3.join();
@@ -1185,7 +1194,7 @@ TEST_F(AuthTest, test_complete_event_flow) {
         .Times(2);
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used))
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart))
         .Times(2);
 
     result = this->auth_handler->on_token(provided_token);
@@ -1257,7 +1266,7 @@ TEST_F(AuthTest, test_reservation_with_parent_id_tag) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStart));
     // this token is not valid for the reservation
     std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
     t3.join();
@@ -1291,7 +1300,7 @@ TEST_F(AuthTest, test_authorization_timeout_and_reswipe) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut))
         .Times(1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used))
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart))
         .Times(1);
     TokenHandlingResult result;
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
@@ -1327,7 +1336,7 @@ TEST_F(AuthTest, test_authorization_without_transaction) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted))
         .Times(2);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used))
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart))
         .Times(2);
     TokenHandlingResult result;
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
@@ -1391,11 +1400,17 @@ TEST_F(AuthTest, test_two_transactions_start_stop) {
         .Times(1);
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used))
-        .Times(2);
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart))
+        .Times(1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used))
-        .Times(2);
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStop))
+        .Times(1);
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStart))
+        .Times(1);
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStop))
+        .Times(1);
     std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
     std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
@@ -1443,7 +1458,7 @@ TEST_F(AuthTest, test_plug_and_charge) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     const auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_START_TRANSACTION);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
@@ -1519,7 +1534,7 @@ TEST_F(AuthTest, test_empty_intersection) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
 
     const auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_START_TRANSACTION);
@@ -1555,7 +1570,7 @@ TEST_F(AuthTest, test_master_pass_group_id) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     result = this->auth_handler->on_token(
         provided_token); // swipe token that gets accepted without parent id in validation result
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_START_TRANSACTION);
@@ -1571,7 +1586,7 @@ TEST_F(AuthTest, test_master_pass_group_id) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStop));
 
     // second swipe to finish transaction
     result = this->auth_handler->on_token(provided_token);
@@ -1643,7 +1658,7 @@ TEST_F(AuthTest, test_subsequent_valid_tokens) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Processing));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
@@ -1676,7 +1691,7 @@ TEST_F(AuthTest, test_withdraw_authorization) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(0)).Times(1);
     EXPECT_CALL(mock_stop_transaction_callback, Call(_, _)).Times(0);
 
@@ -1851,7 +1866,7 @@ TEST_F(AuthTest, test_withdraw_authorization_during_transaction) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(_)).Times(0);
     EXPECT_CALL(mock_stop_transaction_callback, Call(0, _)).Times(1);
 
@@ -1884,13 +1899,13 @@ TEST_F(AuthTest, test_two_authorization_plug_events) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Processing));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStart));
     TokenHandlingResult result1;
 
     std::thread t1([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
@@ -1992,7 +2007,7 @@ TEST_F(AuthTest, test_case_insensitive_authorization) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
     EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::Accepted));
-    EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::Used));
+    EXPECT_CALL(mock_publish_token_validation_status_callback, Call(expected, TokenValidationStatus::UsedToStart));
 
     const auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_START_TRANSACTION);
@@ -2019,13 +2034,13 @@ TEST_F(AuthTest, test_case_insensitive_stop_transaction) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted))
         .Times(1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used))
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart))
         .Times(1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, stop_token.id_token), TokenValidationStatus::Processing))
         .Times(1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, stop_token.id_token), TokenValidationStatus::Used))
+                Call(Field(&ProvidedIdToken::id_token, stop_token.id_token), TokenValidationStatus::UsedToStop))
         .Times(1);
 
     auto result = this->auth_handler->on_token(provided_token);
@@ -2062,9 +2077,9 @@ TEST_F(AuthTest, test_case_insensitive_parent_id_stop_transaction) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::UsedToStop));
     // Start transaction with VALID_TOKEN_1
     result = this->auth_handler->on_token(provided_token_1);
     this->auth_handler->handle_session_event(1, session_event2);
@@ -2108,7 +2123,7 @@ TEST_F(AuthTest, test_case_insensitive_master_pass_group_id) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_START_TRANSACTION);
 
@@ -2122,7 +2137,7 @@ TEST_F(AuthTest, test_case_insensitive_master_pass_group_id) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStop));
 
     result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
@@ -2142,7 +2157,7 @@ TEST_F(AuthTest, test_case_insensitive_withdraw_authorization) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     EXPECT_CALL(mock_withdraw_authorization_callback_mock, Call(0)).Times(1);
 
     const auto result = this->auth_handler->on_token(provided_token);
@@ -2190,7 +2205,7 @@ TEST_F(AuthTest, test_case_insensitive_reservation_matching) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Used));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
     result = this->auth_handler->on_token(provided_token);
 
     ASSERT_EQ(result, TokenHandlingResult::USED_TO_START_TRANSACTION);
