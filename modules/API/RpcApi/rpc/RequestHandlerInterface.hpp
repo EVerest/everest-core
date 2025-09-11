@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
-
 #ifndef REQUEST_HANDLER_INTERFACE_HPP
 #define REQUEST_HANDLER_INTERFACE_HPP
 

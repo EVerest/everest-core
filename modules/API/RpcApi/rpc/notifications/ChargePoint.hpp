@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
-
 #ifndef NOTIFICATIONS_CHARGEPOINT_HPP
 #define NOTIFICATIONS_CHARGEPOINT_HPP
 
