@@ -37,6 +37,9 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
 
     std::unique_lock<std::mutex> lock(server->m_clients_mutex); // To protect access to m_clients
 
+    EVLOG_warning << "LWS_CALLBACK: " << std::to_string(static_cast<int>(reason));
+
+
     switch (reason) {
     case LWS_CALLBACK_ESTABLISHED: {
         // Generate a random UUID for the client
@@ -84,6 +87,7 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
         break;
     }
     default:
+        EVLOG_debug << "Other LWS_CALLBACK: " + std::to_string(static_cast<int>(reason));
         break;
     }
 

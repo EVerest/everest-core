@@ -22,7 +22,7 @@ protected:
     int test_port = 8080;
     void SetUp() override {
         // Start the WebSocket server
-        m_websocket_server = std::make_unique<server::WebSocketServer>(false, test_port, "");
+        m_websocket_server = std::make_unique<server::WebSocketServer>(false, test_port, "lo");
         lws_set_log_level(LLL_ERR | LLL_WARN, NULL);
 
         // Create RpcHandler instance. Move the transport interfaces and request handler to the RpcHandler

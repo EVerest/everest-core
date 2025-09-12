@@ -16,7 +16,7 @@ protected:
     int test_port = 8080;
 
     void SetUp() override {
-        ws_server = std::make_unique<WebSocketServer>(false, test_port, "");
+        ws_server = std::make_unique<WebSocketServer>(false, test_port, "lo");
         lws_set_log_level(LLL_ERR | LLL_WARN, NULL);
 
         ws_server->on_client_connected = [this](const TransportInterface::ClientId& client_id,
