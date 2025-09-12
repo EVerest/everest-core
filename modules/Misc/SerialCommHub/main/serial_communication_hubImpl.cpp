@@ -30,6 +30,47 @@ static std::vector<int> vector_to_int(const std::vector<uint16_t>& response) {
     return i;
 }
 
+/**
+ * @brief Converts a Result to a ResultBool by looking at each bit of the uint16_t values and converting them to
+ * bools in the right order. Used for Modbus read coils responses where the result is a bit-packed array of coil states.
+ * @param result The Result to convert
+ * @param number_of_coils The number of coils that were requested to read, used to limit the number of bools in the
+ * output
+ * @return The converted ResultBool
+ */
+static types::serial_comm_hub_requests::ResultBool
+convert_read_coils_result(const types::serial_comm_hub_requests::Result& result, size_t number_of_coils) {
+    constexpr uint8_t BITS_PER_BYTE = 8;
+    constexpr uint16_t BYTE_MASK = 0xFF;
+
+    types::serial_comm_hub_requests::ResultBool out;
+    out.status_code = result.status_code;
+
+    if (result.value.has_value()) {
+        std::vector<bool> result_bool;
+        for (const uint16_t packed_bytes : result.value.value()) {
+            // Modbus read coils response packs bits into raw bytes, the modbus library uses big-endian to build uint16
+            // from those. Here we extract the original MSB and LSB from the BE uint16_t and process them in the correct
+            // order.
+            const auto msb = static_cast<uint8_t>((packed_bytes >> BITS_PER_BYTE) & BYTE_MASK);
+            const auto lsb = static_cast<uint8_t>(packed_bytes & BYTE_MASK);
+
+            for (const uint8_t byte : {msb, lsb}) {
+                for (int bit = 0; bit < BITS_PER_BYTE; bit++) {
+                    if (result_bool.size() >= number_of_coils) {
+                        break;
+                    }
+                    result_bool.push_back((byte & (1U << bit)) != 0);
+                }
+            }
+        }
+
+        out.value = std::move(result_bool);
+    }
+
+    return out;
+}
+
 // Implementation
 
 void serial_communication_hubImpl::init() {
@@ -148,6 +189,25 @@ serial_communication_hubImpl::handle_modbus_write_single_register(int& target_de
                                     register_address, 1, true, {static_cast<uint16_t>(data)});
 
     return result.status_code;
+}
+
+types::serial_comm_hub_requests::StatusCodeEnum
+serial_communication_hubImpl::handle_modbus_write_single_coil(int& target_device_id, int& coil_address, bool& data) {
+    types::serial_comm_hub_requests::Result result;
+
+    result = perform_modbus_request(target_device_id, tiny_modbus::FunctionCode::WRITE_SINGLE_COIL, coil_address, 1,
+                                    true, {static_cast<uint16_t>(data ? 0xFF00 : 0x0000)});
+
+    return result.status_code;
+}
+
+types::serial_comm_hub_requests::ResultBool
+serial_communication_hubImpl::handle_modbus_read_coils(int& target_device_id, int& first_coil_address,
+                                                       int& num_coils_to_read) {
+    const auto result = perform_modbus_request(target_device_id, tiny_modbus::FunctionCode::READ_COILS,
+                                               first_coil_address, num_coils_to_read);
+
+    return convert_read_coils_result(result, num_coils_to_read);
 }
 
 void serial_communication_hubImpl::handle_nonstd_write(int& target_device_id, int& first_register_address,
