@@ -1,0 +1,32 @@
+description: >-
+  This module provides ISO15118 internet value-added services (VAS).
+config:
+  ev_interface:
+    description: >-
+      Name of the interface which is connected to the EV.
+    type: string
+  modem_interface:
+    description: >-
+      Name of the interface which is connected to the internet.
+    type: string
+  http_support:
+    description: >-
+      Boolean dictating whether we should let the EV know we support HTTP
+    type: boolean
+  https_support:
+    description: >-
+      Boolean dictating whether we should let the EV know we support HTTPS
+    type: boolean
+provides:
+  iso15118_vas:
+    interface: ISO15118_vas
+    description: The internet VAS
+requires:
+  evse_manager:
+    interface: evse_manager
+    min_connections: 0
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Martin Litre, Pionix GmbH
