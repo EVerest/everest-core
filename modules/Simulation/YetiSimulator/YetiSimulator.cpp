@@ -12,41 +12,48 @@ namespace {
 
 types::powermeter::Powermeter power_meter_external(const state::PowermeterData& powermeter_data) {
     const auto current_iso_time_string = util::get_current_iso_time_string();
-    const auto& [time_stamp, totalWattHr, wattL1, vrmsL1, irmsL1, wattHrL1, tempL1, freqL1, wattL2, vrmsL2, irmsL2,
-                 wattHrL2, tempL2, freqL2, wattL3, vrmsL3, irmsL3, wattHrL3, tempL3, freqL3, irmsN] = powermeter_data;
+    const auto& [time_stamp, import_totalWattHr, export_totalWattHr, wattL1, vrmsL1, irmsL1, import_wattHrL1,
+                 export_wattHrL1, tempL1, freqL1, wattL2, vrmsL2, irmsL2, import_wattHrL2, export_wattHrL2, tempL2,
+                 freqL2, wattL3, vrmsL3, irmsL3, import_wattHrL3, export_wattHrL3, tempL3, freqL3, irmsN] =
+        powermeter_data;
 
     const std::vector<types::temperature::Temperature> temperatures = {
         {static_cast<float>(powermeter_data.tempL1), std::nullopt, "Body"}};
 
     return {current_iso_time_string, // timestamp
             {
-                static_cast<float>(totalWattHr),
-                static_cast<float>(wattHrL1),
-                static_cast<float>(wattHrL2),
-                static_cast<float>(wattHrL3),
+                static_cast<float>(import_totalWattHr),
+                static_cast<float>(import_wattHrL1),
+                static_cast<float>(import_wattHrL2),
+                static_cast<float>(import_wattHrL3),
             },                 // energy_Wh_import
             "YETI_POWERMETER", // meter_id
             false,             // phase_seq_error
-            {},                // energy_Wh_export
+            std::make_optional<types::units::Energy>({
+                static_cast<float>(export_totalWattHr),
+                static_cast<float>(export_wattHrL1),
+                static_cast<float>(export_wattHrL2),
+                static_cast<float>(export_wattHrL3),
+            }), // energy_Wh_export
             types::units::Power{
                 static_cast<float>(wattL1 + wattL2 + wattL3),
                 static_cast<float>(wattL1),
                 static_cast<float>(wattL2),
                 static_cast<float>(wattL3),
-            },                                                    // power_W
-            types::units::Voltage{vrmsL1, vrmsL2, vrmsL3},        // voltage_V
-            {},                                                   // VAR
-            types::units::Current{irmsL1, irmsL2, irmsL3, irmsN}, // current_A
+            },                                                                  // power_W
+            types::units::Voltage{std::nullopt, vrmsL1, vrmsL2, vrmsL3},        // voltage_V
+            std::nullopt,                                                       // VAR
+            types::units::Current{std::nullopt, irmsL1, irmsL2, irmsL3, irmsN}, // current_A
             types::units::Frequency{static_cast<float>(freqL1), static_cast<float>(freqL2),
                                     static_cast<float>(freqL3)}, // frequency_Hz
-            {},                                                  // energy_Wh_import_signed
-            {},                                                  // energy_Wh_export_signed
-            {},                                                  // power_W_signed
-            {},                                                  // voltage_V_signed
-            {},                                                  // VAR_signed
-            {},                                                  // current_A_signed
-            {},                                                  // frequency_Hz_signed
-            {},                                                  // signed_meter_value
+            std::nullopt,                                        // energy_Wh_import_signed
+            std::nullopt,                                        // energy_Wh_export_signed
+            std::nullopt,                                        // power_W_signed
+            std::nullopt,                                        // voltage_V_signed
+            std::nullopt,                                        // VAR_signed
+            std::nullopt,                                        // current_A_signed
+            std::nullopt,                                        // frequency_Hz_signed
+            std::nullopt,                                        // signed_meter_value
             temperatures};                                       // temperatures
 }
 
@@ -184,83 +191,92 @@ void YetiSimulator::ready() {
 }
 
 void YetiSimulator::run_telemetry_slow() const {
-    const auto current_iso_time_string = util::get_current_iso_time_string();
 
-    auto& p_p_c_v = module_state->telemetry_data.power_path_controller_version;
-    p_p_c_v.timestamp = current_iso_time_string;
+    while (true) {
+        const auto current_iso_time_string = util::get_current_iso_time_string();
 
-    telemetry.publish("livedata", "power_path_controller_version",
-                      {{"timestamp", p_p_c_v.timestamp},
-                       {"type", p_p_c_v.type},
-                       {"hardware_version", p_p_c_v.hardware_version},
-                       {"software_version", p_p_c_v.software_version},
-                       {"date_manufactured", p_p_c_v.date_manufactured},
-                       {"operating_time_h", p_p_c_v.operating_time_h},
-                       {"operating_time_warning", p_p_c_v.operating_time_h_warning},
-                       {"operating_time_error", p_p_c_v.operating_time_h_error},
-                       {"error", p_p_c_v.error}});
+        auto& p_p_c_v = module_state->telemetry_data.power_path_controller_version;
+        p_p_c_v.timestamp = current_iso_time_string;
+
+        telemetry.publish("livedata", "power_path_controller_version",
+                          {{"timestamp", p_p_c_v.timestamp},
+                           {"type", p_p_c_v.type},
+                           {"hardware_version", p_p_c_v.hardware_version},
+                           {"software_version", p_p_c_v.software_version},
+                           {"date_manufactured", p_p_c_v.date_manufactured},
+                           {"operating_time_h", p_p_c_v.operating_time_h},
+                           {"operating_time_warning", p_p_c_v.operating_time_h_warning},
+                           {"operating_time_error", p_p_c_v.operating_time_h_error},
+                           {"error", p_p_c_v.error}});
+
+        std::this_thread::sleep_for(std::chrono::milliseconds{15000});
+    }
 }
 
 void YetiSimulator::run_telemetry_fast() const {
-    const auto current_iso_time_string = util::get_current_iso_time_string();
-    auto& p_p_c = module_state->telemetry_data.power_path_controller;
-    p_p_c.timestamp = current_iso_time_string;
-    p_p_c.cp_voltage_high = module_state->pwm_voltage_hi;
-    p_p_c.cp_voltage_low = module_state->pwm_voltage_lo;
-    p_p_c.cp_pwm_duty_cycle = module_state->pwm_duty_cycle * 100.0;
-    p_p_c.cp_state = state_to_string(*module_state);
 
-    p_p_c.temperature_controller = module_state->powermeter_data.tempL1;
-    p_p_c.temperature_car_connector = module_state->powermeter_data.tempL1 * 2.0;
-    p_p_c.watchdog_reset_count = 0;
-    p_p_c.error = false;
+    while (true) {
+        const auto current_iso_time_string = util::get_current_iso_time_string();
+        auto& p_p_c = module_state->telemetry_data.power_path_controller;
+        p_p_c.timestamp = current_iso_time_string;
+        p_p_c.cp_voltage_high = module_state->pwm_voltage_hi;
+        p_p_c.cp_voltage_low = module_state->pwm_voltage_lo;
+        p_p_c.cp_pwm_duty_cycle = module_state->pwm_duty_cycle * 100.0;
+        p_p_c.cp_state = state_to_string(*module_state);
 
-    auto& p_s = module_state->telemetry_data.power_switch;
-    p_s.timestamp = current_iso_time_string;
-    p_s.is_on = module_state->relais_on;
-    p_s.time_to_switch_on_ms = 110;
-    p_s.time_to_switch_off_ms = 100;
-    p_s.temperature_C = 20;
-    p_s.error = false;
-    p_s.error_over_current = false;
+        p_p_c.temperature_controller = module_state->powermeter_data.tempL1;
+        p_p_c.temperature_car_connector = module_state->powermeter_data.tempL1 * 2.0;
+        p_p_c.watchdog_reset_count = 0;
+        p_p_c.error = false;
 
-    auto& rcd = module_state->telemetry_data.rcd;
-    rcd.timestamp = current_iso_time_string;
-    rcd.current_mA = module_state->simulation_data.rcd_current;
+        auto& p_s = module_state->telemetry_data.power_switch;
+        p_s.timestamp = current_iso_time_string;
+        p_s.is_on = module_state->relais_on;
+        p_s.time_to_switch_on_ms = 110;
+        p_s.time_to_switch_off_ms = 100;
+        p_s.temperature_C = 20;
+        p_s.error = false;
+        p_s.error_over_current = false;
 
-    telemetry.publish("livedata", "power_path_controller",
-                      {{"timestamp", p_p_c.timestamp},
-                       {"type", p_p_c.type},
-                       {"cp_voltage_high", p_p_c.cp_voltage_high},
-                       {"cp_voltage_low", p_p_c.cp_voltage_low},
-                       {"cp_pwm_duty_cycle", p_p_c.cp_pwm_duty_cycle},
-                       {"cp_state", p_p_c.cp_state},
-                       {"pp_ohm", p_p_c.pp_ohm},
-                       {"supply_voltage_12V", p_p_c.supply_voltage_12V},
-                       {"supply_voltage_minus_12V", p_p_c.supply_voltage_minus_12V},
-                       {"temperature_controller", p_p_c.temperature_controller},
-                       {"temperature_car_connector", p_p_c.temperature_car_connector},
-                       {"watchdog_reset_count", p_p_c.watchdog_reset_count},
-                       {"error", p_p_c.error}});
-    telemetry.publish("livedata", "power_switch",
-                      {{"timestamp", p_s.timestamp},
-                       {"type", p_s.type},
-                       {"switching_count", p_s.switching_count},
-                       {"switching_count_warning", p_s.switching_count_warning},
-                       {"switching_count_error", p_s.switching_count_error},
-                       {"is_on", p_s.is_on},
-                       {"time_to_switch_on_ms", p_s.time_to_switch_on_ms},
-                       {"time_to_switch_off_ms", p_s.time_to_switch_off_ms},
-                       {"temperature_C", p_s.temperature_C},
-                       {"error", p_s.error},
-                       {"error_over_current", p_s.error_over_current}});
-    telemetry.publish("livedata", "rcd",
-                      {{"timestamp", rcd.timestamp},
-                       {"type", rcd.type},
-                       {"enabled", rcd.enabled},
-                       {"current_mA", rcd.current_mA},
-                       {"triggered", rcd.triggered},
-                       {"error", rcd.error}});
+        auto& rcd = module_state->telemetry_data.rcd;
+        rcd.timestamp = current_iso_time_string;
+        rcd.current_mA = module_state->simulation_data.rcd_current;
+
+        telemetry.publish("livedata", "power_path_controller",
+                          {{"timestamp", p_p_c.timestamp},
+                           {"type", p_p_c.type},
+                           {"cp_voltage_high", p_p_c.cp_voltage_high},
+                           {"cp_voltage_low", p_p_c.cp_voltage_low},
+                           {"cp_pwm_duty_cycle", p_p_c.cp_pwm_duty_cycle},
+                           {"cp_state", p_p_c.cp_state},
+                           {"pp_ohm", p_p_c.pp_ohm},
+                           {"supply_voltage_12V", p_p_c.supply_voltage_12V},
+                           {"supply_voltage_minus_12V", p_p_c.supply_voltage_minus_12V},
+                           {"temperature_controller", p_p_c.temperature_controller},
+                           {"temperature_car_connector", p_p_c.temperature_car_connector},
+                           {"watchdog_reset_count", p_p_c.watchdog_reset_count},
+                           {"error", p_p_c.error}});
+        telemetry.publish("livedata", "power_switch",
+                          {{"timestamp", p_s.timestamp},
+                           {"type", p_s.type},
+                           {"switching_count", p_s.switching_count},
+                           {"switching_count_warning", p_s.switching_count_warning},
+                           {"switching_count_error", p_s.switching_count_error},
+                           {"is_on", p_s.is_on},
+                           {"time_to_switch_on_ms", p_s.time_to_switch_on_ms},
+                           {"time_to_switch_off_ms", p_s.time_to_switch_off_ms},
+                           {"temperature_C", p_s.temperature_C},
+                           {"error", p_s.error},
+                           {"error_over_current", p_s.error_over_current}});
+        telemetry.publish("livedata", "rcd",
+                          {{"timestamp", rcd.timestamp},
+                           {"type", rcd.type},
+                           {"enabled", rcd.enabled},
+                           {"current_mA", rcd.current_mA},
+                           {"triggered", rcd.triggered},
+                           {"error", rcd.error}});
+        std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+    }
 }
 
 [[noreturn]] void YetiSimulator::run_simulation(const int sleep_time_ms) {
@@ -319,23 +335,27 @@ void YetiSimulator::read_from_car() {
 
     const auto diode_fault = error_definitions::evse_board_support_DiodeFault;
 
-    auto hlc_active = false;
-    if (module_state->pwm_duty_cycle >= 0.03 and module_state->pwm_duty_cycle <= 0.07)
-        hlc_active = true;
+    double amps{0.0};
 
-    auto amps = duty_cycle_to_amps(module_state->pwm_duty_cycle);
-    if (amps > module_state->ev_max_current or hlc_active == true)
+    // 5% dutycycle: Getting current from HLC
+    if (module_state->pwm_duty_cycle >= 0.03 and module_state->pwm_duty_cycle <= 0.07) {
         amps = module_state->ev_max_current;
+    } else if (module_state->ev_max_current == 0.0) { // Basic charging: only pwm dutycycle
+        amps = duty_cycle_to_amps(module_state->pwm_duty_cycle);
+    } else { // Nominal dutycycle: Smallest amp between hlc and pwm dutycycle, ev_max_current can be negative
+        amps = std::min(duty_cycle_to_amps(module_state->pwm_duty_cycle), std::fabs(module_state->ev_max_current));
+        if (module_state->ev_max_current < 0) {
+            amps = -amps;
+        }
+    }
 
-    double amps1 = (module_state->relais_on == true and module_state->ev_three_phases > 0) ? amps : 0.0;
-    double amps2 = (module_state->relais_on == true and module_state->ev_three_phases > 1 and
-                    module_state->use_three_phases_confirmed)
-                       ? amps
-                       : 0.0;
-    double amps3 = (module_state->relais_on == true and module_state->ev_three_phases > 2 and
-                    module_state->use_three_phases_confirmed)
-                       ? amps
-                       : 0.0;
+    const auto amps1 = (module_state->relais_on and module_state->ev_phases > 0) ? amps : 0.0;
+    const auto amps2 =
+        (module_state->relais_on and module_state->ev_phases > 1 and module_state->use_three_phases_confirmed) ? amps
+                                                                                                               : 0.0;
+    const auto amps3 =
+        (module_state->relais_on and module_state->ev_phases > 2 and module_state->use_three_phases_confirmed) ? amps
+                                                                                                               : 0.0;
 
     if (module_state->pwm_running) {
         module_state->pwm_voltage_hi = module_state->simulation_data.cp_voltage;
@@ -549,33 +569,44 @@ void YetiSimulator::simulate_powermeter() {
     const auto wattL3 = module_state->simulation_data.voltages.L3 * module_state->simulation_data.currents.L3 *
                         (module_state->relais_on and module_state->use_three_phases_confirmed ? 1 : 0);
 
-    module_state->watt_hr.L1 += wattL1 * deltat / 1000.0 / 3600.0;
-    module_state->watt_hr.L2 += wattL2 * deltat / 1000.0 / 3600.0;
-    module_state->watt_hr.L3 += wattL3 * deltat / 1000.0 / 3600.0;
+    if (module_state->simulation_data.currents.L1 >= 0) {
+        module_state->import_watt_hr.L1 += wattL1 * deltat / 1000.0 / 3600.0;
+        module_state->import_watt_hr.L2 += wattL2 * deltat / 1000.0 / 3600.0;
+        module_state->import_watt_hr.L3 += wattL3 * deltat / 1000.0 / 3600.0;
+    } else {
+        module_state->export_watt_hr.L1 += wattL1 * deltat / 1000.0 / 3600.0;
+        module_state->export_watt_hr.L2 += wattL2 * deltat / 1000.0 / 3600.0;
+        module_state->export_watt_hr.L3 += wattL3 * deltat / 1000.0 / 3600.0;
+    }
 
     module_state->powermeter_data.time_stamp = round(time_stamp / 1000);
-    module_state->powermeter_data.totalWattHr =
-        round(module_state->watt_hr.L1 + module_state->watt_hr.L2 + module_state->watt_hr.L3);
+    module_state->powermeter_data.export_totalWattHr =
+        round(module_state->export_watt_hr.L1 + module_state->export_watt_hr.L2 + module_state->export_watt_hr.L3);
+    module_state->powermeter_data.import_totalWattHr =
+        round(module_state->import_watt_hr.L1 + module_state->import_watt_hr.L2 + module_state->import_watt_hr.L3);
 
     module_state->powermeter_data.wattL1 = round(wattL1);
     module_state->powermeter_data.vrmsL1 = module_state->simulation_data.voltages.L1;
     module_state->powermeter_data.irmsL1 = module_state->simulation_data.currents.L1;
-    module_state->powermeter_data.wattHrL1 = round(module_state->watt_hr.L1);
-    module_state->powermeter_data.tempL1 = 25.0 + (wattL1 + wattL2 + wattL3) * 0.003;
+    module_state->powermeter_data.import_wattHrL1 = round(module_state->import_watt_hr.L1);
+    module_state->powermeter_data.export_wattHrL1 = round(module_state->export_watt_hr.L1);
+    module_state->powermeter_data.tempL1 = 25.0 + fabs(wattL1 + wattL2 + wattL3) * 0.003;
     module_state->powermeter_data.freqL1 = module_state->simulation_data.frequencies.L1;
 
     module_state->powermeter_data.wattL2 = round(wattL2);
     module_state->powermeter_data.vrmsL2 = module_state->simulation_data.voltages.L2;
-    module_state->powermeter_data.irmsL2 = module_state->simulation_data.currents.L1;
-    module_state->powermeter_data.wattHrL2 = round(module_state->watt_hr.L2);
-    module_state->powermeter_data.tempL2 = 25.0 + (wattL1 + wattL2 + wattL3) * 0.003;
+    module_state->powermeter_data.irmsL2 = module_state->simulation_data.currents.L2;
+    module_state->powermeter_data.import_wattHrL2 = round(module_state->import_watt_hr.L2);
+    module_state->powermeter_data.export_wattHrL2 = round(module_state->export_watt_hr.L2);
+    module_state->powermeter_data.tempL2 = 25.0 + fabs(wattL1 + wattL2 + wattL3) * 0.003;
     module_state->powermeter_data.freqL2 = module_state->simulation_data.frequencies.L2;
 
     module_state->powermeter_data.wattL3 = round(wattL3);
     module_state->powermeter_data.vrmsL3 = module_state->simulation_data.voltages.L3;
     module_state->powermeter_data.irmsL3 = module_state->simulation_data.currents.L3;
-    module_state->powermeter_data.wattHrL3 = round(module_state->watt_hr.L3);
-    module_state->powermeter_data.tempL3 = 25.0 + (wattL1 + wattL2 + wattL3) * 0.003;
+    module_state->powermeter_data.import_wattHrL3 = round(module_state->import_watt_hr.L3);
+    module_state->powermeter_data.export_wattHrL3 = round(module_state->export_watt_hr.L3);
+    module_state->powermeter_data.tempL3 = 25.0 + fabs(wattL1 + wattL2 + wattL3) * 0.003;
     module_state->powermeter_data.freqL3 = module_state->simulation_data.frequencies.L3;
 
     module_state->powermeter_data.irmsN = module_state->simulation_data.currents.N;
@@ -592,6 +623,14 @@ void YetiSimulator::publish_powermeter() {
     p_powermeter->publish_powermeter(power_meter_external(module_state->powermeter_data));
 
     // Deprecated external stuff
+    const auto totalKWattHr =
+        module_state->powermeter_data.irmsL1 >= 0
+            ? (module_state->powermeter_data.import_wattHrL1 + module_state->powermeter_data.import_wattHrL2 +
+               module_state->powermeter_data.import_wattHrL3) /
+                  1000.0
+            : (module_state->powermeter_data.export_wattHrL1 + module_state->powermeter_data.export_wattHrL2 +
+               module_state->powermeter_data.export_wattHrL3) /
+                  1000.0;
     mqtt.publish("/external/powermeter/vrmsL1", module_state->powermeter_data.vrmsL1);
     mqtt.publish("/external/powermeter/phaseSeqError", false);
     mqtt.publish("/external/powermeter/time_stamp", std::to_string(module_state->powermeter_data.time_stamp));
@@ -600,10 +639,7 @@ void YetiSimulator::publish_powermeter() {
                  (module_state->powermeter_data.wattL1 + module_state->powermeter_data.wattL2 +
                   module_state->powermeter_data.wattL3) /
                      1000.0);
-    mqtt.publish("/external/powermeter/totalKWattHr",
-                 (module_state->powermeter_data.wattHrL1 + module_state->powermeter_data.wattHrL2 +
-                  module_state->powermeter_data.wattHrL3) /
-                     1000.0);
+    mqtt.publish("/external/powermeter/totalKWattHr", totalKWattHr);
     mqtt.publish("/external/powermeter_json", json{module_state->powermeter_data}.dump());
 
     mqtt.publish("/external/" + info.id + "/powermeter/tempL1", module_state->powermeter_data.tempL1);
@@ -611,10 +647,7 @@ void YetiSimulator::publish_powermeter() {
                  (module_state->powermeter_data.wattL1 + module_state->powermeter_data.wattL2 +
                   module_state->powermeter_data.wattL3) /
                      1000.0);
-    mqtt.publish("/external/" + info.id + "/powermeter/totalKWattHr",
-                 (module_state->powermeter_data.wattHrL1 + module_state->powermeter_data.wattHrL2 +
-                  module_state->powermeter_data.wattHrL3) /
-                     1000.0);
+    mqtt.publish("/external/" + info.id + "/powermeter/totalKWattHr", totalKWattHr);
 }
 
 void YetiSimulator::publish_telemetry() {
@@ -690,9 +723,12 @@ void YetiSimulator::pwm_f() {
 
 void YetiSimulator::reset_powermeter() const {
     if (config.reset_powermeter_on_session_start) {
-        module_state->watt_hr.L1 = 0;
-        module_state->watt_hr.L2 = 0;
-        module_state->watt_hr.L3 = 0;
+        module_state->import_watt_hr.L1 = 0;
+        module_state->import_watt_hr.L2 = 0;
+        module_state->import_watt_hr.L3 = 0;
+        module_state->export_watt_hr.L1 = 0;
+        module_state->export_watt_hr.L2 = 0;
+        module_state->export_watt_hr.L3 = 0;
     }
     module_state->powermeter_sim_last_time_stamp = 0;
 }

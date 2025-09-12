@@ -697,6 +697,29 @@ types:
       - VoltWatt
       - WattPF
       - WattVar
+  ServiceCategory:
+    description: Different service (energy and VAS) in ISO15118-20
+    type: string
+    enum:
+      - AC
+      - DC
+      - WPT
+      - DC_ACDP
+      - AC_BPT
+      - DC_BPT
+      - DC_ACDP_BPT
+      - Internet
+      - ParkingStatus
+  Connector:
+    description: Different AC and DC connector
+    type: string
+    enum:
+      - SinglePhase
+      - ThreePhase
+      - Core
+      - Extended
+      - Dual2
+      - Dual4
   ControlMode:
     description: >-
       (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When
@@ -736,6 +759,33 @@ types:
     enum:
       - EVCC
       - EVCC_SECC
+  Pricing:
+    description: >-
+      Providing information about which pricing structure will be used in the offered
+      schedules.
+    type: string
+    enum:
+      - NoPricing
+      - AbsolutePricing
+      - PriceLevels
+  BptChannel:
+    description: Type of installed power transfer channel
+    type: string
+    enum:
+      - Unified
+      - Separated
+  GeneratorMode:
+    description: Power converter behavior.
+    type: string
+    enum:
+      - GridFollowing
+      - GridForming
+  GridCodeIslandingDetectionMethod:
+    description: Islanding detection method
+    type: string
+    enum:
+      - Active
+      - Passive
   V2XChargingParameters:
     description: >-
       Charging parameters for ISO 15118-20, also supporting V2X charging/discharging.
@@ -1455,6 +1505,222 @@ types:
           DepartureTime ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType:
           DepartureTime
         type: string
+  AcParameters:
+    description: Ac parameters the EVSE is setting
+    type: object
+    additionalProperties: false
+    required:
+      - nominal_frequency
+      - nominal_voltage
+      - connectors
+    properties:
+      nominal_frequency:
+        description: Nominal frequency supported by the EVSE in Hz
+        type: number
+        minimum: 0
+      max_power_asymmetry:
+        description: Maximum asymmetric power in W
+        type: number
+        minimum: 0
+      power_ramp_limitation:
+        description: Limitation of the power variation in %/min
+        type: number
+        minimum: 0
+      nominal_voltage:
+        description: Nominal voltage supported by the EVSE in V
+        type: number
+        minimum: 0
+      connectors:
+        description: Supported ac connectors from the EVSE
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/Connector
+        minItems: 1
+  AcEvseMaximumPower:
+    description: Maximum ac power values (charge and discharge) the EVSE can deliver
+    type: object
+    additionalProperties: false
+    required:
+      - charge_power
+    properties:
+      charge_power:
+        description: Maximum ac power the EVSE can deliver
+        type: object
+        $ref: /units#/Power
+      discharge_power:
+        description: Maximum ac discharge power the EVSE can deliver
+        type: object
+        $ref: /units#/Power
+  AcEvseMinimumPower:
+    description: Minimum ac power values (charge and discharge) the EVSE can deliver
+    type: object
+    additionalProperties: false
+    required:
+      - charge_power
+    properties:
+      charge_power:
+        description: Minimum ac power the EVSE can deliver
+        type: object
+        $ref: /units#/Power
+      discharge_power:
+        description: Minimum ac discharge power the EVSE can deliver
+        type: object
+        $ref: /units#/Power
+  AcEvPowerLimits:
+    description: Ac charge & discharge power values supported and allowed by the EV
+    type: object
+    additionalProperties: false
+    properties:
+      max_charge_power:
+        description: Maximum power supported by the EV
+        type: object
+        $ref: /units#/Power
+      min_charge_power:
+        description: Minimum power supported by the EV
+        type: object
+        $ref: /units#/Power
+      max_discharge_power:
+        description: Maximum discharge power supported by the EV
+        type: object
+        $ref: /units#/Power
+      min_discharge_power:
+        description: Minimum discharge power supported by the EV
+        type: object
+        $ref: /units#/Power
+  AcEvPresentPowerValues:
+    description: Present active and reactive power measured from the EV
+    type: object
+    additionalProperties: false
+    required:
+      - present_active_power
+    properties:
+      present_active_power:
+        description: Present active power measured from the EV
+        type: object
+        $ref: /units#/Power
+      present_reactive_power:
+        description: Present reactive power measured from the EV
+        type: object
+        $ref: /units#/Power
+  AcEvDynamicModeValues:
+    description: Parameters for ac ev dynamic control mode
+    type: object
+    additionalProperties: false
+    required:
+      - target_energy_request
+      - max_energy_request
+      - min_energy_request
+    properties:
+      departure_time:
+        description: The time when the EV wants to finish charging
+        type: number
+        minimum: 0
+      target_energy_request:
+        description: Energy request to fulfil the target SoC in Wh
+        type: number
+        minimum: 0
+      max_energy_request:
+        description: Maximum acceptable energy level of the EV in Wh
+        type: number
+        minimum: 0
+      min_energy_request:
+        description: Energy request to fulfil the minimum SoC in Wh
+        type: number
+        minimum: 0
+      max_v2x_energy_request:
+        description: >-
+          Energy which may be charged until the PresentSOC has left the range
+          dedicated for cycling activity in Wh
+        type: number
+        minimum: 0
+      min_v2x_energy_request:
+        description: >-
+          Energy which needs to be charged until the PresentSOC has left the
+          range dedicated for cycling activity in Wh
+        type: number
+        minimum: 0
+  AcTargetValues:
+    description: Target ac values requested by the EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - target_active_power
+    properties:
+      target_active_power:
+        description: Target active power requested by the EVSE
+        type: object
+        $ref: /units#/Power
+      target_reactive_power:
+        description: Target reactive power requested by the EVSE
+        type: object
+        $ref: /units#/ReactivePower
+      target_frequency:
+        description: Target frequency requested by the EVSE
+        type: number
+        minimum: 0
+  SelectedServiceParameters:
+    description: >-
+      The selected service parameters selected from the EV in the ServiceSelectionReq message.
+      Only for ISO15118-20.
+    type: object
+    additionalProperties: false
+    required:
+      - energy_transfer
+      - connector
+      - control_mode
+      - mobility_needs_mode
+      - pricing
+    properties:
+      energy_transfer:
+        description: The selected energy mode by the EV
+        type: string
+        $ref: /iso15118#/ServiceCategory
+      connector:
+        description: The selected connector by the EV
+        type: string
+        $ref: /iso15118#/Connector
+      control_mode:
+        description: The selected control mode by the EV
+        type: string
+        $ref: /iso15118#/ControlMode
+      mobility_needs_mode:
+        description: The selected mobility needs mode by the EV
+        type: string
+        $ref: /iso15118#/MobilityNeedsMode
+      pricing:
+        description: The selected pricing by the EV
+        type: string
+        $ref: /iso15118#/Pricing
+      bpt_channel:
+        description: The selected bpt channel by the EV
+        type: string
+        $ref: /iso15118#/BptChannel
+      generator_mode:
+        description: The selected generator mode by the EV
+        type: string
+        $ref: /iso15118#/GeneratorMode
+  BptSetup:
+    description: The required parameters for a BPT setup
+    type: object
+    additionalProperties: false
+    required:
+      - bpt_channel
+      - generator_mode
+    properties:
+      bpt_channel:
+        description: The supported bpt channel by the EVSE
+        type: string
+        $ref: /iso15118#/BptChannel
+      generator_mode:
+        description: The supported generator mode by the EVSE
+        type: string
+        $ref: /iso15118#/GeneratorMode
+      grid_code_detection:
+        description: >-
+          The supported grid code detection method supported by the EVSE
+        type: string
+        $ref: /iso15118#/GridCodeIslandingDetectionMethod
 # EV Side
   DcEvParameters:
     description: Target settings for dc charging
@@ -1557,3 +1823,26 @@ types:
         description:
           Certificate used by the EV for the TLS1.3 communication.
         type: string
+  AcTargetPower:
+    description: Target active and reactive power from the EVSE
+    type: object
+    additionalProperties: false
+    properties:
+      target_active_power:
+        description: Target active power requested by the EVSE in W
+        type: number
+      target_active_power_L2:
+        description: Target active power requested by the EVSE on L2 in W
+        type: number
+      target_active_power_L3:
+        description: Target active power requested by the EVSE on L3 in W
+        type: number
+      target_reactive_power:
+        description: Target reactive power requested by the EVSE in W
+        type: number
+      target_reactive_power_L2:
+        description: Target reactive power requested by the EVSE on L2 in W
+        type: number
+      target_reactive_power_L3:
+        description: Target reactive power requested by the EVSE on L3 in W
+        type: number

@@ -222,6 +222,10 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
     v2g_ctx->evse_v2g_data.central_contract_validation_allowed = central_contract_validation_allowed;
 }
 
+void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_config) {
+    EVLOG_warning << "Ignoring handle_bpt_setup call";
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {
@@ -380,6 +384,26 @@ void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     v2g_ctx->basic_config.evse_ac_current_limit = max_current;
+}
+
+void ISO15118_chargerImpl::handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) {
+    EVLOG_warning << "Ignoring handle_update_ac_parameters call";
+}
+
+void ISO15118_chargerImpl::handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) {
+    EVLOG_warning << "Ignoring handle_update_ac_maximum_limits call";
+}
+
+void ISO15118_chargerImpl::handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) {
+    EVLOG_warning << "Ignoring handle_update_ac_minimum_limits call";
+}
+
+void ISO15118_chargerImpl::handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) {
+    EVLOG_warning << "Ignoring handle_update_ac_target_values call";
+}
+
+void ISO15118_chargerImpl::handle_update_ac_present_power(types::units::Power& present_power) {
+    EVLOG_warning << "Ignoring handle_update_ac_present_power call";
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {

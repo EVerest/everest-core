@@ -420,11 +420,11 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         if (value.limits_root_side.total_power_W.has_value()) {
             mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
                               value.limits_root_side.total_power_W.value().value);
-
-            float a = value.limits_root_side.total_power_W.value().value / mod->config.ac_nominal_voltage /
-                      mod->ac_nr_phases_active;
-            if (a < limit) {
-                limit = a;
+            // watt limit converted to current limit
+            const float current_limit_power = value.limits_root_side.total_power_W.value().value /
+                                              mod->config.ac_nominal_voltage / mod->ac_nr_phases_active;
+            if ((limit >= 0 and limit > current_limit_power) or (limit < 0 and limit < current_limit_power)) {
+                limit = current_limit_power;
             }
         }
 
@@ -494,9 +494,12 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             mod->charger->set_max_current(limit, valid_until);
         } else {
             // export
-            // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
-            // this needs to be fixed in transition to -20 AC bidirectional.
-            mod->charger->set_max_current(0, valid_until);
+            if (mod->session_is_iso_d20_ac_bpt()) {
+                mod->charger->set_max_current(limit, valid_until);
+            } else {
+                // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
+                mod->charger->set_max_current(0, valid_until);
+            }
         }
 
         if (limit > 1e-5 || limit < -1e-5)

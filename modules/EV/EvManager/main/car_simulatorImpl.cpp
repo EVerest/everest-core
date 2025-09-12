@@ -302,7 +302,23 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
     if (!mod->r_ev.empty()) {
         const auto& _ev = mod->r_ev.at(0);
         _ev->subscribe_ev_power_ready([this](auto value) { car_simulation->set_iso_pwr_ready(value); });
-        _ev->subscribe_ac_evse_max_current([this](auto value) { car_simulation->set_evse_max_current(value); });
+        _ev->subscribe_ac_evse_max_current(
+            [this](auto value) { mod->r_ev_board_support->call_set_ac_max_current(value); });
+        _ev->subscribe_ac_evse_target_power([this](const types::iso15118::AcTargetPower& value) {
+            if (value.target_active_power.has_value()) {
+                auto phase_count = mod->config.three_phases ? 3 : 1;
+                if (value.target_active_power_L2.has_value() and mod->config.three_phases) {
+                    phase_count--;
+                }
+                if (value.target_active_power_L3.has_value() and mod->config.three_phases) {
+                    phase_count--;
+                }
+
+                const auto current = value.target_active_power.value() / (mod->config.ac_nominal_voltage * phase_count);
+                mod->r_ev_board_support->call_set_ac_max_current(current);
+            }
+            // TODO(SL): Adding missing reactive power
+        });
         _ev->subscribe_stop_from_charger([this]() { car_simulation->set_iso_stopped(true); });
         _ev->subscribe_v2g_session_finished([this]() { car_simulation->set_v2g_finished(true); });
         _ev->subscribe_dc_power_on([this]() { car_simulation->set_dc_power_on(true); });
