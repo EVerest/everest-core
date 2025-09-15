@@ -13,14 +13,16 @@ void handle_error_raised(data::DataStoreCharger& data, const types::json_rpc_api
         EVLOG_warning << "Error while adding error to the data store: " << e.what();
     }
 
-    if (error.origin.evse_index.has_value()) {
-        auto tmp_evse_store = data.get_evse_store(error.origin.evse_index.value());
-        if (tmp_evse_store != nullptr) {
-            EVLOG_debug << "Setting error present for EVSE index: " << error.origin.evse_index.value();
-            tmp_evse_store->evsestatus.set_error_present(true);
-        } else {
-            EVLOG_warning << "No EVSE store found for EVSE index: " << error.origin.evse_index.value();
-        }
+    // only set error present for EVSE specific errors. Index 0 is reserved for the charger itself
+    if (!error.origin.evse_index.has_value() || error.origin.evse_index.value() == 0) {
+        return;
+    }
+    auto tmp_evse_store = data.get_evse_store(error.origin.evse_index.value());
+    if (tmp_evse_store != nullptr) {
+        EVLOG_debug << "Setting error present for EVSE index: " << error.origin.evse_index.value();
+        tmp_evse_store->evsestatus.set_error_present(true);
+    } else {
+        EVLOG_error << "Cannot set error present for EVSE index: " << error.origin.evse_index.value();
     }
 }
 
@@ -31,7 +33,8 @@ void handle_error_cleared(data::DataStoreCharger& data, const types::json_rpc_ap
         EVLOG_warning << "Error while clearing error from the data store: " << e.what();
     }
 
-    if (!error.origin.evse_index.has_value()) {
+    // only clear error present for EVSE specific errors. Index 0 is reserved for the charger itself
+    if (!error.origin.evse_index.has_value() || error.origin.evse_index.value() == 0) {
         return;
     }
 
