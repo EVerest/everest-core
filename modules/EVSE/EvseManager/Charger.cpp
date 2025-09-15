@@ -2015,7 +2015,7 @@ bool Charger::stop_charging_on_fatal_error_internal() {
 void Charger::emergency_shutdown() {
     // state F is handled in the state machine
     EVLOG_info << "Initiating emergency shutdown";
-    if (shared_context.pwm_running and shared_context.hlc_charging_active) {
+    if (shared_context.pwm_running) {
         pwm_off();
     }
 
@@ -2031,7 +2031,7 @@ void Charger::emergency_shutdown() {
 void Charger::error_shutdown() {
     // state F is handled in the state machine
     EVLOG_info << "Initiating error shutdown";
-    // we keep the PWM on if HLC is active. This allows us to keep the HLC session active and send the error to the EV
+    // we keep the PWM on. This allows us to keep the HLC session active and send the error to the EV
 
     // Shutdown DC power supplies
     if (config_context.charge_mode == ChargeMode::DC) {
