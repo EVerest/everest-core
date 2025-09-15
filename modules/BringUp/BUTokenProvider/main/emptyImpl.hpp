@@ -11,7 +11,7 @@
 
 #include <generated/interfaces/empty/Implementation.hpp>
 
-#include "../BUNfcReader.hpp"
+#include "../BUTokenProvider.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -25,7 +25,7 @@ struct Conf {};
 class emptyImpl : public emptyImplBase {
 public:
     emptyImpl() = delete;
-    emptyImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<BUNfcReader>& mod, Conf& config) :
+    emptyImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<BUTokenProvider>& mod, Conf& config) :
         emptyImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
@@ -40,7 +40,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<BUNfcReader>& mod;
+    const Everest::PtrContainer<BUTokenProvider>& mod;
     const Conf& config;
 
     virtual void init() override;

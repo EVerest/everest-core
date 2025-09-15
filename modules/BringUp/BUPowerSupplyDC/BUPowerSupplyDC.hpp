@@ -53,11 +53,7 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     std::mutex data_mutex;
-    std::string cp_state;
-    std::string relais_feedback;
-    std::string telemetry;
     types::power_supply_DC::Capabilities raw_caps;
-    std::chrono::time_point<std::chrono::steady_clock> last_allow_power_on_time_point;
     std::string actual_voltage;
     std::string actual_current;
     std::string actual_mode;

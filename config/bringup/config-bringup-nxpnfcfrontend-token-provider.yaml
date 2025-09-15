@@ -10,9 +10,9 @@ active_modules:
         no_physical_nfc_reader: false
     standalone: true
   cli:
-    module: BUNfcReader
+    module: BUTokenProvider
     standalone: true
     connections:
-      token_provider: 
+      token_provider:
         - module_id: tokenprovider
           implementation_id: main

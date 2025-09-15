@@ -3,23 +3,14 @@
 
 #include <chrono>
 
-#include "BUNfcReader.hpp"
-#include "ftxui/component/component.hpp" // for Checkbox, Renderer, Horizontal, Vertical, Input, Menu, Radiobox, ResizableSplitLeft, Tab
-#include "ftxui/component/component_base.hpp"     // for ComponentBase, Component
-#include "ftxui/component/component_options.hpp"  // for MenuOption, InputOption
-#include "ftxui/component/event.hpp"              // for Event, Event::Custom
-#include "ftxui/component/screen_interactive.hpp" // for Component, ScreenInteractive
-
-#include "ftxui/dom/elements.hpp" // for text, color, operator|, bgcolor, filler, Element, vbox, size, hbox, separator, flex, window, graph, EQUAL, paragraph, WIDTH, hcenter, Elements, bold, vscroll_indicator, HEIGHT, flexbox, hflow, border, frame, flex_grow, gauge, paragraphAlignCenter, paragraphAlignJustify, paragraphAlignLeft, paragraphAlignRight, dim, spinner, LESS_THAN, center, yframe, GREATER_THAN
-#include "ftxui/dom/flexbox_config.hpp" // for FlexboxConfig
-#include "ftxui/dom/table.hpp"          // for Table
-#include "ftxui/screen/color.hpp" // for Color, Color::BlueLight, Color::RedLight, Color::Black, Color::Blue, Color::Cyan, Color::CyanLight, Color::GrayDark, Color::GrayLight, Color::Green, Color::GreenLight, Color::Magenta, Color::MagentaLight, Color::Red, Color::White, Color::Yellow, Color::YellowLight, Color::Default, Color::Palette256, ftxui
-#include "ftxui/screen/color_info.hpp" // for ColorInfo
-#include "ftxui/screen/terminal.hpp"   // for Size, Dimensions
-
-using namespace ftxui;
+#include "BUTokenProvider.hpp"
+#include "ftxui/component/component.hpp"
+#include "ftxui/component/screen_interactive.hpp"
+#include "ftxui/dom/table.hpp"
 
 namespace module {
+
+using namespace ftxui;
 
 static std::vector<std::vector<std::string>> to_table(types::authorization::ProvidedIdToken t) {
     std::vector<std::vector<std::string>> token;
@@ -36,7 +27,7 @@ static std::vector<std::vector<std::string>> to_table(types::authorization::Prov
     return token;
 }
 
-void BUNfcReader::init() {
+void BUTokenProvider::init() {
     invoke_init(*p_main);
 
     types::authorization::ProvidedIdToken t;
@@ -45,7 +36,7 @@ void BUNfcReader::init() {
     last_token = to_table(t);
 }
 
-void BUNfcReader::ready() {
+void BUTokenProvider::ready() {
     invoke_ready(*p_main);
 
     auto screen = ScreenInteractive::Fullscreen();

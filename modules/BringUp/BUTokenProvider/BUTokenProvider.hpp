@@ -25,11 +25,11 @@ namespace module {
 
 struct Conf {};
 
-class BUNfcReader : public Everest::ModuleBase {
+class BUTokenProvider : public Everest::ModuleBase {
 public:
-    BUNfcReader() = delete;
-    BUNfcReader(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                std::unique_ptr<auth_token_providerIntf> r_token_provider, Conf& config) :
+    BUTokenProvider() = delete;
+    BUTokenProvider(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
+                    std::unique_ptr<auth_token_providerIntf> r_token_provider, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), r_token_provider(std::move(r_token_provider)), config(config){};
 
     const std::unique_ptr<emptyImplBase> p_main;
