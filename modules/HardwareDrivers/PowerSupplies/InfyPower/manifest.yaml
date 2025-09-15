@@ -1,0 +1,47 @@
+description: Driver for InfyPower ACDC power supply. Supports multiple InfyPower modules using V1.13 CAN protocol either in fixed address mode or group discovery mode.
+config:
+  can_device:
+    description: CAN interface name
+    type: string
+    default: can0
+  module_addresses:
+    description: >-
+      Module Addresses to use. Set to "0" for broadcast. Make sure to connect only one PSU on the CAN bus in broadcast mode, otherwise
+      it will charge at a too high current (as every module will produce the full current the EV requests!)
+      If you have multiple PSUs, use individual addresses and list them comma separated, e.g. "1,2". Then it will share the current between
+      these PSUs.
+    type: string
+    default: ""
+  group_address:
+    description: >-
+      Group address/dial setting. Use this if your PSUs using automatic allocation of the addresses.
+      If you have multiple PSUs, set this number in accordance with the group dial
+      setting of the PSUs you want to use. Check the PSU manual for details but
+      the DIAL is sometimes in format 8421 (left MSB and right LSB).
+      Can't use module addresses and group address at the same time, if both are set, the module addresses will be used.
+    type: integer
+    default: 0
+  device_connection_timeout_s:
+    description: >-
+      Timeout in seconds to wait for a module to respond before considering it offline.
+      CRITICAL SAFETY: Must be > 10s (module internal timeout) to prevent overcurrent risk.
+      Recommended: 15s.
+    type: integer
+    default: 15
+  conversion_efficiency_export:
+    description: Conversion efficiency of the export mode.
+    type: number
+    default: 0.95
+  controller_address:
+    description: Controller address defaults to 0xF0.
+    type: integer
+    default: 240
+provides:
+  main:
+    description: Main interface
+    interface: power_supply_DC
+    config: {}
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - Florin Mihut
