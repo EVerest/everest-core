@@ -1,12 +1,12 @@
 active_modules:
-  bsp_ui:
+  im_cli:
     standalone: true
     module: BUIsolationMonitor
     connections:
       imd:
         - implementation_id: main
           module_id: iso_monitor
-  powersupply_ui:
+  powersupply_cli:
     connections:
       psu:
         - implementation_id: main

@@ -1,5 +1,5 @@
 active_modules:
-  bsp_ui:
+  cli:
     module: BUIsolationMonitor
     standalone: true
     connections:

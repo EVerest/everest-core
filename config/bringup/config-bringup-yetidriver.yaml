@@ -1,5 +1,5 @@
 active_modules:
-  bsp_ui:
+  cli:
     module: BUEvseBoardSupport
     standalone: true
     connections:
@@ -9,6 +9,6 @@ active_modules:
   connector_1_powerpath:
     config_module:
       baud_rate: 115200
-      reset_gpio: 27                  
+      reset_gpio: 27
       serial_port: /dev/ttyAMA0
     module: YetiDriver

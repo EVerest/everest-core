@@ -1,7 +1,7 @@
 settings:
   telemetry_enabled: false
 active_modules:
-  system:                                                                                             
+  system:
     module: System
     connections:
       store:
@@ -14,7 +14,8 @@ active_modules:
     module: PersistentStore
   cli:
     module: BUSystem
+    standalone: true
     connections:
-      system: 
+      system:
         - module_id: system
           implementation_id: main

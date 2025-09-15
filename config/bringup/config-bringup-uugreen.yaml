@@ -1,5 +1,5 @@
 active_modules:
-  powersupply_ui:
+  cli:
     connections:
       psu:
         - implementation_id: main
