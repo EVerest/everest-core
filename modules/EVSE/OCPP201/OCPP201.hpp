@@ -30,12 +30,18 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <queue>
 #include <tuple>
+#include <variant>
 
 #include <device_model/everest_device_model_storage.hpp>
 #include <generated/types/evse_board_support.hpp>
 #include <ocpp/v2/charge_point.hpp>
 #include <transaction_handler.hpp>
+
+using EventQueue =
+    std::map<int32_t,
+             std::queue<std::variant<types::evse_manager::SessionEvent, ocpp::v2::EventData, ocpp::v2::MeterValue>>>;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -142,7 +148,10 @@ private:
     std::mutex evse_ready_mutex;
     std::mutex session_event_mutex;
     std::condition_variable evse_ready_cv;
+    std::atomic_bool started{false};
+    EventQueue event_queue;
     void init_evse_maps();
+    void init_evse_subscriptions();
     void init_module_configuration();
     bool all_evse_ready();
     std::map<int32_t, int32_t> get_connector_structure();
