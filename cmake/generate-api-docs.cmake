@@ -16,13 +16,14 @@ function(generate_async_api_docs)
     message(FATAL_ERROR "API_NAME is required")
   endif()
 
-  set(OUTPUT_DIR  ${CMAKE_BINARY_DIR}/docs/${FN_API_NAME})
+  set(OUTPUT_DIR ${CMAKE_BINARY_DIR}/everest_api_docs/${FN_API_NAME})
   set(ASYNC_TARGET_NAME ${FN_API_NAME}_AsyncApi)
+  set(API_DOC_INSTALL_DIR ${CMAKE_INSTALL_DOCDIR}/everest_api)
 
   add_custom_command(
     OUTPUT ${OUTPUT_DIR}/yaml/asyncapi.yaml
-    COMMAND ${CMAKE_COMMAND} -E make_directory ./documentation/html
-    COMMAND ${CMAKE_COMMAND} -E make_directory ./documentation/yaml
+    COMMAND ${CMAKE_COMMAND} -E make_directory ./html
+    COMMAND ${CMAKE_COMMAND} -E make_directory ./yaml
     COMMAND ${CMAKE_COMMAND} -E copy ${FN_API_PATH} ${OUTPUT_DIR}/yaml/asyncapi.yaml
     DEPENDS ${FN_API_PATH}
     COMMENT "${FN_API_NAME}: Prepare AsyncApi documentation generation and copy asyncapi.yaml"
@@ -44,14 +45,14 @@ function(generate_async_api_docs)
   )
 
   install(
-    DIRECTORY ${OUTPUT_DIR}/documentation/html/
-    DESTINATION ${CMAKE_INSTALL_DOCDIR}/html/${FN_API_NAME}/
+    DIRECTORY ${OUTPUT_DIR}/html/
+    DESTINATION ${API_DOC_INSTALL_DIR}/html/${FN_API_NAME}/
     OPTIONAL
   )
 
   install(
-    FILES ${OUTPUT_DIR}/documentation/yaml/asyncapi.yaml
-    DESTINATION ${CMAKE_INSTALL_DOCDIR}/yaml/${FN_API_NAME}/
+    FILES ${OUTPUT_DIR}/yaml/asyncapi.yaml
+    DESTINATION ${API_DOC_INSTALL_DIR}/yaml/${FN_API_NAME}/
     OPTIONAL
   )
 
