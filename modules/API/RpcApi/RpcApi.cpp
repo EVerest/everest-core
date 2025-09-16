@@ -210,7 +210,13 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             if (!tmp.has_value()) {
                 tmp.emplace();
             }
-            tmp->evse_max_current = limits.max_current;
+            // max_current of 0 is not a valid current value and means internally that no energy is
+            // available. The energy available state is already notified via the EVSE state, thus it
+            // is not necessary to forward max_current=0 to the API clients
+            if (limits.max_current != 0) {
+                tmp->evse_max_current = limits.max_current;
+            }
+
             tmp->evse_max_phase_count = limits.nr_of_phases_available;
             evse_data.evsestatus.set_ac_charge_param(tmp);
         } else {
