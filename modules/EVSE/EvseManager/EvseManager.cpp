@@ -2018,6 +2018,7 @@ void EvseManager::fail_cable_check(const std::string& reason) {
         }
         r_hlc[0]->call_cable_check_finished(false);
     }
+    // Raising the cable check error also causes the HLC stack to get notified
     this->error_handling->raise_cable_check_fault(reason);
 }
 
