@@ -37,7 +37,6 @@ private:
     event::timer_fd poll_status_timer;
     std::atomic_bool exit_rx_thread;
     std::thread rx_thread_handle;
-    std::condition_variable rx_thread_cv;
     void rx_thread();
 };
 

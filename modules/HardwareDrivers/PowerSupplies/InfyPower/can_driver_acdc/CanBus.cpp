@@ -76,7 +76,6 @@ bool CanBus::close_device() {
 
     // Stop the RX thread first
     exit_rx_thread = true;
-    rx_thread_cv.notify_one();
     if (rx_thread_handle.joinable()) {
         rx_thread_handle.join();
     }
@@ -113,8 +112,6 @@ static std::string bytes_to_hex(const std::vector<uint8_t>& bytes) {
 }
 
 bool CanBus::_tx(uint32_t can_id, const std::vector<uint8_t>& payload) {
-    // EVLOG_debug << "CAN frame sent using ID:" << std::hex << can_id << "#" << bytes_to_hex(payload);
-
     // Validate payload size for CAN protocol compliance
     if (payload.size() > 8) {
         EVLOG_error << "CAN payload too large (" << payload.size() << " bytes), max 8 bytes allowed";

@@ -48,6 +48,12 @@ void power_supply_DCImpl::init() {
     mod->acdc->signalCapabilitiesUpdate.connect([this](InfyCanDevice::TelemetryMap telemetries) {
         types::power_supply_DC::Capabilities new_caps;
         new_caps.bidirectional = false;
+        // since the power supply is not bidirectional, we set the import capabilities to 0
+        new_caps.min_import_voltage_V = 0;
+        new_caps.max_import_voltage_V = 0;
+        new_caps.min_import_current_A = 0;
+        new_caps.max_import_current_A = 0;
+        // not working correctly if set to 0, the device will not allow setting the current to 0
         new_caps.min_export_current_A = 1;
         if (telemetries.size() == 0) {
             EVLOG_info << "Infy: No telemetries received, setting default capabilities";
