@@ -134,7 +134,7 @@ add_subdirectory(lib)
 # FIXME (aw): this should be optional
 add_subdirectory(config)
 
-add_subdirectory(api_specs)
+add_subdirectory(doc)
 
 ev_install_project()
 
