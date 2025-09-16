@@ -124,7 +124,7 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
     bool is_charging = (evse_state == types::json_rpc_api::EVSEStateEnum::Charging);
     bool is_charging_paused = (evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEVSE ||
                                evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEV);
-    bool is_power_limit = configured_limits.is_current_set;
+    bool is_power_limit = !configured_limits.is_current_set;
 
     if (charging_allowed) {
         float phy_limit{0.0f};
