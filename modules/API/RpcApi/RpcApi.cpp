@@ -290,6 +290,12 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
         if (inobj.L1.has_value()) {
             meter_data_new.current_A.value().L1 = inobj.L1.value();
         }
+        if (inobj.L2.has_value()) {
+            meter_data_new.current_A.value().L2 = inobj.L2.value();
+        }
+        if (inobj.L3.has_value()) {
+            meter_data_new.current_A.value().L3 = inobj.L3.value();
+        }
     }
     if (powermeter.energy_Wh_export.has_value()) {
         // a shortcut reference to the input data sub-object
