@@ -162,21 +162,21 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
                 success = false;
                 EVLOG_warning << "Failed to pause charging for EVSE index: " << evse_index;
             }
-        }
+        } else {
+            // Additionally, in case the EVSE is not charging, we set the limits to 0 to prevent any charging from
+            // starting
+            float max_power{0.0f};
 
-        // Additionally, if charging is not allowed, we set the external limits to zero.
-        float max_power = 0.0f;
+            ErrorResObj res_limit = set_external_limit(
+                evse_index, max_power,
+                std::function<types::energy::ExternalLimits(float)>(
+                    [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
 
-        ErrorResObj result;
-        result = set_external_limit(evse_index, max_power,
-                                    std::function<types::energy::ExternalLimits(float)>(
-                                        [this](float value) { return get_external_limits(value, true); }));
-
-        if (result.error != ResponseErrorEnum::NoError) {
-            EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
-                          << " with error: " << result.error;
-            res.error = result.error;
-            return res;
+            if (res_limit.error != ResponseErrorEnum::NoError) {
+                EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
+                              << " with error: " << res_limit.error;
+                return res;
+            }
         }
     }
 
