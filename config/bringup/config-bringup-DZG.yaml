@@ -1,0 +1,21 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  dzg:
+    config_implementation:
+      main:
+        serial_port: '/dev/ttyUSB0'
+        baudrate: 115200
+        num_of_retries: 3
+        publish_device_data: false
+        publish_device_diagnostics: false
+    module: DZG_GSH01
+  cli:
+    config_module:
+      evse_id: "api"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: dzg
+          implementation_id: main

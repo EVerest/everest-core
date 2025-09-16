@@ -1,0 +1,19 @@
+active_modules:
+  im_cli:
+    standalone: true
+    module: BUIsolationMonitor
+    connections:
+      imd:
+        - implementation_id: main
+          module_id: iso_monitor
+  powersupply_cli:
+    connections:
+      psu:
+        - implementation_id: main
+          module_id: powersupply
+    module: BUPowerSupplyDC
+    standalone: true
+  iso_monitor:
+    module: IMDSimulator
+  powersupply:
+    module: DCSupplySimulator

@@ -12,7 +12,7 @@ public:
     Topics() = default;
     Topics(const std::string& target_module_id);
 
-    void setTargetApiModuleID(const std::string& target_moduel_id, const std::string& api_type);
+    void setTargetApiModuleID(const std::string& target_module_id, const std::string& api_type);
 
     std::string everest_to_extern(const std::string& var) const;
     std::string extern_to_everest(const std::string& var) const;
