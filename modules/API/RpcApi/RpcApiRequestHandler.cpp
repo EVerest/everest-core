@@ -241,6 +241,18 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_ind
     configured_limits.is_current_set = true;
     configured_limits.evse_limit = max_current;
     ErrorResObj res{};
+
+    auto evse_store = data_store.get_evse_store(evse_index);
+    auto evse_state = evse_store->evsestatus.get_state();
+
+    // Skipping applying limits if the EVSE is in WaitingForEnergy state and charging is not allowed.
+    // In this case, the zero limit is already applied to prevent charging. This value should not be overridden.
+    if ((evse_state == types::json_rpc_api::EVSEStateEnum::WaitingForEnergy) &&
+        (evse_store->evsestatus.get_data()->charging_allowed == false)) {
+        res.error = ResponseErrorEnum::NoError;
+        return res;
+    }
+
     res = check_active_phases_and_set_limits(evse_index, max_current, false);
     return res;
 }
