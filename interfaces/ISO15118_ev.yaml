@@ -9,6 +9,10 @@ cmds:
           by the EVCC
         type: string
         $ref: /iso15118#/EnergyTransferMode
+      PaymentOption:
+        description: >-
+          Selected method of payment
+        type: string
     result:
       description: Returns true if the evcc simulation started
       type: boolean
