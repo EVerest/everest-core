@@ -354,7 +354,7 @@ private:
     void imd_start();
     Everest::Thread telemetryThreadHandle;
 
-    void fail_cable_check();
+    void fail_cable_check(const std::string& reason);
 
     // setup sae j2847/2 v2h mode
     void setup_v2h_mode();
