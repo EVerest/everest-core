@@ -1,5 +1,6 @@
 ev_add_module(ChargerInfo)
 ev_add_module(ErrorHistory)
+ev_add_module(Linux_Systemd_Rauc)
 ev_add_module(LocalAllowlistTokenValidator)
 ev_add_module(PacketSniffer)
 ev_add_module(PersistentStore)
