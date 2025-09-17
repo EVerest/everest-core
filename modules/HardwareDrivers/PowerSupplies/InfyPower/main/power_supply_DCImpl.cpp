@@ -181,7 +181,8 @@ void power_supply_DCImpl::handle_setExportVoltageCurrent(double& voltage, double
 };
 
 void power_supply_DCImpl::handle_setImportVoltageCurrent(double& voltage, double& current) {
-    if (caps.min_import_voltage_V.has_value() && caps.max_import_current_A.has_value()) {
+    if (caps.min_import_voltage_V.has_value() && caps.max_import_voltage_V.has_value() &&
+        caps.min_import_current_A.has_value() && caps.max_import_current_A.has_value()) {
         if (voltage > caps.max_import_voltage_V.value())
             voltage = caps.max_import_voltage_V.value();
         else if (voltage < caps.min_import_voltage_V.value())
