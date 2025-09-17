@@ -18,26 +18,30 @@ struct TimeStamp {
 };
 struct PowermeterData {
     TimeStamp time_stamp;
-    double totalWattHr = 0.0;
+    double import_totalWattHr = 0.0;
+    double export_totalWattHr = 0.0;
 
     double wattL1 = 0.0;
     double vrmsL1 = 230.0;
     double irmsL1 = 0.0;
-    double wattHrL1 = 0.0;
+    double import_wattHrL1 = 0.0;
+    double export_wattHrL1 = 0.0;
     double tempL1 = 25.0;
     double freqL1 = 50.0;
 
     double wattL2 = 0.0;
     double vrmsL2 = 230.0;
     double irmsL2 = 0.0;
-    double wattHrL2 = 0.0;
+    double import_wattHrL2 = 0.0;
+    double export_wattHrL2 = 0.0;
     double tempL2 = 25.0;
     double freqL2 = 50.0;
 
     double wattL3 = 0.0;
     double vrmsL3 = 230.0;
     double irmsL3 = 0.0;
-    double wattHrL3 = 0.0;
+    double import_wattHrL3 = 0.0;
+    double export_wattHrL3 = 0.0;
     double tempL3 = 25.0;
     double freqL3 = 50.0;
 
@@ -224,12 +228,13 @@ struct ModuleState {
     std::string country_code = "DE";
     int64_t last_pwm_update = 0;
 
-    WattHr watt_hr;
+    WattHr export_watt_hr;
+    WattHr import_watt_hr;
 
     int64_t powermeter_sim_last_time_stamp = 0L;
 
     double ev_max_current = 0.0;
-    int ev_three_phases = 3;
+    int ev_phases = 3;
 
     bool republish_state = false;
 };
