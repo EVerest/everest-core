@@ -918,7 +918,7 @@ void EvseManager::ready() {
             if (hlc_enabled) {
                 r_hlc[0]->call_update_meter_info(p);
 
-                if (p.power_W) {
+                if (p.power_W and selected_d20_energy_service.has_value()) {
                     r_hlc[0]->call_update_ac_present_power(p.power_W.value());
                 }
             }
