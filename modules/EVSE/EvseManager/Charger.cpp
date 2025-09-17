@@ -538,8 +538,7 @@ void Charger::run_state_machine() {
 
             // make sure we are enabling PWM
             if (not hlc_use_5percent_current_session) {
-                auto m = get_max_current_internal();
-                update_pwm_now_if_changed_ampere(m);
+                update_pwm_now_if_changed_ampere(get_max_current_internal());
             } else {
                 update_pwm_now_if_changed(PWM_5_PERCENT);
             }
@@ -1069,17 +1068,17 @@ float Charger::ampere_to_duty_cycle(float ampere) {
 }
 
 bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::steady_clock> validUntil) {
-    if (c >= 0.0 and c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
+    if (c >= -CHARGER_ABSOLUTE_MAX_CURRENT and c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
 
         // is it still valid?
         if (validUntil > std::chrono::steady_clock::now()) {
             {
                 Everest::scoped_lock_timeout lock(state_machine_mutex,
                                                   Everest::MutexDescription::Charger_set_max_current);
-                shared_context.max_current = c;
+                shared_context.max_current = std::fabs(c);
                 shared_context.max_current_valid_until = validUntil;
             }
-            bsp->set_overcurrent_limit(c);
+            bsp->set_overcurrent_limit(std::fabs(c));
             signal_max_current(c);
             return true;
         }
@@ -1714,11 +1713,6 @@ std::string Charger::evse_state_to_string(EvseState s) {
     return "Invalid";
 }
 
-float Charger::get_max_current() {
-    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_max_current);
-    return get_max_current_internal();
-}
-
 float Charger::get_max_current_internal() {
     auto maxc = shared_context.max_current;
 
@@ -1735,9 +1729,8 @@ float Charger::get_max_current_signalled_to_ev_internal() {
     // for up to 5 seconds as the PWM may only be updated every 5 seconds according to IEC61851-1.
     if (not shared_context.hlc_charging_active) {
         return internal_context.pwm_set_last_ampere;
-    } else {
-        return get_max_current_internal();
     }
+    return get_max_current_internal();
 }
 
 void Charger::set_current_drawn_by_vehicle(float l1, float l2, float l3) {
@@ -1754,8 +1747,9 @@ void Charger::check_soft_over_current() {
     float limit = (get_max_current_signalled_to_ev_internal() + soft_over_current_measurement_noise_A) *
                   (1. + soft_over_current_tolerance_percent / 100.);
 
-    if (shared_context.current_drawn_by_vehicle[0] > limit or shared_context.current_drawn_by_vehicle[1] > limit or
-        shared_context.current_drawn_by_vehicle[2] > limit) {
+    if (std::fabs(shared_context.current_drawn_by_vehicle[0]) > limit or
+        std::fabs(shared_context.current_drawn_by_vehicle[1]) > limit or
+        std::fabs(shared_context.current_drawn_by_vehicle[2]) > limit) {
         if (not internal_context.over_current) {
             internal_context.over_current = true;
             // timestamp when over current happend first
@@ -1795,7 +1789,7 @@ bool Charger::power_available() {
             signal_max_current(shared_context.max_current);
         }
     }
-    return (get_max_current_internal() > 5.9);
+    return get_max_current_internal() > 5.9;
 }
 
 void Charger::request_error_sequence() {
