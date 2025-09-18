@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
 
-#include "../data/DataStore.hpp"
 #include <gtest/gtest.h>
 #include <thread>
 
@@ -27,7 +26,7 @@ protected:
 
         // Create RpcHandler instance. Move the transport interfaces and request handler to the RpcHandler
         std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces;
-        request_handler = std::make_unique<RequestHandlerDummy>();
+        request_handler = std::make_unique<RequestHandlerDummy>(data_store);
         transport_interfaces.push_back(std::shared_ptr<server::TransportInterface>(std::move(m_websocket_server)));
         m_rpc_handler =
             std::make_unique<RpcHandler>(std::move(transport_interfaces), data_store, std::move(request_handler));
@@ -571,36 +570,39 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
         create_json_rpc_request("EVSE.SetACChargingCurrent", {{"evse_index", 1}, {"max_current", 12.3}}, 1);
     nlohmann::json evse_set_ac_charging_current_req_invalid_index =
         create_json_rpc_request("EVSE.SetACChargingCurrent", {{"evse_index", 99}, {"max_current", 12.3}}, 1);
+    nlohmann::json evse_set_ac_charging_current_req_invalid_max_current =
+        create_json_rpc_request("EVSE.SetACChargingCurrent", {{"evse_index", 1}, {"max_current", 15.0}}, 1);
 
     // Set up the data store with test data
-    RPCDataTypes::EVSEInfoObj evse_info;
+    RPCDataTypes::EVSEInfoObj evse_info{};
     evse_info.index = 1;
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
-    RPCDataTypes::EVSEStatusObj evse_status;
-    evse_status.available = false;
-    evse_status.ac_charge_param.emplace();
-    evse_status.ac_charge_param->evse_max_current = 12.3;
+    RPCDataTypes::EVSEStatusObj evse_status{};
     data_store.evses[0]->evsestatus.set_data(evse_status);
+    data_store.evses[0]->evsestatus.set_ac_charge_param_evse_max_current(12.3);
 
     // Set up the expected responses
     types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
-    nlohmann::json expected_error = {
+    nlohmann::json expected_error_invalid_index = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
+    nlohmann::json expected_error_invalid_current = {
+        {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorValuesNotApplied)}};
 
     // Send Api.Hello request
     client.send_api_hello_req();
     client.wait_for_data(std::chrono::seconds(1));
     // Send EVSE.SetACChargingCurrent request with valid ID
     send_req_and_validate_res(client, evse_set_ac_charging_current_req_valid_index, expected_response);
-    // Check if the EVSE status is updated
-    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().has_value());
-    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
 
     // Send EVSE.SetACChargingCurrent request with invalid ID
-    send_req_and_validate_res(client, evse_set_ac_charging_current_req_invalid_index, expected_error,
+    send_req_and_validate_res(client, evse_set_ac_charging_current_req_invalid_index, expected_error_invalid_index,
                               is_key_value_in_json_rpc_result);
+
+    // Send EVSE.SetACChargingCurrent request with invalid AC charging current
+    send_req_and_validate_res(client, evse_set_ac_charging_current_req_invalid_max_current,
+                              expected_error_invalid_current, is_key_value_in_json_rpc_result);
 }
 
 // Test: Connect to WebSocket server and send EVSE.SetACChargingPhaseCount request with valid and invalid index
