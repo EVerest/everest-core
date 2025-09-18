@@ -113,3 +113,7 @@ catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.9.0
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
+libbasecamp_io:
+  git: git@github.com:PionixPro/libbasecamp_io.git
+  git_tag: a7fa3738f1540909455dd1b6d2696f69f35e798a
+
