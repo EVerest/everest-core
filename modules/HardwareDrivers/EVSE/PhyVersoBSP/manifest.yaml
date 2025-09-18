@@ -133,13 +133,25 @@ config:
     type: integer
     default: 23
   conn1_motor_lock_type:
-    description: Connector 1 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
+    description: >
+      Connector 1 motor lock type; 
+        -1 == no Lock
+         1 == Hella Style time-based lock, 
+         2 == Valeo potentiometer feedback based; 
+
+      If charging port has a socket and is AC charging, it will need a lock specified
     type: integer
-    default: 2
+    default: -1
   conn2_motor_lock_type:
-    description: Connector 2 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
+    description: >
+      Connector 2 motor lock type; 
+        -1 == no Lock
+         1 == Hella Style time-based lock, 
+         2 == Valeo potentiometer feedback based; 
+
+      If charging port has a socket and is AC charging, it will need a lock specified
     type: integer
-    default: 2
+    default: -1
   conn1_gpio_stop_button_enabled:
     description: Set to true to enable external charging stop button for connector 1 on a GPIO connected to the SOM
     type: boolean
@@ -172,6 +184,31 @@ config:
     description: Set to true to invert pin logic
     type: boolean
     default: false
+  conn1_disable_port:
+    description: Set to true if port 1 is neither used for AC nor DC charging (will overwrite conn1_dc parameter)
+    type: boolean
+    default: false
+  conn2_disable_port:
+    description: Set to true if port 2 is neither used for AC nor DC charging (will overwrite conn2_dc parameter)
+    type: boolean
+    default: false
+  conn1_feedback_active_low:
+    description: Set to true if relay mirror contact on port 1 feedback is active LOW, false if active HIGH; don't change for AC port config
+    type: boolean
+    default: true
+  conn2_feedback_active_low:
+    description: Set to true if relay mirror contact on port 2 feedback is active LOW, false if active HIGH; don't change for AC port config
+    type: boolean
+    default: true
+  conn1_feedback_pull:
+    description: DC port config only - specify which way internal pull resistors will work; 0 -> None, 1 -> PullUp, 2 -> PullDown (default=PD)
+    type: integer
+    default: 2
+  conn2_feedback_pull:
+    description: DC port config only - specify which way internal pull resistors will work; 0 -> None, 1 -> PullUp, 2 -> PullDown (default=PD)
+    type: integer
+    default: 2
+    
 provides:
   connector_1:
     interface: evse_board_support
@@ -181,10 +218,10 @@ provides:
     description: provides the board support interface to low level control the proximity and control pilots, relais and motor lock
   rcd_1:
     interface: ac_rcd
-    description: RCD interface of the onboard RCD
+    description: RCD interface for an external RDC-MD
   rcd_2:
     interface: ac_rcd
-    description: RCD interface of the onboard RCD
+    description: RCD interface of the onboard RDC-MD
   connector_lock_1:
     interface: connector_lock
     description: Lock interface
@@ -196,4 +233,5 @@ metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Cornelius Claussen
+    - Jonas Rockstroh
 
