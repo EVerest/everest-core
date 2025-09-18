@@ -531,6 +531,7 @@ components:
           Uploading: File is being uploaded
       type: string
       enum:
+        - AcceptedCanceled
         - BadMessage
         - Idle
         - NotSupportedOperation

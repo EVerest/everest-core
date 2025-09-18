@@ -155,7 +155,7 @@ components:
       summary: 'Current mode of DC power supply.'
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/Mode'
+        $ref: '#/components/schemas/ModeRequest'
       examples:   # Define examples here
         - summary: "Example 1 of sending voltage and current."
           payload:
@@ -246,6 +246,9 @@ components:
     VoltageCurrent:
       type: object
       additionalProperties: true
+      required:
+        - voltage_V
+        - current_A
       properties:
         voltage_V:
           description: Voltage in volt
@@ -298,6 +301,15 @@ components:
     Capabilities:
       type: object
       additionalProperties: true
+      required:
+        - bidirectional
+        - max_export_voltage_V
+        - min_export_voltage_V
+        - max_export_current_A
+        - min_export_current_A
+        - max_export_power_W
+        - current_regulation_tolerance_A
+        - peak_current_ripple_A
       properties:
         bidirectional:
           description: |

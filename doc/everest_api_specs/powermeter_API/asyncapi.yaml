@@ -61,7 +61,7 @@ channels:
       send_communication_check:
         $ref: '#/components/messages/send_communication_check'
   send_public_key_ocmf:
-    address: "m2e/public_key_ocmf"
+    address: 'm2e/public_key_ocmf'
     messages:
       send_public_key_ocmf:
         $ref: "#/components/messages/send_public_key_ocmf"
@@ -411,10 +411,9 @@ components:
       required:
         - evse_id
         - transaction_id
-        - client_id
-        - tariff_id
-        - cable_id
-        - user_data
+        - identification_status
+        - identification_type
+        - identification_flags
       properties:
         evse_id:
           description: Id of this EVSE
@@ -491,6 +490,10 @@ components:
         status:
           description: Response status that indicates whether the transaction stop request could successfully be performed.
           $ref: '#/components/schemas/TransactionStatus'
+        start_signed_meter_value:
+          description: The signed meter value report for start of transaction. Needs to be filled if meter provides separate values for start and stop.
+          type: object
+          $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
         signed_meter_value:
           description: The signed meter value report of the stopped transaction. Must be provided if status is OK.
           type: object
@@ -511,6 +514,9 @@ components:
           type: number
         identification:
           description: A (vendor specific) ID if required
+          type: string
+        location:
+          description: Location of the measurement
           type: string
 
     Powermeter:

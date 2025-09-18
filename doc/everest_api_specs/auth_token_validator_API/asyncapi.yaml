@@ -307,9 +307,6 @@ components:
         certificate_status:
           type: string
           $ref: "#/components/schemas/CertificateStatus"
-        reason:
-            type: object
-            $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/TokenValidationStatusMessage'
         expiry_time:
           description: Absolute UTC time point when reservation expires in RFC3339 format
           type: string

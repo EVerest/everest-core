@@ -304,6 +304,7 @@ components:
         - HTML
         - URI
         - UTF8
+        - QRCODE
     Identifier_type:
       description: The identifier type
       type: string

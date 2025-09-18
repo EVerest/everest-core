@@ -749,6 +749,15 @@ components:
         info:
           description: Additional information about the occurred security event
           type: string
+        critical:
+          description: >-
+            If set this overwrites the default criticality recommended in the OCPP 2.0.1 appendix.
+            A critical security event is transmitted as a message to the CSMS, a non-critical one is just written to the security log
+          type: boolean
+        timestamp:
+          description: Timestamp of the moment the security event was generated, if absent the current datetime is assumed
+          type: string
+          format: date-time
 
     ConnectedStatus:
       description: Indicates if chargepoint is connected to CSMS

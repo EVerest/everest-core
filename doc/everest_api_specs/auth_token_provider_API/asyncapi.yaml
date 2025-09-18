@@ -64,7 +64,7 @@ operations:
 components:
   messages:
     send_provided_token:
-      title: Send provided toekn
+      title: Send provided token
       summary: 'The provided token'
       contentType: application/json
       payload:
@@ -122,6 +122,7 @@ components:
     CustomIdToken:
       description: Type for a custom id token with a free-form type
       type: object
+      additionalProperties: true
       required:
         - value
         - type
