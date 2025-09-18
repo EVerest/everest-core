@@ -8,6 +8,10 @@
 
 namespace data {
 
+static bool almost_equal(float a, float b, float epsilon = std::numeric_limits<float>::epsilon() * 100) {
+    return std::fabs(a - b) <= epsilon * std::fmax(1.0f, std::fmax(std::fabs(a), std::fabs(b)));
+}
+
 // we currently don't get this info from the system yet, so allow setting to unknown
 void ChargerInfoStore::set_unknown() {
     this->dataobj.vendor = "unknown";
@@ -114,6 +118,81 @@ void EVSEStatusStore::update_data_is_valid() {
         }
     }
     this->data_is_valid = true;
+}
+
+void EVSEStatusStore::set_ac_charge_param_evse_max_current(float current_limit) {
+    std::unique_lock<std::mutex> cv_lock(mtx_current_limit_applied);
+
+    // current_limit with 0 is not valid and means internally that no energy is
+    // available. The energy available state is already notified via the EVSE state, thus it
+    // is not necessary to forward current_limit=0 to the API clients
+    if (current_limit == 0.0f) {
+        return;
+    }
+    configured_current_limit = current_limit;
+
+    // Check if a new current limit is requested
+    if (requested_current_limit != 0.0f) {
+        // Check if the requested limit is applied
+        cv_current_limit_applied.notify_all();
+        // We are skipping applying the new current limit, as long as a new limit is requested and not yet applied
+        return;
+    }
+    // Apply the new current limit
+    EVLOG_debug << "Applying new current limit: " << configured_current_limit;
+    set_ac_charge_param_evse_current_limit_internal(configured_current_limit);
+}
+
+bool EVSEStatusStore::wait_until_current_limit_applied(float requested_limit, std::chrono::milliseconds timeout_ms) {
+    std::unique_lock<std::mutex> lock(mtx_current_limit_applied);
+    bool is_current_limit_applied{false};
+    requested_current_limit = requested_limit;
+    if (cv_current_limit_applied.wait_for(
+            lock, timeout_ms, [this] { return almost_equal(configured_current_limit, requested_current_limit); })) {
+        requested_current_limit = 0.0f;
+        is_current_limit_applied = true;
+        EVLOG_debug << "Current limit applied: " << configured_current_limit;
+    } else {
+        // If there is already a new limit configured, notify it now
+        requested_current_limit = 0.0f;
+        set_ac_charge_param_evse_current_limit_internal(configured_current_limit);
+    }
+
+    return is_current_limit_applied;
+}
+
+void EVSEStatusStore::set_ac_charge_param_evse_phase_count(int32_t phase_count) {
+    std::unique_lock<std::mutex> data_lock(this->data_mutex);
+    auto& ac_charge_param = this->dataobj.ac_charge_param;
+
+    if (!ac_charge_param.has_value()) {
+        ac_charge_param.emplace();
+    }
+
+    auto& evse_phase_count = ac_charge_param.value().evse_max_phase_count;
+
+    if (evse_phase_count != phase_count) {
+        evse_phase_count = phase_count;
+        data_lock.unlock();
+        this->notify_data_changed();
+    }
+}
+
+void EVSEStatusStore::set_ac_charge_param_evse_current_limit_internal(int32_t phase_count) {
+    std::unique_lock<std::mutex> data_lock(this->data_mutex);
+    auto& ac_charge_param = this->dataobj.ac_charge_param;
+
+    if (!ac_charge_param.has_value()) {
+        ac_charge_param.emplace();
+    }
+
+    auto& evse_max_current = ac_charge_param.value().evse_max_current;
+
+    if (!almost_equal(evse_max_current, phase_count)) {
+        evse_max_current = phase_count;
+        data_lock.unlock();
+        this->notify_data_changed();
+    }
 }
 
 EVSEStatusStore::EVSEStatusStore() :

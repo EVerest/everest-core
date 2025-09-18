@@ -3,12 +3,15 @@
 #ifndef REQUESTHANDLERDUMMY_HPP
 #define REQUESTHANDLERDUMMY_HPP
 
+#include "../data/DataStore.hpp"
+
 #include <../rpc/RequestHandlerInterface.hpp>
 #include <generated/types/json_rpc_api.hpp>
 
 class RequestHandlerDummy : public request_interface::RequestHandlerInterface {
 public:
-    RequestHandlerDummy() = default;
+    RequestHandlerDummy() = delete;
+    RequestHandlerDummy(data::DataStoreCharger& data_store);
     ~RequestHandlerDummy() override = default;
 
     types::json_rpc_api::ErrorResObj set_charging_allowed(const int32_t evse_index, bool charging_allowed) override;
@@ -21,6 +24,9 @@ public:
     types::json_rpc_api::ErrorResObj set_dc_charging_power(const int32_t evse_index, float max_power) override;
     types::json_rpc_api::ErrorResObj enable_connector(const int32_t evse_index, int connector_id, bool enable,
                                                       int priority) override;
+
+private:
+    data::DataStoreCharger& data_store;
 };
 
 #endif // REQUESTHANDLERDUMMY_HPP

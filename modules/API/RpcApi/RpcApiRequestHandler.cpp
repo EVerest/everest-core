@@ -10,6 +10,7 @@
 using namespace types::json_rpc_api;
 
 static const std::string RPCAPI_MODULE_SOURCE = "RpcApi_module";
+static const std::chrono::seconds CURRENT_LIMIT_APPLY_TIMEOUT{5};
 
 types::energy::ExternalLimits get_external_limits(int32_t phases) {
     const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
@@ -254,6 +255,17 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_ind
     }
 
     res = check_active_phases_and_set_limits(evse_index, max_current, false);
+    if (res.error != ResponseErrorEnum::NoError) {
+        return res;
+    }
+
+    // Wait until the limits are applied or timeout occurs
+    if (evse_store->evsestatus.wait_until_current_limit_applied(max_current, CURRENT_LIMIT_APPLY_TIMEOUT)) {
+        res.error = ResponseErrorEnum::NoError;
+    } else {
+        res.error = ResponseErrorEnum::ErrorValuesNotApplied;
+    }
+
     return res;
 }
 

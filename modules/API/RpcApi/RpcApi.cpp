@@ -198,6 +198,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_session_event([this, &evse_data](types::evse_manager::SessionEvent session_event) {
         check_evse_session_event(evse_data, session_event);
     });
+
     evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
         auto var_selected_protocol = types::json_rpc_api::evse_manager_protocol_to_charge_protocol(selected_protocol);
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
@@ -206,19 +207,8 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_limits([this, &evse_data](const types::evse_manager::Limits& limits) {
         // set the external limits in the data store
         if (evse_data.evseinfo.get_is_ac_transfer_mode()) {
-            auto tmp = evse_data.evsestatus.get_ac_charge_param();
-            if (!tmp.has_value()) {
-                tmp.emplace();
-            }
-            // max_current of 0 is not a valid current value and means internally that no energy is
-            // available. The energy available state is already notified via the EVSE state, thus it
-            // is not necessary to forward max_current=0 to the API clients
-            if (limits.max_current != 0) {
-                tmp->evse_max_current = limits.max_current;
-            }
-
-            tmp->evse_max_phase_count = limits.nr_of_phases_available;
-            evse_data.evsestatus.set_ac_charge_param(tmp);
+            evse_data.evsestatus.set_ac_charge_param_evse_phase_count(limits.nr_of_phases_available);
+            evse_data.evsestatus.set_ac_charge_param_evse_max_current(limits.max_current);
         } else {
             evse_data.evsestatus.set_ac_charge_param(std::nullopt);
         }
