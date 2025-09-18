@@ -6,6 +6,8 @@
 #include "GenericInfoStore.hpp"
 #include "SessionInfo.hpp"
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <everest/logging.hpp>
 
 namespace data {
@@ -60,7 +62,14 @@ class EVSEStatusStore : public GenericInfoStore<RPCDataTypes::EVSEStatusObj> {
 private:
     std::map<EVSEStatusField, bool> field_status; // Tracks whether each field has been set
 
+    std::condition_variable cv_current_limit_applied;
+    std::mutex mtx_current_limit_applied;
+    float requested_current_limit{0.0f};
+    float configured_current_limit{0.0f};
+
     void update_data_is_valid();
+    // Internal method to set the current limit in the AC charge parameters without checking for pending requests
+    void set_ac_charge_param_evse_current_limit_internal(int32_t phase_count);
 
 public:
     EVSEStatusStore();
@@ -94,6 +103,12 @@ public:
     void set_dc_charge_status(const std::optional<RPCDataTypes::DCChargeStatusObj>& dc_charge_status);
     // set the display parameters
     void set_display_parameters(const std::optional<RPCDataTypes::DisplayParametersObj>& display_parameters);
+    // set the AC phase count in the AC charge parameters
+    void set_ac_charge_param_evse_phase_count(int32_t phase_count);
+    // set the AC current limit and notify any waiting request threads
+    void set_ac_charge_param_evse_max_current(float current_limit);
+    // wait until the current limit is applied or timeout occurs
+    bool wait_until_current_limit_applied(float current_limit, std::chrono::milliseconds timeout_ms);
 
     types::json_rpc_api::EVSEStateEnum get_state() const;
     std::optional<RPCDataTypes::ACChargeParametersObj>& get_ac_charge_param();
