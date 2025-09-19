@@ -1077,17 +1077,18 @@ float Charger::ampere_to_duty_cycle(float ampere) {
 }
 
 bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::steady_clock> validUntil) {
-    if (c >= -CHARGER_ABSOLUTE_MAX_CURRENT and c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
+    float c_abs{std::fabs(c)};
+    if (c_abs <= CHARGER_ABSOLUTE_MAX_CURRENT) {
 
         // is it still valid?
         if (validUntil > std::chrono::steady_clock::now()) {
             {
                 Everest::scoped_lock_timeout lock(state_machine_mutex,
                                                   Everest::MutexDescription::Charger_set_max_current);
-                shared_context.max_current = std::fabs(c);
+                shared_context.max_current = c_abs;
                 shared_context.max_current_valid_until = validUntil;
             }
-            bsp->set_overcurrent_limit(std::fabs(c));
+            bsp->set_overcurrent_limit(c_abs);
             signal_max_current(c);
             return true;
         }
