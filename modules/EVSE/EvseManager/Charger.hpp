@@ -281,6 +281,7 @@ private:
         bool legacy_wakeup_done{false};
         bool hlc_allow_close_contactor{false};
         bool iec_allow_close_contactor{false};
+        bool contactor_open{true};
         bool hlc_charging_active{false};
         HlcTerminatePause hlc_charging_terminate_pause;
         types::iso15118::DcEvseMaximumLimits current_evse_max_limits;
@@ -301,7 +302,7 @@ private:
         std::string session_uuid;
         bool connector_enabled;
         EvseState current_state;
-        types::evse_manager::StopTransactionReason last_stop_transaction_reason;
+        std::optional<types::evse_manager::StopTransactionReason> last_stop_transaction_reason;
         types::evse_manager::StartSessionReason last_start_session_reason;
         float current_drawn_by_vehicle[3];
         ShutdownType shutdown_type{ShutdownType::None};
