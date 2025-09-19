@@ -19,6 +19,12 @@ void auth_token_validatorImpl::ready() {
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
 
+    if (this->mod->charge_point == nullptr) {
+        types::authorization::ValidationResult result;
+        result.authorization_status = types::authorization::AuthorizationStatus::Unknown;
+        return result;
+    }
+
     if (provided_token.authorization_type == types::authorization::AuthorizationType::PlugAndCharge) {
         return validate_pnc_request(provided_token);
     } else {
