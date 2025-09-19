@@ -38,6 +38,8 @@ enum class TokenValidationStatus {
     Accepted,
     Rejected,
     TimedOut,
+    UsedToStart,
+    UsedToStop,
     Withdrawn,
 };
 

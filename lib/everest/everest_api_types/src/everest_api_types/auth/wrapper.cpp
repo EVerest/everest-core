@@ -163,6 +163,10 @@ TokenValidationStatus_Internal to_internal_api(TokenValidationStatus_External co
         return TarT::TimedOut;
     case SrcT::Withdrawn:
         return TarT::Withdrawn;
+    case SrcT::UsedToStart:
+        return TarT::UsedToStart;
+    case SrcT::UsedToStop:
+        return TarT::UsedToStop;
     }
     throw std::out_of_range(
         "Unexpected value for everest::lib::API::V1_0::types::auth::TokenValidationStatus_External");
@@ -181,6 +185,10 @@ TokenValidationStatus_External to_external_api(TokenValidationStatus_Internal co
         return TarT::TimedOut;
     case SrcT::Withdrawn:
         return TarT::Withdrawn;
+    case SrcT::UsedToStart:
+        return TarT::UsedToStart;
+    case SrcT::UsedToStop:
+        return TarT::UsedToStop;
     }
     throw std::out_of_range(
         "Unexpected value for everest::lib::API::V1_0::types::auth::TokenValidationStatus_Internal");
