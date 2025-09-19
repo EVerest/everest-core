@@ -2,7 +2,6 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "uk_random_delay/wrapper.hpp"
-#include "uk_random_delay/codec.hpp"
 #include <stdexcept>
 #include <string>
 

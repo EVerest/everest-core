@@ -185,10 +185,16 @@ void from_json(json const& j, StopTransactionReason& k) {
 
 void to_json(json& j, StopTransactionRequest const& k) noexcept {
     j = json{{"reason", k.reason}};
+    if (k.id_tag) {
+        j["id_tag"] = serialize(k.id_tag.value());
+    }
 }
 
 void from_json(json const& j, StopTransactionRequest& k) {
     k.reason = j.at("reason");
+    if (j.contains("id_tag")) {
+        k.id_tag.emplace(auth::deserialize<auth::ProvidedIdToken>(j.at("id_tag")));
+    }
 }
 
 void to_json(json& j, StartSessionReason const& k) noexcept {
@@ -629,6 +635,9 @@ void to_json(json& j, SessionStarted const& k) noexcept {
         {"reason", k.reason},
         {"meter_value", serialize(k.meter_value)},
     };
+    if (k.id_tag) {
+        j["id_tag"] = serialize(k.id_tag.value());
+    }
     if (k.signed_meter_value) {
         j["signed_meter_value"] = serialize(k.signed_meter_value.value());
     }
@@ -644,6 +653,9 @@ void from_json(json const& j, SessionStarted& k) {
     using namespace powermeter;
     k.reason = j.at("reason");
     k.meter_value = powermeter::deserialize<PowermeterValues>(j.at("meter_value"));
+    if (j.contains("id_tag")) {
+        k.id_tag.emplace(auth::deserialize<auth::ProvidedIdToken>(j.at("id_tag")));
+    }
     if (j.contains("signed_meter_value")) {
         k.signed_meter_value.emplace(powermeter::deserialize<SignedMeterValue>(j.at("signed_meter_value")));
     }
@@ -705,6 +717,9 @@ void to_json(json& j, TransactionFinished const& k) noexcept {
     if (k.reason) {
         j["reason"] = k.reason.value();
     }
+    if (k.id_tag) {
+        j["id_tag"] = serialize(k.id_tag.value());
+    }
 }
 
 void from_json(json const& j, TransactionFinished& k) {
@@ -718,6 +733,9 @@ void from_json(json const& j, TransactionFinished& k) {
     }
     if (j.contains("reason")) {
         k.reason.emplace(j.at("reason"));
+    }
+    if (j.contains("id_tag")) {
+        k.id_tag.emplace(auth::deserialize<auth::ProvidedIdToken>(j.at("id_tag")));
     }
 }
 
