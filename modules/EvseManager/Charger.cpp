@@ -963,7 +963,16 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
             shared_context.current_state = EvseState::Finished;
         }
         break;
-
+    case CPEvent::PowerOff:
+        shared_context.contactor_open = true;
+        // stop transaction if active and not authorized anymore (e.g. due to Remote Stop or Local Stop)
+        if (shared_context.transaction_active and !shared_context.authorized_pnc and !shared_context.authorized) {
+            stop_transaction();
+        }
+        break;
+    case CPEvent::PowerOn:
+        shared_context.contactor_open = false;
+        break;
     default:
         break;
     }
@@ -1166,27 +1175,16 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
             pwm_off();
         }
 
-        shared_context.transaction_active = false;
+        shared_context.authorized = false;
+        shared_context.authorized_pnc = false;
         shared_context.last_stop_transaction_reason = request.reason;
         shared_context.stop_transaction_id_token = request.id_tag;
 
-        for (const auto& meter : r_powermeter_billing) {
-            const auto response = meter->call_stop_transaction(shared_context.session_uuid);
-            // If we fail to stop the transaction, we ignore since there is no
-            // path to recovery. Its also not clear what to do
-            if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
-                EVLOG_error << "Failed to stop a transaction on the power meter " << response.error.value_or("");
-                break;
-            } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
-                shared_context.start_signed_meter_value = response.start_signed_meter_value;
-                shared_context.stop_signed_meter_value = response.signed_meter_value;
-                break;
-            }
+        // Stop transaction now only if contactor is already open. Transaction is stopped on contactor open event
+        // otherwise.
+        if (shared_context.contactor_open) {
+            stop_transaction();
         }
-
-        signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
-        signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
-                                          shared_context.stop_transaction_id_token);
         return true;
     }
     return false;
@@ -1215,6 +1213,7 @@ void Charger::stop_session() {
 
 bool Charger::start_transaction() {
     shared_context.stop_transaction_id_token.reset();
+    shared_context.last_stop_transaction_reason.reset();
     shared_context.transaction_active = true;
 
     types::powermeter::TransactionReq req;
@@ -1252,7 +1251,12 @@ bool Charger::start_transaction() {
 
 void Charger::stop_transaction() {
     shared_context.transaction_active = false;
-    shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
+
+    if (!shared_context.last_stop_transaction_reason.has_value()) {
+        // if the stop transaction reason was already set (e.g. by cancel_transaction), we keep it, else we know it is
+        // EVDisconnected
+        shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
+    }
 
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_stop_transaction(shared_context.session_uuid);
@@ -1271,7 +1275,7 @@ void Charger::stop_transaction() {
     store->clear_session();
 
     signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
-    signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
+    signal_transaction_finished_event(shared_context.last_stop_transaction_reason.value(),
                                       shared_context.stop_transaction_id_token);
 }
 
