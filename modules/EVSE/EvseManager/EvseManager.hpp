@@ -349,7 +349,8 @@ private:
 
     bool cable_check_should_exit();
 
-    double get_over_voltage_threshold();
+    double get_emergency_over_voltage_threshold();
+    double get_error_over_voltage_threshold();
 
     // EV information
     Everest::timed_mutex_traceable ev_info_mutex;

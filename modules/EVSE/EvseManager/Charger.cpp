@@ -2034,7 +2034,6 @@ void Charger::error_shutdown() {
 
     // open contactors
     bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
-
     this->signal_hlc_error(types::iso15118::EvseError::Error_EmergencyShutdown);
 }
 
