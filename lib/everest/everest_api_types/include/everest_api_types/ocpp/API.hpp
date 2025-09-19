@@ -139,6 +139,8 @@ struct SetVariablesArgs {
 struct SecurityEvent {
     std::string type;
     std::optional<std::string> info;
+    std::optional<bool> critical;
+    std::optional<std::string> timestamp;
 };
 
 struct StatusInfoType {

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#include "display_message/json_codec.hpp"
+#include "auth/json_codec.hpp"
 #include "auth/API.hpp"
 #include "auth/codec.hpp"
-#include "auth/json_codec.hpp"
+
 #include "iso15118_charger/json_codec.hpp"
 #include "nlohmann/json.hpp"
+#include "text_message/json_codec.hpp"
 
 namespace everest::lib::API::V1_0::types::auth {
 
@@ -532,7 +533,7 @@ void from_json(const json& j, TokenValidationStatusMessage& k) {
     k.status = j.at("status");
     if (j.contains("messages")) {
         json arr = j.at("messages");
-        std::vector<types::display_message::MessageContent> vec;
+        std::vector<types::text_message::MessageContent> vec;
         for (auto val : arr) {
             vec.push_back(val);
         }
@@ -547,6 +548,10 @@ void to_json(json& j, ValidationResult const& k) noexcept {
 
     if (k.certificate_status) {
         j["certificate_status"] = k.certificate_status.value();
+    }
+    j["tariff_messages"] = json::array();
+    for (auto val : k.tariff_messages) {
+        j["tariff_messages"].push_back(val);
     }
     if (k.expiry_time) {
         j["expiry_time"] = k.expiry_time.value();
@@ -563,6 +568,12 @@ void to_json(json& j, ValidationResult const& k) noexcept {
     if (k.reservation_id) {
         j["reservation_id"] = k.reservation_id.value();
     }
+    if (k.allowed_energy_transfer_modes) {
+        j["allowed_energy_transfer_modes"] = json::array();
+        for (auto val : k.allowed_energy_transfer_modes.value()) {
+            j["allowed_energy_transfer_modes"].push_back(val);
+        }
+    }
 }
 
 void from_json(const json& j, ValidationResult& k) {
@@ -570,6 +581,9 @@ void from_json(const json& j, ValidationResult& k) {
 
     if (j.contains("certificate_status")) {
         k.certificate_status.emplace(j.at("certificate_status"));
+    }
+    for (auto val : j.at("tariff_messages")) {
+        k.tariff_messages.push_back(val);
     }
     if (j.contains("expiry_time")) {
         k.expiry_time.emplace(j.at("expiry_time"));
@@ -587,6 +601,13 @@ void from_json(const json& j, ValidationResult& k) {
     }
     if (j.contains("reservation_id")) {
         k.reservation_id.emplace(j.at("reservation_id"));
+    }
+    if (j.contains("allowed_energy_transfer_modes")) {
+        std::vector<types::iso15118_charger::EnergyTransferMode> vec;
+        for (auto val : j.at("allowed_energy_transfer_modes")) {
+            vec.push_back(val);
+        }
+        k.allowed_energy_transfer_modes.emplace(vec);
     }
 }
 
