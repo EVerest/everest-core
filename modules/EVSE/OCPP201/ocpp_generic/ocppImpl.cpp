@@ -25,6 +25,11 @@ bool ocppImpl::handle_restart() {
 }
 
 void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not yet initialized. Cannot handle security event.";
+        return;
+    }
+
     std::optional<ocpp::DateTime> timestamp;
     if (event.timestamp.has_value()) {
         timestamp = ocpp_conversions::to_ocpp_datetime_or_now(event.timestamp.value());
@@ -34,6 +39,20 @@ void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
 
 std::vector<types::ocpp::GetVariableResult>
 ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& requests) {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not yet initialized. Cannot handle get variables request.";
+        std::vector<types::ocpp::GetVariableResult> results;
+        for (const auto& req : requests) {
+            types::ocpp::GetVariableResult result;
+            result.status = types::ocpp::GetVariableStatusEnumType::Rejected;
+            result.component_variable.component = req.component_variable.component;
+            result.component_variable.variable = req.component_variable.variable;
+            result.attribute_type = req.attribute_type;
+            results.push_back(result);
+        }
+        return results;
+    }
+
     const auto _requests = conversions::to_ocpp_get_variable_data_vector(requests);
     const auto response = this->mod->charge_point->get_variables(_requests);
     return conversions::to_everest_get_variable_result_vector(response);
@@ -41,6 +60,20 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
 
 std::vector<types::ocpp::SetVariableResult>
 ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests, std::string& source) {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not yet initialized. Cannot handle set variables request.";
+        std::vector<types::ocpp::SetVariableResult> results;
+        for (const auto& req : requests) {
+            types::ocpp::SetVariableResult result;
+            result.status = types::ocpp::SetVariableStatusEnumType ::Rejected;
+            result.component_variable.component = req.component_variable.component;
+            result.component_variable.variable = req.component_variable.variable;
+            result.attribute_type = req.attribute_type;
+            results.push_back(result);
+        }
+        return results;
+    }
+
     const auto _requests = conversions::to_ocpp_set_variable_data_vector(requests);
     const auto response_map = this->mod->charge_point->set_variables(_requests, source);
     std::vector<ocpp::v2::SetVariableResult> response;
