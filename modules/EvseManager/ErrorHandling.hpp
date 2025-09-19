@@ -41,6 +41,20 @@ namespace module {
 
 class EvseManager;
 
+// ErrorHandling events
+enum class ErrorHandlingEvents : std::uint8_t {
+    ForceErrorShutdown,
+    ForceEmergencyShutdown,
+    AllErrorsPreventingChargingCleared,
+    AllErrorCleared
+};
+
+enum class ShutdownType {
+    None,
+    ErrorShutdown,
+    EmergencyShutdown
+};
+
 class ErrorHandling {
 
 public:
@@ -58,7 +72,7 @@ public:
 
     // Signal that error set has changed. Bool argument is true if it is preventing charging at the moment and false if
     // charging can continue.
-    sigslot::signal<bool> signal_error;
+    sigslot::signal<ErrorHandlingEvents> signal_error;
     // Signal that all errors are cleared (both those preventing charging and not)
     sigslot::signal<> signal_all_errors_cleared;
 
@@ -73,6 +87,12 @@ public:
 
     void raise_powermeter_transaction_start_failed_error(const std::string& description);
     void clear_powermeter_transaction_start_failed_error();
+
+    void raise_isolation_resistance_fault(const std::string& description);
+    void clear_isolation_resistance_fault();
+
+    void raise_cable_check_fault(const std::string& description);
+    void clear_cable_check_fault();
 
 protected:
     void raise_inoperative_error(const Everest::error::Error& caused_by);

@@ -332,7 +332,8 @@ private:
 
     bool cable_check_should_exit();
 
-    double get_over_voltage_threshold();
+    double get_emergency_over_voltage_threshold();
+    double get_error_over_voltage_threshold();
 
     // EV information
     Everest::timed_mutex_traceable ev_info_mutex;
@@ -343,7 +344,7 @@ private:
     void imd_start();
     Everest::Thread telemetryThreadHandle;
 
-    void fail_cable_check();
+    void fail_cable_check(const std::string& reason);
 
     // setup sae j2847/2 v2h mode
     void setup_v2h_mode();

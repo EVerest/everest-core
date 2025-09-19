@@ -41,8 +41,6 @@ struct evse_managerImplStub : public evse_managerImplBase {
     }
     virtual void handle_cancel_reservation() {
     }
-    virtual void handle_set_faulted() {
-    }
     virtual bool handle_pause_charging() {
         return true;
     }
