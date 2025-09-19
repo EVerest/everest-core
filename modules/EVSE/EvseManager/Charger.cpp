@@ -1088,8 +1088,9 @@ bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::stea
                 shared_context.max_current = c_abs;
                 shared_context.max_current_valid_until = validUntil;
             }
+            c_abs = get_max_current_internal();
             bsp->set_overcurrent_limit(c_abs);
-            signal_max_current(c);
+            signal_max_current(c < 0.0f ? -c_abs : c_abs);
             return true;
         }
     }
