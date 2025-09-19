@@ -1,0 +1,15 @@
+active_modules:
+  cli:
+    connections:
+      ovm:
+        - implementation_id: main
+          module_id: ovm
+    module: BUOverVoltageMonitor
+    standalone: true
+  ovm:
+    module: OVMSimulator
+    config_implementation:
+      main:
+        simulate_error_shutdown: true
+        simulate_emergency_shutdown: false
+        simulate_error_delay: 5

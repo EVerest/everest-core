@@ -74,14 +74,21 @@ void BUOverVoltageMonitor::ready() {
     o.multiline = false;
     o.cursor_position = 0;
 
-    auto limit_input = Input(&limit, "800.0", o);
+    auto error_limit_input = Input(&error_limit, "800.0", o);
+    auto emergency_limit_input = Input(&emergency_limit, "1000.0", o);
+
+    Component ovm_set_limit = Button(
+                                  "Set Error/Emergency Limits",
+                                  [&] {
+                                      auto error_val = std::stof(error_limit);
+                                      auto emergency_val = std::stof(emergency_limit);
+                                      r_ovm->call_set_limits(error_val, emergency_val);
+                                  },
+                                  ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White)) |
+                              flex_grow;
 
     Component ovm_start = Button(
-                              "Start",
-                              [&] {
-                                  auto val = std::stof(limit);
-                                  r_ovm->call_start(val);
-                              },
+                              "Start", [&] { r_ovm->call_start(); },
                               ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White)) |
                           flex_grow;
 
@@ -97,7 +104,9 @@ void BUOverVoltageMonitor::ready() {
 
     auto action_component = Container::Horizontal({
         Container::Vertical({
-            limit_input,
+            ovm_set_limit,
+            error_limit_input,
+            emergency_limit_input,
             ovm_start,
             ovm_stop,
             ovm_reset,
@@ -105,8 +114,10 @@ void BUOverVoltageMonitor::ready() {
     });
 
     auto action_component_renderer = Renderer(action_component, [&] {
-        return vbox({hbox(ovm_start->Render()), hbox(text(" Over voltage limit (V): "), limit_input->Render()),
-                     hbox(ovm_stop->Render()), hbox(ovm_reset->Render())});
+        return vbox({hbox(text(" Over voltage error limit (V): "), error_limit_input->Render()),
+                     hbox(text(" Over voltage emergency limit (V): "), emergency_limit_input->Render()),
+                     hbox(ovm_set_limit->Render()), hbox(ovm_start->Render()), hbox(ovm_stop->Render()),
+                     hbox(ovm_reset->Render())});
     });
 
     auto action_renderer = Renderer(action_component, [&] {

@@ -20,7 +20,8 @@ namespace module {
 namespace main {
 
 struct Conf {
-    bool simulate_error;
+    bool simulate_error_shutdown;
+    bool simulate_emergency_shutdown;
     int simulate_error_delay;
 };
 
@@ -36,7 +37,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_start(double& over_voltage_limit_V) override;
+    virtual void handle_set_limits(double& emergency_over_voltage_limit_V, double& error_over_voltage_limit_V) override;
+    virtual void handle_start() override;
     virtual void handle_stop() override;
     virtual void handle_reset_over_voltage_error() override;
 
@@ -53,6 +55,8 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    double error_threshold{0.};
+    double emergency_threshold{0.};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
