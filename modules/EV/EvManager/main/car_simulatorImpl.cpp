@@ -200,8 +200,12 @@ void car_simulatorImpl::register_all_commands() {
         command_registry->register_command("iso_dc_power_on", 0, [this](const CmdArguments& arguments) {
             return this->car_simulation->iso_dc_power_on(arguments);
         });
-        command_registry->register_command("iso_start_v2g_session", 1, [this](const CmdArguments& arguments) {
-            return this->car_simulation->iso_start_v2g_session(arguments, mod->config.three_phases);
+        command_registry->register_command("iso_start_v2g_session", 2, [this](const CmdArguments& arguments) {
+	    auto payment_option = arguments[1];
+	    if (payment_option == "externalpayment") payment_option = "ExternalPayment";
+	    if (payment_option == "contract") payment_option = "Contract";
+	    CmdArguments args{arguments[0], payment_option};
+            return this->car_simulation->iso_start_v2g_session(args, mod->config.three_phases);
         });
         command_registry->register_command("iso_stop_charging", 0, [this](const CmdArguments& arguments) {
             return this->car_simulation->iso_stop_charging(arguments);
