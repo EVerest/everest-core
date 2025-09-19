@@ -50,8 +50,8 @@
 using EvseConnectorMap = std::map<int32_t, std::map<int32_t, int32_t>>;
 using ClearedErrorId = std::string;
 using EventQueue =
-    std::map<int32_t,
-             std::queue<std::variant<types::evse_manager::SessionEvent, ocpp::v16::ErrorInfo, ClearedErrorId>>>;
+    std::map<int32_t, std::queue<std::variant<types::evse_manager::SessionEvent, ocpp::v16::ErrorInfo, ClearedErrorId,
+                                              types::system::LogStatus, types::system::FirmwareUpdateStatus>>>;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {

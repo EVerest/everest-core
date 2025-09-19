@@ -12,6 +12,11 @@ void ocpp_1_6_charge_pointImpl::ready() {
 }
 
 bool ocpp_1_6_charge_pointImpl::handle_stop() {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle stop command";
+        return false;
+    }
+
     std::lock_guard<std::mutex> lock(this->m);
     mod->charging_schedules_timer->stop();
     bool success = mod->charge_point->stop();
@@ -21,6 +26,11 @@ bool ocpp_1_6_charge_pointImpl::handle_stop() {
     return success;
 }
 bool ocpp_1_6_charge_pointImpl::handle_restart() {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle restart command";
+        return false;
+    }
+
     std::lock_guard<std::mutex> lock(this->m);
     mod->charging_schedules_timer->interval(std::chrono::seconds(this->mod->config.PublishChargingScheduleIntervalS));
     bool success = mod->charge_point->restart();
@@ -79,6 +89,16 @@ types::ocpp::GetConfigurationResponse to_everest(const ocpp::v16::GetConfigurati
 }
 
 types::ocpp::GetConfigurationResponse ocpp_1_6_charge_pointImpl::handle_get_configuration_key(Array& keys) {
+
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle get configuration key command";
+        types::ocpp::GetConfigurationResponse response;
+        for (const auto& key : keys) {
+            response.unknown_keys.push_back(key);
+        }
+        return response;
+    }
+
     ocpp::v16::GetConfigurationRequest request;
     std::vector<ocpp::CiString<50>> _keys;
     for (const auto& key : keys) {
@@ -92,11 +112,20 @@ types::ocpp::GetConfigurationResponse ocpp_1_6_charge_pointImpl::handle_get_conf
 
 types::ocpp::ConfigurationStatus ocpp_1_6_charge_pointImpl::handle_set_custom_configuration_key(std::string& key,
                                                                                                 std::string& value) {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle set configuration key command";
+        return types::ocpp::ConfigurationStatus::Rejected;
+    }
     const auto response = this->mod->charge_point->set_custom_configuration_key(key, value);
     return to_everest(response);
 }
 
 void ocpp_1_6_charge_pointImpl::handle_monitor_configuration_keys(Array& keys) {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle monitor configuration keys command";
+        return;
+    }
+
     for (const auto& key : keys) {
         this->mod->charge_point->register_configuration_key_changed_callback(
             key,

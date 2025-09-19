@@ -41,7 +41,8 @@
 
 using EventQueue =
     std::map<int32_t,
-             std::queue<std::variant<types::evse_manager::SessionEvent, ocpp::v2::EventData, ocpp::v2::MeterValue>>>;
+             std::queue<std::variant<types::evse_manager::SessionEvent, ocpp::v2::EventData, ocpp::v2::MeterValue,
+                                     types::system::FirmwareUpdateStatus, types::system::LogStatus>>>;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
