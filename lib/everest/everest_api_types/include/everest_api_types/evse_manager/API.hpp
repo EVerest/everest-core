@@ -36,7 +36,8 @@ enum class StopTransactionReason {
 };
 
 struct StopTransactionRequest {
-    types::evse_manager::StopTransactionReason reason;
+    StopTransactionReason reason;
+    std::optional<auth::ProvidedIdToken> id_tag;
 };
 
 enum class StartSessionReason {
@@ -73,6 +74,7 @@ enum class SessionEventEnum {
 
 struct SessionStarted {
     StartSessionReason reason;
+    std::optional<auth::ProvidedIdToken> id_tag;
     powermeter::PowermeterValues meter_value;
     std::optional<powermeter::SignedMeterValue> signed_meter_value;
     std::optional<int32_t> reservation_id;
@@ -95,6 +97,7 @@ struct TransactionFinished {
     std::optional<powermeter::SignedMeterValue> start_signed_meter_value;
     std::optional<powermeter::SignedMeterValue> signed_meter_value;
     std::optional<StopTransactionReason> reason;
+    std::optional<auth::ProvidedIdToken> id_tag;
 };
 
 struct ChargingStateChangedEvent {

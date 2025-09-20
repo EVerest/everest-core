@@ -22,14 +22,8 @@ void from_json(const json& j, DisplayMessageStatusEnum& k);
 void to_json(json& j, ClearMessageResponseEnum const& k) noexcept;
 void from_json(const json& j, ClearMessageResponseEnum& k);
 
-void to_json(json& j, MessageFormat const& k) noexcept;
-void from_json(const json& j, MessageFormat& k);
-
 void to_json(json& j, Identifier_type const& k) noexcept;
 void from_json(const json& j, Identifier_type& k);
-
-void to_json(json& j, MessageContent const& k) noexcept;
-void from_json(const json& j, MessageContent& k);
 
 void to_json(json& j, DisplayMessage const& k) noexcept;
 void from_json(const json& j, DisplayMessage& k);

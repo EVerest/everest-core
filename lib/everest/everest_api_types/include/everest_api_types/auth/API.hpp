@@ -2,8 +2,8 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #pragma once
-#include <everest_api_types/display_message/API.hpp>
 #include <everest_api_types/iso15118_charger/API.hpp>
+#include <everest_api_types/text_message/API.hpp>
 #include <optional>
 #include <string>
 #include <vector>
@@ -98,16 +98,18 @@ struct ProvidedIdToken {
 struct TokenValidationStatusMessage {
     ProvidedIdToken token;
     TokenValidationStatus status;
-    std::optional<std::vector<display_message::MessageContent>> messages;
+    std::optional<std::vector<text_message::MessageContent>> messages;
 };
 
 struct ValidationResult {
     AuthorizationStatus authorization_status;
     std::optional<CertificateStatus> certificate_status;
+    std::vector<text_message::MessageContent> tariff_messages;
     std::optional<std::string> expiry_time;
     std::optional<IdToken> parent_id_token;
     std::optional<std::vector<int32_t>> evse_ids;
     std::optional<int32_t> reservation_id;
+    std::optional<std::vector<iso15118_charger::EnergyTransferMode>> allowed_energy_transfer_modes;
 };
 
 struct ValidationResultUpdate {

@@ -168,6 +168,7 @@ struct SignedReactivePower {
 struct Temperature {
     float temperature;
     std::optional<std::string> identification;
+    std::optional<std::string> location;
 };
 
 struct PowermeterValues {
@@ -201,6 +202,7 @@ struct ReplyStartTransaction {
 
 struct ReplyStopTransaction {
     TransactionStatus status;
+    std::optional<SignedMeterValue> start_signed_meter_value;
     std::optional<SignedMeterValue> signed_meter_value;
     std::optional<std::string> error;
 };

@@ -564,12 +564,24 @@ void to_json(json& j, SecurityEvent const& k) noexcept {
     if (k.info) {
         j["info"] = k.info.value();
     }
+    if (k.critical) {
+        j["critical"] = k.critical.value();
+    }
+    if (k.timestamp) {
+        j["timestamp"] = k.timestamp.value();
+    }
 }
 
 void from_json(const json& j, SecurityEvent& k) {
     k.type = j.at("type");
     if (j.contains("info")) {
         k.info.emplace(j.at("info"));
+    }
+    if (j.contains("critical")) {
+        k.critical.emplace(j.at("critical"));
+    }
+    if (j.contains("timestamp")) {
+        k.timestamp.emplace(j.at("timestamp"));
     }
 }
 

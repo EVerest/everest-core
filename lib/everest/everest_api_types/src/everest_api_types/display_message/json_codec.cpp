@@ -4,7 +4,9 @@
 #include "display_message/json_codec.hpp"
 #include "display_message/API.hpp"
 #include "display_message/codec.hpp"
+
 #include "nlohmann/json.hpp"
+#include "text_message/json_codec.hpp"
 
 namespace everest::lib::API::V1_0::types::display_message {
 
@@ -185,56 +187,6 @@ void from_json(const json& j, ClearMessageResponseEnum& k) {
         " could not be converted to enum of type everest::lib::API::V1_0::types::auth::ClearMessageResponseEnum");
 }
 
-void to_json(json& j, MessageFormat const& k) noexcept {
-    switch (k) {
-    case MessageFormat::ASCII:
-        j = "ASCII";
-        return;
-    case MessageFormat::HTML:
-        j = "HTML";
-        return;
-    case MessageFormat::URI:
-        j = "URI";
-        return;
-    case MessageFormat::UTF8:
-        j = "UTF8";
-        return;
-    case MessageFormat::QRCODE:
-        j = "QRCODE";
-        return;
-    }
-
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::display_message::MessageFormat";
-}
-
-void from_json(const json& j, MessageFormat& k) {
-    std::string s = j;
-    if (s == "ASCII") {
-        k = MessageFormat::ASCII;
-        return;
-    }
-    if (s == "HTML") {
-        k = MessageFormat::HTML;
-        return;
-    }
-    if (s == "URI") {
-        k = MessageFormat::URI;
-        return;
-    }
-    if (s == "UTF8") {
-        k = MessageFormat::UTF8;
-        return;
-    }
-    if (s == "QRCODE") {
-        k = MessageFormat::QRCODE;
-        return;
-    }
-
-    throw std::out_of_range(
-        "Provided string " + s +
-        " could not be converted to enum of type everest::lib::API::V1_0::types::display_messages::MessageFormat");
-}
-
 void to_json(json& j, Identifier_type const& k) noexcept {
     switch (k) {
     case Identifier_type::IdToken:
@@ -269,27 +221,6 @@ void from_json(const json& j, Identifier_type& k) {
     throw std::out_of_range(
         "Provided string " + s +
         " could not be converted to enum of type everest::lib::API::V1_0::types::dispaly_messages::Identifier_type");
-}
-
-void to_json(json& j, MessageContent const& k) noexcept {
-    j = json{
-        {"content", k.content},
-    };
-    if (k.format) {
-        j["format"] = k.format.value();
-    }
-    if (k.language) {
-        j["language"] = k.language.value();
-    }
-}
-void from_json(const json& j, MessageContent& k) {
-    k.content = j.at("content");
-    if (j.contains("format")) {
-        k.format.emplace(j.at("format"));
-    }
-    if (j.contains("language")) {
-        k.language.emplace(j.at("language"));
-    }
 }
 
 void to_json(json& j, DisplayMessage const& k) noexcept {

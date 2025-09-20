@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #pragma once
+#include <everest_api_types/text_message/API.hpp>
 #include <optional>
 #include <string>
 #include <vector>
@@ -37,28 +38,14 @@ enum class ClearMessageResponseEnum {
     Unknown,
 };
 
-enum class MessageFormat {
-    ASCII,
-    HTML,
-    URI,
-    UTF8,
-    QRCODE,
-};
-
 enum class Identifier_type {
     IdToken,
     SessionId,
     TransactionId,
 };
 
-struct MessageContent {
-    std::string content;
-    std::optional<MessageFormat> format;
-    std::optional<std::string> language;
-};
-
 struct DisplayMessage {
-    MessageContent message;
+    text_message::MessageContent message;
     std::optional<int32_t> id;
     std::optional<MessagePriorityEnum> priority;
     std::optional<MessageStateEnum> state;
