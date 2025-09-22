@@ -1,0 +1,399 @@
+Module Communication Protocol V1.50
+Content
+Module Communication Protocol V1.50.................................................................... 1
+1. Overview........................................................................................................... 2
+2. Definition of Frame Format.............................................................................. 2
+2.1 Frame Format.......................................................................................... 2
+2.2 Frame Identifier - 29bits...........................................................................2
+2.3 Data Field................................................................................................ 3
+3. Attached Charts................................................................................................. 5
+3.1 Data Description Chart.............................................................................5
+3.2 Module Alarm/Status Chart......................................................................9
+4. Set Group Number, Address Command...........................................................10
+5. Floating Point Data Description.......................................................................11
+6. Altitude Derating..............................................................................................141. Overview
+This protocol applies to Winline Technology N X R &
+U X R Series charging module. Baud rate: 125Kbps
+2. Definition of Frame Format
+2.1 Frame Format
+A frame is the basic unit of transmitting information. CAN 2.0B frame format is
+shown in the following chart,
+Field nameCode
+Start of Framesof(1bit)
+Arbitration FieldIdentifier (11bit)
+SRR
+IDE
+Identifier (18bit)
+RTR
+reseal(2 bits)
+Control Field
+Data Len(4 bits)
+Data FieldData(8bytes)
+CRC FieldCRC(2bits)
+End of Frame(7bits)
+2.2 Frame Identifier - 29bits
+28
+27
+26
+25
+24
+23
+22
+21
+PROTNO（ 9 bits）
+20
+19
+PTP
+18
+17
+16
+15
+14
+13
+DSTADDR （ 8 bits）
+2.2.1 PROTNO
+Default: PRONTO ＝0x060
+2
+12
+1
+10
+9
+8
+7
+6
+5
+SRCADDR（ 8 bits）
+4
+3
+2
+Group
+1
+02.2.3 PTP
+PTP=1，point to point communication;
+PTP=0，broadcast communication;
+2.2.4 DSTADDR
+Destination address:
+Power supply module address range: 00~63;
+Monitor address is fixed to: 0xF0;
+Broadcast address: 0xFF;
+Group broadcast address: 0xFE
+2.2.5 SRCADDR
+Source address:
+In all communications types, bit3~bit10 are used to indicate source address on the
+bus.
+Power supply module address range: 00~63;
+Monitor address is fixed to: 0xF0
+2.2.6 Group
+Group number of the module: 0~7
+2.3 Data Field
+2.3.1 Set module parameters
+Used to set module voltage, current, current limit point, power on/off.
+Transmit frame data field format
+Byte0Byte1Byte2~ Byte3Byte4~ Byte7
+Function codeReservedRegister No.Data
+0300See Chart 1Data to set（See Chart 1）
+Example：Set module voltage
+03
+00
+00 21
+0x442F0000 The corresponding floating point format data is: 700.0
+3
+44 2F 00 00Example: Set module current limit point
+03
+00
+00 22
+3F 00 00 00
+0x3F000000 corresponding floating point format data is: 0.5(Module current limit
+point is set in percentage).
+Current limit point corresponding to rate current is 1, other value are calculated
+proportionally.
+Module current limit point calculating method: Assuming that the required current is
+10A and the rated current is 20A, then the current limit point = 10/20 = 0.5
+Example: Set module power on
+03
+00
+00 3000 00 00 00
+00 3000 01 00 00
+Example: Set module power off
+03
+00
+2.3.2 Read Module Data
+Transmit frame data field format
+Byte0Byte1Byte2~ Byte3Byte4~ Byte7
+Function codeReservedRegister No.Reserved
+1000See Chart 100 00 00 00
+Respond frame data field format
+Byte0Byte1Byte2~ Byte3Byte4~ Byte7
+Data type of returned dataError codeRegister No.Reserved
+41:Float pointF0：NormalSee Chart 1Returned data
+42:IntegerOthers ： Fault, discard
+frame
+Example：Get module voltage
+Monitor sending：
+410
+0000 0100 00 00 00
+F000 0144 2F 00 00
+Module responding：
+41
+0x41: Returned data is in float point format.
+0xF0: Response frame is normal.
+0x0001: Register number.
+0x442F0000 corresponding floating point format data is: 700.0
+Example: Get module status
+Monitor sending：
+10
+0000 4000 00 00 00
+F000 4000 00 01 00
+Module responding：
+42
+0x42: Returned data is in integer format.
+0xF0: Response frame is normal.
+0x0040: Register number.
+0x00000100 See Chart 2
+3. Attached Charts
+3.1 Data Description Chart
+Chapter 1
+Register
+(VALUETY
+PE)
+Data DescriptionData
+(RMP)Format
+0x0001Get module voltageFloat Point
+0x0002Get module currentFloat Point
+0x0003Get module current limit pointFloat Point
+0x0004Get module DC board temperatureFloat Point
+5
+Format DescriptionGet module input phase voltage(DC
+0x0005
+input voltage)
+Float Point
+Get module PFCO voltage(positive
+0x0008
+half bus)
+Float Point
+Get module PFCO voltage(negative
+0x000A
+half bus)
+Float Point
+Get module panel(ambient)
+0x000B
+temperature
+Float Point
+0x000CGet module AC phase A voltageFloat Point
+0x000DGet module AC phase B voltageFloat Point
+0x000EGet module AC phase C voltageFloat Point
+0x0010Get module PFC board temperatureFloat Point
+0x0011Get module rated output powerFloat Point
+0x0012Get module rated output currentFloat Point
+Unit ：m; range: 1000~5000 No derating when
+0x0017
+Set module working altitude
+altitude is below 1000m; if altitude is higher
+Integer
+than 5000m, set 5000.Setting will be saved
+after power-off.
+0x001B
+Set module output current
+Set value to output current*1024, for example:
+Integer
+10240 = 10A*1024
+byte7 lower 6 bits（range 0~60）
+0x001E
+Set group number
+Integer
+other bytes byte4~byte6 and byte7 higher 5 bits
+are 0s.
+0x00000000:Automatically assigned
+0x001FSet module address assignation mode0x0021Set module output voltageFloat Point
+0x0022Set module current limit pointFloat Point
+Integer
+6
+0x00010000:set by DIP switch (default)Set module output voltage upper
+0x0023
+0x0030
+limit
+Power on/off
+Set module output overvoltage point
+Float Point
+do not set unless specially required
+0x00010000:Power off ； 0x00000000:Power
+Integer
+on
+0x0031
+Set module overvoltage reset
+Integer0x00000000:Disable;0x00010000:Reset
+Integer0x00000000:Enable; 0x00010000:Enable
+IntegerSee Chart 2
+Set module output overvoltage
+0x003E
+protection relevance permission
+0x0040Get current alarm/status
+0x0043Get group number&DIP switch address Integer
+Higher16 bits of the returned data(byte4~byte5)
+are group number, lower 16 bits of the returned
+data（byte6~byte7) are DIP switch address
+0x00000000：Disable;0x00010000:Reset
+0x0044Set module short circuit resetInteger0x0046Set module input modeInteger0x0048Get input powerIntegerUnit 1W
+0x004AGet current set altitudeIntegerUnit: m(efault 1000)
+0x00000001：AC mode(defaule)；0x00000002：
+DC modes;
+0x00000001：Single phase AC;
+0x00000002：DC;
+Get current module input working
+0x004B
+mode
+Integer
+0x00000003：Three phase AC;
+0x00000005：Partten mismatch (phase
+sequence error);
+Get node Serial No low bytes(ID
+0x0054
+number)
+Integer
+Get node Serial No high bytes(ID
+0x0055
+number)
+Integer
+Lower 16 bits ofthe returned
+0x0056
+Get DCDC version
+Integer
+data(byte6~byte7), version number refers to the
+decimal number of data.
+7Lower 16 bits ofthe returned
+0x0057
+Get PFC version
+Integer
+data(byte6~byte7), version number refers to the
+decimal number of data.
+83.2 Module Alarm/Status Chart
+0 invalid 1 valid
+Chart 2- Module Alarm/Status
+Bit
+Description
+0Module fault (red indicator steady on)
+1Module protection (yellow indicator steady on)
+2Reserved
+3Module internal SCI communication failure
+4Input mode error(or input wiring error)
+5Input mode set by monitor does not match the actual working mode
+6Reserved
+7DCDC overvoltage
+8PFC voltage abnormal(imbalance, overvoltage or undervoltage)
+9AC overvoltage
+10Reserved
+11Reserved
+12Reserved
+13Reserved
+14AC undervoltage
+15Reserved
+16CAN communication failure
+17Module current imbalance
+18Reserved
+19Reserved
+20Reserved
+21Reserved
+22DCDC On/off status 0:On, 1:Off
+923Module power limiting
+24Temperature derating
+25AC power limiting
+26Reserved
+27Fan fault
+28DCDC short circuit
+29Reserved
+30DCDC over temperature
+31DCDC output overvoltage
+4. Set Group Number, Address Command
+Command to set group number and module address assignation mode is added. After
+successful setting, the group number and address assignation mode will be updated
+immediately and stored (with power off memory), and the ID in the returned data will
+be changed instantly to the latest group number.
+Group number setting instructions:
+There are two ways to set the group number: DIP switch and communication settings,
+respectively, corresponding to the automatic assignation mode and DIP switch setting
+address mode. When the module address assignation mode is selected as automatic,
+the DIP switch is used to set the group number. Under this circumstance, the
+communication group number setting function is invalid, and sending command will
+return a set failure response; only when the module address assignation mode is
+selected as DIP switch mode, the function of communication group number setting is
+effective!
+Detailed setting steps are as follows:
+Example：Set module group number to 5（0x05）
+10Set command(Data field):
+03
+00
+00 1E00 00 00 05
+00 1E00 00 00 05
+00 1E00 00 00 05
+Replied command for successful setting:
+42
+F0
+Replied command for unsuccessful setting:
+F2
+42
+Set Module address assignation mode to DIP switch mode
+Set command(Data field):
+03
+00
+00 1F00 01 00 00
+00 1F00 01 00 00
+00 1F00 01 00 00
+Replied command for successful setting:
+42
+F0
+Replied command for unsuccessful setting:
+F2
+42
+5.Floating Point Data Description
+Sequence of floating point number transmit: floating point number is stored in the
+format of four
+bytes, it is transmitted after converted to HEX-ASCII code. When
+transmitted, four bytes are send in the order of exponent and sign bit, mantissa higher
+bit, mantissa middle bit and mantissa lower bit. Floating point numbers are in IEEE
+32-bit standard floating point number format(standard C floating point format) with a
+length of 32bits, as shown below,
+D31
+D30—D23
+D22—D16D15—D8D7—D0
+Floating point sign Exponent EMantissaMantissaMantissa lower
+SHigher bitsmiddle bitsbits
+IF the exponent is E and mantissa is M, Then the floating point number is ±
+（1+M×2-23） ·2E-127
+Whether a floating point number is positive or negative depends on the sign bit S,
+11S=1 means the floating point number is negative; S=0 means the floating point
+number is positive.
+For example, When 32-bit floating point numbers are 40H, A0H, 00H,
+00H,which means
+S=0,E= 129,
+M=221,
+then
+the floating point
+number
+is （1
++221×2-23 ） ·2129-127 = 5.0.
+Given a floating point number 60, corresponding 4 bytes ASCII code is: 42, 70, 00,
+00. Transmit order on the bus is 42, 70, 00, 00.
+Given a floating point number 1.2, corresponding 4 bytes ASCII code is: 3f, 99, 99,
+9a. Transmit order on the bus is 3f, 99, 99, 9a.
+6. Altitude Derating
+When the module works in the high altitude area, current working altitude can be set
+by monitor. The effective setting range is 1000m ~5000m, and the module can
+conduct derating operation to different degrees according to the set altitude.
+By principle, when the altitude is below 2000 meters, there is no need to set the
+altitude value; However, considering that the air duct may not be clear in long-term
+operation, when the working altitude of the module is higher than 1000 meters, it is
+suggested to set the actual altitude.
+14Example: Set module working altitude to 3000m
+Set command(Data field):
+03
+00
+00 1700 00 0B B8
+00 1700 00 0B B8
+00 1700 00 0B B8
+Replied command for successful setting:
+42
+F0
+Replied command for unsuccessful setting:
+42
+F2
+15

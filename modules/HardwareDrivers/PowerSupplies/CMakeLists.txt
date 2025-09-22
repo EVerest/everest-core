@@ -1,2 +1,3 @@
 ev_add_module(DPM1000)
 ev_add_module(UUGreenPower_UR1000X0)
+ev_add_module(Winline)
