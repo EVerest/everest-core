@@ -1,0 +1,11 @@
+description: >-
+  Errors for PaymentTerminal
+errors:
+  - name: TerminalIdNotSet
+    description: >-
+      The terminal identifier has not been set properly
+  - name: IncorrectDeviceId
+    description: The device id of the payment terminal is incorrect.
+  - name: GenericPaymentTerminalError
+    description: >-
+      The terminal reported an error

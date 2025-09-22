@@ -6,7 +6,9 @@ description: >-
   to EVerest after the fact.
 errors:
   - name: MREC5OverVoltage
-    description: The output voltage was above IEC61851-23:2023 6.3.1.106.2 Table 103 limits for more than 9ms.
+    description: >-
+      The output voltage was above IEC61851-23:2023 6.3.1.106.2 Table 103 limits for more than 9ms. (severity high)
+      or above Table 104 (medium or low severity).
   - name: DeviceFault
     description: The over voltage monitoring device is no longer functional.
   - name: CommunicationFault

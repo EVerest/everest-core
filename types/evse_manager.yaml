@@ -438,6 +438,33 @@ types:
         type: number
         minimum: 0
         maximum: 100
+      target_energy_request:
+        description: Energy request to fulfil the target SoC from the EV [Wh]
+        type: number
+      max_energy_request:
+        description: Maximum acceptable energy level of the EV [Wh]
+        type: number
+      min_energy_request:
+        description: Energy request to fulfil the minimum SoC [Wh]
+        type: number
+      ac_max_charge_power:
+        description: Ac maximum power supported by the EV [W]
+        type: number
+      ac_min_charge_power:
+        description: Ac minimum power supported by the EV [W]
+        type: number
+      ac_max_discharge_power:
+        description: Ac maximum discharge power supported by the EV [W]
+        type: number
+      ac_min_discharge_power:
+        description: Ac minimum discharge power supported by the EV [W]
+        type: number
+      ac_present_active_power:
+        description: Ac present total active power measured by the EV [W]
+        type: number
+      ac_present_reactive_power:
+        description: Ac present total reactive power measured by the EV [W]
+        type: number
   CarManufacturer:
     description: >-
       Enum type for car manufacturers derived from MAC address.

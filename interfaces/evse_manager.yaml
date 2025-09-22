@@ -58,10 +58,6 @@ cmds:
       type: boolean
   cancel_reservation:
     description: Call to signal that EVSE is not reserved anymore
-  set_faulted:
-    description: >-
-      Sets the evse manager to faulted externally. It may also switch to
-      faulted itself if it detects an internal error.
   pause_charging:
     description: Call to signal EVSE to pause charging
     result:

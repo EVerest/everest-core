@@ -48,12 +48,20 @@ cmds:
           Indicates if the vehicle contract may be forwarded to and validated by a CSMS in case
           local validation was not successful
         type: boolean
+  bpt_setup:
+    description: >-
+      At startup, set the bpt setup for ISO15118-20 at least once. May be updated later on.
+    arguments:
+      bpt_config:
+        description: The required parameters for a BPT setup
+        type: object
+        $ref: /iso15118#/BptSetup
 # Response messages to vars:
   authorization_response:
     description: >-
       This message is an async response to a previously published require_auth_eim
       or require_auth_pnc. The SECC informs the EVCC whether the authorization
-      is accecpted or not.
+      is accepted or not.
     arguments:
       authorization_status:
         description: Authorization status of the ID Token
@@ -110,6 +118,20 @@ cmds:
       pause:
         description: Set to true when to pause, set to false when to continue
         type: boolean
+  no_energy_pause_charging:
+    description: >-
+      Right now there is no power available for the charging process. According to
+      IEC61851-23:2023 CC3.5.3 the charger can pause the session before or after the cable check and
+      pre charge stage.
+    arguments:
+      mode:
+        description: >-
+          Set to different no energy pause modes. For PauseAfterPrecharge the charger should pause but
+          has power for cable check and pre charge. For PauseBeforeCableCheck the charger should pause
+          before cable check. For AllowEvToIgnorePause charger should ignore, that the ev will go to
+          CurrentDemand instead of pausing the session, this is against IEC61851-23:2023.
+        type: string
+        $ref: /iso15118#/NoEnergyPauseMode
 # Update physical values
   update_energy_transfer_modes:
     description: >-
@@ -135,6 +157,42 @@ cmds:
         type: number
         minimum: 0
         maximum: 400
+  update_ac_parameters:
+    description: Update the d20 initial ac parameters. Call at least once during start up
+    arguments:
+      ac_parameters:
+        description: Ac parameters the EVSE is setting
+        type: object
+        $ref: /iso15118#/AcParameters
+  update_ac_maximum_limits:
+    description: Update the ac maximum limits. Call at least once during start up.
+    arguments:
+      maximum_limits:
+        description: Maximum values (charge and discharge) the EVSE can deliver
+        type: object
+        $ref: /iso15118#/AcEvseMaximumPower
+  update_ac_minimum_limits:
+    description: Update the ac minimum limits. Call at least once during start up.
+    arguments:
+      minimum_limits:
+        description: Minimum values (charge and discharge) the EVSE can deliver
+        type: object
+        $ref: /iso15118#/AcEvseMinimumPower
+  update_ac_target_values:
+    description: Update the ac target values. Call at least once before charging begins.
+    arguments:
+      target_values:
+        description: AC target values
+        type: object
+        $ref: /iso15118#/AcTargetValues
+  update_ac_present_power:
+    description: >-
+      Update the present power from the powermeter. Call at least once before charging begins
+    arguments:
+      present_power:
+        description: Present active power
+        type: object
+        $ref: /units#/Power
   update_dc_maximum_limits:
     description: Update the maximum limits. Call at least once during start up.
     arguments:
@@ -174,7 +232,7 @@ cmds:
         $ref: /powermeter#/Powermeter
 # Error handling
   send_error:
-    description: An error has happend. Send this error to inform the EV.
+    description: An error has happened. Send this error to inform the EV.
     arguments:
       error:
         description: The EVSE error enum
@@ -184,7 +242,7 @@ cmds:
     description: Reset all errors
 vars:
   require_auth_eim:
-    description: An EIM authorization is requiered
+    description: An EIM authorization is required
     type: "null"
   require_auth_pnc:
     description: >-
@@ -270,6 +328,20 @@ vars:
     type: number
     minimum: 0
     maximum: 400
+  ac_ev_power_limits:
+    description: >-
+      Ac charge & discharge power values supported and allowed by the EV
+    type: object
+    $ref: /iso15118#/AcEvPowerLimits
+  ac_ev_present_powers:
+    description: Present active and reactive power measured from the EV
+    type: object
+    $ref: /iso15118#/AcEvPresentPowerValues
+  ac_ev_dynamic_control_mode:
+    description: >-
+      The parameters the EVCC offers and sets for ac dynamic control mode
+    type: object
+    $ref: /iso15118#/AcEvDynamicModeValues
   dc_ev_energy_capacity:
     description: "Optional: [Wh] Energy capacity of the EV"
     type: number
@@ -363,3 +435,7 @@ vars:
   meter_info_requested:
     description: The EV requested meter infos from the EVSE
     type: "null"
+  selected_service_parameters:
+    description: From the EV selected service parameters
+    type: object
+    $ref: /iso15118#/SelectedServiceParameters

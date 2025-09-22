@@ -1,0 +1,60 @@
+description: Module that collects power and energy measurements from an AST powermeter
+provides:
+  main:
+    description: Implementation of the driver functionality
+    interface: powermeter
+    config:
+      powermeter_device_id:
+        description: The powermeter's address on the serial bus
+        type: integer
+        minimum: 0
+        maximum: 255
+        default: 1
+      serial_port:
+        description: Serial port the hardware is connected to
+        type: string
+        default: /dev/ttyUSB0
+      baudrate:
+        description: Baudrate
+        type: integer
+        minimum: 0
+        maximum: 230400
+        default: 9600
+      parity:
+        description: 'Parity bit: 0: None, 1: Odd, 2: Even'
+        type: integer
+        minimum: 0
+        maximum: 2
+        default: 0
+      rs485_direction_gpio:
+        description: GPIO to use for direction switching. Set to -1 to disable.
+        type: integer
+        default: -1
+      ignore_echo:
+        description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
+        type: boolean
+        default: false
+      gmt_offset_quarter_hours:
+        description: GMT offset in quarters of an hour, e.g. 8 = +2h
+        type: integer
+        minimum: -47
+        maximum: 47
+        default: 0
+      publish_device_data:
+        description: Regularly publish device data not covered by the "powermeter" interface (for debugging purposes).
+        type: boolean
+        default: false
+      publish_device_diagnostics:
+        description: Regularly publish device diagnostics (e.g. log messages, errors, SW/HW revisions; for debugging purposes).
+        type: boolean
+        default: false
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Lars Dieckmann
+    - Andreas Heinrich
+    - Cornelius Claussen
+    - Florin Mihut
+    - Jan Christoph Habig
+    - Kai-Uwe Hermann

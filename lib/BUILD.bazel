@@ -1,4 +1,4 @@
-# Main lib BUILD file that exposes staging libraries
+# Main lib BUILD file that exposes everest libraries
 
 # Alias libraries to provide the expected target names
 alias(
@@ -9,13 +9,25 @@ alias(
 
 alias(
     name = "ocpp_evse_security",
-    actual = "//lib/staging/ocpp:ocpp_evse_security",
+    actual = "//lib/everest/conversions/ocpp:ocpp_evse_security",
     visibility = ["//visibility:public"],
 )
 
 alias(
     name = "ocpp_conversions",
-    actual = "//lib/staging/ocpp:ocpp_conversions",
+    actual = "//lib/everest/conversions/ocpp:ocpp_conversions",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "evse_security_conversions",
+    actual = "//lib/everest/conversions/evse_security:evse_security_conversions",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "run_application",
+    actual = "//lib/everest/run_application:run_application",
     visibility = ["//visibility:public"],
 )
 
@@ -33,6 +45,6 @@ alias(
 
 alias(
     name = "external_energy_limits",
-    actual = "//lib/staging/external_energy_limits:external_energy_limits",
+    actual = "//lib/everest/external_energy_limits:external_energy_limits",
     visibility = ["//visibility:public"],
 )

@@ -571,6 +571,8 @@ async def test_C13(
     # Expected result: No session started
     test_utility.forbidden_actions.append("TransactionEvent")
 
+    await asyncio.sleep(2)
+
     logging.info("disconnect the ws connection...")
     test_controller.disconnect_websocket()
 
