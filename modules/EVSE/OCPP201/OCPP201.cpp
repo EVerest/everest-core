@@ -411,13 +411,21 @@ void OCPP201::init() {
     subscribe_global_all_errors(error_handler, error_cleared_handler);
 
     r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
-        this->charge_point->on_firmware_update_status_notification(
-            status.request_id, conversions::to_ocpp_firmware_status_enum(status.firmware_update_status));
+        if (this->started) {
+            this->charge_point->on_firmware_update_status_notification(
+                status.request_id, conversions::to_ocpp_firmware_status_enum(status.firmware_update_status));
+        } else {
+            this->event_queue[0].push(status);
+        }
     });
 
     r_system->subscribe_log_status([this](types::system::LogStatus status) {
-        this->charge_point->on_log_status_notification(conversions::to_ocpp_upload_logs_status_enum(status.log_status),
-                                                       status.request_id);
+        if (this->started) {
+            this->charge_point->on_log_status_notification(
+                conversions::to_ocpp_upload_logs_status_enum(status.log_status), status.request_id);
+        } else {
+            this->event_queue[0].push(status);
+        }
     });
 
     if (!this->r_reservation.empty() && this->r_reservation.at(0) != nullptr) {
@@ -1044,6 +1052,19 @@ void OCPP201::ready() {
                 const auto meter_value = std::get<ocpp::v2::MeterValue>(queued_event);
                 EVLOG_info << "Processing queued meter value for evse_id: " << evse_id;
                 this->charge_point->on_meter_value(evse_id, meter_value);
+            } else if (std::holds_alternative<types::system::FirmwareUpdateStatus>(queued_event)) {
+                const auto fw_update_status = std::get<types::system::FirmwareUpdateStatus>(queued_event);
+                EVLOG_info << "Processing queued firmware update status";
+                this->charge_point->on_firmware_update_status_notification(
+                    fw_update_status.request_id,
+                    conversions::to_ocpp_firmware_status_enum(fw_update_status.firmware_update_status));
+            } else if (std::holds_alternative<types::system::LogStatus>(queued_event)) {
+                const auto log_status = std::get<types::system::LogStatus>(queued_event);
+                EVLOG_info << "Processing queued log status";
+                this->charge_point->on_log_status_notification(
+                    conversions::to_ocpp_upload_logs_status_enum(log_status.log_status), log_status.request_id);
+            } else {
+                EVLOG_warning << "Unknown event type in queue for evse_id: " << evse_id;
             }
             evse_event_queue.pop();
         }

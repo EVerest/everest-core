@@ -581,6 +581,26 @@ void OCPP::init() {
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(config.MessageQueueResumeDelay));
 
     this->init_evse_subscriptions(); // initialize EvseManager subscriptions as early as possible
+
+    this->r_system->subscribe_log_status([this](types::system::LogStatus log_status) {
+        if (this->started) {
+            this->charge_point->on_log_status_notification(
+                log_status.request_id, types::system::log_status_enum_to_string(log_status.log_status));
+        } else {
+            this->event_queue[0].push(log_status);
+        }
+    });
+
+    this->r_system->subscribe_firmware_update_status(
+        [this](types::system::FirmwareUpdateStatus firmware_update_status) {
+            if (this->started) {
+                this->charge_point->on_firmware_update_status_notification(
+                    firmware_update_status.request_id,
+                    conversions::to_ocpp_firmware_status_notification(firmware_update_status.firmware_update_status));
+            } else {
+                this->event_queue[0].push(firmware_update_status);
+            }
+        });
 }
 
 void OCPP::ready() {
@@ -754,19 +774,6 @@ void OCPP::ready() {
         EVLOG_info << "All connectors unavailable, proceed with firmware installation";
         this->r_system->call_allow_firmware_installation();
     });
-
-    // FIXME(kai): subscriptions should be as early as possible
-    this->r_system->subscribe_log_status([this](types::system::LogStatus log_status) {
-        this->charge_point->on_log_status_notification(log_status.request_id,
-                                                       types::system::log_status_enum_to_string(log_status.log_status));
-    });
-
-    this->r_system->subscribe_firmware_update_status(
-        [this](types::system::FirmwareUpdateStatus firmware_update_status) {
-            this->charge_point->on_firmware_update_status_notification(
-                firmware_update_status.request_id,
-                conversions::to_ocpp_firmware_status_notification(firmware_update_status.firmware_update_status));
-        });
 
     this->charge_point->register_provide_token_callback(
         [this](const std::string& id_token, std::vector<int32_t> referenced_connectors, bool prevalidated) {
@@ -1059,6 +1066,17 @@ void OCPP::ready() {
                     EVLOG_info << "Processing queued error event for evse_id: " << evse_id
                                << ", error id: " << error.uuid;
                     this->charge_point->on_error(evse_id, error);
+                } else if (std::holds_alternative<types::system::LogStatus>(queued_event)) {
+                    const auto log_status = std::get<types::system::LogStatus>(queued_event);
+                    EVLOG_info << "Processing queued log status event";
+                    this->charge_point->on_log_status_notification(
+                        log_status.request_id, types::system::log_status_enum_to_string(log_status.log_status));
+                } else if (std::holds_alternative<types::system::FirmwareUpdateStatus>(queued_event)) {
+                    const auto firmware_status = std::get<types::system::FirmwareUpdateStatus>(queued_event);
+                    EVLOG_info << "Processing queued firmware status event";
+                    this->charge_point->on_firmware_update_status_notification(
+                        firmware_status.request_id,
+                        conversions::to_ocpp_firmware_status_notification(firmware_status.firmware_update_status));
                 } else {
                     // holds string -> is event to clear error
                     const auto cleared_uuid = std::get<ClearedErrorId>(queued_event);
