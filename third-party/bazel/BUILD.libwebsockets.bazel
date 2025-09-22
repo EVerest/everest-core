@@ -6,6 +6,7 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+
 cmake(
     name = "libwebsockets",
     cache_entries = {
@@ -19,7 +20,7 @@ cmake(
         "LWS_WITH_JPEG": "OFF",
         "LWS_WITH_DLO": "OFF",
         "LWS_WITH_SECURE_STREAMS": "OFF",
-        "LWS_WITH_STATIC": "OFF",
+        "LWS_WITH_STATIC": "ON",
         "LWS_WITH_LHP": "OFF",
         "LWS_WITH_LEJP_CONF": "OFF",
         "LWS_WITH_MINIMAL_EXAMPLES": "OFF",
@@ -33,7 +34,7 @@ cmake(
         "LWS_WITH_SSL": "ON",
     },
     lib_source = ":all_srcs",
-    out_shared_libs = ["libwebsockets.so"],
+    out_static_libs = ["libwebsockets.a"],
     visibility = [
         "//visibility:public",
     ],

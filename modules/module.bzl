@@ -5,7 +5,8 @@ def cc_everest_module(
     srcs = [],
     deps = [],
     impls = [],
-    data = []
+    data = [],
+    **cc_binary_kwargs
 ):
     """
     Define C++ Everest module.
@@ -88,6 +89,7 @@ def cc_everest_module(
             "USE_AUTOLOAD=0",
             "HAS_REMOTE_API=0",
         ],
+        **cc_binary_kwargs,
     )
 
     native.genrule(

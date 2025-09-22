@@ -1,3 +1,5 @@
+exports_files(["config"])
+
 cc_library(
     name = "websocketpp_utils",
     hdrs = glob([

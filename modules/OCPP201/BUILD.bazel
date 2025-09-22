@@ -56,17 +56,18 @@ genrule(
         "share/everest/modules/OCPP201/logging.ini",
     ],
     cmd = """
-        LIBOCPP_SOURCE="/home/woj/repos/ev_workspace/libocpp"
+        echo $(location @libocpp//:config)
+        LIBOCPP_CONFIG_PATH="$(location @libocpp//:config)"
         # Create output directories
         mkdir -p $(RULEDIR)/share/everest/modules/OCPP201/component_config/standardized
         mkdir -p $(RULEDIR)/share/everest/modules/OCPP201/component_config/custom
         mkdir -p $(RULEDIR)/share/everest/modules/OCPP201/core_migrations
         mkdir -p $(RULEDIR)/share/everest/modules/OCPP201/device_model_migrations
         # Copy files from libocpp
-        cp $$LIBOCPP_SOURCE/config/v2/component_config/standardized/*.json $(RULEDIR)/share/everest/modules/OCPP201/component_config/standardized/ 2>/dev/null || true
-        cp $$LIBOCPP_SOURCE/config/v2/core_migrations/*.sql $(RULEDIR)/share/everest/modules/OCPP201/core_migrations/ 2>/dev/null || true
-        cp $$LIBOCPP_SOURCE/config/v2/device_model_migrations/*.sql $(RULEDIR)/share/everest/modules/OCPP201/device_model_migrations/ 2>/dev/null || true
-        cp $$LIBOCPP_SOURCE/config/v2/logging.ini $(RULEDIR)/share/everest/modules/OCPP201/logging.ini 2>/dev/null || true
+        cp $$LIBOCPP_CONFIG_PATH/v2/component_config/standardized/*.json $(RULEDIR)/share/everest/modules/OCPP201/component_config/standardized/ 2>/dev/null || true
+        cp $$LIBOCPP_CONFIG_PATH/v2/core_migrations/*.sql $(RULEDIR)/share/everest/modules/OCPP201/core_migrations/ 2>/dev/null || true
+        cp $$LIBOCPP_CONFIG_PATH/v2/device_model_migrations/*.sql $(RULEDIR)/share/everest/modules/OCPP201/device_model_migrations/ 2>/dev/null || true
+        cp $$LIBOCPP_CONFIG_PATH/v2/logging.ini $(RULEDIR)/share/everest/modules/OCPP201/logging.ini 2>/dev/null || true
         # Create placeholder for custom directory
         touch $(RULEDIR)/share/everest/modules/OCPP201/component_config/custom/.gitkeep
         # Create placeholder files for missing outputs
@@ -86,6 +87,9 @@ genrule(
         done
         echo "OCPP201 config files prepared"
     """,
+    srcs = [
+        "@libocpp//:config",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -115,4 +119,5 @@ cc_everest_module(
     ],
     impls = IMPLS,
     data = [":ocpp201_config_files"],
+    linkopts = ["-lcap"],
 )
