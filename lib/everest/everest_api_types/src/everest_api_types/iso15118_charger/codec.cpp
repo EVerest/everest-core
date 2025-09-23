@@ -16,6 +16,11 @@ std::string serialize(CertificateActionEnum val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(EnergyTransferMode val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::string serialize(Status val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -42,6 +47,11 @@ std::string serialize(CertificateHashDataInfo const& val) noexcept {
 }
 
 std::ostream& operator<<(std::ostream& os, CertificateActionEnum const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, EnergyTransferMode const& val) {
     os << serialize(val);
     return os;
 }
@@ -74,6 +84,12 @@ std::ostream& operator<<(std::ostream& os, CertificateHashDataInfo const& val) {
 template <> CertificateActionEnum deserialize(std::string const& s) {
     auto data = json::parse(s);
     CertificateActionEnum result = data;
+    return result;
+}
+
+template <> EnergyTransferMode deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    EnergyTransferMode result = data;
     return result;
 }
 

@@ -28,17 +28,7 @@ std::string serialize(ClearMessageResponseEnum val) noexcept {
     return result.dump(json_indent);
 }
 
-std::string serialize(MessageFormat val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
 std::string serialize(Identifier_type val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
-std::string serialize(MessageContent const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
 }
@@ -98,17 +88,7 @@ std::ostream& operator<<(std::ostream& os, ClearMessageResponseEnum const& val) 
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, MessageFormat const& val) {
-    os << serialize(val);
-    return os;
-}
-
 std::ostream& operator<<(std::ostream& os, Identifier_type const& val) {
-    os << serialize(val);
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, MessageContent const& val) {
     os << serialize(val);
     return os;
 }
@@ -172,21 +152,9 @@ template <> ClearMessageResponseEnum deserialize(std::string const& val) {
     return obj;
 }
 
-template <> MessageFormat deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    MessageFormat obj = data;
-    return obj;
-}
-
 template <> Identifier_type deserialize(std::string const& val) {
     auto data = json::parse(val);
     Identifier_type obj = data;
-    return obj;
-}
-
-template <> MessageContent deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    MessageContent obj = data;
     return obj;
 }
 

@@ -3,11 +3,13 @@
 
 #include "display_message/wrapper.hpp"
 #include "display_message/API.hpp"
+#include "text_message/wrapper.hpp"
 #include <vector>
 
 namespace everest::lib::API::V1_0::types::display_message {
 
 namespace {
+using namespace text_message;
 template <class SrcT, class ConvT>
 auto srcToTarOpt(std::optional<SrcT> const& src, ConvT const& converter)
     -> std::optional<decltype(converter(src.value()))> {
@@ -185,44 +187,6 @@ ClearMessageResponseEnum_External to_external_api(ClearMessageResponseEnum_Inter
         "Unexpected value for everest::lib::API::V1_0::types::display_message::ClearMessageResponseEnum_Internal");
 }
 
-MessageFormat_Internal to_internal_api(MessageFormat_External const& val) {
-    using SrcT = MessageFormat_External;
-    using TarT = MessageFormat_Internal;
-    switch (val) {
-    case SrcT::ASCII:
-        return TarT::ASCII;
-    case SrcT::HTML:
-        return TarT::HTML;
-    case SrcT::URI:
-        return TarT::URI;
-    case SrcT::UTF8:
-        return TarT::UTF8;
-    case SrcT::QRCODE:
-        return TarT::QRCODE;
-    }
-    throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::display_message::MessageFormat_External");
-}
-
-MessageFormat_External to_external_api(MessageFormat_Internal const& val) {
-    using SrcT = MessageFormat_Internal;
-    using TarT = MessageFormat_External;
-    switch (val) {
-    case SrcT::ASCII:
-        return TarT::ASCII;
-    case SrcT::HTML:
-        return TarT::HTML;
-    case SrcT::URI:
-        return TarT::URI;
-    case SrcT::UTF8:
-        return TarT::UTF8;
-    case SrcT::QRCODE:
-        return TarT::QRCODE;
-    }
-    throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::display_message::MessageFormat_Internal");
-}
-
 Identifier_type_Internal to_internal_api(Identifier_type_External const& val) {
     using SrcT = Identifier_type_External;
     using TarT = Identifier_type_Internal;
@@ -253,25 +217,9 @@ Identifier_type_External to_external_api(Identifier_type_Internal const& val) {
         "Unexpected value for everest::lib::API::V1_0::types::display_message::Identifier_type_Internal");
 }
 
-MessageContent_Internal to_internal_api(MessageContent_External const& val) {
-    MessageContent_Internal result;
-    result.content = val.content;
-    result.format = optToInternal(val.format);
-    result.language = val.language;
-    return result;
-}
-
-MessageContent_External to_external_api(MessageContent_Internal const& val) {
-    MessageContent_External result;
-    result.content = val.content;
-    result.format = optToExternal(val.format);
-    result.language = val.language;
-    return result;
-}
-
 DisplayMessage_Internal to_internal_api(DisplayMessage_External const& val) {
     DisplayMessage_Internal result;
-    result.message = to_internal_api(val.message);
+    result.message = text_message::to_internal_api(val.message);
     result.id = val.id;
     result.priority = optToInternal(val.priority);
     result.state = optToInternal(val.state);
@@ -285,7 +233,7 @@ DisplayMessage_Internal to_internal_api(DisplayMessage_External const& val) {
 
 DisplayMessage_External to_external_api(DisplayMessage_Internal const& val) {
     DisplayMessage_External result;
-    result.message = to_external_api(val.message);
+    result.message = text_message::to_external_api(val.message);
     result.id = val.id;
     result.priority = optToExternal(val.priority);
     result.state = optToExternal(val.state);

@@ -3,7 +3,6 @@
 
 #include "iso15118_charger/wrapper.hpp"
 #include "iso15118_charger/API.hpp"
-#include "iso15118_charger/codec.hpp"
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -58,6 +57,86 @@ CertificateActionEnum_External to_external_api(CertificateActionEnum_Internal co
     }
 
     throw std::out_of_range("Unexpected value for CertificateActionEnum_Internal");
+}
+
+EnergyTransferMode_Internal to_internal_api(EnergyTransferMode_External const& val) {
+    using SrcT = EnergyTransferMode_External;
+    using TarT = EnergyTransferMode_Internal;
+
+    switch (val) {
+    case SrcT::AC_single_phase_core:
+        return TarT::AC_single_phase_core;
+    case SrcT::AC_two_phase:
+        return TarT::AC_two_phase;
+    case SrcT::AC_three_phase_core:
+        return TarT::AC_three_phase_core;
+    case SrcT::DC_core:
+        return TarT::DC_core;
+    case SrcT::DC_extended:
+        return TarT::DC_extended;
+    case SrcT::DC_combo_core:
+        return TarT::DC_combo_core;
+    case SrcT::DC_unique:
+        return TarT::DC_unique;
+    case SrcT::DC:
+        return TarT::DC;
+    case SrcT::AC_BPT:
+        return TarT::AC_BPT;
+    case SrcT::AC_BPT_DER:
+        return TarT::AC_BPT_DER;
+    case SrcT::AC_DER:
+        return TarT::AC_DER;
+    case SrcT::DC_BPT:
+        return TarT::DC_BPT;
+    case SrcT::DC_ACDP:
+        return TarT::DC_ACDP;
+    case SrcT::DC_ACDP_BPT:
+        return TarT::DC_ACDP_BPT;
+    case SrcT::WPT:
+        return TarT::WPT;
+    }
+
+    throw std::out_of_range("Unexpected value for EnergyTransferMode_External");
+}
+
+EnergyTransferMode_External to_external_api(EnergyTransferMode_Internal const& val) {
+    using SrcT = EnergyTransferMode_Internal;
+    using TarT = EnergyTransferMode_External;
+
+    switch (val) {
+    case SrcT::AC_single_phase_core:
+        return TarT::AC_single_phase_core;
+    case SrcT::AC_two_phase:
+        return TarT::AC_two_phase;
+    case SrcT::AC_three_phase_core:
+        return TarT::AC_three_phase_core;
+    case SrcT::DC_core:
+        return TarT::DC_core;
+    case SrcT::DC_extended:
+        return TarT::DC_extended;
+    case SrcT::DC_combo_core:
+        return TarT::DC_combo_core;
+    case SrcT::DC_unique:
+        return TarT::DC_unique;
+    case SrcT::DC:
+        return TarT::DC;
+    case SrcT::AC_BPT:
+        return TarT::AC_BPT;
+    case SrcT::AC_BPT_DER:
+        return TarT::AC_BPT_DER;
+    case SrcT::AC_DER:
+        return TarT::AC_DER;
+    case SrcT::DC_BPT:
+        return TarT::DC_BPT;
+    case SrcT::DC_ACDP:
+        return TarT::DC_ACDP;
+    case SrcT::DC_ACDP_BPT:
+        return TarT::DC_ACDP_BPT;
+    case SrcT::WPT:
+        return TarT::WPT;
+    }
+
+    throw std::out_of_range("Unexpected value for EnergyTransferMode_Internal");
 }
 
 Status_Internal to_internal_api(Status_External const& val) {

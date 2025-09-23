@@ -3,14 +3,16 @@
 
 #include "auth/wrapper.hpp"
 #include "auth/API.hpp"
-#include "display_message/wrapper.hpp"
+#include "iso15118_charger/wrapper.hpp"
+#include "text_message/wrapper.hpp"
 #include <vector>
 
 namespace everest::lib::API::V1_0::types {
 
 namespace {
 using namespace auth;
-using namespace display_message;
+using namespace iso15118_charger;
+using namespace text_message;
 template <class SrcT, class ConvT>
 auto srcToTarOpt(std::optional<SrcT> const& src, ConvT const& converter)
     -> std::optional<decltype(converter(src.value()))> {
@@ -422,10 +424,14 @@ ValidationResult_Internal to_internal_api(ValidationResult_External const& val) 
     ValidationResult_Internal result;
     result.authorization_status = to_internal_api(val.authorization_status);
     result.certificate_status = optToInternal(val.certificate_status);
+    result.tariff_messages = vecToInternal(val.tariff_messages);
     result.expiry_time = val.expiry_time;
     result.parent_id_token = optToInternal(val.parent_id_token);
     result.evse_ids = val.evse_ids;
     result.reservation_id = val.reservation_id;
+    if (val.allowed_energy_transfer_modes) {
+        result.allowed_energy_transfer_modes = vecToInternal(val.allowed_energy_transfer_modes.value());
+    }
     return result;
 }
 
@@ -433,10 +439,14 @@ ValidationResult_External to_external_api(ValidationResult_Internal const& val) 
     ValidationResult_External result;
     result.authorization_status = to_external_api(val.authorization_status);
     result.certificate_status = optToExternal(val.certificate_status);
+    result.tariff_messages = vecToExternal(val.tariff_messages);
     result.expiry_time = val.expiry_time;
     result.parent_id_token = optToExternal(val.parent_id_token);
     result.evse_ids = val.evse_ids;
     result.reservation_id = val.reservation_id;
+    if (val.allowed_energy_transfer_modes) {
+        result.allowed_energy_transfer_modes = vecToExternal(val.allowed_energy_transfer_modes.value());
+    }
     return result;
 }
 
