@@ -4,8 +4,6 @@
 #include "evse_manager/wrapper.hpp"
 #include "auth/wrapper.hpp"
 #include "evse_manager/API.hpp"
-#include "evse_manager/codec.hpp"
-#include "powermeter/codec.hpp"
 #include "powermeter/wrapper.hpp"
 #include <optional>
 #include <stdexcept>
@@ -14,6 +12,7 @@
 namespace everest::lib::API::V1_0::types {
 
 namespace {
+using namespace auth;
 using namespace powermeter;
 using namespace evse_manager;
 template <class SrcT>
@@ -145,12 +144,14 @@ StopTransactionReason_External to_external_api(StopTransactionReason_Internal co
 StopTransactionRequest_Internal to_internal_api(StopTransactionRequest_External const& val) {
     StopTransactionRequest_Internal result;
     result.reason = to_internal_api(val.reason);
+    result.id_tag = optToInternal(val.id_tag);
     return result;
 }
 
 StopTransactionRequest_External to_external_api(StopTransactionRequest_Internal const& val) {
     StopTransactionRequest_External result;
     result.reason = to_external_api(val.reason);
+    result.id_tag = optToExternal(val.id_tag);
     return result;
 }
 
@@ -423,10 +424,9 @@ CarManufacturer_Internal to_external_api(CarManufacturer_External const& val) {
 SessionStarted_Internal to_internal_api(SessionStarted_External const& val) {
     SessionStarted_Internal result;
     result.reason = to_internal_api(val.reason);
+    result.id_tag = optToInternal(val.id_tag);
     result.meter_value = powermeter::to_internal_api(val.meter_value);
-    if (val.signed_meter_value) {
-        result.signed_meter_value = powermeter::to_internal_api(val.signed_meter_value.value());
-    }
+    result.signed_meter_value = optToInternal(val.signed_meter_value);
     result.reservation_id = val.reservation_id;
     result.logging_path = val.logging_path;
 
@@ -436,10 +436,9 @@ SessionStarted_Internal to_internal_api(SessionStarted_External const& val) {
 SessionStarted_External to_external_api(SessionStarted_Internal const& val) {
     SessionStarted_External result;
     result.reason = to_external_api(val.reason);
+    result.id_tag = optToExternal(val.id_tag);
     result.meter_value = powermeter::to_external_api(val.meter_value);
-    if (val.signed_meter_value) {
-        result.signed_meter_value = powermeter::to_external_api(val.signed_meter_value.value());
-    }
+    result.signed_meter_value = optToExternal(val.signed_meter_value);
     result.reservation_id = val.reservation_id;
     result.logging_path = val.logging_path;
 
@@ -482,6 +481,7 @@ TransactionFinished_Internal to_internal_api(TransactionFinished_External const&
     result.start_signed_meter_value = optToInternal(val.start_signed_meter_value);
     result.signed_meter_value = optToInternal(val.signed_meter_value);
     result.reason = optToInternal(val.reason);
+    result.id_tag = optToInternal(val.id_tag);
     return result;
 }
 
@@ -491,6 +491,7 @@ TransactionFinished_External to_external_api(TransactionFinished_Internal const&
     result.start_signed_meter_value = optToExternal(val.start_signed_meter_value);
     result.signed_meter_value = optToExternal(val.signed_meter_value);
     result.reason = optToExternal(val.reason);
+    result.id_tag = optToExternal(val.id_tag);
     return result;
 }
 

@@ -25,7 +25,7 @@ void to_json(json& j, ErrorEnum const& k) noexcept {
         j = "VendorWarning";
         return;
     }
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::power_supply_DC::ErrorEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::over_voltage_monitor::ErrorEnum";
 }
 
 void from_json(json const& j, ErrorEnum& k) {
@@ -53,6 +53,39 @@ void from_json(json const& j, ErrorEnum& k) {
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ErrorEnum_API_1_0");
 }
 
+void to_json(json& j, ErrorSeverityEnum const& k) noexcept {
+    switch (k) {
+    case ErrorSeverityEnum::Low:
+        j = "Low";
+        return;
+    case ErrorSeverityEnum::Medium:
+        j = "Medium";
+        return;
+    case ErrorSeverityEnum::High:
+        j = "High";
+        return;
+    }
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::over_voltage_monitor::ErrorSeverityEnum";
+}
+
+void from_json(json const& j, ErrorSeverityEnum& k) {
+    std::string s = j;
+    if (s == "Low") {
+        k = ErrorSeverityEnum::Low;
+        return;
+    }
+    if (s == "Medium") {
+        k = ErrorSeverityEnum::Medium;
+        return;
+    }
+    if (s == "High") {
+        k = ErrorSeverityEnum::High;
+        return;
+    }
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type ErrorSeverityEnum_API_1_0");
+}
+
 void to_json(json& j, const Error& k) noexcept {
     j = json{
         {"type", k.type},
@@ -62,7 +95,10 @@ void to_json(json& j, const Error& k) noexcept {
     }
     if (k.message) {
         j["message"] = k.message.value();
-    };
+    }
+    if (k.severity) {
+        j["severity"] = k.severity.value();
+    }
 }
 
 void from_json(const json& j, Error& k) {
@@ -73,6 +109,18 @@ void from_json(const json& j, Error& k) {
     if (j.contains("message")) {
         k.message.emplace(j.at("message"));
     }
+    if (j.contains("severity")) {
+        k.severity.emplace(j.at("severity"));
+    }
+}
+
+void to_json(json& j, const OverVoltageLimits& k) noexcept {
+    j = json{{"emergency_limit_V", k.emergency_limit_V}, {"error_limit_V", k.error_limit_V}};
+}
+
+void from_json(const json& j, OverVoltageLimits& k) {
+    k.emergency_limit_V = j.at("emergency_limit_V");
+    k.error_limit_V = j.at("error_limit_V");
 }
 
 } // namespace everest::lib::API::V1_0::types::over_voltage_monitor

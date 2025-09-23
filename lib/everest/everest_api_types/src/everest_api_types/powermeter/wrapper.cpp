@@ -274,6 +274,7 @@ Temperature_Internal to_internal_api(Temperature_External const& val) {
     auto result = Temperature_Internal();
     result.temperature = val.temperature;
     result.identification = to_internal_api(val.identification);
+    result.location = to_internal_api(val.location);
     return result;
 }
 
@@ -281,6 +282,7 @@ Temperature_External to_external_api(Temperature_Internal const& val) {
     auto result = Temperature_External();
     result.temperature = val.temperature;
     result.identification = to_external_api(val.identification);
+    result.location = to_external_api(val.location);
     return result;
 }
 
@@ -627,6 +629,14 @@ ReplyStartTransaction_External to_external_api(ReplyStartTransaction_Internal co
 ReplyStopTransaction_Internal to_internal_api(ReplyStopTransaction_External const& val) {
     auto internal = ReplyStopTransaction_Internal();
     internal.status = to_internal_api(val.status);
+    if (val.start_signed_meter_value) {
+        internal.start_signed_meter_value.emplace();
+        internal.start_signed_meter_value->signed_meter_data = val.start_signed_meter_value->signed_meter_data;
+        internal.start_signed_meter_value->signing_method = val.start_signed_meter_value->signing_method;
+        internal.start_signed_meter_value->encoding_method = val.start_signed_meter_value->encoding_method;
+        internal.start_signed_meter_value->public_key = val.start_signed_meter_value->public_key;
+        internal.start_signed_meter_value->timestamp = val.start_signed_meter_value->timestamp;
+    }
     if (val.signed_meter_value) {
         internal.signed_meter_value.emplace();
         internal.signed_meter_value->signed_meter_data = val.signed_meter_value->signed_meter_data;
@@ -642,6 +652,14 @@ ReplyStopTransaction_Internal to_internal_api(ReplyStopTransaction_External cons
 ReplyStopTransaction_External to_external_api(ReplyStopTransaction_Internal const& val) {
     auto result = ReplyStopTransaction_External();
     result.status = to_external_api(val.status);
+    if (val.start_signed_meter_value) {
+        result.start_signed_meter_value.emplace();
+        result.start_signed_meter_value->signed_meter_data = val.start_signed_meter_value->signed_meter_data;
+        result.start_signed_meter_value->signing_method = val.start_signed_meter_value->signing_method;
+        result.start_signed_meter_value->encoding_method = val.start_signed_meter_value->encoding_method;
+        result.start_signed_meter_value->public_key = val.start_signed_meter_value->public_key;
+        result.start_signed_meter_value->timestamp = val.start_signed_meter_value->timestamp;
+    }
     if (val.signed_meter_value) {
         result.signed_meter_value.emplace();
         result.signed_meter_value->signed_meter_data = val.signed_meter_value->signed_meter_data;

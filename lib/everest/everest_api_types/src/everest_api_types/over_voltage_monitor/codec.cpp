@@ -16,7 +16,17 @@ std::string serialize(ErrorEnum val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(ErrorSeverityEnum val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::string serialize(Error const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(OverVoltageLimits const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
 }
@@ -27,9 +37,21 @@ template <> ErrorEnum deserialize(std::string const& s) {
     return result;
 }
 
+template <> ErrorSeverityEnum deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    ErrorSeverityEnum result = data;
+    return result;
+}
+
 template <> Error deserialize(std::string const& s) {
     auto data = json::parse(s);
     Error result = data;
+    return result;
+}
+
+template <> OverVoltageLimits deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    OverVoltageLimits result = data;
     return result;
 }
 
@@ -38,7 +60,17 @@ std::ostream& operator<<(std::ostream& os, const ErrorEnum& val) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const ErrorSeverityEnum& val) {
+    os << serialize(val);
+    return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const Error& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const OverVoltageLimits& val) {
     os << serialize(val);
     return os;
 }
