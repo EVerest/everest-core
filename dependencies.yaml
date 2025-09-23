@@ -73,7 +73,7 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.8
+  git_tag: 63c209435d610caeeaac7eda7143c80e3e216999
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
