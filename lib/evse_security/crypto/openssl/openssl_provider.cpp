@@ -141,6 +141,7 @@ OpenSSLProvider::OpenSSLProvider() {
 }
 
 OpenSSLProvider::~OpenSSLProvider() {
+    set_global_mode(OpenSSLProvider::mode_t::default_provider);
     s_mux.unlock();
 }
 

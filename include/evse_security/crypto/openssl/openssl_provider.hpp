@@ -148,6 +148,12 @@ public:
     inline const char* propquery_tls_str() const {
         return propquery(propquery_tls());
     }
+    inline const char* propquery_default() const {
+        return propquery(mode_t::default_provider);
+    }
+    inline const char* propquery_custom() const {
+        return propquery(mode_t::custom_provider);
+    }
 
     /// @brief return the TLS OSSL library context
     inline operator struct ossl_lib_ctx_st *() {

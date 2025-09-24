@@ -125,6 +125,13 @@ static bool s_generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out
     bool bResult = true;
     bool bEC = true;
 
+    OpenSSLProvider provider;
+    if (key_info.generate_on_custom) {
+        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
+    } else {
+        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+    }
+
     // note when using tpm2 some key_types may not be supported.
 
     EVLOG_info << "Key parameters";
@@ -214,23 +221,13 @@ static bool s_generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out
 bool OpenSSLSupplier::generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out_key) {
     KeyHandle_ptr gen_key;
     EVP_PKEY_CTX_ptr ctx;
-    OpenSSLProvider provider;
     bool bResult = true;
-
-    if (key_info.generate_on_custom) {
-        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
-    } else {
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
-    }
 
     bResult = s_generate_key(key_info, gen_key, ctx);
     if (!bResult) {
         EVLOG_error << "Failed to generate csr pub/priv key!";
     }
 
-    if (key_info.generate_on_custom) {
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
-    }
     return bResult;
 }
 
@@ -487,8 +484,6 @@ X509Handle_ptr OpenSSLSupplier::x509_duplicate_unique(X509Handle* handle) {
 CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(
     X509Handle* target, const std::vector<X509Handle*>& parents, const std::vector<X509Handle*>& untrusted_subcas,
     bool allow_future_certificates, const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path) {
-    OpenSSLProvider provider;
-    provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
 
     X509_STORE_ptr store_ptr(X509_STORE_new());
     X509_STORE_CTX_ptr store_ctx_ptr(X509_STORE_CTX_new());
@@ -564,15 +559,10 @@ KeyValidationResult OpenSSLSupplier::x509_check_private_key(X509Handle* handle, 
         return KeyValidationResult::Unknown;
     }
 
-    OpenSSLProvider provider;
-
-    const bool custom_key = is_custom_private_key_string(private_key);
-    if (custom_key) {
-        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
-    } else {
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+    {
+        OpenSSLProvider provider; // ensure providers are loaded
+                                  // minimise holding the mutex
     }
-    EVLOG_debug << "Is Custom Key: " << custom_key;
 
     BIO_ptr bio(BIO_new_mem_buf(private_key.c_str(), -1));
     // Passing password string since if NULL is provided, the password CB will be called
@@ -595,18 +585,16 @@ KeyValidationResult OpenSSLSupplier::x509_check_private_key(X509Handle* handle, 
         result = KeyValidationResult::Invalid;
     }
 
-    if (custom_key) {
-        // reset global provider back to default settings
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
-    }
-
     return result;
 }
 
 bool OpenSSLSupplier::x509_verify_signature(X509Handle* handle, const std::vector<std::uint8_t>& signature,
                                             const std::vector<std::uint8_t>& data) {
-    OpenSSLProvider provider;
-    provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+    {
+        OpenSSLProvider provider; // ensure providers are loaded
+                                  // minimise holding the mutex
+    }
+
     // extract public key
     X509* x509 = get(handle);
 
@@ -657,13 +645,6 @@ CertificateSignRequestResult OpenSSLSupplier::x509_generate_csr(const Certificat
 
     KeyHandle_ptr gen_key;
     EVP_PKEY_CTX_ptr ctx;
-    OpenSSLProvider provider;
-
-    if (csr_info.key_info.generate_on_custom) {
-        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
-    } else {
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
-    }
 
     if (false == s_generate_key(csr_info.key_info, gen_key, ctx)) {
         return CertificateSignRequestResult::KeyGenerationError;
@@ -763,11 +744,6 @@ CertificateSignRequestResult OpenSSLSupplier::x509_generate_csr(const Certificat
     BIO_get_mem_ptr(bio.get(), &mem_csr);
 
     out_csr = std::string(mem_csr->data, mem_csr->length);
-
-    if (csr_info.key_info.generate_on_custom) {
-        // reset global provider back to default settings
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
-    }
 
     return CertificateSignRequestResult::Valid;
 }

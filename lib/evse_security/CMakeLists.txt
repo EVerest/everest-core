@@ -19,7 +19,7 @@ target_sources(evse_security
 
 if (LIBEVSE_CRYPTO_SUPPLIER_OPENSSL)
     target_sources(evse_security
-        PRIVATE                 
+        PRIVATE
             crypto/openssl/openssl_crypto_supplier.cpp
             crypto/openssl/openssl_provider.cpp
     )
@@ -80,7 +80,7 @@ target_link_libraries(evse_security
 
 if(LIBEVSE_SECURITY_BUILD_TESTING)
     target_compile_definitions(evse_security PRIVATE
-        DEBUG_MODE_EVSE_SECURITY       
+        DEBUG_MODE_EVSE_SECURITY
     )
 endif()
 

@@ -27,18 +27,18 @@ if(USING_TPM2 AND USING_CUSTOM_PROVIDER)
 endif()
 
 if(USING_TPM2)
-    set(CUSTOM_PROVIDER_NAME "tpm2")    
+    set(CUSTOM_PROVIDER_NAME "tpm2")
 endif()
 
 if(USING_CUSTOM_PROVIDER)
-    set(CUSTOM_PROVIDER_NAME "custom_provider")    
+    set(CUSTOM_PROVIDER_NAME "custom_provider")
 endif()
 
 if(USING_TPM2 OR USING_CUSTOM_PROVIDER)
 # OpenSSL property string when using the default provider
-    set(PROPQUERY_PROVIDER_DEFAULT "provider!=${CUSTOM_PROVIDER_NAME}")
+    set(PROPQUERY_PROVIDER_DEFAULT "?provider=default")
     # OpenSSL property string when using the tpm2/custom provider
-    set(PROPQUERY_PROVIDER_CUSTOM "?provider=${CUSTOM_PROVIDER_NAME},${CUSTOM_PROVIDER_NAME}.digest!=yes,${CUSTOM_PROVIDER_NAME}.cipher!=yes")
+    set(PROPQUERY_PROVIDER_CUSTOM "?provider=${CUSTOM_PROVIDER_NAME}")
 endif()
 
 # dependencies
@@ -96,4 +96,3 @@ if(LIBEVSE_SECURITY_BUILD_TESTING)
     add_subdirectory(tests)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-
