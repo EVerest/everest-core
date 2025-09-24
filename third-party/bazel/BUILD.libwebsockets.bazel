@@ -41,6 +41,7 @@ cmake(
         "LWS_WITHOUT_TEST_CLIENT": "ON",
         "CMAKE_VERBOSE_MAKEFILE": "ON",
         "LWS_WITH_SSL": "ON",
+        "LWS_WITH_LIBCAP": "OFF",
     },
     lib_source = ":all_srcs",
     out_static_libs = ["libwebsockets.a"],
