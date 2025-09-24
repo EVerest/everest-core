@@ -28,6 +28,7 @@ void error_history_consumer_API::ready() {
     invoke_ready(*p_main);
 
     generate_api_cmd_active_errors();
+    generate_api_cmd_get_errors();
     generate_api_var_error_events();
 
     generate_api_var_communication_check();
@@ -57,13 +58,30 @@ void error_history_consumer_API::generate_api_cmd_active_errors() {
     subscribe_api_topic("active_errors", [=](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
             types::error_history::FilterArguments filter;
             filter.state_filter = types::error_history::State::Active;
             auto active_errors = r_error_history->call_get_errors(filter);
             auto reply = to_external_api(active_errors);
             mqtt.publish(msg.replyTo, serialize(reply));
             return true;
+        }
+        return false;
+    });
+}
+
+void error_history_consumer_API::generate_api_cmd_get_errors() {
+    using namespace API_types_ext;
+    subscribe_api_topic("filtered_errors", [=](std::string const& data) {
+        API_generic::RequestReply msg;
+        if (deserialize(data, msg)) {
+            API_types_ext::FilterArguments_External payload;
+            if (deserialize(msg.payload, payload)) {
+                auto filter = API_types_ext::deserialize<API_types_ext::FilterArguments_External>(msg.payload);
+                auto errors = r_error_history->call_get_errors(API_types_ext::to_internal_api(filter));
+                auto reply = to_external_api(errors);
+                mqtt.publish(msg.replyTo, serialize(reply));
+                return true;
+            }
         }
         return false;
     });

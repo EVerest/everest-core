@@ -78,6 +78,7 @@ private:
     void generate_api_cmd_active_errors();
 
     void generate_api_var_error_events();
+    void generate_api_cmd_get_errors();
     void generate_api_var_communication_check();
 
     void setup_heartbeat_generator();

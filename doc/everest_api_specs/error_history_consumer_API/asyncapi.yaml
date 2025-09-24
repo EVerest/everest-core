@@ -26,6 +26,16 @@ defaultContentType: application/json
 
 
 channels:
+  send_request_get_errors:
+    address: 'm2e/get_errors'
+    messages:
+      send_request_get_errors:
+        $ref: '#/components/messages/send_request_get_errors'
+  receive_reply_get_errors:
+    address: null
+    messages:
+      receive_reply_get_errors:
+        $ref: '#/components/messages/receive_reply_get_errors'
   send_request_active_errors:
     address: 'm2e/active_errors'
     messages:
@@ -62,6 +72,23 @@ channels:
 
 
 operations:
+  send_request_get_errors:
+    title: 'Send request with a list of filters to get a list of filtered errors'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_get_errors'
+    description: 'Direction: Module to EVerest'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_get_errors'
+  receive_reply_get_errors:
+    title: 'Receive reply with a list of filtered errors'
+    action: receive
+    description: 'Direction: EVerest to Module'
+    channel:
+      $ref: '#/channels/receive_reply_get_errors'
   send_request_active_errors:
     title: 'Send request to transmit the list of currently active errors'
     action: send
@@ -74,7 +101,7 @@ operations:
       channel:
         $ref: '#/channels/receive_reply_active_errors'
   receive_reply_active_errors:
-    title: 'Receive request to transmit the list of currently active errors'
+    title: 'Receive reply to transmit the list of currently active errors'
     action: receive
     description: 'Direction: EVerest to Module'
     channel:
@@ -106,6 +133,29 @@ operations:
 
 components:
   messages:
+    send_request_get_errors:
+      name: send_request_get_errors
+      title: 'Request the list of filtered errors'
+      summary: 'Request the list of filtered errors.'
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              description: Filters to apply to the list of errors
+              $ref: '#/components/schemas/FilterArguments'
+    receive_reply_get_errors:
+      name: receive_reply_get_errors
+      title: 'List of filtered errors'
+      summary: 'Reply to the request to send the list of filtered errors'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/ErrorList'
     send_request_active_errors:
       name: send_request_active_errors
       title: 'Request the list of active errors'
