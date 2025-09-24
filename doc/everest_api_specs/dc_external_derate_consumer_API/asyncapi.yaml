@@ -139,7 +139,7 @@ components:
     ExternalDerating:
       description: Derate DC power supply Capabilities from an external source.
       type: object
-      additionalProperties: false
+      additionalProperties: true
       properties:
         max_export_current_A:
           description: Maximum current that the power supply can output in Ampere

@@ -329,7 +329,7 @@ components:
           description: >-
             The type of 'identifier_id'. If omitted, type will be session id.
           type: string
-          $ref: '#/components/schemas/Identifier_type'
+          $ref: '#/components/schemas/IdentifierType'
         message:
           type: object
           description: The message to show
@@ -350,7 +350,7 @@ components:
         - NotSupportedPriority
         - NotSupportedState
         - UnknownTransaction
-    Identifier_type:
+    IdentifierType:
       description: The identifier type
       type: string
       enum:

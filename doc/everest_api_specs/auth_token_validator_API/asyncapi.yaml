@@ -195,6 +195,27 @@ components:
         - NoCertificateAvailable
         - CertChainError
         - ContractCancelled
+    EnergyTransferMode:
+      description: >-
+        Possible energy transfer modes. The modes AC_single_phase_core to DC_unique apply to DIN70121 and ISO15118-2.
+        The other modes DC to WPT apply to ISO15118-20.
+      type: string
+      enum:
+        - AC_single_phase_core
+        - AC_two_phase
+        - AC_three_phase_core
+        - DC_core
+        - DC_extended
+        - DC_combo_core
+        - DC_unique
+        - DC
+        - AC_BPT
+        - AC_BPT_DER
+        - AC_DER
+        - DC_BPT
+        - DC_ACDP
+        - DC_ACDP_BPT
+        - WPT
     ValidationResult:
       description: >-
         Result object containing authorization status enum value and an optional
@@ -203,6 +224,7 @@ components:
       additionalProperties: true
       required:
         - authorization_status
+        - tariff_messages
       properties:
         authorization_status:
           type: string
@@ -210,6 +232,14 @@ components:
         certificate_status:
           type: string
           $ref: '#/components/schemas/CertificateStatus'
+        tariff_messages:
+          description: >-
+            Messages that can contain session price information to show the user. The array can contain multiple messages in different languages. The first message in this array shall be used to start the transaction at the powermeter (for OCMF).  Empty if no messages are available.
+          type: array
+          items:
+            description: Message with pricing information in a specific language
+            type: object
+            $ref: '../display_message_API/asyncapi.yaml#/components/schemas/MessageContent'
         expiry_time:
           description: Absolute UTC time point when reservation expires in RFC3339 format
           type: string
@@ -230,6 +260,15 @@ components:
         reservation_id:
           description: The reservation id that is used with this validated token.
           type: integer
+        allowed_energy_transfer_modes:
+          description: >-
+            This is only used when we want to specify which energy transfer modes are allowed for
+            the respective authorization request.
+          type: array
+          items:
+            type: string
+            $ref: '#/components/schemas/EnergyTransferMode'
+        minItems: 1
     ValidationResultUpdate:
       description: >-
         Result object containing an updated validation result for a given token.

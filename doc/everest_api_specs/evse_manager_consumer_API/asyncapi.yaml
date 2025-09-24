@@ -1477,6 +1477,11 @@ components:
               Authorized, Deauthorized
           type: object
           $ref: '#/components/schemas/AuthorizationEvent'
+        source:
+          description: >-
+            Additional data for Enabled/Disabled events. Specifies the source of the command that changed the state.
+          type: object
+          $ref: '#/components/schemas/EnableDisableSource'
     SessionEventEnum:
       description: |
         Session Event enum
@@ -1553,6 +1558,10 @@ components:
           description: Reason for session start
           type: string
           $ref: '#/components/schemas/StartSessionReason'
+        id_tag:
+          description: The id tag assigned to this session
+          type: object
+          $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
         meter_value:
           description: Exported meter value
           type: object
@@ -1648,6 +1657,10 @@ components:
           description: Reason for stopping the transaction
           type: string
           $ref: '#/components/schemas/StopTransactionReason'
+        id_tag:
+          description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
+          type: object
+          $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
     StopTransactionReply:
       description: "Reply to stop transaction request. 'true' on success"
       type: boolean
@@ -1697,6 +1710,10 @@ components:
           description: Reason for stopping transaction
           type: string
           $ref: '#/components/schemas/StopTransactionReason'
+        id_tag:
+          description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
+          type: object
+          $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
     WaitingForExternalReady:
       description: >-
         Signals that the EVSE Manager is in principle ready to start charging,
