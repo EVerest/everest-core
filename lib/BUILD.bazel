@@ -32,18 +32,6 @@ alias(
 )
 
 alias(
-    name = "evse_security_conversions",
-    actual = "//lib/staging/evse_security:evse_security_conversions",
-    visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "run_application",
-    actual = "//lib/staging/run_application:run_application",
-    visibility = ["//visibility:public"],
-)
-
-alias(
     name = "external_energy_limits",
     actual = "//lib/everest/external_energy_limits:external_energy_limits",
     visibility = ["//visibility:public"],
