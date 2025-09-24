@@ -18,7 +18,7 @@ on:
 jobs:
   ci:
     name: Build, Lint and Test
-    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@chore-update-to-debian-trixie
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@chore/update-to-debian-trixie
     permissions:
       contents: read
     secrets:
@@ -30,6 +30,7 @@ jobs:
       do_not_run_coverage_badge_creation: true
       run_install_wheels: true
       run_integration_tests: true
+      build_kit_base_image_tag: chore-update-to-debian-trixie
   ocpp-tests:
     name: OCPP Tests
     needs:
