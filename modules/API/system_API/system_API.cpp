@@ -79,7 +79,6 @@ void system_API::subscribe_api_var(const std::string& var, const ParseAndPublish
             parse_and_publish(data);
         } catch (const std::exception& e) {
             EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
-            ;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

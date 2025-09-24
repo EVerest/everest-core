@@ -135,6 +135,10 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/SetConnectionTimeoutRequest'
+      examples:
+        - summary: ""
+          payload:
+            15
     send_set_master_pass_group_id:
       name: send_set_master_pass_group_id
       title: 'Set the master group ID.'
@@ -142,6 +146,10 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/SetMasterPassGroupId'
+      examples:
+        - summary: ""
+          payload:
+            "dDxDam6mt4qyOnFKnSp6O0KYRJK9NFb0"
     send_request_withdraw_authorization:
       name: send_request_withdraw_authorization
       title: 'Withdraw granted authorization'

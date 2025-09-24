@@ -268,7 +268,7 @@ components:
           items:
             type: string
             $ref: '#/components/schemas/EnergyTransferMode'
-        minItems: 1
+          minItems: 1
     ValidationResultUpdate:
       description: >-
         Result object containing an updated validation result for a given token.

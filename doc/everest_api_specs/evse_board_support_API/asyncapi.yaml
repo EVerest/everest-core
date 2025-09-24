@@ -838,7 +838,6 @@ components:
         - AC: 'RCD was triggered by an AC fault'
         - VendorError: 'Vendor specific error code. Will stop charging session.'
         - VendorWarning: 'Vendor specific error code. Charging may continue.'
-        - CommunicationFault: 'The communication to the hardware or underlying driver is lost or has errors.'
 
       type: string
       enum:
