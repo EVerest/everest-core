@@ -60,6 +60,10 @@ void evse_manager_consumer_API::init() {
     invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "evse_manager_consumer");
+}
+
+void evse_manager_consumer_API::ready() {
+    invoke_ready(*p_main);
 
     generate_api_cmd_get_evse();
     generate_api_cmd_enable_disable();
@@ -97,14 +101,10 @@ void evse_manager_consumer_API::init() {
     generate_api_var_dc_mode();
     generate_api_var_dc_capabilities();
     generate_api_var_random_delay_countdown();
-}
 
-void evse_manager_consumer_API::ready() {
-    invoke_ready(*p_main);
-
-    comm_check.start(config.cfg_communication_check_to_s);
     generate_api_var_communication_check();
 
+    comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();
 }
 

@@ -22,14 +22,15 @@ void system_API::init() {
     invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "system");
-
-    generate_api_var_firmware_update_status();
-    generate_api_var_log_status();
-    generate_api_var_communication_check();
 }
 
 void system_API::ready() {
     invoke_ready(*p_main);
+
+    generate_api_var_firmware_update_status();
+    generate_api_var_log_status();
+
+    generate_api_var_communication_check();
 
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();

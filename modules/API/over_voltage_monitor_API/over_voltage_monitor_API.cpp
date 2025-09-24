@@ -10,25 +10,43 @@
 
 namespace module {
 
-namespace API_generic = ev_API::V1_0::types::generic;
+namespace API_types = ev_API::V1_0::types;
+namespace API_generic = API_types::generic;
+namespace API_ovm = API_types::over_voltage_monitor;
 using ev_API::deserialize;
+
+namespace {
+Everest::error::Severity toInternalSeverity(API_ovm::ErrorSeverityEnum severity) {
+    switch (severity) {
+    case API_ovm::ErrorSeverityEnum::Low:
+        return Everest::error::Severity::Low;
+    case API_ovm::ErrorSeverityEnum::Medium:
+        return Everest::error::Severity::Medium;
+    case API_ovm::ErrorSeverityEnum::High:
+        return Everest::error::Severity::High;
+    default:
+        return Everest::error::Severity::High;
+    }
+}
+} // namespace
 
 void over_voltage_monitor_API::init() {
     invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "over_voltage_monitor");
-
-    generate_api_var_raise_error();
-    generate_api_var_clear_error();
-    generate_api_var_voltage_measurement_V();
 }
 
 void over_voltage_monitor_API::ready() {
     invoke_ready(*p_main);
 
-    comm_check.start(config.cfg_communication_check_to_s);
+    generate_api_var_voltage_measurement_V();
+
+    generate_api_var_raise_error();
+    generate_api_var_clear_error();
+
     generate_api_var_communication_check();
 
+    comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();
 }
 
@@ -47,8 +65,9 @@ void over_voltage_monitor_API::generate_api_var_raise_error() {
             auto sub_type_str = error.sub_type ? error.sub_type.value() : "";
             auto message_str = error.message ? error.message.value() : "";
             auto error_str = make_error_string(error);
-            auto ev_error = p_main->error_factory->create_error(error_str, sub_type_str, message_str,
-                                                                Everest::error::Severity::High);
+            auto severity = error.severity.value_or(API_ovm::ErrorSeverityEnum::High);
+            auto ev_error =
+                p_main->error_factory->create_error(error_str, sub_type_str, message_str, toInternalSeverity(severity));
             p_main->raise_error(ev_error);
             return true;
         }

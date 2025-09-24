@@ -34,7 +34,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_start(double& over_voltage_limit_V) override;
+    virtual void handle_set_limits(double& emergency_over_voltage_limit_V, double& error_over_voltage_limit_V) override;
+    virtual void handle_start() override;
     virtual void handle_stop() override;
     virtual void handle_reset_over_voltage_error() override;
 

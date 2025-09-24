@@ -23,14 +23,15 @@ void powermeter_API::init() {
     invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "powermeter");
-
-    generate_api_var_powermeter_values();
-    generate_api_var_public_key_ocmf();
-    generate_api_var_communication_check();
 }
 
 void powermeter_API::ready() {
     invoke_ready(*p_main);
+
+    generate_api_var_powermeter_values();
+    generate_api_var_public_key_ocmf();
+
+    generate_api_var_communication_check();
 
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();

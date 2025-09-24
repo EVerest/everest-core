@@ -25,8 +25,9 @@ void display_message_API::ready() {
     invoke_ready(*p_main);
     invoke_ready(*p_generic_error);
 
+    generate_api_var_communication_check();
+
     comm_check.start(config.cfg_communication_check_to_s);
-    generate_api_var_communication_check();  // TODO(CB): Why not in init()?
     setup_heartbeat_generator();
 }
 

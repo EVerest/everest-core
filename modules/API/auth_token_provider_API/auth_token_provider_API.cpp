@@ -17,14 +17,15 @@ namespace API_types_ext = API_types::auth;
 void auth_token_provider_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "main");
-
-    generate_api_var_communication_check();
-    generate_api_var_provided_token();
+    topics.setTargetApiModuleID(info.id, "auth_token_provider");
 }
 
 void auth_token_provider_API::ready() {
     invoke_ready(*p_main);
+
+    generate_api_var_provided_token();
+
+    generate_api_var_communication_check();
 
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();

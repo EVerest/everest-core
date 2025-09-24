@@ -19,16 +19,18 @@ void isolation_monitor_API::init() {
     invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "isolation_monitor");
-
-    generate_api_var_isolation_measurement();
-    generate_api_var_self_test_result();
-    generate_api_var_communication_check();
-    generate_api_var_raise_error();
-    generate_api_var_clear_error();
 }
 
 void isolation_monitor_API::ready() {
     invoke_ready(*p_main);
+
+    generate_api_var_isolation_measurement();
+    generate_api_var_self_test_result();
+
+    generate_api_var_raise_error();
+    generate_api_var_clear_error();
+
+    generate_api_var_communication_check();
 
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();

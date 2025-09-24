@@ -27,6 +27,12 @@ void evse_board_support_API::init() {
     invoke_init(*p_connector_lock);
 
     topics.setTargetApiModuleID(info.id, "evse_board_support");
+}
+
+void evse_board_support_API::ready() {
+    invoke_ready(*p_main);
+    invoke_ready(*p_rcd);
+    invoke_ready(*p_connector_lock);
 
     generate_api_var_event();
     generate_api_var_phase_count();
@@ -35,16 +41,10 @@ void evse_board_support_API::init() {
     generate_api_var_request_stop_transaction();
     generate_api_var_rcd_current();
 
-    generate_api_var_communication_check();
-
     generate_api_var_raise_error();
     generate_api_var_clear_error();
-}
 
-void evse_board_support_API::ready() {
-    invoke_ready(*p_main);
-    invoke_ready(*p_rcd);
-    invoke_ready(*p_connector_lock);
+    generate_api_var_communication_check();
 
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();

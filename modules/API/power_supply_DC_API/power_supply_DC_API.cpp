@@ -22,6 +22,10 @@ void power_supply_DC_API::init() {
     invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "power_supply_DC");
+}
+
+void power_supply_DC_API::ready() {
+    invoke_ready(*p_main);
 
     generate_api_var_mode();
     generate_api_var_voltage_current();
@@ -29,14 +33,10 @@ void power_supply_DC_API::init() {
 
     generate_api_var_raise_error();
     generate_api_var_clear_error();
-}
 
-void power_supply_DC_API::ready() {
-    invoke_ready(*p_main);
-
-    comm_check.start(config.cfg_communication_check_to_s);
     generate_api_var_communication_check();
 
+    comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();
 }
 

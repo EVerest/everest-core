@@ -20,14 +20,15 @@ void auth_consumer_API::init() {
     invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "auth_consumer");
-
-    generate_api_cmd_withdraw_authorization();
-    generate_api_var_token_validation_status();
-    generate_api_var_communication_check();
 }
 
 void auth_consumer_API::ready() {
     invoke_ready(*p_main);
+
+    generate_api_cmd_withdraw_authorization();
+    generate_api_var_token_validation_status();
+
+    generate_api_var_communication_check();
 
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();

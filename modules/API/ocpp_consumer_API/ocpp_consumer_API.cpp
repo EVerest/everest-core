@@ -28,6 +28,11 @@ void ocpp_consumer_API::init() {
     invoke_init(*p_generic_error);
 
     topics.setTargetApiModuleID(info.id, "ocpp_consumer");
+}
+
+void ocpp_consumer_API::ready() {
+    invoke_ready(*p_main);
+    invoke_ready(*p_generic_error);
 
     generate_api_cmd_data_transfer();
     generate_api_cmd_get_variables();
@@ -36,15 +41,10 @@ void ocpp_consumer_API::init() {
     generate_api_var_is_connected();
     generate_api_var_boot_notification_response();
     generate_api_var_ocpp_transaction_event();
-}
 
-void ocpp_consumer_API::ready() {
-    invoke_ready(*p_main);
-    invoke_ready(*p_generic_error);
-
-    comm_check.start(config.cfg_communication_check_to_s);
     generate_api_var_communication_check();
 
+    comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();
 }
 

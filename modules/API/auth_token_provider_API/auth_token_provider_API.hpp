@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#ifndef AUTH_API_HPP
-#define AUTH_API_HPP
+#ifndef AUTH_TOKEN_PROVIDER_API_HPP
+#define AUTH_TOKEN_PROVIDER_API_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -89,4 +89,4 @@ private:
 
 } // namespace module
 
-#endif // AUTH_API_HPP
+#endif // AUTH_TOKEN_PROVIDER_API_HPP

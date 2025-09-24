@@ -20,18 +20,19 @@ using ev_API::deserialize;
 
 void error_history_consumer_API::init() {
     invoke_init(*p_main);
-    topics.setTargetApiModuleID(info.id, "error_history_consumer");
 
-    generate_api_cmd_active_errors();
-    //    generate_api_var_communication_check();  // TODO(CB): Why not here?
-    generate_api_var_error_events();
+    topics.setTargetApiModuleID(info.id, "error_history_consumer");
 }
 
 void error_history_consumer_API::ready() {
     invoke_ready(*p_main);
 
+    generate_api_cmd_active_errors();
+    generate_api_var_error_events();
+
+    generate_api_var_communication_check();
+
     comm_check.start(config.cfg_communication_check_to_s);
-    generate_api_var_communication_check();  // TODO(CB): Why not in ready()?
     setup_heartbeat_generator();
 }
 

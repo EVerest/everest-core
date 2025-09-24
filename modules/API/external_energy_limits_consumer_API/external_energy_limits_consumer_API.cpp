@@ -16,17 +16,17 @@ void external_energy_limits_consumer_API::init() {
     invoke_init(*p_main);
 
     topics.setTargetApiModuleID(info.id, "external_energy_limits_consumer");
-
-    generate_api_var_enforced_limits();
-    generate_api_cmd_set_external_limits();
 }
 
 void external_energy_limits_consumer_API::ready() {
     invoke_ready(*p_main);
 
-    comm_check.start(config.cfg_communication_check_to_s);
+    generate_api_cmd_set_external_limits();
+    generate_api_var_enforced_limits();
+
     generate_api_var_communication_check();
 
+    comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();
 }
 

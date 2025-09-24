@@ -21,13 +21,14 @@ void auth_token_validator_API::init() {
     invoke_init(*p_auth_token_validator);
 
     topics.setTargetApiModuleID(info.id, "auth_token_validator");
-
-    generate_api_var_communication_check();
-    generate_api_var_validation_result_update();
 }
 
 void auth_token_validator_API::ready() {
     invoke_ready(*p_auth_token_validator);
+
+    generate_api_var_validation_result_update();
+
+    generate_api_var_communication_check();
 
     comm_check.start(config.cfg_communication_check_to_s);
     setup_heartbeat_generator();

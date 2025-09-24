@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#ifndef OVER_VOLTAGE_MONITOR_HPP
-#define OVER_VOLTAGE_MONITOR_HPP
+#ifndef OVER_VOLTAGE_MONITOR_API_HPP
+#define OVER_VOLTAGE_MONITOR_API_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -11,7 +11,8 @@
 
 #include "ld-ev.hpp"
 
-// headers for provided interface implementations
+// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
+// insert your custom include headers here
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -19,8 +20,6 @@
 #include <generated/interfaces/over_voltage_monitor/Implementation.hpp>
 #pragma GCC diagnostic pop
 
-// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
-// insert your custom include headers here
 #include <everest_api_types/over_voltage_monitor/API.hpp>
 #include <everest_api_types/utilities/CommCheckHandler.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
@@ -29,7 +28,6 @@ namespace ev_API = everest::lib::API;
 namespace API_types = ev_API::V1_0::types;
 namespace API_types_ext = API_types::over_voltage_monitor;
 
-//
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -95,4 +93,4 @@ private:
 
 } // namespace module
 
-#endif // OVER_VOLTAGE_MONITOR_HPP
+#endif // OVER_VOLTAGE_MONITOR_API_HPP
