@@ -2,8 +2,8 @@
 asyncapi: 3.0.0
 id: 'pionix:de:everest:generic_error_raiser'
 info:
-  title: "EVerest API definition for raising and clearing generic errors"
-  version: 1.0.1
+  title: 'EVerest API definition for raising and clearing generic errors'
+  version: 1.0.0
   description: >-
     API for EVerest API clients for raising and clearing generic errors.
 
@@ -24,6 +24,7 @@ servers:
         description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
+
 channels:
   send_raise_error:
     address: 'm2e/raise_error'
@@ -35,45 +36,52 @@ channels:
     messages:
       send_clear_error:
         $ref: '#/components/messages/send_clear_error'
-  send_communication_check:
-    address: 'm2e/communication_check'
-    messages:
-      send_communication_check:
-        $ref: '#/components/messages/send_communication_check'
+
   receive_heartbeat:
     address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
 
 operations:
   send_raise_error:
-    title: Send raise error
+    title: 'Send raise error'
     action: send
     channel:
       $ref: '#/channels/send_raise_error'
     description: 'Direction: Module to EVerest'
   send_clear_error:
-    title: Send clear error
+    title: 'Send clear error'
     action: send
     channel:
       $ref : '#/channels/send_clear_error'
-  send_communication_check:
-    title: Send communication check
-    action: send
-    channel:
-      $ref : '#/channels/send_communication_check'
+
   receive_heartbeat:
-    title: Receive heatbeat
+    title: 'Receive heatbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
     description: 'Direction: EVerest to Module'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+
+
 
 components:
   messages:
     send_raise_error:
-      title: Send raise error
+      name: send_raise_error
+      title: 'Send raise error'
       summary: Signal to EVerest that an error happened.
       contentType: application/json
       payload:
@@ -85,7 +93,8 @@ components:
                 "sub_type": "subtype"
                 "message": "message"
     send_clear_error:
-      title: Send clear error
+      name: send_clear_error
+      title: 'Send clear error'
       summary: Signal to EVerest that a previously raised error is no longer active.
       contentType: application/json
       payload:
@@ -96,8 +105,15 @@ components:
                 "type": "CommunicationFault"
                 "sub_type": "subtype"
                 "message": "message"
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
     send_communication_check:
-      title: Send communication check
+      name: send_communication_check
+      title: 'Send communication check'
       summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
@@ -106,10 +122,7 @@ components:
         - summary: "CommunicationCheck"
           payload:
             True
-    receive_heartbeat:
-      title: Receive heartbeat
-      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
-      contentType: application/json
+
 
   schemas:
     ErrorEnum:
@@ -124,7 +137,6 @@ components:
         - CommunicationFault
         - VendorError
         - VendorWarning
-
     Error:
       description: >-
         Errors for the power_supply_DC interface.

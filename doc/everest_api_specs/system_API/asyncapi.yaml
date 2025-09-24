@@ -2,8 +2,8 @@
 asyncapi: 3.0.0
 id: 'pionix:de:everest:system_API'
 info:
-  title: "EVerest API definition for the system module"
-  version: 1.0.1
+  title: 'EVerest API definition for the system module'
+  version: 1.0.0
   description: >-
     API for EVerest API client implementing the system capabilities OTA update and log upload.
 
@@ -24,6 +24,7 @@ servers:
         description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
+
 channels:
   receive_request_update_firmware:
     address: 'e2m/update_firmware'
@@ -35,6 +36,11 @@ channels:
     messages:
       send_reply_update_firmware:
         $ref: '#/components/messages/send_reply_update_firmware'
+  receive_allow_firmware_installation:
+    address: 'e2m/allow_firmware_installation'
+    messages:
+      receive_allow_firmware_installation:
+        $ref: '#/components/messages/receive_allow_firmware_installation'
   receive_request_upload_logs:
     address: 'e2m/upload_logs'
     messages:
@@ -45,51 +51,42 @@ channels:
     messages:
       reply_upload_logs:
         $ref: '#/components/messages/send_reply_upload_logs'
-  send_reply_is_reset_allowed:
-    address: null
-    messages:
-      send_reply_is_reset_allowed:
-        $ref: '#/components/messages/send_reply_is_reset_allowed'
   receive_request_is_reset_allowed:
     address: 'e2m/is_reset_allowed'
     messages:
       receive_request_is_reset_allowed:
         $ref: '#/components/messages/receive_request_is_reset_allowed'
-  send_reply_set_system_time:
+  send_reply_is_reset_allowed:
     address: null
     messages:
-      send_reply_set_system_time:
-        $ref: '#/components/messages/send_reply_set_system_time'
-  receive_request_set_system_time:
-    address: 'e2m/set_system_time'
-    messages:
-      receive_request_set_system_time:
-        $ref: '#/components/messages/receive_request_set_system_time'
-  send_reply_get_boot_reason:
-    address: null
-    messages:
-      send_reply_get_boot_reason:
-        $ref: '#/components/messages/send_reply_get_boot_reason'
-  receive_request_get_boot_reason:
-    address: 'e2m/get_boot_reason'
-    messages:
-      receive_request_get_boot_reason:
-        $ref: '#/components/messages/receive_request_get_boot_reason'
-  receive_allow_firmware_installation:
-    address: 'e2m/allow_firmware_installation'
-    messages:
-      receive_allow_firmware_installation:
-        $ref: '#/components/messages/receive_allow_firmware_installation'
+      send_reply_is_reset_allowed:
+        $ref: '#/components/messages/send_reply_is_reset_allowed'
   receive_reset:
     address: 'e2m/reset'
     messages:
       receive_reset:
         $ref: '#/components/messages/receive_reset'
-  receive_heartbeat:
-    address: 'e2m/heartbeat'
+  receive_request_set_system_time:
+    address: 'e2m/set_system_time'
     messages:
-      receive_heartbeat:
-        $ref: '#/components/messages/receive_heartbeat'
+      receive_request_set_system_time:
+        $ref: '#/components/messages/receive_request_set_system_time'
+  send_reply_set_system_time:
+    address: null
+    messages:
+      send_reply_set_system_time:
+        $ref: '#/components/messages/send_reply_set_system_time'
+  receive_request_get_boot_reason:
+    address: 'e2m/get_boot_reason'
+    messages:
+      receive_request_get_boot_reason:
+        $ref: '#/components/messages/receive_request_get_boot_reason'
+  send_reply_get_boot_reason:
+    address: null
+    messages:
+      send_reply_get_boot_reason:
+        $ref: '#/components/messages/send_reply_get_boot_reason'
+
   send_firmware_update_status:
     address: 'm2e/firmware_update_status'
     messages:
@@ -100,6 +97,13 @@ channels:
     messages:
       send_log_status:
         $ref: '#/components/messages/send_log_status'
+
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
   send_communication_check:
     address: 'm2e/communication_check'
     messages:
@@ -107,15 +111,10 @@ channels:
         $ref: '#/components/messages/send_communication_check'
 
 
+
 operations:
-  send_reply_update_firmware:
-    title: Request validate token
-    action: send
-    description: 'Direction: EVerest to Module'
-    channel:
-      $ref: '#/channels/send_reply_update_firmware'
   receive_request_update_firmware:
-    title: Request to update the firmware
+    title: 'Request to update the firmware'
     action: receive
     channel:
       $ref: '#/channels/receive_request_update_firmware'
@@ -125,14 +124,20 @@ operations:
         location: "$message.header#/replyTo"
       channel:
         $ref: '#/channels/send_reply_update_firmware'
-  send_reply_upload_logs:
-    title: Request to upload loads
+  send_reply_update_firmware:
+    title: 'Request validate token'
     action: send
     description: 'Direction: EVerest to Module'
     channel:
-      $ref: '#/channels/send_reply_upload_logs'
+      $ref: '#/channels/send_reply_update_firmware'
+  receive_allow_firmware_installation:
+    title: 'Call to allow a firmware installation to proceed'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_allow_firmware_installation'
+      description: 'Direction: EVerest to Module'
   receive_request_upload_logs:
-    title: Receive request to upload loads
+    title: 'Receive request to upload loads'
     action: receive
     channel:
       $ref: '#/channels/receive_request_upload_logs'
@@ -142,14 +147,14 @@ operations:
         location: "$message.header#/replyTo"
       channel:
         $ref: '#/channels/send_reply_upload_logs'
-  send_reply_is_reset_allowed:
-    title: Receive request for is reset allowed
+  send_reply_upload_logs:
+    title: 'Request to upload loads'
     action: send
-    channel:
-      $ref: '#/channels/send_reply_is_reset_allowed'
     description: 'Direction: EVerest to Module'
+    channel:
+      $ref: '#/channels/send_reply_upload_logs'
   receive_request_is_reset_allowed:
-    title: Receive request for is reset allowed
+    title: 'Receive request for is reset allowed'
     action: receive
     channel:
       $ref: '#/channels/receive_request_is_reset_allowed'
@@ -159,14 +164,20 @@ operations:
         location: "$message.header#/replyTo"
       channel:
         $ref: '#/channels/send_reply_is_reset_allowed'
-  send_reply_set_system_time:
-    title: Receive request to set the system time
+  send_reply_is_reset_allowed:
+    title: 'Receive request for is reset allowed'
     action: send
     channel:
-      $ref: '#/channels/send_reply_set_system_time'
+      $ref: '#/channels/send_reply_is_reset_allowed'
+    description: 'Direction: EVerest to Module'
+  receive_reset:
+    title: 'Call to reset the system immediately'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reset'
     description: 'Direction: EVerest to Module'
   receive_request_set_system_time:
-    title: Receive request to set the system time
+    title: 'Receive request to set the system time'
     action: receive
     channel:
       $ref: '#/channels/receive_request_set_system_time'
@@ -176,14 +187,14 @@ operations:
         location: "$message.header#/replyTo"
       channel:
         $ref: '#/channels/send_reply_set_system_time'
-  send_reply_get_boot_reason:
-    title: Receive request to get the boot reason
+  send_reply_set_system_time:
+    title: 'Receive request to set the system time'
     action: send
     channel:
-      $ref: '#/channels/send_reply_get_boot_reason'
+      $ref: '#/channels/send_reply_set_system_time'
     description: 'Direction: EVerest to Module'
   receive_request_get_boot_reason:
-    title: Receive request to get the boot reason
+    title: 'Receive request to get the boot reason'
     action: receive
     channel:
       $ref: '#/channels/receive_request_get_boot_reason'
@@ -193,36 +204,33 @@ operations:
         location: "$message.header#/replyTo"
       channel:
         $ref: '#/channels/send_reply_get_boot_reason'
-  receive_allow_firmware_installation:
-    title: Call to allow a firmware installation to proceed
-    action: receive
+  send_reply_get_boot_reason:
+    title: 'Receive request to get the boot reason'
+    action: send
     channel:
-      $ref: '#/channels/receive_allow_firmware_installation'
-      description: 'Direction: EVerest to Module'
-  receive_reset:
-    title: Call to reset the system immediately
-    action: receive
-    channel:
-      $ref: '#/channels/receive_reset'
+      $ref: '#/channels/send_reply_get_boot_reason'
     description: 'Direction: EVerest to Module'
-  receive_heartbeat:
-    title: Receive heatbeat
-    action: receive
-    channel:
-      $ref: '#/channels/receive_heartbeat'
+
   send_firmware_update_status:
-    title: Send firmware update status
+    title: 'Send firmware update status'
     action: send
     channel:
       $ref: '#/channels/send_firmware_update_status'
     description: 'Direction: Module to EVerest'
   send_log_status:
-    title: Send log upload status
+    title: 'Send log upload status'
     action: send
     channel:
       $ref: '#/channels/send_log_status'
+
+
+  receive_heartbeat:
+    title: 'Receive heatbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
   send_communication_check:
-    title: Send communication check
+    title: 'Send communication check'
     action: send
     channel:
       $ref : '#/channels/send_communication_check'
@@ -232,7 +240,8 @@ operations:
 components:
   messages:
     receive_request_update_firmware:
-      title: Request update firmware
+      name: receive_request_update_firmware
+      title: 'Request update firmware'
       summary: 'Request to update the firmware.'
       contentType: application/json
       payload:
@@ -247,7 +256,8 @@ components:
             payload:
               $ref: '#/components/schemas/FirmwareUpdateRequest'
     send_reply_update_firmware:
-      title: Reply update firmware
+      name: send_reply_update_firmware
+      title: 'Reply update firmware'
       summary: 'Reply to update firmware request.'
       contentType: application/json
       payload:
@@ -257,7 +267,8 @@ components:
           payload:
             "Accepted"
     receive_request_upload_logs:
-      title: Request upload logs
+      name: receive_request_upload_logs
+      title: 'Request upload logs'
       summary: 'Request to upload logs.'
       contentType: application/json
       payload:
@@ -272,7 +283,8 @@ components:
             payload:
               $ref: '#/components/schemas/UploadLogsRequest'
     send_reply_upload_logs:
-      title: Reply upload logs
+      name: send_reply_upload_logs
+      title: 'Reply upload logs'
       summary: 'Reply to upload logs request.'
       contentType: application/json
       payload:
@@ -283,7 +295,8 @@ components:
               file_name: "string"
               upload_logs_status: "Accepted"
     receive_request_is_reset_allowed:
-      title: Request if reset is allowed
+      name: receive_request_is_reset_allowed
+      title: 'Request if reset is allowed'
       summary: 'Request for is reset allowed.'
       contentType: application/json
       payload:
@@ -298,7 +311,8 @@ components:
             payload:
               $ref: '#/components/schemas/ResetType'
     send_reply_is_reset_allowed:
-      title: Reply to is reset allows
+      name: send_reply_is_reset_allowed
+      title: 'Reply to is reset allows'
       summary: 'Reply to is reset allowed request.'
       contentType: application/json
       payload:
@@ -308,7 +322,8 @@ components:
           payload:
             true
     receive_request_set_system_time:
-      title: Receive set system time request
+      name: receive_request_set_system_time
+      title: 'Receive set system time request'
       summary:  Call to set the system time
       contentType: application/json
       payload:
@@ -323,7 +338,8 @@ components:
             payload:
               $ref: '#/components/schemas/SystemTime'
     send_reply_set_system_time:
-      title: Reply to is reset allows
+      name: send_reply_set_system_time
+      title: 'Reply to is reset allows'
       summary: 'Reply to is reset allowed request.'
       contentType: application/json
       payload:
@@ -333,7 +349,8 @@ components:
           payload:
             true
     receive_request_get_boot_reason:
-      title: Receive get boot reason request
+      name: receive_request_get_boot_reason
+      title: 'Receive get boot reason request'
       summary:  Call to get the boot reason
       payload:
           type: object
@@ -345,7 +362,8 @@ components:
                   type: string
                   description: Address to send the response to.
     send_reply_get_boot_reason:
-      title: Reply to get boot reason
+      name: send_reply_get_boot_reason
+      title: 'Reply to get boot reason'
       summary: 'Reply to get boot reason.'
       contentType: application/json
       payload:
@@ -355,19 +373,19 @@ components:
           payload:
             "ApplicationReset"
     receive_allow_firmware_installation:
-      title: Receive Allow firmware installation
+      name: receive_allow_firmware_installation
+      title: 'Receive Allow firmware installation'
       summary:  Call to allow a firmware installation to proceed
     receive_reset:
-      title: Receive reset command
+      name: receive_reset
+      title: 'Receive reset command'
       summary:  Call to reset the system immediately
       payload:
         $ref: '#/components/schemas/ResetRequest'
-    receive_heartbeat:
-      title: Receive heartbeat
-      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
-      contentType: application/json
+
     send_firmware_update_status:
-      title: Send firmware update status
+      name: send_firmware_update_status
+      title: 'Send firmware update status'
       summary: Describes the current status of a firmware update of the system
       payload:
         $ref: '#/components/schemas/FirmwareUpdateStatus'
@@ -377,7 +395,8 @@ components:
             firmware_update_status: "Downloaded"
             request_id: 0
     send_log_status:
-      title: Send log upload status
+      name: send_log_status
+      title: 'Send log upload status'
       summary: Describes the current status of log upload of the system
       payload:
         $ref: '#/components/schemas/LogStatus'
@@ -386,8 +405,16 @@ components:
           payload:
               log_status: "BadMessage"
               request_id: 0
+
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
     send_communication_check:
-      title: Send communication check
+      name: send_communication_check
+      title: 'Send communication check'
       summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
@@ -399,6 +426,19 @@ components:
 
 
   schemas:
+    BootReason:
+      description: Enum defining the boot reason
+      type: string
+      enum:
+        - ApplicationReset
+        - FirmwareUpdate
+        - LocalReset
+        - PowerUp
+        - RemoteReset
+        - ScheduledReset
+        - Triggered
+        - Unknown
+        - Watchdog
     FirmwareUpdateRequest:
       description: Type defining a Firmware update request
       type: object
@@ -438,6 +478,120 @@ components:
         signature:
           description: Base64 encoded firmware signature
           type: string
+    FirmwareUpdateStatus:
+      description: Type defining the status of a firmware update
+      type: object
+      additionalProperties: true
+      required:
+        - firmware_update_status
+        - request_id
+      properties:
+        firmware_update_status:
+          description: >-
+            State describing the current status of firmware update of the
+            system
+          type: string
+          $ref: '#/components/schemas/FirmwareUpdateStatusEnum'
+        request_id:
+          description: Id of the request
+          type: integer
+    FirmwareUpdateStatusEnum:
+      description: >-
+        State describing the current download/upload status of a firmware
+        update of the system
+          Downloaded: Intermediate state. New firmware has been downloaded by System
+          DownloadFailed: Failure end state. System failed to download firmware
+          Downloading: Intermediate state. Firmware is being downloaded
+          DownloadScheduled: Intermediate state. Downloading of new firmware has been scheduled
+          DownloadPaused: Intermediate state. Downloading has been paused
+          Idle: System is not performing firmware update related tasks
+          InstallationFailed: Failure end state. Installation of new firmware has failed
+          Installing: Intermediate state. Firmware is being installed
+          Installed: Successful end state. New firmware has successfully been installed in System
+          InstallRebooting: Intermediate state. System is about to reboot to activate new firmware
+          InstallScheduled: Intermediate state. Installation of the downloaded firmware is scheduled to take place on installDateTime
+          InstallVerificationFailed: Failure end state. Verification of the new firmware (e.g. using a checksum or some other means) has failed and installation will not proceed. (Final failure state)
+          InvalidSignature: Failure end state. The firmware signature is not valid
+          SignatureVerified: Intermediate state. Provide signature successfully verified
+      type: string
+      enum:
+        - Downloaded
+        - DownloadFailed
+        - Downloading
+        - DownloadScheduled
+        - DownloadPaused
+        - Idle
+        - InstallationFailed
+        - Installing
+        - Installed
+        - InstallRebooting
+        - InstallScheduled
+        - InstallVerificationFailed
+        - InvalidSignature
+        - SignatureVerified
+    LogStatusEnum:
+      description: >-
+        State describing the current status of log upload of the system
+          BadMessage: A badly formatted packet or other protocol incompatibility was detected
+          Idle: The system is not uploading a log file
+          NotSupportedOperation: The server does not support the operation
+          PermissionDenied: Insufficient permissions to perform the operation
+          Uploaded: File has been uploaded successfully
+          UploadFailure: Failed to upload the requested file
+          Uploading: File is being uploaded
+      type: string
+      enum:
+        - AcceptedCanceled
+        - BadMessage
+        - Idle
+        - NotSupportedOperation
+        - PermissionDenied
+        - Uploaded
+        - UploadFailure
+        - Uploading
+    LogStatus:
+      description: Type defining the status of a log upload
+      type: object
+      additionalProperties: true
+      required:
+        - log_status
+        - request_id
+      properties:
+        log_status:
+          description: State describing the current status of log upload of the system
+          type: string
+          $ref: '#/components/schemas/LogStatusEnum'
+        request_id:
+          description: Id of the request
+          type: integer
+    ResetAllowed:
+      description: 'true if reset is allowed'
+      type: boolean
+    ResetRequest:
+      description: 'request for reset'
+      type: object
+      additionalProperties: true
+      properties:
+        type:
+          description: 'type ot the reset (Soft or Hard)'
+          type: string
+          $ref: '#/components/schemas/ResetType'
+        scheduled:
+          type: boolean
+    ResetType:
+      description: Enum defining the type of a reset
+      type: string
+      enum:
+        - Soft
+        - Hard
+        - NotSpecified
+    SystemTime:
+      description: 'system time in RFC3339 format'
+      type: string
+      format: date-time
+    SystemTimeSet:
+      description: 'true if reset successful'
+      type: boolean
     UpdateFirmwareResponse:
       description: >-
         Enum for the response of an update_firmware command
@@ -494,17 +648,6 @@ components:
         request_id:
           description: The id of the request
           type: integer
-    UploadLogsStatus:
-      description: >-
-        Enum for the upload logs status response
-          Accepted: Request to upload logs has been accepted
-          Rejected: Request to upload logs has been rejected
-          AcceptedCanceled: Accepted this log upload, but in doing this has cancelled an ongoing log file upload
-      type: string
-      enum:
-        - Accepted
-        - Rejected
-        - AcceptedCanceled
     UploadLogsResponse:
       description: Response to a upload logs request
       type: object
@@ -519,133 +662,17 @@ components:
           description: The log status enum
           type: string
           $ref: '#/components/schemas/UploadLogsStatus'
-    LogStatusEnum:
+    UploadLogsStatus:
       description: >-
-        State describing the current status of log upload of the system
-          BadMessage: A badly formatted packet or other protocol incompatibility was detected
-          Idle: The system is not uploading a log file
-          NotSupportedOperation: The server does not support the operation
-          PermissionDenied: Insufficient permissions to perform the operation
-          Uploaded: File has been uploaded successfully
-          UploadFailure: Failed to upload the requested file
-          Uploading: File is being uploaded
+        Enum for the upload logs status response
+          Accepted: Request to upload logs has been accepted
+          Rejected: Request to upload logs has been rejected
+          AcceptedCanceled: Accepted this log upload, but in doing this has cancelled an ongoing log file upload
       type: string
       enum:
+        - Accepted
+        - Rejected
         - AcceptedCanceled
-        - BadMessage
-        - Idle
-        - NotSupportedOperation
-        - PermissionDenied
-        - Uploaded
-        - UploadFailure
-        - Uploading
-    LogStatus:
-      description: Type defining the status of a log upload
-      type: object
-      additionalProperties: true
-      required:
-        - log_status
-        - request_id
-      properties:
-        log_status:
-          description: State describing the current status of log upload of the system
-          type: string
-          $ref: '#/components/schemas/LogStatusEnum'
-        request_id:
-          description: Id of the request
-          type: integer
-    FirmwareUpdateStatusEnum:
-      description: >-
-        State describing the current download/upload status of a firmware
-        update of the system
-          Downloaded: Intermediate state. New firmware has been downloaded by System
-          DownloadFailed: Failure end state. System failed to download firmware
-          Downloading: Intermediate state. Firmware is being downloaded
-          DownloadScheduled: Intermediate state. Downloading of new firmware has been scheduled
-          DownloadPaused: Intermediate state. Downloading has been paused
-          Idle: System is not performing firmware update related tasks
-          InstallationFailed: Failure end state. Installation of new firmware has failed
-          Installing: Intermediate state. Firmware is being installed
-          Installed: Successful end state. New firmware has successfully been installed in System
-          InstallRebooting: Intermediate state. System is about to reboot to activate new firmware
-          InstallScheduled: Intermediate state. Installation of the downloaded firmware is scheduled to take place on installDateTime
-          InstallVerificationFailed: Failure end state. Verification of the new firmware (e.g. using a checksum or some other means) has failed and installation will not proceed. (Final failure state)
-          InvalidSignature: Failure end state. The firmware signature is not valid
-          SignatureVerified: Intermediate state. Provide signature successfully verified
-      type: string
-      enum:
-        - Downloaded
-        - DownloadFailed
-        - Downloading
-        - DownloadScheduled
-        - DownloadPaused
-        - Idle
-        - InstallationFailed
-        - Installing
-        - Installed
-        - InstallRebooting
-        - InstallScheduled
-        - InstallVerificationFailed
-        - InvalidSignature
-        - SignatureVerified
-    FirmwareUpdateStatus:
-      description: Type defining the status of a firmware update
-      type: object
-      additionalProperties: true
-      required:
-        - firmware_update_status
-        - request_id
-      properties:
-        firmware_update_status:
-          description: >-
-            State describing the current status of firmware update of the
-            system
-          type: string
-          $ref: '#/components/schemas/FirmwareUpdateStatusEnum'
-        request_id:
-          description: Id of the request
-          type: integer
-    ResetType:
-      description: Enum defining the type of a reset
-      type: string
-      enum:
-        - Soft
-        - Hard
-        - NotSpecified
-    BootReason:
-      description: Enum defining the boot reason
-      type: string
-      enum:
-        - ApplicationReset
-        - FirmwareUpdate
-        - LocalReset
-        - PowerUp
-        - RemoteReset
-        - ScheduledReset
-        - Triggered
-        - Unknown
-        - Watchdog
-    ResetAllowed:
-      description: 'true if reset is allowed'
-      type: boolean
-    ResetRequest:
-      description: 'request for reset'
-      type: object
-      additionalProperties: true
-      properties:
-        type:
-          description: 'type ot the reset (Soft or Hard)'
-          type: string
-          $ref: '#/components/schemas/ResetType'
-        scheduled:
-          type: boolean
-    SystemTime:
-      description: 'system time in RFC3339 format'
-      type: string
-      format: date-time
-    SystemTimeSet:
-      description: 'true if reset successful'
-      type: boolean
 
     CommunicationCheck:
       type: boolean

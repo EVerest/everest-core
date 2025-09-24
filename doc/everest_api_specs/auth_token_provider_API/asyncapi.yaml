@@ -2,8 +2,8 @@
 asyncapi: 3.0.0
 id: 'pionix:de:everest:auth_token_provider_API'
 info:
-  title: "EVerest API definition for auth token provider"
-  version: 1.0.1
+  title: 'EVerest API definition for auth token provider'
+  version: 1.0.0
   description: >-
     API for EVerest API clients implementing auth token provider.
 
@@ -24,51 +24,57 @@ servers:
         description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
+
 channels:
   send_provided_token:
     address: 'm2e/provided_token'
     messages:
       provided_token:
         $ref: '#/components/messages/send_provided_token'
-  send_communication_check:
-    address: 'm2e/communication_check'
-    messages:
-      send_communication_check:
-        $ref: '#/components/messages/send_communication_check'
+
   receive_heartbeat:
     address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
 
 
 operations:
   send_provided_token:
-    title: Send provided token
+    title: 'Send provided token'
     action: send
     channel:
       $ref: '#/channels/send_provided_token'
     description: 'Direction: Module to EVerest'
-  send_communication_check:
-    title: Send communication check
-    action: send
-    channel:
-      $ref : '#/channels/send_communication_check'
+
   receive_heartbeat:
-    title: Receive heatbeat
+    title: 'Receive heatbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+
 
 
 components:
   messages:
     send_provided_token:
-      title: Send provided token
+      name: send_provided_token
+      title: 'Send provided token'
       summary: 'The provided token'
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ProvidedIdToken'
+        $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
       examples:
         - summary: "CommunicationCheck"
           payload:
@@ -76,8 +82,15 @@ components:
             id_token:
               type: "Central"
               value: "TOKEN"
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
     send_communication_check:
-      title: Send communication check
+      name: send_communication_check
+      title: 'Send communication check'
       summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
@@ -86,122 +99,9 @@ components:
         - summary: "CommunicationCheck"
           payload:
             true
-    receive_heartbeat:
-      title: Receive heartbeat
-      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
-      contentType: application/json
-
 
 
   schemas:
-    IdTokenType:
-      description: >-
-        IdTokenType of the provided token. Required by OCPP2.0.1 to distinguish between different types of tokens.
-      type: string
-      enum:
-        - Central
-        - eMAID
-        - MacAddress
-        - ISO14443
-        - ISO15693
-        - KeyCode
-        - Local
-        - NoAuthorization
-    AuthorizationType:
-      description: >-
-        Type of authorization of the provided token. The value
-        of AuthorizationType can influence the authorization process
-      type: string
-      enum:
-        - OCPP
-        - RFID
-        - Autocharge
-        - PlugAndCharge
-        - BankCard
-
-    CustomIdToken:
-      description: Type for a custom id token with a free-form type
-      type: object
-      additionalProperties: true
-      required:
-        - value
-        - type
-      properties:
-        value:
-          description: Arbitrary value of the IdToken
-          type: string
-          minLength: 0
-          maxLength: 36
-        type:
-          description: Custom type of the token
-          type: string
-          minLength: 0
-          maxLength: 50
-
-    IdToken:
-      description: Type for an id token
-      type: object
-      additionalProperties: true
-      required:
-        - value
-        - type
-      properties:
-        value:
-          description: >-
-            Arbitrary value of the IdToken: This has to be printable case insensitive ascii
-          type: string
-          minLength: 0
-          maxLength: 36
-        type:
-          description: Type of the token
-          type: string
-          $ref: "#/components/schemas/IdTokenType"
-        additional_info:
-          description: A list of additional custom id tokens than can be used for providing additional information for validation
-          type: array
-          items:
-            type: object
-            $ref: "#/components/schemas/CustomIdToken"
-    ProvidedIdToken:
-      description: Type for IdToken provided by auth token providers. Contains additional information about the IdToken like the source and purpose
-      type: object
-      additionalProperties: true
-      required:
-        - id_token
-        - authorization_type
-      properties:
-        request_id:
-          description: >-
-            Id of the authorization request of this token. Could be used to put remoteStartId of OCPP2.0.1
-          type: integer
-        id_token:
-          description: IdToken of the provided token
-          type: object
-          $ref: "#/components/schemas/IdToken"
-        parent_id_token:
-          description: Parent IdToken of the provided token
-          type: object
-          $ref: "#/components/schemas/IdToken"
-        authorization_type:
-          description: Authorization type of the token.
-          type: string
-          $ref: "#/components/schemas/AuthorizationType"
-          minLength: 2
-          maxLength: 32
-        connectors:
-          description: A list of connector ids to which the authorization can be assigned
-          type: array
-          items:
-            minimum: 1
-            type: integer
-        prevalidated:
-          description: Indicates that the id token is already validated by the provider
-          type: boolean
-        certificate:
-          description: The X.509 certificated presented by EV and encoded in PEM format
-          type: string
-          maxLength: 5500
-
     CommunicationCheck:
       type: boolean
       description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"

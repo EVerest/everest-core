@@ -2,8 +2,8 @@
 asyncapi: 3.0.0
 id: 'pionix:de:everest:auth_token_validator_API'
 info:
-  title: "EVerest API definition for auth token validator - CLIENT side (MODULE)"
-  version: 1.0.2
+  title: 'EVerest API definition for auth token validator - CLIENT side (MODULE)'
+  version: 1.0.0
   description: >-
     API for EVerest API clients implementing auth token validator.
 
@@ -24,17 +24,8 @@ servers:
         description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
+
 channels:
-  send_validate_result_update:
-    address: 'm2e/validate_result_update'
-    messages:
-      send_validate_result_update:
-        $ref: '#/components/messages/send_validate_result_update'
-  send_communication_check:
-    address: 'm2e/communication_check'
-    messages:
-      send_communication_check:
-        $ref: '#/components/messages/send_communication_check'
   receive_request_validate_token:
     address: 'e2m/validate_token'
     messages:
@@ -45,32 +36,30 @@ channels:
     messages:
       send_reply_validate_token:
         $ref: '#/components/messages/send_reply_validate_token'
+
+  send_validate_result_update:
+    address: 'm2e/validate_result_update'
+    messages:
+      send_validate_result_update:
+        $ref: '#/components/messages/send_validate_result_update'
+
+
   receive_heartbeat:
     address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
 
 
 operations:
-  send_validate_result_update:
-    title: Send validate result update
-    action: send
-    channel:
-      $ref : '#/channels/send_validate_result_update'
-  send_communication_check:
-    title: Send communication check
-    action: send
-    channel:
-      $ref : '#/channels/send_communication_check'
-  send_reply_validate_token:
-    title: Receive request to validate token
-    action: send
-    description: 'Direction: Module to EVerest'
-    channel:
-      $ref: '#/channels/send_reply_validate_token'
   receive_request_validate_token:
-    title: Request validate token
+    title: 'Request validate token'
     action: receive
     description: 'Direction: EVerest to Module'
     channel:
@@ -80,17 +69,68 @@ operations:
         location: "$message.header#/replyTo"
       channel:
         $ref: '#/channels/send_reply_validate_token'
+  send_reply_validate_token:
+    title: 'Receive request to validate token'
+    action: send
+    description: 'Direction: Module to EVerest'
+    channel:
+      $ref: '#/channels/send_reply_validate_token'
+
+  send_validate_result_update:
+    title: 'Send validate result update'
+    action: send
+    channel:
+      $ref : '#/channels/send_validate_result_update'
+
+
   receive_heartbeat:
-    title: Receive heatbeat
+    title: 'Receive heatbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+
 
 
 components:
   messages:
+    receive_request_validate_token:
+      name: receive_request_validate_token
+      title: 'Request validate token'
+      summary: 'Request to validate token.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
+    send_reply_validate_token:
+      name: send_reply_validate_token
+      title: 'Reply validate token'
+      summary: 'Reply to validate token.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ValidationResult'
+      examples:
+        - summary: "Reply validate token."
+          payload:
+            authorization_status: Accepted
+            evse_ids:
+            - 1
+
     send_validate_result_update:
-      title: Send validate result update
+      name: send_validate_result_update
+      title: 'Send validate result update'
       summary: >-
         Updated validation result for a given token due to some changes.
         These can be triggered by TransactionEvent messages or StartTransaction.
@@ -111,8 +151,14 @@ components:
                 }
             }
 
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
     send_communication_check:
-      title: Send communication check
+      name: send_communication_check
+      title: 'Send communication check'
       summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
@@ -122,67 +168,8 @@ components:
           payload:
             true
 
-    receive_request_validate_token:
-      title: Request validate token
-      summary: 'Request to validate token.'
-      contentType: application/json
-      payload:
-          type: object
-          properties:
-            headers:
-              type: object
-              properties:
-                replyTo:  # Address for the request to reply to
-                  type: string
-                  description: Address to send the response to.
-            payload:
-              $ref: '#/components/schemas/ProvidedIdToken'
-
-    send_reply_validate_token:
-      title: Reply validate token
-      summary: 'Reply to validate token.'
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/ValidationResult'
-      examples:
-        - summary: "Reply validate token."
-          payload:
-            authorization_status: Accepted
-            evse_ids:
-            - 1
-
-    receive_heartbeat:
-      title: Receive heartbeat
-      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
-      contentType: application/json
-
-
 
   schemas:
-    IdTokenType:
-      description: >-
-        IdTokenType of the provided token. Required by OCPP2.0.1 to distinguish between different types of tokens.
-      type: string
-      enum:
-        - Central
-        - eMAID
-        - MacAddress
-        - ISO14443
-        - ISO15693
-        - KeyCode
-        - Local
-        - NoAuthorization
-    AuthorizationType:
-      description: >-
-        Type of authorization of the provided token. The value
-        of AuthorizationType can influence the authorization process
-      type: string
-      enum:
-        - OCPP
-        - RFID
-        - Autocharge
-        - PlugAndCharge
-        - BankCard
     AuthorizationStatus:
       description: Authorization Status enum
       type: string
@@ -208,90 +195,6 @@ components:
         - NoCertificateAvailable
         - CertChainError
         - ContractCancelled
-
-    CustomIdToken:
-      description: Type for a custom id token with a free-form type
-      type: object
-      additionalProperties: true
-      required:
-        - value
-        - type
-      properties:
-        value:
-          description: Arbitrary value of the IdToken
-          type: string
-          minLength: 0
-          maxLength: 36
-        type:
-          description: Custom type of the token
-          type: string
-          minLength: 0
-          maxLength: 50
-
-    IdToken:
-      description: Type for an id token
-      type: object
-      additionalProperties: true
-      required:
-        - value
-        - type
-      properties:
-        value:
-          description: >-
-            Arbitrary value of the IdToken: This has to be printable case insensitive ascii
-          type: string
-          minLength: 0
-          maxLength: 36
-        type:
-          description: Type of the token
-          type: string
-          $ref: "#/components/schemas/IdTokenType"
-        additional_info:
-          description: A list of additional custom id tokens than can be used for providing additional information for validation
-          type: array
-          items:
-            type: object
-            $ref: "#/components/schemas/CustomIdToken"
-    ProvidedIdToken:
-      description: Type for IdToken provided by auth token providers. Contains additional information about the IdToken like the source and purpose
-      type: object
-      additionalProperties: true
-      required:
-        - id_token
-        - authorization_type
-      properties:
-        request_id:
-          description: >-
-            Id of the authorization request of this token. Could be used to put remoteStartId of OCPP2.0.1
-          type: integer
-        id_token:
-          description: IdToken of the provided token
-          type: object
-          $ref: "#/components/schemas/IdToken"
-        parent_id_token:
-          description: Parent IdToken of the provided token
-          type: object
-          $ref: "#/components/schemas/IdToken"
-        authorization_type:
-          description: Authorization type of the token.
-          type: string
-          $ref: "#/components/schemas/AuthorizationType"
-          minLength: 2
-          maxLength: 32
-        connectors:
-          description: A list of connector ids to which the authorization can be assigned
-          type: array
-          items:
-            minimum: 1
-            type: integer
-        prevalidated:
-          description: Indicates that the id token is already validated by the provider
-          type: boolean
-        certificate:
-          description: The X.509 certificated presented by EV and encoded in PEM format
-          type: string
-          maxLength: 5500
-
     ValidationResult:
       description: >-
         Result object containing authorization status enum value and an optional
@@ -303,10 +206,10 @@ components:
       properties:
         authorization_status:
           type: string
-          $ref: "#/components/schemas/AuthorizationStatus"
+          $ref: '#/components/schemas/AuthorizationStatus'
         certificate_status:
           type: string
-          $ref: "#/components/schemas/CertificateStatus"
+          $ref: '#/components/schemas/CertificateStatus'
         expiry_time:
           description: Absolute UTC time point when reservation expires in RFC3339 format
           type: string
@@ -314,7 +217,7 @@ components:
         parent_id_token:
           description: Parent Id Tag of the validated token
           type: object
-          $ref: "#/components/schemas/IdToken"
+          $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/IdToken'
         evse_ids:
           description: >-
             Only used when the id token is valid for one or more specific evses,
@@ -327,7 +230,6 @@ components:
         reservation_id:
           description: The reservation id that is used with this validated token.
           type: integer
-
     ValidationResultUpdate:
       description: >-
         Result object containing an updated validation result for a given token.
@@ -343,7 +245,7 @@ components:
             Result object containing authorization status enum value and an optional
             parentIdTag
           type: object
-          $ref: "#/components/schemas/ValidationResult"
+          $ref: '#/components/schemas/ValidationResult'
         connector_id:
           description: >-
             Id of the connector on which the id token information has been updated.

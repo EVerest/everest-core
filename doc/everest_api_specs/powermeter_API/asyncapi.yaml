@@ -2,8 +2,8 @@
 asyncapi: 3.0.0
 id: 'pionix:de:everest:powermeter_API'
 info:
-  title: EVerest API definition for powermeters
-  version: 1.0.1
+  title: 'EVerest API definition for powermeters'
+  version: 1.0.0
   description: >-
     API for EVerest API clients implementing powermeter.
 
@@ -24,8 +24,7 @@ servers:
         description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
-#Channels are addressable components (MQTT topics). They are used (to send or receive) by the customer application.
-#Senders send to channels and receivers receive messages from channels.
+
 channels:
   receive_request_start_transaction:
     address: 'e2m/start_transaction'
@@ -44,38 +43,41 @@ channels:
       receive_request_stop_transaction:
         $ref: '#/components/messages/receive_request_stop_transaction'
   send_reply_stop_transaction:
-    title: Reply stop transaction
+    title: 'Reply stop transaction'
     address: null
     description: Dynamically defined channel. Used to reply to a stop_transaction message.
     messages:
       send_reply_stop_transaction:
         $ref: '#/components/messages/send_reply_stop_transaction'
+
   send_powermeter_values:
     address: 'm2e/powermeter_values'
     messages:
       send_powermeter_values:
         $ref: '#/components/messages/send_powermeter_values'
-  send_communication_check:
-    address: 'm2e/communication_check'
-    messages:
-      send_communication_check:
-        $ref: '#/components/messages/send_communication_check'
   send_public_key_ocmf:
     address: 'm2e/public_key_ocmf'
     messages:
       send_public_key_ocmf:
-        $ref: "#/components/messages/send_public_key_ocmf"
+        $ref: '#/components/messages/send_public_key_ocmf'
+
+
   receive_heartbeat:
     address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
 
 
-#Operations must be implemented by customer application.
+
 operations:
   receive_request_start_transaction:
-    title: Request start transaction
+    title: 'Request start transaction'
     summary: Request to reply.
     action: receive
     description: This operation is used to handle the request to start a new transaction on the powermeter (for signed metering according to German Eichrecht).
@@ -87,14 +89,14 @@ operations:
       channel:
         $ref: '#/channels/send_reply_start_transaction'
   send_reply_start_transaction:
-    title: Request start transaction
+    title: 'Request start transaction'
     summary: Request to reply.
     description: This operation is used to handle the request to start a new transaction on the powermeter (for signed metering according to German Eichrecht).
     action: send
     channel:
       $ref: '#/channels/send_reply_start_transaction'
   receive_request_stop_transaction:
-    title: Request stop transaction
+    title: 'Request stop transaction'
     summary: Request to reply.
     description: This operation is used to handle the request to stop the transaction on the powermeter and ask for the signed metering information in a reply.
     action: receive
@@ -106,41 +108,44 @@ operations:
       channel:
         $ref: '#/channels/send_reply_stop_transaction'
   send_reply_stop_transaction:
-    title: Request stop transaction
+    title: 'Request stop transaction'
     summary: Request to reply.
     description: This operation is used to handle the request to stop the transaction on the powermeter and ask for the signed metering information in a reply.
     action: send
     channel:
       $ref: '#/channels/send_reply_stop_transaction'
+
   send_powermeter_values:
-    title: Send powermeter values
+    title: 'Send powermeter values'
     summary: 'Direction: Module to EVerest'
     description: This operation is used to send a dataset of measured values. The timestamp and the imported energy (in Wh) are required. Other values are optional.
     action: send
     channel:
       $ref: '#/channels/send_powermeter_values'
-  send_communication_check:
-    title: Send communication check
-    action: send
-    channel:
-      $ref : '#/channels/send_communication_check'
   send_public_key_ocmf:
-    title: Send the public key
+    title: 'Send the public key'
     action: send
     channel:
       $ref : '#/channels/send_public_key_ocmf'
+
+
   receive_heartbeat:
-    title: Receive heatbeat
+    title: 'Receive heatbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
 
 
 components:
   messages:
     receive_request_start_transaction:
       name: start_transaction_req
-      title: Start transaction request message
+      title: 'Start transaction request message'
       summary: The start transaction request message contains the required input parameter for starting an OCMF transaction. These values will be included in the signed OCMF packet of the stop transaction reply.
       contentType: application/json
       payload:
@@ -162,7 +167,7 @@ components:
             $ref: '#/components/schemas/StartTransactionRequest'
     send_reply_start_transaction:
       name: start_transaction_reply
-      title: Start transaction reply message
+      title: 'Start transaction reply message'
       summary: The start transaction reply message contains the request status. It indicates whether the transaction could be started successfully or not. Further values may be added to the message depending on the value of the status.
       contentType: application/json
       payload:
@@ -176,7 +181,7 @@ components:
             transaction_max_stop_time: "2019-08-24T14:15:22Z"
     receive_request_stop_transaction:
       name: stop_transaction_req
-      title: Stop transaction request message
+      title: 'Stop transaction request message'
       summary: The stop transaction request message contains the transaction id to stop the corresponding transaction.
       contentType: application/json
       payload:
@@ -205,7 +210,7 @@ components:
                 description: 'Transaction id received in start transaction request.'
     send_reply_stop_transaction:
       name: stop_transaction_reply
-      title: Stop transaction reply message
+      title: 'Stop transaction reply message'
       summary: The stop transaction reply message contains the request status. It indicates whether the transaction could be stoped successfully or not. If successful the signed meter value report must be provided in this message too.
       contentType: application/json
       payload:
@@ -221,9 +226,10 @@ components:
               public_key: string
               timestamp: '2019-08-24T14:15:22Z'
             error: string
+
     send_powermeter_values:
       name: send_powermeter_values
-      title: Send powermeter values
+      title: 'Send powermeter values'
       summary: The send powermeter values message contains the measured dataset. It requires a timestamp and the imported energy in Wh at least. Other values are optional.
       contentType: application/json
       payload:
@@ -257,18 +263,9 @@ components:
               L1: 228.47914123535156
               L2: 228.47914123535156
               L3: 228.47914123535156
-    send_communication_check:
-      title: Send communication check
-      summary: Signal to EVerest that communication is good or check shall be stopped
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/CommunicationCheck'
-      examples:
-        - summary: ""
-          payload:
-            true
     send_public_key_ocmf:
-      title: Send the public key
+      name: send_public_key_ocmf
+      title: 'Send the public key'
       summary: Provide the public key used to sign the OCMF data
       contentType: application/json
       payload:
@@ -277,12 +274,66 @@ components:
         - summary: ""
           payload:
             "THE_KEY"
+
+
     receive_heartbeat:
-      title: Receive heartbeat
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
       summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: ""
+          payload:
+            true
+
 
   schemas:
+    OCMFIdentificationFlags:
+      description: >-
+        RFID_NONE: No assignment via RFID
+        RFID_PLAIN: Assignment via external RFID card reader
+        RFID_RELATED: Assignment via protected RFID card reader
+        RFID_PSK: A previously known shared key (pre-shared key) was used, e.g. with a secured RFID card.
+        OCPP_NONE: No user assignment by OCPP
+        OCPP_RS: Assignment by OCPP RemoteStart method
+        OCPP_AUTH: Assignment by OCPP Authorize method
+        OCPP_RS_TLS: Assignment by OCPP RemoteStart method, obtained via a secured TLS connection.
+        OCPP_AUTH_TLS: Assignment by OCPP Authorize method, obtained via a secured TLS connection.
+        OCPP_CACHE: Assignment by authorization cache of OCPP
+        OCPP_WHITELIST: Assignment by whitelist from OCPP
+        OCPP_CERTIFIED: A certificate of the backend was used which certifies the user mapping.
+        ISO15118_NONE: no user assignment by ISO 15118
+        ISO15118_PNC: Plug & Charge was used
+        PLMN_NONE: no user assignment
+        PLMN_RING: call
+        PLMN_SMS: short message
+        type: string
+      type: string
+      enum:
+        - RFID_NONE
+        - RFID_PLAIN
+        - RFID_RELATED
+        - RFID_PSK
+        - OCPP_NONE
+        - OCPP_RS
+        - OCPP_AUTH
+        - OCPP_RS_TLS
+        - OCPP_AUTH_TLS
+        - OCPP_CACHE
+        - OCPP_WHITELIST
+        - OCPP_CERTIFIED
+        - ISO15118_NONE
+        - ISO15118_PNC
+        - PLMN_NONE
+        - PLMN_RING
+        - PLMN_SMS
     OCMFIdentificationLevel:
       description: >-
         NONE: There is no user assignment. The other data for user assignment have no significance.
@@ -307,44 +358,6 @@ components:
         - INVALID
         - OUTDATED
         - UNKNOWN
-    OCMFIdentificationFlags:
-      description: >-
-        RFID_NONE: No assignment via RFID
-        RFID_PLAIN: Assignment via external RFID card reader
-        RFID_RELATED: Assignment via protected RFID card reader
-        RFID_PSK: A previously known shared key (pre-shared key) was used, e.g. with a secured RFID card.
-        OCPP_NONE: No user assignment by OCPP
-        OCPP_RS: Assignment by OCPP RemoteStart method
-        OCPP_AUTH: Assignment by OCPP Authorize method
-        OCPP_RS_TLS: Assignment by OCPP RemoteStart method, obtained via a secured TLS connection.
-        OCPP_AUTH_TLS: Assignment by OCPP Authorize method, obtained via a secured TLS connection.
-        OCPP_CACHE: Assignment by authorization cache of OCPP
-        OCPP_WHITELIST: Assignment by whitelist from OCPP
-        OCPP_CERTIFIED: A certificate of the backend was used which certifies the user mapping.
-        ISO15118_NONE: no user assignment by ISO 15118
-        ISO15118_PNC: Plug & Charge was used
-        PLMN_NONE: no user assignment
-        PLMN_RING: call
-        PLMN_SMS: short message
-        type: string
-      enum:
-        - RFID_NONE
-        - RFID_PLAIN
-        - RFID_RELATED
-        - RFID_PSK
-        - OCPP_NONE
-        - OCPP_RS
-        - OCPP_AUTH
-        - OCPP_RS_TLS
-        - OCPP_AUTH_TLS
-        - OCPP_CACHE
-        - OCPP_WHITELIST
-        - OCPP_CERTIFIED
-        - ISO15118_NONE
-        - ISO15118_PNC
-        - PLMN_NONE
-        - PLMN_RING
-        - PLMN_SMS
     OCMFIdentificationType:
       description: >-
         NONE: No assignment available
@@ -366,6 +379,7 @@ components:
         PHONE_NUMBER: International phone number with leading "+".
         KEY_CODE: User-related private key code. No exact format defined.
         type: string
+      type: string
       enum:
         - NONE
         - DENIED
@@ -394,131 +408,6 @@ components:
       enum:
         - ASSIGNED
         - NOT_ASSIGNED
-
-
-
-    TransactionStatus:
-      description: Status of a start or stop transaction - used in start or stop transaction reply.
-      type: string
-      enum:
-          - OK
-          - NOT_SUPPORTED
-          - UNEXPECTED_ERROR
-
-    StartTransactionRequest:
-      type: object
-      additionalProperties: true
-      required:
-        - evse_id
-        - transaction_id
-        - identification_status
-        - identification_type
-        - identification_flags
-      properties:
-        evse_id:
-          description: Id of this EVSE
-          type: string
-        transaction_id:
-          description: OCPP transaction UUID
-          type: string
-        identification_status:
-          description: >-
-            OCMF Identification Status (IS): General status for user assignment
-          type: string
-          $ref: '#/components/schemas/OCMFUserIdentificationStatus'
-        identification_level:
-          description: >-
-            OCMF Identification Level (IL): Encoded overall status of the user assignment
-          type: string
-          $ref: '#/components/schemas/OCMFIdentificationLevel'
-        identification_flags:
-          description: >-
-            OCMF Identification Flags (IF): Detailed statements about the user assignment, represented by one or more identifiers
-          type: array
-          items:
-            type: string
-            $ref: '#/components/schemas/OCMFIdentificationFlags'
-          minItems: 0
-          maxItems: 4
-        identification_type:
-          description: >-
-            OCMF Identification Type (IT): Type of identification data
-          type: string
-          $ref: '#/components/schemas/OCMFIdentificationType'
-        identification_data:
-          description: >-
-            OCMF Identification Data (ID): The actual identification data e.g. a hex-coded UID according to ISO 14443.
-          type: string
-        tariff_text:
-          description: >-
-            A textual description used to identify a unique tariff.
-            This field is intended for the tariff designation in "Direct Payment" use case.
-          type: string
-          minLength: 0
-          maxLength: 250
-
-    StartTransactionReply:
-      description: Return value when a transaction is started.
-      type: object
-      additionalProperties: true
-      required:
-        - status
-      properties:
-        status:
-          description: Response status that indicates whether the transaction start request could successfully be performed.
-          $ref: '#/components/schemas/TransactionStatus'
-        error:
-          description: If status is not OK, a verbose error message.
-          type: string
-        transaction_min_stop_time:
-          description: Earliest point in time the started transaction can be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
-          type: string
-          format: date-time
-        transaction_max_stop_time:
-          description:  Deadline for the transaction to be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
-          type: string
-          format: date-time
-
-
-    StopTransactionReply:
-      description: Report returned when a signed transaction is requested to stop. If successful, includes the signed meter value object. In case of an error, an additional error message can be provided.
-      type: object
-      additionalProperties: true
-      required:
-        - status
-      properties:
-        status:
-          description: Response status that indicates whether the transaction stop request could successfully be performed.
-          $ref: '#/components/schemas/TransactionStatus'
-        start_signed_meter_value:
-          description: The signed meter value report for start of transaction. Needs to be filled if meter provides separate values for start and stop.
-          type: object
-          $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
-        signed_meter_value:
-          description: The signed meter value report of the stopped transaction. Must be provided if status is OK.
-          type: object
-          $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
-        error:
-          description: If status is not OK, a verbose error message.
-          type: string
-
-    Temperature:
-      description: Temperature sensor expressed in C and a description (vendor specific) allowing to identify its purpose or meaning
-      type: object
-      additionalProperties: true
-      required:
-        - temperature
-      properties:
-        temperature:
-          description: The temperature of the sensor measured in C
-          type: number
-        identification:
-          description: A (vendor specific) ID if required
-          type: string
-        location:
-          description: Location of the measurement
-          type: string
-
     Powermeter:
       description: Measured dataset (AC or DC)
       type: object
@@ -611,8 +500,125 @@ components:
           items:
             type: object
             $ref: '#/components/schemas/Temperature'
-
-
+    SendPublicKeyOCMF:
+      type: string
+      description: "The public key as string used to sign the OCMF data"
+    StartTransactionReply:
+      description: Return value when a transaction is started.
+      type: object
+      additionalProperties: true
+      required:
+        - status
+      properties:
+        status:
+          description: Response status that indicates whether the transaction start request could successfully be performed.
+          $ref: '#/components/schemas/TransactionStatus'
+        error:
+          description: If status is not OK, a verbose error message.
+          type: string
+        transaction_min_stop_time:
+          description: Earliest point in time the started transaction can be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
+          type: string
+          format: date-time
+        transaction_max_stop_time:
+          description:  Deadline for the transaction to be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
+          type: string
+          format: date-time
+    StartTransactionRequest:
+      type: object
+      additionalProperties: true
+      required:
+        - evse_id
+        - transaction_id
+        - identification_status
+        - identification_type
+        - identification_flags
+      properties:
+        evse_id:
+          description: Id of this EVSE
+          type: string
+        transaction_id:
+          description: OCPP transaction UUID
+          type: string
+        identification_status:
+          description: >-
+            OCMF Identification Status (IS): General status for user assignment
+          type: string
+          $ref: '#/components/schemas/OCMFUserIdentificationStatus'
+        identification_level:
+          description: >-
+            OCMF Identification Level (IL): Encoded overall status of the user assignment
+          type: string
+          $ref: '#/components/schemas/OCMFIdentificationLevel'
+        identification_flags:
+          description: >-
+            OCMF Identification Flags (IF): Detailed statements about the user assignment, represented by one or more identifiers
+          type: array
+          items:
+            type: string
+            $ref: '#/components/schemas/OCMFIdentificationFlags'
+          minItems: 0
+          maxItems: 4
+        identification_type:
+          description: >-
+            OCMF Identification Type (IT): Type of identification data
+          type: string
+          $ref: '#/components/schemas/OCMFIdentificationType'
+        identification_data:
+          description: >-
+            OCMF Identification Data (ID): The actual identification data e.g. a hex-coded UID according to ISO 14443.
+          type: string
+        tariff_text:
+          description: >-
+            A textual description used to identify a unique tariff.
+            This field is intended for the tariff designation in "Direct Payment" use case.
+          type: string
+          minLength: 0
+          maxLength: 250
+    StopTransactionReply:
+      description: Report returned when a signed transaction is requested to stop. If successful, includes the signed meter value object. In case of an error, an additional error message can be provided.
+      type: object
+      additionalProperties: true
+      required:
+        - status
+      properties:
+        status:
+          description: Response status that indicates whether the transaction stop request could successfully be performed.
+          $ref: '#/components/schemas/TransactionStatus'
+        start_signed_meter_value:
+          description: The signed meter value report for start of transaction. Needs to be filled if meter provides separate values for start and stop.
+          type: object
+          $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        signed_meter_value:
+          description: The signed meter value report of the stopped transaction. Must be provided if status is OK.
+          type: object
+          $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        error:
+          description: If status is not OK, a verbose error message.
+          type: string
+    Temperature:
+      description: Temperature sensor expressed in C and a description (vendor specific) allowing to identify its purpose or meaning
+      type: object
+      additionalProperties: true
+      required:
+        - temperature
+      properties:
+        temperature:
+          description: The temperature of the sensor measured in C
+          type: number
+        identification:
+          description: A (vendor specific) ID if required
+          type: string
+        location:
+          description: Location of the measurement
+          type: string
+    TransactionStatus:
+      description: Status of a start or stop transaction - used in start or stop transaction reply.
+      type: string
+      enum:
+          - OK
+          - NOT_SUPPORTED
+          - UNEXPECTED_ERROR
     units:
       description: Unit types
       types:
@@ -888,6 +894,3 @@ components:
     CommunicationCheck:
       type: boolean
       description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
-    SendPublicKeyOCMF:
-      type: string
-      description: "The public key as string used to sign the OCMF data"

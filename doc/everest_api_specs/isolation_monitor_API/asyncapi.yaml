@@ -2,8 +2,8 @@
 asyncapi: 3.0.0
 id: 'pionix:de:everest:isolation_monitor_API'
 info:
-  title: EVerest API definition for isolation monitors
-  version: 1.0.1
+  title: 'EVerest API definition for isolation monitors'
+  version: 1.0.0
   description: >-
     API for EVerest API clients implementing isolation monitoring.
 
@@ -24,6 +24,7 @@ servers:
         description: The ID of the module as defined in the EVerest config file.
 defaultContentType: application/json
 
+
 channels:
   receive_start:
     address: 'e2m/receive_start'
@@ -40,6 +41,7 @@ channels:
     messages:
       receive_start_self_test:
         $ref: '#/components/messages/receive_start_self_test'
+
   send_isolation_measurement:
     address: 'm2e/isolation_measurement'
     messages:
@@ -50,6 +52,8 @@ channels:
     messages:
       send_self_test_result:
         $ref: '#/components/messages/send_self_test_result'
+
+
   send_raise_error:
     address: 'm2e/raise_error'
     messages:
@@ -60,97 +64,109 @@ channels:
     messages:
       send_clear_error:
         $ref: '#/components/messages/send_clear_error'
-  send_communication_check:
-    address: 'm2e/communication_check'
-    messages:
-      send_communication_check:
-        $ref: '#/components/messages/send_communication_check'
+
   receive_heartbeat:
     address: 'e2m/heartbeat'
     messages:
       receive_heartbeat:
         $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
 
 
 operations:
   receive_start:
-    title: Receive start command
+    title: 'Receive start command'
     summary: 'Direction: EVerest to Module'
     description:  By receiving the start command the monitoring of the isolation status should be started. Measurement data should be sent in user dependent interval until the stop command is received.
     action: receive
     channel:
       $ref: '#/channels/receive_start'
   receive_stop:
-    title: Receive stop command
+    title: 'Receive stop command'
     summary: 'Direction: EVerest to Module'
     description:  By receiving the stop command the monitoring of the isolation status should be stoped. Measurement data must not be sent until the next start command is received.
     action: receive
     channel:
       $ref: '#/channels/receive_stop'
   receive_start_self_test:
-    title: Receive start self test command
+    title: 'Receive start self test command'
     summary: 'Direction: EVerest to Module'
     description: The EvseManager will enable a DC voltage to support the testing, but will not enable output relais such that there is no high voltage on the external plug. The "self_test_result" variable must be published once the self testing is done.
     action: receive
     channel:
       $ref: '#/channels/receive_start_self_test'
+
   send_isolation_measurement:
-    title: Send isolation measurement
+    title: 'Send isolation measurement'
     summary: 'Direction: Module to EVerest'
     description: This operation is used to send a dataset of measured values. The isolation resistance (in Ohm) is required. The voltage is optional.
     action: send
     channel:
       $ref: '#/channels/send_isolation_measurement'
   send_self_test_result:
-    title: Send self test result
+    title: 'Send self test result'
     summary: 'Direction: Module to EVerest'
     description: This operation is used to send the result of the self test.
     action: send
     channel:
       $ref: '#/channels/send_self_test_result'
+
+
   send_raise_error:
-    title: Send raise error
+    title: 'Send raise error'
     action: send
     channel:
       $ref: '#/channels/send_raise_error'
     description: 'Direction: Module to EVerest'
   send_clear_error:
-    title: Send clear error
+    title: 'Send clear error'
     action: send
     channel:
       $ref : '#/channels/send_clear_error'
-  send_communication_check:
-    title: Send communication check
-    action: send
-    channel:
-      $ref : '#/channels/send_communication_check'
+
   receive_heartbeat:
-    title: Receive heatbeat
+    title: 'Receive heatbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+
 
 
 components:
   messages:
     receive_start:
-      title: Receive start command
+      name: receive_start
+      title: 'Receive start command'
       summary: Start recurring isolation measurements. The device should monitor the isolation status until stopped and publish the resistance data in regular intervals. The actual interval is device dependent.
       contentType: application/json
       payload: {}
     receive_stop:
-      title: Receive stop command
+      name: receive_stop
+      title: 'Receive stop command'
       summary: Stop recurring measurements. The device should stop to monitor the isolation resistance and stop publishing the data.
       contentType: application/json
       payload: {}
     receive_start_self_test:
-      title: Receive start self test command
+      name: receive_start_self_test
+      title: 'Receive start self test command'
       summary: Start self test. EvseManager will enable a DC voltage to support the testing, but will not enable output relais such that there is no high voltage on the external plug.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/SelfTestVoltage'
+
     send_isolation_measurement:
-      title: Send isolation monitor measurement
+      name: send_isolation_measurement
+      title: 'Send isolation monitor measurement'
       summary: 'Isolation monitoring measurement results'
       contentType: application/json
       payload:
@@ -161,7 +177,8 @@ components:
             "resistance_F_Ohm": 0
             "voltage_V": 0
     send_self_test_result:
-      title: Send self test result
+      name: send_self_test_result
+      title: 'Send self test result'
       summary: 'Self test result'
       contentType: application/json
       payload:
@@ -170,8 +187,11 @@ components:
         - summary: ""
           payload:
             true
+
+
     send_raise_error:
-      title: Send raise error
+      name: send_raise_error
+      title: 'Send raise error'
       summary: Signal to EVerest that an error happened.
       contentType: application/json
       payload:
@@ -183,7 +203,8 @@ components:
             "sub_type": "string"
             "message": "string"
     send_clear_error:
-      title: Send clear error
+      name: send_clear_error
+      title: 'Send clear error'
       summary: Signal to EVerest that a previously raised error is no longer active.
       contentType: application/json
       payload:
@@ -194,8 +215,15 @@ components:
             "type": "CommunicationFault"
             "sub_type": "string"
             "message": "string"
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
     send_communication_check:
-      title: Send communication check
+      name: send_communication_check
+      title: 'Send communication check'
       summary: Signal to EVerest that communication is good or check shall be stopped
       contentType: application/json
       payload:
@@ -204,11 +232,6 @@ components:
         - summary: ""
           payload:
             true
-    receive_heartbeat:
-      title: Receive heartbeat
-      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
-      contentType: application/json
-
 
 
   schemas:
@@ -230,6 +253,9 @@ components:
         Indicates the self test is done and publishes the result.
         Set "true" for success, "false" for failure.
       type: boolean
+    SelfTestVoltage:
+      type: number
+      description: "Voltage for the isolation monitor self test"
 
     ErrorEnum:
       description: |
@@ -239,13 +265,12 @@ components:
         - VendorError: Vendor specific error code. Will stop charging session.
         - VendorWarning:  Vendor specific error code. Charging may continue.
 
-        type: string
-        enum:
-          - DeviceFault
-          - CommunicationFault
-          - VendorError
-          - VendorWarning
-
+      type: string
+      enum:
+        - DeviceFault
+        - CommunicationFault
+        - VendorError
+        - VendorWarning
     Error:
       description: >-
          Errors for Isolation Monitor
@@ -272,7 +297,3 @@ components:
     CommunicationCheck:
       type: boolean
       description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
-
-    SelfTestVoltage:
-      type: number
-      description: "Voltage for the isolation monitor self test"
