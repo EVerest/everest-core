@@ -26,6 +26,16 @@ defaultContentType: application/json
 
 
 channels:
+  send_set_connection_timeout:
+    address: 'm2e/set_connection_timeout'
+    messages:
+      send_set_connection_timeout:
+        $ref: '#/components/messages/send_set_connection_timeout'
+  send_set_master_pass_group_id:
+    address: 'm2e/set_connection_timeout'
+    messages:
+      send_set_master_pass_group_id:
+        $ref: '#/components/messages/send_set_master_pass_group_id'
   send_request_withdraw_authorization:
     address: 'm2e/withdraw_authorization'
     messages:
@@ -58,6 +68,21 @@ channels:
 
 
 operations:
+  send_set_connection_timeout:
+    title: 'Set the connection timeout.'
+    action: send
+    channel:
+      $ref: '#/channels/send_set_connection_timeout'
+  send_set_master_pass_group_id:
+    title: 'Set the master group ID.'
+    action: send
+    channel:
+      $ref: '#/channels/send_set_master_pass_group_id'
+    description: >-
+      Sets the master pass group id. IdTokens that have this id as parent_id_token belong to the Master Pass Group. 
+      This means they can stop any ongoing transaction, but cannot start transactions. This can, for example, be used by
+      law enforcement personal to stop any ongoing transaction when an EV has to be towed away. If master_pass_group_id 
+      is an empty string, it is not used.
   send_request_withdraw_authorization:
     title: 'Withdraw granted authorization.'
     action: send
@@ -103,6 +128,20 @@ operations:
 
 components:
   messages:
+    send_set_connection_timeout:
+      name: send_set_connection_timeout
+      title: 'Set the connection timeout.'
+      summary: 'Set the connection timeout.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SetConnectionTimeoutRequest'
+    send_set_master_pass_group_id:
+      name: send_set_master_pass_group_id
+      title: 'Set the master group ID.'
+      summary: 'Set the master group ID.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SetMasterPassGroupId'
     send_request_withdraw_authorization:
       name: send_request_withdraw_authorization
       title: 'Withdraw granted authorization'
@@ -187,6 +226,40 @@ components:
         - Autocharge
         - PlugAndCharge
         - BankCard
+    CertificateHashDataInfo:
+      description: Contains the certificate information
+      type: object
+      additionalProperties: true
+      required:
+        - hashAlgorithm
+        - issuerNameHash
+        - issuerKeyHash
+        - serialNumber
+        - responderURL
+      properties:
+        hashAlgorithm:
+          description: Used algorithms for the hashes provided
+          type: string
+          enum:
+            - SHA256
+            - SHA384
+            - SHA512
+        issuerNameHash:
+          description: Hashed value of the Issuer Distinguished Name
+          type: string
+          maxLength: 128
+        issuerKeyHash:
+          description: Hashed value of the issuers public key
+          type: string
+          maxLength: 128
+        serialNumber:
+          description: The serial number of the certificate
+          type: string
+          maxLength: 40
+        responderURL:
+          description: This contains the responder URL
+          type: string
+          maxLength: 512
     CustomIdToken:
       description: 'Type for a custom id token with a free-form type'
       type: object
@@ -281,6 +354,26 @@ components:
           description: The X.509 certificated presented by EV and encoded in PEM format
           type: string
           maxLength: 5500
+        iso15118CertificateHashData:
+          description: >-
+            Contains the information needed to verify the EV Contract Certificate
+            via OCSP
+          type: array
+          items:
+            description: An array of contract certificate infos
+            type: object
+            $ref: '#/components/schemas/CertificateHashDataInfo'
+          minItems: 1
+          maxItems: 4
+    SetConnectionTimeoutRequest:
+      description: Connection timeout in seconds
+      type: integer
+      minimum: 10
+      maximum: 300
+    SetMasterPassGroupId:
+      description: The master pass group id
+      type: string
+      maxLength: 36
     TokenValidationStatus:
       description: |
         Ongoing token validation status

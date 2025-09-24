@@ -25,6 +25,8 @@ void auth_consumer_API::init() {
 void auth_consumer_API::ready() {
     invoke_ready(*p_main);
 
+    generate_api_cmd_set_connection_timeout();
+    generate_api_cmd_set_master_pass_group_id();
     generate_api_cmd_withdraw_authorization();
     generate_api_var_token_validation_status();
 
@@ -48,6 +50,28 @@ auto auth_consumer_API::forward_api_var(std::string const& var) {
             EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
         }
     };
+}
+
+void auth_consumer_API::generate_api_cmd_set_connection_timeout() {
+    subscribe_api_topic("set_connection_timeout", [=](std::string const& data) {
+        int connection_timeout;
+        if (deserialize(data, connection_timeout)) {
+            r_auth->call_set_connection_timeout(connection_timeout);
+            return true;
+        }
+        return false;
+    });
+}
+
+void auth_consumer_API::generate_api_cmd_set_master_pass_group_id() {
+    subscribe_api_topic("set_master_pass_group_id", [=](std::string const& data) {
+        std::string master_pass_group_id;
+        if (deserialize(data, master_pass_group_id)) {
+            r_auth->call_set_master_pass_group_id(master_pass_group_id);
+            return true;
+        }
+        return false;
+    });
 }
 
 void auth_consumer_API::generate_api_cmd_withdraw_authorization() {
