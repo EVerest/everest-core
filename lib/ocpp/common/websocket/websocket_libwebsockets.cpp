@@ -1090,7 +1090,7 @@ static bool send_internal(lws* wsi, WebsocketMessage* msg) {
 
     if (sent < 0) {
         // Fatal error, conn closed
-        EVLOG_error << "Error sending message over TLS websocket, conn closed.";
+        EVLOG_error << "Error sending message, conn closed.";
         msg->sent_bytes = 0;
         return false;
     }
@@ -1103,8 +1103,7 @@ static bool send_internal(lws* wsi, WebsocketMessage* msg) {
     msg->sent_bytes = sent;
 
     if (static_cast<size_t>(sent) < message_len) {
-        EVLOG_error << "Error sending message over TLS websocket. Sent bytes: " << sent
-                    << " Total to send: " << message_len;
+        EVLOG_error << "Error sending message. Sent bytes: " << sent << " Total to send: " << message_len;
         return false;
     }
 
@@ -1147,7 +1146,7 @@ void WebsocketLibwebsockets::poll_message(const std::shared_ptr<WebsocketMessage
         }
     }
 
-    EVLOG_debug << "Queueing message over TLS websocket: " << msg->payload;
+    EVLOG_debug << "Queueing message: " << msg->payload;
     message_queue.push(msg);
 
     // Request a write callback
@@ -1157,9 +1156,9 @@ void WebsocketLibwebsockets::poll_message(const std::shared_ptr<WebsocketMessage
                                        std::chrono::seconds(MESSAGE_SEND_TIMEOUT_S));
 
     if (msg->message_sent) {
-        EVLOG_debug << "Successfully sent last message over TLS websocket!";
+        EVLOG_debug << "Successfully sent last message!";
     } else {
-        EVLOG_warning << "Could not send last message over TLS websocket!";
+        EVLOG_warning << "Could not send last message!";
     }
 }
 
