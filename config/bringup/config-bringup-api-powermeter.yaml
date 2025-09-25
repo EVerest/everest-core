@@ -4,7 +4,7 @@ active_modules:
   powermeter_1:
     module: powermeter_API
     config_module:
-      cfg_communication_check_to_s: 60
+      cfg_communication_check_to_s: 0
       cfg_heartbeat_interval_ms: 10000
   cli:
     config_module:

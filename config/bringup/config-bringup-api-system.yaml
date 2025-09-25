@@ -4,7 +4,7 @@ active_modules:
   system_1:
     module: system_API
     config_module:
-      cfg_communication_check_to_s: 60
+      cfg_communication_check_to_s: 0
   cli:
     module: BUSystem
     standalone: true

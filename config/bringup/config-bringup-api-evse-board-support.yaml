@@ -4,7 +4,7 @@ active_modules:
   bsp_1:
     module: evse_board_support_API
     config_module:
-      cfg_communication_check_to_s: 600
+      cfg_communication_check_to_s: 0
   cli:
     module: BUEvseBoardSupport
     standalone: true

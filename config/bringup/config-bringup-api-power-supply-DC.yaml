@@ -4,7 +4,7 @@ active_modules:
   ps_dc_1:
     module: power_supply_DC_API
     config_module:
-      cfg_communication_check_to_s: 60
+      cfg_communication_check_to_s: 0
       cfg_heartbeat_interval_ms: 10000
   cli:
     module: BUPowerSupplyDC
