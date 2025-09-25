@@ -52,8 +52,7 @@ public:
         p_rcd(std::move(p_rcd)),
         p_connector_lock(std::move(p_connector_lock)),
         config(config),
-        comm_check("evse_board_support/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {
-        };
+        comm_check("evse_board_support/CommunicationFault", "Bridge to implementation connection lost", this->p_main){};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<evse_board_supportImplBase> p_main;

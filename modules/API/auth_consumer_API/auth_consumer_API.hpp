@@ -46,7 +46,7 @@ public:
         p_main(std::move(p_main)),
         r_auth(std::move(r_auth)),
         config(config),
-        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {};
+        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_main){};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<generic_errorImplBase> p_main;

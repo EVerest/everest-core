@@ -47,7 +47,7 @@ public:
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         config(config),
-        comm_check("power_supply_DC/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {};
+        comm_check("power_supply_DC/CommunicationFault", "Bridge to implementation connection lost", this->p_main){};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<power_supply_DCImplBase> p_main;

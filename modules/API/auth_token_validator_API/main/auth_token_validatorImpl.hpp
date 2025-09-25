@@ -30,7 +30,7 @@ public:
     auth_token_validatorImpl() = delete;
     auth_token_validatorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<auth_token_validator_API>& mod,
                              Conf& config) :
-        auth_token_validatorImplBase(ev, "main"), mod(mod), config(config) {};
+        auth_token_validatorImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

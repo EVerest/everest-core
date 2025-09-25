@@ -42,7 +42,7 @@ public:
         p_generic_error(std::move(p_generic_error)),
         r_derate(std::move(r_derate)),
         config(config),
-        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_generic_error) {};
+        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_generic_error){};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<generic_errorImplBase> p_generic_error;

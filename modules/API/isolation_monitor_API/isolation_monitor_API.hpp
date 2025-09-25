@@ -43,7 +43,7 @@ public:
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         config(config),
-        comm_check("isolation_monitor/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {};
+        comm_check("isolation_monitor/CommunicationFault", "Bridge to implementation connection lost", this->p_main){};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<isolation_monitorImplBase> p_main;

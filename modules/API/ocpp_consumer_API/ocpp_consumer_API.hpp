@@ -53,7 +53,7 @@ public:
         r_ocpp(std::move(r_ocpp)),
         r_data_transfer(std::move(r_data_transfer)),
         config(config),
-        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_generic_error) {};
+        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_generic_error){};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<generic_errorImplBase> p_generic_error;

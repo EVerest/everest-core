@@ -46,7 +46,7 @@ public:
         p_auth_token_validator(std::move(p_auth_token_validator)),
         config(config),
         comm_check("generic/CommunicationFault", "Bridge to implementation connection lost",
-                   this->p_auth_token_validator) {};
+                   this->p_auth_token_validator){};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<auth_token_validatorImplBase> p_auth_token_validator;
