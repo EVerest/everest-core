@@ -15,24 +15,21 @@ namespace module {
 namespace main {
 
 void power_supply_DCImpl::init() {
-    constexpr int telemetry_update_interval = 5;
     mod->acdc->initial_ping();
     mod->acdc->signalVoltageCurrent.connect([this](WinlineCanDevice::TelemetryMap telemetries) {
-        if (throttle_cnt++ % telemetry_update_interval == 0) {
-            float total_current = 0;
-            float module_voltage = 0;
+        float total_current = 0;
+        float module_voltage = 0;
 
-            for (const auto& telemetry : telemetries) {
-                total_current += telemetry.second.current;
-                // Use the proper Winline voltage reading from register 0x0001
-                module_voltage = telemetry.second.voltage; // Changed from v_ext to voltage
-            }
-
-            types::power_supply_DC::VoltageCurrent vc;
-            vc.current_A = total_current;
-            vc.voltage_V = module_voltage;
-            publish_voltage_current(vc);
+        for (const auto& telemetry : telemetries) {
+            total_current += telemetry.second.current;
+            // Use the proper Winline voltage reading from register 0x0001
+            module_voltage = telemetry.second.voltage; // Changed from v_ext to voltage
         }
+
+        types::power_supply_DC::VoltageCurrent vc;
+        vc.current_A = total_current;
+        vc.voltage_V = module_voltage;
+        publish_voltage_current(vc);
     });
 
     mod->acdc->signalModuleStatus.connect([this](can_packet_acdc::PowerModuleStatus status) {
