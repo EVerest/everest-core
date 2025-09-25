@@ -4,6 +4,8 @@
 
 #include <goose/sender.hpp>
 
+#include <algorithm>
+
 class DummyEthernetInterface : public goose_ethernet::EthernetInterfaceIntf {
     std::function<void(const uint8_t*, size_t)> send_callback;
     std::function<std::vector<uint8_t>()> receive_callback;
