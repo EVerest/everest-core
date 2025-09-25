@@ -1088,8 +1088,12 @@ bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::stea
                 shared_context.max_current = c_abs;
                 shared_context.max_current_valid_until = validUntil;
             }
+            // now after max_current is updated with c_abs we can update c_abs with the internal max current which
+            // considers the cable limit as well
             c_abs = get_max_current_internal();
             bsp->set_overcurrent_limit(c_abs);
+            // the max_current is internally an absolute value. The sign of c is now used to signal
+            // if it is charging (c>0) or discharging (c<0)
             signal_max_current(c < 0.0f ? -c_abs : c_abs);
             return true;
         }
