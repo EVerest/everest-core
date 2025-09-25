@@ -31,6 +31,10 @@ struct Conf {
     double min_export_current_A;
     double max_export_current_A;
     int power_state_grace_period_ms;
+    double current_regulation_tolerance_A;
+    double peak_current_ripple_A;
+    int altitude_setting_m;
+    std::string input_mode;
 };
 
 class Winline : public Everest::ModuleBase {

@@ -15,24 +15,21 @@ namespace module {
 namespace main {
 
 void power_supply_DCImpl::init() {
-    constexpr int telemetry_update_interval = 5;
     mod->acdc->initial_ping();
     mod->acdc->signalVoltageCurrent.connect([this](WinlineCanDevice::TelemetryMap telemetries) {
-        if (throttle_cnt++ % telemetry_update_interval == 0) {
-            float total_current = 0;
-            float module_voltage = 0;
+        float total_current = 0;
+        float module_voltage = 0;
 
-            for (const auto& telemetry : telemetries) {
-                total_current += telemetry.second.current;
-                // Use the proper Winline voltage reading from register 0x0001
-                module_voltage = telemetry.second.voltage; // Changed from v_ext to voltage
-            }
-
-            types::power_supply_DC::VoltageCurrent vc;
-            vc.current_A = total_current;
-            vc.voltage_V = module_voltage;
-            publish_voltage_current(vc);
+        for (const auto& telemetry : telemetries) {
+            total_current += telemetry.second.current;
+            // Use the proper Winline voltage reading from register 0x0001
+            module_voltage = telemetry.second.voltage; // Changed from v_ext to voltage
         }
+
+        types::power_supply_DC::VoltageCurrent vc;
+        vc.current_A = total_current;
+        vc.voltage_V = module_voltage;
+        publish_voltage_current(vc);
     });
 
     mod->acdc->signalModuleStatus.connect([this](can_packet_acdc::PowerModuleStatus status) {
@@ -67,6 +64,9 @@ void power_supply_DCImpl::init() {
         new_caps.max_export_voltage_V = mod->config.max_export_voltage_V;
         new_caps.min_export_current_A = mod->config.min_export_current_A;
         new_caps.max_export_current_A = 0.0;  // Will be updated with device rated values
+        new_caps.current_regulation_tolerance_A = mod->config.current_regulation_tolerance_A;
+        new_caps.peak_current_ripple_A = mod->config.peak_current_ripple_A;
+
 
         // Update with device rated values (current and power from protocol)
         for (const auto& telemetry : telemetries) {
@@ -247,6 +247,10 @@ std::string power_supply_DCImpl::map_winline_error_to_power_supply_dc(WinlineCan
         return "power_supply_DC/VendorWarning"; // Non-critical vendor-specific warning
     case WinlineCanDevice::Error::InputPhaseLoss:
         return "power_supply_DC/VendorError"; // Critical vendor-specific error
+    case WinlineCanDevice::Error::VendorError:
+        return "power_supply_DC/VendorError"; // Critical vendor-specific error
+    case WinlineCanDevice::Error::VendorWarning:
+        return "power_supply_DC/VendorWarning"; // Non-critical vendor-specific warning
     default:
         return "power_supply_DC/VendorError"; // Fallback for unknown errors
     }

@@ -62,7 +62,6 @@ private:
 
     bool firsttime{true};
     uint8_t last_module_count{0};
-    uint8_t throttle_cnt{0};
 
     // Error handling helpers
     std::string map_winline_error_to_power_supply_dc(WinlineCanDevice::Error error);

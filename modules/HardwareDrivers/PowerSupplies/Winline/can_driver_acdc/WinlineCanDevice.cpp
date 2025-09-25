@@ -61,17 +61,23 @@ void WinlineCanDevice::set_can_device(const std::string& dev) {
     open_device(can_device.c_str());
 }
 
-void WinlineCanDevice::set_config_values(const std::string& addrs, int group_addr, int timeout,
-                                         int controller_address, int power_state_grace_period_ms) {
+void WinlineCanDevice::set_config_values(const std::string& addrs, int group_addr, int timeout, int controller_address,
+                                         int power_state_grace_period_ms, int altitude_setting_m,
+                                         const std::string& input_mode) {
     this->device_connection_timeout_s = timeout;
     this->group_address = group_addr;
     this->controller_address = controller_address;
     this->power_state_grace_period_ms = power_state_grace_period_ms;
+    this->altitude_setting_m = altitude_setting_m;
+    this->input_mode = input_mode;
 
     EVLOG_info << "Winline: Operating with controller address: 0x" << std::hex << controller_address;
+    EVLOG_info << "Winline: Altitude setting: " << altitude_setting_m << "m";
+    EVLOG_info << "Winline: Input mode: " << input_mode;
     if (!addrs.empty()) {
         operating_mode = OperatingMode::FIXED_ADDRESS;
-        active_module_addresses = parse_module_addresses(addrs);
+        configured_module_addresses = parse_module_addresses(addrs); // Store original configured addresses
+        active_module_addresses = configured_module_addresses;       // Initialize active list with configured addresses
         expected_module_count = active_module_addresses.size();
 
         // Initialize telemetry entries for configured modules to prevent immediate removal
@@ -193,35 +199,6 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
             EVLOG_debug << format_module_id(source_address) << ": Current = " << current_reading.current << "A";
         }
     } break;
-    case WinlineProtocol::Registers::CURRENT_LIMIT_POINT: {
-        if (data_type == WinlineProtocol::DATA_TYPE_FLOAT) {
-            can_packet_acdc::ReadCurrentLimitPoint limit_reading(payload);
-            auto& telemetry = telemetries[source_address];
-            telemetry.current_limit_point = limit_reading.limit_point;
-            telemetry.last_update = std::chrono::steady_clock::now();
-            EVLOG_debug << format_module_id(source_address) << ": Current limit = " << limit_reading.limit_point;
-        }
-    } break;
-
-        // Temperature monitoring registers
-    case WinlineProtocol::Registers::DC_BOARD_TEMPERATURE: {
-        if (data_type == WinlineProtocol::DATA_TYPE_FLOAT) {
-            can_packet_acdc::ReadDCBoardTemperature temp_reading(payload);
-            auto& telemetry = telemetries[source_address];
-            telemetry.dc_board_temperature = temp_reading.temperature;
-            telemetry.last_update = std::chrono::steady_clock::now();
-            EVLOG_debug << format_module_id(source_address) << ": DC board temp = " << temp_reading.temperature << "°C";
-        }
-    } break;
-    case WinlineProtocol::Registers::AMBIENT_TEMPERATURE: {
-        if (data_type == WinlineProtocol::DATA_TYPE_FLOAT) {
-            can_packet_acdc::ReadAmbientTemperature temp_reading(payload);
-            auto& telemetry = telemetries[source_address];
-            telemetry.ambient_temperature = temp_reading.temperature;
-            telemetry.last_update = std::chrono::steady_clock::now();
-            EVLOG_debug << format_module_id(source_address) << ": Ambient temp = " << temp_reading.temperature << "°C";
-        }
-    } break;
 
     // Module capabilities and ratings
     case WinlineProtocol::Registers::RATED_OUTPUT_POWER: {
@@ -264,7 +241,7 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
             // Perform trend analysis and maintain status history
             analyze_status_trends(source_address);
 
-            // Enhanced power control verification (Task 12)
+            // Enhanced power control verification
             auto& power_tracking = telemetry.power_tracking;
             if (power_tracking.power_commands_sent > 0 && !power_tracking.power_state_verified) {
                 bool verification_result = verify_power_state(source_address, power_tracking.expected_power_state);
@@ -297,6 +274,16 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
             if (operating_mode == OperatingMode::GROUP_DISCOVERY) {
                 // Validate that the discovered module belongs to our target group
                 if (group_info.group_number == group_address) {
+                    // Add to configured_module_addresses (persistent discovery list)
+                    if (std::find(configured_module_addresses.begin(), configured_module_addresses.end(), source_address) ==
+                        configured_module_addresses.end()) {
+                        configured_module_addresses.push_back(source_address);
+                        EVLOG_info << "Winline: Added discovered module 0x" << std::hex
+                                   << static_cast<int>(source_address) << " to configured list (group "
+                                   << static_cast<int>(group_info.group_number) << ")";
+                    }
+
+                    // Also add to active_module_addresses for online tracking
                     if (std::find(active_module_addresses.begin(), active_module_addresses.end(), source_address) ==
                         active_module_addresses.end()) {
                         active_module_addresses.push_back(source_address);
@@ -346,35 +333,11 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
         }
     } break;
 
-        // Version information
-    case WinlineProtocol::Registers::DCDC_VERSION: {
-        if (data_type == WinlineProtocol::DATA_TYPE_INTEGER) {
-            can_packet_acdc::ReadDCDCVersion version_reading(payload);
-            auto& telemetry = telemetries[source_address];
-            telemetry.dcdc_version = version_reading.version;
-            telemetry.last_update = std::chrono::steady_clock::now();
-            EVLOG_info << format_module_id(source_address) << ": DCDC version = " << version_reading.version;
-        }
-    } break;
-    case WinlineProtocol::Registers::PFC_VERSION: {
-        if (data_type == WinlineProtocol::DATA_TYPE_INTEGER) {
-            can_packet_acdc::ReadPFCVersion version_reading(payload);
-            auto& telemetry = telemetries[source_address];
-            telemetry.pfc_version = version_reading.version;
-            telemetry.last_update = std::chrono::steady_clock::now();
-            EVLOG_info << format_module_id(source_address) << ": PFC version = " << version_reading.version;
-        }
-    } break;
-
     // SET operation responses (confirmation of settings)
     case WinlineProtocol::Registers::SET_OUTPUT_VOLTAGE:
     case WinlineProtocol::Registers::SET_OUTPUT_CURRENT:
-    case WinlineProtocol::Registers::SET_GROUP_NUMBER:
     case WinlineProtocol::Registers::SET_ALTITUDE:
-    case WinlineProtocol::Registers::SET_INPUT_MODE:
-    case WinlineProtocol::Registers::SET_ADDRESS_MODE:
-    case WinlineProtocol::Registers::SET_CURRENT_LIMIT_POINT:
-    case WinlineProtocol::Registers::SET_VOLTAGE_UPPER_LIMIT: {
+    case WinlineProtocol::Registers::SET_INPUT_MODE: {
         // SET operations return success/failure confirmation
         if (error_code == WinlineProtocol::ERROR_NORMAL) {
             EVLOG_debug << format_module_id(source_address) << ": SET operation confirmed for register 0x" << std::hex
@@ -388,7 +351,7 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
     } break;
 
     case WinlineProtocol::Registers::POWER_CONTROL: {
-        // Enhanced power control response handling (Task 12)
+        // Enhanced power control response handling
         auto& telemetry = telemetries[source_address];
         auto& power_tracking = telemetry.power_tracking;
 
@@ -451,6 +414,25 @@ size_t WinlineCanDevice::remove_expired_telemetry_entries() {
         } else if (!telemetries.empty()) {
             // At least one module responding - clear CommunicationFault
             signalError(0xFF, Error::CommunicationFault, false); // Use address 0xFF for system-wide fault
+
+            // In FIXED_ADDRESS mode, ensure all responding modules are in active list
+            if (operating_mode == OperatingMode::FIXED_ADDRESS) {
+                bool modules_re_added = false;
+                for (const auto& [addr, telemetry] : telemetries) {
+                    if (std::find(active_module_addresses.begin(), active_module_addresses.end(), addr) ==
+                        active_module_addresses.end()) {
+                        active_module_addresses.push_back(addr);
+                        EVLOG_info << "Winline: Re-added module 0x" << std::hex << static_cast<int>(addr)
+                                   << " to active list during cleanup";
+                        modules_re_added = true;
+                    }
+                }
+
+                // Signal capabilities update if modules were re-added
+                if (modules_re_added) {
+                    signalCapabilitiesUpdate(telemetries);
+                }
+            }
         }
     }
 
@@ -473,24 +455,40 @@ void WinlineCanDevice::poll_status_handler() {
     // Poll ALL configured modules (not just active ones) to allow offline modules to recover.
     // This enables automatic recovery when temporarily offline modules come back online.
 
-    // For Winline: Enhanced group discovery using register 0x0043 (GROUP_INFO)
+    // Unified polling approach for both modes
     if (operating_mode == OperatingMode::GROUP_DISCOVERY) {
-        // Use the enhanced discovery method for more comprehensive group operations
+        // First, try to discover new modules
         discover_group_modules();
-
-        // Also query group status for comprehensive group monitoring
-        send_read_register(WinlineProtocol::GROUP_BROADCAST_ADDR, WinlineProtocol::Registers::STATUS, true);
     }
 
+    // Poll ALL configured modules (not just active ones) to allow offline modules to recover.
+    // This enables automatic recovery when temporarily offline modules come back online.
+    for (const auto& addr : configured_module_addresses) {
+        // Send basic telemetry requests to check if module is responding
+        send_read_register(addr, WinlineProtocol::Registers::VOLTAGE);
+        send_read_register(addr, WinlineProtocol::Registers::CURRENT);
+
+        // If module responds and is not in active list, re-add it
+        if (telemetries.find(addr) != telemetries.end() &&
+            std::find(active_module_addresses.begin(), active_module_addresses.end(), addr) ==
+                active_module_addresses.end()) {
+            active_module_addresses.push_back(addr);
+            EVLOG_info << "Winline: Module 0x" << std::hex << static_cast<int>(addr)
+                       << " reconnected and added back to active list";
+
+            // Signal capabilities update when module is re-added
+            signalCapabilitiesUpdate(telemetries);
+        }
+    }
+
+    // Poll active modules for detailed telemetry
     for (const auto& addr : active_module_addresses) {
         // Read essential telemetry using Winline registers
         send_read_register(addr, WinlineProtocol::Registers::VOLTAGE); // Read voltage
         send_read_register(addr, WinlineProtocol::Registers::CURRENT); // Read current
 
-        // Enhanced status monitoring (Task 11) - use comprehensive status check
+        // Enhanced status monitoring - use comprehensive status check
         perform_comprehensive_status_check(addr);
-
-        send_read_register(addr, WinlineProtocol::Registers::CURRENT_LIMIT_POINT); // Read current limit point
 
         // Read serial number if we don't have it yet (only poll once to avoid spam)
         auto it = telemetries.find(addr);
@@ -522,15 +520,7 @@ bool WinlineCanDevice::switch_on_off(bool on) {
         return false;
     }
 
-    // Optimize: Use group operations when we have multiple modules and are in group discovery mode
-    if (operating_mode == OperatingMode::GROUP_DISCOVERY && active_module_addresses.size() > 2) {
-        EVLOG_info << "Winline: Using optimized group operation for " << active_module_addresses.size() << " modules";
-        // Release current lock before calling group function to avoid deadlock
-        // The group function will acquire its own lock
-        return switch_on_off_group(on);
-    }
-
-    // Use individual module commands for fixed address mode or small numbers of modules
+    // Use individual module commands (unified approach for both modes)
     EVLOG_info << "Winline: Using individual module commands with enhanced power tracking";
     uint32_t power_value = on ? WinlineProtocol::POWER_ON : WinlineProtocol::POWER_OFF;
     bool success = true;
@@ -538,8 +528,7 @@ bool WinlineCanDevice::switch_on_off(bool on) {
     for (const auto& addr : active_module_addresses) {
         bool module_success = send_set_register_integer(addr, WinlineProtocol::Registers::POWER_CONTROL, power_value);
         if (!module_success) {
-            EVLOG_warning << "Winline: Failed to send power control to module 0x" << std::hex
-                         << static_cast<int>(addr);
+            EVLOG_warning << "Winline: Failed to send power control to module 0x" << std::hex << static_cast<int>(addr);
             success = false;
         } else {
             // Track power state change for this module
@@ -566,18 +555,7 @@ bool WinlineCanDevice::set_voltage_current(float voltage, float current) {
         return false;
     }
 
-    // Optimize: Use group operations when we have multiple modules and are in group discovery mode
-    // Note: For group operations, current division should be handled by the modules themselves
-    if (operating_mode == OperatingMode::GROUP_DISCOVERY && module_count > 2) {
-        EVLOG_info << "Winline: Using optimized group operation for " << module_count << " modules";
-        // Calculate current per module for group operation
-        const float current_per_module = current / static_cast<float>(module_count);
-        // Release current lock before calling group function to avoid deadlock
-        // The group function will acquire its own lock
-        return set_voltage_current_group(voltage, current_per_module);
-    }
-
-    // Use individual module commands for fixed address mode or small numbers of modules
+    // Use individual module commands (unified approach for both modes)
     EVLOG_info << "Winline: Using individual module commands";
     const float current_per_module = current / static_cast<float>(module_count);
     bool success = true;
@@ -597,75 +575,7 @@ bool WinlineCanDevice::set_voltage_current(float voltage, float current) {
 }
 
 // Enhanced Winline group operations
-bool WinlineCanDevice::switch_on_off_group(bool on) {
 
-    EVLOG_info << "Winline: switch_on_off_group(" << on << ") - targeting group " << group_address
-               << " with enhanced power tracking";
-
-    // Use Winline group broadcast to send power control to all modules in the group
-    uint32_t power_value = on ? WinlineProtocol::POWER_ON : WinlineProtocol::POWER_OFF;
-    bool result = send_set_register_integer(WinlineProtocol::GROUP_BROADCAST_ADDR,
-                                            WinlineProtocol::Registers::POWER_CONTROL, power_value, true);
-
-    if (!result) {
-        EVLOG_warning << "Winline: Group power control command failed";
-    } else {
-        EVLOG_info << "Winline: Group power control command sent successfully (group " << group_address << ")";
-
-        // Enhanced power tracking (Task 12) - track power state change for all active modules
-        for (const auto& addr : active_module_addresses) {
-            track_power_state_change(addr, on);
-        }
-
-        EVLOG_info << "Winline: Power state tracking updated for " << active_module_addresses.size()
-                   << " modules. Verification will occur in next status poll.";
-    }
-
-    return result;
-}
-
-bool WinlineCanDevice::set_voltage_current_group(float voltage, float current) {
-    EVLOG_info << "Winline: set_voltage_current_group(" << voltage << "V, " << current << "A) - targeting group "
-               << group_address;
-
-    // For group operations, current is NOT divided - each module in the group should handle current distribution
-    // This is different from individual module control where we divide current among modules
-    bool voltage_result = send_set_register_float(WinlineProtocol::GROUP_BROADCAST_ADDR,
-                                                  WinlineProtocol::Registers::SET_OUTPUT_VOLTAGE, voltage, true);
-
-    // Set current using register 0x001B (integer, scaled by 1024)
-    uint32_t scaled_current = static_cast<uint32_t>(current * WinlineProtocol::CURRENT_SCALE_FACTOR);
-    bool current_result = send_set_register_integer(
-        WinlineProtocol::GROUP_BROADCAST_ADDR, WinlineProtocol::Registers::SET_OUTPUT_CURRENT, scaled_current, true);
-
-    bool success = voltage_result && current_result;
-
-    if (!success) {
-        EVLOG_warning << "Winline: Group voltage/current setting failed (voltage=" << voltage_result
-                      << ", current=" << current_result << ")";
-    } else {
-        EVLOG_info << "Winline: Group voltage/current setting sent successfully (group " << group_address << ")";
-    }
-
-    return success;
-}
-
-bool WinlineCanDevice::send_group_command_to_all_modules(uint16_t register_number, uint32_t value) {
-    EVLOG_info << "Winline: send_group_command_to_all_modules(register=0x" << std::hex << register_number
-               << ", value=0x" << value << ") - targeting group " << group_address;
-
-    // Send integer command to all modules in the group using group broadcast
-    bool result = send_set_register_integer(WinlineProtocol::GROUP_BROADCAST_ADDR, register_number, value, true);
-
-    if (!result) {
-        EVLOG_warning << "Winline: Group command failed for register 0x" << std::hex << register_number;
-    } else {
-        EVLOG_info << "Winline: Group command sent successfully for register 0x" << std::hex << register_number
-                   << " (group " << group_address << ")";
-    }
-
-    return result;
-}
 
 bool WinlineCanDevice::discover_group_modules() {
     EVLOG_info << "Winline: discover_group_modules() - querying group " << group_address;
@@ -718,185 +628,84 @@ bool WinlineCanDevice::reset_short_circuit_protection(uint8_t module_address) {
     return result;
 }
 
-bool WinlineCanDevice::enable_overvoltage_protection(uint8_t module_address, bool enable) {
-    EVLOG_info << "Winline: enable_overvoltage_protection(0x" << std::hex << static_cast<int>(module_address) << ", "
-               << enable << ")";
+bool WinlineCanDevice::set_altitude_all_modules() {
+    EVLOG_info << "Winline: Setting altitude to " << altitude_setting_m << "m on all modules";
 
-    uint32_t protection_value = enable ? WinlineProtocol::RESET_DISABLE : WinlineProtocol::RESET_ENABLE;
-    bool result = send_set_register_integer(module_address, WinlineProtocol::Registers::SET_OVERVOLTAGE_PROTECTION,
-                                            protection_value);
-
-    if (!result) {
-        EVLOG_warning << "Winline: Overvoltage protection command failed for module 0x" << std::hex
-                      << static_cast<int>(module_address);
-    } else {
-        EVLOG_info << "Winline: Overvoltage protection " << (enable ? "enabled" : "disabled")
-                   << " successfully for module 0x" << std::hex << static_cast<int>(module_address);
+    // Validate altitude setting
+    if (altitude_setting_m < WinlineProtocol::ALTITUDE_MIN || altitude_setting_m > WinlineProtocol::ALTITUDE_MAX) {
+        EVLOG_error << "Winline: Invalid altitude setting " << altitude_setting_m
+                    << "m. Valid range: " << WinlineProtocol::ALTITUDE_MIN << "-" << WinlineProtocol::ALTITUDE_MAX
+                    << "m";
+        return false;
     }
 
-    return result;
-}
+    bool all_success = true;
 
-bool WinlineCanDevice::reset_all_faults(uint8_t module_address) {
-    EVLOG_info << "Winline: reset_all_faults(0x" << std::hex << static_cast<int>(module_address) << ")";
+    // Send to each configured module individually (unified approach for both modes)
+    for (const auto& addr : configured_module_addresses) {
+        EVLOG_info << "Winline: Setting altitude on module 0x" << std::hex << static_cast<int>(addr);
+        bool result =
+            send_set_register_integer(addr, WinlineProtocol::Registers::SET_ALTITUDE, altitude_setting_m, false);
+        if (!result) {
+            EVLOG_warning << "Winline: Failed to send altitude setting to module 0x" << std::hex
+                          << static_cast<int>(addr);
+            all_success = false;
+        } else {
+            EVLOG_info << "Winline: Altitude setting sent successfully to module 0x" << std::hex
+                       << static_cast<int>(addr);
+        }
+    }
 
-    bool overvoltage_result = reset_overvoltage_protection(module_address);
-    bool short_circuit_result = reset_short_circuit_protection(module_address);
-
-    bool all_success = overvoltage_result && short_circuit_result;
-
-    if (!all_success) {
-        EVLOG_warning << "Winline: Some fault reset commands failed for module 0x" << std::hex
-                      << static_cast<int>(module_address);
+    if (all_success) {
+        EVLOG_info << "Winline: Altitude setting " << altitude_setting_m << "m sent to all modules successfully";
     } else {
-        EVLOG_info << "Winline: All fault reset commands sent successfully to module 0x" << std::hex
-                   << static_cast<int>(module_address);
+        EVLOG_warning << "Winline: Some altitude setting commands failed";
     }
 
     return all_success;
 }
 
-// Enhanced Winline precision control methods
-bool WinlineCanDevice::set_current_limit_point(uint8_t module_address, float current_limit_point) {
-    EVLOG_info << "Winline: set_current_limit_point(0x" << std::hex << static_cast<int>(module_address) << ", "
-               << current_limit_point << ")";
+bool WinlineCanDevice::set_input_mode_all_modules() {
+    EVLOG_info << "Winline: Setting input mode to " << input_mode << " on all modules";
 
-    // Validate current limit point (should be between 0.0 and 1.0 for percentage)
-    if (current_limit_point < 0.0f || current_limit_point > 1.0f) {
-        EVLOG_warning << "Winline: Invalid current limit point " << current_limit_point
-                      << " (must be 0.0-1.0). Clamping to valid range.";
-        current_limit_point = std::max(0.0f, std::min(current_limit_point, 1.0f));
-    }
-
-    bool result = send_set_register_float(module_address, WinlineProtocol::Registers::SET_CURRENT_LIMIT_POINT,
-                                          current_limit_point);
-
-    if (!result) {
-        EVLOG_warning << "Winline: Current limit point setting failed for module 0x" << std::hex
-                      << static_cast<int>(module_address);
+    // Convert input mode string to Winline protocol value
+    uint32_t input_mode_value;
+    if (input_mode == "AC") {
+        input_mode_value = 1; // AC mode
+    } else if (input_mode == "DC") {
+        input_mode_value = 2; // DC mode
     } else {
-        EVLOG_info << "Winline: Current limit point set successfully to " << current_limit_point << " for module 0x"
-                   << std::hex << static_cast<int>(module_address);
-    }
-
-    return result;
-}
-
-bool WinlineCanDevice::set_voltage_upper_limit(uint8_t module_address, float voltage_upper_limit) {
-    EVLOG_info << "Winline: set_voltage_upper_limit(0x" << std::hex << static_cast<int>(module_address) << ", "
-               << voltage_upper_limit << "V)";
-
-    // Basic validation - voltage should be positive
-    if (voltage_upper_limit <= 0.0f) {
-        EVLOG_warning << "Winline: Invalid voltage upper limit " << voltage_upper_limit
-                      << "V (must be positive). Command not sent.";
+        EVLOG_error << "Winline: Invalid input mode '" << input_mode << "'. Valid values: AC, DC";
         return false;
     }
 
-    bool result = send_set_register_float(module_address, WinlineProtocol::Registers::SET_VOLTAGE_UPPER_LIMIT,
-                                          voltage_upper_limit);
+    bool all_success = true;
 
-    if (!result) {
-        EVLOG_warning << "Winline: Voltage upper limit setting failed for module 0x" << std::hex
-                      << static_cast<int>(module_address);
+    // Send to each configured module individually (unified approach for both modes)
+    for (const auto& addr : configured_module_addresses) {
+        EVLOG_info << "Winline: Setting input mode on module 0x" << std::hex << static_cast<int>(addr);
+        bool result =
+            send_set_register_integer(addr, WinlineProtocol::Registers::SET_INPUT_MODE, input_mode_value, false);
+        if (!result) {
+            EVLOG_warning << "Winline: Failed to send input mode setting to module 0x" << std::hex
+                          << static_cast<int>(addr);
+            all_success = false;
+        } else {
+            EVLOG_info << "Winline: Input mode setting sent successfully to module 0x" << std::hex
+                       << static_cast<int>(addr);
+        }
+    }
+
+    if (all_success) {
+        EVLOG_info << "Winline: Input mode setting " << input_mode << " sent to all modules successfully";
     } else {
-        EVLOG_info << "Winline: Voltage upper limit set successfully to " << voltage_upper_limit << "V for module 0x"
-                   << std::hex << static_cast<int>(module_address);
+        EVLOG_warning << "Winline: Some input mode setting commands failed";
     }
 
-    return result;
+    return all_success;
 }
 
-bool WinlineCanDevice::set_voltage_current_with_validation(float voltage, float current, float max_voltage,
-                                                           float max_current) {
-
-    EVLOG_info << "Winline: set_voltage_current_with_validation(" << voltage << "V, " << current
-               << "A, max_V=" << max_voltage << "V, max_A=" << max_current
-               << "A) - active modules: " << active_module_addresses.size();
-
-    // Enhanced validation with limits
-    if (max_voltage > 0.0f && voltage > max_voltage) {
-        EVLOG_warning << "Winline: Requested voltage " << voltage << "V exceeds maximum " << max_voltage
-                      << "V. Clamping.";
-        voltage = max_voltage;
-    }
-
-    if (max_current > 0.0f && current > max_current) {
-        EVLOG_warning << "Winline: Requested current " << current << "A exceeds maximum " << max_current
-                      << "A. Clamping.";
-        current = max_current;
-    }
-
-    if (voltage <= 0.0f || current < 0.0f) {
-        EVLOG_error << "Winline: Invalid voltage/current values (V=" << voltage << ", A=" << current << ")";
-        return false;
-    }
-
-    const size_t module_count = active_module_addresses.size();
-    if (module_count == 0) {
-        EVLOG_warning << "Winline: No active modules for validated voltage/current setting.";
-        return false;
-    }
-
-    // Use existing optimized implementation
-    return set_voltage_current(voltage, current);
-}
-
-bool WinlineCanDevice::set_precision_current_control(uint8_t module_address, float current, float limit_point) {
-    EVLOG_info << "Winline: set_precision_current_control(0x" << std::hex << static_cast<int>(module_address) << ", "
-               << current << "A, limit=" << limit_point << ")";
-
-    // Set current limit point first
-    bool limit_result = set_current_limit_point(module_address, limit_point);
-
-    // Then set the current using the precise scaled method
-    uint32_t scaled_current = static_cast<uint32_t>(current * WinlineProtocol::CURRENT_SCALE_FACTOR);
-    bool current_result =
-        send_set_register_integer(module_address, WinlineProtocol::Registers::SET_OUTPUT_CURRENT, scaled_current);
-
-    bool success = limit_result && current_result;
-
-    if (!success) {
-        EVLOG_warning << "Winline: Precision current control failed for module 0x" << std::hex
-                      << static_cast<int>(module_address) << " (limit=" << limit_result
-                      << ", current=" << current_result << ")";
-    } else {
-        EVLOG_info << "Winline: Precision current control set successfully for module 0x" << std::hex
-                   << static_cast<int>(module_address);
-    }
-
-    return success;
-}
-
-bool WinlineCanDevice::read_module_telemetry(uint8_t module_address) {
-    EVLOG_debug << "Winline: read_module_telemetry(0x" << std::hex << static_cast<int>(module_address) << ")";
-
-    // Read comprehensive telemetry using optimized batch approach
-    bool voltage_result = send_read_register(module_address, WinlineProtocol::Registers::VOLTAGE);
-    bool current_result = send_read_register(module_address, WinlineProtocol::Registers::CURRENT);
-    bool status_result = send_read_register(module_address, WinlineProtocol::Registers::STATUS);
-    bool current_limit_result = send_read_register(module_address, WinlineProtocol::Registers::CURRENT_LIMIT_POINT);
-
-    // Optional extended telemetry
-    bool dc_temp_result = send_read_register(module_address, WinlineProtocol::Registers::DC_BOARD_TEMPERATURE);
-    bool ambient_temp_result = send_read_register(module_address, WinlineProtocol::Registers::AMBIENT_TEMPERATURE);
-
-    bool basic_success = voltage_result && current_result && status_result;
-    bool extended_success = current_limit_result && dc_temp_result && ambient_temp_result;
-
-    if (!basic_success) {
-        EVLOG_warning << "Winline: Basic telemetry read failed for module 0x" << std::hex
-                      << static_cast<int>(module_address);
-    } else {
-        EVLOG_debug << "Winline: Telemetry read commands sent for module 0x" << std::hex
-                    << static_cast<int>(module_address) << " (basic=" << basic_success
-                    << ", extended=" << extended_success << ")";
-    }
-
-    return basic_success;
-}
-
-// Enhanced Winline Status Monitoring Capabilities (Task 11)
+// Enhanced Winline Status Monitoring Capabilities
 bool WinlineCanDevice::perform_comprehensive_status_check(uint8_t module_address) {
     EVLOG_debug << "Winline: perform_comprehensive_status_check(0x" << std::hex << static_cast<int>(module_address)
                 << ")";
@@ -1125,7 +934,7 @@ std::string WinlineCanDevice::get_status_summary(uint8_t module_address) const {
         summary << "RECOVERIES:" << history.recovery_count << " ";
     }
 
-    // Enhanced power control statistics (Task 12)
+    // Enhanced power control statistics
     const auto& power_tracking = telemetry.power_tracking;
     if (power_tracking.power_commands_sent > 0) {
         summary << "POWER_CMDS:" << power_tracking.power_commands_sent << " ";
@@ -1152,58 +961,6 @@ std::string WinlineCanDevice::get_status_summary(uint8_t module_address) const {
     return summary.str();
 }
 
-// Enhanced Winline Power Control Capabilities (Task 12)
-bool WinlineCanDevice::set_power_state_with_verification(bool on, uint8_t module_address) {
-    EVLOG_info << "Winline: set_power_state_with_verification(" << on << ", 0x" << std::hex
-               << static_cast<int>(module_address) << ")";
-
-    // Use all modules if module_address is 0xFF (broadcast)
-    std::vector<uint8_t> target_modules;
-    if (module_address == 0xFF) {
-        target_modules = active_module_addresses;
-    } else {
-        target_modules.push_back(module_address);
-    }
-
-    if (target_modules.empty()) {
-        EVLOG_warning << "Winline: No target modules for power state setting";
-        return false;
-    }
-
-    bool all_success = true;
-    uint32_t power_value = on ? WinlineProtocol::POWER_ON : WinlineProtocol::POWER_OFF;
-
-    // Send power commands to target modules
-    for (const auto& addr : target_modules) {
-        bool cmd_result = send_set_register_integer(addr, WinlineProtocol::Registers::POWER_CONTROL, power_value);
-
-        if (cmd_result) {
-            // Update power tracking
-            auto it = telemetries.find(addr);
-            if (it != telemetries.end()) {
-                auto& tracking = it->second.power_tracking;
-                tracking.expected_power_state = on;
-                tracking.power_commands_sent++;
-                tracking.last_power_command = std::chrono::steady_clock::now();
-                tracking.power_state_verified = false; // Will be verified later
-
-                EVLOG_debug << "Winline: Power command sent to module 0x" << std::hex << static_cast<int>(addr)
-                            << " (command #" << tracking.power_commands_sent << ")";
-            }
-        } else {
-            EVLOG_error << "Winline: Failed to send power command to module 0x" << std::hex << static_cast<int>(addr);
-            all_success = false;
-        }
-    }
-
-    // Schedule verification after a brief delay (power state changes take time)
-    if (all_success) {
-        EVLOG_info << "Winline: Power commands sent successfully. Will verify state in next status poll.";
-    }
-
-    return all_success;
-}
-
 bool WinlineCanDevice::verify_power_state(uint8_t module_address, bool expected_on_state) {
     auto it = telemetries.find(module_address);
     if (it == telemetries.end()) {
@@ -1218,14 +975,14 @@ bool WinlineCanDevice::verify_power_state(uint8_t module_address, bool expected_
 
     // Check if enough time has passed since the last power command
     auto now = std::chrono::steady_clock::now();
-    auto time_since_command = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now - tracking.last_power_command).count();
+    auto time_since_command =
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - tracking.last_power_command).count();
 
     // Give the module time to process the command (configurable grace period)
     if (time_since_command < power_state_grace_period_ms) {
         EVLOG_debug << "Winline: Power state verification skipped for module 0x" << std::hex
-                    << static_cast<int>(module_address) << " - Grace period: "
-                    << time_since_command << "ms < " << power_state_grace_period_ms << "ms";
+                    << static_cast<int>(module_address) << " - Grace period: " << time_since_command << "ms < "
+                    << power_state_grace_period_ms << "ms";
         return true; // Don't fail verification during grace period
     }
 
@@ -1242,12 +999,11 @@ bool WinlineCanDevice::verify_power_state(uint8_t module_address, bool expected_
         EVLOG_warning << "Winline: Power state mismatch for module 0x" << std::hex << static_cast<int>(module_address)
                       << " - Expected: " << (expected_on_state ? "ON" : "OFF")
                       << ", Actual: " << (module_is_on ? "ON" : "OFF") << " (mismatch #"
-                      << tracking.power_state_mismatches << ") - Time since command: "
-                      << time_since_command << "ms";
+                      << tracking.power_state_mismatches << ") - Time since command: " << time_since_command << "ms";
     } else {
         EVLOG_debug << "Winline: Power state verified for module 0x" << std::hex << static_cast<int>(module_address)
-                    << " - State: " << (module_is_on ? "ON" : "OFF") << " - Time since command: "
-                    << time_since_command << "ms";
+                    << " - State: " << (module_is_on ? "ON" : "OFF") << " - Time since command: " << time_since_command
+                    << "ms";
     }
 
     return state_matches;
@@ -1258,16 +1014,9 @@ bool WinlineCanDevice::handle_power_transition(bool target_state) {
 
     // Optimize: Use group operations when appropriate
     bool result;
-    {
-        if (operating_mode == OperatingMode::GROUP_DISCOVERY && active_module_addresses.size() > 2) {
-            EVLOG_info << "Winline: Using group power transition for " << active_module_addresses.size() << " modules";
-            result = switch_on_off_group(target_state);
-        } else {
-            EVLOG_info << "Winline: Using individual power transition for " << active_module_addresses.size()
-                       << " modules";
-            result = switch_on_off(target_state);
-        }
-    }
+    EVLOG_info << "Winline: Using individual power transition for " << active_module_addresses.size()
+                << " modules";
+    result = switch_on_off(target_state);
 
     if (result) {
         // Track the transition for all active modules
@@ -1402,7 +1151,7 @@ void WinlineCanDevice::check_and_signal_error_status_change(uint8_t source_addre
                            << static_cast<int>(source_address);
                 recovery_action();
 
-                // Update recovery statistics (Task 11 enhancement)
+                // Update recovery statistics
                 auto it = telemetries.find(source_address);
                 if (it != telemetries.end()) {
                     it->second.status_history.recovery_count++;
@@ -1415,7 +1164,7 @@ void WinlineCanDevice::check_and_signal_error_status_change(uint8_t source_addre
     };
 
     // Check all error status changes using Winline status bit names with automatic recovery
-    check_status_change(new_status.module_fault, old_status.module_fault, Error::InternalFault);
+    check_status_change(new_status.module_fault, old_status.module_fault, Error::VendorError);
     check_status_change(new_status.dcdc_over_temperature, old_status.dcdc_over_temperature, Error::OverTemperature);
 
     // Overvoltage with automatic recovery
@@ -1428,14 +1177,22 @@ void WinlineCanDevice::check_and_signal_error_status_change(uint8_t source_addre
                         Error::CommunicationFault);
     check_status_change(new_status.ac_undervoltage, old_status.ac_undervoltage, Error::UnderVoltage);
     check_status_change(new_status.ac_overvoltage, old_status.ac_overvoltage, Error::OverVoltage);
-    check_status_change(new_status.input_mode_error, old_status.input_mode_error, Error::InputVoltage);
-    check_status_change(new_status.pfc_voltage_abnormal, old_status.pfc_voltage_abnormal, Error::InputVoltage);
-    check_status_change(new_status.module_protection, old_status.module_protection, Error::InternalFault);
-    check_status_change(new_status.module_current_imbalance, old_status.module_current_imbalance, Error::InternalFault);
+    check_status_change(new_status.input_mode_error, old_status.input_mode_error, Error::VendorError);
+    check_status_change(new_status.pfc_voltage_abnormal, old_status.pfc_voltage_abnormal, Error::VendorError);
+    check_status_change(new_status.module_protection, old_status.module_protection, Error::VendorError);
+    check_status_change(new_status.module_current_imbalance, old_status.module_current_imbalance, Error::VendorWarning);
 
     // Short circuit with automatic recovery
     check_status_with_recovery(new_status.dcdc_short_circuit, old_status.dcdc_short_circuit, Error::OverCurrent,
                                [this, source_address]() { reset_short_circuit_protection(source_address); });
+
+    // Additional status bits that were missing
+    check_status_change(new_status.sci_communication_failure, old_status.sci_communication_failure, Error::VendorError);
+    check_status_change(new_status.input_mode_mismatch, old_status.input_mode_mismatch, Error::VendorError);
+    check_status_change(new_status.dcdc_overvoltage, old_status.dcdc_overvoltage, Error::OverVoltage);
+    check_status_change(new_status.temperature_derating, old_status.temperature_derating, Error::VendorWarning);
+    check_status_change(new_status.module_power_limiting, old_status.module_power_limiting, Error::InternalFault);
+    check_status_change(new_status.ac_power_limiting, old_status.ac_power_limiting, Error::VendorWarning);
 }
 
 void WinlineCanDevice::check_and_update_capabilities(uint8_t source_address) {
@@ -1453,8 +1210,9 @@ void WinlineCanDevice::check_and_update_capabilities(uint8_t source_address) {
     // Mark capabilities as valid if we have both power and current data
     if (has_power && has_current && !telemetry.valid_caps) {
         telemetry.valid_caps = true;
-        EVLOG_info << format_module_id(source_address) << ": Capabilities now complete - Power: "
-                   << telemetry.dc_rated_output_power << "W, Current: " << telemetry.dc_max_output_current << "A";
+        EVLOG_info << format_module_id(source_address)
+                   << ": Capabilities now complete - Power: " << telemetry.dc_rated_output_power
+                   << "W, Current: " << telemetry.dc_max_output_current << "A";
 
         // Signal capabilities update when a module's capabilities become complete
         signalCapabilitiesUpdate(telemetries);

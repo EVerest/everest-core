@@ -33,7 +33,9 @@ public:
         CommunicationFault,
         InternalFault,
         OverCurrent,
-        InputVoltage
+        InputVoltage,
+        VendorError,
+        VendorWarning
     };
 
     enum class OperatingMode {
@@ -42,7 +44,8 @@ public:
     };
 
     void set_can_device(const std::string& dev);
-    void set_config_values(const std::string& addrs, int group_address, int timeout, int controller_address, int power_state_grace_period_ms = 2000);
+    void set_config_values(const std::string& addrs, int group_address, int timeout, int controller_address,
+                           int power_state_grace_period_ms, int altitude_setting_m, const std::string& input_mode);
     void initial_ping();
 
     // Commands
@@ -50,16 +53,17 @@ public:
     bool set_voltage_current(float voltage, float current);
 
     // Enhanced Winline group operations
-    bool switch_on_off_group(bool on);
-    bool set_voltage_current_group(float voltage, float current);
-    bool send_group_command_to_all_modules(uint16_t register_number, uint32_t value);
     bool discover_group_modules();
 
     // Winline error recovery operations
     bool reset_overvoltage_protection(uint8_t module_address);
     bool reset_short_circuit_protection(uint8_t module_address);
-    bool enable_overvoltage_protection(uint8_t module_address, bool enable);
-    bool reset_all_faults(uint8_t module_address);
+
+    // Altitude setting operations
+    bool set_altitude_all_modules();
+
+    // Input mode setting operations
+    bool set_input_mode_all_modules();
 
     // Winline register-based command functions
     bool send_read_register(uint8_t destination_address, uint16_t register_number, bool group = false);
@@ -68,15 +72,6 @@ public:
     bool send_set_register_integer(uint8_t destination_address, uint16_t register_number, uint32_t value,
                                    bool group = false);
 
-    // Enhanced Winline precision control methods for current limit point and voltage upper limit settings
-    bool set_current_limit_point(uint8_t module_address, float current_limit_point);
-    bool set_voltage_upper_limit(uint8_t module_address, float voltage_upper_limit);
-
-    // Enhanced Winline voltage/current control with validation
-    bool set_voltage_current_with_validation(float voltage, float current, float max_voltage = 0.0f,
-                                             float max_current = 0.0f);
-    bool set_precision_current_control(uint8_t module_address, float current, float limit_point = 1.0f);
-    bool read_module_telemetry(uint8_t module_address);
 
     // Enhanced Winline status monitoring capabilities
     bool perform_comprehensive_status_check(uint8_t module_address);
@@ -84,8 +79,7 @@ public:
     void log_status_diagnostics(uint8_t module_address, const can_packet_acdc::PowerModuleStatus& status);
     std::string get_status_summary(uint8_t module_address) const;
 
-    // Enhanced Winline power control capabilities (Task 12)
-    bool set_power_state_with_verification(bool on, uint8_t module_address = 0xFF);
+    // Enhanced Winline power control capabilities
     bool verify_power_state(uint8_t module_address, bool expected_on_state);
     bool handle_power_transition(bool target_state);
     void track_power_state_change(uint8_t module_address, bool new_power_state);
@@ -142,7 +136,7 @@ public:
         uint8_t group_number{0};         // Module group assignment
         uint8_t dip_address{0};          // DIP switch address
 
-        // Enhanced status monitoring (Task 11)
+        // Enhanced status monitoring
         struct StatusHistory {
             std::deque<can_packet_acdc::PowerModuleStatus> recent_status; // Last 10 status readings
             uint32_t fault_count{0};                                      // Total fault occurrences
@@ -158,7 +152,7 @@ public:
             float status_read_success_rate{100.0f}; // Success rate percentage
         } status_metrics;
 
-        // Enhanced power control tracking (Task 12)
+        // Enhanced power control tracking
         struct PowerStateTracking {
             bool expected_power_state{false};   // Expected power state (what we commanded)
             bool actual_power_state{false};     // Actual power state (from status register)
@@ -192,9 +186,12 @@ private:
     size_t expected_module_count{0};
     int device_connection_timeout_s{0};
     int power_state_grace_period_ms{2000};
+    int altitude_setting_m{1000};
+    std::string input_mode{"AC"};
     OperatingMode operating_mode{OperatingMode::FIXED_ADDRESS};
 
     std::vector<uint8_t> active_module_addresses;
+    std::vector<uint8_t> configured_module_addresses; // Store original configured addresses for recovery
     std::mutex active_modules_mutex;
 
     void poll_status_handler() override;
