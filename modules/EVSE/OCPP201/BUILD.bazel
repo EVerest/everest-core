@@ -112,6 +112,7 @@ cc_everest_module(
     deps = [
         "@openssl//:ssl",
         "@openssl//:crypto",
+        "@libcap//:libcap",
         "@everest-core//lib:ocpp",
         "@everest-core//lib:ocpp_evse_security",
         "@everest-core//lib:ocpp_conversions",
