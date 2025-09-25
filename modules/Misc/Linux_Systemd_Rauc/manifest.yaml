@@ -1,0 +1,45 @@
+description: This module implements system wide operations for the base linux system
+config:
+  DefaultRetries:
+    description: Specifies how many times Charge Point tries to upload or download files on previous failure.
+    type: number
+    default: 1
+  DefaultRetryInterval:
+    description: >-
+      Specifies in seconds after which time a retry of an upload or download on previous failure may be attempted.
+    type: number
+    default: 1
+  OCPPLogPath:
+    description: Path to folder where logs of all OCPP messages get written to (see ocpp MessageLogPath)
+    type: string
+    default: /var/log/everest/ocpp
+  SessionLogPath:
+    description: Output directory for session log files (see evse_manager session_logging_path)
+    type: string
+    default: /var/log/everest/session
+  RebootCommand:
+    description: Command to execute for rebooting the system
+    type: string
+    default: /sbin/reboot
+  VerifyUpdateScriptPath:
+    description: >-
+      Full path to shell script that checks if an OTA update has been successful. The script is executed after 
+      an update and shall verify the success of the update. It shall return 0 in case of success and
+      non-zero in case of failure.
+      If empty no check is performed and the update is considered successful and it is marked as good.
+    type: string
+    default: ""
+provides:
+  main:
+    description: Implements the system interface
+    interface: system
+requires:
+  store:
+    interface: kvs
+enable_external_mqtt: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Piet Gömpel
+    - Cornelius Claussen
+    - James Chapman
