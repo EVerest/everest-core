@@ -37,16 +37,15 @@ auto powermeterImpl::generic_request_reply(T const& default_value, ReqT const& r
     return result.value();
 }
 
-types_int::TransactionStartResponse
-powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
+types_int::TransactionStartResponse powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
     static const types_int::TransactionStartResponse default_response{status::UNEXPECTED_ERROR, std::nullopt,
-                                                                         std::nullopt, std::nullopt};
+                                                                      std::nullopt, std::nullopt};
     return generic_request_reply(default_response, value, "start_transaction");
 }
 
 types_int::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     static const types_int::TransactionStopResponse default_response{status::UNEXPECTED_ERROR, std::nullopt,
-                                                                        std::nullopt, std::nullopt};
+                                                                     std::nullopt, std::nullopt};
     return generic_request_reply(default_response, transaction_id, "stop_transaction");
 }
 

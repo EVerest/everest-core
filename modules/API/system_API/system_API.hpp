@@ -38,13 +38,13 @@ struct Conf {
 class system_API : public Everest::ModuleBase {
 public:
     system_API() = delete;
-    system_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-               std::unique_ptr<systemImplBase> p_main, Conf& config) :
+    system_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<systemImplBase> p_main,
+               Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         config(config),
-        comm_check("system/CommunicationFault", "Bridge to implementation connection lost", this->p_main){};
+        comm_check("system/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<systemImplBase> p_main;

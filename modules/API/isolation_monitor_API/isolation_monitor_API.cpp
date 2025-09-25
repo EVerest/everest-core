@@ -72,7 +72,7 @@ void isolation_monitor_API::generate_api_var_raise_error() {
             auto message_str = error.message ? error.message.value() : "";
             auto error_str = make_error_string(error);
             auto ev_error = p_main->error_factory->create_error(error_str, sub_type_str, message_str,
-                                                                                Everest::error::Severity::High);
+                                                                Everest::error::Severity::High);
             p_main->raise_error(ev_error);
             return true;
         }

@@ -2,12 +2,12 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "error_history_consumer_API.hpp"
 
+#include "error_wrapper.hpp"
 #include <everest_api_types/error_history/API.hpp>
 #include <everest_api_types/error_history/codec.hpp>
 #include <everest_api_types/error_history/wrapper.hpp>
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
-#include "error_wrapper.hpp"
 
 #include <generated/types/error_history.hpp>
 

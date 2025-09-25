@@ -23,8 +23,8 @@
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include <everest_api_types/evse_board_support/API.hpp>
-#include <everest_api_types/utilities/Topics.hpp>
 #include <everest_api_types/utilities/CommCheckHandler.hpp>
+#include <everest_api_types/utilities/Topics.hpp>
 
 namespace ev_API = everest::lib::API;
 namespace ev_API_v = everest::lib::API::V1_0;
@@ -44,8 +44,7 @@ class evse_board_support_API : public Everest::ModuleBase {
 public:
     evse_board_support_API() = delete;
     evse_board_support_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                           std::unique_ptr<evse_board_supportImplBase> p_main,
-                           std::unique_ptr<ac_rcdImplBase> p_rcd,
+                           std::unique_ptr<evse_board_supportImplBase> p_main, std::unique_ptr<ac_rcdImplBase> p_rcd,
                            std::unique_ptr<connector_lockImplBase> p_connector_lock, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
@@ -53,8 +52,8 @@ public:
         p_rcd(std::move(p_rcd)),
         p_connector_lock(std::move(p_connector_lock)),
         config(config),
-        comm_check("evse_board_support/CommunicationFault", "Bridge to implementation connection lost",
-                   this->p_main){};
+        comm_check("evse_board_support/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {
+        };
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<evse_board_supportImplBase> p_main;

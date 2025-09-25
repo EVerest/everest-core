@@ -18,7 +18,8 @@ void power_supply_DCImpl::init() {
 void power_supply_DCImpl::ready() {
 }
 
-void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& mode, types::power_supply_DC::ChargingPhase& phase) {
+void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& mode,
+                                         types::power_supply_DC::ChargingPhase& phase) {
     auto topic = mod->get_topics().everest_to_extern("mode");
     auto mode_ext = API_types_ext::to_external_api(mode);
     auto phase_ext = API_types_ext::to_external_api(phase);

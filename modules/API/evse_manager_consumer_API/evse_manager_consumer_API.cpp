@@ -32,8 +32,8 @@
 #include <everest_api_types/uk_random_delay/codec.hpp>
 #include <everest_api_types/uk_random_delay/json_codec.hpp>
 #include <everest_api_types/uk_random_delay/wrapper.hpp>
-#include <everest_api_types/utilities/codec.hpp>
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 
 #include <everest/logging.hpp>
 

@@ -21,9 +21,9 @@
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 
-#include <everest_api_types/utilities/Topics.hpp>
 #include <everest_api_types/power_supply_DC/API.hpp>
 #include <everest_api_types/utilities/CommCheckHandler.hpp>
+#include <everest_api_types/utilities/Topics.hpp>
 
 namespace ev_API = everest::lib::API;
 namespace API_types = ev_API::V1_0::types;
@@ -47,8 +47,7 @@ public:
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         config(config),
-        comm_check("power_supply_DC/CommunicationFault", "Bridge to implementation connection lost",
-                   this->p_main){};
+        comm_check("power_supply_DC/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<power_supply_DCImplBase> p_main;

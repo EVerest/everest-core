@@ -29,7 +29,7 @@ class systemImpl : public systemImplBase {
 public:
     systemImpl() = delete;
     systemImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<system_API>& mod, Conf& config) :
-        systemImplBase(ev, "main"), mod(mod), config(config){};
+        systemImplBase(ev, "main"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

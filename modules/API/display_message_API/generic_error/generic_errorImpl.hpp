@@ -29,7 +29,7 @@ class generic_errorImpl : public generic_errorImplBase {
 public:
     generic_errorImpl() = delete;
     generic_errorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<display_message_API>& mod, Conf& config) :
-        generic_errorImplBase(ev, "generic_error"), mod(mod), config(config){};
+        generic_errorImplBase(ev, "generic_error"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

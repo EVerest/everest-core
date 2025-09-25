@@ -26,7 +26,7 @@ public:
     over_voltage_monitorImpl() = delete;
     over_voltage_monitorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<over_voltage_monitor_API>& mod,
                              Conf& config) :
-        over_voltage_monitorImplBase(ev, "main"), mod(mod), config(config){};
+        over_voltage_monitorImplBase(ev, "main"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

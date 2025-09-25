@@ -30,7 +30,7 @@ public:
     power_supply_DCImpl() = delete;
     power_supply_DCImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<power_supply_DC_API>& mod,
                         Conf& config) :
-        power_supply_DCImplBase(ev, "main"), mod(mod), config(config){};
+        power_supply_DCImplBase(ev, "main"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

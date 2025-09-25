@@ -47,7 +47,7 @@ public:
         p_main(std::move(p_main)),
         config(config),
         comm_check("over_voltage_monitor/CommunicationFault", "Bridge to implementation connection lost",
-                   this->p_main){};
+                   this->p_main) {};
 
     Everest::MqttProvider& mqtt;
     const std::shared_ptr<over_voltage_monitorImplBase> p_main;

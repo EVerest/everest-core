@@ -10,8 +10,8 @@
 #include <everest_api_types/power_supply_DC/wrapper.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
 
-#include <everest/logging.hpp>
 #include "utils/error.hpp"
+#include <everest/logging.hpp>
 
 namespace module {
 
@@ -70,8 +70,8 @@ void power_supply_DC_API::generate_api_var_raise_error() {
         auto sub_type_str = error.sub_type ? error.sub_type.value() : "";
         auto message_str = error.message ? error.message.value() : "";
         auto error_str = make_error_string(error);
-        auto ev_error = p_main->error_factory->create_error(error_str, sub_type_str, message_str,
-                                                                          Everest::error::Severity::High);
+        auto ev_error =
+            p_main->error_factory->create_error(error_str, sub_type_str, message_str, Everest::error::Severity::High);
         p_main->raise_error(ev_error);
     });
 }

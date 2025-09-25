@@ -207,7 +207,7 @@ evse_board_support_API::ErrorHandler evse_board_support_API::make_error_handler(
         error_id = "evse_board_support/" + error_str;
         result.raiser = [this, sub_type_str, message_str, error_id]() {
             auto ev_error = p_main->error_factory->create_error(error_id, sub_type_str, message_str,
-                                                                         Everest::error::Severity::High);
+                                                                Everest::error::Severity::High);
             p_main->raise_error(ev_error);
         };
         result.clearer = [this, error_id, sub_type_str] { p_main->clear_error(error_id, sub_type_str); };
