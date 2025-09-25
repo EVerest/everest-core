@@ -1,6 +1,7 @@
 if (NOT ftxui_FOUND AND NOT DEFINED ftxui_SOURCE_DIR)
     message(WARNING "Not building BringUp modules because dependency ftxui is not available")
 else()
+    ev_add_module(BUDCExternalDerate)
     ev_add_module(BUDisplayMessage)
     ev_add_module(BUEvseBoardSupport)
     ev_add_module(BUIsolationMonitor)
