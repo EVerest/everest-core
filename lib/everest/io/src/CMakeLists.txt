@@ -28,7 +28,7 @@ target_sources(everest_io
 
 target_include_directories(everest_io
     PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
         $<INSTALL_INTERFACE:include>
 )
 
@@ -58,16 +58,10 @@ set_target_properties(everest_io
 )
 
 install(
-  TARGETS everest_io mqttc
-  EXPORT everest_io-targets
+  TARGETS everest_io
 )
 
-evc_setup_package(
-  NAME everest-io
-  EXPORT everest_io-targets
-  NAMESPACE everest
-)
-
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/everest
     DESTINATION include
+    FILES_MATCHING PATTERN "*.hpp"
 )
