@@ -100,6 +100,11 @@ ftxui:
   git: https://github.com/ArthurSonzogni/ftxui
   git_tag: v5.0.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_FTXUI"
+# everest/io library
+mqttc:
+  git: https://github.com/LiamBindle/MQTT-C.git
+  git_tag: v1.1.6
+  options: ["MQTT_C_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
 # unit testing
 gtest:
   # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
