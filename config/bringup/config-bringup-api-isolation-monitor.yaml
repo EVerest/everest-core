@@ -1,0 +1,25 @@
+active_modules:
+  bsp_ui:
+    standalone: true
+    module: BUIsolationMonitor
+    connections:
+      imd:
+        - implementation_id: main
+          module_id: iso_monitor
+  powersupply_ui:
+    connections:
+      psu:
+        - implementation_id: main
+          module_id: powersupply
+    module: BUPowerSupplyDC
+    standalone: true
+  iso_monitor:
+    module: isolation_monitor_API
+    config_module:
+      cfg_communication_check_to_s: 0
+      cfg_heartbeat_interval_ms: 10000
+  powersupply:
+    module: power_supply_DC_API
+    config_module:
+      cfg_communication_check_to_s: 0
+      cfg_heartbeat_interval_ms: 10000

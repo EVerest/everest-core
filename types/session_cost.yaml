@@ -72,6 +72,7 @@ types:
       timestamp_from:
         description: Time when these prices become active.
         type: string
+        format: date-time
       charging_price:
         description: Price components while charging
         type: array
