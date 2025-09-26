@@ -16,12 +16,14 @@ namespace API_types_ext = API_types::session_cost;
 
 void session_cost_API::init() {
     invoke_init(*p_main);
+    invoke_init(*p_generic_error);
 
     topics.setTargetApiModuleID(info.id, "session_cost");
 }
 
 void session_cost_API::ready() {
     invoke_ready(*p_main);
+    invoke_ready(*p_generic_error);
 
     generate_api_var_tariff_message();
     generate_api_var_session_cost();

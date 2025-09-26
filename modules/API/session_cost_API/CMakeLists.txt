@@ -23,6 +23,7 @@ target_link_libraries(${MODULE_NAME}
 
 target_sources(${MODULE_NAME}
   PRIVATE
+    "generic_error/generic_errorImpl.cpp"
     "main/session_costImpl.cpp"
 )
 

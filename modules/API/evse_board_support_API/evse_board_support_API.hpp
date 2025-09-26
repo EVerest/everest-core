@@ -89,7 +89,7 @@ private:
 
     void subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish);
     void generate_api_var_event();
-    void generate_api_var_phase_count();
+    void generate_api_var_ac_nr_of_phases();
     void generate_api_var_capabilities();
     void generate_api_var_ac_pp_ampacity();
     void generate_api_var_request_stop_transaction();

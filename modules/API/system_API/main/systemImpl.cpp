@@ -10,22 +10,9 @@
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 
 #include <generated/types/system.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 using namespace everest::lib::API;
 namespace ns_types_ext = everest::lib::API::V1_0::types::system;
-
-namespace types {
-namespace system {
-void to_json(json& j, const ResetType& k) noexcept {
-    j = reset_type_to_string(k);
-}
-void from_json(const json& j, ResetType& k) {
-    k = string_to_reset_type(j);
-}
-} // namespace system
-} // namespace types
-
 namespace {
 bool to_external_api(bool value) {
     return value;

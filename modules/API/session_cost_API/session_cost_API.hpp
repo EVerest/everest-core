@@ -16,6 +16,7 @@
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <generated/interfaces/generic_error/Implementation.hpp>
 #include <generated/interfaces/session_cost/Implementation.hpp>
 #pragma GCC diagnostic pop
 
@@ -39,21 +40,24 @@ class session_cost_API : public Everest::ModuleBase {
 public:
     session_cost_API() = delete;
     session_cost_API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                     std::unique_ptr<session_costImplBase> p_main, Conf& config) :
+                     std::unique_ptr<session_costImplBase> p_main,
+                     std::unique_ptr<generic_errorImplBase> p_generic_error, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
+        p_generic_error(std::move(p_generic_error)),
         p_main(std::move(p_main)),
         config(config),
-        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_main){};
+        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_generic_error){};
 
     Everest::MqttProvider& mqtt;
+    const std::shared_ptr<generic_errorImplBase> p_generic_error;
     const std::shared_ptr<session_costImplBase> p_main;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     const ev_API::Topics& get_topics() const;
-    ev_API::CommCheckHandler<session_costImplBase> comm_check;
+    ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 

@@ -35,7 +35,7 @@ void evse_board_support_API::ready() {
     invoke_ready(*p_connector_lock);
 
     generate_api_var_event();
-    generate_api_var_phase_count();
+    generate_api_var_ac_nr_of_phases();
     generate_api_var_capabilities();
     generate_api_var_ac_pp_ampacity();
     generate_api_var_request_stop_transaction();
@@ -61,10 +61,10 @@ void evse_board_support_API::generate_api_var_event() {
     });
 }
 
-void evse_board_support_API::generate_api_var_phase_count() {
+void evse_board_support_API::generate_api_var_ac_nr_of_phases() {
     subscribe_api_var("ac_nr_of_phases", [=](std::string const& data) {
-        auto phase_count = API_generic::deserialize<int>(data);
-        p_main->publish_ac_nr_of_phases_available(phase_count);
+        auto ac_nr_of_phases_available = API_generic::deserialize<int>(data);
+        p_main->publish_ac_nr_of_phases_available(ac_nr_of_phases_available);
         return true;
     });
 }

@@ -1,7 +1,7 @@
 description: API for DC power supplies
 config:
   cfg_communication_check_to_s:
-    description: "Maximum time between to two communication check events. Values <= 0 disables communication checks."
+    description: "Maximum time between two communication check events. Values <= 0 disables communication checks."
     type: integer
     default: 5
   cfg_heartbeat_interval_ms:
