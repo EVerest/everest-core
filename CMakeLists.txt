@@ -49,6 +49,7 @@ option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as depe
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVEREST_ENABLE_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag" OFF)
 option(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag globally" OFF)
+option(EVEREST_BUILD_API_CLIENTS "Build and install the python command line API client application" OFF)
 # list of compile options that are passed to modules if EVEREST_ENABLE_COMPILE_WARNINGS=ON
 # generated code has functions often not used
 set(EVEREST_COMPILE_OPTIONS "-Wall;-Wno-unused-function" CACHE STRING "A list of compile options used for building modules")
@@ -135,6 +136,7 @@ add_subdirectory(lib)
 add_subdirectory(config)
 
 add_subdirectory(doc)
+add_subdirectory(api_client)
 
 ev_install_project()
 

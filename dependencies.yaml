@@ -10,6 +10,11 @@ everest-framework:
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
     "everest-framework_USE_PYTHON_VENV_PATH ${PROJECT_NAME}_USE_PYTHON_VENV_PATH",
   ]
+python-mqtt-template:
+  git: git@github.com:PionixPro/python-mqtt-template.git
+  git_tag: 72414d85fa43710094390e95b82627f27c61afe6
+  cmake_condition: "EVEREST_BUILD_API_CLIENTS"
+
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.3
