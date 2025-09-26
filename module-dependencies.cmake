@@ -62,6 +62,15 @@ ev_define_dependency(
     DEPENDENCY_NAME ftxui
     DEPENDENT_MODULES_LIST BUDisplayMessage BUEvseBoardSupport BUIsolationMonitor BUmMWcar BUNfcReader BUOverVoltageMonitor BUPowermeter BUPowerSupplyDC BUSystem)
 
+ev_define_dependency(
+    DEPENDENCY_NAME websockets_shared
+    DEPENDENT_MODULES_LIST RpcApi)
+
+ev_define_dependency(
+    DEPENDENCY_NAME json-rpc-cxx
+    OUTPUT_VARIABLE_SUFFIX JSON_RPC_CXX
+    DEPENDENT_MODULES_LIST RpcApi)
+
 if(NOT everest-gpio IN_LIST EVEREST_EXCLUDE_DEPENDENCIES)
     set(EVEREST_DEPENDENCY_ENABLED_EVEREST_GPIO ON)
 else()
