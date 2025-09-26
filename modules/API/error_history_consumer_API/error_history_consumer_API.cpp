@@ -71,7 +71,7 @@ void error_history_consumer_API::generate_api_cmd_active_errors() {
 
 void error_history_consumer_API::generate_api_cmd_get_errors() {
     using namespace API_types_ext;
-    subscribe_api_topic("filtered_errors", [=](std::string const& data) {
+    subscribe_api_topic("get_errors", [=](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             API_types_ext::FilterArguments_External payload;

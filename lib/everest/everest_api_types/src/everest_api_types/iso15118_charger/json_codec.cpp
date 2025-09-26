@@ -265,4 +265,18 @@ void to_json(json& j, CertificateHashDataInfo const& k) noexcept {
     };
 }
 
+void to_json(json& j, EnergyTransferModeList const& k) noexcept {
+    j["modes"] = json::array();
+    for (auto val : k.modes) {
+        j["modes"].push_back(val);
+    }
+}
+
+void from_json(const json& j, EnergyTransferModeList& k) {
+    k.modes.clear();
+    for (auto val : j.at("modes")) {
+        k.modes.push_back(val);
+    }
+}
+
 } // namespace everest::lib::API::V1_0::types::iso15118_charger

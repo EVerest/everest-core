@@ -5,32 +5,28 @@
 #include <everest_api_types/auth/wrapper.hpp>
 #include <everest_api_types/evse_board_support/API.hpp>
 #include <everest_api_types/evse_board_support/codec.hpp>
-#include <everest_api_types/evse_board_support/json_codec.hpp>
 #include <everest_api_types/evse_board_support/wrapper.hpp>
 #include <everest_api_types/evse_manager/API.hpp>
 #include <everest_api_types/evse_manager/codec.hpp>
-#include <everest_api_types/evse_manager/json_codec.hpp>
 #include <everest_api_types/evse_manager/wrapper.hpp>
+#include <everest_api_types/energy/API.hpp>
+#include <everest_api_types/energy/codec.hpp>
+#include <everest_api_types/energy/wrapper.hpp>
 #include <everest_api_types/generic/codec.hpp>
-#include <everest_api_types/generic/json_codec.hpp>
 #include <everest_api_types/generic/string.hpp>
 #include <everest_api_types/iso15118_charger/API.hpp>
 #include <everest_api_types/iso15118_charger/codec.hpp>
-#include <everest_api_types/iso15118_charger/json_codec.hpp>
 #include <everest_api_types/iso15118_charger/wrapper.hpp>
 #include <everest_api_types/isolation_monitor/API.hpp>
 #include <everest_api_types/isolation_monitor/codec.hpp>
-#include <everest_api_types/isolation_monitor/json_codec.hpp>
 #include <everest_api_types/isolation_monitor/wrapper.hpp>
 #include <everest_api_types/power_supply_DC/API.hpp>
 #include <everest_api_types/power_supply_DC/codec.hpp>
-#include <everest_api_types/power_supply_DC/json_codec.hpp>
 #include <everest_api_types/power_supply_DC/wrapper.hpp>
 #include <everest_api_types/powermeter/codec.hpp>
 #include <everest_api_types/powermeter/wrapper.hpp>
 #include <everest_api_types/uk_random_delay/API.hpp>
 #include <everest_api_types/uk_random_delay/codec.hpp>
-#include <everest_api_types/uk_random_delay/json_codec.hpp>
 #include <everest_api_types/uk_random_delay/wrapper.hpp>
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 #include <everest_api_types/utilities/codec.hpp>
@@ -41,14 +37,16 @@ namespace {
 template <class T> T const& to_external_api(T const& val) {
     return val;
 }
+
 } // namespace
 
 namespace module {
 
-namespace API_types = everest::lib::API::V1_0::types;
+namespace API_types = ev_API::V1_0::types;
 namespace API_types_ext = API_types::evse_manager;
 namespace API_powermeter = API_types::powermeter;
 namespace API_iso = API_types::iso15118_charger;
+namespace API_energy = API_types::energy;
 namespace API_evse_bsp = API_types::evse_board_support;
 namespace API_imd = API_types::isolation_monitor;
 namespace API_dc = API_types::power_supply_DC;
@@ -88,10 +86,12 @@ void evse_manager_consumer_API::ready() {
     generate_api_var_powermeter();
     generate_api_var_evse_id();
     generate_api_var_hw_capabilities();
+    generate_api_var_enforced_limits();
     generate_api_var_waiting_for_external_ready();
     generate_api_var_ready();
     generate_api_var_selected_protocol();
     generate_api_var_powermeter_public_key_ocmf();
+    generate_api_var_supported_energy_transfer_modes();
 
     generate_api_var_ac_nr_of_phases_available();
     generate_api_var_ac_pp_ampacity();
@@ -112,6 +112,7 @@ auto evse_manager_consumer_API::forward_api_var(std::string const& var) {
     using namespace API_types_ext;
     using namespace API_powermeter;
     using namespace API_generic;
+    using namespace API_energy;
     using namespace API_evse_bsp;
     using namespace API_iso;
     using namespace API_imd;
@@ -332,6 +333,10 @@ void evse_manager_consumer_API::generate_api_var_hw_capabilities() {
     r_evse_manager->subscribe_hw_capabilities(forward_api_var("hw_capabilities"));
 }
 
+void evse_manager_consumer_API::generate_api_var_enforced_limits() {
+    r_evse_manager->subscribe_enforced_limits(forward_api_var("enforced_limits"));
+}
+
 void evse_manager_consumer_API::generate_api_var_waiting_for_external_ready() {
     r_evse_manager->subscribe_waiting_for_external_ready(forward_api_var("waiting_for_external_ready"));
 }
@@ -342,6 +347,10 @@ void evse_manager_consumer_API::generate_api_var_ready() {
 
 void evse_manager_consumer_API::generate_api_var_selected_protocol() {
     r_evse_manager->subscribe_selected_protocol(forward_api_var("selected_protocol"));
+}
+
+void evse_manager_consumer_API::generate_api_var_supported_energy_transfer_modes() {
+    r_evse_manager->subscribe_supported_energy_transfer_modes(forward_api_var("supported_energy_transfer_modes"));
 }
 
 void evse_manager_consumer_API::generate_api_var_powermeter_public_key_ocmf() {

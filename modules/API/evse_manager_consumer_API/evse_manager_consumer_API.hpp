@@ -125,10 +125,12 @@ private:
     void generate_api_var_powermeter();
     void generate_api_var_evse_id();
     void generate_api_var_hw_capabilities();
+    void generate_api_var_enforced_limits();
     void generate_api_var_waiting_for_external_ready();
     void generate_api_var_ready();
     void generate_api_var_selected_protocol();
     void generate_api_var_powermeter_public_key_ocmf();
+    void generate_api_var_supported_energy_transfer_modes();
 
     void generate_api_var_ac_nr_of_phases_available();
     void generate_api_var_ac_pp_ampacity();

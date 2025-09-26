@@ -165,7 +165,11 @@ channels:
     messages:
       receive_hw_capabilities:
         $ref: '#/components/messages/receive_hw_capabilities'
-  # enforced_limits not implemented
+  receive_enforced_limits:
+    address: 'e2m/enforced_limits'
+    messages:
+      receive_enforced_limits:
+        $ref: '#/components/messages/receive_enforced_limits'
   receive_waiting_for_external_ready:
     address: 'e2m/waiting_for_external_ready'
     messages:
@@ -181,7 +185,11 @@ channels:
     messages:
       receive_selected_protocol:
         $ref: '#/components/messages/receive_selected_protocol'
-  # supported_energy_transfer_modes not implemented
+  receive_supported_energy_transfer_modes:
+    address: 'e2m/supported_energy_transfer_modes'
+    messages:
+      receive_supported_energy_transfer_modes:
+        $ref: '#/components/messages/receive_supported_energy_transfer_modes'
 
   ########## evse_board_support
   receive_ac_nr_of_phases_available:
@@ -457,7 +465,11 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_hw_capabilities'
-  # enforced_limits not implemented
+  receive_enforced_limits:
+    title: 'Receive enforced limits'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_enforced_limits'
   receive_waiting_for_external_ready:
     title: 'Receive waiting for external ready status'
     action: receive
@@ -473,7 +485,11 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_selected_protocol'
-  # supported_energy_transfer_modes not implemented
+  receive_supported_energy_transfer_modes:
+    title: 'Receive supported energy transfer modes'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_supported_energy_transfer_modes'
 
   ########## evse_board_support
   receive_ac_nr_of_phases_available:
@@ -895,7 +911,13 @@ components:
       contentType: application/json
       payload:
         $ref: '../evse_board_support_API/asyncapi.yaml#/components/schemas/HardwareCapabilities'
-    # enforced_limits not implemented
+    receive_enforced_limits:
+      name: receive_enforced_limits
+      title: 'Receive enforced limits'
+      summary: 'Enforced limits for this node (coming from the EnergyManager)'
+      contentType: application/json
+      payload:
+        $ref: '../external_energy_limits_consumer_API/asyncapi.yaml#/components/schemas/EnforcedLimits'
     receive_waiting_for_external_ready:
       name: receive_waiting_for_external_ready
       title: 'Receive waiting for external ready status'
@@ -917,7 +939,13 @@ components:
       contentType: application/json
       payload:
          $ref: '#/components/schemas/SelectedProtocol'
-    # supported_energy_transfer_modes not implemented
+    receive_supported_energy_transfer_modes:
+      name: receive_supported_energy_transfer_modes
+      title: 'Receive supported energy transfer modes'
+      summary: 'The list of supported energy transfers e.g. AC mono/tri, DC, DC_BPT, etc.''
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/SupportedEnergyTransferModeList'
 
     ########## evse_board_support
     receive_ac_nr_of_phases_available:
@@ -1226,6 +1254,13 @@ components:
           type: integer
           minimum: 0
           maximum: 10000
+    SupportedEnergyTransferModeList:
+      description: List of supported energy transfers e.g. AC mono/tri, DC, DC_BPT, etc.
+      type: array
+      items:
+        type: string
+        $ref: '../auth_token_validator_API/asyncapi.yaml#/components/schemas/EnergyTransferMode'
+      minItems: 1
     Evse:
       description: Type that defines properties of an EVSE including its connectors
       type: object
