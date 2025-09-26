@@ -15,7 +15,6 @@ namespace module {
 namespace main {
 
 void power_supply_DCImpl::init() {
-    mod->acdc->initial_ping();
     mod->acdc->signalVoltageCurrent.connect([this](WinlineCanDevice::TelemetryMap telemetries) {
         float total_current = 0;
         float module_voltage = 0;
@@ -132,6 +131,7 @@ void power_supply_DCImpl::init() {
             clear_error(error_type);
         }
     });
+    mod->acdc->initial_ping();
 }
 
 void power_supply_DCImpl::ready() {

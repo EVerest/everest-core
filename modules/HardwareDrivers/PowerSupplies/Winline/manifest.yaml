@@ -76,6 +76,10 @@ config:
     enum:
       - "AC"
       - "DC"
+  module_current_limit_point:
+    description: Percentage of the rated current that the module will use as the current limit point (0.0-3.3325)
+    type: number
+    default: 3.3325
 provides:
   main:
     description: Main interface

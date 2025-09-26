@@ -63,13 +63,14 @@ void WinlineCanDevice::set_can_device(const std::string& dev) {
 
 void WinlineCanDevice::set_config_values(const std::string& addrs, int group_addr, int timeout, int controller_address,
                                          int power_state_grace_period_ms, int altitude_setting_m,
-                                         const std::string& input_mode) {
+                                         const std::string& input_mode, double module_current_limit_point) {
     this->device_connection_timeout_s = timeout;
     this->group_address = group_addr;
     this->controller_address = controller_address;
     this->power_state_grace_period_ms = power_state_grace_period_ms;
     this->altitude_setting_m = altitude_setting_m;
     this->input_mode = input_mode;
+    this->module_current_limit_point = module_current_limit_point;
 
     EVLOG_info << "Winline: Operating with controller address: 0x" << std::hex << controller_address;
     EVLOG_info << "Winline: Altitude setting: " << altitude_setting_m << "m";
@@ -217,7 +218,11 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
         if (data_type == WinlineProtocol::DATA_TYPE_FLOAT) {
             can_packet_acdc::ReadRatedOutputCurrent current_reading(payload);
             auto& telemetry = telemetries[source_address];
-            telemetry.dc_max_output_current = current_reading.current;
+            //
+            // Strangely the rated output current is not the max output current, it is the basis calculation for the max output current
+            // The max output current is the rated output current * module_current_limit_point
+            //
+            telemetry.dc_max_output_current = current_reading.current * module_current_limit_point;
             telemetry.last_update = std::chrono::steady_clock::now();
             EVLOG_info << format_module_id(source_address) << ": Rated current = " << current_reading.current << "A";
 
@@ -290,6 +295,10 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
                         EVLOG_info << "Winline: Discovered new module at address 0x" << std::hex
                                    << static_cast<int>(source_address) << " in group "
                                    << static_cast<int>(group_info.group_number);
+
+                        // Configure newly discovered module
+                        set_altitude_all_modules();
+                        set_current_limit_point_all_modules();
                     }
                 } else {
                     EVLOG_debug << "Winline: Ignoring module at address 0x" << std::hex
@@ -431,6 +440,10 @@ size_t WinlineCanDevice::remove_expired_telemetry_entries() {
                 // Signal capabilities update if modules were re-added
                 if (modules_re_added) {
                     signalCapabilitiesUpdate(telemetries);
+
+                    // Configure reconnected modules
+                    set_altitude_all_modules();
+                    set_current_limit_point_all_modules();
                 }
             }
         }
@@ -478,6 +491,10 @@ void WinlineCanDevice::poll_status_handler() {
 
             // Signal capabilities update when module is re-added
             signalCapabilitiesUpdate(telemetries);
+
+            // Configure reconnected module
+            set_altitude_all_modules();
+            set_current_limit_point_all_modules();
         }
     }
 
@@ -660,6 +677,35 @@ bool WinlineCanDevice::set_altitude_all_modules() {
         EVLOG_info << "Winline: Altitude setting " << altitude_setting_m << "m sent to all modules successfully";
     } else {
         EVLOG_warning << "Winline: Some altitude setting commands failed";
+    }
+
+    return all_success;
+}
+
+bool WinlineCanDevice::set_current_limit_point_all_modules() {
+    EVLOG_info << "Winline: Setting current limit point to " << module_current_limit_point << " on all modules";
+
+    bool all_success = true;
+
+    // Send to each configured module individually (unified approach for both modes)
+    for (const auto& addr : configured_module_addresses) {
+        EVLOG_info << "Winline: Setting current limit point on module 0x" << std::hex << static_cast<int>(addr);
+        bool result =
+            send_set_register_integer(addr, WinlineProtocol::Registers::SET_CURRENT_LIMIT_POINT, module_current_limit_point, false);
+        if (!result) {
+            EVLOG_warning << "Winline: Failed to send current limit point setting to module 0x" << std::hex
+                          << static_cast<int>(addr);
+            all_success = false;
+        } else {
+            EVLOG_info << "Winline: Current limit point setting sent successfully to module 0x" << std::hex
+                       << static_cast<int>(addr);
+        }
+    }
+
+    if (all_success) {
+        EVLOG_info << "Winline: Current limit point setting " << module_current_limit_point << " sent to all modules successfully";
+    } else {
+        EVLOG_warning << "Winline: Some current limit point setting commands failed";
     }
 
     return all_success;
@@ -1107,26 +1153,6 @@ bool WinlineCanDevice::send_set_register_integer(uint8_t destination_address, ui
                       << " (int=0x" << value << ") to address 0x" << static_cast<int>(destination_address);
     }
     return result;
-}
-
-void WinlineCanDevice::handle_module_count_packet(const std::vector<uint8_t>& payload) {
-    // NOTE: This function is deprecated for Winline protocol
-    // Winline uses register 0x0043 (GROUP_INFO) for module discovery instead
-    EVLOG_warning << "Winline: handle_module_count_packet called - this is deprecated for Winline protocol";
-
-    // For compatibility during transition, just mark as initialized
-    if (!initialized) {
-        initialized = true;
-        EVLOG_info << "Winline: System initialized via legacy path";
-        switch_on_off(false);
-    }
-}
-
-void WinlineCanDevice::handle_simple_telemetry_update(uint8_t source_address, const std::vector<uint8_t>& payload,
-                                                      uint8_t command_number) {
-    // NOTE: This function is deprecated for Winline protocol
-    // Winline uses register-based responses handled directly in rx_handler
-    EVLOG_warning << "Winline: handle_simple_telemetry_update called - this is deprecated for Winline protocol";
 }
 
 void WinlineCanDevice::check_and_signal_error_status_change(uint8_t source_address,

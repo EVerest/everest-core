@@ -45,7 +45,8 @@ public:
 
     void set_can_device(const std::string& dev);
     void set_config_values(const std::string& addrs, int group_address, int timeout, int controller_address,
-                           int power_state_grace_period_ms, int altitude_setting_m, const std::string& input_mode);
+                           int power_state_grace_period_ms, int altitude_setting_m, const std::string& input_mode,
+                           double module_current_limit_point);
     void initial_ping();
 
     // Commands
@@ -62,6 +63,9 @@ public:
     // Altitude setting operations
     bool set_altitude_all_modules();
 
+    // Current limit point setting operations
+    bool set_current_limit_point_all_modules();
+
     // Input mode setting operations
     bool set_input_mode_all_modules();
 
@@ -71,7 +75,6 @@ public:
                                  bool group = false);
     bool send_set_register_integer(uint8_t destination_address, uint16_t register_number, uint32_t value,
                                    bool group = false);
-
 
     // Enhanced Winline status monitoring capabilities
     bool perform_comprehensive_status_check(uint8_t module_address);
@@ -185,8 +188,9 @@ private:
     int group_address{0};
     size_t expected_module_count{0};
     int device_connection_timeout_s{0};
-    int power_state_grace_period_ms{2000};
-    int altitude_setting_m{1000};
+    int power_state_grace_period_ms{0};
+    int altitude_setting_m{0};
+    double module_current_limit_point{0.};
     std::string input_mode{"AC"};
     OperatingMode operating_mode{OperatingMode::FIXED_ADDRESS};
 
@@ -198,9 +202,6 @@ private:
     size_t remove_expired_telemetry_entries();
 
     // Helper methods to reduce code duplication in packet handling
-    void handle_module_count_packet(const std::vector<uint8_t>& payload);
-    void handle_simple_telemetry_update(uint8_t source_address, const std::vector<uint8_t>& payload,
-                                        uint8_t command_number);
     void check_and_signal_error_status_change(uint8_t source_address,
                                               const can_packet_acdc::PowerModuleStatus& new_status,
                                               const can_packet_acdc::PowerModuleStatus& old_status);

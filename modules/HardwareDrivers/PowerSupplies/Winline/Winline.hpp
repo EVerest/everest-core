@@ -35,6 +35,7 @@ struct Conf {
     double peak_current_ripple_A;
     int altitude_setting_m;
     std::string input_mode;
+    double module_current_limit_point;
 };
 
 class Winline : public Everest::ModuleBase {
