@@ -270,10 +270,22 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_ind
 }
 
 ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
-    ErrorResObj res = set_external_limit(evse_index, phase_count,
-                                         std::function<types::energy::ExternalLimits(int)>([this](int value) {
-                                             return get_external_limits(static_cast<int32_t>(value));
-                                         }));
+    ErrorResObj res{};
+
+    if (configured_limits.evse_limit.has_value()) {
+        // In case a current or power limit is already set, we need to consider that when applying the phase count
+        bool is_power = !configured_limits.is_current_set;
+        res = set_external_limit(
+            evse_index, configured_limits.evse_limit.value(),
+            std::function<types::energy::ExternalLimits(float)>([this, is_power, phase_count](float phy_value) {
+                return get_external_limits(phy_value, is_power, phase_count);
+            }));
+    } else {
+        // If no current or power limit is set, we can just apply the phase count
+        res = set_external_limit(evse_index, phase_count,
+                                 std::function<types::energy::ExternalLimits(int)>(
+                                     [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
+    }
     return res;
 }
 
