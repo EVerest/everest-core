@@ -13,14 +13,19 @@ The following modules are available, each corresponding to a EVerest API interfa
 * `AuthConsumerAPIClient`
 * `AuthTokenProviderAPIClient`
 * `AuthTokenValidatorAPIClient`
+* `DcExternalDerateAPIClient`
 * `DisplayMessageAPIClient`
 * `ErrorHistoryConsumerAPIClient`
 * `EvseBspAPIClient`
 * `EvseManagerConsumerAPIClient`
+* `ExternalEnergyLimitsConsumerAPIClient`
+* `GenericErrorRaiserAPIClient`
 * `IsolationMonitorAPIClient`
 * `OcppConsumerAPIClient`
+* `OverVoltageMonitorAPIClient`
 * `PowermeterAPIClient`
 * `PowerSupplyDCAPIClient`
+* `SessionCostAPIClient`
 * `SystemAPIClient`
 
 An additional module has been created to spy on the communication of a module or for the entire system: `SpyClient`
@@ -29,7 +34,7 @@ An additional module has been created to spy on the communication of a module or
 The API client is part of the EVerest API, however it is not build by default.
 In order to build and install the tool you need the following `cmake` flags:
 * EVEREST_ENABLE_PY_SUPPORT
-* EVEREST_BUILD_API_CLIENT
+* EVEREST_BUILD_API_CLIENTS
 
 The tool is written in Python so, obviously in order to run it you would require Python3 and the following modules:
 * paho-mqtt
@@ -46,7 +51,13 @@ In addition to that the tool requires the modules WHL files to be installed on t
 Since the tool is generated from the Async API Async specification the Async API cli tools need to be installed. We are installing the tools automatically during `cmake` phase if `node` and `npm` are already available.
 
 ## Build
-In order to build EVerest with the API client you need to pass the following 2 options `-DEVEREST_ENABLE_PY_SUPPORT=On` and `-DEVEREST_BUILD_API_CLIENT=On` to `cmake`.
+In order to build EVerest with the API client you need to pass the following 2 options `-DEVEREST_ENABLE_PY_SUPPORT=On` and `-DEVEREST_BUILD_API_CLIENTS=On` to `cmake`.
+
+You will also need the Python package *build* available:
+
+```
+python3 -m pip install build
+```
 
 By default the build and install process will create the modules listed above as WHL package.
 If nothing has been changed, they are in the `build\dist-wheels` folder and can be installed (use python environment if necessary):

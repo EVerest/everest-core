@@ -38,7 +38,7 @@ class EVerestAPICmd(cmd2.Cmd):
         self.hide_topic = ""
         self.quiet = True
         self.prettify = False
-        self.replyToPlaceholder = "everest/api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}"
+        self.replyToPlaceholder = "everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}"
         self.colors = True
 
         self.IN_COLOR = '\033[92m'   # Green

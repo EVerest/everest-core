@@ -1,5 +1,7 @@
-if(EVEREST_BUILD_API_DOCS)
+if(EVEREST_BUILD_API_DOCS OR EVEREST_BUILD_API_CLIENTS)
     include(${PROJECT_SOURCE_DIR}/cmake/fetch_async_api.cmake)
+endif()
+if(EVEREST_BUILD_API_DOCS)
     include(${PROJECT_SOURCE_DIR}/cmake/fetch_async_api_html_template.cmake)
 endif()
 
@@ -44,3 +46,45 @@ if(EVEREST_BUILD_API_DOCS)
     endforeach()
 endif()
 
+if(EVEREST_ENABLE_PY_SUPPORT AND EVEREST_BUILD_API_CLIENTS)
+    include(${CMAKE_SOURCE_DIR}/cmake/generate-api-python-client.cmake)
+
+    add_custom_target(everest_api_clients ALL)
+
+    set(TEMPLATE_DIR ${python-mqtt-template_SOURCE_DIR})
+
+    if("${TEMPLATE_DIR}" STREQUAL "")
+        message(FATAL_ERROR "Could not find python-mqtt-template, please install it using CPM or set python-mqtt-template_SOURCE_DIR")
+    endif()
+
+    add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/generated/npm_install_done
+        COMMAND cd ${TEMPLATE_DIR} && npm install
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/generated
+        COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/generated/npm_install_done
+        COMMENT "Install NPM once only"
+    )
+
+    add_custom_target(npm_install_target
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/generated/npm_install_done
+    )
+
+    # Iterate over the list and create the documentation
+    foreach(API_SPEC IN LISTS API_SPECS)
+        set(API_SPEC_PARAMS ${${API_SPEC}})
+        list(GET API_SPEC_PARAMS 0 API_FOLDER_NAME)
+        list(GET API_SPEC_PARAMS 1 API_NAME_CAMEL_CASE)
+        list(GET API_SPEC_PARAMS 2 API_NAME_SNAKE_CASE)
+        list(GET API_SPEC_PARAMS 3 API_INTERFACE_PREFIX)
+        message(STATUS "Generating API client for: ${API_FOLDER_NAME}")
+        message(STATUS "  camel case: ${API_NAME_CAMEL_CASE}")
+        message(STATUS "  snake case: ${API_NAME_SNAKE_CASE}")
+        message(STATUS "  prefix: ${API_INTERFACE_PREFIX}")
+        add_api_client(
+            API_PATH ${CMAKE_SOURCE_DIR}/doc/everest_api_specs/${API_FOLDER_NAME}/asyncapi.yaml
+            NAME_CAMEL_CASE ${API_NAME_CAMEL_CASE}
+            NAME_SNAKE_CASE ${API_NAME_SNAKE_CASE}
+            INTERFACE_PREFIX ${API_INTERFACE_PREFIX}
+        )
+    endforeach()
+endif()

@@ -1,11 +1,5 @@
-#
-# Licensor: Pionix GmbH, 2024
-# License: BaseCamp - License Version 1.0
-#
-# Licensed under the terms and conditions of the BaseCamp License contained in the "LICENSE" file, also available
-# under: https://pionix.com/pionix-license-terms
-# You may not use this file/code except in compliance with said License.
-#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 function(generate_async_python_client)
     set(oneValueArgs
@@ -93,7 +87,7 @@ function(add_api_client)
         NAME_SNAKE_CASE     ${FUNCTION_ARGS_NAME_SNAKE_CASE}
         INTERFACE_PREFIX    ${FUNCTION_ARGS_INTERFACE_PREFIX}
     )
-    add_dependencies(basecamp_api_clients
+    add_dependencies(everest_api_clients
         async_python_client_${FUNCTION_ARGS_NAME_SNAKE_CASE}_install_wheel
    )
 endfunction()

@@ -45,7 +45,7 @@ class SpyClient:
     if topic != "":
       self._mqtt_prefix = topic
     else:
-      self._mqtt_prefix = 'everest/api/1.0'
+      self._mqtt_prefix = 'everest_api/1.0'
     topics = {
       f'{ self._mqtt_prefix }/#',
     }
