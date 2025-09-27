@@ -62,16 +62,16 @@ void PhyVersoBSP::init() {
         p_connector_2->clear_error("evse_board_support/CommunicationFault", "McuToEverest");
     });
 
-    serial.reset(1);
-
     serial.run();
     gpio.run();
+    serial.reset(1);
 
     // very sporadically multiple resets needed for MCU to respond -> retrying until we get MCU response in a
     // configured, ready and running state
     mcu_config_done = false;
     uint16_t n_tries = 0;
     while (!mcu_config_done) {
+        serial.keep_alive();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         n_tries++;
         if (n_tries > 20) {
