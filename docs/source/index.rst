@@ -11,8 +11,18 @@ EVerest is ...
 * licensed under the Apache 2.0 license to allow commercial-friendly use and
 * backed by strong industry partners via great compatibility.
 
-The EVerest project was initiated by Pionix GmbH to help help with the
+The EVerest project was initiated by Pionix GmbH to help with the
 electrification of the mobility sector.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Contents
+
+   tutorials/index
+   how-to-guides/index
+   explanation/index
+   reference/index
 
 .. grid:: 1 2 2 2
    :gutter: 2
@@ -35,7 +45,7 @@ electrification of the mobility sector.
 
    .. grid-item-card:: GitHub source
       :link: https://github.com/everest
-      :link-type: ext
+      :link-type: url
 
       In case you want to dig directly into the sources of EVerest, go for it!
 
@@ -50,7 +60,7 @@ electrification of the mobility sector.
 For a live experience, you can attend any live discussion session of the
 EVerest contributors.
 The events are open to anyone and can be found in the
-`EVerest event calendar<https://zoom-lfx.platform.linuxfoundation.org/meetings/everest?view=week>`_.
+`EVerest event calendar <https://zoom-lfx.platform.linuxfoundation.org/meetings/everest?view=week>`_.
 
 .. raw:: html
 
@@ -85,7 +95,7 @@ everybody to find their best way of learning:
       Example: **"How can I activate the OCPP protocol?"**
 
    .. grid-item-card:: 📚 Explanations
-      :link: explanation/index.html
+      :link: explanation/index
       :link-type: doc
 
       More detailed information to deepen your knowledge.
@@ -93,7 +103,7 @@ everybody to find their best way of learning:
       Example: **How is authorization done in EVerest?**
 
    .. grid-item-card:: 📄 References
-      :link: reference/index.html
+      :link: reference/index
       :link-type: doc
 
       Technical overviews, API documentation, auto-generated class definitions - go here.
@@ -102,10 +112,16 @@ everybody to find their best way of learning:
 Further important links
 =======================
 
-.. hlist::
-   :columns: 3
+.. grid:: 2
+   :gutter: 3
 
-   * `GitHub Repository <https://github.com/everest>`_
-   * `Diskussionsforum <https://lfenergy.zulipchat.com/>`_
-   * `Live Events & Kalender <https://zoom-lfx.platform.linuxfoundation.org/meetings/everest?view=week>`_
-   * `Linux Foundation Energy<https://lfenergy.org/>`_
+   .. grid-item::
+
+      * `GitHub Repository <https://github.com/everest>`_
+      * `Linux Foundation Energy <https://lfenergy.org/>`_
+
+   .. grid-item::
+
+      * `Discussion Forum (Zulip) <https://lfenergy.zulipchat.com/>`_
+      * `Live Events & Calendar <https://zoom-lfx.platform.linuxfoundation.org/meetings/everest?view=week>`_
+ 
