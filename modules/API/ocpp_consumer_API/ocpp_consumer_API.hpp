@@ -83,8 +83,8 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     auto forward_api_var(std::string const& var);
-    using ParseAndPublishFtor = std::function<bool(const json&)>;
-    void subscribe_api_topic(const std::string& var, ParseAndPublishFtor const& parse_and_publish);
+    using ParseAndPublishFtor = std::function<bool(std::string const&)>;
+    void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
 
     void generate_api_cmd_data_transfer();
     void generate_api_cmd_get_variables();

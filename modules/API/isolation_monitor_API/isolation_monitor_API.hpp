@@ -69,7 +69,7 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
-    void subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish);
+    void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
     void generate_api_var_isolation_measurement();
     void generate_api_var_self_test_result();
     void generate_api_var_raise_error();

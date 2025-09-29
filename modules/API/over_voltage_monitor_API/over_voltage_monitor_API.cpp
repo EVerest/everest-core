@@ -50,12 +50,21 @@ void over_voltage_monitor_API::ready() {
     setup_heartbeat_generator();
 }
 
-void over_voltage_monitor_API::generate_api_var_communication_check() {
-    subscribe_api_topic("communication_check", [this](std::string const& data) {
-        auto val = API_generic::deserialize<bool>(data);
-        comm_check.set_value(val);
-        return true;
+void over_voltage_monitor_API::generate_api_var_voltage_measurement_V() {
+    subscribe_api_topic("voltage_measurement_V", [this](std::string const& data) {
+        float val = 0.0;
+        if (deserialize(data, val)) {
+            p_main->publish_voltage_measurement_V(val);
+            return true;
+        }
+        return false;
     });
+}
+
+std::string over_voltage_monitor_API::make_error_string(API_types_ext::Error const& error) {
+    auto error_str = API_generic::trimmed(serialize(error.type));
+    auto result = "over_voltage_monitor/" + error_str;
+    return result;
 }
 
 void over_voltage_monitor_API::generate_api_var_raise_error() {
@@ -91,18 +100,15 @@ void over_voltage_monitor_API::generate_api_var_clear_error() {
     });
 }
 
-void over_voltage_monitor_API::generate_api_var_voltage_measurement_V() {
-    subscribe_api_topic("voltage_measurement_V", [this](std::string const& data) {
-        auto val = API_generic::deserialize<float>(data);
-        p_main->publish_voltage_measurement_V(val);
-        return true;
+void over_voltage_monitor_API::generate_api_var_communication_check() {
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
+            return true;
+        }
+        return false;
     });
-}
-
-std::string over_voltage_monitor_API::make_error_string(API_types_ext::Error const& error) {
-    auto error_str = API_generic::trimmed(serialize(error.type));
-    auto result = "over_voltage_monitor/" + error_str;
-    return result;
 }
 
 void over_voltage_monitor_API::setup_heartbeat_generator() {
@@ -114,8 +120,8 @@ void over_voltage_monitor_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void over_voltage_monitor_API::subscribe_api_topic(const std::string& var,
-                                                   const ParseAndPublishFtor& parse_and_publish) {
+void over_voltage_monitor_API::subscribe_api_topic(std::string const& var,
+                                                   ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
@@ -123,7 +129,7 @@ void over_voltage_monitor_API::subscribe_api_topic(const std::string& var,
                 EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
             }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Cmd/Var: '" << topic << "' failed with -> " << e.what();
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

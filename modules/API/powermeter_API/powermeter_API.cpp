@@ -10,6 +10,8 @@
 #include <everest_api_types/powermeter/wrapper.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
+#include <utility>
+
 #include <everest/logging.hpp>
 
 namespace module {
@@ -38,28 +40,35 @@ void powermeter_API::ready() {
 }
 
 void powermeter_API::generate_api_var_powermeter_values() {
-    subscribe_api_var("powermeter_values", [=](std::string const& data) {
-        API_types_ext::PowermeterValues ext;
-        if (deserialize(data, ext)) {
-            auto value = to_internal_api(ext);
-            p_main->publish_powermeter(value);
+    subscribe_api_topic("powermeter_values", [this](std::string const& data) {
+        API_types_ext::PowermeterValues payload;
+        if (deserialize(data, payload)) {
+            p_main->publish_powermeter(to_internal_api(payload));
+            return true;
         }
+        return false;
     });
 }
 
 void powermeter_API::generate_api_var_public_key_ocmf() {
-    subscribe_api_var("public_key_ocmf", [=](std::string const& data) {
-        std::string ext;
-        if (deserialize(data, ext)) {
-            p_main->publish_public_key_ocmf(ext);
+    subscribe_api_topic("public_key_ocmf", [this](std::string const& data) {
+        std::string val;
+        if (deserialize(data, val)) {
+            p_main->publish_public_key_ocmf(std::move(val));
+            return true;
         }
+        return false;
     });
 }
 
 void powermeter_API::generate_api_var_communication_check() {
-    subscribe_api_var("communication_check", [this](std::string const& data) {
-        auto val = API_generic::deserialize<bool>(data);
-        comm_check.set_value(val);
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
+            return true;
+        }
+        return false;
     });
 }
 
@@ -72,14 +81,15 @@ void powermeter_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void powermeter_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
+void powermeter_API::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
-            parse_and_publish(data);
+            if (not parse_and_publish(data)) {
+                EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
+            }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
-            ;
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

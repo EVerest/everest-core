@@ -35,10 +35,10 @@ void auth_token_validator_API::ready() {
 }
 
 void auth_token_validator_API::generate_api_var_validation_result_update() {
-    subscribe_api_var("validate_result_update", [=](std::string const& data) {
-        API_types_ext::ValidationResultUpdate ext;
-        if (deserialize(data, ext)) {
-            p_auth_token_validator->publish_validate_result_update(to_internal_api(ext));
+    subscribe_api_topic("validate_result_update", [=](std::string const& data) {
+        API_types_ext::ValidationResultUpdate payload;
+        if (deserialize(data, payload)) {
+            p_auth_token_validator->publish_validate_result_update(to_internal_api(payload));
             return true;
         }
         return false;
@@ -46,10 +46,13 @@ void auth_token_validator_API::generate_api_var_validation_result_update() {
 }
 
 void auth_token_validator_API::generate_api_var_communication_check() {
-    subscribe_api_var("communication_check", [this](std::string const& data) {
-        auto val = API_generic::deserialize<bool>(data);
-        comm_check.set_value(val);
-        return true;
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
+            return true;
+        }
+        return false;
     });
 }
 
@@ -62,7 +65,8 @@ void auth_token_validator_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void auth_token_validator_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
+void auth_token_validator_API::subscribe_api_topic(std::string const& var,
+                                                   ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
@@ -70,7 +74,7 @@ void auth_token_validator_API::subscribe_api_var(const std::string& var, const P
                 EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
             }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

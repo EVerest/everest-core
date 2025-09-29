@@ -9,6 +9,8 @@
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
+#include <utility>
+
 namespace module {
 
 namespace API_types = ev_API::V1_0::types;
@@ -53,8 +55,8 @@ auto auth_consumer_API::forward_api_var(std::string const& var) {
 }
 
 void auth_consumer_API::generate_api_cmd_set_connection_timeout() {
-    subscribe_api_topic("set_connection_timeout", [=](std::string const& data) {
-        int connection_timeout;
+    subscribe_api_topic("set_connection_timeout", [this](std::string const& data) {
+        int connection_timeout = 0;
         if (deserialize(data, connection_timeout)) {
             r_auth->call_set_connection_timeout(connection_timeout);
             return true;
@@ -64,10 +66,10 @@ void auth_consumer_API::generate_api_cmd_set_connection_timeout() {
 }
 
 void auth_consumer_API::generate_api_cmd_set_master_pass_group_id() {
-    subscribe_api_topic("set_master_pass_group_id", [=](std::string const& data) {
+    subscribe_api_topic("set_master_pass_group_id", [this](std::string const& data) {
         std::string master_pass_group_id;
         if (deserialize(data, master_pass_group_id)) {
-            r_auth->call_set_master_pass_group_id(master_pass_group_id);
+            r_auth->call_set_master_pass_group_id(std::move(master_pass_group_id));
             return true;
         }
         return false;
@@ -75,13 +77,12 @@ void auth_consumer_API::generate_api_cmd_set_master_pass_group_id() {
 }
 
 void auth_consumer_API::generate_api_cmd_withdraw_authorization() {
-    subscribe_api_topic("withdraw_authorization", [=](std::string const& data) {
+    subscribe_api_topic("withdraw_authorization", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             API_types_ext::WithdrawAuthorizationRequest payload;
             if (deserialize(msg.payload, payload)) {
-                auto int_arg = to_internal_api(payload);
-                auto int_res = r_auth->call_withdraw_authorization(int_arg);
+                auto int_res = r_auth->call_withdraw_authorization(to_internal_api(payload););
                 auto ext_res = API_types_ext::to_external_api(int_res);
                 mqtt.publish(msg.replyTo, serialize(ext_res));
                 return true;
@@ -96,7 +97,7 @@ void auth_consumer_API::generate_api_var_token_validation_status() {
 }
 
 void auth_consumer_API::generate_api_var_communication_check() {
-    subscribe_api_topic("communication_check", [this](const json& data) {
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
         bool val = false;
         if (deserialize(data, val)) {
             comm_check.set_value(val);
@@ -115,7 +116,7 @@ void auth_consumer_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void auth_consumer_API::subscribe_api_topic(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
+void auth_consumer_API::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
@@ -123,7 +124,7 @@ void auth_consumer_API::subscribe_api_topic(const std::string& var, const ParseA
                 EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
             }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Cmd/Var: '" << topic << "' failed with -> " << e.what();
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

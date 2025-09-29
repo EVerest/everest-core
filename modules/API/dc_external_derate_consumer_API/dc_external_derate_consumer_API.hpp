@@ -67,7 +67,7 @@ private:
     // insert your private definitions here
     auto forward_api_var(std::string const& var);
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
-    void subscribe_api_topic(const std::string& var, const ParseAndPublishFtor& parse_and_publish);
+    void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
 
     void generate_api_var_plug_temperature_C();
     void generate_api_var_communication_check();

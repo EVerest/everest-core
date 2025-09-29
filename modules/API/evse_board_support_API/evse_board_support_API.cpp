@@ -51,7 +51,7 @@ void evse_board_support_API::ready() {
 }
 
 void evse_board_support_API::generate_api_var_event() {
-    subscribe_api_var("event", [=](std::string const& data) {
+    subscribe_api_topic("event", [=](std::string const& data) {
         API_types_ext::BspEvent ext;
         if (deserialize(data, ext)) {
             p_main->publish_event(to_internal_api(ext));
@@ -62,15 +62,18 @@ void evse_board_support_API::generate_api_var_event() {
 }
 
 void evse_board_support_API::generate_api_var_ac_nr_of_phases() {
-    subscribe_api_var("ac_nr_of_phases", [=](std::string const& data) {
-        auto ac_nr_of_phases_available = API_generic::deserialize<int>(data);
-        p_main->publish_ac_nr_of_phases_available(ac_nr_of_phases_available);
-        return true;
+    subscribe_api_topic("ac_nr_of_phases", [=](std::string const& data) {
+        int ac_nr_of_phases_available = 0;
+        if (deserialize(data, ac_nr_of_phases_available)) {
+            p_main->publish_ac_nr_of_phases_available(ac_nr_of_phases_available);
+            return true;
+        }
+        return false;
     });
 }
 
 void evse_board_support_API::generate_api_var_capabilities() {
-    subscribe_api_var("capabilities", [=](std::string const& data) {
+    subscribe_api_topic("capabilities", [=](std::string const& data) {
         API_types_ext::HardwareCapabilities ext;
         if (deserialize(data, ext)) {
             p_main->publish_capabilities(to_internal_api(ext));
@@ -81,7 +84,7 @@ void evse_board_support_API::generate_api_var_capabilities() {
 }
 
 void evse_board_support_API::generate_api_var_ac_pp_ampacity() {
-    subscribe_api_var("ac_pp_ampacity", [=](std::string const& data) {
+    subscribe_api_topic("ac_pp_ampacity", [=](std::string const& data) {
         API_types_ext::ProximityPilot ext;
         if (deserialize(data, ext)) {
             p_main->publish_ac_pp_ampacity(to_internal_api(ext));
@@ -92,7 +95,7 @@ void evse_board_support_API::generate_api_var_ac_pp_ampacity() {
 }
 
 void evse_board_support_API::generate_api_var_request_stop_transaction() {
-    subscribe_api_var("request_stop_transaction", [=](std::string const& data) {
+    subscribe_api_topic("request_stop_transaction", [=](std::string const& data) {
         API_evse_manager::StopTransactionRequest ext;
         if (deserialize(data, ext)) {
             p_main->publish_request_stop_transaction(to_internal_api(ext));
@@ -103,23 +106,18 @@ void evse_board_support_API::generate_api_var_request_stop_transaction() {
 }
 
 void evse_board_support_API::generate_api_var_rcd_current() {
-    subscribe_api_var("rcd_current", [=](std::string const& data) {
-        auto rcd_current = API_generic::deserialize<double>(data);
-        p_rcd->publish_rcd_current_mA(rcd_current);
-        return true;
-    });
-}
-
-void evse_board_support_API::generate_api_var_communication_check() {
-    subscribe_api_var("communication_check", [this](std::string const& data) {
-        auto val = API_generic::deserialize<bool>(data);
-        comm_check.set_value(val);
-        return true;
+    subscribe_api_topic("rcd_current", [=](std::string const& data) {
+        double rcd_current;
+        if (deserialize(data, rcd_current)) {
+            p_rcd->publish_rcd_current_mA(rcd_current);
+            return true;
+        }
+        return false;
     });
 }
 
 void evse_board_support_API::generate_api_var_raise_error() {
-    subscribe_api_var("raise_error", [=](std::string const& data) {
+    subscribe_api_topic("raise_error", [=](std::string const& data) {
         API_types_ext::Error error;
         if (deserialize(data, error)) {
             auto handler = make_error_handler(error);
@@ -131,11 +129,22 @@ void evse_board_support_API::generate_api_var_raise_error() {
 }
 
 void evse_board_support_API::generate_api_var_clear_error() {
-    subscribe_api_var("clear_error", [=](std::string const& data) {
+    subscribe_api_topic("clear_error", [=](std::string const& data) {
         API_types_ext::Error error;
         if (deserialize(data, error)) {
             auto handler = make_error_handler(error);
             handler.clearer();
+            return true;
+        }
+        return false;
+    });
+}
+
+void evse_board_support_API::generate_api_var_communication_check() {
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
             return true;
         }
         return false;
@@ -151,7 +160,7 @@ void evse_board_support_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void evse_board_support_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
+void evse_board_support_API::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
@@ -159,7 +168,7 @@ void evse_board_support_API::subscribe_api_var(const std::string& var, const Par
                 EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
             }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

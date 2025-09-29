@@ -37,29 +37,35 @@ void system_API::ready() {
 }
 
 void system_API::generate_api_var_firmware_update_status() {
-    subscribe_api_var("firmware_update_status", [=](std::string const& data) {
-        API_types_ext::FirmwareUpdateStatus ext;
-        if (deserialize(data, ext)) {
-            auto value = to_internal_api(ext);
-            p_main->publish_firmware_update_status(value);
+    subscribe_api_topic("firmware_update_status", [this](std::string const& data) {
+        API_types_ext::FirmwareUpdateStatus payload;
+        if (deserialize(data, payload)) {
+            p_main->publish_firmware_update_status(to_internal_api(payload));
+            return true;
         }
+        return false;
     });
 }
 
 void system_API::generate_api_var_log_status() {
-    subscribe_api_var("log_status", [=](std::string const& data) {
-        API_types_ext::LogStatus ext;
-        if (deserialize(data, ext)) {
-            auto value = to_internal_api(ext);
-            p_main->publish_log_status(value);
+    subscribe_api_topic("log_status", [this](std::string const& data) {
+        API_types_ext::LogStatus payload;
+        if (deserialize(data, payload)) {
+            p_main->publish_log_status(to_internal_api(payload));
+            return true;
         }
+        return false;
     });
 }
 
 void system_API::generate_api_var_communication_check() {
-    subscribe_api_var("communication_check", [this](std::string const& data) {
-        auto val = API_generic::deserialize<bool>(data);
-        comm_check.set_value(val);
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
+            return true;
+        }
+        return false;
     });
 }
 
@@ -72,13 +78,16 @@ void system_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void system_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
+void system_API::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
-            parse_and_publish(data);
+            if (not parse_and_publish(data)) {
+                EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
+            }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
+
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

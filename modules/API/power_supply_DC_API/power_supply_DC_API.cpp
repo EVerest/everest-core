@@ -9,6 +9,7 @@
 #include <everest_api_types/power_supply_DC/codec.hpp>
 #include <everest_api_types/power_supply_DC/wrapper.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
+#include <everest_api_types/utilities/codec.hpp>
 
 #include "utils/error.hpp"
 #include <everest/logging.hpp>
@@ -16,7 +17,7 @@
 namespace module {
 
 namespace API_generic = API_types::generic;
-using API_types_ext::deserialize;
+using ev_API::deserialize;
 
 void power_supply_DC_API::init() {
     invoke_init(*p_main);
@@ -41,57 +42,67 @@ void power_supply_DC_API::ready() {
 }
 
 void power_supply_DC_API::generate_api_var_mode() {
-    subscribe_api_var("mode", [=](const std::string& data) {
-        auto ext = deserialize<API_types_ext::Mode>(data);
-        auto arg = to_internal_api(ext);
-        p_main->publish_mode(arg);
+    subscribe_api_topic("mode", [this](const std::string& data) {
+        API_types_ext::Mode payload;
+        if (deserialize(data, payload)) {
+            p_main->publish_mode(to_internal_api(payload));
+            return true;
+        }
+        return false;
     });
 }
 
 void power_supply_DC_API::generate_api_var_voltage_current() {
-    subscribe_api_var("voltage_current", [=](const std::string& data) {
-        auto ext = deserialize<API_types_ext::VoltageCurrent>(data);
-        auto arg = to_internal_api(ext);
-        p_main->publish_voltage_current(arg);
+    subscribe_api_topic("voltage_current", [this](const std::string& data) {
+        API_types_ext::VoltageCurrent payload;
+        if (deserialize(data, payload)) {
+            p_main->publish_voltage_current(to_internal_api(payload));
+            return true;
+        }
+        return false;
     });
 }
 
 void power_supply_DC_API::generate_api_var_capabilities() {
-    subscribe_api_var("capabilities", [=](const json& data) {
-        auto ext = deserialize<API_types_ext::Capabilities>(data);
-        auto arg = to_internal_api(ext);
-        p_main->publish_capabilities(arg);
+    subscribe_api_topic("capabilities", [this](const std::string& data) {
+        API_types_ext::Capabilities payload;
+        if (deserialize(data, payload)) {
+            p_main->publish_capabilities(to_internal_api(payload));
+            return true;
+        }
+        return false;
     });
 }
 
 void power_supply_DC_API::generate_api_var_raise_error() {
-    subscribe_api_var("raise_error", [=](const std::string& data) {
-        auto error = deserialize<API_types_ext::Error>(data);
-        auto sub_type_str = error.sub_type ? error.sub_type.value() : "";
-        auto message_str = error.message ? error.message.value() : "";
-        auto error_str = make_error_string(error);
-        auto ev_error =
-            p_main->error_factory->create_error(error_str, sub_type_str, message_str, Everest::error::Severity::High);
-        p_main->raise_error(ev_error);
+    subscribe_api_topic("raise_error", [this](const std::string& data) {
+        API_types_ext::Error payload;
+        if (deserialize(data, payload)) {
+            auto sub_type_str = payload.sub_type ? payload.sub_type.value() : "";
+            auto message_str = payload.message ? payload.message.value() : "";
+            auto error_str = make_error_string(payload);
+            auto ev_error = p_main->error_factory->create_error(error_str, sub_type_str, message_str,
+                                                                Everest::error::Severity::High);
+            p_main->raise_error(ev_error);
+            return true;
+        }
+        return false;
     });
 }
 
 void power_supply_DC_API::generate_api_var_clear_error() {
-    subscribe_api_var("clear_error", [=](const std::string& data) {
-        auto error = deserialize<API_types_ext::Error>(data);
-        std::string error_str = make_error_string(error);
-        if (error.sub_type) {
-            p_main->clear_error(error_str, error.sub_type.value());
-        } else {
-            p_main->clear_error(error_str);
+    subscribe_api_topic("clear_error", [this](const std::string& data) {
+        API_types_ext::Error payload;
+        if (deserialize(data, payload)) {
+            std::string error_str = make_error_string(payload);
+            if (payload.sub_type) {
+                p_main->clear_error(error_str, payload.sub_type.value());
+            } else {
+                p_main->clear_error(error_str);
+            }
+            return true;
         }
-    });
-}
-
-void power_supply_DC_API::generate_api_var_communication_check() {
-    subscribe_api_var("communication_check", [this](const std::string& data) {
-        auto val = API_generic::deserialize<bool>(data);
-        comm_check.set_value(val);
+        return false;
     });
 }
 
@@ -99,6 +110,17 @@ std::string power_supply_DC_API::make_error_string(API_types_ext::Error const& e
     auto error_str = API_generic::trimmed(serialize(error.type));
     auto result = "power_supply_DC/" + error_str;
     return result;
+}
+
+void power_supply_DC_API::generate_api_var_communication_check() {
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
+            return true;
+        }
+        return false;
+    });
 }
 
 void power_supply_DC_API::setup_heartbeat_generator() {
@@ -110,13 +132,15 @@ void power_supply_DC_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void power_supply_DC_API::subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
+void power_supply_DC_API::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
-            parse_and_publish(data);
+            if (not parse_and_publish(data)) {
+                EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
+            }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

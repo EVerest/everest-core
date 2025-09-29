@@ -50,22 +50,22 @@ void external_energy_limits_consumer_API::generate_api_var_enforced_limits() {
     r_energy_node->subscribe_enforced_limits(forward_api_var("enforced_limits"));
 }
 
-void external_energy_limits_consumer_API::generate_api_var_communication_check() {
-    subscribe_api_topic("communication_check", [this](std::string const& data) {
-        bool val = false;
+void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits() {
+    subscribe_api_topic("set_external_limits", [this](std::string const& data) {
+        API_types_ext::ExternalLimits val;
         if (deserialize(data, val)) {
-            comm_check.set_value(val);
+            r_energy_node->call_set_external_limits(to_internal_api(val));
             return true;
         }
         return false;
     });
 }
 
-void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits() {
-    subscribe_api_topic("set_external_limits", [=](std::string const& data) {
-        API_types_ext::ExternalLimits val;
+void external_energy_limits_consumer_API::generate_api_var_communication_check() {
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
         if (deserialize(data, val)) {
-            r_energy_node->call_set_external_limits(to_internal_api(val));
+            comm_check.set_value(val);
             return true;
         }
         return false;
@@ -81,8 +81,8 @@ void external_energy_limits_consumer_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void external_energy_limits_consumer_API::subscribe_api_topic(const std::string& var,
-                                                              const ParseAndPublishFtor& parse_and_publish) {
+void external_energy_limits_consumer_API::subscribe_api_topic(std::string const& var,
+                                                              ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
@@ -90,7 +90,7 @@ void external_energy_limits_consumer_API::subscribe_api_topic(const std::string&
                 EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
             }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Cmd/Var: '" << topic << "' failed with -> " << e.what();
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

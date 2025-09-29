@@ -59,22 +59,22 @@ void dc_external_derate_consumer_API::generate_api_var_plug_temperature_C() {
     r_derate->subscribe_plug_temperature_C(forward_api_var("plug_temperature_C"));
 }
 
-void dc_external_derate_consumer_API::generate_api_var_communication_check() {
-    subscribe_api_topic("communication_check", [this](std::string const& data) {
-        bool val = false;
-        if (deserialize(data, val)) {
-            comm_check.set_value(val);
+void dc_external_derate_consumer_API::generate_api_cmd_set_external_derating() {
+    subscribe_api_topic("set_external_derating", [=](std::string const& data) {
+        API_types_ext::ExternalDerating external;
+        if (deserialize(data, external)) {
+            r_derate->call_set_external_derating(to_internal_api(external));
             return true;
         }
         return false;
     });
 }
 
-void dc_external_derate_consumer_API::generate_api_cmd_set_external_derating() {
-    subscribe_api_topic("set_external_derating", [=](std::string const& data) {
-        API_types_ext::ExternalDerating val;
+void dc_external_derate_consumer_API::generate_api_var_communication_check() {
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
         if (deserialize(data, val)) {
-            r_derate->call_set_external_derating(to_internal_api(val));
+            comm_check.set_value(val);
             return true;
         }
         return false;
@@ -90,8 +90,8 @@ void dc_external_derate_consumer_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void dc_external_derate_consumer_API::subscribe_api_topic(const std::string& var,
-                                                          const ParseAndPublishFtor& parse_and_publish) {
+void dc_external_derate_consumer_API::subscribe_api_topic(std::string const& var,
+                                                          ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
@@ -99,7 +99,7 @@ void dc_external_derate_consumer_API::subscribe_api_topic(const std::string& var
                 EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
             }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Cmd/Var: '" << topic << "' failed with -> " << e.what();
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

@@ -13,6 +13,7 @@ namespace module {
 namespace API_types = ev_API::V1_0::types;
 namespace API_types_ext = API_types::display_message;
 namespace API_generic = API_types::generic;
+using ev_API::deserialize;
 
 void display_message_API::init() {
     invoke_init(*p_main);
@@ -33,9 +34,12 @@ void display_message_API::ready() {
 
 void display_message_API::generate_api_var_communication_check() {
     subscribe_api_topic("communication_check", [this](std::string const& data) {
-        auto val = API_generic::deserialize<bool>(data);
-        comm_check.set_value(val);
-        return true;
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
+            return true;
+        }
+        return false;
     });
 }
 
@@ -48,7 +52,7 @@ void display_message_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void display_message_API::subscribe_api_topic(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
+void display_message_API::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
@@ -56,7 +60,7 @@ void display_message_API::subscribe_api_topic(const std::string& var, const Pars
                 EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
             }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Cmd/Var: '" << topic << "' failed with -> " << e.what();
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

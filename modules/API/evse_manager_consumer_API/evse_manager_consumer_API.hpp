@@ -98,7 +98,7 @@ private:
     // insert your private definitions here
 
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
-    void subscribe_api_topic(const std::string& var, const ParseAndPublishFtor& parse_and_publish);
+    void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
 
     auto forward_api_var(std::string const& var);
 

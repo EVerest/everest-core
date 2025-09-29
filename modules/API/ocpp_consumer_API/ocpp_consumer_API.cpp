@@ -71,8 +71,7 @@ void ocpp_consumer_API::generate_api_cmd_data_transfer() {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             DataTransferRequest request;
-            auto payload_ok = deserialize(msg.payload, request);
-            if (payload_ok) {
+            if (deserialize(msg.payload, request)) {
                 auto int_reply = r_data_transfer->call_data_transfer(to_internal_api(request));
                 auto reply = to_external_api(int_reply);
                 mqtt.publish(msg.replyTo, serialize(reply));
@@ -89,8 +88,7 @@ void ocpp_consumer_API::generate_api_cmd_get_variables() {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             GetVariableRequestList request;
-            auto payload_ok = deserialize(msg.payload, request);
-            if (payload_ok) {
+            if (deserialize(msg.payload, request)) {
                 auto int_reply = r_ocpp->call_get_variables(to_internal_api(request));
                 auto reply = to_external_api(int_reply);
                 mqtt.publish(msg.replyTo, serialize(reply));
@@ -107,8 +105,7 @@ void ocpp_consumer_API::generate_api_cmd_set_variables() {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
             SetVariablesArgs request;
-            auto payload_ok = deserialize(msg.payload, request);
-            if (payload_ok) {
+            if (deserialize(msg.payload, request)) {
                 auto int_reply = r_ocpp->call_set_variables(to_internal_api(request.variables), request.source);
                 auto reply = to_external_api(int_reply);
                 mqtt.publish(msg.replyTo, serialize(reply));
@@ -136,10 +133,13 @@ void ocpp_consumer_API::generate_api_var_ocpp_transaction_event() {
 }
 
 void ocpp_consumer_API::generate_api_var_communication_check() {
-    subscribe_api_topic("communication_check", [this](const json& data) {
-        auto val = API_generic::deserialize<bool>(data);
-        comm_check.set_value(val);
-        return true;
+    subscribe_api_topic("communication_check", [this](std::string const& data) {
+        bool val = false;
+        if (deserialize(data, val)) {
+            comm_check.set_value(val);
+            return true;
+        }
+        return false;
     });
 }
 
@@ -152,7 +152,7 @@ void ocpp_consumer_API::setup_heartbeat_generator() {
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);
 }
 
-void ocpp_consumer_API::subscribe_api_topic(const std::string& var, const ParseAndPublishFtor& parse_and_publish) {
+void ocpp_consumer_API::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_everest(var);
     mqtt.subscribe(topic, [=](std::string const& data) {
         try {
@@ -160,7 +160,7 @@ void ocpp_consumer_API::subscribe_api_topic(const std::string& var, const ParseA
                 EVLOG_warning << "Invalid data: Deserialization failed.\n" << topic << "\n" << data;
             }
         } catch (const std::exception& e) {
-            EVLOG_warning << "Cmd/Var: '" << topic << "' failed with -> " << e.what();
+            EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

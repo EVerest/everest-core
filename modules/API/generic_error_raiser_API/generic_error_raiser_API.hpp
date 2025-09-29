@@ -55,7 +55,7 @@ public:
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
-    void subscribe_api_topic(const std::string& var, ParseAndPublishFtor const& parse_and_publish);
+    void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
     std::string make_error_string(generic::Error const& error);
 
     void generate_api_var_communication_check();

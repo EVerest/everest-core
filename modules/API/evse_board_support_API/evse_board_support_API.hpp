@@ -79,15 +79,14 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    using ParseAndPublishFtor = std::function<bool(const std::string&)>;
+    using ParseAndPublishFtor = std::function<bool(std::string const&)>;
     using HandleErrorFtor = std::function<void()>;
     struct ErrorHandler {
         HandleErrorFtor raiser;
         HandleErrorFtor clearer;
         std::string error_id;
     };
-
-    void subscribe_api_var(const std::string& var, const ParseAndPublishFtor& parse_and_publish);
+    void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
     void generate_api_var_event();
     void generate_api_var_ac_nr_of_phases();
     void generate_api_var_capabilities();
