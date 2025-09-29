@@ -178,6 +178,50 @@ corresponding nodered flows in the [config folder](config/).
 
 Check out this [guide for using EVerest SIL](https://everest.github.io/nightly/tutorials/run_sil/index.html)
 
+## Building the documentation
+
+The EVerest documentation is built using [Sphinx](https://www.sphinx-doc.org/).
+The sources can be found in the `docs` directory.
+
+To build it locally, follow these steps.
+
+1.  **Navigate to the documentation directory:**
+
+    ```bash
+    cd docs
+    ```
+
+2.  **Create and activate a Python virtual environment:**
+
+    This creates an isolated environment for the documentation dependencies,
+    which is a critical best practice.
+
+    ```bash
+    # Create the environment
+    python3 -m venv venv
+
+    # Activate it (Unix or MacOS)
+    source venv/bin/activate
+
+    # On Windows, use:
+    # venv\Scripts\activate
+    ```
+
+3.  **Build the documentation:**
+
+    The included Makefile automates the entire process.
+    It will first install the required Python packages and then build the
+    static HTML site.
+
+    ```bash
+    make html
+    ```
+
+4.  **View the documentation:**
+
+    The generated website can be found in the `docs/_build/html` directory.
+    You can open the main page in your browser.
+
 ## Troubleshoot
 
 **1. Problem:** "make install" fails with complaining about missing header files.
