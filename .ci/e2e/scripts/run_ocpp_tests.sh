@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 source "$EXT_MOUNT/venv/bin/activate"
 retVal=$?

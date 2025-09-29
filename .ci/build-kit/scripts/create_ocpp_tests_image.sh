@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 rsync -a "$EXT_MOUNT/source/tests" ./
 retVal=$?
