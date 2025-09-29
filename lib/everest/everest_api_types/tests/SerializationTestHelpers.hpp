@@ -23,7 +23,8 @@ template <class T> T codec_test(T const& original_object) {
 
     // deserialization
     T result_object;
-    everest::lib::API::deserialize(basic_serialization_result, result_object);
+    auto success = everest::lib::API::deserialize(basic_serialization_result, result_object);
+    EXPECT_TRUE(success);
 
     return result_object;
 }

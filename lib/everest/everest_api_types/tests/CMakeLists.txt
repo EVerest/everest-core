@@ -70,6 +70,8 @@ target_compile_definitions(${TEST_TARGET_NAME} PRIVATE
   ACTUAL_IFC_FILE_HASHES_CSV_PATH="${ACTUAL_IFC_HASHES_CSV}"
 )
 
+####################### GTest and automatic (de-)serialization tests
+
 set(INCLUDE_DIR
   "${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/include"
   "${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/tests"
@@ -96,6 +98,9 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
 file(GLOB API_FILES ${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/include/everest_api_types/*/API.hpp)
+file(GLOB TEST_GENERATOR_PY_FILES ${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/tests/test_file_autogenerator/*.py)
+set (TEST_DISABLE_FILE ${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/tests/test_file_autogenerator/disable.csv)
+set (SERIALIZATION_TEST_HELPERS_HPP ${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/tests/SerializationTestHelpers.hpp)
 
 set(GENERATED_TESTS_LOCATION ${CMAKE_BINARY_DIR}/generated/lib/everest/everest_api_types/tests/)
 
@@ -114,7 +119,7 @@ set(
 add_custom_command(OUTPUT ${GENERATED_TESTS_LOCATION}
     COMMAND
     ${GENERATE_COMMAND}
-    DEPENDS ${API_FILES}
+    DEPENDS ${API_FILES} ${TEST_GENERATOR_PY_FILES} ${TEST_DISABLE_FILE} ${SERIALIZATION_TEST_HELPERS_HPP}
 )
 
 add_custom_target(generate_new_tests_on_file_change_only ALL   DEPENDS ${GENERATED_TESTS_LOCATION})
