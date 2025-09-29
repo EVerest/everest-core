@@ -82,7 +82,7 @@ void auth_consumer_API::generate_api_cmd_withdraw_authorization() {
         if (deserialize(data, msg)) {
             API_types_ext::WithdrawAuthorizationRequest payload;
             if (deserialize(msg.payload, payload)) {
-                auto int_res = r_auth->call_withdraw_authorization(to_internal_api(payload););
+                auto int_res = r_auth->call_withdraw_authorization(to_internal_api(payload));
                 auto ext_res = API_types_ext::to_external_api(int_res);
                 mqtt.publish(msg.replyTo, serialize(ext_res));
                 return true;
