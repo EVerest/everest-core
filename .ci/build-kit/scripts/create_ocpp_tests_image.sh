@@ -8,7 +8,7 @@ if [ $retVal -ne 0 ]; then
     exit $retVal
 fi
 
-python3 -m venv "$EXT_MOUNT/venv"
+python3 -m venv "$EXT_MOUNT/venv" --system-site-packages
 retVal=$?
 
 if [ $retVal -ne 0 ]; then
