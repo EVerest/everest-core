@@ -1,5 +1,12 @@
 #!/bin/sh
 
+source "$EXT_MOUNT/venv/bin/activate"
+retVal=$?
+if [ $retVal -ne 0 ]; then
+    echo "Failed to activate virtual environment"
+    exit $retVal
+fi
+
 cd tests
 
 PARALLEL_TESTS=$(nproc)
