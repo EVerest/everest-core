@@ -34,6 +34,8 @@ struct Conf {
     double pre_alarm_threshold_kohm;
     double alarm_threshold_kohm;
     std::string coupling_device;
+    std::string indicator_relay_k1_function;
+    std::string indicator_relay_k2_function;
     bool automatic_self_test;
 };
 

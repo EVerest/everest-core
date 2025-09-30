@@ -25,7 +25,7 @@ This driver supports three modes of operation:
 
 - [ ] Implement communication timeout
 - [x] Implement alarmspeicherung setting
-- [ ] Implement indicator relay settings
+- [x] Implement indicator relay settings
 - [ ] check if device name + other device info should be read and logged
 - [ ] Test error handling
   - [ ] Modbus disconnect at arbitrary times

@@ -256,6 +256,45 @@ bool isolation_monitorImpl::configure_device() {
     }
     new_settings[7] = coupling_device; // 2007
 
+    uint16_t indicator_relay_k1_function = 8; // see datasheet
+    if (mod->config.indicator_relay_k1_function == "INSULATION_FAULT_ALARM") {
+        indicator_relay_k1_function = (1U << 0);
+    } else if (mod->config.indicator_relay_k1_function == "INSULATION_FAULT_PREALARM") {
+        indicator_relay_k1_function = (1U << 1);
+    } else if (mod->config.indicator_relay_k1_function == "DEVICE_FAULT") {
+        indicator_relay_k1_function = (1U << 2);
+    } else if (mod->config.indicator_relay_k1_function == "INSULATION_FAULT_ALARM_OR_DEVICE_FAULT") {
+        indicator_relay_k1_function = (1U << 3);
+    } else if (mod->config.indicator_relay_k1_function == "INSULATION_FAULT_ON_DC+") {
+        indicator_relay_k1_function = (1U << 4);
+    } else if (mod->config.indicator_relay_k1_function == "INSULATION_FAULT_ON_DC+_OR_DEVICE_FAULT") {
+        indicator_relay_k1_function = (1U << 5);
+    } else {
+        EVLOG_error << "Invalid indicator relay K1 function configuration: " << mod->config.indicator_relay_k1_function;
+        return false;
+    }
+
+    uint16_t indicator_relay_k2_function = 8; // see datasheet
+    if (mod->config.indicator_relay_k2_function == "INSULATION_FAULT_ALARM") {
+        indicator_relay_k2_function = (1U << 0);
+    } else if (mod->config.indicator_relay_k2_function == "INSULATION_FAULT_PRE_ALARM") {
+        indicator_relay_k2_function = (1U << 1);
+    } else if (mod->config.indicator_relay_k2_function == "DEVICE_FAULT") {
+        indicator_relay_k2_function = (1U << 2);
+    } else if (mod->config.indicator_relay_k2_function == "INSULATION_FAULT_PRE_ALARM_OR_DEVICE_FAULT") {
+        indicator_relay_k2_function = (1U << 3);
+    } else if (mod->config.indicator_relay_k2_function == "INSULATION_FAULT_ON_DC-") {
+        indicator_relay_k2_function = (1U << 4);
+    } else if (mod->config.indicator_relay_k2_function == "INSULATION_FAULT_ON_DC-_OR_DEVICE_FAULT") {
+        indicator_relay_k2_function = (1U << 5);
+    } else {
+        EVLOG_error << "Invalid indicator relay K2 function configuration: " << mod->config.indicator_relay_k2_function;
+        return false;
+    }
+
+    new_settings[8] = indicator_relay_k1_function; // 2008
+    new_settings[9] = indicator_relay_k2_function; // 2009
+
     if (std::equal(new_settings.begin(), new_settings.end(), present_settings->begin())) {
         EVLOG_debug << "Device configuration is already up to date, no need to write";
         return true;
@@ -332,7 +371,7 @@ void isolation_monitorImpl::raise_communication_fault() {
 bool isolation_monitorImpl::update_control_word1(bool start_self_test) {
     if (start_self_test) {
         // Note that the self test only works when measurement is not disabled
-        return write_holding_register(0, 1 << 4); // Bit 4: Start self test
+        return write_holding_register(0, 1U << 4); // Bit 4: Start self test
     }
 
     if (self_test_triggered or self_test_running) {
@@ -345,7 +384,7 @@ bool isolation_monitorImpl::update_control_word1(bool start_self_test) {
 
     // if we should not measure, set bit 8 to disable measurements
     if (not publish_enabled and not mod->config.keep_measurement_active) {
-        control_word1 |= 1 << 8; // bit 8: Measurement off
+        control_word1 |= 1U << 8; // bit 8: Measurement off
     }
 
     return write_holding_register(0, control_word1);

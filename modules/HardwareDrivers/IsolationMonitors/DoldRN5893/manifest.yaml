@@ -68,27 +68,28 @@ config:
       - NONE
       - RP5898
     default: NONE
-  # todo: implement
-  # indicator_relay_k1_function:
-  #   description: 42009 - Function of the indicator relay K1. See datasheet for details
-  #   type: string
-  #   enum:
-  #     - INSULATION_FAULT_ALARM
-  #     - INSULATION_FAULT_PREALARM
-  #     - DEVICE_FAULT
-  #     - INSULATION_FAULT_ALARM_OR_DEVICE_FAULT
-  #     - INSULATION_FAULT_ON_DC+
-  #     - INSULATION_FAULT_ON_DC+_OR_DEVICE_FAULT
-  # indicator_relay_k2_function:
-  #   description: 42010 - Function of the indicator relay K2. See datasheet for details
-  #   type: string
-  #   enum:
-  #     - INSULATION_FAULT_ALARM
-  #     - INSULATION_FAULT_PREALARM
-  #     - DEVICE_FAULT
-  #     - INSULATION_FAULT_PRE_ALARM_OR_DEVICE_FAULT
-  #     - INSULATION_FAULT_ON_DC-
-  #     - INSULATION_FAULT_ON_DC-_OR_DEVICE_FAULT
+  indicator_relay_k1_function:
+    description: 42009 - Function of the indicator relay K1. See datasheet for details
+    type: string
+    enum:
+      - INSULATION_FAULT_ALARM
+      - INSULATION_FAULT_PREALARM
+      - DEVICE_FAULT
+      - INSULATION_FAULT_ALARM_OR_DEVICE_FAULT
+      - INSULATION_FAULT_ON_DC+
+      - INSULATION_FAULT_ON_DC+_OR_DEVICE_FAULT
+    default: INSULATION_FAULT_ALARM_OR_DEVICE_FAULT
+  indicator_relay_k2_function:
+    description: 42010 - Function of the indicator relay K2. See datasheet for details
+    type: string
+    enum:
+      - INSULATION_FAULT_ALARM
+      - INSULATION_FAULT_PREALARM
+      - DEVICE_FAULT
+      - INSULATION_FAULT_PRE_ALARM_OR_DEVICE_FAULT
+      - INSULATION_FAULT_ON_DC-
+      - INSULATION_FAULT_ON_DC-_OR_DEVICE_FAULT
+    default: INSULATION_FAULT_PRE_ALARM_OR_DEVICE_FAULT
   automatic_self_test:
     description: 42011 - Whether automatic self-test is enabled
     type: boolean
