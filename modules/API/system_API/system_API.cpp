@@ -87,7 +87,6 @@ void system_API::subscribe_api_topic(std::string const& var, ParseAndPublishFtor
             }
         } catch (const std::exception& e) {
             EVLOG_warning << "Topic: '" << topic << "' failed with -> " << e.what() << "\n => " << data;
-
         } catch (...) {
             EVLOG_warning << "Invalid data: Failed to parse JSON or to get data from it.\n" << topic;
         }

@@ -64,16 +64,6 @@ channels:
     messages:
       receive_evse_replug:
         $ref: '#/components/messages/receive_evse_replug'
-  receive_request_ac_pp_ampacity:
-    address: 'e2m/ac_pp_ampacity'
-    messages:
-      receive_request_ac_pp_ampacity:
-        $ref: '#/components/messages/receive_request_ac_pp_ampacity'
-  send_reply_ac_pp_ampacity:
-    address: null
-    messages:
-      send_reply_ac_pp_ampacity:
-        $ref: '#/components/messages/send_reply_ac_pp_ampacity'
   receive_ac_overcurrent_limit:
     address: 'e2m/ac_overcurrent_limit'
     messages:
@@ -210,22 +200,6 @@ operations:
     channel:
       $ref: '#/channels/receive_evse_replug'
     description: 'Direction: EVerest to Module'
-  receive_request_ac_pp_ampacity:
-    title: 'Request for AC ampacity'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_request_ac_pp_ampacity'
-    reply:
-      address:
-        location: "$message.header#/replyTo"
-      channel:
-        $ref: '#/channels/send_reply_ac_pp_ampacity'
-  send_reply_ac_pp_ampacity:
-    title: 'Request for AC ampacity'
-    description: 'Reply to request'
-    action: send
-    channel:
-      $ref: '#/channels/send_reply_ac_pp_ampacity'
   receive_ac_overcurrent_limit:
     title: 'Receive over current limit'
     action: receive
@@ -412,33 +386,6 @@ components:
         - summary: ""
           payload:
             200
-    receive_request_ac_pp_ampacity:
-      name: receive_request_ac_pp_ampacity
-      title: 'Request for hardware capabilities'
-      summary: 'Reply to provided topic.'
-      contentType: application/json
-      payload:
-        type: object
-        properties:
-          headers:
-            type: object
-            properties:
-              replyTo:
-                type: string
-                description: 'The topic to which to send the reply'
-    send_reply_ac_pp_ampacity:
-      name: send_reply_ac_pp_ampacity
-      title: 'Reply to request for AC ampacity'
-      summary: >-
-        Read the current carrying capacity of the connected cable in ampere for AC charging
-        with a socket. This function will be used by EvseManager to get the PP value at
-        a distinct time. You should also publish the var pp_ampacity whenever the PP ampacity reading changes
-        to signal changes e.g. during the charging time.
-        This has no meaning for DC or AC charging with a fixed attached cable, it does not
-        need to be implemented and the returned value is not used in those cases.
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/ProximityPilot'
     receive_ac_overcurrent_limit:
       name: receive_ac_overcurrent_limit
       title: 'Receive over current limit'

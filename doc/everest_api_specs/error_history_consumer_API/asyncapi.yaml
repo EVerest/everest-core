@@ -138,17 +138,16 @@ components:
       title: 'Request the list of filtered errors'
       summary: 'Request the list of filtered errors.'
       payload:
-          type: object
-          properties:
-            headers:
-              type: object
-              properties:
-                replyTo:  # Address for the request to reply to
-                  type: string
-                  description: Address to send the response to.
-            payload:
-              description: Filters to apply to the list of errors
-              $ref: '#/components/schemas/FilterArguments'
+        type: object
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:  # Address for the request to reply to
+                type: string
+                description: Address to send the response to.
+          payload:
+            $ref: '#/components/schemas/FilterArguments'
     receive_reply_get_errors:
       name: receive_reply_get_errors
       title: 'List of filtered errors'
@@ -161,14 +160,14 @@ components:
       title: 'Request the list of active errors'
       summary: 'Request the list of active errors.'
       payload:
-          type: object
-          properties:
-            headers:
-              type: object
-              properties:
-                replyTo:  # Address for the request to reply to
-                  type: string
-                  description: Address to send the response to.
+        type: object
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:  # Address for the request to reply to
+                type: string
+                description: Address to send the response to.
       examples:
         - summary: "Request active errors"
           payload:
@@ -218,9 +217,15 @@ components:
   schemas:
     ErrorList:
       description: A list of ErrorObjects
-      type: array
-      items:
-        $ref: '#/components/schemas/ErrorObject'
+      type: object
+      additionalProperties: true
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorObject'
     ErrorObject:
       description: Represents an error
       type: object

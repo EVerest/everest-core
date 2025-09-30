@@ -82,9 +82,7 @@ void evse_board_supportImpl::handle_evse_replug(int& value) {
 }
 
 types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
-    static const types::board_support_common::ProximityPilot default_response =
-        types::board_support_common::ProximityPilot{types::board_support_common::Ampacity::None};
-    return generic_request_reply(default_response, internal::empty_payload, "ac_pp_ampacity");
+    return {};
 }
 
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
