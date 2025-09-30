@@ -1,0 +1,104 @@
+description: DOLD RN5893 IMD driver module
+config:
+  self_test_timeout_s:
+    description: Maximum time in seconds a self-test is allowed to take
+    type: number
+    default: 30
+  device_id:
+    description: Modbus device ID of DOLD RN5893, set via potentiometers on device
+    type: number
+  keep_measurement_active:
+    description: |
+      Normally, this module stops measurements when stop is called and restarts when start is called. 
+      If this option is enabled, measurements will continue even if stop is called.
+      This does not affect publishing of measurements, which is still controlled by start/stop commands and 
+      the always_publish_measurements option.
+    type: boolean
+    default: false
+  always_publish_measurements: # todo: one could remove this option, is present in bender but might not be needed here
+    description: |
+      Whether measurements should always be published, no matter if start/stop commands have been received.
+      Note that this only works if keep_measurement_active is enabled.
+    type: boolean
+    default: false
+
+  connection_monitoring:
+    description: 42001 - Whether connection to L(+)/L(-) should be monitored and if so, when
+    type: string
+    enum:
+      - ON
+      - OFF
+      - ONLY_DURING_SELF_TEST
+    default: ON
+  # todo: Alarmspeicherung
+  indicator_relay_switching_mode: # todo: better name?
+    description: 42003 - Behaviour type of the alarm relays. See datasheet for details
+    type: string
+    enum:
+      - DE_ENERGIZED_ON_TRIP
+      - ENERGIZED_ON_TRIP
+    default: DE_ENERGIZED_ON_TRIP
+  power_supply_type:
+    description: 42004 - Type of connected power network. See datasheet for details
+    type: string
+    enum:
+      - AC
+      - DC
+      - 3NAC
+    default: DC # the device's default is 3NAC; everest IMDs are usually only needed in DC so this is a better default
+  pre_alarm_threshold_kohm:
+    description: 42006 - Pre-alarm threshold setting in kOhm
+    type: number
+    maximum: 500
+    minimum: 1
+    default: 500
+  alarm_threshold_kohm:
+    description: 42007 - Alarm threshold setting in kOhm
+    type: number
+    maximum: 500
+    minimum: 1
+    default: 500
+  coupling_device:
+    description: 42008 - Whether a coupling device is connected and which one
+    type: string
+    enum:
+      - NONE
+      - RP5898
+    default: NONE
+  # todo: implement
+  # indicator_relay_k1_function:
+  #   description: 42009 - Function of the indicator relay K1. See datasheet for details
+  #   type: string
+  #   enum:
+  #     - INSULATION_FAULT_ALARM
+  #     - INSULATION_FAULT_PREALARM
+  #     - DEVICE_FAULT
+  #     - INSULATION_FAULT_ALARM_OR_DEVICE_FAULT
+  #     - INSULATION_FAULT_ON_DC+
+  #     - INSULATION_FAULT_ON_DC+_OR_DEVICE_FAULT
+  # indicator_relay_k2_function:
+  #   description: 42010 - Function of the indicator relay K2. See datasheet for details
+  #   type: string
+  #   enum:
+  #     - INSULATION_FAULT_ALARM
+  #     - INSULATION_FAULT_PREALARM
+  #     - DEVICE_FAULT
+  #     - INSULATION_FAULT_PRE_ALARM_OR_DEVICE_FAULT
+  #     - INSULATION_FAULT_ON_DC-
+  #     - INSULATION_FAULT_ON_DC-_OR_DEVICE_FAULT
+  automatic_self_test:
+    description: 42011 - Whether automatic self-test is enabled
+    type: boolean
+    default: false
+provides:
+  main:
+    description: IMD Interface of DOLD RN5893
+    interface: isolation_monitor
+requires:
+  serial_comm_hub:
+    interface: serial_communication_hub
+metadata:
+  # todo: determine license
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Mark Oude Elberink
