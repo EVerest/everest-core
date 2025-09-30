@@ -739,6 +739,7 @@ function(ev_install_project)
             ${EV_CORE_CMAKE_SCRIPT_DIR}/ev-targets.cmake
             ${EV_CORE_CMAKE_SCRIPT_DIR}/config-run-script.cmake
             ${EV_CORE_CMAKE_SCRIPT_DIR}/config-run-nodered-script.cmake
+            ${EV_CORE_CMAKE_SCRIPT_DIR}/config-tmux-run-script.cmake
         DESTINATION
             ${CMAKE_INSTALL_LIBDIR}/cmake/${LIBRARY_PACKAGE_NAME}
     )
