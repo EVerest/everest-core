@@ -226,6 +226,19 @@ void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_confi
     EVLOG_warning << "Ignoring handle_bpt_setup call";
 }
 
+void ISO15118_chargerImpl::handle_set_powersupply_capabilities(types::iso15118::Capabilities& capabilities) {
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.power_capabilities.max_current,
+                                  capabilities.max_charge_current, 1, iso2_unitSymbolType_A);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.power_capabilities.min_current,
+                                  capabilities.min_charge_current, 1, iso2_unitSymbolType_A);
+    populate_physical_value(&v2g_ctx->evse_v2g_data.power_capabilities.max_power, capabilities.max_charge_power,
+                            iso2_unitSymbolType_W);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.power_capabilities.max_voltage, capabilities.max_voltage, 1,
+                                  iso2_unitSymbolType_V);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.power_capabilities.min_voltage, capabilities.min_voltage, 1,
+                                  iso2_unitSymbolType_V);
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {
