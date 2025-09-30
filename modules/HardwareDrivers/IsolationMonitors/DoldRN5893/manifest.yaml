@@ -30,9 +30,12 @@ config:
       - OFF
       - ONLY_DURING_SELF_TEST
     default: ON
-  # todo: Alarmspeicherung
+  alarm_persistance:
+    description: 42002 - Storing insulation fault message. See datasheet for details
+    type: boolean
+    default: false
   indicator_relay_switching_mode: # todo: better name?
-    description: 42003 - Behaviour type of the alarm relays. See datasheet for details
+    description: 42003 - Behaviour type of the indicator relays. See datasheet for details
     type: string
     enum:
       - DE_ENERGIZED_ON_TRIP

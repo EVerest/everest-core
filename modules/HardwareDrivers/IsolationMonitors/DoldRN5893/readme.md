@@ -24,7 +24,7 @@ This driver supports three modes of operation:
 ## TODOs
 
 - [ ] Implement communication timeout
-- [ ] Implement alarmspeicherung setting
+- [x] Implement alarmspeicherung setting
 - [ ] Implement indicator relay settings
 - [ ] check if device name + other device info should be read and logged
 - [ ] Test error handling

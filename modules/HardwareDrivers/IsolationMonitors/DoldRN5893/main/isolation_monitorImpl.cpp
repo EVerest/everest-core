@@ -220,7 +220,7 @@ bool isolation_monitorImpl::configure_device() {
 
     new_settings[0] = connection_monitoring; // 2000
 
-    // todo: alarmspeicherung
+    new_settings[1] = mod->config.alarm_persistance ? 1 : 0; // 2001
 
     uint16_t indicator_relay_switching_mode = 0; // see datasheet
     if (mod->config.indicator_relay_switching_mode == "DE_ENERGIZED_ON_TRIP") {
