@@ -1,0 +1,25 @@
+active_modules:
+  im_cli:
+    standalone: true
+    module: BUIsolationMonitor
+    connections:
+      imd:
+        - implementation_id: main
+          module_id: dold_rn5893
+
+  serial_comm_hub:
+    module: SerialCommHub
+    config_implementation:
+      main:
+        serial_port: /dev/ttyUSB0
+        baudrate: 115200
+
+  dold_rn5893:
+    module: DoldRN5893
+    connections:
+      serial_comm_hub:
+        - module_id: serial_comm_hub
+          implementation_id: main
+    config_module:
+      device_id: 1
+      power_supply_type: DC
