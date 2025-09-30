@@ -36,17 +36,18 @@ minimum requirements:
 * PLC GreenPhy
 * RFID
 
-### Ubuntu 22.04
+### Ubuntu 24.04
 
 > [!WARNING]
-> Ubuntu 20.04 is not supported anymore. Please use Ubuntu 22.04 or newer.
+> Ubuntu 20.04 and Ubuntu 22.04 are not supported anymore. Please use Ubuntu 24.04 or newer.
 
 ```bash
 sudo apt update
 sudo apt install -y python3-pip python3-venv git rsync wget cmake doxygen \
-  graphviz build-essential clang-tidy cppcheck openjdk-17-jdk npm docker \
+  graphviz build-essential clang-tidy cppcheck openjdk-17-jdk npm docker.io \
   docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev \
-  clang-format curl rfkill libpcap-dev libevent-dev pkg-config libcap-dev
+  clang-format curl rfkill libpcap-dev libevent-dev pkg-config libcap-dev \
+  libsystemd-dev
 ```
 
 ### OpenSuse
@@ -59,10 +60,10 @@ zypper install -y git rsync wget cmake doxygen graphviz clang-tools cppcheck \
   libboost_program_options-devel libboost_system-devel libboost_thread-devel \
   java-17-openjdk java-17-openjdk-devel nodejs nodejs-devel npm python3-pip \
   gcc-c++ libopenssl-devel sqlite3-devel libpcap-devel libevent-devel \
-  libcap-devel
+  libcap-devel systemd-devel
 ```
 
-### Fedora 40, 41 & 42
+### Fedora 41 & 42
 
 ```bash
 sudo dnf update
@@ -70,7 +71,7 @@ sudo dnf install make automake gcc gcc-c++ kernel-devel python3-pip \
   python3-devel git rsync wget cmake doxygen graphviz clang-tools-extra \
   cppcheck java-21-openjdk java-21-openjdk-devel boost-devel nodejs \
   nodejs-devel npm openssl openssl-devel libsqlite3x-devel curl rfkill \
-  libpcap-devel libevent-devel libcap-devel
+  libpcap-devel libevent-devel libcap-devel systemd-devel
 ```
 
 ## Build & Install
