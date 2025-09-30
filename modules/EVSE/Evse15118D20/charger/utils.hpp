@@ -2,13 +2,18 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <vector>
+
 #include <generated/types/iso15118.hpp>
+#include <generated/types/iso15118_vas.hpp>
+
 #include <iso15118/d20/ev_information.hpp>
+#include <iso15118/message/service_detail.hpp>
 #include <iso15118/message/type.hpp>
 
 static constexpr auto NUMBER_OF_SETUP_STEPS = 5;
 
-enum class SetupStep {
+enum class SetupStep : std::uint8_t {
     SETUP,
     ENERGY_SERVICE,
     AUTH_SETUP,
@@ -105,6 +110,24 @@ constexpr types::iso15118::V2gMessageId convert_v2g_message_type(iso15118::messa
 }
 
 namespace module::charger {
+
+template <typename T, typename U> std::optional<T> convert_from_optional(const std::optional<U>& in);
+
 types::iso15118::AppProtocol convert_app_protocol(const iso15118::message_20::SupportedAppProtocol& app_protocol);
 types::iso15118::EvInformation convert_ev_info(const iso15118::d20::EVInformation& ev_info);
+
+template <typename T> types::iso15118::DcChargeDynamicModeValues convert_dynamic_values(const T& in);
+
+template <typename EVSE, typename EV>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params, const EVSE& evse_limits,
+                                  const EV& ev_limits);
+template <typename In>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params, const In& data);
+
+std::vector<iso15118::message_20::datatypes::ParameterSet>
+convert_parameter_set_list(const std::vector<types::iso15118_vas::ParameterSet>& parameter_set_list);
+
+template <typename T> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const T& mode);
+template <typename T> types::iso15118::AcEvPresentPowerValues fill_ac_ev_present_power_values(const T& mode);
+
 } // namespace module::charger
