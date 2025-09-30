@@ -2,7 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include <gtest/gtest.h>
 
-#inlcude <algorithm>
+#include <algorithm>
 
 #include <goose/sender.hpp>
 
