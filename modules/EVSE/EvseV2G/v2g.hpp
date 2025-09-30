@@ -173,6 +173,14 @@ enum NoEnergyPauseStatus {
     BeforeCableCheck,
 };
 
+struct PowerCapabilities {
+    iso2_PhysicalValueType max_current;
+    iso2_PhysicalValueType min_current;
+    iso2_PhysicalValueType max_power;
+    iso2_PhysicalValueType max_voltage;
+    iso2_PhysicalValueType min_voltage;
+};
+
 /**
  * Abstracts a charging port, i.e. a power outlet in this daemon.
  *
@@ -308,6 +316,9 @@ struct v2g_context {
 
         // No energy pause IEC61851-23:2023
         NoEnergyPauseStatus no_energy_pause{NoEnergyPauseStatus::None};
+
+        // Min and max limits from the dc powersupply
+        PowerCapabilities power_capabilities{};
 
     } evse_v2g_data;
 

@@ -249,6 +249,11 @@ public:
 
     void update_powersupply_capabilities(types::power_supply_DC::Capabilities caps) {
         std::scoped_lock lock(powersupply_capabilities_mutex);
+
+        if (caps != powersupply_capabilities) {
+            r_hlc[0]->call_set_powersupply_capabilities(caps);
+        }
+
         powersupply_capabilities = caps;
 
         // Inform HLC layer about update of physical values
