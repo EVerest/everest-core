@@ -885,7 +885,8 @@ void ChargePoint::message_callback(const std::string& message) {
             CallError(MessageId("-1"), "RpcFrameworkError", error_message, json({})));
         const auto& security_event = ocpp::security_events::INVALIDMESSAGES;
         this->security->security_event_notification_req(CiString<50>(security_event, StringTooLarge::Truncate),
-                                                        error_message, true, utils::is_critical(security_event));
+                                                        CiString<255>(error_message, StringTooLarge::Truncate), true,
+                                                        utils::is_critical(security_event));
         return;
     } catch (const StringConversionException& e) {
         this->logging->central_system("Unknown", message);
