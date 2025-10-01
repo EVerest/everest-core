@@ -33,6 +33,8 @@ target_compile_definitions(everest_system
         SDBUSCPP_MAJOR_VERSION=${sdbus-c++_VERSION_MAJOR}
 )
 
+set_target_properties(everest_system PROPERTIES EXPORT_NAME system)
+
 if (DISABLE_EDM)
     install(
         TARGETS everest_system
@@ -49,6 +51,7 @@ if (DISABLE_EDM)
         EXPORT everest_system-targets
         ADDITIONAL_CONTENT
             "find_dependency(everest-log)"
+            "find_dependency(sdbus-c++)"
     )
 endif()
 
