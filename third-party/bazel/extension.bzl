@@ -34,36 +34,36 @@ def _deps_impl(module_ctx):
     maybe(
         http_archive,
         name = "libevse-security",
-        url = "https://github.com/EVerest/libevse-security/archive/bf5a015cfeacad72509c1620464460753e5a5bec.tar.gz",
-        sha256 = "ddf1c033d3db9c81b14240efaa0b89845d493b253d69d5f5623eebed4fe4da10",
-        strip_prefix = "libevse-security-bf5a015cfeacad72509c1620464460753e5a5bec",
+        url = "https://github.com/EVerest/libevse-security/archive/71870efd97bd276a21a9513baa8cc3e79b5f4665.tar.gz",
+        sha256 = "f5f7e27a71084abdbd2a116baaef36dcc44ebb8d6e2826cf8ae6f891469b3d2d",
+        strip_prefix = "libevse-security-71870efd97bd276a21a9513baa8cc3e79b5f4665",
         build_file = "@everest-core//third-party/bazel:BUILD.libevse-security.bazel",
     )
 
     maybe(
         http_archive,
         name = "libocpp",
-        url = "https://github.com/EVerest/libocpp/archive/157ba65d9487c149dcd0ed31179a738c4b5ca343.tar.gz",
-        sha256 = "1f6ae0745399e1d1df8bfa085d689b354e96f0a8330eae5ead77408fad96c020",
-        strip_prefix = "libocpp-157ba65d9487c149dcd0ed31179a738c4b5ca343",
+        url = "https://github.com/EVerest/libocpp/archive/2ea181e6b24e03d7c44e96d38ec458f9a84c6085.tar.gz",
+        sha256 = "cfb0a24c40319483eec1337d064959a0004bea72c56b84835df45fb0fedd1fde",
+        strip_prefix = "libocpp-2ea181e6b24e03d7c44e96d38ec458f9a84c6085",
         build_file = "@everest-core//third-party/bazel:BUILD.libocpp.bazel",
     )
 
     maybe(
         http_archive,
         name = "com_github_warmcatt_libwebsockets",
-        url = "https://github.com/warmcat/libwebsockets/archive/e83ed4eb88b77039d69189327482263f6fdf5fef.tar.gz",
-        sha256 = "d0a4029a2b7b557a386eb74883c1d88e15a020168c805769ab326000f2fe40fa",
-        strip_prefix = "libwebsockets-e83ed4eb88b77039d69189327482263f6fdf5fef",
+        url = "https://github.com/warmcat/libwebsockets/archive/adc128ca082a3c6fb9d4abbadefc09e3bc736724.tar.gz",
+        sha256 = "8da42692347ba5bc3cbd89dc2b30aba3934ad51085ebeb2f8657321bf7164831",
+        strip_prefix = "libwebsockets-adc128ca082a3c6fb9d4abbadefc09e3bc736724",
         build_file = "@everest-core//third-party/bazel:BUILD.libwebsockets.bazel",
     )
 
     maybe(
         http_archive,
         name = "everest_sqlite",
-        url = "https://github.com/EVerest/everest-sqlite/archive/ccb56abb214a7f40b90598dfbec7c8d155999ada.tar.gz",
-        sha256 = "9c101aa8d37020f289c26394f247f963d33f7a877fcb382449a35edb2371b540",
-        strip_prefix = "everest-sqlite-ccb56abb214a7f40b90598dfbec7c8d155999ada",
+        url = "https://github.com/EVerest/everest-sqlite/archive/85b31859f20255e1b96992ab35d40ebdb15d9c55.tar.gz",
+        sha256 = "e1beb67c314d52036a8e65f3d00516c2f2f610264390866dedf87cf18a26bb02",
+        strip_prefix = "everest-sqlite-85b31859f20255e1b96992ab35d40ebdb15d9c55",
         build_file = "@everest-core//third-party/bazel:BUILD.everest-sqlite.bazel",
     )
 
