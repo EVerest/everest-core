@@ -297,19 +297,19 @@ components:
     receive_request_is_reset_allowed:
       name: receive_request_is_reset_allowed
       title: 'Request if reset is allowed'
-      summary: 'Request for is reset allowed.'
+      summary: 'Request if is reset allowed.'
       contentType: application/json
       payload:
-          type: object
-          properties:
-            headers:
-              type: object
-              properties:
-                replyTo:  # Address for the request to reply to
-                  type: string
-                  description: Address to send the response to.
-            payload:
-              $ref: '#/components/schemas/ResetType'
+        type: object
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:  # Address for the request to reply to
+                type: string
+                description: Address to send the response to.
+          payload:
+            $ref: '#/components/schemas/ResetType'
     send_reply_is_reset_allowed:
       name: send_reply_is_reset_allowed
       title: 'Reply to is reset allows'

@@ -39,20 +39,24 @@ types::display_message::SetDisplayMessageResponse
 display_messageImpl::handle_set_display_message(std::vector<types::display_message::DisplayMessage>& request) {
     static const types::display_message::SetDisplayMessageResponse default_response{
         types::display_message::DisplayMessageStatusEnum::UnknownTransaction, {}};
-    return generic_request_reply(default_response, request, "set_display_message");
+    std::vector<API_types_ext::DisplayMessage> messages;
+    for (const auto& message: request) {
+        messages.push_back(API_types_ext::to_external_api(message));
+    }
+    return generic_request_reply(default_response, messages, "set_display_message");
 }
 
 types::display_message::GetDisplayMessageResponse
 display_messageImpl::handle_get_display_messages(types::display_message::GetDisplayMessageRequest& request) {
     types::display_message::GetDisplayMessageResponse default_response;
-    return generic_request_reply(default_response, request, "get_display_message");
+    return generic_request_reply(default_response, API_types_ext::to_external_api(request), "get_display_message");
 }
 
 types::display_message::ClearDisplayMessageResponse
 display_messageImpl::handle_clear_display_message(types::display_message::ClearDisplayMessageRequest& request) {
     types::display_message::ClearDisplayMessageResponse default_response{
         types::display_message::ClearMessageResponseEnum::Unknown, {}};
-    return generic_request_reply(default_response, request, "clear_display_message");
+    return generic_request_reply(default_response, API_types_ext::to_external_api(request), "clear_display_message");
 }
 
 } // namespace main

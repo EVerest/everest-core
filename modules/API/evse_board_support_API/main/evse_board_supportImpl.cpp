@@ -27,17 +27,6 @@ void evse_board_supportImpl::init() {
 void evse_board_supportImpl::ready() {
 }
 
-template <class T, class ReqT>
-auto evse_board_supportImpl::generic_request_reply(T const& default_value, ReqT const& request,
-                                                   std::string const& topic) {
-    using namespace API_types_ext;
-    using ExtT = decltype(to_external_api(std::declval<T>()));
-    auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
-    if (!result) {
-        return default_value;
-    }
-    return result.value();
-}
 
 void evse_board_supportImpl::handle_enable(bool& value) {
     auto topic = mod->get_topics().everest_to_extern("enable");

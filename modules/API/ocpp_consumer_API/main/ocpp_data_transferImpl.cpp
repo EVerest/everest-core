@@ -9,7 +9,7 @@
 #include <everest_api_types/utilities/AsyncApiRequestReply.hpp>
 
 using namespace everest::lib::API;
-namespace ns_types_ext = everest::lib::API::V1_0::types::ocpp;
+namespace API_types_ext = everest::lib::API::V1_0::types::ocpp;
 
 namespace module {
 namespace main {
@@ -24,7 +24,7 @@ void ocpp_data_transferImpl::ready() {
 template <class T, class ReqT>
 auto ocpp_data_transferImpl::generic_request_reply(T const& default_value, ReqT const& request,
                                                    std::string const& topic) {
-    using namespace ns_types_ext;
+    using namespace API_types_ext;
     using ExtT = decltype(to_external_api(std::declval<T>()));
     auto result = request_reply_handler<ExtT>(mod->mqtt, mod->get_topics(), request, topic, timeout_s);
     if (!result) {
@@ -36,7 +36,7 @@ auto ocpp_data_transferImpl::generic_request_reply(T const& default_value, ReqT 
 types::ocpp::DataTransferResponse
 ocpp_data_transferImpl::handle_data_transfer(types::ocpp::DataTransferRequest& request) {
     types::ocpp::DataTransferResponse default_response{types::ocpp::DataTransferStatus::Offline, {}, {}};
-    return generic_request_reply(default_response, request, "data_transfer_incoming");
+    return generic_request_reply(default_response, API_types_ext::to_external_api(request), "data_transfer_incoming");
 }
 
 } // namespace main

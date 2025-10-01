@@ -25,8 +25,8 @@
 #include <everest_api_types/utilities/CommCheckHandler.hpp>
 
 namespace ev_API = everest::lib::API;
-namespace ns_ev_api_types = ev_API::V1_0::types;
-namespace generic = ns_ev_api_types::generic;
+namespace API_types = ev_API::V1_0::types;
+namespace API_generic = API_types::generic;
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -56,7 +56,7 @@ public:
     // insert your public definitions here
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
     void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
-    std::string make_error_string(generic::Error const& error);
+    std::string make_error_string(API_generic::Error const& error);
 
     void generate_api_var_communication_check();
     void generate_api_var_raise_error();

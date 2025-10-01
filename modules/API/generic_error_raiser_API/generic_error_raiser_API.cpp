@@ -32,7 +32,7 @@ void generic_error_raiser_API::ready() {
 
 void generic_error_raiser_API::generate_api_var_raise_error() {
     subscribe_api_topic("raise_error", [=](const std::string& data) {
-        generic::Error error;
+        API_generic::Error error;
         if (deserialize(data, error)) {
             auto sub_type_str = error.sub_type ? error.sub_type.value() : "";
             auto message_str = error.message ? error.message.value() : "";
@@ -47,15 +47,15 @@ void generic_error_raiser_API::generate_api_var_raise_error() {
     });
 }
 
-std::string generic_error_raiser_API::make_error_string(generic::Error const& error) {
-    auto error_str = generic::trimmed(serialize(error.type));
+std::string generic_error_raiser_API::make_error_string(API_generic::Error const& error) {
+    auto error_str = API_generic::trimmed(serialize(error.type));
     auto result = "generic/" + error_str;
     return result;
 }
 
 void generic_error_raiser_API::generate_api_var_clear_error() {
     subscribe_api_topic("clear_error", [=](const std::string& data) {
-        generic::Error error;
+        API_generic::Error error;
         if (deserialize(data, error)) {
             std::string error_str = make_error_string(error);
             if (error.sub_type) {

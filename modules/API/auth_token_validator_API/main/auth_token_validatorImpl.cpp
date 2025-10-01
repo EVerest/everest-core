@@ -39,7 +39,7 @@ types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
     static const types::authorization::ValidationResult default_response{
         types::authorization::AuthorizationStatus::Invalid, {}, {}, {}, {}, {}, {}, {}};
-    return generic_request_reply(default_response, provided_token, "validate_token");
+    return generic_request_reply(default_response, API_types_ext::to_external_api(provided_token), "validate_token");
 }
 
 } // namespace main
