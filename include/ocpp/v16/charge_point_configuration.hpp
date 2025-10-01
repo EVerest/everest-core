@@ -86,6 +86,8 @@ public:
     KeyValue getAuthorizeConnectorZeroOnConnectorOneKeyValue();
     bool getLogMessages();
     KeyValue getLogMessagesKeyValue();
+    bool getLogMessagesRaw();
+    KeyValue getLogMessagesRawKeyValue();
     std::vector<std::string> getLogMessagesFormat();
     KeyValue getLogMessagesFormatKeyValue();
     bool getLogRotation();

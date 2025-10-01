@@ -423,6 +423,9 @@ bool ChargePointConfiguration::getAuthorizeConnectorZeroOnConnectorOne() {
 bool ChargePointConfiguration::getLogMessages() {
     return this->config["Internal"]["LogMessages"];
 }
+bool ChargePointConfiguration::getLogMessagesRaw() {
+    return this->config["Internal"]["LogMessagesRaw"];
+}
 std::vector<std::string> ChargePointConfiguration::getLogMessagesFormat() {
     return this->config["Internal"]["LogMessagesFormat"];
 }
@@ -766,6 +769,14 @@ KeyValue ChargePointConfiguration::getLogMessagesKeyValue() {
     kv.key = "LogMessages";
     kv.readonly = true;
     kv.value.emplace(ocpp::conversions::bool_to_string(this->getLogMessages()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getLogMessagesRawKeyValue() {
+    KeyValue kv;
+    kv.key = "LogMessagesRaw";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getLogMessagesRaw()));
     return kv;
 }
 
@@ -3281,6 +3292,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "LogMessages") {
         return this->getLogMessagesKeyValue();
+    }
+    if (key == "LogMessagesRaw") {
+        return this->getLogMessagesRawKeyValue();
     }
     if (key == "LogMessagesFormat") {
         return this->getLogMessagesFormatKeyValue();

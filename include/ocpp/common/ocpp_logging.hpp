@@ -41,6 +41,12 @@ enum class LogRotationStatus {
     RotatedWithDeletion
 };
 
+enum class LogType {
+    ChargePoint,
+    CentralSystem,
+    System
+};
+
 /// \brief contains a ocpp message logging abstraction
 class MessageLogging {
 private:
@@ -51,12 +57,17 @@ private:
     bool detailed_log_to_console;
     bool log_to_file;
     bool log_to_html;
+    bool log_raw;
     bool log_security;
     bool session_logging;
     std::filesystem::path log_file;
     std::ofstream log_os;
+    std::filesystem::path log_raw_file;
+    std::ofstream log_raw_os;
     std::filesystem::path html_log_file;
     std::ofstream html_log_os;
+    std::filesystem::path html_raw_log_file;
+    std::ofstream html_raw_log_os;
     std::filesystem::path security_log_file;
     std::ofstream security_log_os;
     std::mutex output_file_mutex;
@@ -75,10 +86,7 @@ private:
     void initialize();
 
     /// \brief Output log message to the configured targets
-    void log_output(unsigned int typ, const std::string& message_type, const std::string& json_str);
-
-    /// \brief HTML encode the provided message \p msg
-    std::string html_encode(const std::string& msg);
+    void log_output(LogType typ, const std::string& message_type, const std::string& json_str, bool raw = false);
 
     /// \brief Format the given \p json_str with the given \p message_type
     FormattedMessageWithType format_message(const std::string& message_type, const std::string& json_str);
@@ -112,15 +120,15 @@ public:
     /// \brief Creates a new MessageLogging object with the provided configuration
     explicit MessageLogging(
         bool log_messages, const std::string& message_log_path, const std::string& output_file_name,
-        bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_security,
-        bool session_logging,
+        bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_raw,
+        bool log_security, bool session_logging,
         std::function<void(const std::string& message, MessageDirection direction)> message_callback);
 
     /// \brief Creates a new MessageLogging object with the provided configuration and enabled log rotation
     explicit MessageLogging(
         bool log_messages, const std::string& message_log_path, const std::string& output_file_name,
-        bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_security,
-        bool session_logging,
+        bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_raw,
+        bool log_security, bool session_logging,
         std::function<void(const std::string& message, MessageDirection direction)> message_callback,
         LogRotationConfig log_rotation_config, std::function<void(LogRotationStatus status)> status_callback);
     ~MessageLogging();
@@ -136,6 +144,9 @@ public:
 
     /// \brief Log a security message
     void security(const std::string& msg);
+
+    /// \brief Log a raw OCPP message
+    void raw(const std::string& msg, LogType log_type);
 
     /// \brief Start session logging (without log rotation)
     void start_session_logging(const std::string& session_id, const std::string& log_path);

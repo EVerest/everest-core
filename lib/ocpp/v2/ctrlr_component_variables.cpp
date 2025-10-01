@@ -133,6 +133,12 @@ const ComponentVariable LogMessages = {
         "LogMessages",
     }),
 };
+const ComponentVariable LogMessagesRaw = {
+    ControllerComponents::InternalCtrlr,
+    std::optional<Variable>({
+        "LogMessagesRaw",
+    }),
+};
 const RequiredComponentVariable LogMessagesFormat = {
     ControllerComponents::InternalCtrlr,
     std::optional<Variable>({

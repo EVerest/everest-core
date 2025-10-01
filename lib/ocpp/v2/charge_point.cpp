@@ -250,6 +250,8 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
     bool detailed_log_to_console = log_formats.find("console_detailed") != log_formats.npos;
     bool log_to_file = log_formats.find("log") != log_formats.npos;
     bool log_to_html = log_formats.find("html") != log_formats.npos;
+    bool log_raw =
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::LogMessagesRaw).value_or(false);
     bool log_security = log_formats.find("security") != log_formats.npos;
     bool session_logging = log_formats.find("session_logging") != log_formats.npos;
     bool message_callback = log_formats.find("callback") != log_formats.npos;
@@ -273,7 +275,7 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
     if (log_rotation) {
         this->logging = std::make_shared<ocpp::MessageLogging>(
             !log_formats.empty(), message_log_path, "libocpp_201", log_to_console, detailed_log_to_console, log_to_file,
-            log_to_html, log_security, session_logging, logging_callback,
+            log_to_html, log_raw, log_security, session_logging, logging_callback,
             ocpp::LogRotationConfig(log_rotation_date_suffix, log_rotation_maximum_file_size,
                                     log_rotation_maximum_file_count),
             [this](ocpp::LogRotationStatus status) {
@@ -288,7 +290,7 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
     } else {
         this->logging = std::make_shared<ocpp::MessageLogging>(
             !log_formats.empty(), message_log_path, DateTime().to_rfc3339(), log_to_console, detailed_log_to_console,
-            log_to_file, log_to_html, log_security, session_logging, logging_callback);
+            log_to_file, log_to_html, log_raw, log_security, session_logging, logging_callback);
     }
 }
 
@@ -855,6 +857,7 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
 }
 
 void ChargePoint::message_callback(const std::string& message) {
+    this->logging->raw(message, LogType::CentralSystem);
     EnhancedMessage<v2::MessageType> enhanced_message;
     try {
         enhanced_message = this->message_queue->receive(message);

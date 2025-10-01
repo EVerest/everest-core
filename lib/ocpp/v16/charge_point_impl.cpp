@@ -70,13 +70,14 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
         std::find(log_formats.begin(), log_formats.end(), "console_detailed") != log_formats.end();
     bool log_to_file = std::find(log_formats.begin(), log_formats.end(), "log") != log_formats.end();
     bool log_to_html = std::find(log_formats.begin(), log_formats.end(), "html") != log_formats.end();
+    bool log_raw = this->configuration->getLogMessagesRaw();
     bool log_security = std::find(log_formats.begin(), log_formats.end(), "security") != log_formats.end();
     bool session_logging = std::find(log_formats.begin(), log_formats.end(), "session_logging") != log_formats.end();
 
     if (this->configuration->getLogRotation()) {
         this->logging = std::make_shared<ocpp::MessageLogging>(
             this->configuration->getLogMessages(), this->message_log_path, "libocpp_16", log_to_console,
-            detailed_log_to_console, log_to_file, log_to_html, log_security, session_logging, nullptr,
+            detailed_log_to_console, log_to_file, log_to_html, log_raw, log_security, session_logging, nullptr,
             ocpp::LogRotationConfig(this->configuration->getLogRotationDateSuffix(),
                                     this->configuration->getLogRotationMaximumFileSize(),
                                     this->configuration->getLogRotationMaximumFileCount()),
@@ -90,7 +91,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     } else {
         this->logging = std::make_shared<ocpp::MessageLogging>(
             this->configuration->getLogMessages(), this->message_log_path, DateTime().to_rfc3339(), log_to_console,
-            detailed_log_to_console, log_to_file, log_to_html, log_security, session_logging, nullptr);
+            detailed_log_to_console, log_to_file, log_to_html, log_raw, log_security, session_logging, nullptr);
     }
 
     this->boot_notification_timer =

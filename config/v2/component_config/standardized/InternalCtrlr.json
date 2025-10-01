@@ -266,6 +266,22 @@
           "default": true,
           "type": "boolean"
       },
+      "LogMessagesRaw": {
+          "variable_name": "LogMessages",
+          "characteristics": {
+              "supportsMonitoring": true,
+              "dataType": "boolean"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "If messages are additionally supposed to be logged without parsing them first. This can be useful to log and debug messages that violate the schema.",
+          "default": false,
+          "type": "boolean"
+      },
       "LogMessagesFormat": {
           "variable_name": "LogMessagesFormat",
           "characteristics": {

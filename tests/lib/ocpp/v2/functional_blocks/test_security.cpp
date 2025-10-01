@@ -56,7 +56,7 @@ protected: // Functions
     SecurityTest() :
         device_model_test_helper(),
         device_model(device_model_test_helper.get_device_model()),
-        logging(false, "", "", false, false, false, false, false, false, nullptr),
+        logging(false, "", "", false, false, false, false, false, false, false, nullptr),
         evse_security(),
         connectivity_manager(),
         evse_manager(2),

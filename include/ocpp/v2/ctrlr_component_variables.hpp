@@ -115,6 +115,7 @@ extern const RequiredComponentVariable SupportedCiphers12;
 extern const RequiredComponentVariable SupportedCiphers13;
 extern const ComponentVariable AuthorizeConnectorZeroOnConnectorOne;
 extern const ComponentVariable LogMessages;
+extern const ComponentVariable LogMessagesRaw;
 extern const RequiredComponentVariable LogMessagesFormat;
 extern const ComponentVariable LogRotation;
 extern const ComponentVariable LogRotationDateSuffix;

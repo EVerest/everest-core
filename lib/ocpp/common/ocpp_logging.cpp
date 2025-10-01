@@ -16,7 +16,8 @@ namespace ocpp {
 
 MessageLogging::MessageLogging(
     bool log_messages, const std::string& message_log_path, const std::string& output_file_name, bool log_to_console,
-    bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_security, bool session_logging,
+    bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_raw, bool log_security,
+    bool session_logging,
     std::function<void(const std::string& message, MessageDirection direction)> message_callback) :
     log_messages(log_messages),
     message_log_path(message_log_path),
@@ -25,6 +26,7 @@ MessageLogging::MessageLogging(
     detailed_log_to_console(detailed_log_to_console),
     log_to_file(log_to_file),
     log_to_html(log_to_html),
+    log_raw(log_raw),
     log_security(log_security),
     session_logging(session_logging),
     message_callback(message_callback),
@@ -37,8 +39,8 @@ MessageLogging::MessageLogging(
 
 MessageLogging::MessageLogging(
     bool log_messages, const std::string& message_log_path, const std::string& output_file_name, bool log_to_console,
-    bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_security, bool session_logging,
-    std::function<void(const std::string& message, MessageDirection direction)> message_callback,
+    bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_raw, bool log_security,
+    bool session_logging, std::function<void(const std::string& message, MessageDirection direction)> message_callback,
     LogRotationConfig log_rotation_config, std::function<void(LogRotationStatus status)> status_callback) :
     log_messages(log_messages),
     message_log_path(message_log_path),
@@ -47,6 +49,7 @@ MessageLogging::MessageLogging(
     detailed_log_to_console(detailed_log_to_console),
     log_to_file(log_to_file),
     log_to_html(log_to_html),
+    log_raw(log_raw),
     log_security(log_security),
     session_logging(session_logging),
     message_callback(message_callback),
@@ -72,6 +75,13 @@ void MessageLogging::initialize() {
         if (this->log_to_file) {
             auto output_file_path = message_log_path + "/";
             output_file_path += output_file_name;
+            if (this->log_raw) {
+                auto raw_output_file_path = output_file_path + "_raw.log";
+                EVLOG_info << "Logging raw OCPP messages to log file: " << raw_output_file_path;
+                this->log_raw_file = std::filesystem::path(raw_output_file_path);
+                this->log_raw_os.open(raw_output_file_path, std::ofstream::app);
+                this->rotate_log_if_needed(this->log_raw_file, this->log_raw_os);
+            }
             output_file_path += +".log";
             EVLOG_info << "Logging OCPP messages to log file: " << output_file_path;
             this->log_file = std::filesystem::path(output_file_path);
@@ -82,6 +92,22 @@ void MessageLogging::initialize() {
         if (this->log_to_html) {
             auto html_file_path = message_log_path + "/";
             html_file_path += output_file_name;
+            if (this->log_raw) {
+                auto raw_html_file_path = html_file_path + "_raw.html";
+                EVLOG_info << "Logging raw OCPP messages to html file: " << raw_html_file_path;
+                this->html_raw_log_file = std::filesystem::path(raw_html_file_path);
+                this->html_raw_log_os.open(html_raw_log_file, std::ofstream::app);
+                this->rotate_log_if_needed(
+                    this->html_raw_log_file, this->html_raw_log_os,
+                    [this](std::ofstream& os) { this->close_html_tags(os); },
+                    [this](std::ofstream& os) { this->open_html_tags(os); });
+
+                if (this->file_size(this->html_raw_log_file) > 0) {
+                    // TODO: try to remove the end tags in the HTML if present
+                } else {
+                    this->open_html_tags(this->html_raw_log_os);
+                }
+            }
             html_file_path += ".html";
             EVLOG_info << "Logging OCPP messages to html file: " << html_file_path;
             this->html_log_file = std::filesystem::path(html_file_path);
@@ -278,7 +304,7 @@ void MessageLogging::charge_point(const std::string& message_type, const std::st
         this->message_callback(json_str, MessageDirection::ChargingStationToCSMS);
     }
     auto formatted = format_message(message_type, json_str);
-    log_output(0, formatted.message_type, formatted.message);
+    log_output(LogType::ChargePoint, formatted.message_type, formatted.message);
     if (this->session_logging) {
         std::scoped_lock lock(this->session_id_logging_mutex);
         for (auto const& [session_id, logging] : this->session_id_logging) {
@@ -292,7 +318,7 @@ void MessageLogging::central_system(const std::string& message_type, const std::
         this->message_callback(json_str, MessageDirection::CSMSToChargingStation);
     }
     auto formatted = format_message(message_type, json_str);
-    log_output(1, formatted.message_type, formatted.message);
+    log_output(LogType::CentralSystem, formatted.message_type, formatted.message);
     if (this->session_logging) {
         std::scoped_lock lock(this->session_id_logging_mutex);
         for (auto const& [session_id, logging] : this->session_id_logging) {
@@ -302,11 +328,11 @@ void MessageLogging::central_system(const std::string& message_type, const std::
 }
 
 void MessageLogging::sys(const std::string& msg) {
-    log_output(2, msg, "");
+    log_output(LogType::System, msg, "");
     if (this->session_logging) {
         std::scoped_lock lock(this->session_id_logging_mutex);
         for (auto const& [session_id, logging] : this->session_id_logging) {
-            log_output(2, msg, "");
+            log_output(LogType::System, msg, "");
         }
     }
 }
@@ -321,7 +347,42 @@ void MessageLogging::security(const std::string& msg) {
     this->security_log_os.flush();
 }
 
-void MessageLogging::log_output(unsigned int typ, const std::string& message_type, const std::string& json_str) {
+void MessageLogging::raw(const std::string& msg, LogType log_type) {
+    log_output(log_type, msg, "", true);
+    if (this->session_logging) {
+        std::scoped_lock lock(this->session_id_logging_mutex);
+        for (auto const& [session_id, logging] : this->session_id_logging) {
+            log_output(log_type, "", msg, true);
+        }
+    }
+}
+
+std::string html_encode(const std::string& msg) {
+    std::string out = msg;
+    boost::replace_all(out, "<", "&lt;");
+    boost::replace_all(out, ">", "&gt;");
+    return out;
+}
+
+void write_log_to_file(std::ofstream& log_os, LogType typ, const std::string& ts, const std::string& origin,
+                       const std::string& target, const std::string& message_type, const std::string& json_str) {
+    log_os << ts << ": " << origin + ">" + target << " "
+           << (typ == LogType::ChargePoint || typ == LogType::System ? message_type : "") << " "
+           << (typ == LogType::CentralSystem ? message_type : "") << "\n"
+           << json_str << "\n\n";
+    log_os.flush();
+}
+
+void write_html_log_to_file(std::ofstream& html_log_os, LogType typ, const std::string& ts, const std::string& origin,
+                            const std::string& target, const std::string& message_type, const std::string& json_str) {
+    html_log_os << "<tr class=\"" << origin << "\"> <td>" << ts << "</td> <td>" << origin + "&gt;" + target
+                << "</td> <td><b>" << (typ == LogType::ChargePoint || typ == LogType::System ? message_type : "")
+                << "</b></td><td><b>" << (typ == LogType::CentralSystem ? message_type : "")
+                << "</b></td> <td><pre lang=\"json\">" << html_encode(json_str) << "</pre></td> </tr>\n";
+    html_log_os.flush();
+}
+
+void MessageLogging::log_output(LogType typ, const std::string& message_type, const std::string& json_str, bool raw) {
     if (this->log_messages) {
         std::lock_guard<std::mutex> lock(this->output_file_mutex);
 
@@ -329,7 +390,7 @@ void MessageLogging::log_output(unsigned int typ, const std::string& message_typ
 
         std::string origin, target;
 
-        if (typ == 0) {
+        if (typ == LogType::ChargePoint) {
             origin = "ChargePoint";
             target = "CentralSystem";
             if (this->detailed_log_to_console) {
@@ -337,7 +398,7 @@ void MessageLogging::log_output(unsigned int typ, const std::string& message_typ
             } else if (this->log_to_console) {
                 EVLOG_info << "\033[1;35mChargePoint: " << message_type << "\033[1;0m";
             }
-        } else if (typ == 1) {
+        } else if (typ == LogType::CentralSystem) {
             origin = "CentralSystem";
             target = "ChargePoint";
             if (this->detailed_log_to_console) {
@@ -346,7 +407,7 @@ void MessageLogging::log_output(unsigned int typ, const std::string& message_typ
                 EVLOG_info << "                                    \033[1;36mCentralSystem: " << message_type
                            << "\033[1;0m";
             }
-        } else {
+        } else if (typ == LogType::System) {
             origin = "SYS";
             target = "";
             if (this->detailed_log_to_console || this->log_to_console) {
@@ -355,32 +416,29 @@ void MessageLogging::log_output(unsigned int typ, const std::string& message_typ
         }
 
         if (this->log_to_file) {
-            this->rotate_log_if_needed(this->log_file, this->log_os);
-            this->log_os << ts << ": " << origin + ">" + target << " " << (typ == 0 || typ == 2 ? message_type : "")
-                         << " " << (typ == 1 ? message_type : "") << "\n"
-                         << json_str << "\n\n";
-            this->log_os.flush();
+            if (raw and this->log_raw) {
+                this->rotate_log_if_needed(this->log_raw_file, this->log_raw_os);
+                write_log_to_file(this->log_raw_os, typ, ts, origin, target, message_type, json_str);
+            } else {
+                this->rotate_log_if_needed(this->log_file, this->log_os);
+                write_log_to_file(this->log_os, typ, ts, origin, target, message_type, json_str);
+            }
         }
         if (this->log_to_html) {
-            this->rotate_log_if_needed(
-                this->html_log_file, this->html_log_os, [this](std::ofstream& os) { this->close_html_tags(os); },
-                [this](std::ofstream& os) { this->open_html_tags(os); });
-
-            this->html_log_os << "<tr class=\"" << origin << "\"> <td>" << ts << "</td> <td>"
-                              << origin + "&gt;" + target << "</td> <td><b>"
-                              << (typ == 0 || typ == 2 ? message_type : "") << "</b></td><td><b>"
-                              << (typ == 1 ? message_type : "") << "</b></td> <td><pre lang=\"json\">"
-                              << html_encode(json_str) << "</pre></td> </tr>\n";
-            this->html_log_os.flush();
+            if (raw and this->log_raw) {
+                this->rotate_log_if_needed(
+                    this->html_raw_log_file, this->html_raw_log_os,
+                    [this](std::ofstream& os) { this->close_html_tags(os); },
+                    [this](std::ofstream& os) { this->open_html_tags(os); });
+                write_html_log_to_file(this->html_raw_log_os, typ, ts, origin, target, message_type, json_str);
+            } else {
+                this->rotate_log_if_needed(
+                    this->html_log_file, this->html_log_os, [this](std::ofstream& os) { this->close_html_tags(os); },
+                    [this](std::ofstream& os) { this->open_html_tags(os); });
+                write_html_log_to_file(this->html_log_os, typ, ts, origin, target, message_type, json_str);
+            }
         }
     }
-}
-
-std::string MessageLogging::html_encode(const std::string& msg) {
-    std::string out = msg;
-    boost::replace_all(out, "<", "&lt;");
-    boost::replace_all(out, ">", "&gt;");
-    return out;
 }
 
 FormattedMessageWithType MessageLogging::format_message(const std::string& message_type, const std::string& json_str) {
@@ -407,7 +465,7 @@ FormattedMessageWithType MessageLogging::format_message(const std::string& messa
 void MessageLogging::start_session_logging(const std::string& session_id, const std::string& log_path) {
     std::scoped_lock lock(this->session_id_logging_mutex);
     this->session_id_logging[session_id] = std::make_shared<ocpp::MessageLogging>(
-        true, log_path, "incomplete-ocpp", false, false, false, true, false, false, nullptr);
+        true, log_path, "incomplete-ocpp", false, false, false, true, true, false, false, nullptr);
 }
 
 void MessageLogging::stop_session_logging(const std::string& session_id) {
