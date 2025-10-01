@@ -60,8 +60,18 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     skip_invalid_csms_certificate_notifications(false),
     upload_log_status(UploadLogStatusEnum::Idle),
     bootreason(BootReasonEnum::PowerUp),
-    ocsp_updater(this->evse_security, this->send_callback<GetCertificateStatusRequest, GetCertificateStatusResponse>(
-                                          MessageType::GetCertificateStatusResponse)),
+    ocsp_updater(this->evse_security,
+                 [this](GetCertificateStatusRequest req) -> GetCertificateStatusResponse {
+                     try {
+                         return this->send_callback<GetCertificateStatusRequest, GetCertificateStatusResponse>(
+                             MessageType::GetCertificateStatusResponse)(req);
+                     } catch (const UnexpectedMessageTypeFromCSMS& e) {
+                         EVLOG_warning << e.what();
+                     }
+                     GetCertificateStatusResponse response;
+                     response.status = GetCertificateStatusEnum::Failed;
+                     return response;
+                 }),
     callbacks(callbacks) {
 
     if (!this->device_model) {
