@@ -1,12 +1,14 @@
 description: DOLD RN5893 IMD driver module
 config:
+  device_id:
+    description: Modbus device ID of DOLD RN5893, set via potentiometers on device
+    type: number
+
   self_test_timeout_s:
     description: Maximum time in seconds a self-test is allowed to take
     type: number
     default: 30
-  device_id:
-    description: Modbus device ID of DOLD RN5893, set via potentiometers on device
-    type: number
+
   keep_measurement_active:
     description: |
       Normally, this module stops measurements when stop is called and restarts when start is called. 
@@ -15,7 +17,7 @@ config:
       the always_publish_measurements option.
     type: boolean
     default: false
-  always_publish_measurements: # todo: one could remove this option, is present in bender but might not be needed here
+  always_publish_measurements:
     description: |
       Whether measurements should always be published, no matter if start/stop commands have been received.
       Note that this only works if keep_measurement_active is enabled.
@@ -30,7 +32,7 @@ config:
       - OFF
       - ONLY_DURING_SELF_TEST
     default: ON
-  alarm_persistance:
+  alarm_persistence:
     description: 42002 - Storing insulation fault message. See datasheet for details
     type: boolean
     default: false
@@ -102,7 +104,6 @@ requires:
   serial_comm_hub:
     interface: serial_communication_hub
 metadata:
-  # todo: determine license
   license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Mark Oude Elberink

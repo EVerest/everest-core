@@ -28,7 +28,7 @@ struct Conf {
     bool keep_measurement_active;
     bool always_publish_measurements;
     std::string connection_monitoring;
-    bool alarm_persistance;
+    bool alarm_persistence;
     std::string indicator_relay_switching_mode;
     std::string power_supply_type;
     double pre_alarm_threshold_kohm;

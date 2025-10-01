@@ -1,5 +1,15 @@
 # Dold RN5893 Isolation Monitor
 
+## Self test
+
+We currently only support "normal" self tests, not the extended self test.
+
+When a self test is started via the IMD interface, bit 4 of the "control word 1" register (address 40001) is set.
+The device will then perform a self test. If a device fault is present while the self test is running, the self test will fail.
+If the device reports a state that is not "self test running" anymore and there is no device fault, the self test is considered successful.
+
+Note that after setting the self test bit, it can take a few seconds (0-2s) until the device state reflects that a self test is running. This is solved using the internal `self_test_running` and `self_test_triggered` variables of the driver.
+
 ## Measurement and publishing modes
 
 This driver supports three modes of operation:
@@ -15,6 +25,7 @@ This driver supports three modes of operation:
 - Self testing is only possible when Bit 8 of the "control word 1" register (address 40001) is not set, i.e. when measurement is not disabled
 - When triggering a self test by setting bit 4 of the "control word 1" register (address 40001), the device can take a few seconds (about 0-2s) to publish the device state reflecting a self test.
 - Alarm and pre-alarm are triggered before a lower isolation resistance is reported, and is resetted before the reported isolation resistance rises again. This is probably due to a delay in the publishing of the measured resistance.
+- The device state "Error" may not always be set when a device fault is present (i.e. the device fault register shows a fault). Because of this, we only check the device fault register to determine if a fault is present and report that to everest.
 
 
 ## Others
@@ -27,7 +38,8 @@ This driver supports three modes of operation:
 - [x] Implement alarmspeicherung setting
 - [x] Implement indicator relay settings
 - [ ] check if device name + other device info should be read and logged
-- [ ] Test error handling
-  - [ ] Modbus disconnect at arbitrary times
-  - [ ] Device fault handling
-  - [ ] Communication timeout (see first todo)
+- [ ] check if extended self test should be implemented
+- [x] check if self test should fail when device errors occur during self test
+  - Has been implemented. If the device fault register shows a fault, the self test is considered failed. This is also the case when a device timeout occurs
+- [x] check if self test should fail when connection errors occur during self test
+  - Has been implemented. Not tested yet

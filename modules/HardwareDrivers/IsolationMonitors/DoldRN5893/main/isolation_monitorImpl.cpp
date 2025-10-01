@@ -32,10 +32,18 @@ void isolation_monitorImpl::ready() {
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
-        // If the self test takes too long to start or to run, we time out here
         if (self_test_triggered or self_test_running) {
+            // If the self test takes too long to start or to run, we time out here
             if (std::chrono::steady_clock::now() > self_test_deadline) {
                 EVLOG_error << "Self test timed out";
+                self_test_running = false;
+                self_test_triggered = false;
+                publish_self_test_result(false);
+            }
+
+            // If some communication error occurs during the self test, we consider the self test failed
+            if (error_state_monitor->is_error_active("isolation_monitor/CommunicationFault", "")) {
+                EVLOG_error << "Self test failed due to communication error";
                 self_test_running = false;
                 self_test_triggered = false;
                 publish_self_test_result(false);
@@ -43,8 +51,8 @@ void isolation_monitorImpl::ready() {
         }
 
         auto device_fault_and_state = read_device_fault_and_state();
-        if (!device_fault_and_state) {
-            EVLOG_error << "Failed to read input registers 0-1";
+        if (not device_fault_and_state.has_value()) {
+            EVLOG_error << "Failed to read device fault and state";
             continue;
         }
 
@@ -60,9 +68,11 @@ void isolation_monitorImpl::ready() {
             self_test_running = true;
         }
 
-        // Once the device has entered self test mode and then left it again, the self test is complete
-        if (self_test_triggered and self_test_running and device_state != DeviceState_30002::SelfTesting) {
-            // first, reset the self test state
+        // Once the device has entered self test mode AND then left it again (either device state is reset or some fault
+        // is raised)
+        if (self_test_triggered and self_test_running and
+            (device_state != DeviceState_30002::SelfTesting or device_fault != DeviceFault_30001::NoFailure)) {
+            // the self test is now complete, reset flags
             self_test_running = false;
             self_test_triggered = false;
 
@@ -91,8 +101,6 @@ void isolation_monitorImpl::ready() {
         }
 
         // if device is initializing, raise an error as device is not ready
-        // todo: can state be ErrorMode without device_fault register being an error? If so -> publish another error
-        // here
         if (device_state == DeviceState_30002::Initialize) {
             if (not error_state_monitor->is_error_active("isolation_monitor/DeviceFault", "NotReady")) {
                 raise_error(
@@ -122,7 +130,7 @@ void isolation_monitorImpl::ready() {
 
         if (should_publish_isolation_measurement) {
             const auto isolation_measurement = read_isolation_measurement();
-            if (!isolation_measurement) {
+            if (not isolation_measurement.has_value()) {
                 EVLOG_error << "Failed to read isolation measurement";
                 continue;
             }
@@ -195,7 +203,7 @@ bool isolation_monitorImpl::configure_device() {
     // should be avoided to prevent wearing out the EEPROM).
     // There are 11 configuration registers starting at address 2000, we read all for convenience
     const auto present_settings = read_holding_registers(2000, 11);
-    if (!present_settings) {
+    if (not present_settings.has_value()) {
         EVLOG_error << "Failed to read current configuration from device";
         return false;
     }
@@ -220,7 +228,7 @@ bool isolation_monitorImpl::configure_device() {
 
     new_settings[0] = connection_monitoring; // 2000
 
-    new_settings[1] = mod->config.alarm_persistance ? 1 : 0; // 2001
+    new_settings[1] = mod->config.alarm_persistence ? 1 : 0; // 2001
 
     uint16_t indicator_relay_switching_mode = 0; // see datasheet
     if (mod->config.indicator_relay_switching_mode == "DE_ENERGIZED_ON_TRIP") {
@@ -367,7 +375,6 @@ void isolation_monitorImpl::raise_communication_fault() {
     }
 }
 
-// todo: what does bit 0 do? Works fine without it but is mentioned...
 bool isolation_monitorImpl::update_control_word1(bool start_self_test) {
     if (start_self_test) {
         // Note that the self test only works when measurement is not disabled
@@ -394,7 +401,7 @@ std::optional<types::isolation_monitor::IsolationMeasurement> isolation_monitorI
     types::isolation_monitor::IsolationMeasurement isolation_measurement;
 
     const auto input_registers = read_input_registers(2000, 3);
-    if (!input_registers) {
+    if (not input_registers.has_value()) {
         return std::nullopt;
     }
 
@@ -416,7 +423,7 @@ std::optional<types::isolation_monitor::IsolationMeasurement> isolation_monitorI
 
 std::optional<std::tuple<DeviceFault_30001, DeviceState_30002>> isolation_monitorImpl::read_device_fault_and_state() {
     const auto raw_registers = read_input_registers(0x0000, 2);
-    if (!raw_registers) {
+    if (not raw_registers.has_value()) {
         return std::nullopt;
     }
 

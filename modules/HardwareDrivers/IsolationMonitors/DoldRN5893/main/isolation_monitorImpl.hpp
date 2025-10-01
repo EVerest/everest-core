@@ -15,7 +15,6 @@
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
 #include "registers.hpp"
-#include <atomic>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -79,7 +78,6 @@ private:
     // Deadline for the current self test. If the self test is not finished by this time, it is considered failed
     std::chrono::steady_clock::time_point self_test_deadline;
 
-    std::atomic_bool communication_fault_raised = false;
     // Raises a communication fault if not already raised
     void raise_communication_fault();
 
