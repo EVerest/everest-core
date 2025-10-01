@@ -243,6 +243,7 @@ public:
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
 
     bool session_is_iso_d20_ac_bpt();
+    bool session_is_iso_d20_dc_bpt();
 
     types::power_supply_DC::Capabilities get_powersupply_capabilities();
     void set_external_derating(types::dc_external_derate::ExternalDerating d);
