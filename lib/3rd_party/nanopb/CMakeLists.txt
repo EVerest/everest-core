@@ -28,7 +28,7 @@ set_target_properties(nanopb PROPERTIES OUTPUT_NAME "everest_nanopb")
 
 install(TARGETS nanopb
     EXPORT everest-core-targets
-    LIBRARY
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(
