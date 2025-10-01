@@ -267,7 +267,7 @@
           "type": "boolean"
       },
       "LogMessagesRaw": {
-          "variable_name": "LogMessages",
+          "variable_name": "LogMessagesRaw",
           "characteristics": {
               "supportsMonitoring": true,
               "dataType": "boolean"

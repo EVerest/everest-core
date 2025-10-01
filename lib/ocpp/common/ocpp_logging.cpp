@@ -348,11 +348,13 @@ void MessageLogging::security(const std::string& msg) {
 }
 
 void MessageLogging::raw(const std::string& msg, LogType log_type) {
-    log_output(log_type, msg, "", true);
-    if (this->session_logging) {
-        std::scoped_lock lock(this->session_id_logging_mutex);
-        for (auto const& [session_id, logging] : this->session_id_logging) {
-            log_output(log_type, "", msg, true);
+    if (this->log_raw) {
+        log_output(log_type, msg, "", true);
+        if (this->session_logging) {
+            std::scoped_lock lock(this->session_id_logging_mutex);
+            for (auto const& [session_id, logging] : this->session_id_logging) {
+                log_output(log_type, "", msg, true);
+            }
         }
     }
 }
