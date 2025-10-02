@@ -100,6 +100,8 @@ class PyEVJosevModule():
 
     def _handler_start_charging(self, args) -> bool:
 
+        self._es.DepartureTime = args['DepartureTime']
+        self._es.EAmount_kWh = args['EAmount']
         self._es.EnergyTransferMode = args['EnergyTransferMode']
 
         self._ready_event.set()
