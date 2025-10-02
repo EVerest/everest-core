@@ -1,3 +1,4 @@
+generate_config_tmux_run_script(CONFIG bringup-dold-rn5893)
 generate_config_tmux_run_script(CONFIG bringup-DZG)
 generate_config_tmux_run_script(CONFIG bringup-LEM)
 generate_config_tmux_run_script(CONFIG bringup-bender-isocha)
