@@ -81,7 +81,7 @@ struct SQLiteStatementTest : public StatementInterface {
     virtual int column_int(const int idx) {
         return 0;
     }
-    virtual int64_t column_int64(const int64_t idx) {
+    virtual int64_t column_int64(const int idx) {
         return 0;
     }
     virtual double column_double(const int idx) {
