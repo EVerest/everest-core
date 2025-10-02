@@ -565,7 +565,7 @@ class EverestCore:
                 container=container,
                 exit_code=await container.exit_code(),
             )
-    
+
     @function
     @cached_task(key_func=create_key_from_container)
     @create_github_status(
@@ -694,16 +694,16 @@ class EverestCore:
     @cached_task(key_func=create_key_from_container)
     async def export_cpm_cache(
         self,
-        container: Annotated[
-            Container | None,
-            Doc("Container to run the function in")
+        configure_result: Annotated[
+            ConfigureResult | None,
+            Doc("Result of the configure_cmake_gcc function")
         ] = None,
     ) -> Directory:
         """Export the cache from the configure_cmake_gcc function"""
 
-        if container is None:
+        if configure_result is None:
             res = await self.configure_cmake_gcc()
-            container = res.container
+            configure_result = res
 
         with tracer.start_as_current_span(
             f"{self.__class__.__name__}.export_cpm_cache",
@@ -711,10 +711,10 @@ class EverestCore:
             async with self._outputs_mutex:
                 self._outputs.with_directory(
                     "cache/CPM",
-                    res.cache_cpm,
+                    configure_result.cache_cpm,
                 )
 
-            return res.cache_cpm
+            return configure_result.cache_cpm
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -783,16 +783,16 @@ class EverestCore:
     @cached_task(key_func=create_key_from_container)
     async def export_ccache_cache(
         self,
-        container: Annotated[
-            Container | None,
-            Doc("Container to run the function in")
+        build_result: Annotated[
+            BuildResult | None,
+            Doc("Result of the build_cmake_gcc function to export ccache from")
         ] = None,
     ) -> Directory:
         """Export the ccache cache from the build_cmake_gcc function"""
 
-        if container is None:
+        if build_result is None:
             res = await self.build_cmake_gcc()
-            container = res.container
+            build_result = res
 
         with tracer.start_as_current_span(
             f"{self.__class__.__name__}.export_ccache_cache",
@@ -800,10 +800,10 @@ class EverestCore:
             async with self._outputs_mutex:
                 self._outputs.with_directory(
                     "cache/ccache",
-                    res.cache_ccache,
+                    build_result.cache_ccache,
                 )
 
-            return res.cache_ccache
+            return build_result.cache_ccache
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -871,16 +871,16 @@ class EverestCore:
     @cached_task(key_func=create_key_from_container)
     async def export_unit_tests_log_file(
         self,
-        container: Annotated[
-            Container | None,
-            Doc("Container to run the tests in, typically the build-kit image")
+        unit_tests_result: Annotated[
+            UnitTestsResult | None,
+            Doc("Result of the unit_tests function to export log file from")
         ] = None,
     ) -> File:
         """Returns the last unit tests log file"""
 
-        if container is None:
+        if unit_tests_result is None:
             res = await self.unit_tests()
-            container = res.container
+            unit_tests_result = res
 
         with tracer.start_as_current_span(
             f"{self.__class__.__name__}.export_unit_tests_log_file",
@@ -888,10 +888,10 @@ class EverestCore:
             async with self._outputs_mutex:
                 self._outputs = self._outputs.with_file(
                     "artifacts/unit-tests-log.txt",
-                    res.last_test_log,
+                    unit_tests_result.last_test_log,
                 )
 
-            return res.last_test_log
+            return unit_tests_result.last_test_log
 
     @function
     @cached_task(key_func=create_key_from_container)
@@ -1055,17 +1055,16 @@ class EverestCore:
     @cached_task(key_func=create_key_from_container)
     async def export_integration_tests_artifacts(
         self,
-        container: Annotated[
-            Container | None,
-            Doc("Container to run the integration tests in, "
-                "typically the build-kit image")
+        integration_tests_result: Annotated[
+            IntegrationTestsResult | None,
+            Doc("Integration tests result to export artifacts from"),
         ] = None,
     ) -> Directory:
         """Export the artifacts from the integration tests"""
 
-        if container is None:
+        if integration_tests_result is None:
             res = await self.integration_tests()
-            container = res.container
+            integration_tests_result = res
 
         with tracer.start_as_current_span(
             f"{self.__class__.__name__}.export_integration_tests_artifacts",
@@ -1075,11 +1074,11 @@ class EverestCore:
                     self._outputs.
                     with_file(
                         "artifacts/integration-tests.html",
-                        res.report_html,
+                        integration_tests_result.report_html,
                     )
                     .with_file(
                         "artifacts/integration-tests.xml",
-                        res.result_xml,
+                        integration_tests_result.result_xml,
                     )
                 )
 
@@ -1087,11 +1086,11 @@ class EverestCore:
                 dag.directory()
                 .with_file(
                     "integration-tests.html",
-                    res.report_html,
+                    integration_tests_result.report_html,
                 )
                 .with_file(
                     "integration-tests.xml",
-                    res.result_xml,
+                    integration_tests_result.result_xml,
                 )
             )
             return ret
@@ -1162,19 +1161,18 @@ class EverestCore:
     @cached_task(key_func=create_key_from_container)
     async def export_ocpp_tests_artifacts(
         self,
-        container: Annotated[
-            Container | None,
+        ocpp_tests_result: Annotated[
+            OcppTestsResult | None,
             Doc(
-                "Container to run the ocpp tests in, "
-                "typically the build-kit image"
+                "OCPP tests result to export artifacts from"
             )
         ] = None,
     ) -> Directory:
         """Export the artifacts from the OCPP tests"""
 
-        if container is None:
+        if ocpp_tests_result is None:
             res = await self.ocpp_tests()
-            container = res.container
+            ocpp_tests_result = res
 
         with tracer.start_as_current_span(
             f"{self.__class__.__name__}.export_ocpp_tests_artifacts",
@@ -1184,11 +1182,11 @@ class EverestCore:
                     self._outputs
                     .with_file(
                         "artifacts/ocpp-tests.xml",
-                        res.result_xml,
+                        ocpp_tests_result.result_xml,
                     )
                     .with_file(
                         "artifacts/ocpp-tests.html",
-                        res.report_html,
+                        ocpp_tests_result.report_html,
                     )
                 )
 
@@ -1196,10 +1194,10 @@ class EverestCore:
                 dag.directory().
                 with_file(
                     "ocpp-tests.xml",
-                    res.result_xml,
+                    ocpp_tests_result.result_xml,
                 ).with_file(
                     "ocpp-tests.html",
-                    res.report_html,
+                    ocpp_tests_result.report_html,
                 )
             )
             return ret
