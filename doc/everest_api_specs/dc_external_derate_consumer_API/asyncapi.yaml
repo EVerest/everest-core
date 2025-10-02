@@ -1,0 +1,163 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:dc_external_derate_API'
+info:
+  title: 'EVerest API definition for external derating of a DC powersupply'
+  version: 1.0.0
+  description: >-
+    Specification of a the EVerest API for implementing DC power supply derating
+    functionality. This allows integration of hardware-specific derating logic, for
+    example adjusting output current based on internal temperature measurements.
+
+    In the simplest case, derating is determined solely by the plug temperature,
+    as reported by the evse_board_support driver. This value is exposed here for conv enience.
+
+    More advanced implementations may incorporate additional temperature sensors,
+    such as relay temperature or other relevant measurements, to enable more precise cont rol.
+
+    Note that this is for DC output in DC charging only.
+    To derate for AC chargers (or the AC side in DC chargers), use an EnergyNode and set external_limits instead.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: powermeter
+servers:
+  default:
+    pathname: 'everest_api/1.0/powermeter/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module has to be defined by `cfg_target_module_id` in EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  send_set_external_derating:
+    address: 'm2e/set_external_derating'
+    messages:
+      send_set_external_derating:
+        $ref: '#/components/messages/send_set_external_derating'
+
+  receive_plug_temperature_C:
+    address: "e2m/plug_temperature_C"
+    messages:
+      receive_plug_temperature_C:
+        $ref: "#/components/messages/receive_plug_temperature_C"
+
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  send_set_external_derating:
+    title: Send set external derating
+    action: receive
+    channel:
+      $ref: '#/channels/send_set_external_derating'
+
+  receive_plug_temperature_C:
+    title: Receive the plug temperature
+    action: send
+    channel:
+      $ref : '#/channels/receive_plug_temperature_C'
+
+
+  receive_heartbeat:
+    title: Receive heatbeat
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: Send communication check
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+
+
+
+components:
+  messages:
+    send_set_external_derating:
+      name: send_set_external_derating
+      title: Send set external derating
+      summary:  >-
+        Set external derating values. The provided values
+        will be merged with the existing internal capabilities of the power supply:
+        The minimum of the internal and external values will be used.
+        All values are optional, unset means no limit.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ExternalDerating'
+      examples:
+        - summary: "Limit to 15A charging"
+          payload:
+            max_export_current_A: 15
+
+    receive_plug_temperature_C:
+      name: receive_plug_temperature_C
+      title: Receive the public key
+      summary: Current temperature of the plug in degree celsius
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PlugTemperature'
+
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: Receive heartbeat
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+    send_communication_check:
+      name: send_communication_check
+      title: Send communication check
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: ""
+          payload:
+            true
+
+
+  schemas:
+    ExternalDerating:
+      description: Derate DC power supply Capabilities from an external source.
+      type: object
+      additionalProperties: true
+      properties:
+        max_export_current_A:
+          description: Maximum current that the power supply can output in Ampere
+          type: number
+        max_import_current_A:
+          description: Maximum current that the power supply can sink in Ampere
+          type: number
+        max_export_power_W:
+          description: Maximum export power that the power supply can output in Watt
+          type: number
+        max_import_power_W:
+          description: Maximum import power that the power supply can sink in Watt
+          type: number
+    PlugTemperature:
+      type: number
+      description: "Temperature in degree celsius"
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+

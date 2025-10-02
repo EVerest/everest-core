@@ -37,16 +37,29 @@ std::optional<std::vector<std::string>> read_csv_lines(const std::string& path) 
 
 } // namespace
 
-TEST(everest_api, everest_core_source_hashes) {
-    // file paths are injected as defines by CMake
-    const std::string expected_types_file_hashes_csv_path = EXPECTED_TYPE_FILE_HASHES_CSV_PATH;
-    const std::string actual_types_file_hashes_csv_path = ACTUAL_TYPE_FILE_HASHES_CSV_PATH;
+struct FileHashTestParams {
+    std::string test_name;
+    std::string expected_csv_path;
+    std::string actual_csv_path;
+};
 
-    auto expected_lines_opt = read_csv_lines(expected_types_file_hashes_csv_path);
-    auto actual_lines_opt = read_csv_lines(actual_types_file_hashes_csv_path);
+void PrintTo(const FileHashTestParams& params, std::ostream* os) {
+    *os << "\n  Test Parameters:"
+        << "\n    test_name: " << params.test_name << "\n    expected_csv_path: " << params.expected_csv_path
+        << "\n    actual_csv_path: " << params.actual_csv_path
+        << "\n    On test failure: See \033[1;36m lib/everest/everest_api_types/README.md\033[0m for further details.";
+}
 
-    ASSERT_TRUE(expected_lines_opt) << "Could not open or read '" << expected_types_file_hashes_csv_path << "'";
-    ASSERT_TRUE(actual_lines_opt) << "Could not open or read '" << actual_types_file_hashes_csv_path << "'";
+class EverestFileHashTest : public ::testing::TestWithParam<FileHashTestParams> {};
+
+TEST_P(EverestFileHashTest, verify_file_hashes) {
+    const auto& params = GetParam();
+
+    auto expected_lines_opt = read_csv_lines(params.expected_csv_path);
+    auto actual_lines_opt = read_csv_lines(params.actual_csv_path);
+
+    ASSERT_TRUE(expected_lines_opt) << "Could not open or read '" << params.expected_csv_path << "'";
+    ASSERT_TRUE(actual_lines_opt) << "Could not open or read '" << params.actual_csv_path << "'";
 
     const auto& expected_lines = expected_lines_opt.value();
     const auto& actual_lines = actual_lines_opt.value();
@@ -63,12 +76,18 @@ TEST(everest_api, everest_core_source_hashes) {
         if (not equal) {
             mismatch_found = true;
         }
-        EXPECT_TRUE(equal) << "Mismatch found at sorted line index " << i << ":\n"
-                           << "  - Expected: " << expected_lines[i] << "\n"
-                           << "  - Actual:   " << actual_lines[i];
+        EXPECT_EQ(expected_lines[i], actual_lines[i]);
     }
-    if (not sizes_match or mismatch_found) {
-        EXPECT_TRUE(false) << "Type yaml file hashes mismatched: See \033[1;36m "
-                              "lib/everest/everest_api_types/README.md\033[0m for further details.\n";
-    }
+
+    EXPECT_TRUE(sizes_match and not mismatch_found);
 }
+
+INSTANTIATE_TEST_SUITE_P(everest_api, EverestFileHashTest,
+                         ::testing::Values(FileHashTestParams{"everest_core_types", EXPECTED_TYPE_FILE_HASHES_CSV_PATH,
+                                                              ACTUAL_TYPE_FILE_HASHES_CSV_PATH},
+                                           FileHashTestParams{"everest_core_interfaces",
+                                                              EXPECTED_IFC_FILE_HASHES_CSV_PATH,
+                                                              ACTUAL_IFC_FILE_HASHES_CSV_PATH}),
+                         // This lambda tells GTest how to name each individual test case
+                         // for clear output (e.g., everest_api/EverestHashTest.VerifySourceHashes/EverestCoreTypes)
+                         [](const testing::TestParamInfo<FileHashTestParams>& info) { return info.param.test_name; });

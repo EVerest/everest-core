@@ -23,13 +23,14 @@ template <class T> T codec_test(T const& original_object) {
 
     // deserialization
     T result_object;
-    everest::lib::API::deserialize(basic_serialization_result, result_object);
+    auto success = everest::lib::API::deserialize(basic_serialization_result, result_object);
+    EXPECT_TRUE(success);
 
     return result_object;
 }
 
 /* Runs the default codec_test for all objects in the list
- * This is used to run tests for all fields in a typial enum
+ * This is used to run tests for all fields in a typical enum
  * in namespace everest::lib::API::V1_0::types
  */
 template <class T> void codec_test_all(std::initializer_list<T> const& all_values) {

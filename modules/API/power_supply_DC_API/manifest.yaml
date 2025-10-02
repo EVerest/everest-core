@@ -1,0 +1,24 @@
+description: API for DC power supplies
+config:
+  cfg_communication_check_to_s:
+    description: "Maximum time between two communication check events. Values <= 0 disables communication checks."
+    type: integer
+    default: 5
+  cfg_heartbeat_interval_ms:
+    description: "Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat."
+    type: integer
+    default: 1000
+
+provides:
+  main:
+    interface: power_supply_DC
+    description: "Allows EVerest to control a DC power supply device via API clients."
+
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+    - Jan Christoph Habig
+    - Kai Hermann
+    - Florin Mihut

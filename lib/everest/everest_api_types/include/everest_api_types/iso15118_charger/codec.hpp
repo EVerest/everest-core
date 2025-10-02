@@ -15,6 +15,7 @@ std::string serialize(HashAlgorithm val) noexcept;
 std::string serialize(RequestExiStreamSchema const& val) noexcept;
 std::string serialize(ResponseExiStreamStatus const& val) noexcept;
 std::string serialize(CertificateHashDataInfo const& val) noexcept;
+std::string serialize(EnergyTransferModeList const& val) noexcept;
 
 std::ostream& operator<<(std::ostream& os, CertificateActionEnum const& val);
 std::ostream& operator<<(std::ostream& os, EnergyTransferMode const& val);
@@ -23,6 +24,7 @@ std::ostream& operator<<(std::ostream& os, HashAlgorithm const& val);
 std::ostream& operator<<(std::ostream& os, RequestExiStreamSchema const& val);
 std::ostream& operator<<(std::ostream& os, ResponseExiStreamStatus const& val);
 std::ostream& operator<<(std::ostream& os, CertificateHashDataInfo const& val);
+std::ostream& operator<<(std::ostream& os, EnergyTransferModeList const& val);
 
 template <class T> T deserialize(std::string const& val);
 template <class T> std::optional<T> try_deserialize(std::string const& val) noexcept {

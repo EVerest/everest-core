@@ -776,8 +776,9 @@ void to_json(json& j, const SignedEnergy& k) noexcept {
 }
 
 void from_json(const json& j, SignedReactivePower& k) {
-    k.total = j.at("total");
-
+    if (j.contains("total")) {
+        k.total = j.at("total");
+    }
     if (j.contains("L1")) {
         k.L1.emplace(j.at("L1"));
     }

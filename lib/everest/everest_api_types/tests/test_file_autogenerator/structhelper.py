@@ -33,10 +33,10 @@ class StructHelper(Helper):
         field = self.regex_single_field
         matches = re.findall(field, representation)
         for x in matches:
-            sanatized = re.sub(";", "", x[0])
+            sanitized = re.sub(";", "", x[0])
             # structs with default values are tested as if they had no default values
-            sanatized = re.sub(self.default_value, "", sanatized)
-            fields.append(sanatized)
+            sanitized = re.sub(self.default_value, "", sanitized)
+            fields.append(sanitized)
         return fields
 
     def get_fields_mandatory(self):
@@ -44,9 +44,9 @@ class StructHelper(Helper):
 
     def get_fields_helper(self, mandatory):
         a = []
-        for x in self.get_fields():
-            if ("std::optional" not in x) == mandatory:
-                split = re.split(Helper.regex_whitespaces, x)
+        for field in self.get_fields():
+            if ("std::optional" not in field) == mandatory:
+                split = re.split(Helper.regex_whitespaces, field)
                 assert split.__len__() == 2
                 a.append((split[0], split[1]))
         return a
@@ -115,7 +115,7 @@ class StructHelper(Helper):
         code = []
         type = self.get_type()
         type_namespace = self.get_type_with_namespace()
-        if self.has_mandatory_fields and self.has_optional_fields:
+        if self.has_optional_fields:
             code.append("\nTEST(" + "%s" + ", " + type +
                         "_no_optional_fields_set){\n    gen_test<" + type_namespace + ">(" + "false" + ");\n}\n")
         code.append("\nTEST(" + "%s" + ", " + type +

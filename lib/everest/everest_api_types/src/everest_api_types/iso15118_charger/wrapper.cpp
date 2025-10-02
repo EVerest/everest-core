@@ -27,6 +27,23 @@ auto optToExternal(std::optional<SrcT> const& src) -> std::optional<decltype(to_
     return std::nullopt;
 }
 
+template <class SrcT, class ConvT> auto srcToTarVec(std::vector<SrcT> const& src, ConvT const& converter) {
+    using TarT = decltype(converter(src[0]));
+    std::vector<TarT> result;
+    for (SrcT const& elem : src) {
+        result.push_back(converter(elem));
+    }
+    return result;
+}
+
+template <class SrcT> auto vecToExternal(std::vector<SrcT> const& src) {
+    return srcToTarVec(src, [](SrcT const& val) { return to_external_api(val); });
+}
+
+template <class SrcT> auto vecToInternal(std::vector<SrcT> const& src) {
+    return srcToTarVec(src, [](SrcT const& val) { return to_internal_api(val); });
+}
+
 } // namespace
 
 namespace iso15118_charger {
@@ -196,6 +213,19 @@ ResponseExiStreamStatus_External to_external_api(ResponseExiStreamStatus_Interna
     result.status = to_external_api(val.status);
     result.certificate_action = to_external_api(val.certificate_action);
     result.exi_response = val.exi_response;
+    return result;
+}
+
+
+EnergyTransferModeList_Internal to_internal_api(EnergyTransferModeList_External const& val) {
+    EnergyTransferModeList_Internal result;
+    result = vecToInternal(val.modes);
+    return result;
+}
+
+EnergyTransferModeList_External to_external_api(EnergyTransferModeList_Internal const& val) {
+    EnergyTransferModeList_External result;
+    result.modes = vecToExternal(val);
     return result;
 }
 
