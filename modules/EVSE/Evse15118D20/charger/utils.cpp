@@ -3,10 +3,7 @@
 #include "utils.hpp"
 
 #include <iso15118/d20/limits.hpp>
-#include <iso15118/message/ac_charge_loop.hpp>
-#include <iso15118/message/ac_charge_parameter_discovery.hpp>
 #include <iso15118/message/common_types.hpp>
-#include <iso15118/message/dc_charge_loop.hpp>
 #include <iso15118/message/dc_charge_parameter_discovery.hpp>
 #include <iso15118/message/schedule_exchange.hpp>
 #include <iso15118/message/service_detail.hpp>
@@ -53,15 +50,15 @@ dt::ParameterSet convert_parameter_set(const types::iso15118_vas::ParameterSet& 
 }
 } // namespace
 
-template <> std::optional<float> convert_from_optional(const std::optional<dt::RationalNumber>& in) {
+std::optional<float> convert_from_optional(const std::optional<dt::RationalNumber>& in) {
     return (in.has_value()) ? std::make_optional(dt::from_RationalNumber(*in)) : std::nullopt;
 }
 
-template <> std::optional<dt::RationalNumber> convert_from_optional(const std::optional<float>& in) {
+std::optional<dt::RationalNumber> convert_from_optional(const std::optional<float>& in) {
     return (in.has_value()) ? std::make_optional(dt::from_float(*in)) : std::nullopt;
 }
 
-template <> std::optional<float> convert_from_optional(const std::optional<uint32_t>& in) {
+std::optional<float> convert_from_optional(const std::optional<uint32_t>& in) {
     return (in.has_value()) ? std::make_optional(static_cast<float>(*in)) : std::nullopt;
 }
 
@@ -90,7 +87,6 @@ types::iso15118::EvInformation convert_ev_info(const iso15118::d20::EVInformatio
     return result;
 }
 
-template <>
 types::iso15118::DcChargeDynamicModeValues convert_dynamic_values(const dt::Dynamic_DC_CLReqControlMode& in) {
     return {dt::from_RationalNumber(in.target_energy_request),
             dt::from_RationalNumber(in.max_energy_request),
@@ -100,7 +96,7 @@ types::iso15118::DcChargeDynamicModeValues convert_dynamic_values(const dt::Dyna
             dt::from_RationalNumber(in.max_charge_current),
             dt::from_RationalNumber(in.max_voltage),
             dt::from_RationalNumber(in.min_voltage),
-            convert_from_optional<float>(in.departure_time),
+            convert_from_optional(in.departure_time),
             std::nullopt,
             std::nullopt,
             std::nullopt,
@@ -108,7 +104,6 @@ types::iso15118::DcChargeDynamicModeValues convert_dynamic_values(const dt::Dyna
             std::nullopt};
 }
 
-template <>
 types::iso15118::DcChargeDynamicModeValues convert_dynamic_values(const dt::BPT_Dynamic_DC_CLReqControlMode& in) {
     return {dt::from_RationalNumber(in.target_energy_request),
             dt::from_RationalNumber(in.max_energy_request),
@@ -118,12 +113,12 @@ types::iso15118::DcChargeDynamicModeValues convert_dynamic_values(const dt::BPT_
             dt::from_RationalNumber(in.max_charge_current),
             dt::from_RationalNumber(in.max_voltage),
             dt::from_RationalNumber(in.min_voltage),
-            convert_from_optional<float>(in.departure_time),
+            convert_from_optional(in.departure_time),
             dt::from_RationalNumber(in.max_discharge_power),
             dt::from_RationalNumber(in.min_discharge_power),
             dt::from_RationalNumber(in.max_discharge_current),
-            convert_from_optional<float>(in.max_v2x_energy_request),
-            convert_from_optional<float>(in.min_v2x_energy_request)};
+            convert_from_optional(in.max_v2x_energy_request),
+            convert_from_optional(in.min_v2x_energy_request)};
 }
 
 template <>
@@ -241,9 +236,9 @@ void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_pa
 template <>
 void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params,
                                   const dt::Scheduled_SEReqControlMode& ev_control_mode) {
-    out_params.ev_target_energy_request = convert_from_optional<float>(ev_control_mode.target_energy);
-    out_params.ev_min_energy_request = convert_from_optional<float>(ev_control_mode.min_energy);
-    out_params.ev_max_energy_request = convert_from_optional<float>(ev_control_mode.max_energy);
+    out_params.ev_target_energy_request = convert_from_optional(ev_control_mode.target_energy);
+    out_params.ev_min_energy_request = convert_from_optional(ev_control_mode.min_energy);
+    out_params.ev_max_energy_request = convert_from_optional(ev_control_mode.max_energy);
 }
 
 template <>
@@ -253,8 +248,8 @@ void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_pa
     out_params.ev_min_energy_request = dt::from_RationalNumber(ev_control_mode.min_energy);
     out_params.ev_max_energy_request = dt::from_RationalNumber(ev_control_mode.max_energy);
 
-    out_params.ev_min_v2xenergy_request = convert_from_optional<float>(ev_control_mode.min_v2x_energy);
-    out_params.ev_max_v2xenergy_request = convert_from_optional<float>(ev_control_mode.max_v2x_energy);
+    out_params.ev_min_v2xenergy_request = convert_from_optional(ev_control_mode.min_v2x_energy);
+    out_params.ev_max_v2xenergy_request = convert_from_optional(ev_control_mode.max_v2x_energy);
 }
 
 std::vector<dt::ParameterSet>
@@ -267,15 +262,15 @@ convert_parameter_set_list(const std::vector<types::iso15118_vas::ParameterSet>&
     return out;
 }
 
-template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::AC_CPDReqEnergyTransferMode& mode) {
+types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::AC_CPDReqEnergyTransferMode& mode) {
     const auto max_charge_L1 = dt::from_RationalNumber(mode.max_charge_power);
-    const auto max_charge_L2 = convert_from_optional<float>(mode.max_charge_power_L2);
-    const auto max_charge_L3 = convert_from_optional<float>(mode.max_charge_power_L3);
+    const auto max_charge_L2 = convert_from_optional(mode.max_charge_power_L2);
+    const auto max_charge_L3 = convert_from_optional(mode.max_charge_power_L3);
     const auto max_charge_total = max_charge_L1 + max_charge_L2.value_or(0.0) + max_charge_L3.value_or(0.0);
 
     const auto min_charge_L1 = dt::from_RationalNumber(mode.min_charge_power);
-    const auto min_charge_L2 = convert_from_optional<float>(mode.min_charge_power_L2);
-    const auto min_charge_L3 = convert_from_optional<float>(mode.min_charge_power_L3);
+    const auto min_charge_L2 = convert_from_optional(mode.min_charge_power_L2);
+    const auto min_charge_L3 = convert_from_optional(mode.min_charge_power_L3);
     const auto min_charge_total = min_charge_L1 + min_charge_L2.value_or(0.0) + min_charge_L3.value_or(0.0);
 
     types::iso15118::AcEvPowerLimits ac_ev_power_limits;
@@ -288,26 +283,25 @@ template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::A
     return ac_ev_power_limits;
 }
 
-template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::BPT_AC_CPDReqEnergyTransferMode& mode) {
-
+types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::BPT_AC_CPDReqEnergyTransferMode& mode) {
     const auto max_charge_L1 = dt::from_RationalNumber(mode.max_charge_power);
-    const auto max_charge_L2 = convert_from_optional<float>(mode.max_charge_power_L2);
-    const auto max_charge_L3 = convert_from_optional<float>(mode.max_charge_power_L3);
+    const auto max_charge_L2 = convert_from_optional(mode.max_charge_power_L2);
+    const auto max_charge_L3 = convert_from_optional(mode.max_charge_power_L3);
     const auto max_charge_total = max_charge_L1 + max_charge_L2.value_or(0.0) + max_charge_L3.value_or(0.0);
 
     const auto min_charge_L1 = dt::from_RationalNumber(mode.min_charge_power);
-    const auto min_charge_L2 = convert_from_optional<float>(mode.min_charge_power_L2);
-    const auto min_charge_L3 = convert_from_optional<float>(mode.min_charge_power_L3);
+    const auto min_charge_L2 = convert_from_optional(mode.min_charge_power_L2);
+    const auto min_charge_L3 = convert_from_optional(mode.min_charge_power_L3);
     const auto min_charge_total = min_charge_L1 + min_charge_L2.value_or(0.0) + min_charge_L3.value_or(0.0);
 
     const auto max_discharge_L1 = dt::from_RationalNumber(mode.max_discharge_power);
-    const auto max_discharge_L2 = convert_from_optional<float>(mode.max_discharge_power_L2);
-    const auto max_discharge_L3 = convert_from_optional<float>(mode.max_discharge_power_L3);
+    const auto max_discharge_L2 = convert_from_optional(mode.max_discharge_power_L2);
+    const auto max_discharge_L3 = convert_from_optional(mode.max_discharge_power_L3);
     const auto max_discharge_total = max_discharge_L1 + max_discharge_L2.value_or(0.0) + max_discharge_L3.value_or(0.0);
 
     const auto min_discharge_L1 = dt::from_RationalNumber(mode.min_discharge_power);
-    const auto min_discharge_L2 = convert_from_optional<float>(mode.min_discharge_power_L2);
-    const auto min_discharge_L3 = convert_from_optional<float>(mode.min_discharge_power_L3);
+    const auto min_discharge_L2 = convert_from_optional(mode.min_discharge_power_L2);
+    const auto min_discharge_L3 = convert_from_optional(mode.min_discharge_power_L3);
     const auto min_discharge_total = min_discharge_L1 + min_discharge_L2.value_or(0.0) + min_discharge_L3.value_or(0.0);
 
     types::iso15118::AcEvPowerLimits ac_ev_power_limits;
@@ -324,15 +318,15 @@ template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::B
     return ac_ev_power_limits;
 }
 
-template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::Dynamic_AC_CLReqControlMode& mode) {
+types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::Dynamic_AC_CLReqControlMode& mode) {
     const auto max_charge_L1 = dt::from_RationalNumber(mode.max_charge_power);
-    const auto max_charge_L2 = convert_from_optional<float>(mode.max_charge_power_L2);
-    const auto max_charge_L3 = convert_from_optional<float>(mode.max_charge_power_L3);
+    const auto max_charge_L2 = convert_from_optional(mode.max_charge_power_L2);
+    const auto max_charge_L3 = convert_from_optional(mode.max_charge_power_L3);
     const auto max_charge_total = max_charge_L1 + max_charge_L2.value_or(0.0) + max_charge_L3.value_or(0.0);
 
     const auto min_charge_L1 = dt::from_RationalNumber(mode.min_charge_power);
-    const auto min_charge_L2 = convert_from_optional<float>(mode.min_charge_power_L2);
-    const auto min_charge_L3 = convert_from_optional<float>(mode.min_charge_power_L3);
+    const auto min_charge_L2 = convert_from_optional(mode.min_charge_power_L2);
+    const auto min_charge_L3 = convert_from_optional(mode.min_charge_power_L3);
     const auto min_charge_total = min_charge_L1 + min_charge_L2.value_or(0.0) + min_charge_L3.value_or(0.0);
 
     types::iso15118::AcEvPowerLimits ac_ev_power_limits;
@@ -345,26 +339,25 @@ template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::D
     return ac_ev_power_limits;
 }
 
-template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::BPT_Dynamic_AC_CLReqControlMode& mode) {
-
+types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::BPT_Dynamic_AC_CLReqControlMode& mode) {
     const auto max_charge_L1 = dt::from_RationalNumber(mode.max_charge_power);
-    const auto max_charge_L2 = convert_from_optional<float>(mode.max_charge_power_L2);
-    const auto max_charge_L3 = convert_from_optional<float>(mode.max_charge_power_L3);
+    const auto max_charge_L2 = convert_from_optional(mode.max_charge_power_L2);
+    const auto max_charge_L3 = convert_from_optional(mode.max_charge_power_L3);
     const auto max_charge_total = max_charge_L1 + max_charge_L2.value_or(0.0) + max_charge_L3.value_or(0.0);
 
     const auto min_charge_L1 = dt::from_RationalNumber(mode.min_charge_power);
-    const auto min_charge_L2 = convert_from_optional<float>(mode.min_charge_power_L2);
-    const auto min_charge_L3 = convert_from_optional<float>(mode.min_charge_power_L3);
+    const auto min_charge_L2 = convert_from_optional(mode.min_charge_power_L2);
+    const auto min_charge_L3 = convert_from_optional(mode.min_charge_power_L3);
     const auto min_charge_total = min_charge_L1 + min_charge_L2.value_or(0.0) + min_charge_L3.value_or(0.0);
 
     const auto max_discharge_L1 = dt::from_RationalNumber(mode.max_discharge_power);
-    const auto max_discharge_L2 = convert_from_optional<float>(mode.max_discharge_power_L2);
-    const auto max_discharge_L3 = convert_from_optional<float>(mode.max_discharge_power_L3);
+    const auto max_discharge_L2 = convert_from_optional(mode.max_discharge_power_L2);
+    const auto max_discharge_L3 = convert_from_optional(mode.max_discharge_power_L3);
     const auto max_discharge_total = max_discharge_L1 + max_discharge_L2.value_or(0.0) + max_discharge_L3.value_or(0.0);
 
     const auto min_discharge_L1 = dt::from_RationalNumber(mode.min_discharge_power);
-    const auto min_discharge_L2 = convert_from_optional<float>(mode.min_discharge_power_L2);
-    const auto min_discharge_L3 = convert_from_optional<float>(mode.min_discharge_power_L3);
+    const auto min_discharge_L2 = convert_from_optional(mode.min_discharge_power_L2);
+    const auto min_discharge_L3 = convert_from_optional(mode.min_discharge_power_L3);
     const auto min_discharge_total = min_discharge_L1 + min_discharge_L2.value_or(0.0) + min_discharge_L3.value_or(0.0);
 
     types::iso15118::AcEvPowerLimits ac_ev_power_limits;
@@ -381,16 +374,16 @@ template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::B
     return ac_ev_power_limits;
 }
 
-template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::Scheduled_AC_CLReqControlMode& mode) {
-    const auto max_charge_L1 = convert_from_optional<float>(mode.max_charge_power);
-    const auto max_charge_L2 = convert_from_optional<float>(mode.max_charge_power_L2);
-    const auto max_charge_L3 = convert_from_optional<float>(mode.max_charge_power_L3);
+types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::Scheduled_AC_CLReqControlMode& mode) {
+    const auto max_charge_L1 = convert_from_optional(mode.max_charge_power);
+    const auto max_charge_L2 = convert_from_optional(mode.max_charge_power_L2);
+    const auto max_charge_L3 = convert_from_optional(mode.max_charge_power_L3);
     const auto max_charge_total =
         max_charge_L1.value_or(0.0) + max_charge_L2.value_or(0.0) + max_charge_L3.value_or(0.0);
 
-    const auto min_charge_L1 = convert_from_optional<float>(mode.min_charge_power);
-    const auto min_charge_L2 = convert_from_optional<float>(mode.min_charge_power_L2);
-    const auto min_charge_L3 = convert_from_optional<float>(mode.min_charge_power_L3);
+    const auto min_charge_L1 = convert_from_optional(mode.min_charge_power);
+    const auto min_charge_L2 = convert_from_optional(mode.min_charge_power_L2);
+    const auto min_charge_L3 = convert_from_optional(mode.min_charge_power_L3);
     const auto min_charge_total =
         min_charge_L1.value_or(0.0) + min_charge_L2.value_or(0.0) + min_charge_L3.value_or(0.0);
 
@@ -408,29 +401,28 @@ template <> types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::S
     return ac_ev_power_limits;
 }
 
-template <>
 types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::BPT_Scheduled_AC_CLReqControlMode& mode) {
-    const auto max_charge_L1 = convert_from_optional<float>(mode.max_charge_power);
-    const auto max_charge_L2 = convert_from_optional<float>(mode.max_charge_power_L2);
-    const auto max_charge_L3 = convert_from_optional<float>(mode.max_charge_power_L3);
+    const auto max_charge_L1 = convert_from_optional(mode.max_charge_power);
+    const auto max_charge_L2 = convert_from_optional(mode.max_charge_power_L2);
+    const auto max_charge_L3 = convert_from_optional(mode.max_charge_power_L3);
     const auto max_charge_total =
         max_charge_L1.value_or(0.0) + max_charge_L2.value_or(0.0) + max_charge_L3.value_or(0.0);
 
-    const auto min_charge_L1 = convert_from_optional<float>(mode.min_charge_power);
-    const auto min_charge_L2 = convert_from_optional<float>(mode.min_charge_power_L2);
-    const auto min_charge_L3 = convert_from_optional<float>(mode.min_charge_power_L3);
+    const auto min_charge_L1 = convert_from_optional(mode.min_charge_power);
+    const auto min_charge_L2 = convert_from_optional(mode.min_charge_power_L2);
+    const auto min_charge_L3 = convert_from_optional(mode.min_charge_power_L3);
     const auto min_charge_total =
         min_charge_L1.value_or(0.0) + min_charge_L2.value_or(0.0) + min_charge_L3.value_or(0.0);
 
-    const auto max_discharge_L1 = convert_from_optional<float>(mode.max_discharge_power);
-    const auto max_discharge_L2 = convert_from_optional<float>(mode.max_discharge_power_L2);
-    const auto max_discharge_L3 = convert_from_optional<float>(mode.max_discharge_power_L3);
+    const auto max_discharge_L1 = convert_from_optional(mode.max_discharge_power);
+    const auto max_discharge_L2 = convert_from_optional(mode.max_discharge_power_L2);
+    const auto max_discharge_L3 = convert_from_optional(mode.max_discharge_power_L3);
     const auto max_discharge_total =
         max_discharge_L1.value_or(0.0) + max_discharge_L2.value_or(0.0) + max_discharge_L3.value_or(0.0);
 
-    const auto min_discharge_L1 = convert_from_optional<float>(mode.min_discharge_power);
-    const auto min_discharge_L2 = convert_from_optional<float>(mode.min_discharge_power_L2);
-    const auto min_discharge_L3 = convert_from_optional<float>(mode.min_discharge_power_L3);
+    const auto min_discharge_L1 = convert_from_optional(mode.min_discharge_power);
+    const auto min_discharge_L2 = convert_from_optional(mode.min_discharge_power_L2);
+    const auto min_discharge_L3 = convert_from_optional(mode.min_discharge_power_L3);
     const auto min_discharge_total =
         min_discharge_L1.value_or(0.0) + min_discharge_L2.value_or(0.0) + min_discharge_L3.value_or(0.0);
 
@@ -457,19 +449,18 @@ types::iso15118::AcEvPowerLimits fill_ac_ev_power_limits(const dt::BPT_Scheduled
     return ac_ev_power_limits;
 }
 
-template <>
 types::iso15118::AcEvPresentPowerValues fill_ac_ev_present_power_values(const dt::Dynamic_AC_CLReqControlMode& mode) {
     types::iso15118::AcEvPresentPowerValues present_values{};
 
     const auto present_active_power_L1 = dt::from_RationalNumber(mode.present_active_power);
-    const auto present_active_power_L2 = convert_from_optional<float>(mode.present_active_power_L2);
-    const auto present_active_power_L3 = convert_from_optional<float>(mode.present_active_power_L3);
+    const auto present_active_power_L2 = convert_from_optional(mode.present_active_power_L2);
+    const auto present_active_power_L3 = convert_from_optional(mode.present_active_power_L3);
     const auto present_active_power_total =
         present_active_power_L1 + present_active_power_L2.value_or(0.0) + present_active_power_L3.value_or(0.0);
 
     const auto present_reactive_power_L1 = dt::from_RationalNumber(mode.present_reactive_power);
-    const auto present_reactive_power_L2 = convert_from_optional<float>(mode.present_reactive_power_L2);
-    const auto present_reactive_power_L3 = convert_from_optional<float>(mode.present_reactive_power_L3);
+    const auto present_reactive_power_L2 = convert_from_optional(mode.present_reactive_power_L2);
+    const auto present_reactive_power_L3 = convert_from_optional(mode.present_reactive_power_L3);
     const auto present_reactive_power_total =
         present_reactive_power_L1 + present_reactive_power_L2.value_or(0.0) + present_reactive_power_L3.value_or(0.0);
 
@@ -482,25 +473,18 @@ types::iso15118::AcEvPresentPowerValues fill_ac_ev_present_power_values(const dt
     return present_values;
 }
 
-template <>
-types::iso15118::AcEvPresentPowerValues
-fill_ac_ev_present_power_values(const dt::BPT_Dynamic_AC_CLReqControlMode& mode) {
-    return fill_ac_ev_present_power_values(static_cast<dt::Dynamic_AC_CLReqControlMode>(mode));
-}
-
-template <>
 types::iso15118::AcEvPresentPowerValues fill_ac_ev_present_power_values(const dt::Scheduled_AC_CLReqControlMode& mode) {
     types::iso15118::AcEvPresentPowerValues present_values{};
 
     const auto present_active_power_L1 = dt::from_RationalNumber(mode.present_active_power);
-    const auto present_active_power_L2 = convert_from_optional<float>(mode.present_active_power_L2);
-    const auto present_active_power_L3 = convert_from_optional<float>(mode.present_active_power_L3);
+    const auto present_active_power_L2 = convert_from_optional(mode.present_active_power_L2);
+    const auto present_active_power_L3 = convert_from_optional(mode.present_active_power_L3);
     const auto present_active_power_total =
         present_active_power_L1 + present_active_power_L2.value_or(0.0) + present_active_power_L3.value_or(0.0);
 
-    const auto present_reactive_power_L1 = convert_from_optional<float>(mode.present_reactive_power);
-    const auto present_reactive_power_L2 = convert_from_optional<float>(mode.present_reactive_power_L2);
-    const auto present_reactive_power_L3 = convert_from_optional<float>(mode.present_reactive_power_L3);
+    const auto present_reactive_power_L1 = convert_from_optional(mode.present_reactive_power);
+    const auto present_reactive_power_L2 = convert_from_optional(mode.present_reactive_power_L2);
+    const auto present_reactive_power_L3 = convert_from_optional(mode.present_reactive_power_L3);
     const auto present_reactive_power_total = present_reactive_power_L1.value_or(0.0) +
                                               present_reactive_power_L2.value_or(0.0) +
                                               present_reactive_power_L3.value_or(0.0);
@@ -516,12 +500,6 @@ types::iso15118::AcEvPresentPowerValues fill_ac_ev_present_power_values(const dt
             : std::nullopt;
 
     return present_values;
-}
-
-template <>
-types::iso15118::AcEvPresentPowerValues
-fill_ac_ev_present_power_values(const dt::BPT_Scheduled_AC_CLReqControlMode& mode) {
-    return fill_ac_ev_present_power_values(static_cast<dt::Scheduled_AC_CLReqControlMode>(mode));
 }
 
 } // namespace module::charger

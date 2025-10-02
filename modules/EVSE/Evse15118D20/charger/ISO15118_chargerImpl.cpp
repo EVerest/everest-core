@@ -43,7 +43,7 @@ types::iso15118::DisplayParameters convert_display_parameters(const dt::DisplayP
             in.remaining_time_to_target_soc,
             in.remaining_time_to_max_soc,
             in.charging_complete,
-            convert_from_optional<float>(in.battery_energy_capacity),
+            convert_from_optional(in.battery_energy_capacity),
             in.inlet_hot};
 }
 
@@ -451,9 +451,9 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                 publish_ac_ev_present_powers(fill_ac_ev_present_power_values(*bpt_dynamic_mode));
                 auto ev_dynamic_values = fill_ac_ev_dynamic_control_mode(*bpt_dynamic_mode);
                 ev_dynamic_values.max_v2x_energy_request =
-                    convert_from_optional<float>(bpt_dynamic_mode->max_v2x_energy_request);
+                    convert_from_optional(bpt_dynamic_mode->max_v2x_energy_request);
                 ev_dynamic_values.min_v2x_energy_request =
-                    convert_from_optional<float>(bpt_dynamic_mode->min_v2x_energy_request);
+                    convert_from_optional(bpt_dynamic_mode->min_v2x_energy_request);
                 publish_ac_ev_dynamic_control_mode(ev_dynamic_values);
             }
         } else if (const auto* display_parameters = std::get_if<dt::DisplayParameters>(&ac_charge_loop_req)) {
@@ -815,10 +815,8 @@ void ISO15118_chargerImpl::handle_update_ac_parameters(types::iso15118::AcParame
     std::scoped_lock lock(GEL);
 
     setup_config.ac_limits.nominal_frequency = dt::from_float(ac_parameters.nominal_frequency);
-    setup_config.ac_limits.max_power_asymmetry =
-        convert_from_optional<dt::RationalNumber>(ac_parameters.max_power_asymmetry);
-    setup_config.ac_limits.power_ramp_limitation =
-        convert_from_optional<dt::RationalNumber>(ac_parameters.power_ramp_limitation);
+    setup_config.ac_limits.max_power_asymmetry = convert_from_optional(ac_parameters.max_power_asymmetry);
+    setup_config.ac_limits.power_ramp_limitation = convert_from_optional(ac_parameters.power_ramp_limitation);
 
     // Exisiting values in ac_setup_config will be overwritten
     auto& ac_setup_config = setup_config.ac_setup_config.emplace();
@@ -889,7 +887,7 @@ void ISO15118_chargerImpl::handle_update_ac_target_values(types::iso15118::AcTar
         if (target_values.target_reactive_power.has_value()) {
             target_power.target_reactive_power = dt::from_float(target_values.target_reactive_power.value().total);
         }
-        target_power.target_frequency = convert_from_optional<dt::RationalNumber>(target_values.target_frequency);
+        target_power.target_frequency = convert_from_optional(target_values.target_frequency);
         controller->send_control_event(target_power);
     }
 }
