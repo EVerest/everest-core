@@ -136,9 +136,18 @@ lws_http_mount Server::Impl::mount = {
     0,            // unsigned int cache_reusable:1; /**< set if client cache may reuse this */
     0,            // unsigned int cache_revalidate:1; /**< set if client cache should revalidate on use */
     0,            // unsigned int cache_intermediaries:1; /**< set if intermediaries are allowed to cache */
+#if defined(LWS_LIBRARY_VERSION_NUMBER) && LWS_LIBRARY_VERSION_NUMBER >= 4004000
+    0, // unsigned int cache_no:1; /**< set if client should check cache always*/
+#endif
     LWSMPRO_FILE, // unsigned char origin_protocol; /**< one of enum lws_mount_protocols */
     1,            // unsigned char mountpoint_len; /**< length of mountpoint string */
     nullptr,      // const char *basic_auth_login_file;
+#if defined(LWS_LIBRARY_VERSION_NUMBER) && LWS_LIBRARY_VERSION_NUMBER >= 4004000
+    nullptr, // const char *cgi_chroot_path;
+    nullptr, // const char *cgi_wd;
+    nullptr, // const struct lws_protocol_vhost_options *headers;
+    0,       // unsigned int keepalive_timeout; /**< 0 or seconds http stream should stay alive while idle. */
+#endif
 };
 
 int Server::Impl::callback(struct lws* wsi, lws_callback_reasons reason, void* user, void* in, std::size_t len) {
