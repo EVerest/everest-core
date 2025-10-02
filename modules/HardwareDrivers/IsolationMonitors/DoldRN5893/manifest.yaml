@@ -24,6 +24,19 @@ config:
     type: boolean
     default: false
 
+  enable_device_timeout:
+    description: 40002 - Timeout release - whether the timeout on the IMD side should be enabled. This enables writing the Timeout register every cycle
+    type: boolean
+    default: false
+  device_timeout_s:
+    description: |
+      40003 - Timeout - the time in seconds after the device will trigger a fault if no communication is received.
+      This should not be smaller than 2 seconds, as this module writes the register every second
+    type: number
+    minimum: 2
+    default: 3
+    maximum: 10
+
   connection_monitoring:
     description: 42001 - Whether connection to L(+)/L(-) should be monitored and if so, when
     type: string

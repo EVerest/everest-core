@@ -10,6 +10,21 @@ If the device reports a state that is not "self test running" anymore and there 
 
 Note that after setting the self test bit, it can take a few seconds (0-2s) until the device state reflects that a self test is running. This is solved using the internal `self_test_running` and `self_test_triggered` variables of the driver.
 
+## Timeout
+
+The device supports a communication timeout, which raises a device fault if no communication is possible for a certain time.
+
+This module supports this timeout, which can be enabled by setting `enable_device_timeout` to `true` and configuring the timeout duration in seconds with `device_timeout_s`, which defaults to 3s.
+
+This shall not be smaller that 2s, as the driver will only update the `Timeout` register every second or a bit more, which would lead to false positives.
+
+If the device reports "Communication Fault Modbus" in the device fault register, this driver will try to reset the device by writing `2` to the control word 1 register. After that, the driver resets the control word 1 to the previous value.
+
+The driver will try to write the device reset command every cycle, until the device fault is cleared.
+
+- [ ] The device does not seem to always react to device resets, it sporadically just clears the fault, not significantly correlating to the number of reset commands sent, though some of the time it executes a reset after receiving < 3 reset commands. This needs more testing.
+
+
 ## Measurement and publishing modes
 
 This driver supports three modes of operation:
@@ -34,7 +49,7 @@ This driver supports three modes of operation:
 
 ## TODOs
 
-- [ ] Implement communication timeout
+- [x] Implement communication timeout
 - [x] Implement alarmspeicherung setting
 - [x] Implement indicator relay settings
 - [ ] check if device name + other device info should be read and logged

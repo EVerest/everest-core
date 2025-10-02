@@ -51,22 +51,45 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    const int MAIN_LOOP_INTERVAL_S = 1;
+
     /**
      * @brief reads a number of input registers via modbus
+     * @note this raises a everest communication fault if unsuccessful
      * @param first_register_address the address of the first register to read (protocol address)
      * @param register_quantity the number of registers to read
      * @return a vector of integers containing the register values, or std::nullopt in case of a communication error
      */
     std::optional<std::vector<int>> read_input_registers(uint16_t first_protocol_register_address,
                                                          uint16_t register_quantity);
+    /**
+     * @brief reads a number of holding registers via modbus
+     * @note this raises a everest communication fault if unsuccessful
+     * @param first_register_address the address of the first register to read (protocol address)
+     * @param register_quantity the number of registers to read
+     * @return a vector of integers containing the register values, or std::nullopt in case of a communication error
+     */
     std::optional<std::vector<int>> read_holding_registers(uint16_t first_protocol_register_address,
                                                            uint16_t register_quantity);
-    // writes a single holding register via modbus. Returns true on success
+
+    /**
+     * @brief writes a single holding register via modbus
+     * @note this raises a everest communication fault if unsuccessful
+     * @param protocol_address the address of the register to write (protocol address)
+     * @param value the value to write
+     * @return true on success, false on communication error
+     */
     bool write_holding_register(uint16_t protocol_address, uint16_t value);
-    // writes multiple holding registers via modbus. Returns true on success
+    /**
+     * @brief writes multiple holding registers via modbus
+     * @note this raises a everest communication fault if unsuccessful
+     * @param protocol_address the address of the first register to write (protocol address)
+     * @param values the values to write
+     * @return true on success, false on communication error
+     */
     bool write_holding_registers(uint16_t protocol_address, std::vector<uint16_t> values);
 
-    // if true, the main loop publishes measurements
+    // true if measurement should be published, set via the start/stop commands
     std::atomic_bool publish_enabled = false;
 
     // true if a self test has been triggered and the device should do a self test.
@@ -74,26 +97,65 @@ private:
     std::atomic_bool self_test_triggered = false;
     // true if a self test has been triggered and the device has started the self test.
     // When triggering a self test, this stays false until the device switches to self test mode.
+    // It is reset when self_test_triggered is reset - after the self test is finished or the timeout is reached
     std::atomic_bool self_test_running = false;
-    // Deadline for the current self test. If the self test is not finished by this time, it is considered failed
+    // Deadline for the current self test. If the self test is not finished by this time, it is considered failed.
+    // Its value is only valid if self_test_triggered is true
     std::chrono::steady_clock::time_point self_test_deadline;
 
-    // Raises a communication fault if not already raised
+    /**
+     * @brief raises a everest communication fault error if not already active
+     * @note the fault is cleared in the main loop when communication is successful again
+     */
     void raise_communication_fault();
 
-    // Upload the device configuration to the device. Returns true on success
+    /**
+     * @brief raises or clears a everest device fault based on the provided device fault register value
+     * @param device_fault_register the current value of the device fault register
+     * @note the error is raised if the value is not NoFailure and cleared if it is NoFailure
+     */
+    void raise_or_clear_device_fault(const DeviceFault_30001& device_fault_register);
+
+    /**
+     * @brief Configures the device according to the current config.
+     * Only writes the registers if the current value differs from the desired value.
+     * Also calls \c update_control_word1 to set the control word according to the current config and state.
+     * @note this also raises a everest communication fault if unsuccessful
+     * @return true on success, false on communication error
+     */
     bool configure_device();
 
-    // Reads the current isolation measurement and voltage from the device. Returns std::nullopt on error
+    /**
+     * @brief Update the timeout registers based on the config
+     * @note should be called once per main loop iteration
+     * @return true on success, false on communication error
+     */
+    bool write_timeout_registers();
+
+    /**
+     * @brief reads the current isolation measurement and voltage from the device
+     * @note this raises a everest communication fault if unsuccessful
+     * @return the isolation measurement, or std::nullopt in case of a communication error
+     */
     std::optional<types::isolation_monitor::IsolationMeasurement> read_isolation_measurement();
 
-    // Read the two first input registers containing the device fault and device state
+    /**
+     * @brief reads the current device fault and state from the device (first two input registers)
+     * @note this raises a everest communication fault if unsuccessful
+     * @return a tuple of device fault and device state, or std::nullopt in case of a communication error
+     */
     std::optional<std::tuple<DeviceFault_30001, DeviceState_30002>> read_device_fault_and_state();
 
+    enum class ControlWord1Action {
+        None,
+        StartSelfTest,
+        ResetDevice,
+    };
+
     // Updates the control word 1 register (address 40001) based on the current state and config.
-    // Set start_self_test to true to start a self test.
-    // Returns true on success
-    bool update_control_word1(bool start_self_test = false);
+    // Use action to trigger a specific action (self test or reset).
+    // Returns true on success.
+    bool update_control_word1(ControlWord1Action action = ControlWord1Action::None);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

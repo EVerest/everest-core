@@ -23,14 +23,10 @@ void isolation_monitorImpl::ready() {
         EVLOG_info << "Device configured successfully";
     }
 
-    if (not update_control_word1()) {
-        EVLOG_error << "Failed to set control word 1";
-    }
-
     EVLOG_info << "Starting main loop";
 
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(MAIN_LOOP_INTERVAL_S));
 
         if (self_test_triggered or self_test_running) {
             // If the self test takes too long to start or to run, we time out here
@@ -61,6 +57,28 @@ void isolation_monitorImpl::ready() {
         EVLOG_debug << "Device status: " << to_string(device_state);
         EVLOG_debug << "Device error: " << to_string(device_fault);
 
+        raise_or_clear_device_fault(device_fault);
+
+        if (device_fault == DeviceFault_30001::CommunicationFault_Modbus) {
+            EVLOG_info << "Device modbus timeout detected, trying to reset device and reconfigure";
+
+            if (not update_control_word1(ControlWord1Action::ResetDevice)) {
+                EVLOG_error << "Failed to reset device";
+                continue;
+            }
+
+            if (not update_control_word1()) {
+                EVLOG_error << "Failed to update control word 1";
+                continue;
+            };
+        }
+
+        // update Timeout register if enabled
+        if (not write_timeout_registers()) {
+            EVLOG_error << "Failed to write timeout register";
+            continue;
+        }
+
         // When we trigger a self test, the device can publish a normal status before switching to self test mode, this
         // is handled here
         if (self_test_triggered and not self_test_running and device_state == DeviceState_30002::SelfTesting) {
@@ -84,20 +102,6 @@ void isolation_monitorImpl::ready() {
             // update the control word 1 to potentially disable measurement again (self test only works when measurement
             // is not disabled)
             update_control_word1();
-        }
-
-        // raise device fault if any present
-        if (device_fault != DeviceFault_30001::NoFailure) {
-            if (not error_state_monitor->is_error_active("isolation_monitor/DeviceFault", "DeviceFaultRegister")) {
-                EVLOG_error << "Raising device fault: " << to_string(device_fault);
-                raise_error(
-                    error_factory->create_error("isolation_monitor/DeviceFault", "DeviceFaultRegister",
-                                                std::string("Device fault: ") + std::string(to_string(device_fault))));
-            }
-        } else {
-            if (error_state_monitor->is_error_active("isolation_monitor/DeviceFault", "DeviceFaultRegister")) {
-                clear_error("isolation_monitor/DeviceFault", "DeviceFaultRegister");
-            }
         }
 
         // if device is initializing, raise an error as device is not ready
@@ -150,10 +154,6 @@ void isolation_monitorImpl::ready() {
                 EVLOG_error << "Failed to reconfigure device after communication fault";
                 continue;
             };
-            if (not update_control_word1()) {
-                EVLOG_error << "Failed to update control word 1 after communication fault";
-                continue;
-            }
 
             clear_error("isolation_monitor/CommunicationFault");
         }
@@ -175,8 +175,10 @@ void isolation_monitorImpl::handle_stop() {
 }
 
 void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
+    (void)test_voltage_V; // Unused parameter
     // Note that we only check if a self test has been triggered by us, not if the device is currently in self test
-    // mode. If the device is already in self test mode, we can use the self test to populate our self test result
+    // mode. If the device is already in self test mode, we can use the running self test to populate our self test
+    // result
 
     if (self_test_running or self_test_triggered) {
         EVLOG_warning << "Self test already running or triggered";
@@ -185,7 +187,7 @@ void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
 
     EVLOG_info << "Starting self test";
 
-    if (not update_control_word1(true)) {
+    if (not update_control_word1(ControlWord1Action::StartSelfTest)) {
         publish_self_test_result(false);
         EVLOG_error << "Failed to start self test";
         return;
@@ -195,10 +197,23 @@ void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
         std::chrono::steady_clock::now() + std::chrono::seconds(static_cast<int>(mod->config.self_test_timeout_s));
 
     self_test_triggered = true;
-    self_test_running = false; // device might take some time to actually start the self test
+    // device might take some time to actually start the self test; this is set in the main
+    // loop when we see the device state change to self testing
+    self_test_running = false;
 }
 
 bool isolation_monitorImpl::configure_device() {
+    // disable timeout if not enabled. Note that is enabled in the write_timeout_registers function after Timeout is
+    // written
+    if (not mod->config.enable_device_timeout) {
+        // Timeout release register. Write 0 to disable timeout
+        const auto success = write_holding_register(1, 0);
+        if (not success) {
+            EVLOG_error << "Failed to disable device timeout";
+            return false;
+        }
+    }
+
     // Read current settings from device to prevent unnecessary writes (the datasheet specifies that unnecessary writes
     // should be avoided to prevent wearing out the EEPROM).
     // There are 11 configuration registers starting at address 2000, we read all for convenience
@@ -303,14 +318,18 @@ bool isolation_monitorImpl::configure_device() {
     new_settings[8] = indicator_relay_k1_function; // 2008
     new_settings[9] = indicator_relay_k2_function; // 2009
 
-    if (std::equal(new_settings.begin(), new_settings.end(), present_settings->begin())) {
+    if (not std::equal(new_settings.begin(), new_settings.end(), present_settings->begin())) {
+        const auto write_success = write_holding_registers(2000, new_settings);
+        if (not write_success) {
+            EVLOG_error << "Failed to write configuration to device";
+            return false;
+        }
+    } else {
         EVLOG_debug << "Device configuration is already up to date, no need to write";
-        return true;
     }
 
-    const auto write_success = write_holding_registers(2000, new_settings);
-    if (!write_success) {
-        EVLOG_error << "Failed to write configuration to device";
+    if (not update_control_word1()) {
+        EVLOG_error << "Failed to set control word 1 after configuration";
         return false;
     }
 
@@ -375,8 +394,12 @@ void isolation_monitorImpl::raise_communication_fault() {
     }
 }
 
-bool isolation_monitorImpl::update_control_word1(bool start_self_test) {
-    if (start_self_test) {
+bool isolation_monitorImpl::update_control_word1(ControlWord1Action action) {
+    if (action == ControlWord1Action::ResetDevice) {
+        return write_holding_register(0, 1U << 1); // Bit 1: device reset
+    }
+
+    if (action == ControlWord1Action::StartSelfTest) {
         // Note that the self test only works when measurement is not disabled
         return write_holding_register(0, 1U << 4); // Bit 4: Start self test
     }
@@ -411,9 +434,8 @@ std::optional<types::isolation_monitor::IsolationMeasurement> isolation_monitorI
     isolation_measurement.resistance_F_Ohm =
         static_cast<float>(insulation_resistance_to_ohm(raw_insulation_resistance));
 
-    // todo: check if this is the best approach
     // 0xFFFF means voltage out of range, 0V means either less than 5V or could not be measured
-    // we assume the worst case -> we dont publish 0V
+    // we assume the worst case -> we don't publish 0V or if out of range
     if (raw_voltage != 0xFFFF and raw_voltage != 0) {
         isolation_measurement.voltage_V = static_cast<float>(raw_voltage);
     }
@@ -431,6 +453,42 @@ std::optional<std::tuple<DeviceFault_30001, DeviceState_30002>> isolation_monito
     const auto device_state = static_cast<DeviceState_30002>(raw_registers.value()[1]);
 
     return std::make_tuple(device_fault, device_state);
+}
+
+bool isolation_monitorImpl::write_timeout_registers() {
+    if (not mod->config.enable_device_timeout) {
+        return true;
+    }
+
+    // write timeout register
+    if (not write_holding_register(2, mod->config.device_timeout_s * 1000)) {
+        EVLOG_error << "Failed to write Timeout register";
+        return false;
+    }
+
+    //  enable timeout (note that disabling the timeout is only done in the configure_device function to reduce
+    //  unnecessary writes)
+    if (not write_holding_register(1, 1)) {
+        EVLOG_error << "Failed to enable device timeout";
+        return false;
+    }
+
+    return true;
+}
+
+void isolation_monitorImpl::raise_or_clear_device_fault(const DeviceFault_30001& device_fault) {
+    if (device_fault != DeviceFault_30001::NoFailure) {
+        if (not error_state_monitor->is_error_active("isolation_monitor/DeviceFault", "DeviceFaultRegister")) {
+            EVLOG_error << "Raising device fault: " << to_string(device_fault);
+            raise_error(
+                error_factory->create_error("isolation_monitor/DeviceFault", "DeviceFaultRegister",
+                                            std::string("Device fault: ") + std::string(to_string(device_fault))));
+        }
+    } else {
+        if (error_state_monitor->is_error_active("isolation_monitor/DeviceFault", "DeviceFaultRegister")) {
+            clear_error("isolation_monitor/DeviceFault", "DeviceFaultRegister");
+        }
+    }
 }
 
 } // namespace main

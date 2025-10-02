@@ -27,6 +27,8 @@ struct Conf {
     double device_id;
     bool keep_measurement_active;
     bool always_publish_measurements;
+    bool enable_device_timeout;
+    double device_timeout_s;
     std::string connection_monitoring;
     bool alarm_persistence;
     std::string indicator_relay_switching_mode;
