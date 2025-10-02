@@ -87,7 +87,7 @@ private:
      * @param values the values to write
      * @return true on success, false on communication error
      */
-    bool write_holding_registers(uint16_t protocol_address, std::vector<uint16_t> values);
+    bool write_holding_registers(uint16_t protocol_address, const std::vector<uint16_t>& values);
 
     // true if measurement should be published, set via the start/stop commands
     std::atomic_bool publish_enabled = false;

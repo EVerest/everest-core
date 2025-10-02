@@ -371,9 +371,9 @@ bool isolation_monitorImpl::write_holding_register(uint16_t protocol_address, ui
     return true;
 }
 
-bool isolation_monitorImpl::write_holding_registers(uint16_t protocol_address, std::vector<uint16_t> values) {
+bool isolation_monitorImpl::write_holding_registers(uint16_t protocol_address, const std::vector<uint16_t>& values) {
     types::serial_comm_hub_requests::VectorUint16 values_converted;
-    for (const auto v : values) {
+    for (const auto& v : values) {
         values_converted.data.push_back(v);
     }
 
