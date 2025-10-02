@@ -98,7 +98,7 @@ libnfc-nci:
 # UI library for BringUp modules
 ftxui:
   git: https://github.com/ArthurSonzogni/ftxui
-  git_tag: v5.0.0
+  git_tag: v6.1.9
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_FTXUI"
 # everest/io library
 mqttc:

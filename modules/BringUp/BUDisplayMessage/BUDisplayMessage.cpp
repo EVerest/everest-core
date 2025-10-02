@@ -240,7 +240,7 @@ public:
     }
 
     // Override the Render method to display label and input together.
-    Element Render() override {
+    Element OnRender() override {
         return vbox({
             text(m_heading) | inverted,
             hbox(text(" Message         : ") | bold, m_msg_input->Render()),
