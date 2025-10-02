@@ -17,3 +17,5 @@ endif()
 if(EVEREST_DEPENDENCY_ENABLED_LIBSLAC AND EVEREST_DEPENDENCY_ENABLED_LIBFSM)
     add_subdirectory(slac)
 endif()
+
+add_subdirectory(run_application)
