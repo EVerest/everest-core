@@ -16,10 +16,22 @@ enum class ErrorEnum {
     VendorWarning
 };
 
+enum class ErrorSeverityEnum {
+    Low,
+    Medium,
+    High
+};
+
 struct Error {
     ErrorEnum type;
     std::optional<std::string> sub_type;
     std::optional<std::string> message;
+    std::optional<ErrorSeverityEnum> severity;
+};
+
+struct OverVoltageLimits {
+    float emergency_limit_V;
+    float error_limit_V;
 };
 
 } // namespace everest::lib::API::V1_0::types::over_voltage_monitor

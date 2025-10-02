@@ -10,3 +10,6 @@ FROM ghcr.io/everest/everest-ci/build-kit-base:${BASE_IMAGE_TAG}
 #     && cd ${EVEREST_CMAKE_PATH} \
 #     && git checkout ${EVEREST_CMAKE_VERSION} \
 #     && rm -r .git
+
+# FIXME(kai): Install libsystemd-dev as a dependency of sdbus-c++
+RUN apt-get update && apt-get -y install libsystemd-dev

@@ -27,6 +27,8 @@ active_modules:
       session_logging_path: /tmp/everest-logs
       charge_mode: DC
       payment_enable_contract: false
+      bpt_channel: Unified
+      bpt_generator_mode: GridFollowing
     connections:
       bsp:
         - module_id: yeti_driver

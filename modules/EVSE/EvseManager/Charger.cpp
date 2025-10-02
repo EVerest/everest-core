@@ -538,8 +538,7 @@ void Charger::run_state_machine() {
 
             // make sure we are enabling PWM
             if (not hlc_use_5percent_current_session) {
-                auto m = get_max_current_internal();
-                update_pwm_now_if_changed_ampere(m);
+                update_pwm_now_if_changed_ampere(get_max_current_internal());
             } else {
                 update_pwm_now_if_changed(PWM_5_PERCENT);
             }
@@ -972,7 +971,16 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
             shared_context.current_state = EvseState::Finished;
         }
         break;
-
+    case CPEvent::PowerOff:
+        shared_context.contactor_open = true;
+        // stop transaction if active and not authorized anymore (e.g. due to Remote Stop or Local Stop)
+        if (shared_context.transaction_active and !shared_context.authorized_pnc and !shared_context.authorized) {
+            stop_transaction();
+        }
+        break;
+    case CPEvent::PowerOn:
+        shared_context.contactor_open = false;
+        break;
     default:
         break;
     }
@@ -1069,18 +1077,24 @@ float Charger::ampere_to_duty_cycle(float ampere) {
 }
 
 bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::steady_clock> validUntil) {
-    if (c >= 0.0 and c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
+    float c_abs{std::fabs(c)};
+    if (c_abs <= CHARGER_ABSOLUTE_MAX_CURRENT) {
 
         // is it still valid?
         if (validUntil > std::chrono::steady_clock::now()) {
             {
                 Everest::scoped_lock_timeout lock(state_machine_mutex,
                                                   Everest::MutexDescription::Charger_set_max_current);
-                shared_context.max_current = c;
+                shared_context.max_current = c_abs;
                 shared_context.max_current_valid_until = validUntil;
             }
-            bsp->set_overcurrent_limit(c);
-            signal_max_current(c);
+            // now after max_current is updated with c_abs we can update c_abs with the internal max current which
+            // considers the cable limit as well
+            c_abs = get_max_current_internal();
+            bsp->set_overcurrent_limit(c_abs);
+            // the max_current is internally an absolute value. The sign of c is now used to signal
+            // if it is charging (c>0) or discharging (c<0)
+            signal_max_current(c < 0.0f ? -c_abs : c_abs);
             return true;
         }
     }
@@ -1179,27 +1193,16 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
             pwm_off();
         }
 
-        shared_context.transaction_active = false;
+        shared_context.authorized = false;
+        shared_context.authorized_pnc = false;
         shared_context.last_stop_transaction_reason = request.reason;
         shared_context.stop_transaction_id_token = request.id_tag;
 
-        for (const auto& meter : r_powermeter_billing) {
-            const auto response = meter->call_stop_transaction(shared_context.session_uuid);
-            // If we fail to stop the transaction, we ignore since there is no
-            // path to recovery. Its also not clear what to do
-            if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
-                EVLOG_error << "Failed to stop a transaction on the power meter " << response.error.value_or("");
-                break;
-            } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
-                shared_context.start_signed_meter_value = response.start_signed_meter_value;
-                shared_context.stop_signed_meter_value = response.signed_meter_value;
-                break;
-            }
+        // Stop transaction now only if contactor is already open. Transaction is stopped on contactor open event
+        // otherwise.
+        if (shared_context.contactor_open) {
+            stop_transaction();
         }
-
-        signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
-        signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
-                                          shared_context.stop_transaction_id_token);
         return true;
     }
     return false;
@@ -1228,6 +1231,7 @@ void Charger::stop_session() {
 
 bool Charger::start_transaction() {
     shared_context.stop_transaction_id_token.reset();
+    shared_context.last_stop_transaction_reason.reset();
     shared_context.transaction_active = true;
 
     types::powermeter::TransactionReq req;
@@ -1265,7 +1269,12 @@ bool Charger::start_transaction() {
 
 void Charger::stop_transaction() {
     shared_context.transaction_active = false;
-    shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
+
+    if (!shared_context.last_stop_transaction_reason.has_value()) {
+        // if the stop transaction reason was already set (e.g. by cancel_transaction), we keep it, else we know it is
+        // EVDisconnected
+        shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
+    }
 
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_stop_transaction(shared_context.session_uuid);
@@ -1284,7 +1293,7 @@ void Charger::stop_transaction() {
     store->clear_session();
 
     signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
-    signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
+    signal_transaction_finished_event(shared_context.last_stop_transaction_reason.value(),
                                       shared_context.stop_transaction_id_token);
 }
 
@@ -1714,11 +1723,6 @@ std::string Charger::evse_state_to_string(EvseState s) {
     return "Invalid";
 }
 
-float Charger::get_max_current() {
-    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_max_current);
-    return get_max_current_internal();
-}
-
 float Charger::get_max_current_internal() {
     auto maxc = shared_context.max_current;
 
@@ -1735,9 +1739,8 @@ float Charger::get_max_current_signalled_to_ev_internal() {
     // for up to 5 seconds as the PWM may only be updated every 5 seconds according to IEC61851-1.
     if (not shared_context.hlc_charging_active) {
         return internal_context.pwm_set_last_ampere;
-    } else {
-        return get_max_current_internal();
     }
+    return get_max_current_internal();
 }
 
 void Charger::set_current_drawn_by_vehicle(float l1, float l2, float l3) {
@@ -1754,8 +1757,9 @@ void Charger::check_soft_over_current() {
     float limit = (get_max_current_signalled_to_ev_internal() + soft_over_current_measurement_noise_A) *
                   (1. + soft_over_current_tolerance_percent / 100.);
 
-    if (shared_context.current_drawn_by_vehicle[0] > limit or shared_context.current_drawn_by_vehicle[1] > limit or
-        shared_context.current_drawn_by_vehicle[2] > limit) {
+    if (std::fabs(shared_context.current_drawn_by_vehicle[0]) > limit or
+        std::fabs(shared_context.current_drawn_by_vehicle[1]) > limit or
+        std::fabs(shared_context.current_drawn_by_vehicle[2]) > limit) {
         if (not internal_context.over_current) {
             internal_context.over_current = true;
             // timestamp when over current happend first
@@ -1795,7 +1799,7 @@ bool Charger::power_available() {
             signal_max_current(shared_context.max_current);
         }
     }
-    return (get_max_current_internal() > 5.9);
+    return get_max_current_internal() > 5.9;
 }
 
 void Charger::request_error_sequence() {
@@ -2040,7 +2044,6 @@ void Charger::error_shutdown() {
 
     // open contactors
     bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
-
     this->signal_hlc_error(types::iso15118::EvseError::Error_EmergencyShutdown);
 }
 

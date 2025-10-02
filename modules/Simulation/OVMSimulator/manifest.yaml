@@ -4,8 +4,12 @@ provides:
     interface: over_voltage_monitor
     description: Main interface for the OVM
     config:
-      simulate_error:
-        description: Set to true to throw an over voltage error during charging
+      simulate_error_shutdown:
+        description: Set to true to simulate an error shutdown during charging
+        type: boolean
+        default: false
+      simulate_emergency_shutdown:
+        description: Set to true to simulate an emergency shutdown during charging
         type: boolean
         default: false
       simulate_error_delay:

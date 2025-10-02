@@ -16,6 +16,14 @@ void ocpp_data_transferImpl::ready() {
 
 types::ocpp::DataTransferResponse
 ocpp_data_transferImpl::handle_data_transfer(types::ocpp::DataTransferRequest& request) {
+
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot data transfer command";
+        types::ocpp::DataTransferResponse response;
+        response.status = types::ocpp::DataTransferStatus::Offline;
+        return response;
+    }
+
     ocpp::v2::DataTransferRequest ocpp_request = conversions::to_ocpp_data_transfer_request(request);
     auto ocpp_response = mod->charge_point->data_transfer_req(ocpp_request);
 

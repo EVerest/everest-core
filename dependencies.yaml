@@ -47,7 +47,7 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: v0.7.2
+  git_tag: v0.8.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
@@ -73,7 +73,7 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.8
+  git_tag: bf5a015cfeacad72509c1620464460753e5a5bec
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
@@ -98,8 +98,18 @@ libnfc-nci:
 # UI library for BringUp modules
 ftxui:
   git: https://github.com/ArthurSonzogni/ftxui
-  git_tag: v5.0.0
+  git_tag: v6.1.9
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_FTXUI"
+# everest/io library
+mqttc:
+  git: https://github.com/LiamBindle/MQTT-C.git
+  git_tag: v1.1.6
+  options: ["MQTT_C_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
+# Linux_Systemd_Rauc module
+sdbus-cpp:
+  git:  https://github.com/Kistler-Group/sdbus-cpp.git
+  git_tag: v2.1.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP"
 # unit testing
 gtest:
   # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.

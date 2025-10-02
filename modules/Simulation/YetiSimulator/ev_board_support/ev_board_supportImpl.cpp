@@ -71,9 +71,9 @@ void ev_board_supportImpl::handle_set_ac_max_current(double& current) {
 
 void ev_board_supportImpl::handle_set_three_phases(bool& three_phases) {
     if (three_phases) {
-        mod->module_state->ev_three_phases = 3;
+        mod->module_state->ev_phases = 3;
     } else {
-        mod->module_state->ev_three_phases = 1;
+        mod->module_state->ev_phases = 1;
     }
 }
 

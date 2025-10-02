@@ -18,6 +18,14 @@ void auth_token_validatorImpl::ready() {
 
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
+
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle validate token command";
+        types::authorization::ValidationResult validation_result;
+        validation_result.authorization_status = types::authorization::AuthorizationStatus::Unknown;
+        return validation_result;
+    }
+
     types::authorization::ValidationResult validation_result;
     try {
         const auto id_token = conversions::to_ocpp_id_token(provided_token.id_token);

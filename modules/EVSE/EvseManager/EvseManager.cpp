@@ -124,7 +124,7 @@ void EvseManager::init() {
             r_powersupply_DC[0]->subscribe_capabilities([this](const auto& caps) {
                 update_powersupply_capabilities(caps);
                 const bool dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
-                bool dc_bpt_was_updated =
+                const bool dc_bpt_was_updated =
                     caps.bidirectional ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT)
                                        : false;
                 if (dc_was_updated || dc_bpt_was_updated) {
@@ -163,18 +163,20 @@ void EvseManager::init() {
         bsp->set_three_phases(c.max_phase_count_import);
         charger->set_connector_type(c.connector_type);
         p_evse->publish_hw_capabilities(c);
-        if (config.charge_mode == "AC") {
+        if (config.charge_mode == "AC" and hlc_enabled) {
             EVLOG_debug << fmt::format("Max AC hardware capabilities: {}A/{}ph", hw_capabilities.max_current_A_import,
                                        hw_capabilities.max_phase_count_import);
             const bool ac_1_was_updated =
                 update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_single_phase_core);
-            bool ac_3_was_updated =
+            const bool ac_3_was_updated =
                 c.max_phase_count_import == 3
                     ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core)
                     : false;
             if (ac_1_was_updated || ac_3_was_updated) {
                 this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
             }
+
+            update_hlc_ac_parameters();
         }
     });
 
@@ -253,6 +255,7 @@ void EvseManager::ready() {
         });
 
         r_hlc[0]->subscribe_dlink_terminate([this] {
+            selected_d20_energy_service.reset();
             session_log.evse(true, "D-LINK_TERMINATE.req");
             charger->dlink_terminate();
             r_slac[0]->call_dlink_terminate();
@@ -314,6 +317,84 @@ void EvseManager::ready() {
             transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_three_phase_core);
             update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core);
 
+            if (config.supported_iso_ac_bpt) {
+                transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_BPT});
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_BPT);
+            }
+
+            r_hlc[0]->subscribe_ac_eamount([this](double e) {
+                // FIXME send only on change / throttle messages
+                Everest::scoped_lock_timeout lock(ev_info_mutex, Everest::MutexDescription::EVSE_subscribe_ac_eamount);
+                ev_info.remaining_energy_needed = e;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_ac_ev_max_voltage([this](double v) {
+                // FIXME send only on change / throttle messages
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_max_voltage);
+                ev_info.maximum_voltage_limit = v;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_ac_ev_max_current([this](double c) {
+                // FIXME send only on change / throttle messages
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_max_current);
+                ev_info.maximum_current_limit = c;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_ac_ev_min_current([this](double c) {
+                // FIXME send only on change / throttle messages
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_min_current);
+                ev_info.minimum_current_limit = c;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_ac_ev_power_limits([this](types::iso15118::AcEvPowerLimits l) {
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_power_limits);
+                if (l.max_charge_power.has_value()) {
+                    ev_info.ac_max_charge_power = l.max_charge_power.value().total;
+                }
+                if (l.min_charge_power.has_value()) {
+                    ev_info.ac_min_charge_power = l.min_charge_power.value().total;
+                }
+                if (l.max_discharge_power.has_value()) {
+                    ev_info.ac_max_discharge_power = l.max_discharge_power.value().total;
+                }
+                if (l.min_discharge_power.has_value()) {
+                    ev_info.ac_min_discharge_power = l.min_discharge_power.value().total;
+                }
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_ac_ev_present_powers([this](types::iso15118::AcEvPresentPowerValues values) {
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_present_powers);
+                ev_info.ac_present_active_power = values.present_active_power.total;
+                if (values.present_reactive_power.has_value()) {
+                    ev_info.ac_present_reactive_power = values.present_reactive_power.value().total;
+                }
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_ac_ev_dynamic_control_mode([this](types::iso15118::AcEvDynamicModeValues values) {
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_dynamic_control_mode);
+                ev_info.target_energy_request = values.target_energy_request;
+                ev_info.max_energy_request = values.max_energy_request;
+                ev_info.min_energy_request = values.min_energy_request;
+                if (values.departure_time.has_value()) {
+                    // TODO(SL): Convert departure_time to rfc3339
+                    // ev_info.departure_time = values.departure_time.value();
+                }
+                // TODO(SL): Missing max_v2x_energy_request & min_v2x_energy_request
+                p_evse->publish_ev_info(ev_info);
+            });
+
         } else if (config.charge_mode == "DC") {
             transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
             update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
@@ -349,7 +430,7 @@ void EvseManager::ready() {
                 apply_new_target_voltage_current();
                 charger->notify_currentdemand_started();
                 if (not r_over_voltage_monitor.empty()) {
-                    r_over_voltage_monitor[0]->call_start(get_over_voltage_threshold());
+                    r_over_voltage_monitor[0]->call_start();
                 }
             });
 
@@ -547,59 +628,22 @@ void EvseManager::ready() {
                 Everest::scoped_lock_timeout lock(ev_info_mutex,
                                                   Everest::MutexDescription::EVSE_subscribe_dc_ev_maximum_limits);
 
-                if (ev_info.present_voltage.has_value()) {
-                    const auto actual_voltage = ev_info.present_voltage.value();
-                    // IEC61851_23 CC.6.2:
-                    // The d.c. supply shall trigger a d.c. supply initiated emergency shutdown according to CC.3.4
-                    // in order to prevent overvoltage at the battery, if output voltage exceeds maximum voltage limit
-                    // sent by the vehicle
-                    if (actual_voltage > l.dc_ev_maximum_voltage_limit) {
-                        r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
-                        return;
-                    }
-                }
-
                 ev_info.maximum_current_limit = l.dc_ev_maximum_current_limit;
                 ev_info.maximum_power_limit = l.dc_ev_maximum_power_limit;
                 ev_info.maximum_voltage_limit = l.dc_ev_maximum_voltage_limit;
                 p_evse->publish_ev_info(ev_info);
+
+                // Update limits for over voltage monitoring
+                if (not r_over_voltage_monitor.empty()) {
+                    r_over_voltage_monitor[0]->call_set_limits(get_emergency_over_voltage_threshold(),
+                                                               get_error_over_voltage_threshold());
+                }
             });
 
             r_hlc[0]->subscribe_departure_time([this](const std::string& t) {
                 Everest::scoped_lock_timeout lock(ev_info_mutex,
                                                   Everest::MutexDescription::EVSE_subscribe_departure_time);
                 ev_info.departure_time = t;
-                p_evse->publish_ev_info(ev_info);
-            });
-
-            r_hlc[0]->subscribe_ac_eamount([this](double e) {
-                // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, Everest::MutexDescription::EVSE_subscribe_ac_eamount);
-                ev_info.remaining_energy_needed = e;
-                p_evse->publish_ev_info(ev_info);
-            });
-
-            r_hlc[0]->subscribe_ac_ev_max_voltage([this](double v) {
-                // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex,
-                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_max_voltage);
-                ev_info.maximum_voltage_limit = v;
-                p_evse->publish_ev_info(ev_info);
-            });
-
-            r_hlc[0]->subscribe_ac_ev_max_current([this](double c) {
-                // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex,
-                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_max_current);
-                ev_info.maximum_current_limit = c;
-                p_evse->publish_ev_info(ev_info);
-            });
-
-            r_hlc[0]->subscribe_ac_ev_min_current([this](double c) {
-                // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex,
-                                                  Everest::MutexDescription::EVSE_subscribe_ac_ev_min_current);
-                ev_info.minimum_current_limit = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
@@ -686,11 +730,35 @@ void EvseManager::ready() {
             exit(255);
         }
 
+        r_hlc[0]->subscribe_selected_service_parameters([this](types::iso15118::SelectedServiceParameters parameters) {
+            selected_d20_energy_service.emplace(parameters.energy_transfer);
+
+            session_log.car(true, fmt::format("EV selected service: {}",
+                                              types::iso15118::service_category_to_string(parameters.energy_transfer)));
+        });
+
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
         r_hlc[0]->call_setup(evseid, sae_mode, config.session_logging);
         r_hlc[0]->call_update_energy_transfer_modes(transfer_modes);
 
+        if ((config.bpt_channel == "Unified" or config.bpt_channel == "Separated") and
+            (config.bpt_generator_mode == "GridFollowing" or config.bpt_generator_mode == "GridForming")) {
+            types::iso15118::BptSetup bpt_setup_config{};
+
+            bpt_setup_config.bpt_channel = config.bpt_channel == "Unified" ? types::iso15118::BptChannel::Unified
+                                                                           : types::iso15118::BptChannel::Separated;
+            bpt_setup_config.generator_mode = config.bpt_generator_mode == "GridFollowing"
+                                                  ? types::iso15118::GeneratorMode::GridFollowing
+                                                  : types::iso15118::GeneratorMode::GridForming;
+
+            if (config.bpt_grid_code_island_method == "Active" or config.bpt_grid_code_island_method == "Passive") {
+                bpt_setup_config.grid_code_detection = config.bpt_grid_code_island_method == "Active"
+                                                           ? types::iso15118::GridCodeIslandingDetectionMethod::Active
+                                                           : types::iso15118::GridCodeIslandingDetectionMethod::Passive;
+            }
+            r_hlc[0]->call_bpt_setup(bpt_setup_config);
+        }
         // reset error flags
         r_hlc[0]->call_reset_error();
 
@@ -843,6 +911,10 @@ void EvseManager::ready() {
             // Inform HLC about the power meter data
             if (hlc_enabled) {
                 r_hlc[0]->call_update_meter_info(p);
+
+                if (p.power_W and selected_d20_energy_service.has_value()) {
+                    r_hlc[0]->call_update_ac_present_power(p.power_W.value());
+                }
             }
 
             // Store local cache
@@ -873,6 +945,13 @@ void EvseManager::ready() {
 
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
                          p.energy_Wh_import.total / 1000.);
+
+            if (p.energy_Wh_export.has_value()) {
+                mqtt.publish(
+                    fmt::format("everest_external/nodered/{}/powermeter/totalExportKWattHr", config.connector_id),
+                    p.energy_Wh_export.value().total / 1000.);
+            }
+
             json j;
             to_json(j, p);
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id), j.dump());
@@ -910,7 +989,21 @@ void EvseManager::ready() {
     charger->signal_max_current.connect([this](float ampere) {
         // The charger changed the max current setting. Forward to HLC
         if (hlc_enabled) {
-            r_hlc[0]->call_update_ac_max_current(ampere);
+            if (not selected_d20_energy_service.has_value() and ampere >= 0.0) {
+                r_hlc[0]->call_update_ac_max_current(ampere); // ISO-2
+                return;
+            }
+
+            if (selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC or
+                selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT) {
+
+                types::units::Power target_power = {ampere * static_cast<float>(config.ac_nominal_voltage) *
+                                                    hw_capabilities.max_phase_count_import};
+
+                // TODO(SL): Adding target frequency
+                // TODO(SL): Adding reactive power
+                r_hlc[0]->call_update_ac_target_values({target_power});
+            }
         }
     });
 
@@ -1308,40 +1401,24 @@ bool EvseManager::update_local_energy_limit(types::energy::ExternalLimits l) {
     return true;
 }
 
-// Note: deprecated. Only kept for node red compat.
-// This overwrites all other schedules set before.
-void EvseManager::nodered_set_current_limit(float max_current) {
-    std::scoped_lock lock(external_local_limits_mutex);
-    update_max_current_limit(external_local_energy_limits, max_current);
-}
-
-// Note: deprecated. Only kept for node red compat.
-// This overwrites all other schedules set before.
-void EvseManager::nodered_set_watt_limit(float max_watt) {
-    std::scoped_lock lock(external_local_limits_mutex);
-    update_max_watt_limit(external_local_energy_limits, max_watt);
-}
-
 // Helper function to set a watt limit in an ExternalLimits type
-bool EvseManager::update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt) {
+bool EvseManager::update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt_export,
+                                        std::optional<float> max_watt_import) {
     types::energy::ScheduleReqEntry e;
     e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-    if (max_watt >= 0) {
-        e.limits_to_leaves.total_power_W = {max_watt, info.id + "update_max_watt_limit"};
-        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.total_power_W = {0, info.id + "update_max_watt_limit"};
-        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-    } else {
-        e.limits_to_leaves.total_power_W = {-max_watt, info.id + "update_max_watt_limit"};
-        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.total_power_W = {0, info.id + "update_max_watt_limit"};
-        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-    }
+
+    e.limits_to_leaves.total_power_W = {max_watt_export, info.id + " update_max_watt_limit"};
+    limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+
+    e.limits_to_leaves.total_power_W = {max_watt_import.value_or(0.0f), info.id + " update_max_watt_limit"};
+    limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+
     return true;
 }
 
 // Helper function to set a current limit in an ExternalLimits type
-bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits, float max_current) {
+bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits, float max_current_import,
+                                           float max_current_export) {
     if (config.charge_mode == "DC") {
         return false;
     }
@@ -1349,17 +1426,11 @@ bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits
     types::energy::ScheduleReqEntry e;
     e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
-    if (max_current >= 0) {
-        e.limits_to_leaves.ac_max_current_A = {max_current, info.id + "update_max_current_limit"};
-        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.ac_max_current_A = {0, info.id + "update_max_current_limit"};
-        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-    } else {
-        e.limits_to_leaves.ac_max_current_A = {-max_current, info.id + "update_max_current_limit"};
-        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
-        e.limits_to_leaves.ac_max_current_A = {0, info.id + "update_max_current_limit"};
-        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
-    }
+    e.limits_to_leaves.ac_max_current_A = {max_current_import, info.id + " update_max_current_limit"};
+    limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+
+    e.limits_to_leaves.ac_max_current_A = {max_current_export, info.id + " update_max_current_limit"};
+    limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
 
     return true;
 }
@@ -1471,6 +1542,54 @@ bool EvseManager::update_supported_energy_transfers(const types::iso15118::Energ
     return was_updated;
 }
 
+void EvseManager::update_hlc_ac_parameters() {
+    std::scoped_lock lock(hlc_ac_parameters_mutex);
+
+    types::iso15118::AcEvseMaximumPower ac_maximum_power;
+    const float max_charge_power_per_phase = config.ac_nominal_voltage * hw_capabilities.max_current_A_import;
+    const float max_discharge_power_per_phase = config.ac_nominal_voltage * hw_capabilities.max_current_A_export;
+
+    ac_maximum_power.charge_power = {
+        max_charge_power_per_phase * hw_capabilities.max_phase_count_import,
+        max_charge_power_per_phase,
+        hw_capabilities.max_phase_count_import >= 2 ? std::make_optional(max_charge_power_per_phase) : std::nullopt,
+        hw_capabilities.max_phase_count_import == 3 ? std::make_optional(max_charge_power_per_phase) : std::nullopt,
+    };
+    ac_maximum_power.discharge_power.emplace(types::units::Power{
+        max_discharge_power_per_phase * hw_capabilities.max_phase_count_export,
+        max_discharge_power_per_phase,
+        hw_capabilities.max_phase_count_export >= 2 ? std::make_optional(max_discharge_power_per_phase) : std::nullopt,
+        hw_capabilities.max_phase_count_export == 3 ? std::make_optional(max_discharge_power_per_phase) : std::nullopt,
+    });
+    r_hlc[0]->call_update_ac_maximum_limits(ac_maximum_power);
+
+    types::iso15118::AcEvseMinimumPower ac_minimum_power;
+    const float min_charge_power_per_phase = config.ac_nominal_voltage * hw_capabilities.min_current_A_import;
+    const float min_discharge_power_per_phase = config.ac_nominal_voltage * hw_capabilities.min_current_A_export;
+
+    ac_minimum_power.charge_power = {
+        min_charge_power_per_phase * hw_capabilities.max_phase_count_import,
+        min_charge_power_per_phase,
+        hw_capabilities.max_phase_count_import >= 2 ? std::make_optional(min_charge_power_per_phase) : std::nullopt,
+        hw_capabilities.max_phase_count_import == 3 ? std::make_optional(min_charge_power_per_phase) : std::nullopt,
+    };
+
+    ac_minimum_power.discharge_power.emplace(types::units::Power{
+        min_discharge_power_per_phase * hw_capabilities.max_phase_count_export,
+        min_discharge_power_per_phase,
+        hw_capabilities.max_phase_count_export >= 2 ? std::make_optional(min_discharge_power_per_phase) : std::nullopt,
+        hw_capabilities.max_phase_count_export == 3 ? std::make_optional(min_discharge_power_per_phase) : std::nullopt,
+    });
+    r_hlc[0]->call_update_ac_minimum_limits(ac_minimum_power);
+
+    std::vector<types::iso15118::Connector> ac_connectors{types::iso15118::Connector::SinglePhase};
+    if (hw_capabilities.max_phase_count_import == 3) {
+        ac_connectors.push_back(types::iso15118::Connector::ThreePhase);
+    }
+    r_hlc[0]->call_update_ac_parameters({50, static_cast<float>(config.ac_nominal_voltage), ac_connectors, std::nullopt,
+                                         std::nullopt}); // TODO(sl): Getting nominal frequency
+}
+
 void EvseManager::log_v2g_message(types::iso15118::V2gMessages v2g_messages) {
 
     const std::string msg = types::iso15118::v2g_message_id_to_string(v2g_messages.id);
@@ -1526,7 +1645,7 @@ static double get_cable_check_voltage(double ev_max_cpd, double evse_max_cpd) {
     return cable_check_voltage;
 }
 
-double EvseManager::get_over_voltage_threshold() {
+double EvseManager::get_emergency_over_voltage_threshold() {
 
     float ev_max_voltage = 500.;
 
@@ -1542,16 +1661,33 @@ double EvseManager::get_over_voltage_threshold() {
 
     double ovp = 550.;
 
-    // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
-    if (negotiated_max_voltage > 850) {
+    if (negotiated_max_voltage > 1000) {
+        // IEC 61851-23-3 (DRAFT 2025) Table 202
+        ovp = 1375.;
+    } else if (negotiated_max_voltage > 850) {
+        // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
         ovp = 1100.;
     } else if (negotiated_max_voltage > 750) {
+        // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
         ovp = 935.;
     } else if (negotiated_max_voltage > 500) {
+        // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
         ovp = 825.;
     }
 
     return ovp;
+}
+
+double EvseManager::get_error_over_voltage_threshold() {
+    double ev_max_voltage = 500;
+
+    if (ev_info.maximum_voltage_limit.has_value()) {
+        ev_max_voltage = ev_info.maximum_voltage_limit.value();
+    } else {
+        EVLOG_error << "OverVoltageThreshold: Did not receive EV maximum voltage, falling back to 500V";
+    }
+
+    return ev_max_voltage;
 }
 
 bool EvseManager::cable_check_should_exit() {
@@ -1995,10 +2131,11 @@ types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
     // external limits are empty
     if (external_local_energy_limits.schedule_import.empty() and external_local_energy_limits.schedule_export.empty()) {
         if (config.charge_mode == "AC") {
-            // by default we import energy
-            update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import);
+            update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import,
+                                     get_hw_capabilities().max_current_A_export);
         } else {
-            update_max_watt_limit(active_local_limits, get_powersupply_capabilities().max_export_power_W);
+            update_max_watt_limit(active_local_limits, get_powersupply_capabilities().max_export_power_W,
+                                  get_powersupply_capabilities().max_import_power_W);
         }
     } else {
         // apply external limits if they are lower
@@ -2031,6 +2168,11 @@ void EvseManager::apply_new_target_voltage_current() {
     if (latest_target_voltage > 0) {
         powersupply_DC_set(latest_target_voltage, latest_target_current);
     }
+}
+
+bool EvseManager::session_is_iso_d20_ac_bpt() {
+    return selected_d20_energy_service.has_value() &&
+           selected_d20_energy_service.value() == types::iso15118::ServiceCategory::AC_BPT;
 }
 
 static std::optional<float> min_optional(std::optional<float> a, std::optional<float> b) {

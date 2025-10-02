@@ -56,6 +56,10 @@ vars:
     type: number
     minimum: 0
     maximum: 400
+  ac_evse_target_power:
+    description: Evse AC max target power
+    type: object
+    $ref: /iso15118#/AcTargetPower
   dc_power_on:
     description: The ev wants to close the dc contactors
     type: 'null'

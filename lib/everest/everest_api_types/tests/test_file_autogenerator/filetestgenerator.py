@@ -10,16 +10,20 @@ from structhelper import StructHelper
 from valuegenerator import ValueGenerator
 from namespace import Namespace
 
+
 class FileTestGenerator:
     enums_found = False
     structs_found = False
     files_to_include = []
-    def __init__(self, api_file_path, test_folder_path, across_file_struct_generator, include_path, license_header, deny_list = []):
+
+    def __init__(self, api_file_path, test_folder_path, across_file_generator, include_path, license_header, deny_list=[]):
         self.license_header = license_header
         self.api_file_path = api_file_path
         self.test_folder_path = test_folder_path
-        FileTestGenerator.files_to_include.append("#include \"" + re.sub(self.test_folder_path, "", FileTestGenerator.calculate_file_path(test_folder_path, api_file_path, "hpp")+ "\""))
-        FileTestGenerator.files_to_include.append("#include \"" + re.sub(include_path, "", api_file_path) + "\"")
+        FileTestGenerator.files_to_include.append("#include \"" + re.sub(
+            self.test_folder_path, "", FileTestGenerator.calculate_file_path(test_folder_path, api_file_path, "hpp") + "\""))
+        FileTestGenerator.files_to_include.append(
+            "#include \"" + re.sub(include_path, "", api_file_path) + "\"")
         api_file = open(api_file_path).read()
         sanitized = Helper.sanitize(api_file)
         self.api_file = sanitized
@@ -29,16 +33,20 @@ class FileTestGenerator:
 
         helpers = []
         enums_map = {}
-        struct_matches = re.finditer(StructHelper.get_regex_find_in_file(), sanitized)
-        enum_matches = re.finditer(EnumHelper.get_regex_find_in_file(), sanitized)
+        struct_matches = re.finditer(
+            StructHelper.get_regex_find_in_file(), sanitized)
+        enum_matches = re.finditer(
+            EnumHelper.get_regex_find_in_file(), sanitized)
         for x in enum_matches:
-            enum_helper = EnumHelper(x.group(), namespace)
+            enum_helper = EnumHelper(
+                x.group(), across_file_generator, namespace)
             if not (enum_helper.get_type() in deny_list):
                 enums_map[enum_helper.get_type()] = enum_helper.get_fields()
                 helpers.append(enum_helper)
                 FileTestGenerator.enums_found = True
         for x in struct_matches:
-            struct_helper = StructHelper(x.group(), across_file_struct_generator, namespace, enums_map)
+            struct_helper = StructHelper(
+                x.group(), across_file_generator, namespace, enums_map)
             if not (struct_helper.get_type() in deny_list):
                 helpers.append(struct_helper)
                 FileTestGenerator.structs_found = True
@@ -64,41 +72,43 @@ class FileTestGenerator:
     def get_file_path(self, file_ending):
         return FileTestGenerator.calculate_file_path(self.test_folder_path, self.api_file_path, file_ending)
 
-    def generate_code(self, with_warning = False):
+    def generate_code(self, with_warning=False):
         for i in self.helpers:
             i.generate_code()
         self.generate_code_cpp(with_warning)
         self.generate_code_hpp()
 
-    def generate_code_cpp(self, with_warning = False):
+    def generate_code_cpp(self, with_warning=False):
         test_code = self.get_code_test()
         if test_code[0] != "" and with_warning:
-            raise NotImplementedError ("The generation of a struct could not be done automatically, it needs to be supplied manually.\n"+
-                                       "The suplying of manual helpers is not fully implemented. The imports need to be added and the manual helpers need to be registered with the accross file generator. \n"+
-                                       "The problematic struct is probably related to: " + test_code[0])
+            raise NotImplementedError("The generation of a struct could not be done automatically, it needs to be supplied manually.\n" +
+                                      "The suplying of manual helpers is not fully implemented. The imports need to be added and the manual helpers need to be registered with the accross file generator. \n" +
+                                      "The problematic struct is probably related to: " + test_code[0])
         code = (
-                self.license_header
-                + "#include <gtest/gtest.h>\n"
-                + "#include \"everest_api_types/" + self.name + "/codec.hpp\"\n"
-                + "#include \"SerializationTestHelpers.hpp\"\n\n"
-                + self.get_test_helper_includes()
-                + "using namespace everest::lib::API::V1_0::types::" + self.name + ";\n\n"
-                # needed for across file types
-                + "using namespace everest::lib::API::V1_0::types;\n\n"
-                + "//Automatic test helpers\n"
-                + test_code[1] + "\n"
-                + "//Tests\n"
-                + test_code[2] + "\n"
+            self.license_header
+            + "#include <gtest/gtest.h>\n"
+            + "#include \"everest_api_types/" + self.name + "/codec.hpp\"\n"
+            + "#include \"SerializationTestHelpers.hpp\"\n\n"
+            + self.get_test_helper_includes()
+            + "using namespace everest::lib::API::V1_0::types::" + self.name + ";\n\n"
+            # needed for across file types
+            + "using namespace everest::lib::API::V1_0::types;\n\n"
+            + "//Automatic test helpers\n"
+            + test_code[1] + "\n"
+            + "//Tests\n"
+            + test_code[2] + "\n"
         )
         self.code_cpp = code
         if with_warning:
             if test_code[0].__len__() > 0:
-                warnings.warn("Not all required methods could be generated automatically, some need to be added manually, or the code generator neeeds to be updated.")
+                warnings.warn(
+                    "Not all required methods could be generated automatically, some need to be added manually, or the code generator neeeds to be updated.")
             if not FileTestGenerator.enums_found:
-                raise ValueError("There was not a single enum found in all api files. This is probably wrong.")
+                raise ValueError(
+                    "There was not a single enum found in all api files. This is probably wrong.")
             if not FileTestGenerator.structs_found:
-                raise ValueError("There was not a single struct found in all api files. This is probably wrong.")
-
+                raise ValueError(
+                    "There was not a single struct found in all api files. This is probably wrong.")
 
     def get_code_cpp(self):
         return self.code_cpp
