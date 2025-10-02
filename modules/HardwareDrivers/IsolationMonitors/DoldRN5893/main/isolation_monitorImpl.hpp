@@ -152,9 +152,12 @@ private:
         ResetDevice,
     };
 
-    // Updates the control word 1 register (address 40001) based on the current state and config.
-    // Use action to trigger a specific action (self test or reset).
-    // Returns true on success.
+    /**
+     * @brief Updates the control word 1 register (address 40001) based on the current state and config.
+     * Use action to trigger a specific action (self test or reset).
+     * @param action the action to perform, defaults to None
+     * @return true on success, false on communication error
+     */
     bool update_control_word1(ControlWord1Action action = ControlWord1Action::None);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };

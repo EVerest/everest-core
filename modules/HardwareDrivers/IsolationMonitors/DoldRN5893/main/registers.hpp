@@ -30,10 +30,10 @@ enum class DeviceFault_30001 : std::uint16_t {
 std::string_view to_string(DeviceFault_30001 code) noexcept;
 
 enum class DeviceState_30002 : std::uint8_t {
-    /// 0: Device initialize
-    Initialize = 0,
+    /// 0: Device initializing
+    Initializing = 0,
     /// 1: Device is ready and in measuring mode, no response value is exceeded
-    Ready_Measuring_NoResponseExceeded = 1,
+    Measuring = 1,
     /// 2: Device in error mode
     ErrorMode = 2,
     /// 3: Device in selftesting

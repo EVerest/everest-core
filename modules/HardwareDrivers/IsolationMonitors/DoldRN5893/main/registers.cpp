@@ -29,9 +29,9 @@ std::string_view to_string(DeviceFault_30001 code) noexcept {
 
 std::string_view to_string(DeviceState_30002 state) noexcept {
     switch (state) {
-    case DeviceState_30002::Initialize:
+    case DeviceState_30002::Initializing:
         return "Initializing";
-    case DeviceState_30002::Ready_Measuring_NoResponseExceeded:
+    case DeviceState_30002::Measuring:
         return "Ready and measuring";
     case DeviceState_30002::ErrorMode:
         return "Error mode";

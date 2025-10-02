@@ -105,7 +105,7 @@ void isolation_monitorImpl::ready() {
         }
 
         // if device is initializing, raise an error as device is not ready
-        if (device_state == DeviceState_30002::Initialize) {
+        if (device_state == DeviceState_30002::Initializing) {
             if (not error_state_monitor->is_error_active("isolation_monitor/DeviceFault", "NotReady")) {
                 raise_error(
                     error_factory->create_error("isolation_monitor/DeviceFault", "NotReady", "Device not ready"));
@@ -117,10 +117,9 @@ void isolation_monitorImpl::ready() {
         }
 
         // dont publish if not measuring
-        bool should_publish_isolation_measurement =
-            device_state == DeviceState_30002::Ready_Measuring_NoResponseExceeded or
-            device_state == DeviceState_30002::Measuring_PreAlarmExceeded or
-            device_state == DeviceState_30002::Measuring_AlarmExceeded;
+        bool should_publish_isolation_measurement = device_state == DeviceState_30002::Measuring or
+                                                    device_state == DeviceState_30002::Measuring_PreAlarmExceeded or
+                                                    device_state == DeviceState_30002::Measuring_AlarmExceeded;
 
         // dont publish if device has a fault
         if (device_fault != DeviceFault_30001::NoFailure) {

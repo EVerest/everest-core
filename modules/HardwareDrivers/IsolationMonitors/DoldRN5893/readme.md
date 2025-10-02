@@ -41,20 +41,9 @@ This driver supports three modes of operation:
 - When triggering a self test by setting bit 4 of the "control word 1" register (address 40001), the device can take a few seconds (about 0-2s) to publish the device state reflecting a self test.
 - Alarm and pre-alarm are triggered before a lower isolation resistance is reported, and is resetted before the reported isolation resistance rises again. This is probably due to a delay in the publishing of the measured resistance.
 - The device state "Error" may not always be set when a device fault is present (i.e. the device fault register shows a fault). Because of this, we only check the device fault register to determine if a fault is present and report that to everest.
+- The device answers to modbus requests even when in a modbus communication timeout. The documentation states that 0x04 will be responded to all requests that are not trying to write a reset. But it seems like we can still read the device state and device fault.
 
 
 ## Others
 
 - ~~As alarm is triggered before isolation resistance is updated we could publish alarm resistance threshold as measured resistance when alarm is triggered~~ We did not do this, because, when Alarmspeicherung is enabled, the reported resistance would be wrong. Also this is not clean behavior and may lead to bugs in the future.
-
-## TODOs
-
-- [x] Implement communication timeout
-- [x] Implement alarmspeicherung setting
-- [x] Implement indicator relay settings
-- [ ] check if device name + other device info should be read and logged
-- [ ] check if extended self test should be implemented
-- [x] check if self test should fail when device errors occur during self test
-  - Has been implemented. If the device fault register shows a fault, the self test is considered failed. This is also the case when a device timeout occurs
-- [x] check if self test should fail when connection errors occur during self test
-  - Has been implemented. Not tested yet
