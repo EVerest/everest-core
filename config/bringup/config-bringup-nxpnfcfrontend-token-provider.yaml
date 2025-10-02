@@ -1,0 +1,18 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  tokenprovider:
+    module: NxpNfcFrontendTokenProvider
+    config_implementation:
+      main:
+        debug: true
+        token_debounce_interval_ms: 3000
+        no_physical_nfc_reader: false
+    standalone: true
+  cli:
+    module: BUTokenProvider
+    standalone: true
+    connections:
+      token_provider:
+        - module_id: tokenprovider
+          implementation_id: main

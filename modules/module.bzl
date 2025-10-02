@@ -4,7 +4,9 @@ def cc_everest_module(
     name,
     srcs = [],
     deps = [],
-    impls = []
+    impls = [],
+    data = [],
+    **cc_binary_kwargs
 ):
     """
     Define C++ Everest module.
@@ -17,6 +19,7 @@ def cc_everest_module(
             module.
         impls: List of implementations that the module has. It should match the
             content of mainifest.yaml file.
+        data: List of data files that should be available at runtime.
     """
     impl_srcs = native.glob([
         "{}/*.cpp".format(impl)
@@ -33,6 +36,8 @@ def cc_everest_module(
 
     binary = name + "__binary"
     manifest = native.glob(["manifest.y*ml"], allow_empty = False)[0]
+
+    prefix = native.package_name().replace("modules/", "").replace(name, "")
 
     native.genrule(
         name = "ld-ev",
@@ -58,8 +63,8 @@ def cc_everest_module(
         --schemas-dir `dirname $(location @everest-framework//:dependencies.yaml)`/schemas \
         --disable-clang-format \
         --output-dir `dirname $(location generated/modules/{module_name}/ld-ev.hpp)`/.. \
-        {module_name}
-    """.format(module_name = name)
+        {prefix}{module_name}
+    """.format(module_name = name, prefix = prefix)
     )
 
     native.cc_binary(
@@ -71,6 +76,7 @@ def cc_everest_module(
             "@everest-core//interfaces:interfaces_lib",
             "@everest-framework//:framework",
         ],
+        data = data,  # Pass through data files to the binary
         copts = ["-std=c++17"],
         includes = [
             ".",
@@ -85,6 +91,7 @@ def cc_everest_module(
             "USE_AUTOLOAD=0",
             "HAS_REMOTE_API=0",
         ],
+        **cc_binary_kwargs,
     )
 
     native.genrule(
@@ -103,6 +110,7 @@ def cc_everest_module(
         name = name,
         srcs = [
             ":copy_to_subdir",
-        ],
+        ] + data,  # Include data files in the filegroup
+        data = [":" + binary],  # Include the binary to get its runfiles
         visibility = ["//visibility:public"],
     )

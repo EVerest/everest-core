@@ -91,8 +91,6 @@ async def _env(
         _add_pm_command_mock(
             evse_manager, "cancel_reservation", None, skip_implementation
         )
-        _add_pm_command_mock(evse_manager, "set_faulted",
-                             None, skip_implementation)
         _add_pm_command_mock(evse_manager, "pause_charging",
                              True, skip_implementation)
         _add_pm_command_mock(evse_manager, "resume_charging",

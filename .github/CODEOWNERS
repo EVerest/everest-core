@@ -12,40 +12,40 @@
 /cmake/ @hikinggrass @a-w50 @corneliusclaussen @andistorm
 
 # config
-/config/ @hikinggrass @pietfried @corneliusclaussen @SebaLukas @MarzellT @mlitre
+/config/ @hikinggrass @pietfried @corneliusclaussen @SebaLukas @mlitre
 
 # lib
 /lib/3rd_party/nanopb/ @a-w50 @corneliusclaussen @hikinggrass
-/lib/staging/can_dpm1000/ @a-w50 @corneliusclaussen @hikinggrass
-/lib/staging/gpio/ @corneliusclaussen @hikinggrass @hikinggrass
-/lib/staging/ocpp/ @hikinggrass @pietfried @corneliusclaussen @mlitre
-/lib/staging/slac/ @a-w50 @corneliusclaussen @SebaLukas
-/lib/staging/tls/ @james-ctc @AssemblyJohn @corneliusclaussen @SebaLukas
+/lib/everest/can_dpm1000/ @a-w50 @corneliusclaussen @hikinggrass
+/lib/everest/gpio/ @corneliusclaussen @hikinggrass @hikinggrass
+/lib/everest/conversions/ @hikinggrass @pietfried @corneliusclaussen @mlitre
+/lib/everest/slac/ @a-w50 @corneliusclaussen @SebaLukas
+/lib/everest/tls/ @james-ctc @mlitre @corneliusclaussen @SebaLukas @pietfried
 
 # modules
 /modules/API/ @hikinggrass @pietfried @corneliusclaussen
-/modules/Auth/ @pietfried @corneliusclaussen @hikinggrass @mlitre
-/modules/Energymanager/ @corneliusclaussen @hikinggrass @pietfried
-/modules/EnergyNode/ @corneliusclaussen @hikinggrass @pietfried
-/modules/ErrorHistory/ @corneliusclaussen @hikinggrass @pietfried @andistorm
-/modules/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried @mlitre
-/modules/EvManager/ @SebaLukas @pietfried @MarzellT
-/modules/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen
-/modules/EvseSecurity/ @AssemblyJohn @pietfried @hikinggrass
-/modules/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc
-/modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas
-/modules/OCPP/ @hikinggrass @pietfried @mlitre
-/modules/OCPP201/ @hikinggrass @pietfried @mlitre
-/modules/PacketSniffer/ @corneliusclaussen @SebaLukas @hikinggrass
-/modules/PhyVersoBSP/ @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
-/modules/PyEvJosev/ @SebaLukas @corneliusclaussen @pietfried
-/modules/Setup/ @hikinggrass @corneliusclaussen @pietfried
-/modules/YetiDriver/ @corneliusclaussen @hikinggrass
-/modules/examples/error-framework/ @corneliusclaussen @hikinggrass @pietfried @andistorm
-/modules/simulation/ @SebaLukas @pietfried @hikinggrass
-/modules/simulation/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
-/modules/simulation/YetiSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
-/modules/rust_examples/ @SirVer @dorezyuk
+/modules/EnergyManagement/Energymanager/ @corneliusclaussen @hikinggrass @pietfried
+/modules/EnergyManagement/EnergyNode/ @corneliusclaussen @hikinggrass @pietfried
+/modules/EV/EvManager/ @SebaLukas @pietfried @james-ctc @mlitre
+/modules/EV/PyEvJosev/ @SebaLukas @corneliusclaussen @pietfried @james-ctc @mlitre
+/modules/EVSE/Auth/ @pietfried @corneliusclaussen @hikinggrass @mlitre
+/modules/EVSE/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen @pietfried @hikinggrass @james-ctc @mlitre
+/modules/EVSE/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried @mlitre
+/modules/EVSE/EvseSecurity/ @pietfried @hikinggrass @james-ctc @mlitre @SebaLukas
+/modules/EVSE/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas @pietfried @hikinggrass
+/modules/EVSE/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc @pietfried @hikinggrass @james-ctc @mlitre
+/modules/EVSE/OCPP/ @hikinggrass @pietfried @mlitre
+/modules/EVSE/OCPP201/ @hikinggrass @pietfried @mlitre
+/modules/Examples/CppExamples/error-framework/ @corneliusclaussen @hikinggrass @pietfried @andistorm
+/modules/Examples/RustExamples/ @SirVer @dorezyuk
+/modules/HardwareDrivers/EVSE/PhyVersoBSP/ @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
+/modules/HardwareDrivers/EVSE/YetiDriver/ @corneliusclaussen @hikinggrass
+/modules/Misc/ErrorHistory/ @corneliusclaussen @hikinggrass @pietfried @andistorm
+/modules/Misc/PacketSniffer/ @corneliusclaussen @SebaLukas @hikinggrass
+/modules/Misc/Setup/ @hikinggrass @corneliusclaussen @pietfried
+/modules/Simulation/ @SebaLukas @pietfried @hikinggrass
+/modules/Simulation/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @james-ctc @mlitre
+/modules/Simulation/YetiSimulator/ @SebaLukas @pietfried @corneliusclaussen @james-ctc @mlitre
 **/Cargo.toml @SirVer @dorezyuk @pietfried @hikinggrass
 **/Cargo.lock @SirVer @dorezyuk @pietfried @hikinggrass
 
@@ -58,5 +58,5 @@
 # third-party/bazel
 /third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @dorezyuk
 
-/dependencies.yaml @hikinggrass @pietfried @corneliusclaussen @SebaLukas @AssemblyJohn @mlitre
-/module-dependencies.cmake @hikinggrass @pietfried @corneliusclaussen @SebaLukas @AssemblyJohn @mlitre
+/dependencies.yaml @hikinggrass @pietfried @corneliusclaussen @SebaLukas @james-ctc @mlitre
+/module-dependencies.cmake @hikinggrass @pietfried @corneliusclaussen @SebaLukas @james-ctc @mlitre

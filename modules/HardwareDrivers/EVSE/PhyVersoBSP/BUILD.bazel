@@ -1,0 +1,20 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+IMPLS = [
+  "connector_2",
+  "connector_1",
+  "rcd_1",
+  "rcd_2",
+  "connector_lock_1",
+  "connector_lock_2",
+]
+
+cc_everest_module(
+    name = "PhyVersoBSP",
+    deps = [
+        "//modules/HardwareDrivers/EVSE/PhyVersoBSP/phyverso_gpio",
+        "//modules/HardwareDrivers/EVSE/PhyVersoBSP/phyverso_mcu_comms",
+    ],
+    impls = IMPLS,
+    srcs = ["board_support_common.cpp", "board_support_common.hpp"],
+)

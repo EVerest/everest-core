@@ -12,7 +12,7 @@ cmds:
         type: string
       certificate_type:
         description: Indicates the type of the certificate
-        type: string 
+        type: string
         $ref: /evse_security#/CaCertificateType
     result:
       description: Result of the attempt to install a CA certificate
@@ -77,9 +77,9 @@ cmds:
   get_v2g_ocsp_request_data:
     description: >-
       Command to retrieve the OCSP request data of the V2G certificates. Contains OCSP data for each
-      certificate that is present in the chain (excluding the root). 
+      certificate that is present in the chain (excluding the root).
     result:
-      description: The OCSP request data of all V2G CA certificates including the Sub CAs (exluding the root)
+      description: The OCSP request data of all V2G CA certificates including the Sub CAs (excluding the root)
       type: object
       $ref: /evse_security#/OCSPRequestDataList
   get_mo_ocsp_request_data:
@@ -93,7 +93,7 @@ cmds:
     result:
       description: >-
           The OCSP request data of the given certificate chain. Contains OCSP data for each
-          certificate in the given chain. 
+          certificate in the given chain.
       type: object
       $ref: /evse_security#/OCSPRequestDataList
   update_ocsp_cache:
@@ -105,7 +105,7 @@ cmds:
         $ref: /evse_security#/CertificateHashData
       ocsp_response:
         description: OCSPResponse class as defined in IETF RFC 6960. DER and then base64 encoded
-        type: string  
+        type: string
   is_ca_certificate_installed:
     description: Command that indicates of the given CA certificate type is installed
     arguments:
@@ -119,7 +119,7 @@ cmds:
   generate_certificate_signing_request:
     description: Command to generate a certificate signing request for the given use
     arguments:
-      certificate_type: 
+      certificate_type:
         description: Specifies the leaf certificate type
         type: string
         $ref: /evse_security#/LeafCertificateType
@@ -134,7 +134,7 @@ cmds:
         type: string
       use_tpm:
         description: Specifies if the CSR should store the private key on the TPM
-        type: boolean 
+        type: boolean
     result:
       description: The certificate signing request in PEM format
       type: object
@@ -142,7 +142,7 @@ cmds:
   get_leaf_certificate_info:
     description: Command to get the paths of the certificate and the respective key
     arguments:
-      certificate_type: 
+      certificate_type:
         description: Specifies the leaf certificate type
         type: string
         $ref: /evse_security#/LeafCertificateType
@@ -162,7 +162,7 @@ cmds:
         Finds the latest valid leafs, for each root certificate that is present on the filesystem,
         and returns all the newest valid leafs that are present for different roots
     arguments:
-      certificate_type: 
+      certificate_type:
         description: Specifies the leaf certificate type
         type: string
         $ref: /evse_security#/LeafCertificateType
@@ -199,7 +199,7 @@ cmds:
       type: string
   get_leaf_expiry_days_count:
     description: >-
-      Command to get the days count until the given leaf certificate expires. 
+      Command to get the days count until the given leaf certificate expires.
       If no leaf certificate is installed this command will return 0
     arguments:
       certificate_type:
@@ -229,7 +229,7 @@ cmds:
 vars:
   certificate_store_update:
     description: >-
-      Variable that indicates that the certificate store has been updated, i.e. either a certificate has been installed or deleted. 
+      Variable that indicates that the certificate store has been updated, i.e. either a certificate has been installed or deleted.
       This is used to notify other modules that the certificate store has changed.
     type: object
     $ref: /evse_security#/CertificateStoreUpdate

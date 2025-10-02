@@ -1,0 +1,3 @@
+KeepAlive.sw_version_string max_length:50
+FanState.fan_id int_size:IS_8
+FanState.rpm int_size:IS_16

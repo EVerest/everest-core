@@ -1,0 +1,15 @@
+description: Token Validator for local allow list of RFID tags
+config:
+  allowlist_file:
+    description: path/filename of the file containing one RFID token per line
+    type: string
+    default: /mnt/user_data/etc/allowlist_rfid.txt
+provides:
+  token_validator:
+    description: Validator interface for auth
+    interface: auth_token_validator
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - Cornelius Claussen
+

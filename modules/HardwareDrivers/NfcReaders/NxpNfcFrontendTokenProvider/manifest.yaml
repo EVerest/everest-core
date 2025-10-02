@@ -1,0 +1,18 @@
+description: NXP NFC Reader Library token provider returning the token as soon as the tag can be read by the reader
+provides:
+  main:
+    description: Implementation of NXP NFC Reader Library based token provider
+    interface: auth_token_provider
+    config:
+      token_debounce_interval_ms:
+        description: Minimal wait time in ms until next token will be published (debounce interval). 
+        type: integer
+        default: 2000
+        minimum: 500
+        maximum: 10000
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Christoph Burandt
+    - Cornelius Claussen
+

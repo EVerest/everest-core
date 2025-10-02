@@ -1,29 +1,38 @@
 module(
     name = "everest-core",
-    version = "2025.5.0",
+    version = "2025.8.0",
 )
 
 ###############################################################################
 # B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
 ###############################################################################
 
-bazel_dep(name = "everest-framework", version = "0.21.1")
-git_override(module_name="everest-framework", commit="8031136e5c31a345044e187a68de70b4dcae2912", remote="https://github.com/EVerest/everest-framework")
+bazel_dep(name = "everest-framework", version = "0.23.0")
+git_override(
+    module_name="everest-framework",
+    commit="8fc13a05268d552c515e246ebbea1e6dee902404",
+    remote="https://github.com/EVerest/everest-framework",
+)
 
-bazel_dep(name = "everest-utils", version = "0.5.2")
-git_override(module_name="everest-utils", commit="824abc6293f1d130f6166a7765319102cd7d7d92", remote="https://github.com/EVerest/everest-utils")
+bazel_dep(name = "everest-utils", version = "0.6.2")
+git_override(module_name="everest-utils", commit="4d6b213e74a57bc3b690b753e64decf2a487b6b7", remote="https://github.com/EVerest/everest-utils")
 
 bazel_dep(name = "bazel_features", version = "1.21.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 BOOST_VERSION = "1.87.0"
 bazel_dep(name = "boost.asio", version = BOOST_VERSION)
+bazel_dep(name = "boost.process", version = BOOST_VERSION)
 bazel_dep(name = "boost.uuid", version = BOOST_VERSION)
 bazel_dep(name = "fmt", version = "11.1.4", repo_name = "com_github_fmtlib_fmt")
-bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "com_github_nlohmann_json")
+bazel_dep(name = "nlohmann_json", version = "3.12.0", repo_name = "com_github_nlohmann_json")
+bazel_dep(name = "libcap", version = "2.27")
 bazel_dep(name = "openssl", version = "3.3.1.bcr.1")
-bazel_dep(name = "rules_rust", version = "0.59.2")
-bazel_dep(name = "rules_python", version = "1.3.0")
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "rules_foreign_cc", version = "0.14.0")
+bazel_dep(name = "rules_license", version = "0.0.7")
+bazel_dep(name = "rules_python", version = "1.3.0")
+bazel_dep(name = "rules_rust", version = "0.59.2")
 
 ###############################################################################
 # N O N   M O D U L E
@@ -34,6 +43,7 @@ use_repo(
     deps,
     "libtimer",
     "libevse-security",
+    "libocpp",
     "pugixml",
     "sigslot",
     "com_github_HowardHinnant_date",
@@ -78,10 +88,10 @@ everest_core_crate_index.from_cargo(
     cargo_lockfile = "@everest-core//modules:Cargo.lock",
     manifests = [
         "@everest-core//modules:Cargo.toml",
-        "@everest-core//modules/RsIskraMeter:Cargo.toml",
-        "@everest-core//modules/RsPaymentTerminal:Cargo.toml",
-        "@everest-core//modules/rust_examples/RsExample:Cargo.toml",
-        "@everest-core//modules/rust_examples/RsExampleUser:Cargo.toml",
+        "@everest-core//modules/HardwareDrivers/PowerMeters/RsIskraMeter:Cargo.toml",
+        "@everest-core//modules/HardwareDrivers/Payment/RsPaymentTerminal:Cargo.toml",
+        "@everest-core//modules/Examples/RustExamples/RsExample:Cargo.toml",
+        "@everest-core//modules/Examples/RustExamples/RsExampleUser:Cargo.toml",
     ],   
 )
 everest_core_crate_index.annotation(

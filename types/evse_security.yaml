@@ -115,7 +115,7 @@ types:
         maxLength: 128
       issuer_key_hash:
         description: >-
-          The hash of the DER encoded public key: the value (excluding tag and length) of the 
+          The hash of the DER encoded public key: the value (excluding tag and length) of the
           subject public key field
         type: string
         maxLength: 128
@@ -221,13 +221,13 @@ types:
     description: Type that specifies the paths of a certificate and the respective private key
     type: object
     required:
-      - key      
+      - key
       - certificate_count
     properties:
       key:
         description: The path of the PEM or DER encoded private key
         type: string
-      certificate_root: 
+      certificate_root:
         description: The PEM of the root certificate that issued this leaf
         type: string
       certificate:
@@ -247,7 +247,7 @@ types:
         type: array
         items:
           minimum: 0
-          type: object          
+          type: object
           $ref: /evse_security#/CertificateOCSP
   GetCertificateInfoResult:
     description: Response to the command get_leaf_certificate_info
@@ -289,16 +289,16 @@ types:
       - Deleted
   CertificateStoreUpdate:
     description: >-
-      Type that specifies the update of the certificate store. One of leaf_certificate_type 
+      Type that specifies the update of the certificate store. One of leaf_certificate_type
       or ca_certificate_type must be present.
     type: object
     required:
       - operation
     properties:
       operation:
-        description: The operation perfomred on the certificate store
+        description: The operation performed on the certificate store
         type: string
-        $ref: /evse_security#/CertificateStoreUpdateOperation      
+        $ref: /evse_security#/CertificateStoreUpdateOperation
       leaf_certificate_type:
         description: The type of the leaf certificate that was installed or deleted. Only present if type of updated certificate is a leaf certificate
         type: string
