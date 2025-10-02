@@ -538,7 +538,7 @@ mod tests {
         everest_mock
             .bank_session_token_slots
             .push(BankSessionTokenProviderClientPublisher::default());
-        let token = Err(::everestrs::Error::InvalidArgument("oh no"));
+        let token = Err(::everestrs::Error::HandlerException("oh no".to_string()));
         everest_mock.bank_session_token_slots[0]
             .expect_get_bank_session_token()
             .times(1)

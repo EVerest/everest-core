@@ -1,16 +1,16 @@
 module(
     name = "everest-core",
-    version = "2025.8.0",
+    version = "2025.9.0",
 )
 
 ###############################################################################
 # B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
 ###############################################################################
 
-bazel_dep(name = "everest-framework", version = "0.23.0")
+bazel_dep(name = "everest-framework", version = "0.23.1")
 git_override(
     module_name="everest-framework",
-    commit="8fc13a05268d552c515e246ebbea1e6dee902404",
+    commit="c3ac19ec156283888256824881c7725d05a418e5",
     remote="https://github.com/EVerest/everest-framework",
 )
 
