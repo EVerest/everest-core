@@ -1248,8 +1248,8 @@ class EverestCore:
                 ocpp_tests_task = tg.create_task(self.ocpp_tests())
 
                 # Export caches
-                tg.create_task(self.export_cpm_cache())
-                tg.create_task(self.export_ccache_cache())
+                # tg.create_task(self.export_cpm_cache())
+                # tg.create_task(self.export_ccache_cache())
 
                 # Export artifacts
                 tg.create_task(self.export_unit_tests_log_file())
