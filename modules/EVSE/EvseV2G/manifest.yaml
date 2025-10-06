@@ -24,7 +24,7 @@ config:
     - prohibit
     - allow
     - force
-    default: prohibit
+    default: allow
   terminate_connection_on_failed_response:
     description: >-
       Controls how to handle a failed response code of the EVSE. If true the
