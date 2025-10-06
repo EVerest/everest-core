@@ -86,10 +86,11 @@ static v2g_event iso_validate_response_code(iso2_responseCodeType* const v2g_res
     *v2g_response_code = (response_code_tmp >= iso2_responseCodeType_FAILED) ? response_code_tmp : *v2g_response_code;
 
     /* [V2G2-460]: check whether the session id matches the expected one of the active session */
-    *v2g_response_code = ((conn->ctx->current_v2g_msg != V2G_SESSION_SETUP_MSG) &&
-                          (conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id))
-                             ? iso2_responseCodeType_FAILED_UnknownSession
-                             : *v2g_response_code;
+    *v2g_response_code =
+        ((conn->ctx->current_v2g_msg != V2G_SESSION_SETUP_MSG) && (conn->ctx->ev_v2g_data.received_session_id != 0) &&
+         (conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id))
+            ? iso2_responseCodeType_FAILED_UnknownSession
+            : *v2g_response_code;
 
     if ((conn->ctx->terminate_connection_on_failed_response == true) &&
         (*v2g_response_code >= iso2_responseCodeType_FAILED)) {
