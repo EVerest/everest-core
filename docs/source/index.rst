@@ -1,6 +1,10 @@
-##############################
-EVerest - Powering EV-Charging
-##############################
+#######
+EVerest
+#######
+
+********************
+Powering EV-Charging
+********************
 
 EVerest is ...
 
@@ -66,9 +70,9 @@ The events are open to anyone and can be found in the
 
    <hr>
 
-=========================
+*************************
 All EVerest documentation
-=========================
+*************************
 
 We have organized our documentation snippets in the following structure for
 everybody to find their best way of learning:
@@ -108,9 +112,9 @@ everybody to find their best way of learning:
 
       Technical overviews, API documentation, auto-generated class definitions - go here.
 
-=======================
+***********************
 Further important links
-=======================
+***********************
 
 .. grid:: 2
    :gutter: 3
