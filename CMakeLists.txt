@@ -177,3 +177,8 @@ add_custom_target(install_everest_testing
     COMMENT
         "Installing dependencies for testing EVerest"
 )
+
+option(EVEREST_BUILD_DOCS "Build EVerest documentation" OFF)
+if(EVEREST_BUILD_DOCS)
+    add_subdirectory(docs)
+endif()
