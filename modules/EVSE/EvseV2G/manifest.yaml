@@ -31,7 +31,7 @@ config:
       V2G connection is terminated immediately on a failed response code, otherwise
       the EV is responsible for closing of the V2G communication session with SessionStop.
     type: boolean
-    default: false
+    default: true
   tls_key_logging:
     description: >-
       Enable/Disable the export of TLS session keys (pre-master-secret)
