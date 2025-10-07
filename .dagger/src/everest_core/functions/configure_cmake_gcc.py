@@ -74,13 +74,13 @@ async def configure_cmake_gcc(
             ],
             expect=dagger.ReturnType.ANY
         )
-        .with_exec(
-            [
-                "cp", "-r",
-                f"{ci_config.ci_workspace_config.cache_path}/CPM",
-                "/cpm_cache"
-            ]
-        )
+        # .with_exec(
+        #     [
+        #         "cp", "-r",
+        #         f"{ci_config.ci_workspace_config.cache_path}/CPM",
+        #         "/cpm_cache"
+        #     ]
+        # )
     )
 
     result = ConfigureResult(

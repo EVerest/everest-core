@@ -84,13 +84,13 @@ async def build_cmake_gcc(
             ],
             expect=dagger.ReturnType.ANY,
         )
-        .with_exec(
-            [
-                "cp", "-r",
-                f"{ci_config.ci_workspace_config.cache_path}/ccache",
-                "/ccache"
-            ]
-        )
+        # .with_exec(
+        #     [
+        #         "cp", "-r",
+        #         f"{ci_config.ci_workspace_config.cache_path}/ccache",
+        #         "/ccache"
+        #     ]
+        # )
     )
 
     result = BuildResult(
