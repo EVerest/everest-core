@@ -7,7 +7,11 @@ active_modules:
           implementation_id: eebus_energy_sink
     config_module:
       manage_eebus_grpc_api_binary: false
-      control_service_rpc_port: 50051
+      vendor_code: "EVerest"
+      device_brand: "EVerest"
+      device_model: "SIL"
+      serial_number: "123456789"
+      control_service_rpc_port: 4715
       eebus_ems_ski: "this-is-a-ski-42"
   probe:
     module: ProbeModule

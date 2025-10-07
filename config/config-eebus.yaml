@@ -6,7 +6,11 @@ active_modules:
         - module_id: eebus_energy_sink
           implementation_id: external_limits
     config_module:
-      control_service_rpc_port: 50051
+      control_service_rpc_port: 4715
+      vendor_code: "EVerest"
+      device_brand: "EVerest"
+      device_model: "SIL"
+      serial_number: "123456789"
       eebus_ems_ski: "fa2548488be47c89a342ea29c2fc9867df7cf700"
   eebus_energy_sink:
     module: EnergyNode

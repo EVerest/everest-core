@@ -11,33 +11,37 @@
 // everest core deps
 #include <grpcpp/grpcpp.h>
 
-// everest core staging
-#include <everest/staging/run_application/run_application.hpp>
-using namespace everest::staging::run_application;
+#include <everest/run_application/run_application.hpp>
+using namespace everest::run_application;
 
 // module internal
 #include <helper.hpp>
 
-#define MODULE_EEBUS_RETRY_INTERVAL_MS 100 // ms
+constexpr int eebus_retry_interval = 100; // ms
+constexpr int eebus_one_minute = 60;
+constexpr int grpc_control_service_channel_port = 50051;
 
 namespace module {
 
-void start_eebus_grpc_api(std::filesystem::path binary_path, int port, std::filesystem::path cert_file,
-                          std::filesystem::path key_file) {
+namespace {
+void start_eebus_grpc_api(const std::filesystem::path& binary_path, int port, const std::filesystem::path& cert_file,
+                          const std::filesystem::path& key_file) {
     std::vector<std::string> args;
-    args.push_back("-port");
-    args.push_back(std::to_string(port));
-    args.push_back("-certificate-path");
-    args.push_back(cert_file.string());
-    args.push_back("-private-key-path");
-    args.push_back(key_file.string());
+    constexpr int num_args = 6;
+    args.reserve(num_args);
+    args.emplace_back("-port");
+    args.emplace_back(std::to_string(port));
+    args.emplace_back("-certificate-path");
+    args.emplace_back(cert_file.string());
+    args.emplace_back("-private-key-path");
+    args.emplace_back(key_file.string());
     CmdOutput output = run_application(binary_path.string(), args);
     EVLOG_error << "eebus-grpc output: " << output.output;
     EVLOG_error << "eebus-grpc exit code: " << output.exit_code;
 }
 
-bool wait_for_channel_ready(std::shared_ptr<grpc::Channel> channel, std::chrono::milliseconds timeout) {
-    const std::chrono::milliseconds retry_interval = std::chrono::milliseconds(MODULE_EEBUS_RETRY_INTERVAL_MS);
+bool wait_for_channel_ready(const std::shared_ptr<grpc::Channel>& channel, std::chrono::milliseconds timeout) {
+    const std::chrono::milliseconds retry_interval = std::chrono::milliseconds(eebus_retry_interval);
 
     const std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
     grpc_connectivity_state channel_state = channel->GetState(true);
@@ -67,6 +71,8 @@ bool wait_for_channel_ready(std::shared_ptr<grpc::Channel> channel, std::chrono:
     return false;
 }
 
+} // namespace
+
 void EEBUS::set_use_case_event_reader(std::unique_ptr<UseCaseEventReader> reader) {
     this->reader = std::move(reader);
 }
@@ -75,7 +81,8 @@ void EEBUS::init() {
     invoke_init(*p_main);
     this->failed = false;
 
-    this->config_validator = std::make_unique<ConfigValidator>(this->config, this->info.paths.etc, this->info.paths.libexec);
+    this->config_validator =
+        std::make_unique<ConfigValidator>(this->config, this->info.paths.etc, this->info.paths.libexec);
     if (!this->config_validator->validate()) {
         EVLOG_error << "EEBUS module configuration is invalid";
         this->failed = true;
@@ -89,23 +96,33 @@ void EEBUS::init() {
                         this->config_validator->get_private_key_path());
     }
 
-    std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
-        this->config_validator->get_control_service_rpc_endpoint(), grpc::InsecureChannelCredentials());
-    this->failed = !wait_for_channel_ready(channel, std::chrono::seconds(60));
+    std::string control_service_grpc_channel = "localhost:" + std::to_string(grpc_control_service_channel_port);
+    EVLOG_critical << "ML DEBUG PASSED GRPC BINARY, channel: " << control_service_grpc_channel;
+    std::shared_ptr<grpc::Channel> channel =
+        grpc::CreateChannel(control_service_grpc_channel, grpc::InsecureChannelCredentials());
+    this->failed = !wait_for_channel_ready(channel, std::chrono::seconds(eebus_one_minute));
     if (this->failed) {
         EVLOG_error << "control service channel is not ready";
         return;
     }
+    EVLOG_critical << "ML DEBUG PASSED CONNECTED TO CHANNEL";
     this->control_service_stub = control_service::ControlService::NewStub(channel);
 
+    EVLOG_critical << "ML DEBUG PASSED CREATED SERVICE STUF";
     this->cs_calls = std::make_unique<grpc_calls::ControlServiceCalls>(this->control_service_stub);
-    this->cs_calls->call_set_config();
+    EVLOG_critical << "ML DEBUG PASSED INIT CS CALLS";
+    this->cs_calls->call_set_config(
+        this->config_validator->get_control_service_port(), this->config_validator->get_vendor_code(),
+        this->config_validator->get_device_brand(), this->config_validator->get_device_model(),
+        this->config_validator->get_serial_number());
+    EVLOG_critical << "ML DEBUG PASSED CALL SET CONFIG";
     this->cs_calls->call_start_setup();
+    EVLOG_critical << "ML DEBUG PASSED CALL START SETUP";
     this->cs_calls->call_register_remote_ski(this->config.eebus_ems_ski);
     std::string endpoint = this->cs_calls->call_add_use_case();
 
     std::shared_ptr<grpc::Channel> channel2 = grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
-    this->failed = !wait_for_channel_ready(channel2, std::chrono::seconds(60));
+    this->failed = !wait_for_channel_ready(channel2, std::chrono::seconds(eebus_one_minute));
     if (this->failed) {
         EVLOG_error << "use case channel is not ready";
         return;

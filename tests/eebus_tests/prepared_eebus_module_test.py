@@ -105,10 +105,10 @@ class PreparedEEBUSModuleTest:
         if self._assertions:
             assert req is not None
             assert req.port == 4715
-            assert req.vendor_code == "Demo"
-            assert req.device_brand == "Demo"
-            assert req.device_model == "EVSE"
-            assert req.serial_number == "2345678901"
+            assert req.vendor_code == "EVerest"
+            assert req.device_brand == "EVerest"
+            assert req.device_model == "SIL"
+            assert req.serial_number == "123456789"
             assert len(req.device_categories) == 1
             assert req.device_categories[0] == control_service_types_pb2.DeviceCategory.E_MOBILITY
             assert req.device_type == control_service_types_pb2.DeviceType.CHARGING_STATION

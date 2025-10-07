@@ -7,7 +7,7 @@
 namespace module {
 namespace grpc_calls {
 
-ControlServiceCalls::ControlServiceCalls(const std::shared_ptr<control_service::ControlService::Stub> stub) :
+ControlServiceCalls::ControlServiceCalls(const std::shared_ptr<control_service::ControlService::Stub>& stub) :
     stub(stub) {
     this->entity_address = common_types::CreateEntityAddress(std::vector<uint32_t>{1});
     this->use_case = control_service::CreateUseCase(
@@ -15,11 +15,11 @@ ControlServiceCalls::ControlServiceCalls(const std::shared_ptr<control_service::
         control_service::UseCase_NameType_Enum::UseCase_NameType_Enum_limitationOfPowerConsumption);
 }
 
-void ControlServiceCalls::call_set_config() {
+void ControlServiceCalls::call_set_config(uint32_t port, std::string vendor_code, std::string device_brand,
+                                          std::string device_model, std::string serial_number) {
     control_service::SetConfigRequest request;
-    // TODO: Make this configurable
     request = control_service::CreateSetConfigRequest(
-        4715, "Demo", "Demo", "EVSE", "2345678901",
+        port, std::move(vendor_code), std::move(device_brand), std::move(device_model), std::move(serial_number),
         std::vector<control_service::DeviceCategory_Enum>{
             control_service::DeviceCategory_Enum::DeviceCategory_Enum_E_MOBILITY},
         control_service::DeviceType_Enum::DeviceType_Enum_CHARGING_STATION,
@@ -58,7 +58,7 @@ std::string ControlServiceCalls::call_add_use_case() {
 }
 
 void ControlServiceCalls::subscribe_use_case_events(
-    module::EEBUS* eebus_module, const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub) {
+    module::EEBUS* eebus_module, const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub>& cs_lpc_stub) {
     control_service::SubscribeUseCaseEventsRequest request =
         control_service::CreateSubscribeUseCaseEventsRequest(&this->entity_address, &this->use_case);
     eebus_module->set_use_case_event_reader(

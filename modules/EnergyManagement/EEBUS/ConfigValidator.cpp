@@ -5,16 +5,16 @@
 
 namespace module {
 
-ConfigValidator::ConfigValidator(const Conf& config, std::filesystem::path etc_prefix, std::filesystem::path libexec_prefix) : config(config) {
-    this->etc_prefix = etc_prefix;
-    this->libexec_prefix = libexec_prefix;
-
-    this->certificate_path = std::filesystem::path(this->config.certificate_path);
-    this->private_key_path = std::filesystem::path(this->config.private_key_path);
-    this->eebus_grpc_api_binary_path = std::filesystem::path(this->config.eebus_grpc_api_binary_path);
-
-    this->control_service_rpc_endpoint = "localhost:" + std::to_string(this->config.control_service_rpc_port);
-    this->manage_eebus_grpc_api_binary = this->config.manage_eebus_grpc_api_binary;
+ConfigValidator::ConfigValidator(const Conf& config, std::filesystem::path etc_prefix,
+                                 std::filesystem::path libexec_prefix) :
+    config(config),
+    control_service_rpc_endpoint(config.control_service_rpc_port),
+    manage_eebus_grpc_api_binary(config.manage_eebus_grpc_api_binary),
+    etc_prefix(std::move(etc_prefix)),
+    libexec_prefix(std::move(libexec_prefix)),
+    certificate_path(std::filesystem::path(config.certificate_path)),
+    private_key_path(std::filesystem::path(config.private_key_path)),
+    eebus_grpc_api_binary_path(std::filesystem::path(config.eebus_grpc_api_binary_path)) {
 }
 
 bool ConfigValidator::validate() {
@@ -25,6 +25,10 @@ bool ConfigValidator::validate() {
     valid &= this->validate_private_key_path();
     valid &= this->validate_eebus_grpc_api_binary_path();
     valid &= this->validate_manage_eebus_grpc_api_binary();
+    valid &= this->validate_vendor_code();
+    valid &= this->validate_device_brand();
+    valid &= this->validate_device_model();
+    valid &= this->validate_serial_number();
     return valid;
 }
 
@@ -40,8 +44,24 @@ std::filesystem::path ConfigValidator::get_eebus_grpc_api_binary_path() const {
     return this->eebus_grpc_api_binary_path;
 }
 
-std::string ConfigValidator::get_control_service_rpc_endpoint() const {
+int ConfigValidator::get_control_service_port() const {
     return this->control_service_rpc_endpoint;
+}
+
+std::string ConfigValidator::get_vendor_code() const {
+    return this->config.vendor_code;
+}
+
+std::string ConfigValidator::get_device_brand() const {
+    return this->config.device_brand;
+}
+
+std::string ConfigValidator::get_device_model() const {
+    return this->config.device_model;
+}
+
+std::string ConfigValidator::get_serial_number() const {
+    return this->config.serial_number;
 }
 
 bool ConfigValidator::validate_control_service_rpc_port() const {
@@ -96,7 +116,8 @@ bool ConfigValidator::validate_eebus_grpc_api_binary_path() {
     }
     if (this->eebus_grpc_api_binary_path.is_relative()) {
         this->eebus_grpc_api_binary_path = this->libexec_prefix / this->eebus_grpc_api_binary_path;
-        EVLOG_info << "EEBUS GRPC API binary path is relative, using libexec prefix: " << this->eebus_grpc_api_binary_path;
+        EVLOG_info << "EEBUS GRPC API binary path is relative, using libexec prefix: "
+                   << this->eebus_grpc_api_binary_path;
     }
     if (!std::filesystem::exists(this->eebus_grpc_api_binary_path)) {
         EVLOG_error << "EEBUS GRPC API binary does not exist";
@@ -113,6 +134,22 @@ bool ConfigValidator::validate_eebus_grpc_api_binary_path() {
 
 bool ConfigValidator::validate_manage_eebus_grpc_api_binary() const {
     return true;
+}
+
+bool ConfigValidator::validate_vendor_code() const {
+    return !this->config.vendor_code.empty();
+}
+
+bool ConfigValidator::validate_device_brand() const {
+    return !this->config.device_brand.empty();
+}
+
+bool ConfigValidator::validate_device_model() const {
+    return !this->config.device_model.empty();
+}
+
+bool ConfigValidator::validate_serial_number() const {
+    return !this->config.serial_number.empty();
 }
 
 } // namespace module
