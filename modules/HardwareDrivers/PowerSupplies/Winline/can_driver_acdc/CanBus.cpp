@@ -127,7 +127,7 @@ bool CanBus::_tx(uint32_t can_id, const std::vector<uint8_t>& payload) {
     }
 
     // Winline protocol uses 29-bit extended CAN IDs, so we need to set the extended frame flag
-    basecamp::io::can::can_dataset data;
+    everest::lib::io::can::can_dataset data;
     data.set_can_id_with_flags(can_id | CAN_EFF_FLAG);
     data.payload = payload;
 
