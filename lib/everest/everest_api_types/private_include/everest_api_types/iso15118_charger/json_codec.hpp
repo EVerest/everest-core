@@ -13,6 +13,9 @@ using json = nlohmann::json;
 void to_json(json& j, CertificateActionEnum const& k) noexcept;
 void from_json(json const& j, CertificateActionEnum& k);
 
+void to_json(json& j, EnergyTransferMode const& k) noexcept;
+void from_json(json const& j, EnergyTransferMode& k);
+
 void to_json(json& j, Status const& k) noexcept;
 void from_json(json const& j, Status& k);
 

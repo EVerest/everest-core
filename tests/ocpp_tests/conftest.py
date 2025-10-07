@@ -170,13 +170,6 @@ def probe_module(
         module,
         skip_implementation,
         "ProbeModuleConnectorA",
-        "set_faulted",
-        lambda arg: None,
-    )
-    implement_command(
-        module,
-        skip_implementation,
-        "ProbeModuleConnectorA",
         "pause_charging",
         lambda arg: True,
     )
@@ -269,13 +262,6 @@ def probe_module(
         skip_implementation,
         "ProbeModuleConnectorB",
         "cancel_reservation",
-        lambda arg: None,
-    )
-    implement_command(
-        module,
-        skip_implementation,
-        "ProbeModuleConnectorB",
-        "set_faulted",
         lambda arg: None,
     )
     implement_command(

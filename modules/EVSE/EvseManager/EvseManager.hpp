@@ -68,6 +68,7 @@ struct Conf {
     double max_current_import_A;
     double max_current_export_A;
     std::string charge_mode;
+    bool supported_iso_ac_bpt;
     bool ac_hlc_enabled;
     bool ac_hlc_use_5percent;
     bool ac_enforce_hlc;
@@ -113,6 +114,9 @@ struct Conf {
     std::string session_id_type;
     bool zero_power_ignore_pause;
     bool zero_power_allow_ev_to_ignore_pause;
+    std::string bpt_channel;
+    std::string bpt_generator_mode;
+    std::string bpt_grid_code_island_method;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -182,11 +186,11 @@ public:
     types::evse_board_support::HardwareCapabilities get_hw_capabilities();
 
     std::mutex external_local_limits_mutex;
-    bool update_max_current_limit(types::energy::ExternalLimits& limits, float max_current); // deprecated
-    bool update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt);       // deprecated
+    bool update_max_current_limit(types::energy::ExternalLimits& limits, float max_current_import,
+                                  float max_current_export);
+    bool update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt_export,
+                               std::optional<float> max_watt_import);
     bool update_local_energy_limit(types::energy::ExternalLimits l);
-    void nodered_set_current_limit(float max_current);
-    void nodered_set_watt_limit(float max_watt);
     types::energy::ExternalLimits get_local_energy_limits();
 
     void cancel_reservation(bool signal_event);
@@ -237,6 +241,8 @@ public:
     std::chrono::time_point<date::utc_clock> random_delay_start_time;
     std::atomic<std::chrono::seconds> random_delay_max_duration;
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
+
+    bool session_is_iso_d20_ac_bpt();
 
     types::power_supply_DC::Capabilities get_powersupply_capabilities();
     void set_external_derating(types::dc_external_derate::ExternalDerating d);
@@ -343,7 +349,8 @@ private:
 
     bool cable_check_should_exit();
 
-    double get_over_voltage_threshold();
+    double get_emergency_over_voltage_threshold();
+    double get_error_over_voltage_threshold();
 
     // EV information
     Everest::timed_mutex_traceable ev_info_mutex;
@@ -354,7 +361,7 @@ private:
     void imd_start();
     Everest::Thread telemetryThreadHandle;
 
-    void fail_cable_check();
+    void fail_cable_check(const std::string& reason);
 
     // setup sae j2847/2 v2h mode
     void setup_v2h_mode();
@@ -373,6 +380,8 @@ private:
     std::condition_variable powermeter_cv;
     bool initial_powermeter_value_received{false};
 
+    std::optional<types::iso15118::ServiceCategory> selected_d20_energy_service{std::nullopt};
+
     std::atomic<types::power_supply_DC::ChargingPhase> power_supply_DC_charging_phase{
         types::power_supply_DC::ChargingPhase::Other};
 
@@ -381,6 +390,8 @@ private:
     std::mutex supported_energy_transfers_mutex;
     std::vector<types::iso15118::EnergyTransferMode> supported_energy_transfers;
     bool update_supported_energy_transfers(const types::iso15118::EnergyTransferMode& energy_transfer);
+    std::mutex hlc_ac_parameters_mutex;
+    void update_hlc_ac_parameters();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

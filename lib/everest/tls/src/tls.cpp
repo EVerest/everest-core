@@ -421,10 +421,6 @@ bool configure_ssl_ctx(bool is_server, SSL_CTX*& ctx, const char* ciphersuites, 
                        const tls::Server::certificate_config_t& cert_config, bool required) {
     bool result{true};
 
-    // TPM2 support is via the OpenSSL provider class OpenSSLProvider in
-    // libevse-security. This needs to be performed before
-    // SSL_CTX_use_PrivateKey_file() or configure_ssl_ctx()  is called
-
     if (is_server) {
         bool custom_key = false;
 
@@ -435,16 +431,8 @@ bool configure_ssl_ctx(bool is_server, SSL_CTX*& ctx, const char* ciphersuites, 
 
         OpenSSLProvider provider;
 
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
-
-        if (custom_key) {
-            provider.set_tls_mode(OpenSSLProvider::mode_t::custom_provider);
-        } else {
-            provider.set_tls_mode(OpenSSLProvider::mode_t::default_provider);
-        }
-
         const SSL_METHOD* method = TLS_server_method();
-        ctx = SSL_CTX_new_ex(provider, provider.propquery_tls_str(), method);
+        ctx = SSL_CTX_new_ex(provider, provider.propquery_default(), method);
     } else {
         const SSL_METHOD* method = TLS_client_method();
         ctx = SSL_CTX_new(method);

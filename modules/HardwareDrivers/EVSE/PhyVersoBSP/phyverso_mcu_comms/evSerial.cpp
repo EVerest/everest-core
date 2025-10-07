@@ -395,22 +395,6 @@ bool evSerial::reset(const int reset_pin) {
 
     bool success = true;
 
-    // Wait for reset done message from uC
-    /*
-    for (int i = 0; i < 20; i++) {
-        if (reset_done_flag) {
-            success = true;
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-
-
-    // Reset flag to detect run time spurious resets of uC from now on
-    reset_done_flag = false;
-    forced_reset = false;
-    */
-
     // send some dummy packets to resync COBS etc.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     cobs_decode_reset();

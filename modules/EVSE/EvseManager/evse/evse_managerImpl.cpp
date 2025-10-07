@@ -35,14 +35,6 @@ void evse_managerImpl::init() {
 
     // Interface to Node-RED debug UI
 
-    mod->mqtt.subscribe(
-        fmt::format("everest_external/nodered/{}/cmd/set_max_current", mod->config.connector_id),
-        [&charger = mod->charger, this](std::string data) { mod->nodered_set_current_limit(std::stof(data)); });
-
-    mod->mqtt.subscribe(
-        fmt::format("everest_external/nodered/{}/cmd/set_max_watt", mod->config.connector_id),
-        [&charger = mod->charger, this](std::string data) { mod->nodered_set_watt_limit(std::stof(data)); });
-
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/enable", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) {
                             charger->enable_disable(0, {types::evse_manager::Enable_source::LocalAPI,
@@ -54,9 +46,6 @@ void evse_managerImpl::init() {
                             charger->enable_disable(0, {types::evse_manager::Enable_source::LocalAPI,
                                                         types::evse_manager::Enable_state::Disable, 100});
                         });
-
-    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/faulted", mod->config.connector_id),
-                        [&charger = mod->charger](const std::string& data) { charger->set_faulted(); });
 
     mod->mqtt.subscribe(
         fmt::format("everest_external/nodered/{}/cmd/switch_three_phases_while_charging", mod->config.connector_id),
@@ -400,10 +389,6 @@ bool evse_managerImpl::handle_reserve(int& reservation_id) {
 
 void evse_managerImpl::handle_cancel_reservation() {
     mod->cancel_reservation(true);
-};
-
-void evse_managerImpl::handle_set_faulted() {
-    mod->charger->set_faulted();
 };
 
 bool evse_managerImpl::handle_pause_charging() {

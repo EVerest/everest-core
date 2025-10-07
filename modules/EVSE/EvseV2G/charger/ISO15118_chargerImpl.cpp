@@ -60,6 +60,40 @@ void ISO15118_chargerImpl::init() {
 
     v2g_ctx->session.auth_timeout_eim = mod->config.auth_timeout_eim;
     v2g_ctx->session.auth_timeout_pnc = mod->config.auth_timeout_pnc;
+
+    v2g_ctx->supported_vas_services_per_provider.reserve(mod->r_iso15118_vas.size());
+
+    for (size_t i = 0; i < mod->r_iso15118_vas.size(); i++) {
+        auto& supported_vas_services = v2g_ctx->supported_vas_services_per_provider.emplace_back();
+
+        this->mod->r_iso15118_vas.at(i)->subscribe_offered_vas(
+            [&supported_vas_services](const types::iso15118_vas::OfferedServices& offered_services) {
+                for (auto service_id : offered_services.service_ids) {
+                    const auto id = static_cast<uint16_t>(service_id);
+                    if (id == V2G_SERVICE_ID_CHARGING) {
+                        continue;
+                    }
+                    supported_vas_services.push_back(id);
+
+                    iso2_ServiceType vas_service{};
+                    init_iso2_ServiceType(&vas_service);
+                    vas_service.FreeService = true;
+                    vas_service.ServiceID = id;
+
+                    if (id == V2G_SERVICE_ID_CERTIFICATE) {
+                        vas_service.ServiceCategory = iso2_serviceCategoryType_ContractCertificate;
+                    } else if (id == V2G_SERVICE_ID_INTERNET) {
+                        vas_service.ServiceCategory = iso2_serviceCategoryType_Internet;
+                    } else {
+                        vas_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
+                    }
+
+                    if (not add_service_to_service_list(v2g_ctx, vas_service)) {
+                        break;
+                    }
+                }
+            });
+    }
 }
 
 void ISO15118_chargerImpl::ready() {
@@ -186,6 +220,10 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
     }
 
     v2g_ctx->evse_v2g_data.central_contract_validation_allowed = central_contract_validation_allowed;
+}
+
+void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_config) {
+    EVLOG_warning << "Ignoring handle_bpt_setup call";
 }
 
 void ISO15118_chargerImpl::handle_authorization_response(
@@ -346,6 +384,26 @@ void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     v2g_ctx->basic_config.evse_ac_current_limit = max_current;
+}
+
+void ISO15118_chargerImpl::handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) {
+    EVLOG_warning << "Ignoring handle_update_ac_parameters call";
+}
+
+void ISO15118_chargerImpl::handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) {
+    EVLOG_warning << "Ignoring handle_update_ac_maximum_limits call";
+}
+
+void ISO15118_chargerImpl::handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) {
+    EVLOG_warning << "Ignoring handle_update_ac_minimum_limits call";
+}
+
+void ISO15118_chargerImpl::handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) {
+    EVLOG_warning << "Ignoring handle_update_ac_target_values call";
+}
+
+void ISO15118_chargerImpl::handle_update_ac_present_power(types::units::Power& present_power) {
+    EVLOG_warning << "Ignoring handle_update_ac_present_power call";
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {

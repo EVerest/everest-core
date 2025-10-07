@@ -112,9 +112,6 @@ public:
     void enable_disable_initial_state_publish();
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
-    void set_faulted();
-    void set_hlc_error();
-
     // Public interface during charging
     //
     // Call anytime, but mostly used during charging session
@@ -260,7 +257,8 @@ private:
     void main_thread();
     void error_thread();
 
-    void graceful_stop_charging();
+    void emergency_shutdown();
+    void error_shutdown();
 
     float ampere_to_duty_cycle(float ampere);
 
@@ -283,6 +281,7 @@ private:
         bool legacy_wakeup_done{false};
         bool hlc_allow_close_contactor{false};
         bool iec_allow_close_contactor{false};
+        bool contactor_open{true};
         bool hlc_charging_active{false};
         HlcTerminatePause hlc_charging_terminate_pause;
         types::iso15118::DcEvseMaximumLimits current_evse_max_limits;
@@ -303,11 +302,11 @@ private:
         std::string session_uuid;
         bool connector_enabled;
         EvseState current_state;
-        types::evse_manager::StopTransactionReason last_stop_transaction_reason;
+        std::optional<types::evse_manager::StopTransactionReason> last_stop_transaction_reason;
         types::evse_manager::StartSessionReason last_start_session_reason;
         float current_drawn_by_vehicle[3];
-        bool error_prevent_charging_flag{false};
-        bool last_error_prevent_charging_flag{false};
+        ShutdownType shutdown_type{ShutdownType::None};
+        ShutdownType last_shutdown_type{ShutdownType::None};
         int ac_with_soc_timer;
         // non standard compliant option: time out after a while and switch back to DC to get SoC update
         bool ac_with_soc_timeout;
@@ -374,7 +373,7 @@ private:
         std::chrono::time_point<std::chrono::steady_clock> last_over_current_event;
         bool over_current{false};
 
-        bool last_error_prevent_charging_flag{false};
+        ShutdownType last_shutdown_type{ShutdownType::None};
         std::chrono::system_clock::time_point current_state_started;
         EvseState last_state_detect_state_change;
         EvseState last_state;
@@ -400,13 +399,6 @@ private:
     std::atomic<types::evse_board_support::Connector_type> connector_type{
         types::evse_board_support::Connector_type::IEC62196Type2Cable};
     const std::string evse_id;
-
-    // ErrorHandling events
-    enum class ErrorHandlingEvents : std::uint8_t {
-        PreventCharging,
-        AllErrorsPreventingChargingCleared,
-        AllErrorCleared
-    };
 
     EventQueue<ErrorHandlingEvents> error_handling_event_queue;
 

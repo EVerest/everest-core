@@ -42,7 +42,6 @@ protected:
     virtual void handle_withdraw_authorization() override;
     virtual bool handle_reserve(int& reservation_id) override;
     virtual void handle_cancel_reservation() override;
-    virtual void handle_set_faulted() override;
     virtual bool handle_pause_charging() override;
     virtual bool handle_resume_charging() override;
     virtual bool handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) override;

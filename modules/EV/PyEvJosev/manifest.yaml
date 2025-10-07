@@ -7,19 +7,19 @@ config:
     type: string
     default: eth0
   supported_DIN70121:
-    description: The EVSE supports the DIN SPEC
+    description: The EV supports the DIN SPEC
     type: boolean
     default: false
   supported_ISO15118_2:
-    description: The EVSE supports ISO15118-2
+    description: The EV supports ISO15118-2
     type: boolean
     default: false
   supported_ISO15118_20_AC:
-    description: The EVSE supports ISO15118-20 AC
+    description: The EV supports ISO15118-20 AC
     type: boolean
     default: false
   supported_ISO15118_20_DC:
-    description: The EVSE supports ISO15118-20 DC
+    description: The EV supports ISO15118-20 DC
     type: boolean
     default: false
   tls_active:
@@ -40,6 +40,17 @@ config:
     description: The EVCC will enable TLS version 1.3
     type: boolean
     default: false
+  is_internet_service_needed:
+    description: If true, the ev will ask for internet service
+    type: boolean
+    default: false
+  supported_d20_energy_services:
+    description: >-
+      The supported ISO15118-20 energy services (DC, DC_BPT, AC, AC_BPT) the EV supports,
+      provided as a prioritized list. The first entry in the list has the highest priority
+      and is the most likely to be selected. The services should be separated only with commas.
+    type: string
+    default: "DC,DC_BPT"
 provides:  
   ev:
     interface: ISO15118_ev

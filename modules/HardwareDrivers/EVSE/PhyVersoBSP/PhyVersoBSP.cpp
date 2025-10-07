@@ -72,6 +72,7 @@ void PhyVersoBSP::init() {
     mcu_config_done = false;
     uint16_t n_tries = 0;
     while (!mcu_config_done) {
+        serial.keep_alive();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         n_tries++;
         if (n_tries > 20) {

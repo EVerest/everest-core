@@ -97,6 +97,10 @@ if(NOT DISABLE_EDM)
 
     # FIXME (aw): we need to set this by hand due to edm
     set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
+
+    if(NOT TARGET SDBusCpp::sdbus-c++)
+        add_library(SDBusCpp::sdbus-c++ ALIAS sdbus-c++)
+    endif()
 else()
     find_package(everest-framework REQUIRED)
     find_package(everest-ocpp REQUIRED)
@@ -113,7 +117,10 @@ else()
     find_package(CURL 7.84.0 REQUIRED)
     find_package(ryml REQUIRED)
     find_package(nlohmann_json REQUIRED)
-    find_package(basecamp_io REQUIRED)
+
+    find_package(ftxui 6 QUIET) # optional, if not available BringUp module will not be built
+
+    find_package(sdbus-c++ REQUIRED)
 endif()
 
 

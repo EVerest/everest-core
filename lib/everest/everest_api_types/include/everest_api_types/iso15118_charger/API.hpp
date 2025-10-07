@@ -13,6 +13,24 @@ enum class CertificateActionEnum {
     Update,
 };
 
+enum class EnergyTransferMode {
+    AC_single_phase_core,
+    AC_two_phase,
+    AC_three_phase_core,
+    DC_core,
+    DC_extended,
+    DC_combo_core,
+    DC_unique,
+    DC,
+    AC_BPT,
+    AC_BPT_DER,
+    AC_DER,
+    DC_BPT,
+    DC_ACDP,
+    DC_ACDP_BPT,
+    WPT,
+};
+
 enum class Status {
     Accepted,
     Failed,
