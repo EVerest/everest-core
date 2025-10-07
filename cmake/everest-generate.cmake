@@ -216,7 +216,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}"
             EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}"
             ${CARGO_EXECUTABLE} build
-            $<IF:$<STREQUAL:${CMAKE_BUILD_TYPE},Release>,--release,>
+            $<IF:$<STREQUAL:$<CONFIG>,Release>,--release,>
             # explicitly set the linker to match what we're using for C++ to avoid the following issue when cross compiling:
             # https://github.com/rust-lang/rust/issues/28924
             --config 'target.$<TARGET_PROPERTY:build_rust_modules,RUST_TARGET_TRIPLE>.linker = \"${CMAKE_CXX_COMPILER}\"'
@@ -287,12 +287,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         add_dependencies(generate_rust rust_symlink_module_${MODULE_NAME})
 
         set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
-
-        if (CMAKE_BUILD_TYPE STREQUAL "Release")
-            set(BIN_PREFIX "target/$<TARGET_PROPERTY:build_rust_modules,RUST_TARGET_TRIPLE>/release")
-        else ()
-            set(BIN_PREFIX "target/$<TARGET_PROPERTY:build_rust_modules,RUST_TARGET_TRIPLE>/debug")
-        endif ()
+        set(BIN_PREFIX "target/$<TARGET_PROPERTY:build_rust_modules,RUST_TARGET_TRIPLE>/$<IF:$<STREQUAL:$<CONFIG>,Release>,release,debug>")
 
         install(PROGRAMS ${RUST_WORKSPACE_DIR}/${BIN_PREFIX}/${MODULE_NAME}
             DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
