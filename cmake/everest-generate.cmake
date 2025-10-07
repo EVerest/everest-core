@@ -200,6 +200,12 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             ${RUST_WORKSPACE_CARGO_FILE}
     )
 
+    # Store the workspace directory as a target property so that it is accessible in different scopes
+    set_property(TARGET generate_rust
+        PROPERTY
+            RUST_WORKSPACE_DIR "${RUST_WORKSPACE_DIR}"
+    )
+
     # FIXME (aw): use generator expressions here, but this first needs to be fixed in the build.rs file ...
     add_custom_target(build_rust_modules ALL
         COMMENT
@@ -251,6 +257,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             APPEND
             PROPERTY RUST_MODULE_LIST "${MODULE_NAME}"
         )
+        get_target_property(RUST_WORKSPACE_DIR generate_rust RUST_WORKSPACE_DIR)
 
         add_custom_command(OUTPUT ${RUST_WORKSPACE_DIR}/${MODULE_NAME}
             COMMAND
