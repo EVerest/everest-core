@@ -5,7 +5,7 @@ config:
     type: boolean
     default: true
   control_service_rpc_port:
-    description: Port for the control service RPC server
+    description: Port for the control service
     type: integer
     default: 50051
   eebus_ems_ski:
@@ -27,6 +27,22 @@ config:
     type: string
     required: false
     default: eebus_grpc_api
+  vendor_code:
+    description: Vendor code for the configuration of the control service
+    type: string
+    required: true
+  device_brand:
+    description: Device brand for the configuration of the control service
+    type: string
+    required: true
+  device_model:
+    description: Device model for the configuration of the control service
+    type: string
+    required: true
+  serial_number:
+    description: Serial number for the configuration of the control service
+    type: string
+    required: true
 provides:
   main:
     description: main
@@ -40,3 +56,4 @@ metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Andreas Heinrich
+    - Martin Litre

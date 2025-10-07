@@ -8,7 +8,7 @@
 
 // module internal
 #include "EEBUS.hpp"
-#include <helper.hpp>
+#include "helper.hpp"
 
 namespace module {
 
@@ -27,8 +27,8 @@ void UseCaseEventReader::OnReadDone(bool ok) {
         this->handle_use_case_event(this->use_case_event);
         this->StartRead(&this->use_case_event);
     } else {
-        EVLOG_error << "Could not read use case event" << std::endl;
-        EVLOG_error << "Stop reading use case events" << std::endl;
+        EVLOG_error << "Could not read use case event";
+        EVLOG_error << "Stop reading use case events";
     }
 }
 
@@ -51,9 +51,9 @@ void UseCaseEventReader::callback_write_approval_required() {
     cs_lpc::CallPendingConsumptionLimit(this->cs_lpc_stub, request, &response);
 
     auto pending_writes = response.load_limits();
-    for (auto entry : pending_writes) {
+    for (const auto& entry : pending_writes) {
         uint64_t msg_counter = entry.first;
-        common_types::LoadLimit& load_limit = entry.second;
+        // TODO(mlitre): Check why the limit is not applied
 
         cs_lpc::ApproveOrDenyConsumptionLimitRequest request_02 =
             cs_lpc::CreateApproveOrDenyConsumptionLimitRequest(msg_counter, true, "");
@@ -67,7 +67,7 @@ void UseCaseEventReader::callback_data_update_limit() {
     cs_lpc::ConsumptionLimitResponse response;
     cs_lpc::CallConsumptionLimit(this->cs_lpc_stub, request, &response);
     common_types::LoadLimit load_limit = response.load_limit();
-    EVLOG_debug << "load limit:" << std::endl << load_limit.DebugString();
+    EVLOG_debug << "load limit:\n" << load_limit.DebugString();
 
     types::energy::ExternalLimits limits;
     limits = translate_to_external_limits(load_limit);
@@ -85,19 +85,15 @@ void UseCaseEventReader::handle_use_case_event(control_service::SubscribeUseCase
 
     std::string event = res.use_case_event().event();
     if (event == "DataUpdateHeartbeat") {
-        EVLOG_debug << "ignore hearbeat" << std::endl;
-        return;
+        EVLOG_debug << "ignore hearbeat";
     } else if (event == "UseCaseSupportUpdate") {
-        EVLOG_debug << "ignore use case support update" << std::endl;
-        return;
+        EVLOG_debug << "ignore use case support update";
     } else if (event == "WriteApprovalRequired") {
         this->callback_write_approval_required();
-        return;
     } else if (event == "DataUpdateLimit") {
         this->callback_data_update_limit();
     } else {
-        EVLOG_error << "Oh never heard about: " << event << std::endl;
-        return;
+        EVLOG_error << "Oh never heard about: " << event;
     }
 }
 

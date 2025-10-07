@@ -18,7 +18,11 @@ public:
     std::filesystem::path get_certificate_path() const;
     std::filesystem::path get_private_key_path() const;
     std::filesystem::path get_eebus_grpc_api_binary_path() const;
-    std::string get_control_service_rpc_endpoint() const;
+    int get_control_service_port() const;
+    std::string get_vendor_code() const;
+    std::string get_device_brand() const;
+    std::string get_device_model() const;
+    std::string get_serial_number() const;
 
 private:
     bool validate_control_service_rpc_port() const;
@@ -27,6 +31,11 @@ private:
     bool validate_private_key_path();
     bool validate_eebus_grpc_api_binary_path();
     bool validate_manage_eebus_grpc_api_binary() const;
+    bool validate_rpc_control_service_port() const;
+    bool validate_vendor_code() const;
+    bool validate_device_brand() const;
+    bool validate_device_model() const;
+    bool validate_serial_number() const;
 
     const Conf& config;
 
@@ -36,7 +45,7 @@ private:
     std::filesystem::path certificate_path;
     std::filesystem::path private_key_path;
     std::filesystem::path eebus_grpc_api_binary_path;
-    std::string control_service_rpc_endpoint;
+    int control_service_rpc_endpoint;
     bool manage_eebus_grpc_api_binary;
 };
 

@@ -40,6 +40,10 @@ struct Conf {
     std::string certificate_path;
     std::string private_key_path;
     std::string eebus_grpc_api_binary_path;
+    std::string vendor_code;
+    std::string device_brand;
+    std::string device_model;
+    std::string serial_number;
 };
 
 class EEBUS : public Everest::ModuleBase {
