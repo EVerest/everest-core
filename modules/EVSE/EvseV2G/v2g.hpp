@@ -45,12 +45,14 @@
 
 #define ISO_15118_2013_MSG_DEF "urn:iso:15118:2:2013:MsgDef"
 #define ISO_15118_2013_MAJOR   2
+#define ISO_15118_2013_MINOR   0
 
 #define ISO_15118_2010_MSG_DEF "urn:iso:15118:2:2010:MsgDef"
 #define ISO_15118_2010_MAJOR   1
 
 #define DIN_70121_MSG_DEF "urn:din:70121:2012:MsgDef"
 #define DIN_70121_MAJOR   2
+#define DIN_70121_MINOR   0
 
 #define EVSE_LEAF_KEY_FILE_NAME "CPO_EVSE_LEAF.key"
 #define EVSE_PROV_KEY_FILE_NAME "PROV_LEAF.key"

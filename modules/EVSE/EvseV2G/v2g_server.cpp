@@ -262,7 +262,9 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
             (strcmp(proto_ns, DIN_70121_MSG_DEF) == 0) && (app_proto->VersionNumberMajor == DIN_70121_MAJOR) &&
             (ev_app_priority >= app_proto->Priority)) {
             conn->handshake_resp.supportedAppProtocolRes.ResponseCode =
-                appHand_responseCodeType_OK_SuccessfulNegotiation;
+                (app_proto->VersionNumberMinor == DIN_70121_MINOR)
+                    ? appHand_responseCodeType_OK_SuccessfulNegotiation
+                    : appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation;
             ev_app_priority = app_proto->Priority;
             conn->handshake_resp.supportedAppProtocolRes.SchemaID = app_proto->SchemaID;
             conn->ctx->selected_protocol = V2G_PROTO_DIN70121;
@@ -272,7 +274,9 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
                    (ev_app_priority >= app_proto->Priority)) {
 
             conn->handshake_resp.supportedAppProtocolRes.ResponseCode =
-                appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation;
+                (app_proto->VersionNumberMinor == ISO_15118_2013_MINOR)
+                    ? appHand_responseCodeType_OK_SuccessfulNegotiation
+                    : appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation;
             ev_app_priority = app_proto->Priority;
             conn->handshake_resp.supportedAppProtocolRes.SchemaID = app_proto->SchemaID;
             conn->ctx->selected_protocol = V2G_PROTO_ISO15118_2013;
