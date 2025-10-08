@@ -1055,10 +1055,10 @@ impl generated::PowermeterServiceSubscriber for IskraMeter {
         let lock = self
             .state_machine
             .lock()
-            .map_err(|_| ::everestrs::Error::InvalidArgument("Internal error"))?;
+            .map_err(|_| ::everestrs::Error::HandlerException("Internal error".to_string()))?;
 
         let StateMachine::ReadyState(ready_state) = &*lock else {
-            return Err(::everestrs::Error::InvalidArgument("Not initialized"));
+            return Err(::everestrs::Error::HandlerException("Not initialized".to_string()));
         };
 
         let res = ready_state.start_transaction(value);
@@ -1080,10 +1080,10 @@ impl generated::PowermeterServiceSubscriber for IskraMeter {
         let lock = self
             .state_machine
             .lock()
-            .map_err(|_| ::everestrs::Error::InvalidArgument("Internal error"))?;
+            .map_err(|_| ::everestrs::Error::HandlerException("Internal error".to_string()))?;
 
         let StateMachine::ReadyState(ready_state) = &*lock else {
-            return Err(::everestrs::Error::InvalidArgument("Not initialized"));
+            return Err(::everestrs::Error::HandlerException("Not initialized".to_string()));
         };
 
         let res = ready_state.stop_transaction();
