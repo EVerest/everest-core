@@ -24,6 +24,7 @@ void PacketSniffer::init() {
     if (pcap_datalink(p_handle) != DLT_EN10MB) {
         EVLOG_error << fmt::format("Device {} doesn't provide Ethernet headers - not supported. Sniffing disabled.",
                                    config.device);
+        pcap_close(p_handle);
         return;
     }
 
