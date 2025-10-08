@@ -56,11 +56,11 @@ constexpr uint8_t GROUP_MASK = 0x07;    // 3-bit mask for group number
 constexpr uint8_t ADDRESS_MASK = 0xFF;  // 8-bit mask for addresses
 
 // Bit Positions for CAN ID encoding (Winline format)
-constexpr uint8_t SRCADDR_SHIFT = 3; // Bits 10-3: Source address (8 bits)
+constexpr uint8_t SRCADDR_SHIFT = 3;  // Bits 10-3: Source address (8 bits)
 constexpr uint8_t DSTADDR_SHIFT = 11; // Bits 18-11: Destination address (8 bits)
-constexpr uint8_t GROUP_SHIFT = 0;  // Bits 2-0: Group number (3 bits)
-constexpr uint8_t PTP_SHIFT = 19;    // Bit 19: Point-to-point flag
-constexpr uint8_t PROTNO_SHIFT = 20; // Bits 28-20: Protocol number
+constexpr uint8_t GROUP_SHIFT = 0;    // Bits 2-0: Group number (3 bits)
+constexpr uint8_t PTP_SHIFT = 19;     // Bit 19: Point-to-point flag
+constexpr uint8_t PROTNO_SHIFT = 20;  // Bits 28-20: Protocol number
 
 // Winline Register Definitions
 namespace Registers {

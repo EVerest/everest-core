@@ -62,10 +62,9 @@ void power_supply_DCImpl::init() {
         new_caps.min_export_voltage_V = mod->config.min_export_voltage_V;
         new_caps.max_export_voltage_V = mod->config.max_export_voltage_V;
         new_caps.min_export_current_A = mod->config.min_export_current_A;
-        new_caps.max_export_current_A = 0.0;  // Will be updated with device rated values
+        new_caps.max_export_current_A = 0.0; // Will be updated with device rated values
         new_caps.current_regulation_tolerance_A = mod->config.current_regulation_tolerance_A;
         new_caps.peak_current_ripple_A = mod->config.peak_current_ripple_A;
-
 
         // Update with device rated values (current and power from protocol)
         for (const auto& telemetry : telemetries) {
@@ -189,7 +188,8 @@ void power_supply_DCImpl::handle_setExportVoltageCurrent(double& voltage, double
         }
     }
 
-    EVLOG_info << "Winline: request setting voltage/current: " << voltage << "V / " << current << "A (power: " << voltage * current << "W)";
+    EVLOG_info << "Winline: request setting voltage/current: " << voltage << "V / " << current
+               << "A (power: " << voltage * current << "W)";
     exportVoltage.store(voltage);
     exportCurrentLimit.store(current);
 
