@@ -68,9 +68,17 @@ void PacketSniffer::capture(const std::string& logpath, const std::string& sessi
     }
 
     while (!capturing_stopped) {
-        if (pcap_dispatch(p_handle, ALL_PACKETS_PROCESSED, &pcap_dump, (u_char*)pdumpfile) <= PCAP_ERROR) {
-            EVLOG_error << fmt::format("Error reading packets from interface: {}, error: {}", config.device,
-                                       pcap_geterr(p_handle));
+        const int ret =
+            pcap_dispatch(p_handle, ALL_PACKETS_PROCESSED, &pcap_dump, reinterpret_cast<u_char*>(pdumpfile));
+        if (ret <= PCAP_ERROR) {
+            const std::string base_msg = fmt::format("Error reading packets from interface \"{}\"", config.device);
+            if (ret == PCAP_ERROR) {
+                EVLOG_error << fmt::format("{}, error: {}", base_msg, pcap_geterr(p_handle));
+            } else if (ret == PCAP_ERROR_BREAK) {
+                EVLOG_warning << fmt::format("{}, interrupted but no packets received", base_msg);
+            } else {
+                EVLOG_error << fmt::format("{}, unexpected error: {}", base_msg, ret);
+            }
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_FOR_MS));
