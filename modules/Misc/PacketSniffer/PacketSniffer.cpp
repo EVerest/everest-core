@@ -58,7 +58,7 @@ void PacketSniffer::ready() {
 
 void PacketSniffer::capture(const std::string& logpath, const std::string& session_id) {
     already_started = true;
-    const std::string fn = fmt::format("{}/ethernet-traffic.dump", logpath);
+    const std::string fn = fmt::format("{}/ethernet-traffic.pcap", logpath);
 
     EVLOG_info << fmt::format("Starting capturing to {}", fn);
 
