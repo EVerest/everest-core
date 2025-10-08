@@ -559,8 +559,7 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     srand((unsigned int)time(NULL));
     if (conn->ctx->evse_v2g_data.session_id == (uint64_t)0 ||
         conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id) {
-        conn->ctx->evse_v2g_data.session_id =
-            ((uint64_t)rand() << 48) | ((uint64_t)rand() << 32) | ((uint64_t)rand() << 16) | (uint64_t)rand();
+        generate_random_data(&conn->ctx->evse_v2g_data.session_id, 4);
         dlog(
             DLOG_LEVEL_INFO,
             "No session_id found or not equal to the id from the preceding v2g session. Generating random session id.");
