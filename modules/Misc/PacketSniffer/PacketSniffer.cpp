@@ -28,6 +28,8 @@ void PacketSniffer::init() {
         return;
     }
 
+    EVLOG_info << fmt::format("Sniffing on device \"{}\"", config.device);
+
     r_evse_manager->subscribe_session_event([this](types::evse_manager::SessionEvent session_event) {
         if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
             if (!already_started) {
@@ -54,9 +56,9 @@ void PacketSniffer::ready() {
 
 void PacketSniffer::capture(const std::string& logpath, const std::string& session_id) {
     already_started = true;
-    EVLOG_info << fmt::format("Start capturing");
-
     const std::string fn = fmt::format("{}/ethernet-traffic.dump", logpath);
+
+    EVLOG_info << fmt::format("Starting capturing to {}", fn);
 
     if ((pdumpfile = pcap_dump_open(p_handle, fn.c_str())) == nullptr) {
         EVLOG_error << fmt::format("Error opening savefile {} for writing: {}", fn, pcap_geterr(p_handle));
@@ -73,7 +75,7 @@ void PacketSniffer::capture(const std::string& logpath, const std::string& sessi
     }
 
     pcap_dump_close(pdumpfile);
-    EVLOG_info << fmt::format("Capturing stopped.");
+    EVLOG_info << fmt::format("Stopped capturing to {}", fn);
     already_started = false;
 }
 
