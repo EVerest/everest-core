@@ -16,13 +16,15 @@ void PacketSniffer::init() {
     invoke_init(*p_main);
 
     p_handle = pcap_open_live(config.device.c_str(), BUFFERSIZE, PROMISC_MODE, PACKET_BUFFER_TIMEOUT_MS, errbuf);
+    std::string errb{errbuf};
     if (p_handle == nullptr) {
-        EVLOG_error << fmt::format("Could not open device {}. Sniffing disabled.", config.device);
+        EVLOG_error << fmt::format("Could not open device \"{}\", Sniffing disabled.{}", config.device,
+                                   errb.size() > 0 ? (std::string(" Error: ") + errb) : "");
         return;
     }
 
     if (pcap_datalink(p_handle) != DLT_EN10MB) {
-        EVLOG_error << fmt::format("Device {} doesn't provide Ethernet headers - not supported. Sniffing disabled.",
+        EVLOG_error << fmt::format("Device \"{}\" doesn't provide Ethernet headers - not supported. Sniffing disabled.",
                                    config.device);
         pcap_close(p_handle);
         return;
