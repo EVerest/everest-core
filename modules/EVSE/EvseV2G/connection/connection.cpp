@@ -432,6 +432,8 @@ static void* connection_handle_tcp(void* data) {
     }
     dlog(DLOG_LEVEL_INFO, "TCP connection closed gracefully");
 
+    conn->ctx->connection_initiated = false;
+
     if (rv != ERROR_SESSION_ALREADY_STARTED) {
         /* cleanup and notify lower layers */
         connection_teardown(conn);
@@ -493,6 +495,16 @@ static void* connection_server(void* data) {
 
         // store the port to create a udp socket
         conn->ctx->udp_port = ntohs(addr.sin6_port);
+
+        if (ctx->connection_initiated) {
+            dlog(DLOG_LEVEL_ERROR, "Incoming connection on %s, but there is already an active connection.",
+                 ctx->if_name);
+            connection_teardown(conn);
+            free(conn);
+            conn = NULL;
+            continue;
+        }
+        ctx->connection_initiated = true;
 
         if (pthread_create(&conn->thread_id, &attr, connection_handle_tcp, conn) != 0) {
             dlog(DLOG_LEVEL_ERROR, "pthread_create() failed: %s", strerror(errno));
