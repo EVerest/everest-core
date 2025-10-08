@@ -219,8 +219,8 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
             can_packet_acdc::ReadRatedOutputCurrent current_reading(payload);
             auto& telemetry = telemetries[source_address];
             //
-            // Strangely the rated output current is not the max output current, it is the basis calculation for the max output current
-            // The max output current is the rated output current * module_current_limit_point
+            // Strangely the rated output current is not the max output current, it is the basis calculation for the max
+            // output current The max output current is the rated output current * module_current_limit_point
             //
             telemetry.dc_max_output_current = current_reading.current * module_current_limit_point;
             telemetry.last_update = std::chrono::steady_clock::now();
@@ -280,8 +280,8 @@ void WinlineCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& p
                 // Validate that the discovered module belongs to our target group
                 if (group_info.group_number == group_address) {
                     // Add to configured_module_addresses (persistent discovery list)
-                    if (std::find(configured_module_addresses.begin(), configured_module_addresses.end(), source_address) ==
-                        configured_module_addresses.end()) {
+                    if (std::find(configured_module_addresses.begin(), configured_module_addresses.end(),
+                                  source_address) == configured_module_addresses.end()) {
                         configured_module_addresses.push_back(source_address);
                         EVLOG_info << "Winline: Added discovered module 0x" << std::hex
                                    << static_cast<int>(source_address) << " to configured list (group "
@@ -593,7 +593,6 @@ bool WinlineCanDevice::set_voltage_current(float voltage, float current) {
 
 // Enhanced Winline group operations
 
-
 bool WinlineCanDevice::discover_group_modules() {
     EVLOG_info << "Winline: discover_group_modules() - querying group " << group_address;
 
@@ -690,8 +689,8 @@ bool WinlineCanDevice::set_current_limit_point_all_modules() {
     // Send to each configured module individually (unified approach for both modes)
     for (const auto& addr : configured_module_addresses) {
         EVLOG_info << "Winline: Setting current limit point on module 0x" << std::hex << static_cast<int>(addr);
-        bool result =
-            send_set_register_integer(addr, WinlineProtocol::Registers::SET_CURRENT_LIMIT_POINT, module_current_limit_point, false);
+        bool result = send_set_register_integer(addr, WinlineProtocol::Registers::SET_CURRENT_LIMIT_POINT,
+                                                module_current_limit_point, false);
         if (!result) {
             EVLOG_warning << "Winline: Failed to send current limit point setting to module 0x" << std::hex
                           << static_cast<int>(addr);
@@ -703,7 +702,8 @@ bool WinlineCanDevice::set_current_limit_point_all_modules() {
     }
 
     if (all_success) {
-        EVLOG_info << "Winline: Current limit point setting " << module_current_limit_point << " sent to all modules successfully";
+        EVLOG_info << "Winline: Current limit point setting " << module_current_limit_point
+                   << " sent to all modules successfully";
     } else {
         EVLOG_warning << "Winline: Some current limit point setting commands failed";
     }
@@ -1060,8 +1060,7 @@ bool WinlineCanDevice::handle_power_transition(bool target_state) {
 
     // Optimize: Use group operations when appropriate
     bool result;
-    EVLOG_info << "Winline: Using individual power transition for " << active_module_addresses.size()
-                << " modules";
+    EVLOG_info << "Winline: Using individual power transition for " << active_module_addresses.size() << " modules";
     result = switch_on_off(target_state);
 
     if (result) {
