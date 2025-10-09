@@ -1,0 +1,144 @@
+charge_bridge:
+  name: cb_1
+  ip: 192.168.188.65
+  port: 6000
+  fw_file: ./charge-bridge-fw_complete.cbfw
+  fw_update_on_start: true
+  mdns_name: "pionix_cb"
+
+heartbeat:
+  interval_s: 2
+
+safety:
+  pp_mode: "disabled"
+  cp_avg_ms: 10
+  relay_1:
+    relay_mode: "PowerRelay"
+    feedback_enabled: false
+    feedback_delay_ms: 10
+    feedback_inverted: false
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+  relay_2:
+    relay_mode: "PowerRelay"
+    feedback_enabled: false
+    feedback_delay_ms: 10
+    feedback_inverted: false
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+  relay_3:
+    relay_mode: "PowerRelay"
+    feedback_enabled: false
+    feedback_delay_ms: 10
+    feedback_inverted: false
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+
+can_0:
+  enable: true
+  port: 6003
+  local: "cb_can0"
+  baudrate: 250000
+
+serial_1:
+  enable: true
+  port: 6004
+  local: "/dev/cb_serial_1"
+  baudrate: 19200
+  stopbits: OneStopBit
+  parity: None
+
+serial_2:
+  enable: false
+  port: 6005
+  local: "/dev/cb_serial_2"
+  baudrate: 19200
+  stopbits: OneStopBit
+  parity: None
+
+plc:
+  enable: false
+  port: 6002
+  tap: "cb_tap0"
+  ip: 172.25.6.1
+  netmask: 255.255.255.0
+  mtu: 1518
+  powersaving_mode: 1
+
+evse_bsp:
+  enable: true
+  port: 6001
+  module_id: "bsp_1"
+  mqtt_remote: "localhost"
+  mqtt_port: 1883
+  mqtt_ping_interval_ms: 1000
+  capabilities:
+    max_current_A_import: 16
+    min_current_A_import: 6
+    max_phase_count_import: 3
+    min_phase_count_import: 3
+    max_current_A_export: 16
+    min_current_A_export: 6
+    max_phase_count_export: 3
+    min_phase_count_export: 3
+    supports_changing_phases_during_charging: false
+    connector_type: "IEC62196Type2Cable"
+
+gpio:
+  enable: false
+  interval_s: 4
+  mqtt_remote: "localhost"
+  mqtt_port: 1883
+  mqtt_ping_interval_ms: 1000
+  gpio_0:
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_1:
+    mode: "Input"
+    pulls: "NoPull"
+    config: 32767
+  gpio_2:
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_3:
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_4:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_5:
+    mode: "Output"
+    pulls: "NoPull"
+    mdns: false
+    config: 32767
+  gpio_6:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_7:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_8:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_9:
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
