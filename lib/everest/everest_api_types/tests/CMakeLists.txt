@@ -2,13 +2,13 @@ set(TEST_TARGET_NAME ${PROJECT_NAME}_API_serialize_tests)
 
 add_executable(${TEST_TARGET_NAME})
 
+####################### Testing types/*.yaml file hashes against expected values
 set(EXPECTED_TYPE_HASHES_CSV "${CMAKE_CURRENT_SOURCE_DIR}/expected_types_file_hashes.csv")
-set(TYPES_FILES_DIR "${PROJECT_SOURCE_DIR}/types")
 set(ACTUAL_TYPE_HASHES_CSV ${CMAKE_BINARY_DIR}/generated/lib/everest/everest_api_types/tests/actual_types_file_hashes.csv)
-file(GLOB ALL_TYPE_FILES "${TYPES_FILES_DIR}/*")
+file(GLOB ALL_TYPE_FILES "${PROJECT_SOURCE_DIR}/types/*")
 
-set(GENERATE_ACTUAL_HASHES_CMD ${CMAKE_CURRENT_SOURCE_DIR}/manual_tests/source_file_hash_check/create_file_hashes.cmake)
-set(VERIFY_HASHES_CMD ${CMAKE_CURRENT_SOURCE_DIR}/manual_tests/source_file_hash_check/verify_file_hashes.cmake)
+set(GENERATE_ACTUAL_TYPE_HASHES_CMD ${CMAKE_CURRENT_SOURCE_DIR}/manual_tests/source_file_hash_check/create_file_hashes.cmake)
+set(VERIFY_TYPE_HASHES_CMD ${CMAKE_CURRENT_SOURCE_DIR}/manual_tests/source_file_hash_check/verify_file_hashes.cmake)
 
 add_custom_command(
   OUTPUT ${ACTUAL_TYPE_HASHES_CSV}
@@ -16,13 +16,13 @@ add_custom_command(
         -DEXPECTED_CSV=${EXPECTED_TYPE_HASHES_CSV}
         -DPROJECT_SRC_FOLDER=${PROJECT_SOURCE_DIR}
         -DACTUAL_CSV=${ACTUAL_TYPE_HASHES_CSV}
-        -P ${GENERATE_ACTUAL_HASHES_CMD}
+        -P ${GENERATE_ACTUAL_TYPE_HASHES_CMD}
   # On mismatch: Print a warning during configuration/build time
   COMMAND ${CMAKE_COMMAND}
         -DEXPECTED_CSV=${EXPECTED_TYPE_HASHES_CSV}
         -DACTUAL_CSV=${ACTUAL_TYPE_HASHES_CSV}
-        -P ${VERIFY_HASHES_CMD}
-  DEPENDS ${GENERATE_ACTUAL_HASHES_CMD} ${VERIFY_HASHES_CMD} ${EXPECTED_TYPE_HASHES_CSV} ${ALL_TYPE_FILES}
+        -P ${VERIFY_TYPE_HASHES_CMD}
+  DEPENDS ${GENERATE_ACTUAL_TYPE_HASHES_CMD} ${VERIFY_TYPE_HASHES_CMD} ${EXPECTED_TYPE_HASHES_CSV} ${ALL_TYPE_FILES}
   COMMENT "Generating ${ACTUAL_TYPE_HASHES_CSV} from source files..."
 )
 
@@ -30,10 +30,47 @@ add_custom_target(generate_actual_hash_csv ALL
     DEPENDS ${ACTUAL_TYPE_HASHES_CSV}
 )
 
+####################### Testing interfaces/*.yaml file hashes against expected values
+set(EXPECTED_IFC_HASHES_CSV "${CMAKE_CURRENT_SOURCE_DIR}/expected_interfaces_file_hashes.csv")
+set(ACTUAL_IFC_HASHES_CSV ${CMAKE_BINARY_DIR}/generated/lib/everest/everest_api_types/tests/actual_interfaces_file_hashes.csv)
+file(GLOB ALL_IFC_FILES "${PROJECT_SOURCE_DIR}/interfaces/*")
+
+set(GENERATE_ACTUAL_IFC_HASHES_CMD ${CMAKE_CURRENT_SOURCE_DIR}/manual_tests/source_file_hash_check/create_file_hashes.cmake)
+set(VERIFY_IFC_HASHES_CMD ${CMAKE_CURRENT_SOURCE_DIR}/manual_tests/source_file_hash_check/verify_file_hashes.cmake)
+
+add_custom_command(
+  OUTPUT ${ACTUAL_IFC_HASHES_CSV}
+  COMMAND ${CMAKE_COMMAND}
+        -DEXPECTED_CSV=${EXPECTED_IFC_HASHES_CSV}
+        -DPROJECT_SRC_FOLDER=${PROJECT_SOURCE_DIR}
+        -DACTUAL_CSV=${ACTUAL_IFC_HASHES_CSV}
+        -P ${GENERATE_ACTUAL_IFC_HASHES_CMD}
+  # On mismatch: Print a warning during configuration/build time
+  COMMAND ${CMAKE_COMMAND}
+        -DEXPECTED_CSV=${EXPECTED_IFC_HASHES_CSV}
+        -DACTUAL_CSV=${ACTUAL_IFC_HASHES_CSV}
+        -P ${VERIFY_IFC_HASHES_CMD}
+  DEPENDS ${GENERATE_ACTUAL_IFC_HASHES_CMD} ${VERIFY_IFC_HASHES_CMD} ${EXPECTED_IFC_HASHES_CSV} ${ALL_IFC_FILES}
+  COMMENT "Generating ${ACTUAL_IFC_HASHES_CSV} from source files..."
+)
+
+add_custom_target(generate_actual_type_hash_csv ALL
+    DEPENDS ${ACTUAL_TYPE_HASHES_CSV}
+)
+
+add_custom_target(generate_actual_ifc_hash_csv ALL
+    DEPENDS ${ACTUAL_IFC_HASHES_CSV}
+)
+
+# configure the gtest with the filenames containing the file hashess
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE
   EXPECTED_TYPE_FILE_HASHES_CSV_PATH="${EXPECTED_TYPE_HASHES_CSV}"
   ACTUAL_TYPE_FILE_HASHES_CSV_PATH="${ACTUAL_TYPE_HASHES_CSV}"
+  EXPECTED_IFC_FILE_HASHES_CSV_PATH="${EXPECTED_IFC_HASHES_CSV}"
+  ACTUAL_IFC_FILE_HASHES_CSV_PATH="${ACTUAL_IFC_HASHES_CSV}"
 )
+
+####################### GTest and automatic (de-)serialization tests
 
 set(INCLUDE_DIR
   "${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/include"
@@ -61,6 +98,9 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
 file(GLOB API_FILES ${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/include/everest_api_types/*/API.hpp)
+file(GLOB TEST_GENERATOR_PY_FILES ${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/tests/test_file_autogenerator/*.py)
+set (TEST_DISABLE_FILE ${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/tests/test_file_autogenerator/disable.csv)
+set (SERIALIZATION_TEST_HELPERS_HPP ${PROJECT_SOURCE_DIR}/lib/everest/everest_api_types/tests/SerializationTestHelpers.hpp)
 
 set(GENERATED_TESTS_LOCATION ${CMAKE_BINARY_DIR}/generated/lib/everest/everest_api_types/tests/)
 
@@ -79,7 +119,7 @@ set(
 add_custom_command(OUTPUT ${GENERATED_TESTS_LOCATION}
     COMMAND
     ${GENERATE_COMMAND}
-    DEPENDS ${API_FILES}
+    DEPENDS ${API_FILES} ${TEST_GENERATOR_PY_FILES} ${TEST_DISABLE_FILE} ${SERIALIZATION_TEST_HELPERS_HPP}
 )
 
 add_custom_target(generate_new_tests_on_file_change_only ALL   DEPENDS ${GENERATED_TESTS_LOCATION})

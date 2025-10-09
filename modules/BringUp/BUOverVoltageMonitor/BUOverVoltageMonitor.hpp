@@ -55,6 +55,7 @@ private:
     std::string error_limit{"800.0"};
     std::string emergency_limit{"1000.0"};
     std::mutex data_mutex;
+    std::string voltage_measurement_V{"0.0V"};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
