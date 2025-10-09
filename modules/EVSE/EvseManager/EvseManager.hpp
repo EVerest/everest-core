@@ -249,6 +249,25 @@ public:
 
     void update_powersupply_capabilities(types::power_supply_DC::Capabilities caps) {
         std::scoped_lock lock(powersupply_capabilities_mutex);
+
+        if (caps != powersupply_capabilities) {
+            types::iso15118::Capabilities capabilities;
+            capabilities.max_charge_current = caps.max_export_current_A;
+            capabilities.min_charge_current = caps.min_export_current_A;
+            capabilities.max_charge_power = caps.max_export_power_W;
+            capabilities.min_charge_power = caps.min_export_current_A * caps.min_export_voltage_V;
+            capabilities.max_voltage = caps.max_export_voltage_V;
+            capabilities.min_voltage = caps.min_export_voltage_V;
+            capabilities.max_discharge_current = caps.max_import_current_A;
+            capabilities.min_discharge_current = caps.min_import_current_A;
+            capabilities.max_discharge_power = caps.max_import_power_W;
+            capabilities.min_discharge_power =
+                (caps.min_import_voltage_V.has_value() and caps.min_import_current_A.has_value())
+                    ? std::make_optional(caps.min_import_voltage_V.value() * caps.min_import_current_A.value())
+                    : std::nullopt;
+            r_hlc[0]->call_set_powersupply_capabilities(capabilities);
+        }
+
         powersupply_capabilities = caps;
 
         // Inform HLC layer about update of physical values

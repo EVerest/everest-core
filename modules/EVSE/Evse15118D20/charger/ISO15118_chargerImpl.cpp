@@ -1170,6 +1170,36 @@ void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_confi
     }
 }
 
+void ISO15118_chargerImpl::handle_set_powersupply_capabilities(types::iso15118::Capabilities& capabilities) {
+    std::scoped_lock lock(GEL);
+
+    setup_config.powersupply_limits.charge_limits.current.max = dt::from_float(capabilities.max_charge_current);
+    setup_config.powersupply_limits.charge_limits.current.min = dt::from_float(capabilities.min_charge_current);
+    setup_config.powersupply_limits.charge_limits.power.max = dt::from_float(capabilities.max_charge_power);
+    setup_config.powersupply_limits.charge_limits.power.min = dt::from_float(capabilities.min_charge_power);
+    setup_config.powersupply_limits.voltage.max = dt::from_float(capabilities.max_voltage);
+    setup_config.powersupply_limits.voltage.min = dt::from_float(capabilities.min_voltage);
+
+    // Discharge Limits
+    if (capabilities.max_discharge_power.has_value() or capabilities.min_discharge_power.has_value() or
+        capabilities.max_discharge_current.has_value() or capabilities.min_discharge_current.has_value()) {
+        auto& discharge_power = (setup_config.powersupply_limits.discharge_limits.has_value())
+                                    ? setup_config.powersupply_limits.discharge_limits.value()
+                                    : setup_config.powersupply_limits.discharge_limits.emplace();
+        discharge_power.power.max = dt::from_float(capabilities.max_discharge_power.value_or(0.0));
+        discharge_power.power.min = dt::from_float(capabilities.min_discharge_power.value_or(0.0));
+        discharge_power.current.max = dt::from_float(capabilities.max_discharge_current.value_or(0.0));
+        discharge_power.current.min = dt::from_float(capabilities.min_discharge_current.value_or(0.0));
+    }
+
+    if (controller) {
+        controller->update_powersupply_limits(setup_config.powersupply_limits);
+    }
+
+    setup_steps_done.set(to_underlying_value(SetupStep::MAX_LIMITS));
+    setup_steps_done.set(to_underlying_value(SetupStep::MIN_LIMITS));
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     [[maybe_unused]] types::authorization::CertificateStatus& certificate_status) {
@@ -1389,7 +1419,9 @@ void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEv
 
     if (maximum_limits.evse_maximum_discharge_current_limit.has_value() or
         maximum_limits.evse_maximum_discharge_power_limit.has_value()) {
-        auto& discharge_limits = setup_config.dc_limits.discharge_limits.emplace();
+        auto& discharge_limits = (setup_config.dc_limits.discharge_limits.has_value())
+                                     ? setup_config.dc_limits.discharge_limits.value()
+                                     : setup_config.dc_limits.discharge_limits.emplace();
 
         if (maximum_limits.evse_maximum_discharge_current_limit.has_value()) {
             discharge_limits.current.max = dt::from_float(*maximum_limits.evse_maximum_discharge_current_limit);
@@ -1403,8 +1435,6 @@ void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEv
     if (controller) {
         controller->update_dc_limits(setup_config.dc_limits);
     }
-
-    setup_steps_done.set(to_underlying_value(SetupStep::MAX_LIMITS));
 }
 
 void ISO15118_chargerImpl::handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) {
@@ -1417,7 +1447,10 @@ void ISO15118_chargerImpl::handle_update_dc_minimum_limits(types::iso15118::DcEv
 
     if (minimum_limits.evse_minimum_discharge_current_limit.has_value() or
         minimum_limits.evse_minimum_discharge_power_limit.has_value()) {
-        auto& discharge_limits = setup_config.dc_limits.discharge_limits.emplace();
+
+        auto& discharge_limits = (setup_config.dc_limits.discharge_limits.has_value())
+                                     ? setup_config.dc_limits.discharge_limits.value()
+                                     : setup_config.dc_limits.discharge_limits.emplace();
 
         if (minimum_limits.evse_minimum_discharge_current_limit.has_value()) {
             discharge_limits.current.min = dt::from_float(*minimum_limits.evse_minimum_discharge_current_limit);
@@ -1431,8 +1464,6 @@ void ISO15118_chargerImpl::handle_update_dc_minimum_limits(types::iso15118::DcEv
     if (controller) {
         controller->update_dc_limits(setup_config.dc_limits);
     }
-
-    setup_steps_done.set(to_underlying_value(SetupStep::MIN_LIMITS));
 }
 
 void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118::IsolationStatus& isolation_status) {

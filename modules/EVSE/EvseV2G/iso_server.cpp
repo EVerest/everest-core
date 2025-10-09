@@ -1402,11 +1402,11 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         res->DC_EVSEChargeParameter.EVSEEnergyToBeDelivered = conn->ctx->evse_v2g_data.evse_energy_to_be_delivered;
         res->DC_EVSEChargeParameter.EVSEEnergyToBeDelivered_isUsed =
             conn->ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used;
-        res->DC_EVSEChargeParameter.EVSEMaximumCurrentLimit = conn->ctx->evse_v2g_data.evse_maximum_current_limit;
-        res->DC_EVSEChargeParameter.EVSEMaximumPowerLimit = conn->ctx->evse_v2g_data.evse_maximum_power_limit;
-        res->DC_EVSEChargeParameter.EVSEMaximumVoltageLimit = conn->ctx->evse_v2g_data.evse_maximum_voltage_limit;
-        res->DC_EVSEChargeParameter.EVSEMinimumCurrentLimit = conn->ctx->evse_v2g_data.evse_minimum_current_limit;
-        res->DC_EVSEChargeParameter.EVSEMinimumVoltageLimit = conn->ctx->evse_v2g_data.evse_minimum_voltage_limit;
+        res->DC_EVSEChargeParameter.EVSEMaximumCurrentLimit = conn->ctx->evse_v2g_data.power_capabilities.max_current;
+        res->DC_EVSEChargeParameter.EVSEMaximumPowerLimit = conn->ctx->evse_v2g_data.power_capabilities.max_power;
+        res->DC_EVSEChargeParameter.EVSEMaximumVoltageLimit = conn->ctx->evse_v2g_data.power_capabilities.max_voltage;
+        res->DC_EVSEChargeParameter.EVSEMinimumCurrentLimit = conn->ctx->evse_v2g_data.power_capabilities.min_current;
+        res->DC_EVSEChargeParameter.EVSEMinimumVoltageLimit = conn->ctx->evse_v2g_data.power_capabilities.min_voltage;
         res->DC_EVSEChargeParameter.EVSEPeakCurrentRipple = conn->ctx->evse_v2g_data.evse_peak_current_ripple;
 
         if ((unsigned int)1 == req->AC_EVChargeParameter_isUsed) {
