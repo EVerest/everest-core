@@ -2,6 +2,11 @@ add_library(everest_util INTERFACE)
 add_library(everest::util ALIAS everest_util)
 ev_register_library_target(everest_helpers)
 
+set_target_properties(everest_util PROPERTIES
+  VERSION 0.0.1
+)
+
+
 target_include_directories(everest_util
     INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
