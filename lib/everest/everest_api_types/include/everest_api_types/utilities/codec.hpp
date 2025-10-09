@@ -13,6 +13,7 @@ template <class T> bool deserialize(std::string const& json_data, T& obj) {
 
 template <> bool deserialize(std::string const& data, bool& obj);
 template <> bool deserialize(std::string const& data, int& obj);
+template <> bool deserialize(std::string const& data, size_t& obj);
 template <> bool deserialize(std::string const& data, double& obj);
 template <> bool deserialize(std::string const& data, float& obj);
 template <> bool deserialize(std::string const& data, std::string& obj);

@@ -358,12 +358,22 @@ ErrorCode mosquitto_cpp::tls(const ::std::string& ca_file, const ::std::string& 
 }
 
 ErrorCode mosquitto_cpp::connect(const std::string_view& host, std::uint16_t port, std::uint16_t keepalive_seconds) {
-    return connect_impl(host, port, keepalive_seconds);
+    return connect_impl("", host, port, keepalive_seconds);
 }
 
-ErrorCode mosquitto_cpp::connect_impl(const std::string_view& host, std::uint16_t port,
-                                      std::uint16_t keepalive_seconds) {
-    return convertEC(mosquitto_connect_async(client.get(), host.data(), port, keepalive_seconds));
+ErrorCode mosquitto_cpp::connect(const std::string_view& bind_address, const std::string_view& host, std::uint16_t port,
+                                 std::uint16_t keepalive_seconds) {
+    return connect_impl(bind_address, host, port, keepalive_seconds);
+}
+
+ErrorCode mosquitto_cpp::connect(const std::string_view& unix_domain_socket, std::uint16_t keepalive_seconds) {
+    return connect_impl(unix_domain_socket, "", 0, keepalive_seconds);
+}
+
+ErrorCode mosquitto_cpp::connect_impl(const std::string_view& bind_address, const std::string_view& host,
+                                      std::uint16_t port, std::uint16_t keepalive_seconds) {
+    const char* bind_to = bind_address.empty() ? nullptr : bind_address.data();
+    return convertEC(mosquitto_connect_bind_async(client.get(), host.data(), port, keepalive_seconds, bind_to));
 }
 
 ErrorCode mosquitto_cpp::reconnect() {
