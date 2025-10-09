@@ -6,8 +6,12 @@
 #pragma once
 
 #include <chrono>
+#include <everest/io/event/event_fd.hpp>
 #include <everest/io/event/fd_event_client.hpp>
 #include <everest/io/event/fd_event_register_interface.hpp>
+#include <everest/util/queue/thread_safe_queue.hpp>
+
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <set>
@@ -63,6 +67,12 @@ public:
     using event_handler_type = std::function<void(event_list const& event)>;
 
     /**
+     * @var task
+     * @brief Prototype of a callback that is added to the tasks queue
+     */
+    using task = std::function<void()>;
+
+    /**
      * @brief fd_event_event is default constructed
      */
     fd_event_handler();
@@ -90,7 +100,6 @@ public:
      * @return True on success, false otherwise
      */
     bool register_event_handler(int fd, event_handler_type const& handler, event_list const& events);
-
     /**
      * @brief Register an \ref event_fd for event handling
      * @details Reading from the event happens internally to acknowledge event handling.
@@ -210,6 +219,35 @@ public:
      */
     int get_poll_fd();
 
+    /**
+     * @brief Add a task to the task queue
+     * @details Adds a task to the task queue
+     * @param[in] item The task
+     */
+    void add_action(task&& item);
+
+    /**
+     * @brief Add a task to the task queue
+     * @details Adds a task to the task queue
+     * @param[in] item The task
+     */
+    void add_action(task const& item);
+
+    /**
+     * @brief Run the tasks in the task queue
+     */
+    void run_actions();
+
+    /**
+     * @brief Run the event loop
+     * @details This runs the two step event loop. First step is to call \ref poll, the second step is to call
+     *          \ref run_actions. This loop continues while online is 'true'. Beware, just setting online to 'false'
+     *          Does not stop the queue immediately, it just prevents an other cycle from running. For this reason
+     *          it is advisable to register an event that can manually be notified on a cancellation request.
+     * @param[in] online Description
+     */
+    void run(std::atomic_bool& online);
+
 private:
     /// Wait with timeout for any of the registered events to occur
     /**
@@ -218,6 +256,8 @@ private:
      */
     bool poll_impl(int timeout_ms);
     std::unique_ptr<EventHandlerMap> m_handlers{nullptr};
+    util::thread_safe_queue<task> task_pool;
+    event_fd m_action_event;
 };
 
 } // namespace everest::lib::io::event

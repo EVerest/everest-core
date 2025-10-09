@@ -24,7 +24,7 @@ bool udp_socket_base::open_as_client(std::string const& remote, uint16_t port) {
         auto socket = socket::open_udp_client_socket(remote, port);
         socket::set_non_blocking(socket);
         m_owned_udp_fd = std::move(socket);
-        return socket::get_pending_error(socket) == 0;
+        return socket::get_pending_error(m_owned_udp_fd) == 0;
     } catch (...) {
     }
     return false;
@@ -34,7 +34,7 @@ bool udp_socket_base::open_as_server(uint16_t port) {
     auto socket = socket::open_udp_server_socket(port);
     socket::set_non_blocking(socket);
     m_owned_udp_fd = std::move(socket);
-    return socket::get_pending_error(socket) == 0;
+    return socket::get_pending_error(m_owned_udp_fd) == 0;
 }
 
 bool udp_socket_base::is_open() {

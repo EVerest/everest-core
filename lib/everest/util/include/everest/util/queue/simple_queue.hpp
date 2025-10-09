@@ -8,7 +8,7 @@
 #include <optional>
 #include <queue>
 
-namespace everest::lib::io::queue {
+namespace everest::lib::util {
 
 /**
  * Simplified interface for a queue based
@@ -98,4 +98,4 @@ private:
     std::queue<T> m_queue;
 };
 
-} // namespace everest::lib::io::queue
+} // namespace everest::lib::util
