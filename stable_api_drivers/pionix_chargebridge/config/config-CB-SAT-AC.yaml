@@ -1,0 +1,166 @@
+charge_bridge:
+  name: cb_sat_ac
+  ip: chargebridge-44b7d0c98ace.local
+  fw_file: ./firmware/charge-bridge-fw_complete.cbfw
+  fw_update_on_start: false
+  mdns_name: ""
+
+heartbeat:
+  interval_s: 2
+
+safety:
+  pp_mode: "disabled"
+  cp_avg_ms: 10
+  inverted_emergency_input: 1
+  relay_1:
+    relay_mode: "PowerRelay"
+    # Auxilary contact is connected from the OMRON relay
+    feedback_enabled: true
+    # The Omron relay switches in less than 100ms, use 200ms here
+    feedback_delay_ms: 200
+    # Only for PCB version 1.1, set to false for PCB version 1.2 and up
+    feedback_inverted: true
+    # PWM not supported yet
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+  relay_2:
+    # Not connected on PCB
+    relay_mode: "UserRelay"
+    feedback_enabled: false
+    feedback_delay_ms: 10
+    feedback_inverted: false
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+  relay_3:
+    # Not connected on PCB
+    relay_mode: "UserRelay"
+    feedback_enabled: false
+    feedback_delay_ms: 10
+    feedback_inverted: false
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+
+can_0:
+  enable: true
+  local: "cb_can"
+  baudrate: 250000
+
+serial_1:
+  enable: true
+  local: "/dev/cb_uart"
+  baudrate: 115200
+  stopbits: OneStopBit
+  parity: None
+
+serial_2:
+  enable: true
+  local: "/dev/cb_rs485"
+  baudrate: 9600
+  stopbits: OneStopBit
+  parity: None
+
+plc:
+  enable: true
+  tap: "cb_plc"
+  ip: 172.25.6.1
+  netmask: 255.255.255.0
+  mtu: 1518
+  powersaving_mode: 1
+
+evse_bsp:
+  enable: true
+  module_id: "cb_bsp"
+  mqtt_remote: "localhost"
+  mqtt_port: 1883
+  mqtt_ping_interval_ms: 1000
+  capabilities:
+    max_current_A_import: 16
+    min_current_A_import: 6
+    max_phase_count_import: 3
+    min_phase_count_import: 3
+    max_current_A_export: 16
+    min_current_A_export: 6
+    max_phase_count_export: 3
+    min_phase_count_export: 3
+    supports_changing_phases_during_charging: false
+    connector_type: "IEC62196Type2Cable"
+  ovm_enabled: false
+  ovm_module_id: cb_ovm
+
+gpio:
+  enable: true
+  interval_s: 1
+  mqtt_remote: "localhost"
+  mqtt_port: 1883
+  mqtt_ping_interval_ms: 1000
+  gpio_0:
+    # RCD.TEST
+    #mode: "Rcd_Selftest_Output"
+    # Self test not fully supported yet
+    mode: "Input"
+    pulls: "NoPull"
+    mdns: false
+# RCD self test duration (ignore emergency input signals for this time after self test)
+# and show reason of safety decision on host somehow to simplify debugging
+    config: 1000
+  gpio_1:
+    # RCD.ERROR
+    mode: "Input"
+    pulls: "NoPull"
+    mdns: false
+    config: 0
+  gpio_2:
+    # MOTOR_1
+    # simple Motor lock with only 2 wires (no feedback contacts)
+    mode: "MotorLock_1"
+    pulls: "NoPull"
+    mdns: false
+    # 1000 ms motor drive time for locking/unlocking
+    config: 1000
+  gpio_3:
+    # MOTOR_2
+    # simple Motor lock with only 2 wires (no feedback contacts)
+    mode: "MotorLock_2"
+    pulls: "NoPull"
+    mdns: false
+    config: 1000
+  gpio_4:
+    # RCD.PWM
+    # not supported yet
+    mode: "Input"
+    pulls: "NoPull"
+    mdns: false
+    config: 0
+  gpio_5:
+    # External GPIO on connector J4 pin 9 (10kOhm I/O)
+    mode: "Input"
+    pulls: "NoPull"
+    mdns: false
+    config: 0
+  gpio_6:
+    # External GPIO on connector J4 pin 10 (10kOhm I/O)
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 0
+  gpio_7:
+    # External GPIO on connector J3 pin 11 (10kOhm I/O)
+    mode: "Input"
+    pulls: "NoPull"
+    mdns: false
+    config: 0
+  gpio_8:
+    # External GPIO on connector J3 pin 12 (10kOhm I/O)
+    mode: "Input"
+    pulls: "PullDown"
+    mdns: false
+    config: 0
+  gpio_9:
+    # Not connected
+    mode: "Input"
+    pulls: "PullDown"
+    mdns: false
+    config: 0
