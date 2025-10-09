@@ -24,6 +24,7 @@ sync_status generic_fd_event_client_impl::sync() {
 
 sync_status generic_fd_event_client_impl::sync_impl(int timeout_ms) {
     auto result = m_event_handler->poll(std::chrono::milliseconds(timeout_ms));
+    m_event_handler->run_actions();
 
     // The error handler must be called after all event handlers have run.
     // Removing handlers during error processing is likely to result in
@@ -73,7 +74,7 @@ void generic_fd_event_client_impl::setup_io_event_handler(int fd) {
 }
 
 void generic_fd_event_client_impl::set_error_handler(cb_error const& handler) {
-    m_error = handler;
+    add_action([this, handler]() { m_error = handler; });
 }
 
 bool generic_fd_event_client_impl::unregister_source(int fd) {
@@ -118,7 +119,45 @@ bool generic_fd_event_client_impl::tx_handler(int fd) {
 }
 
 void generic_fd_event_client_impl::error_handler() {
-    m_reset_client();
+    add_action([this]() { m_reset_client(); });
+}
+
+void generic_fd_event_client_impl::prepare_io_event_handler() {
+    m_event_handler->register_event_handler(&m_connected_event_fd, [this](auto) {
+        auto client_status = m_client_status.handle();
+        if (client_status->ok) {
+            auto error_code = m_get_error();
+            set_error_status_and_notify(error_code);
+            setup_io_event_handler(client_status->fd);
+            if (m_on_ready_action) {
+                m_event_handler->add_action(m_on_ready_action);
+            }
+        } else {
+            auto error_code = m_get_error();
+            set_error_status_and_notify(error_code);
+        }
+
+        return sync_status::ok;
+    });
+}
+
+void generic_fd_event_client_impl::on_client_ready(bool ok, int fd) {
+    auto client_status = m_client_status.handle();
+    client_status->ok = ok;
+    client_status->fd = fd;
+    m_connected_event_fd.notify();
+}
+
+void generic_fd_event_client_impl::add_action(fd_event_handler::task&& item) {
+    m_event_handler->add_action(std::forward<fd_event_handler::task>(item));
+}
+
+void generic_fd_event_client_impl::set_on_ready_action(ready_action&& item) {
+    m_on_ready_action = std::move(item);
+    auto client_status = m_client_status.handle();
+    if (client_status->ok) {
+        m_event_handler->add_action(m_on_ready_action);
+    }
 }
 
 } // namespace everest::lib::io::event

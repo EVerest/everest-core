@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <everest/io/event/unique_fd.hpp>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -36,12 +37,28 @@ public:
     /**
      * @brief Open a TCP socket.
      * @details Sets the socket non blocking. <br>
-     * Implementation for \p ClientPolicy
+     * Implementation for \p ClientPolicy optional async capabilities
      * @param[in] remote The host to connect to
      * @param[in] port The port on host
      * @return True on success, false otherwise.
      */
     bool open(std::string const& remote, uint16_t port);
+
+    /**
+     * @brief Prepare the setup a TCP socket.
+     * @details Implementation for \p ClientPolicy
+     * @param[in] remote The host to connect to
+     * @param[in] port The port on host
+     * @param[in] timeout_ms Timeout for connecting to the remote
+     * @return True on success, false otherwise.
+     */
+    bool setup(std::string const& remote, uint16_t port, int timeout_ms);
+
+    /**
+     * @brief Long running part of the TCP connection process
+     * @details Implementation for \p ClientPolicy optional async capabilities
+     */
+    void connect(std::function<void(bool, int)> const& setup_cb);
 
     /**
      * @brief Write data to the socket. Partial writes may occur.
@@ -66,6 +83,11 @@ public:
      */
     int get_fd() const;
 
+    /**
+     * @brief Get the file descriptor of the socket
+     * @details Implementation for \p ClientPolicy
+     * @return The file descriptor of the socket
+     */
     /**
      * @brief Get pending errors on the socket.
      * @details Implementation for \p ClientPolicy
@@ -103,7 +125,10 @@ public:
     bool set_user_timeout(uint32_t to_ms);
 
 private:
+    std::string m_remote;
+    uint16_t m_port{0};
     event::unique_fd m_fd;
+    int m_timeout_ms{0};
     static constexpr size_t default_buffer_size{1500};
 };
 } // namespace everest::lib::io::tcp

@@ -41,8 +41,9 @@ tcp_client::cb_error make_error_cb(tcp_client& client) {
     return [&](int error, std::string const& msg) {
         std::cerr << "ERROR ( " << error << " ): " << msg << std::endl;
         if (error) {
-            std::this_thread::sleep_for(1s);
             client.reset();
+        } else {
+            client.tx(make_message(1));
         }
     };
 }
@@ -85,7 +86,10 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "Connecting to ->  " << remote << ":" << port << std::endl;
-    tcp_client client(remote, port);
+    tcp_client client(remote, port, 1000);
+    timer_fd timer;
+    timer.set_timeout_ms(100);
+
     client.set_error_handler(make_error_cb(client));
     client.set_rx_handler(make_rx_callback(client));
 
@@ -93,10 +97,14 @@ int main(int argc, char* argv[]) {
 
     fd_event_handler ev_handler;
 
+    ev_handler.register_event_handler(&timer, [&client](auto const&) {
+        std::cout << "timer" << std::endl;
+        //        client.tx(make_message(12));
+    });
+
     ev_handler.register_event_handler(&client);
-    while (true) {
-        ev_handler.poll();
-    }
+    std::atomic_bool running = true;
+    ev_handler.run(running);
 
     return 0;
 }

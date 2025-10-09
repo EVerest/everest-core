@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+#pragma once
+
+#include "protocol/cb_management.h"
+#include <everest/io/can/can_payload.hpp>
+#include <everest/io/event/fd_event_register_interface.hpp>
+#include <everest/io/event/timer_fd.hpp>
+#include <everest/io/udp/udp_client.hpp>
+#include <protocol/cb_config.h>
+#include <memory>
+
+namespace charge_bridge {
+
+struct heartbeat_config {
+    std::string cb;
+    std::string item;
+    uint16_t cb_port;
+    std::string cb_remote;
+    uint16_t interval_s;
+    CbConfig cb_config;
+};
+
+class heartbeat_service : public everest::lib::io::event::fd_event_register_interface {
+public:
+    heartbeat_service(heartbeat_config const& config);
+    ~heartbeat_service();
+
+    bool register_events(everest::lib::io::event::fd_event_handler& handler) override;
+    bool unregister_events(everest::lib::io::event::fd_event_handler& handler) override;
+
+private:
+    void handle_error_timer();
+    void handle_heartbeat_timer();
+    everest::lib::io::udp::udp_client m_udp;
+    bool m_udp_on_error{false};
+    everest::lib::io::event::timer_fd m_heartbeat_timer;
+    std::string m_identifier;
+    CbManagementPacket<CbConfig> m_config_message;
+};
+
+} // namespace charge_bridge
