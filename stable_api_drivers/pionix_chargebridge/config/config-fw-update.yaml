@@ -1,0 +1,52 @@
+charge_bridge:
+  name: cb_1
+  ip: 192.168.0.173
+  port: 6000
+  fw_file: ../../firmware/build-encrypted-fw-image/charge-bridge-fw_complete.cbfw
+  fw_update_on_start: true
+
+can_0:
+  enable: true
+  port: 6003
+  local: "cb_can0"
+
+serial_1:
+  enable: true
+  port: 6004
+  local: "/dev/cb_serial_1"
+
+serial_2:
+  enable: true
+  port: 6005
+  local: "/dev/cb_serial_2"
+
+plc:
+  enable: true
+  port: 6002
+  tap: "cb_tap0"
+  ip: 172.25.6.1
+  netmask: 255.255.255.0
+  mtu: 1518
+
+evse_bsp:
+  enable: true
+  port: 6001
+  module_id: "bsp_1"
+  mqtt_remote: "localhost"
+  mqtt_port: 1883
+  mqtt_ping_interval_ms: 1000
+  capabilities:
+    {
+          "max_current_A_import": 16,
+          "min_current_A_import": 6,
+          "max_phase_count_import": 3,
+          "min_phase_count_import": 3,
+          "max_current_A_export": 16,
+          "min_current_A_export": 6,
+          "max_phase_count_export": 3,
+          "min_phase_count_export": 3,
+          "supports_changing_phases_during_charging": false,
+          "connector_type": "IEC62196Type2Cable"
+      }
+
+

@@ -80,7 +80,7 @@ public:
         if (result) {
             m_handlers[fd] = std::move(handler);
             m_pollfd_params[fd] = event;
-            m_pollfds.push_back(event);
+            m_pollfds.resize(m_pollfds.size() + 1);
         }
         return result;
     }
@@ -88,14 +88,17 @@ public:
     bool remove(int fd) {
         auto result = false;
         if (m_pollfd_params.count(fd) > 0 or m_handlers.count(fd) > 0) {
-            m_pollfd_params.erase(fd);
-            m_handlers.erase(fd);
-            m_pollfds.resize(m_pollfds.size() - 1);
             result = epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, nullptr) == 0;
+            if (result) {
+                m_pollfd_params.erase(fd);
+                m_handlers.erase(fd);
+                m_pollfds.resize(m_pollfds.size() - 1);
+            }
         }
         return result;
     }
-
+    // FIXME what is this and change name to something sensible
+    // rethink interface and maybe conver to single function
     bool modify_remove(int fd, fd_event_handler::event_list const& events) {
         auto action = [](uint32_t current, fd_event_handler::event_list const& change) {
             auto raw_change = sum_events(change);
@@ -165,15 +168,14 @@ fd_event_handler::~fd_event_handler() = default;
 
 fd_event_handler::fd_event_handler() {
     m_handlers = std::make_unique<EventHandlerMap>();
+    register_event_handler(&m_action_event, [](auto&&) {});
 }
 
 bool fd_event_handler::register_event_handler(int fd, event_handler_type const& handler, event_list const& events) {
     if (fd == -1 or not handler or m_handlers->exists(fd)) {
         return false;
     }
-
     m_handlers->add(fd, handler, events);
-
     return true;
 }
 
@@ -251,7 +253,12 @@ bool fd_event_handler::register_event_handler(fd_event_handler* obj) {
         return false;
     }
     auto raw = obj->get_poll_fd();
-    return register_event_handler(raw, [obj](event_list const&) { obj->poll(); }, {poll_events::read});
+    return register_event_handler(raw,
+                                  [obj](event_list const&) {
+                                      obj->poll();
+                                      obj->run_actions();
+                                  },
+                                  {poll_events::read});
 }
 
 bool fd_event_handler::modify_event_handler(int fd, event_list const& events, event_modification change) {
@@ -297,6 +304,37 @@ bool fd_event_handler::poll_impl(int timeout_ms) {
 
 int fd_event_handler::get_poll_fd() {
     return m_handlers->get_epoll_fd();
+}
+
+void fd_event_handler::add_action(task&& item) {
+    task_pool.push(std::forward<task>(item));
+    m_action_event.notify();
+}
+
+void fd_event_handler::add_action(task const& item) {
+    task_pool.push(std::move(item));
+    m_action_event.notify();
+}
+
+void fd_event_handler::run_actions() {
+    while (true) {
+        auto item = task_pool.try_pop();
+        if (item.has_value()) {
+            try {
+                item.value()();
+            } catch (...) {
+            }
+        } else {
+            break;
+        }
+    }
+}
+
+void fd_event_handler::run(std::atomic_bool& online) {
+    while (online.load()) {
+        poll();
+        run_actions();
+    }
 }
 
 } // namespace everest::lib::io::event

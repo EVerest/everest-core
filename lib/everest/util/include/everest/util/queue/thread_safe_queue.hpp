@@ -10,7 +10,7 @@
 #include <condition_variable>
 #include <mutex>
 
-namespace everest::lib::io::queue {
+namespace everest::lib::util {
 
 /**
  * A thread safe queue implemented on top of \ref queue::simple_queue. <br>
@@ -80,7 +80,17 @@ public:
 private:
     std::optional<value_type> pop_impl(int timeout_ms) {
         std::unique_lock lock(m_mtx);
-        m_cv.wait_for(lock, std::chrono::milliseconds(timeout_ms), [this]() { return not m_queue.empty(); });
+        auto wait_predicate = [this]() { return not m_queue.empty(); };
+
+        if (timeout_ms < 0) {
+            m_cv.wait(lock, wait_predicate);
+        } else {
+            auto element_found = m_cv.wait_for(lock, std::chrono::milliseconds(timeout_ms), wait_predicate);
+            if (not element_found) {
+                return std::nullopt;
+            }
+        }
+
         return m_queue.pop();
     }
 
@@ -89,4 +99,4 @@ private:
     std::condition_variable m_cv;
 };
 
-} // namespace everest::lib::io::queue
+} // namespace everest::lib::util
