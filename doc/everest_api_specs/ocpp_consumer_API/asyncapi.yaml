@@ -1,0 +1,876 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:ocpp_consumer_API'
+info:
+  title: 'EVerest API definition for ocpp (consumer)'
+  version: 1.0.0
+  description: >-
+    API for EVerest API clients implementing occp / ocpp_data_transfer (consumer).
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: OCPP
+servers:
+  default:
+    pathname: 'everest_api/1.0/ocpp_consumer/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file
+defaultContentType: application/json
+
+
+channels:
+  ########## ocpp_data_transfer (incoming)
+  receive_request_data_transfer_incoming:
+    address: 'e2m/data_transfer_incoming'
+    messages:
+      receive_request_data_transfer_incoming:
+        $ref: '#/components/messages/receive_request_data_transfer_incoming'
+  send_reply_data_transfer_incoming:
+    address: null
+    messages:
+      send_reply_data_transfer_incoming:
+        $ref: '#/components/messages/send_reply_data_transfer_incoming'
+
+  ########## ocpp_data_transfer (outgoing)
+  send_request_data_transfer_outgoing:
+    address: 'm2e/data_transfer_outgoing'
+    messages:
+      send_request_data_transfer_outgoing:
+        $ref: '#/components/messages/send_request_data_transfer_outgoing'
+  receive_reply_data_transfer_outgoing:
+    address: null
+    messages:
+      receive_reply_data_transfer_outgoing:
+        $ref: '#/components/messages/receive_reply_data_transfer_outgoing'
+
+  ########## ocpp
+  send_request_get_variables:
+    address: 'm2e/get_variables'
+    messages:
+      send_request_get_variables:
+        $ref: '#/components/messages/send_request_get_variables'
+  receive_reply_get_variables:
+    address: null
+    messages:
+      receive_reply_get_variables:
+        $ref: '#/components/messages/receive_reply_get_variables'
+  send_request_set_variables:
+    address: 'm2e/set_variables'
+    messages:
+      send_request_set_variables:
+        $ref: '#/components/messages/send_request_set_variables'
+  receive_reply_set_variables:
+    address: null
+    messages:
+      receive_reply_set_variables:
+        $ref: '#/components/messages/receive_reply_set_variables'
+
+  receive_ocpp_transaction_event:
+    address: 'e2m/ocpp_transaction_event'
+    messages:
+      receive_ocpp_transaction_event:
+        $ref: '#/components/messages/receive_ocpp_transaction_event'
+  receive_is_connected:
+    address: 'e2m/is_connected'
+    messages:
+      receive_is_connected:
+        $ref: '#/components/messages/receive_is_connected'
+  receive_security_event:
+    address: 'e2m/security_event'
+    messages:
+      receive_security_event:
+        $ref: '#/components/messages/receive_security_event'
+  receive_boot_notification_response:
+    address: 'e2m/boot_notification_response'
+    messages:
+      receive_boot_notification_response:
+        $ref: '#/components/messages/receive_boot_notification_response'
+
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  ########## ocpp_data_transfer (incoming)
+  receive_request_data_transfer_incoming:
+    title: 'Performs an incoming OCPP data transfer request and returns the response'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_request_data_transfer_incoming'
+    description: 'Direction: EVerest to Module'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/send_reply_data_transfer_incoming'
+  send_reply_data_transfer_incoming:
+    title: 'Response for outgoing OCPP data transfer request'
+    action: send
+    channel:
+      $ref: '#/channels/send_reply_data_transfer_incoming'
+
+  ########## ocpp_data_transfer (outgoing)
+  send_request_data_transfer_outgoing:
+    title: 'Performs an outgoing OCPP data transfer request and returns the response'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_data_transfer_outgoing'
+    description: 'Direction: Module to EVerest'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_data_transfer_outgoing'
+  receive_reply_data_transfer_outgoing:
+    title: 'Response for outgoing OCPP data transfer request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_data_transfer_outgoing'
+
+  ########## ocpp
+  send_request_get_variables:
+    title: 'Send request to transmit the requested variables'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_get_variables'
+    description: 'Direction: Module to EVerest'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_get_variables'
+  receive_reply_get_variables:
+    title: 'Receive response with the requested variables'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_get_variables'
+  send_request_set_variables:
+    title: 'Send request to set the listed variables'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_set_variables'
+    description: 'Direction: Module to EVerest'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_set_variables'
+  receive_reply_set_variables:
+    title: 'Receive response for the respective variables'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_set_variables'
+
+  receive_ocpp_transaction_event:
+    title: 'Receive is OCPP transaction event'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_ocpp_transaction_event'
+  receive_is_connected:
+    title: 'Receive is connected'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_is_connected'
+  receive_security_event:
+    title: 'Receive security event'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_security_event'
+  receive_boot_notification_response:
+    title: 'Receive boot notification response'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_boot_notification_response'
+
+
+  receive_heartbeat:
+    title: 'Receive heatbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
+
+
+components:
+  messages:
+    ########## ocpp_data_transfer (incoming)
+    receive_request_data_transfer_incoming:
+      name: receive_request_data_transfer_incoming
+      title: 'Request data transfer'
+      summary: 'Request data transfer.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/DataTransferRequest'
+    send_reply_data_transfer_incoming:
+      name: send_reply_data_transfer_incoming
+      title: 'Reply to data transfer request'
+      summary: 'Reply to the request to transfer data'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/DataTransferResponse'
+      examples:
+        - summary: ""
+          payload:
+            status: Accepted
+            data: string
+            custom_data:
+              vendor_id: string
+              data: string
+
+    ########## ocpp_data_transfer (outgoing)
+    send_request_data_transfer_outgoing:
+      name: send_request_data_transfer_outgoing
+      title: 'Request data transfer'
+      summary: 'Request data transfer.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/DataTransferRequest'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+            payload:
+              vendor_id: string
+              message_id: string
+              data: string
+              custom_data:
+                vendor_id: string
+                data: string
+    receive_reply_data_transfer_outgoing:
+      name: receive_reply_data_transfer_outgoing
+      title: 'Reply to data transfer request'
+      summary: 'Reply to the request to transfer data'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/DataTransferResponse'
+
+    ########## ocpp
+    send_request_get_variables:
+      title: 'Request variables'
+      summary: 'Request the variables.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/GetVariableRequestList'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+            payload:
+              items:
+              - component_variable:
+                  component:
+                    name: string
+                    instance: string
+                    evse:
+                      id: 1
+                      connector_id: 1
+                  variable:
+                    name: string
+                    instance: string
+                attribute_type: Actual
+    receive_reply_get_variables:
+      name: receive_reply_get_variables
+      title: 'Request variables'
+      summary: 'Reply to the request transmit the requested variables'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GetVariableResultList'
+    send_request_set_variables:
+      title: 'Request set variables'
+      summary: 'Request setting the variables.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/SetVariablesArgs'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+            payload:
+              variables:
+                items:
+                - component_variable:
+                    component:
+                      name: string
+                      instance: string
+                      evse:
+                        id: 1
+                        connector_id: 1
+                    variable:
+                      name: string
+                      instance: string
+                  value: string
+                  attribute_type: Actual
+              source: string
+    receive_reply_set_variables:
+      name: receive_reply_set_variables
+      title: 'Reply set variables'
+      summary: 'Reply to the request to set the variables'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/SetVariableResultList'
+
+    receive_ocpp_transaction_event:
+      name: receive_ocpp_transaction_event
+      title: 'Receive OCPP transction event'
+      summary: Events related to OCPP transactions
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/OcppTransactionEvent'
+    receive_is_connected:
+      name: receive_is_connected
+      title: 'Receive is connected'
+      summary: Indicates if chargepoint is connected to CSMS
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ConnectedStatus'
+    receive_security_event:
+      name: receive_security_event
+      title: 'Receive security event'
+      summary: Published when an internal sucurity event occured
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SecurityEvent'
+    receive_boot_notification_response:
+      name: receive_boot_notification_response
+      title: 'Receive boot notification response'
+      summary: >-
+        Published any time a BootNotificationResponse message is received from the CSMS
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/BootNotificationResponse'
+
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: ""
+          payload:
+            true
+
+
+  schemas:
+    AttributeEnum:
+      description: |
+        Attribute enum
+        - Actual: The actual value of a variable
+        - Target: The target value of a variable
+        - MinSet: The minimal allowed value of a variable
+        - MaxSet: The maximum allowed value of a variable
+      type: string
+      enum:
+        - Actual
+        - Target
+        - MinSet
+        - MaxSet
+    BootNotificationResponse:
+      description: OCPP BootNotificationResponse
+      type: object
+      additionalProperties: true
+      required:
+        - status
+        - current_time
+        - interval
+      properties:
+        status:
+          description: Indicates whether the Charging Station has been registered within the OCPP CSMS
+          type: string
+          $ref: '#/components/schemas/RegistrationStatus'
+        current_time:
+          description: Contains the CSMS current time in RFC3339 format
+          type: string
+          format: date-time
+        interval:
+          description: >-
+            When Status is Accepted, this contains the heartbeat interval in seconds. If the CSMS
+            returns something other than Accepted, the value of the interval field indicates the
+            minimum wait time before sending a next BootNotification request.
+          type: integer
+        status_info:
+          description: Detailed status information.
+          type: object
+          $ref: '#/components/schemas/StatusInfoType'
+    Component:
+      description: >-
+        Type for a component with name, optional instance and optional evse
+        For OCPP1.6: A definition of a Component doesn't exist in OCPP1.6; In the context of OCPP1.6
+        this type may not be relevant or used.
+        For OCPP2.0.1: All properties of the Component can be used
+      type: object
+      additionalProperties: true
+      required:
+        - name
+      properties:
+        name:
+          description: Name of a component
+          type: string
+          minLength: 0
+          maxLength: 50
+        instance:
+          description: Name of instance in case the component exists as multiple instances
+          type: string
+          minLength: 0
+          maxLength: 50
+        evse:
+          description: >-
+            Specifies the EVSE when component is located at EVSE level, also specifies
+            the connector when component is located at Connector level
+          type: object
+          $ref: '#/components/schemas/EVSE'
+    ComponentVariable:
+      description: >-
+        Type for a combination of component and variable.
+        Note that for OCPP1.6 only the Variable.name (configuration key) is sufficient to identify a
+        configuration key. For OCPP2.0.1 all properties of the type(s) can be used.
+      type: object
+      additionalProperties: true
+      required:
+        - component
+        - variable
+      properties:
+        component:
+          description: Component
+          type: object
+          $ref: '#/components/schemas/Component'
+        variable:
+          description: Variable
+          type: object
+          $ref: '#/components/schemas/Variable'
+    ConnectedStatus:
+      description: Indicates if chargepoint is connected to CSMS
+      type: boolean
+    CustomData:
+      description: Custom data extension
+      required:
+        - vendor_id
+        - data
+      type: object
+      additionalProperties: true
+      properties:
+        vendor_id:
+          description: >-
+            Vendor Id to identify the customization, this is also
+            included in the data field and only reproduced for convenience
+          type: string
+        data:
+          description: Custom json data object encoded as string
+          type: string
+    DataTransferRequest:
+      description: Type for data transfer request provided by OCPP
+      type: object
+      additionalProperties: true
+      required:
+        - vendor_id
+      properties:
+        vendor_id:
+          description: Identifies the vendor
+          type: string
+        message_id:
+          description: Identifies the message
+          type: string
+        data:
+          description: Data provided by this data transfer
+          type: string
+        custom_data:
+          description: Custom data extension
+          type: object
+          $ref: '#/components/schemas/CustomData'
+    DataTransferResponse:
+      description: Type for data transfer response provided by OCPP
+      type: object
+      additionalProperties: true
+      required:
+        - status
+      properties:
+        status:
+          description: Status of the data transfer
+          type: string
+          $ref: '#/components/schemas/DataTransferStatus'
+        data:
+          description: Data provided by this data transfer
+          type: string
+        custom_data:
+          description: Custom data extension
+          type: object
+          $ref: '#/components/schemas/CustomData'
+    DataTransferStatus:
+      description: Data Transfer Status enum
+      type: string
+      enum:
+        - Accepted
+        - Rejected
+        - UnknownMessageId
+        - UnknownVendorId
+        - Offline
+    EVSE:
+      description: >-
+        Type of an EVSE. If only the id is present, this type identifies an EVSE.
+        If also a connector_id is given, this type identifies a Connector of the EVSE
+      type: object
+      additionalProperties: true
+      required:
+        - id
+      properties:
+        id:
+          description: Id of the EVSE
+          type: integer
+          minimum: 1
+        connector_id:
+          description: An id to designate a specific connector (on an EVSE) by connector index number
+          type: integer
+          minimum: 1
+    GetVariableRequest:
+      description: >-
+        Type to request a variable value (OCPP2.0.1) or configuration value (OCPP1.6)
+      type: object
+      additionalProperties: true
+      required:
+        - component_variable
+      properties:
+        component_variable:
+          description: >-
+            Identifier for which the value should be requested
+          type: object
+          $ref: '#/components/schemas/ComponentVariable'
+        attribute_type:
+          description: AttributeEnum for which the value should be requested. When absent, actual is assumed
+          type: string
+          $ref: '#/components/schemas/AttributeEnum'
+    GetVariableRequestList:
+      description: List of GetVariableRequest values
+      type: object
+      additionalProperties: true
+      required:
+        - items
+      properties:
+        items:
+          description: List of GetVarialRequest values
+          type: array
+          items:
+            $ref: '#/components/schemas/GetVariableRequest'
+    GetVariableResult:
+      description: Result of a GetVariableRequest
+      type: object
+      additionalProperties: true
+      required:
+        - status
+        - component_variable
+      properties:
+        status:
+          description: Status of the GetVariableResult
+          type: string
+          $ref: '#/components/schemas/GetVariableStatusEnumType'
+        attribute_type:
+          description: AttributeEnum for which the value was requested. When absent, actual is assumed
+          type: string
+          $ref: '#/components/schemas/AttributeEnum'
+        value:
+          description: >-
+            Value of the requested variable and AttributeEnum. This field can only be empty when the given
+            status is NOT accepted
+          type: string
+          minLength: 0
+          maxLength: 2500
+        component_variable:
+          description: Identifier for which the value was requested
+          type: object
+          $ref: '#/components/schemas/ComponentVariable'
+    GetVariableResultList:
+      description: List of GetVariableResult values
+      type: object
+      additionalProperties: true
+      required:
+        - items
+      properties:
+        items:
+          description: List of GetVarialResult values
+          type: array
+          items:
+            $ref: '#/components/schemas/GetVariableResult'
+    GetVariableStatusEnumType:
+      description: |
+        Indicates the status of the GetVariableRequest as part of the GetVariableResult operation
+        - Accepted: Variable successfully retrieved
+        - Rejected: Request is rejected
+        - UnknownComponent: Component is not known
+        - UnknownVariable: Variable is not known
+        - NotSupportedAttributeType: The AttributeType is not supported
+      type: string
+      enum:
+        - Accepted
+        - Rejected
+        - UnknownComponent
+        - UnknownVariable
+        - NotSupportedAttributeType
+    OcppTransactionEvent:
+      description: >-
+        Element providing information on OCPP transactions.
+      type: object
+      additionalProperties: true
+      required:
+        - transaction_event
+        - session_id
+      properties:
+        transaction_event:
+          description: >-
+            The transaction related event.
+          type: string
+          $ref: '#/components/schemas/TransactionEvent'
+        evse:
+          description: >-
+            The OCPP 2.0.1 EVSE associated with the transaction.
+          type: object
+          $ref: '#/components/schemas/EVSE'
+        session_id:
+          description: >-
+            The EVSE manager assigned session ID.
+          type: string
+        transaction_id:
+          description: >-
+            The CSMS assigned transaction ID. A string is used to support OCPP 2.0.1.
+            For OCPP 1.6 the integer is converted to a string
+          type: string
+    RegistrationStatus:
+      description: Indicates whether the Charging Station has been registered within the OCPP CSMS
+      type: string
+      enum:
+        - Accepted
+        - Pending
+        - Rejected
+    SecurityEvent:
+      description: Type for a security event
+      type: object
+      additionalProperties: true
+      required:
+        - type
+      properties:
+        type:
+          description: Type of the security event
+          type: string
+        info:
+          description: Additional information about the occurred security event
+          type: string
+        critical:
+          description: >-
+            If set this overwrites the default criticality recommended in the OCPP 2.0.1 appendix.
+            A critical security event is transmitted as a message to the CSMS, a non-critical one is just written to the security log
+          type: boolean
+        timestamp:
+          description: Timestamp of the moment the security event was generated, if absent the current datetime is assumed
+          type: string
+          format: date-time
+    SetVariableRequest:
+      description: Type to request to set a variable or configuration key
+      type: object
+      additionalProperties: true
+      required:
+        - component_variable
+        - value
+      properties:
+        component_variable:
+          description: Identifier for which the value should be set
+          type: object
+          $ref: '#/components/schemas/ComponentVariable'
+        value:
+          description: Value of the variable that should be set
+          type: string
+          minLength: 0
+          maxLength: 1000
+        attribute_type:
+          description: AttributeEnum for which the value should be set. When absent, actual is assumed
+          type: string
+          $ref: '#/components/schemas/AttributeEnum'
+    SetVariableRequestList:
+      description: List of SetVariableRequest values
+      type: object
+      additionalProperties: true
+      required:
+        - items
+      properties:
+        items:
+          description: List of SetVarialRequest values
+          type: array
+          items:
+            $ref: '#/components/schemas/SetVariableRequest'
+    SetVariableResult:
+      description: Result of a SetVariableRequest
+      type: object
+      additionalProperties: true
+      required:
+        - status
+        - component_variable
+      properties:
+        status:
+          description: Status of the SetVariableResult
+          type: string
+          $ref: '#/components/schemas/SetVariableStatusEnumType'
+        component_variable:
+          description: Identifier for which the set of the value should be requested
+          type: object
+          $ref: '#/components/schemas/ComponentVariable'
+        attribute_type:
+          description: AttributeEnum for which the set of the value is requested. When absent, actual is assumed
+          type: string
+          $ref: '#/components/schemas/AttributeEnum'
+    SetVariableResultList:
+      description: List of SetVariableResult values
+      type: object
+      additionalProperties: true
+      required:
+        - items
+      properties:
+        items:
+          description: List of SetVarialResult values
+          type: array
+          items:
+            $ref: '#/components/schemas/SetVariableResult'
+    SetVariableStatusEnumType:
+      description: |
+        Indicates the status of the SetVariableRequest operation as part of the SetVariableResult
+        - Accepted: Variable successfully set
+        - Rejected: Request is rejected
+        - UnknownComponent: Component is not known
+        - UnknownVariable: Variable is not known
+        - NotSupportedAttributeType: The AttributeType is not supported
+        - RebootRequired: A reboot is required
+      type: string
+      enum:
+        - Accepted
+        - Rejected
+        - UnknownComponent
+        - UnknownVariable
+        - NotSupportedAttributeType
+        - RebootRequired
+    SetVariablesArgs:
+      description: Arguments for set_variables
+      type: object
+      additionalProperties: true
+      required:
+        - variables
+        - source
+      properties:
+        variables:
+          description: List of variables
+          type: object
+          $ref: '#/components/schemas/SetVariableRequestList'
+        source:
+          description: source
+          type: string
+    StatusInfoType:
+      description: >-
+        Element providing more information about the status.
+      type: object
+      additionalProperties: true
+      required:
+        - reason_code
+      properties:
+        reason_code:
+          description: >-
+            A predefined code for the reason why the status is returned in this response.
+            The string is case-insensitive.
+          type: string
+        additional_info:
+          description: >-
+            Additional text to provide detailed information
+          type: string
+    TransactionEvent:
+      description: The transaction event enumeration
+      type: string
+      enum:
+        - Started
+        - Updated
+        - Ended
+    Variable:
+      description: >-
+        Type for a variable with a name and an optional instance
+        For OCPP1.6: A Variable should only contain a name. The name identifies
+        the configuration key.
+        For OCPP2.0.1: All properties of the Variable can be used
+      type: object
+      additionalProperties: true
+      required:
+        - name
+      properties:
+        name:
+          description: Name of a variable
+          type: string
+          minLength: 0
+          maxLength: 50
+        instance:
+          description: Name of instance in case the variable exists as multiple instances
+          type: string
+          minLength: 0
+          maxLength: 50
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check"

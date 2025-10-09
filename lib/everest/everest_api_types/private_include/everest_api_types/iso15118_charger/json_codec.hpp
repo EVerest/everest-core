@@ -31,4 +31,7 @@ void from_json(json const& j, ResponseExiStreamStatus& k);
 void to_json(json& j, CertificateHashDataInfo const& k) noexcept;
 void from_json(json const& j, CertificateHashDataInfo& k);
 
+void to_json(json& j, EnergyTransferModeList const& k) noexcept;
+void from_json(const json& j, EnergyTransferModeList& k);
+
 } // namespace everest::lib::API::V1_0::types::iso15118_charger

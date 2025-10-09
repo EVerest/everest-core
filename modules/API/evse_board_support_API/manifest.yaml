@@ -1,0 +1,37 @@
+description: API for EVSE board support
+config:
+  cfg_communication_check_to_s:
+    description: "Maximum time between two communication check events. Values <= 0 disables communication checks."
+    type: integer
+    default: 5
+  cfg_heartbeat_interval_ms:
+    description: "Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat"
+    type: integer
+    default: 1000
+  cfg_request_reply_to_s:
+    description: "Maximum time between request and reply. After timeout the request is answered with a default response."
+    type: integer
+    default: 550
+    minimum: 1
+    maximum: 550
+
+provides:
+  main:
+    interface: evse_board_support
+    description: "Allows EVerest to control EVSE boards via API clients."
+  rcd:
+    interface: ac_rcd
+    description: "Allows EVerest to control/monitor AC RCD devices via API clients."
+  connector_lock:
+    interface: connector_lock
+    description: "Allows EVerest to control the connector/motor lock via API clients."
+
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - James Chapman
+    - Cornelius Claussen
+    - Jan Christoph Habig
+    - Andreas Heinrich
+    - Florin Mihut

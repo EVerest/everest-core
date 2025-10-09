@@ -52,4 +52,10 @@ using CertificateHashDataInfo_External = CertificateHashDataInfo;
 CertificateHashDataInfo_Internal to_internal_api(CertificateHashDataInfo_External const& val);
 CertificateHashDataInfo_External to_external_api(CertificateHashDataInfo_Internal const& val);
 
+using EnergyTransferModeList_Internal = std::vector<EnergyTransferMode_Internal>;
+using EnergyTransferModeList_External = EnergyTransferModeList;
+
+EnergyTransferModeList_Internal to_internal_api(EnergyTransferModeList_External const& val);
+EnergyTransferModeList_External to_external_api(EnergyTransferModeList_Internal const& val);
+
 } // namespace everest::lib::API::V1_0::types::iso15118_charger
