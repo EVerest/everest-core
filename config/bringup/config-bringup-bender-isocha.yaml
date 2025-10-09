@@ -18,7 +18,7 @@ active_modules:
   comm_hub:
     config_implementation:
       main:
-        serial_port: /dev/ttyS4
+        serial_port: /dev/cb_rs485
         baudrate: 19200
         parity: 2
     module: SerialCommHub

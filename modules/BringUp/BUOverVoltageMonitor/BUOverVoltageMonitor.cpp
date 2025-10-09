@@ -107,7 +107,7 @@ void BUOverVoltageMonitor::ready() {
                                   [&] {
                                       auto error_val = std::stof(error_limit);
                                       auto emergency_val = std::stof(emergency_limit);
-                                      r_ovm->call_set_limits(error_val, emergency_val);
+                                      r_ovm->call_set_limits(emergency_val, error_val);
                                   },
                                   ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White)) |
                               flex_grow;
