@@ -1,6 +1,6 @@
 add_executable(EnumFlagsTest
-    EnumFlagsTest.cpp
-    EnumFlagsTest_B.cpp
+    enum/EnumFlagsTest.cpp
+    enum/EnumFlagsTest_B.cpp
 )
 
 target_link_libraries(EnumFlagsTest
