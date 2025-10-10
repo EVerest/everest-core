@@ -36,7 +36,9 @@ typedef enum _PpState {
 typedef enum _LockState {
     LockState_UNDEFINED = 0,
     LockState_UNLOCKED = 1,
-    LockState_LOCKED = 2
+    LockState_LOCKED = 2,
+    LockState_LOCKING = 3,
+    LockState_UNLOCKING = 4
 } LockState;
 
 typedef enum _CoilType {
@@ -48,6 +50,18 @@ typedef enum _CoilType {
     CoilType_COIL_DC3 = 4
 } CoilType;
 
+typedef enum _ChargePortType {
+    ChargePortType_DISABLED = 0,
+    ChargePortType_AC = 1,
+    ChargePortType_DC = 2
+} ChargePortType;
+
+typedef enum _GpioPull {
+    GpioPull_NONE = 0,
+    GpioPull_UP = 1,
+    GpioPull_DOWN = 2
+} GpioPull;
+
 typedef enum _ConfigHardwareRevision {
     ConfigHardwareRevision_HW_REV_UNKNOWN = 0,
     ConfigHardwareRevision_HW_REV_A = 1,
@@ -56,8 +70,10 @@ typedef enum _ConfigHardwareRevision {
 
 typedef enum _MotorLockType {
     MotorLockType_MOTOR_LOCK_UNKNOWN = 0,
-    MotorLockType_MOTOR_LOCK_QWELLO = 1,
-    MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC = 2
+    MotorLockType_MOTOR_LOCK_HELLA = 1,
+    MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC = 2,
+    /* add additional locks here */
+    MotorLockType_MOTOR_LOCK_NONE = -1
 } MotorLockType;
 
 /* Struct definitions */
@@ -68,6 +84,9 @@ typedef struct _ErrorFlags {
     bool ventilation_not_available;
     bool connector_lock_failed;
     bool cp_signal_fault;
+    bool heartbeat_timeout;
+    bool coil_feedback_diverges;
+    bool pp_signal_fault;
 } ErrorFlags;
 
 typedef struct _KeepAlive {
@@ -75,6 +94,7 @@ typedef struct _KeepAlive {
     uint32_t hw_type;
     uint32_t hw_revision;
     char sw_version_string[51];
+    bool configuration_done;
 } KeepAlive;
 
 typedef struct _Telemetry {
@@ -117,15 +137,22 @@ typedef struct _McuToEverest {
 } McuToEverest;
 
 typedef struct _ConfigMotorLockType {
-    MotorLockType type;
+    MotorLockType type; /* additional lock specific options could be added here later
+ will still keep this in place even if it only holds the type enum at the moment */
 } ConfigMotorLockType;
+
+typedef struct _ChargePortConfig {
+    ChargePortType type;
+    bool feedback_active_low;
+    GpioPull feedback_pull;
+    bool has_lock;
+    ConfigMotorLockType lock;
+    bool has_socket;
+} ChargePortConfig;
 
 typedef struct _BootConfigResponse {
     ConfigHardwareRevision hw_rev;
-    bool has_lock_1;
-    ConfigMotorLockType lock_1;
-    bool has_lock_2;
-    ConfigMotorLockType lock_2;
+    ChargePortConfig chargeport_config[2];
 } BootConfigResponse;
 
 typedef struct _RcdCommand {
@@ -169,18 +196,26 @@ extern "C" {
 #define _PpState_ARRAYSIZE ((PpState)(PpState_STATE_FAULT+1))
 
 #define _LockState_MIN LockState_UNDEFINED
-#define _LockState_MAX LockState_LOCKED
-#define _LockState_ARRAYSIZE ((LockState)(LockState_LOCKED+1))
+#define _LockState_MAX LockState_UNLOCKING
+#define _LockState_ARRAYSIZE ((LockState)(LockState_UNLOCKING+1))
 
 #define _CoilType_MIN CoilType_COIL_UNKNOWN
 #define _CoilType_MAX CoilType_COIL_DC3
 #define _CoilType_ARRAYSIZE ((CoilType)(CoilType_COIL_DC3+1))
 
+#define _ChargePortType_MIN ChargePortType_DISABLED
+#define _ChargePortType_MAX ChargePortType_DC
+#define _ChargePortType_ARRAYSIZE ((ChargePortType)(ChargePortType_DC+1))
+
+#define _GpioPull_MIN GpioPull_NONE
+#define _GpioPull_MAX GpioPull_DOWN
+#define _GpioPull_ARRAYSIZE ((GpioPull)(GpioPull_DOWN+1))
+
 #define _ConfigHardwareRevision_MIN ConfigHardwareRevision_HW_REV_UNKNOWN
 #define _ConfigHardwareRevision_MAX ConfigHardwareRevision_HW_REV_B
 #define _ConfigHardwareRevision_ARRAYSIZE ((ConfigHardwareRevision)(ConfigHardwareRevision_HW_REV_B+1))
 
-#define _MotorLockType_MIN MotorLockType_MOTOR_LOCK_UNKNOWN
+#define _MotorLockType_MIN MotorLockType_MOTOR_LOCK_NONE
 #define _MotorLockType_MAX MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC
 #define _MotorLockType_ARRAYSIZE ((MotorLockType)(MotorLockType_MOTOR_LOCK_DEBUG_VALEO_HVAC+1))
 
@@ -199,6 +234,9 @@ extern "C" {
 
 #define BootConfigResponse_hw_rev_ENUMTYPE ConfigHardwareRevision
 
+#define ChargePortConfig_type_ENUMTYPE ChargePortType
+#define ChargePortConfig_feedback_pull_ENUMTYPE GpioPull
+
 #define ConfigMotorLockType_type_ENUMTYPE MotorLockType
 
 
@@ -206,24 +244,26 @@ extern "C" {
 /* Initializer values for message structs */
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}, 0}
 #define McuToEverest_init_default                {0, {KeepAlive_init_default}, 0}
-#define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0}
-#define KeepAlive_init_default                   {0, 0, 0, ""}
+#define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define KeepAlive_init_default                   {0, 0, 0, "", 0}
 #define Telemetry_init_default                   {0, 0}
 #define FanState_init_default                    {0, 0, 0, 0}
 #define CoilState_init_default                   {_CoilType_MIN, 0}
 #define BootConfigRequest_init_default           {0}
-#define BootConfigResponse_init_default          {_ConfigHardwareRevision_MIN, false, ConfigMotorLockType_init_default, false, ConfigMotorLockType_init_default}
+#define BootConfigResponse_init_default          {_ConfigHardwareRevision_MIN, {ChargePortConfig_init_default, ChargePortConfig_init_default}}
+#define ChargePortConfig_init_default            {_ChargePortType_MIN, 0, _GpioPull_MIN, false, ConfigMotorLockType_init_default, 0}
 #define ConfigMotorLockType_init_default         {_MotorLockType_MIN}
 #define RcdCommand_init_default                  {0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
-#define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
-#define KeepAlive_init_zero                      {0, 0, 0, ""}
+#define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define KeepAlive_init_zero                      {0, 0, 0, "", 0}
 #define Telemetry_init_zero                      {0, 0}
 #define FanState_init_zero                       {0, 0, 0, 0}
 #define CoilState_init_zero                      {_CoilType_MIN, 0}
 #define BootConfigRequest_init_zero              {0}
-#define BootConfigResponse_init_zero             {_ConfigHardwareRevision_MIN, false, ConfigMotorLockType_init_zero, false, ConfigMotorLockType_init_zero}
+#define BootConfigResponse_init_zero             {_ConfigHardwareRevision_MIN, {ChargePortConfig_init_zero, ChargePortConfig_init_zero}}
+#define ChargePortConfig_init_zero               {_ChargePortType_MIN, 0, _GpioPull_MIN, false, ConfigMotorLockType_init_zero, 0}
 #define ConfigMotorLockType_init_zero            {_MotorLockType_MIN}
 #define RcdCommand_init_zero                     {0, 0}
 
@@ -234,10 +274,14 @@ extern "C" {
 #define ErrorFlags_ventilation_not_available_tag 4
 #define ErrorFlags_connector_lock_failed_tag     5
 #define ErrorFlags_cp_signal_fault_tag           6
+#define ErrorFlags_heartbeat_timeout_tag         7
+#define ErrorFlags_coil_feedback_diverges_tag    8
+#define ErrorFlags_pp_signal_fault_tag           9
 #define KeepAlive_time_stamp_tag                 1
 #define KeepAlive_hw_type_tag                    2
 #define KeepAlive_hw_revision_tag                3
 #define KeepAlive_sw_version_string_tag          6
+#define KeepAlive_configuration_done_tag         7
 #define Telemetry_cp_voltage_hi_tag              1
 #define Telemetry_cp_voltage_lo_tag              2
 #define FanState_fan_id_tag                      1
@@ -258,9 +302,13 @@ extern "C" {
 #define McuToEverest_config_request_tag          11
 #define McuToEverest_connector_tag               6
 #define ConfigMotorLockType_type_tag             1
+#define ChargePortConfig_type_tag                1
+#define ChargePortConfig_feedback_active_low_tag 2
+#define ChargePortConfig_feedback_pull_tag       3
+#define ChargePortConfig_lock_tag                4
+#define ChargePortConfig_has_socket_tag          5
 #define BootConfigResponse_hw_rev_tag            1
-#define BootConfigResponse_lock_1_tag            2
-#define BootConfigResponse_lock_2_tag            3
+#define BootConfigResponse_chargeport_config_tag 6
 #define RcdCommand_test_tag                      1
 #define RcdCommand_reset_tag                     2
 #define EverestToMcu_keep_alive_tag              1
@@ -321,7 +369,10 @@ X(a, STATIC,   SINGULAR, BOOL,     rcd_selftest_failed,   2) \
 X(a, STATIC,   SINGULAR, BOOL,     rcd_triggered,     3) \
 X(a, STATIC,   SINGULAR, BOOL,     ventilation_not_available,   4) \
 X(a, STATIC,   SINGULAR, BOOL,     connector_lock_failed,   5) \
-X(a, STATIC,   SINGULAR, BOOL,     cp_signal_fault,   6)
+X(a, STATIC,   SINGULAR, BOOL,     cp_signal_fault,   6) \
+X(a, STATIC,   SINGULAR, BOOL,     heartbeat_timeout,   7) \
+X(a, STATIC,   SINGULAR, BOOL,     coil_feedback_diverges,   8) \
+X(a, STATIC,   SINGULAR, BOOL,     pp_signal_fault,   9)
 #define ErrorFlags_CALLBACK NULL
 #define ErrorFlags_DEFAULT NULL
 
@@ -329,7 +380,8 @@ X(a, STATIC,   SINGULAR, BOOL,     cp_signal_fault,   6)
 X(a, STATIC,   SINGULAR, UINT32,   time_stamp,        1) \
 X(a, STATIC,   SINGULAR, UINT32,   hw_type,           2) \
 X(a, STATIC,   SINGULAR, UINT32,   hw_revision,       3) \
-X(a, STATIC,   SINGULAR, STRING,   sw_version_string,   6)
+X(a, STATIC,   SINGULAR, STRING,   sw_version_string,   6) \
+X(a, STATIC,   SINGULAR, BOOL,     configuration_done,   7)
 #define KeepAlive_CALLBACK NULL
 #define KeepAlive_DEFAULT NULL
 
@@ -360,15 +412,23 @@ X(a, STATIC,   SINGULAR, BOOL,     coil_state,        2)
 
 #define BootConfigResponse_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UENUM,    hw_rev,            1) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  lock_1,            2) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  lock_2,            3)
+X(a, STATIC,   FIXARRAY, MESSAGE,  chargeport_config,   6)
 #define BootConfigResponse_CALLBACK NULL
 #define BootConfigResponse_DEFAULT NULL
-#define BootConfigResponse_lock_1_MSGTYPE ConfigMotorLockType
-#define BootConfigResponse_lock_2_MSGTYPE ConfigMotorLockType
+#define BootConfigResponse_chargeport_config_MSGTYPE ChargePortConfig
+
+#define ChargePortConfig_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    type,              1) \
+X(a, STATIC,   SINGULAR, BOOL,     feedback_active_low,   2) \
+X(a, STATIC,   SINGULAR, UENUM,    feedback_pull,     3) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  lock,              4) \
+X(a, STATIC,   SINGULAR, BOOL,     has_socket,        5)
+#define ChargePortConfig_CALLBACK NULL
+#define ChargePortConfig_DEFAULT NULL
+#define ChargePortConfig_lock_MSGTYPE ConfigMotorLockType
 
 #define ConfigMotorLockType_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UENUM,    type,              1)
+X(a, STATIC,   SINGULAR, ENUM,     type,              1)
 #define ConfigMotorLockType_CALLBACK NULL
 #define ConfigMotorLockType_DEFAULT NULL
 
@@ -387,6 +447,7 @@ extern const pb_msgdesc_t FanState_msg;
 extern const pb_msgdesc_t CoilState_msg;
 extern const pb_msgdesc_t BootConfigRequest_msg;
 extern const pb_msgdesc_t BootConfigResponse_msg;
+extern const pb_msgdesc_t ChargePortConfig_msg;
 extern const pb_msgdesc_t ConfigMotorLockType_msg;
 extern const pb_msgdesc_t RcdCommand_msg;
 
@@ -400,19 +461,21 @@ extern const pb_msgdesc_t RcdCommand_msg;
 #define CoilState_fields &CoilState_msg
 #define BootConfigRequest_fields &BootConfigRequest_msg
 #define BootConfigResponse_fields &BootConfigResponse_msg
+#define ChargePortConfig_fields &ChargePortConfig_msg
 #define ConfigMotorLockType_fields &ConfigMotorLockType_msg
 #define RcdCommand_fields &RcdCommand_msg
 
 /* Maximum encoded size of messages (where known) */
 #define BootConfigRequest_size                   0
-#define BootConfigResponse_size                  10
+#define BootConfigResponse_size                  48
+#define ChargePortConfig_size                    21
 #define CoilState_size                           4
-#define ConfigMotorLockType_size                 2
-#define ErrorFlags_size                          12
-#define EverestToMcu_size                        83
+#define ConfigMotorLockType_size                 11
+#define ErrorFlags_size                          18
+#define EverestToMcu_size                        85
 #define FanState_size                            15
-#define KeepAlive_size                           70
-#define McuToEverest_size                        83
+#define KeepAlive_size                           72
+#define McuToEverest_size                        85
 #define PHYVERSO_PB_H_MAX_SIZE                   EverestToMcu_size
 #define RcdCommand_size                          4
 #define Telemetry_size                           12
