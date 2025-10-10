@@ -21,6 +21,19 @@ types:
           type: integer
           minimum: 0
           maximum: 65535
+  ResultBool:
+    description: Return type for IO transfer functions with boolean return values, e.g. for coil states
+    type: object
+    required:
+      - status_code
+    properties:
+      status_code:
+        type: string
+        $ref: /serial_comm_hub_requests#/StatusCodeEnum
+      value:
+        type: array
+        items:
+          type: boolean
   VectorUint16:
     description: Data content (raw data bytes)
     type: object
