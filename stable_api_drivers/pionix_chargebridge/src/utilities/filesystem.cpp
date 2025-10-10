@@ -131,9 +131,10 @@ bool read_crypt_signed_header(const fs::path& path, CryptSignedHeader& hdr, std:
     // offset = 32 + 1 + L + 1 + 16
     image_offset = static_cast<std::uint32_t>(f.tellg());
     // As a sanity fallback, compute if tellg() failed:
-    if (static_cast<std::streamoff>(image_offset)< 0) {
-        image_offset = 32u + 1u + static_cast<std::uint64_t>(hdr.sig_len) + 1u + 16u;
-    }
+    // Disabled, since it is always false
+    // if (static_cast<std::streamoff>(image_offset)< 0) {
+    //     image_offset = 32u + 1u + static_cast<std::uint64_t>(hdr.sig_len) + 1u + 16u;
+    // }
 
     return true;
 }
