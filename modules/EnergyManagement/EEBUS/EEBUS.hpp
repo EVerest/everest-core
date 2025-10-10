@@ -61,7 +61,7 @@ public:
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
-    void set_use_case_event_reader(std::unique_ptr<UseCaseEventReader> reader);
+    ~EEBUS() override;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -77,14 +77,15 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     std::shared_ptr<control_service::ControlService::Stub> control_service_stub;
     std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub;
-    std::unique_ptr<UseCaseEventReader> reader;
     std::thread eebus_grpc_api_thread;
+    std::atomic<bool> eebus_grpc_api_thread_active;
 
     std::unique_ptr<grpc_calls::ControlServiceCalls> cs_calls;
     std::unique_ptr<grpc_calls::ControllableSystemLPCControlCalls> cs_lpc_calls;
     std::unique_ptr<ConfigValidator> config_validator;
 
     bool failed;
+    control_service::UseCase lpc_use_case;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
