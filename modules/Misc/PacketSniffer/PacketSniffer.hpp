@@ -58,7 +58,7 @@ private:
     void capture(const std::string& logpath, const std::string& session_id);
     pcap_t* p_handle{nullptr};
     pcap_dumper_t* pdumpfile{nullptr};
-    char errbuf[PCAP_ERRBUF_SIZE];
+    char errbuf[PCAP_ERRBUF_SIZE]{""};
     std::atomic_bool capturing_stopped{false};
     std::atomic_bool already_started{false};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

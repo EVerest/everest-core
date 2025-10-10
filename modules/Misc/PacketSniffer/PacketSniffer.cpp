@@ -16,16 +16,21 @@ void PacketSniffer::init() {
     invoke_init(*p_main);
 
     p_handle = pcap_open_live(config.device.c_str(), BUFFERSIZE, PROMISC_MODE, PACKET_BUFFER_TIMEOUT_MS, errbuf);
+    std::string errb{errbuf};
     if (p_handle == nullptr) {
-        EVLOG_error << fmt::format("Could not open device {}. Sniffing disabled.", config.device);
+        EVLOG_error << fmt::format("Could not open device \"{}\", Sniffing disabled.{}", config.device,
+                                   errb.size() > 0 ? (std::string(" Error: ") + errb) : "");
         return;
     }
 
-    if (pcap_datalink(p_handle) != DLT_EN10MB) {
-        EVLOG_error << fmt::format("Device {} doesn't provide Ethernet headers - not supported. Sniffing disabled.",
+    if (config.device != "any" && pcap_datalink(p_handle) != DLT_EN10MB) {
+        EVLOG_error << fmt::format("Device \"{}\" doesn't provide Ethernet headers - not supported. Sniffing disabled.",
                                    config.device);
+        pcap_close(p_handle);
         return;
     }
+
+    EVLOG_info << fmt::format("Sniffing on device \"{}\"", config.device);
 
     r_evse_manager->subscribe_session_event([this](types::evse_manager::SessionEvent session_event) {
         if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
@@ -53,9 +58,9 @@ void PacketSniffer::ready() {
 
 void PacketSniffer::capture(const std::string& logpath, const std::string& session_id) {
     already_started = true;
-    EVLOG_info << fmt::format("Start capturing");
+    const std::string fn = fmt::format("{}/ethernet-traffic.pcap", logpath);
 
-    const std::string fn = fmt::format("{}/ethernet-traffic.dump", logpath);
+    EVLOG_info << fmt::format("Starting capturing to {}", fn);
 
     if ((pdumpfile = pcap_dump_open(p_handle, fn.c_str())) == nullptr) {
         EVLOG_error << fmt::format("Error opening savefile {} for writing: {}", fn, pcap_geterr(p_handle));
@@ -63,16 +68,24 @@ void PacketSniffer::capture(const std::string& logpath, const std::string& sessi
     }
 
     while (!capturing_stopped) {
-        if (pcap_dispatch(p_handle, ALL_PACKETS_PROCESSED, &pcap_dump, (u_char*)pdumpfile) <= PCAP_ERROR) {
-            EVLOG_error << fmt::format("Error reading packets from interface: {}, error: {}", config.device,
-                                       pcap_geterr(p_handle));
+        const int ret =
+            pcap_dispatch(p_handle, ALL_PACKETS_PROCESSED, &pcap_dump, reinterpret_cast<u_char*>(pdumpfile));
+        if (ret <= PCAP_ERROR) {
+            const std::string base_msg = fmt::format("Error reading packets from interface \"{}\"", config.device);
+            if (ret == PCAP_ERROR) {
+                EVLOG_error << fmt::format("{}, error: {}", base_msg, pcap_geterr(p_handle));
+            } else if (ret == PCAP_ERROR_BREAK) {
+                EVLOG_warning << fmt::format("{}, interrupted but no packets received", base_msg);
+            } else {
+                EVLOG_error << fmt::format("{}, unexpected error: {}", base_msg, ret);
+            }
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_FOR_MS));
     }
 
     pcap_dump_close(pdumpfile);
-    EVLOG_info << fmt::format("Capturing stopped.");
+    EVLOG_info << fmt::format("Stopped capturing to {}", fn);
     already_started = false;
 }
 
