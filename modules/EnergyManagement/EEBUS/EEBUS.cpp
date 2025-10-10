@@ -73,8 +73,10 @@ bool wait_for_channel_ready(const std::shared_ptr<grpc::Channel>& channel, std::
 
 } // namespace
 
-void EEBUS::set_use_case_event_reader(std::unique_ptr<UseCaseEventReader> reader) {
-    this->reader = std::move(reader);
+EEBUS::~EEBUS() {
+    if (this->config.manage_eebus_grpc_api_binary and this->eebus_grpc_api_thread_active.exchange(false)) {
+        this->eebus_grpc_api_thread.join();
+    }
 }
 
 void EEBUS::init() {
@@ -90,6 +92,7 @@ void EEBUS::init() {
     }
 
     if (this->config.manage_eebus_grpc_api_binary) {
+        this->eebus_grpc_api_thread_active.store(true);
         this->eebus_grpc_api_thread =
             std::thread(start_eebus_grpc_api, this->config_validator->get_eebus_grpc_api_binary_path(),
                         this->config.control_service_rpc_port, this->config_validator->get_certificate_path(),
@@ -119,7 +122,10 @@ void EEBUS::init() {
     this->cs_calls->call_start_setup();
     EVLOG_critical << "ML DEBUG PASSED CALL START SETUP";
     this->cs_calls->call_register_remote_ski(this->config.eebus_ems_ski);
-    std::string endpoint = this->cs_calls->call_add_use_case();
+    this->lpc_use_case = control_service::CreateUseCase(
+        control_service::UseCase_ActorType_Enum::UseCase_ActorType_Enum_ControllableSystem,
+        control_service::UseCase_NameType_Enum::UseCase_NameType_Enum_limitationOfPowerConsumption);
+    std::string endpoint = this->cs_calls->call_add_use_case(&this->lpc_use_case);
 
     std::shared_ptr<grpc::Channel> channel2 = grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
     this->failed = !wait_for_channel_ready(channel2, std::chrono::seconds(eebus_one_minute));
@@ -135,13 +141,13 @@ void EEBUS::init() {
     this->cs_lpc_calls->call_set_failsafe_consumption_active_power_limit();
     this->cs_lpc_calls->call_set_failsafe_duration_minimum();
 
-    this->cs_calls->subscribe_use_case_events(this, this->cs_lpc_stub);
+    this->cs_calls->subscribe_use_case_events(this, this->cs_lpc_stub, &this->lpc_use_case);
 }
 
 void EEBUS::ready() {
     invoke_ready(*p_main);
 
-    if (this->failed) {
+    if (this->failed and this->eebus_grpc_api_thread_active.exchange(false)) {
         EVLOG_error << "EEBUS module failed to initialize";
         this->eebus_grpc_api_thread.join();
         return;
@@ -149,7 +155,7 @@ void EEBUS::ready() {
 
     this->cs_calls->call_start_service();
 
-    if (this->config.manage_eebus_grpc_api_binary) {
+    if (this->config.manage_eebus_grpc_api_binary and this->eebus_grpc_api_thread_active.exchange(false)) {
         this->eebus_grpc_api_thread.join();
     }
 }
