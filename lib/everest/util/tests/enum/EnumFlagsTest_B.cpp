@@ -2,10 +2,10 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <gtest/gtest.h>
 
-#include <everest/util/EnumFlags.hpp>
+#include <everest/util/enum/EnumFlags.hpp>
 
 namespace {
-using namespace everest::util;
+using namespace everest::lib::util;
 
 // needs an 8-bit value
 enum class small : std::uint8_t {
