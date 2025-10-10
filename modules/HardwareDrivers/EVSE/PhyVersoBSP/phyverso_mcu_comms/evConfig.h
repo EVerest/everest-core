@@ -41,8 +41,8 @@ public:
         bool conn2_dc = false;
         int reset_gpio_bank = 1;
         int reset_gpio_pin = 23;
-        int conn1_motor_lock_type = 2;
-        int conn2_motor_lock_type = 2;
+        int conn1_motor_lock_type = -1;
+        int conn2_motor_lock_type = -1;
         bool conn1_gpio_stop_button_enabled = false;
         std::string conn1_gpio_stop_button_bank = "gpiochip1";
         int conn1_gpio_stop_button_pin = 36;
@@ -51,6 +51,12 @@ public:
         std::string conn2_gpio_stop_button_bank = "gpiochip1";
         int conn2_gpio_stop_button_pin = 37;
         bool conn2_gpio_stop_button_invert = false;
+        bool conn1_disable_port = false;
+        bool conn2_disable_port = false;
+        bool conn1_feedback_active_low = true;
+        bool conn2_feedback_active_low = true;
+        int conn1_feedback_pull = 2;
+        int conn2_feedback_pull = 2;
     } conf;
 
     evConfig();
