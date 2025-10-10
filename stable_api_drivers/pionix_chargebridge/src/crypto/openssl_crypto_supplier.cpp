@@ -120,21 +120,21 @@ static bool base64_encode(const unsigned char* bytes_str, int bytes_size, std::s
 
     int base64_length = ((bytes_size / 3) * 4) + 2;
     // If it causes issues, replace with 'alloca' on different platform
-    char base64_out[base64_length + 66]; // + 66 bytes for final block
+    std::vector<char> base64_out(base64_length + 66);
     int full_len = 0;
 
     int base64_out_length;
-    if (EVP_EncodeUpdate(base64_encode_context_ptr.get(), reinterpret_cast<unsigned char*>(base64_out),
+    if (EVP_EncodeUpdate(base64_encode_context_ptr.get(), reinterpret_cast<unsigned char*>(base64_out.data()),
                          &base64_out_length, bytes_str, bytes_size) < 0) {
         return false;
     }
     full_len += base64_out_length;
 
-    EVP_EncodeFinal(base64_encode_context_ptr.get(), reinterpret_cast<unsigned char*>(base64_out) + base64_out_length,
+    EVP_EncodeFinal(base64_encode_context_ptr.get(), reinterpret_cast<unsigned char*>(base64_out.data()) + base64_out_length,
                     &base64_out_length);
     full_len += base64_out_length;
 
-    out_encoded.assign(base64_out, full_len);
+    out_encoded.assign(base64_out.data(), full_len);
 
     return true;
 }
