@@ -200,6 +200,12 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             ${RUST_WORKSPACE_CARGO_FILE}
     )
 
+    # Store the workspace directory as a target property so that it is accessible in different scopes
+    set_property(TARGET generate_rust
+        PROPERTY
+            RUST_WORKSPACE_DIR "${RUST_WORKSPACE_DIR}"
+    )
+
     # FIXME (aw): use generator expressions here, but this first needs to be fixed in the build.rs file ...
     add_custom_target(build_rust_modules ALL
         COMMENT
@@ -210,7 +216,11 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}"
             EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}"
             ${CARGO_EXECUTABLE} build
-            $<IF:$<STREQUAL:${CMAKE_BUILD_TYPE},Release>,--release,>
+            $<IF:$<STREQUAL:$<CONFIG>,Release>,--release,>
+            # explicitly set the linker to match what we're using for C++ to avoid the following issue when cross compiling:
+            # https://github.com/rust-lang/rust/issues/28924
+            --config 'target.$<TARGET_PROPERTY:build_rust_modules,RUST_TARGET_TRIPLE>.linker = \"${CMAKE_CXX_COMPILER}\"'
+            --target $<TARGET_PROPERTY:build_rust_modules,RUST_TARGET_TRIPLE>
         WORKING_DIRECTORY
             ${RUST_WORKSPACE_DIR}
         DEPENDS
@@ -223,6 +233,12 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         APPEND
         PROPERTY
             ADDITIONAL_CLEAN_FILES ${RUST_WORKSPACE_DIR}/target ${RUST_WORKSPACE_DIR}/Cargo.lock
+    )
+
+    set_property(TARGET build_rust_modules
+        PROPERTY
+            # FIXME: Don't assume the glibc ABI here. This won't respect musl builds.
+            RUST_TARGET_TRIPLE "${CMAKE_SYSTEM_PROCESSOR}-unknown-linux-gnu"
     )
 
     function (ev_add_rs_module MODULE_NAME)
@@ -251,6 +267,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             APPEND
             PROPERTY RUST_MODULE_LIST "${MODULE_NAME}"
         )
+        get_target_property(RUST_WORKSPACE_DIR generate_rust RUST_WORKSPACE_DIR)
 
         add_custom_command(OUTPUT ${RUST_WORKSPACE_DIR}/${MODULE_NAME}
             COMMAND
@@ -270,12 +287,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         add_dependencies(generate_rust rust_symlink_module_${MODULE_NAME})
 
         set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
-
-        if (CMAKE_BUILD_TYPE STREQUAL "Release")
-            set(BIN_PREFIX "target/release")
-        else ()
-            set(BIN_PREFIX "target/debug")
-        endif ()
+        set(BIN_PREFIX "target/$<TARGET_PROPERTY:build_rust_modules,RUST_TARGET_TRIPLE>/$<IF:$<STREQUAL:$<CONFIG>,Release>,release,debug>")
 
         install(PROGRAMS ${RUST_WORKSPACE_DIR}/${BIN_PREFIX}/${MODULE_NAME}
             DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
