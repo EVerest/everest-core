@@ -310,12 +310,12 @@ enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
     struct din_SessionSetupResType* res = &conn->exi_out.dinEXIDocument->V2G_Message.Body.SessionSetupRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
 
-    /* format EVCC ID */
-    const auto strId = hexify(req->EVCCID.bytes, req->EVCCID.bytesLen);
+    /* format EVCC ID as a MAC address string */
+    const auto strId = to_mac_string(req->EVCCID.bytes, req->EVCCID.bytesLen, '?');
 
     conn->ctx->p_charger->publish_evcc_id(strId.c_str()); // publish EVCC ID
 
-    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", strId.size() ? strId.c_str() : "(zero length provided)");
+    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", strId.c_str());
 
     /* Now fill the evse response message */
     res->ResponseCode = din_responseCodeType_OK_NewSessionEstablished; // [V2G-DC-393]
