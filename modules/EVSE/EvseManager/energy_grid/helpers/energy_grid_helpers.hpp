@@ -27,13 +27,14 @@ float apply_uk_random_delay(UKRandomDelayStatus& random_delay, float& limit_rand
 
 types::iso15118::DcEvseMaximumLimits
 prepare_evse_max_limits(types::energy::EnforcedLimits const& value,
-                        types::power_supply_DC::Capabilities const& powersupply_capabilities,
                         energy_grid::LastValues const& last_values);
 
 bool prepare_export_to_grid(types::iso15118::DcEvseMaximumLimits& evse_max_limits, bool hack_allow_bpt_with_iso2,
                             bool sae_bidi_active);
 
 bool check_if_enforced_limits_changed_and_update(types::energy::EnforcedLimits const& value,
+                                                 types::power_supply_DC::Capabilities const& powersupply_capabilities,
+
                                                  types::evse_manager::EVInfo const& ev_info,
                                                  energy_grid::LastValues& last);
 

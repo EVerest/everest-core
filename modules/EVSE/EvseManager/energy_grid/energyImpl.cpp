@@ -115,7 +115,7 @@ void energyImpl::clear_request_schedules() {
 
 void energyImpl::ready() {
     hw_caps = mod->get_hw_capabilities();
-    last_powersupply_capabilities = mod->get_powersupply_capabilities();
+    last_values.powersupply_capabilities = mod->get_powersupply_capabilities();
     clear_request_schedules();
 
     // request energy now
@@ -400,12 +400,12 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
     // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
     // FIXME: multiply by conversion_efficiency here!
     auto ev_info = mod->get_ev_info();
-    if (check_if_enforced_limits_changed_and_update(value, ev_info, last_values)) {
-        auto powersupply_capabilities = mod->get_powersupply_capabilities();
+    auto powersupply_capabilities = mod->get_powersupply_capabilities();
+
+    if (check_if_enforced_limits_changed_and_update(value, powersupply_capabilities, ev_info, last_values)) {
 
         // collect the new limits
-        types::iso15118::DcEvseMaximumLimits evse_max_limits =
-            prepare_evse_max_limits(value, powersupply_capabilities, last_values);
+        types::iso15118::DcEvseMaximumLimits evse_max_limits = prepare_evse_max_limits(value, last_values);
 
         // In contrast to the original code, this also sets the variable to false,
         // when neither hack_allow_bpt_with_iso2 nor sae_bidi_active are set.

@@ -119,10 +119,11 @@ float apply_uk_random_delay(UKRandomDelayStatus& random_delay, float& limit_rand
 
 types::iso15118::DcEvseMaximumLimits
 prepare_evse_max_limits(types::energy::EnforcedLimits const& value,
-                        types::power_supply_DC::Capabilities const& powersupply_capabilities,
                         energy_grid::LastValues const& last_values) {
     constexpr float min_on_voltage = 10.;
     types::iso15118::DcEvseMaximumLimits evse_max_limits;
+    auto const& powersupply_capabilities = last_values.powersupply_capabilities;
+
 
     if (last_values.target_voltage > min_on_voltage) {
         // we use target_voltage here to calculate current limit.
@@ -201,6 +202,8 @@ bool prepare_export_to_grid(types::iso15118::DcEvseMaximumLimits& evse_max_limit
  * @return 'true' if last values were changed
  */
 bool check_if_enforced_limits_changed_and_update(types::energy::EnforcedLimits const& value,
+                                                 types::power_supply_DC::Capabilities const& powersupply_capabilities,
+
                                                  types::evse_manager::EVInfo const& ev_info,
                                                  energy_grid::LastValues& last) {
     bool values_changed = false;
@@ -214,6 +217,7 @@ bool check_if_enforced_limits_changed_and_update(types::energy::EnforcedLimits c
 
         values_changed = not almost_eq(last.enforced_limits_watt, watt_leave_side) or
                          not almost_eq(last.enforced_limits_ampere, ampere_root_side) or
+                         not almost_eq(last.powersupply_capabilities, powersupply_capabilities) or
                          not almost_eq(target_voltage, last.target_voltage) or
                          voltage_changed(actual_voltage, last.actual_voltage);
     }
@@ -223,6 +227,7 @@ bool check_if_enforced_limits_changed_and_update(types::energy::EnforcedLimits c
         last.enforced_limits_watt = value.limits_root_side.ac_max_current_A->value;
         last.target_voltage = ev_info.target_voltage.value_or(0.);
         last.actual_voltage = ev_info.present_voltage.value_or(0.);
+        last.powersupply_capabilities = powersupply_capabilities;
     }
 
     return values_changed;

@@ -26,6 +26,7 @@ struct LastValues {
     float enforced_limits_watt{-9999};
     float target_voltage{-9999};
     float actual_voltage{-9999};
+    types::power_supply_DC::Capabilities powersupply_capabilities;
 };
 
 class energyImpl : public energyImplBase {
@@ -59,7 +60,6 @@ private:
     // types::energy_price_information::PricePerkWh price_limit;
     // types::energy::OptimizerTarget optimizer_target;
     types::energy::EnergyFlowRequest energy_flow_request;
-    types::power_supply_DC::Capabilities last_powersupply_capabilities;
     LastValues last_values;
     void clear_import_request_schedule();
     void clear_export_request_schedule();
