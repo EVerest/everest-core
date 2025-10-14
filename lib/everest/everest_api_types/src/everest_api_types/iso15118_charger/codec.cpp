@@ -46,6 +46,11 @@ std::string serialize(CertificateHashDataInfo const& val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(EnergyTransferModeList const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::ostream& operator<<(std::ostream& os, CertificateActionEnum const& val) {
     os << serialize(val);
     return os;
@@ -77,6 +82,11 @@ std::ostream& operator<<(std::ostream& os, ResponseExiStreamStatus const& val) {
 }
 
 std::ostream& operator<<(std::ostream& os, CertificateHashDataInfo const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, EnergyTransferModeList const& val) {
     os << serialize(val);
     return os;
 }
@@ -120,6 +130,12 @@ template <> ResponseExiStreamStatus deserialize(std::string const& s) {
 template <> CertificateHashDataInfo deserialize(std::string const& s) {
     auto data = json::parse(s);
     CertificateHashDataInfo result = data;
+    return result;
+}
+
+template <> EnergyTransferModeList deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    EnergyTransferModeList result = data;
     return result;
 }
 

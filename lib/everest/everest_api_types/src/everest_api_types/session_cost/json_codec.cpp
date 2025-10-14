@@ -58,7 +58,7 @@ void from_json(const json& j, IdlePrice& k) {
         k.grace_minutes.emplace(j.at("grace_minutes"));
     }
     if (j.contains("hour_price")) {
-        k.hour_price = j.at("hour_price");
+        k.hour_price.emplace(j.at("hour_price"));
     }
 }
 

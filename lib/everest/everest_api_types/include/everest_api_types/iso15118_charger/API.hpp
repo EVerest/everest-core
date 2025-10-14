@@ -5,6 +5,7 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace everest::lib::API::V1_0::types::iso15118_charger {
 
@@ -60,6 +61,10 @@ struct CertificateHashDataInfo {
     std::string issuerKeyHash;
     std::string serialNumber;
     std::string responderURL;
+};
+
+struct EnergyTransferModeList {
+    std::vector<EnergyTransferMode> modes;
 };
 
 } // namespace everest::lib::API::V1_0::types::iso15118_charger

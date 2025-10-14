@@ -1,0 +1,107 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:auth_token_provider_API'
+info:
+  title: 'EVerest API definition for auth token provider'
+  version: 1.0.0
+  description: >-
+    API for EVerest API clients implementing auth token provider.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: Auth
+servers:
+  default:
+    pathname: 'everest_api/1.0/auth_token_provider/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  send_provided_token:
+    address: 'm2e/provided_token'
+    messages:
+      provided_token:
+        $ref: '#/components/messages/send_provided_token'
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  send_provided_token:
+    title: 'Send provided token'
+    action: send
+    channel:
+      $ref: '#/channels/send_provided_token'
+    description: 'Direction: Module to EVerest'
+
+  receive_heartbeat:
+    title: 'Receive heatbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+
+
+
+components:
+  messages:
+    send_provided_token:
+      name: send_provided_token
+      title: 'Send provided token'
+      summary: 'The provided token'
+      contentType: application/json
+      payload:
+        $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            authorization_type: "OCPP"
+            id_token:
+              type: "Central"
+              value: "TOKEN"
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            true
+
+
+  schemas:
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
