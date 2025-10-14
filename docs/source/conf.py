@@ -5,6 +5,9 @@
 
 import os
 import sys
+sys.path.append(os.path.abspath("./_ext"))
+
+import yaml
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here.
@@ -33,6 +36,7 @@ extensions = [
     'sphinx.ext.viewcode',     # Add links to highlighted source code
     'sphinx_copybutton',       # Add a "copy" button to code blocks
     'sphinx_design',           # For advanced design elements like cards, grids
+    'staticpages.extension',   # For static pages like versions_index.html
 ]
 
 templates_path = ['_templates']
@@ -63,3 +67,22 @@ html_short_title = f"EVerest Manual {release}"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+metadata_yaml_path = os.getenv('EVEREST_METADATA_YAML_PATH', "metadata_everest.yaml")
+with open(metadata_yaml_path, 'r') as f:
+    metadata = yaml.safe_load(f)
+
+deployed_versions = metadata.get('versions', [])
+versionsindex_page = {
+    'pagename': 'versions_index',
+    'urls_prefix': '/latest/',
+    'template': 'versions_index.html',
+    'context': {
+        'versions': deployed_versions,
+    },
+}
+
+staticpages_pages = [
+    versionsindex_page,
+]
+staticpages_urls_prefix = '/latest/'
