@@ -180,7 +180,7 @@ Check out this [guide for using EVerest SIL](https://everest.github.io/nightly/t
 
 ## Building the documentation
 
-The EVerest documentation is built using [Sphinx](https://www.sphinx-doc.org/).
+The EVerest documentation is written with [Sphinx](https://www.sphinx-doc.org/).
 The sources can be found in the `docs` directory.
 
 To build it locally, follow these steps.
