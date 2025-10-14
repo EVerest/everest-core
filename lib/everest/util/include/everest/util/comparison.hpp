@@ -21,11 +21,7 @@ constexpr T range_limit(int digits_of_precision) {
 
 template <int Prec, class T1, class T2>
 constexpr auto almost_eq(T1 lhs, T2 rhs) ->
-    typename std::enable_if<
-        std::is_floating_point<T1>::value and std::is_floating_point<T2>::value,
-        bool
-    >::type
-{
+    typename std::enable_if<std::is_floating_point<T1>::value and std::is_floating_point<T2>::value, bool>::type {
     using CommonType = typename std::common_type<T1, T2>::type;
     constexpr auto range = range_limit<CommonType>(Prec);
 
@@ -35,8 +31,7 @@ constexpr auto almost_eq(T1 lhs, T2 rhs) ->
     return common_lhs > common_rhs - range and common_lhs < common_rhs + range;
 }
 
-template <int Prec, class T>
-constexpr bool almost_eq(std::optional<T> const& lhs, std::optional<T> const& rhs) {
+template <int Prec, class T> constexpr bool almost_eq(std::optional<T> const& lhs, std::optional<T> const& rhs) {
     if (lhs.has_value() and rhs.has_value()) {
         return almost_eq<Prec, T>(lhs.value(), rhs.value());
     }
@@ -45,7 +40,6 @@ constexpr bool almost_eq(std::optional<T> const& lhs, std::optional<T> const& rh
     }
     return false;
 }
-
 
 template <class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
 bool in_noise_range(T val_a, T val_b, T noise_level) {

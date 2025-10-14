@@ -22,14 +22,7 @@
 namespace module {
 namespace energy_grid {
 
-template <class T, class U> auto almost_eq(T const& a, U const& b) {
-    return everest::lib::util::almost_eq<1>(a, b);
-}
-
-auto const voltage_changed = [](float val_a, float val_b) {
-    return not everest::lib::util::in_noise_range(val_a, val_b, 1.0F);
-};
-// helper to find out if voltage changed (more then noise)
+auto const almost_eq = everest::lib::util::almost_eq<1, float>;
 
 void energyImpl::init() {
 
@@ -324,26 +317,6 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
     // EVLOG_info << "Outgoing request " << energy_flow_request;
 }
 
-static bool almost_eq(types::power_supply_DC::Capabilities const& lhs,
-                      types::power_supply_DC::Capabilities const& rhs) {
-    bool result = lhs.bidirectional == rhs.bidirectional and
-                  almost_eq(lhs.current_regulation_tolerance_A, rhs.current_regulation_tolerance_A) and
-                  almost_eq(lhs.peak_current_ripple_A, rhs.peak_current_ripple_A) and
-                  almost_eq(lhs.max_export_voltage_V, rhs.max_export_voltage_V) and
-                  almost_eq(lhs.min_export_voltage_V, rhs.min_export_voltage_V) and
-                  almost_eq(lhs.max_export_current_A, rhs.max_export_current_A) and
-                  almost_eq(lhs.min_export_current_A, rhs.min_export_current_A) and
-                  almost_eq(lhs.max_export_power_W, rhs.max_export_power_W) and
-                  almost_eq(lhs.max_import_voltage_V, rhs.max_import_voltage_V) and
-                  almost_eq(lhs.min_import_voltage_V, rhs.min_import_voltage_V) and
-                  almost_eq(lhs.max_import_current_A, rhs.max_import_current_A) and
-                  almost_eq(lhs.min_import_current_A, rhs.min_import_current_A) and
-                  almost_eq(lhs.max_import_power_W, rhs.max_import_power_W) and
-                  almost_eq(lhs.conversion_efficiency_import, rhs.conversion_efficiency_import) and
-                  almost_eq(lhs.conversion_efficiency_export, rhs.conversion_efficiency_export);
-    return result;
-}
-
 // This is the decision logic when limits are changing.
 bool energyImpl::random_delay_needed(float last_limit, float limit) {
 
@@ -373,91 +346,91 @@ bool energyImpl::random_delay_needed(float last_limit, float limit) {
 }
 
 void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
-    if (value.uuid == energy_flow_request.uuid) {
-        // EVLOG_info << "Incoming enforce limits" << value;
+    // Check if we are supposed to handle the update
+    if (value.uuid not_eq energy_flow_request.uuid) {
+        return;
+    }
 
-        // publish for e.g. OCPP module
-        mod->p_evse->publish_enforced_limits(value);
+    // Adressing common AC and DC cases
 
-        // apply enforced limits
-        // apply number of phase limit
-        apply_number_of_phase_limit(
-            mod->ac_nr_phases_active, mod->get_hw_capabilities().supports_changing_phases_during_charging,
-            value.limits_root_side.ac_max_phase_count, mod->ac_nr_phases_active,
-            [this](bool value) { return mod->charger->switch_three_phases_while_charging(value); });
+    // publish for e.g. OCPP module
+    mod->p_evse->publish_enforced_limits(value);
 
-        // set enforced AC current limit and apply watt limit
-        float limit = 0.;
-        auto enforced_limit = limit = apply_AC_watt_limit(
-            value.limits_root_side.ac_max_current_A, value.limits_root_side.total_power_W, mod->ac_nr_phases_active,
-            mod->config.ac_nominal_voltage, [this](float total_power_W) {
-                mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
-                                  total_power_W);
-            });
+    // apply number of phase limit
+    apply_number_of_phase_limit(mod->ac_nr_phases_active,
+                                mod->get_hw_capabilities().supports_changing_phases_during_charging,
+                                value.limits_root_side.ac_max_phase_count, mod->ac_nr_phases_active,
+                                [this](bool value) { return mod->charger->switch_three_phases_while_charging(value); });
 
-        // check if we need to add a random delay for UK smart charging regs
-        last_enforced_limit =
-            apply_uk_random_delay(mod->random_delay, limit_when_random_delay_started, limit, enforced_limit,
-                                  charger_state, last_enforced_limit, random_delay_needed(last_enforced_limit, limit),
-                                  [this](auto const& countdown) { mod->p_random_delay->publish_countdown(countdown); });
+    // set enforced AC current limit and apply watt limit
+    float limit = 0.;
+    auto enforced_limit = limit = apply_AC_limit(
+        value.limits_root_side, mod->ac_nr_phases_active, mod->config.ac_nominal_voltage, [this](float total_power_W) {
+            mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
+                              total_power_W);
+        });
 
-        // update limit at the charger
-        const auto valid_until = steady_clock::now() + seconds(value.valid_for);
-        if (limit >= 0) {
-            // import
-            mod->charger->set_max_current(limit, valid_until);
-        } else {
-            // export
-            if (mod->session_is_iso_d20_ac_bpt()) {
-                mod->charger->set_max_current(limit, valid_until);
-            } else {
-                // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
-                mod->charger->set_max_current(0, valid_until);
-            }
+    // handle random delay for UK smart charging regs
+    last_enforced_limit =
+        apply_uk_random_delay(mod->random_delay, limit_when_random_delay_started, limit, enforced_limit, charger_state,
+                              last_enforced_limit, random_delay_needed(last_enforced_limit, limit),
+                              [this](auto const& countdown) { mod->p_random_delay->publish_countdown(countdown); });
+
+    // update limit at the charger
+    const auto valid_until = steady_clock::now() + seconds(value.valid_for);
+    if (limit >= 0) {
+        // import
+        mod->charger->set_max_current(limit, valid_until);
+    } else {
+        // export
+        // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
+        // this needs to be fixed in transition to -20 AC bidirectional.
+        mod->charger->set_max_current(0, valid_until);
+    }
+
+    if (std::abs(limit) > 1e-5) {
+        mod->charger->resume_charging_power_available();
+    }
+
+    // AC mode is done. We are handling DC only from here on
+    if (mod->config.charge_mode not_eq "DC") {
+        return;
+    }
+
+    // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
+    // FIXME: multiply by conversion_efficiency here!
+    auto ev_info = mod->get_ev_info();
+    if (check_if_enforced_limits_changed_and_update(value, ev_info, last_values)) {
+        auto powersupply_capabilities = mod->get_powersupply_capabilities();
+
+        // collect the new limits
+        types::iso15118::DcEvseMaximumLimits evse_max_limits =
+            prepare_evse_max_limits(value, powersupply_capabilities, last_values);
+
+        // In contrast to the original code, this also sets the variable to false,
+        // when neither hack_allow_bpt_with_iso2 nor sae_bidi_active are set.
+        // Behavior should be the same, since the default for that variable is false
+        // This function call alters evse_max_limits as necessary for export to grid
+        mod->is_actually_exporting_to_grid =
+            prepare_export_to_grid(evse_max_limits, mod->config.hack_allow_bpt_with_iso2, mod->sae_bidi_active);
+
+        // tell car our new limits
+        session_log.evse(true,
+                         fmt::format("Change HLC Limits: {}W/{}A, target_voltage {}, actual_voltage {}, hack_bpt {}",
+                                     evse_max_limits.evse_maximum_power_limit,
+                                     evse_max_limits.evse_maximum_current_limit, last_values.target_voltage,
+                                     last_values.actual_voltage, mod->is_actually_exporting_to_grid));
+        mod->r_hlc[0]->call_update_dc_maximum_limits(evse_max_limits);
+        mod->charger->inform_new_evse_max_hlc_limits(evse_max_limits);
+
+        // This is just neccessary to switch between charging and discharging
+        if (last_values.target_voltage > 0) {
+            mod->apply_new_target_voltage_current();
         }
 
-        if (limit > 1e-5 || limit < -1e-5) {
-            mod->charger->resume_charging_power_available();
-        }
-
-        if (mod->config.charge_mode == "DC") {
-            // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
-
-            // FIXME: multiply by conversion_efficiency here!
-            auto ev_info = mod->get_ev_info();
-            if (check_if_enforced_limits_changed_and_update(value, ev_info, last_values)) {
-                auto powersupply_capabilities = mod->get_powersupply_capabilities();
-
-                // collect the new limits
-                types::iso15118::DcEvseMaximumLimits evse_max_limits =
-                    prepare_evse_max_limits(value, powersupply_capabilities, last_values);
-
-                // In contrast to the original code, this also sets the variable to false,
-                // when neither hack_allow_bpt_with_iso2 nor sae_bidi_active are set.
-                // Behavior should be the same, since the default for that variable is false
-                // This function call alters evse_max_limits as necessary for export to grid
-                mod->is_actually_exporting_to_grid =
-                    prepare_export_to_grid(evse_max_limits, mod->config.hack_allow_bpt_with_iso2, mod->sae_bidi_active);
-
-                // tell car our new limits
-                session_log.evse(
-                    true, fmt::format("Change HLC Limits: {}W/{}A, target_voltage {}, actual_voltage {}, hack_bpt {}",
-                                      evse_max_limits.evse_maximum_power_limit,
-                                      evse_max_limits.evse_maximum_current_limit, last_values.target_voltage,
-                                      last_values.actual_voltage, mod->is_actually_exporting_to_grid));
-                mod->r_hlc[0]->call_update_dc_maximum_limits(evse_max_limits);
-                mod->charger->inform_new_evse_max_hlc_limits(evse_max_limits);
-
-                // This is just neccessary to switch between charging and discharging
-                if (last_values.target_voltage > 0) {
-                    mod->apply_new_target_voltage_current();
-                }
-
-                // Note: If the limits are lower then before, we could tell the DC power supply to
-                // ramp down already here instead of waiting for the car to request less power.
-                // Some cars may not like it, so we wait for the car to request less for now.
-            }
-        }
+        // Note: If the limits are lower then before, we could tell the DC power supply to
+        // ramp down already here instead of waiting for the car to request less power.
+        // Some cars may not like it, so we wait for the car to request less for now.
     }
 }
 
