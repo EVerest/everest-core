@@ -130,7 +130,7 @@ static void publish_var_V2G_Message(v2g_connection* conn, bool is_req) {
 /*!
  * \brief v2g_incoming_v2gtp This function reads the V2G transport header
  * \param conn hold the context of the V2G-connection.
- * \return Returns 0 if the V2G-session was successfully stopped, otherwise -1.
+ * \return Returns 0 if the V2G-session was successfully stopped, 1 if connection was closed unexpectedly, otherwise -1.
  */
 static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
     assert(conn != nullptr);
@@ -145,9 +145,10 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
              (rv == -1) ? strerror(errno) : "connection terminated");
         return -1;
     }
-    /* peer closed connection */
+    /* connection was closed unexpectedly (timeout or closed by peer) */
     if (rv == 0)
         return 1;
+
     if (rv != V2GTP_HEADER_LENGTH) {
         dlog(DLOG_LEVEL_ERROR, "connection_read(header) too short: expected %d, got %d", V2GTP_HEADER_LENGTH, rv);
         return -1;
@@ -382,7 +383,7 @@ int v2g_handle_connection(struct v2g_connection* conn) {
         conn->payload_len = 0;
         exi_bitstream_init(&conn->stream, conn->buffer, 0, 0, nullptr);
 
-        /* next call return -1 on error, 1 when peer closed connection, 0 on success */
+        /* next call return -1 on error, 1 if connection was closed unexpectedly, 0 on success */
         rv = v2g_incoming_v2gtp(conn);
 
         if (rv != 0) {
@@ -468,7 +469,7 @@ int v2g_handle_connection(struct v2g_connection* conn) {
         conn->stream.byte_pos = 0;
         conn->payload_len = 0;
 
-        /* next call return -1 on error, 1 when peer closed connection, 0 on success */
+        /* next call return -1 on error, 1 connection was closed unexpectedly, 0 on success */
         rv = v2g_incoming_v2gtp(conn);
 
         if (rv == 1) {
