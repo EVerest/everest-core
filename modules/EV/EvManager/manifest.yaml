@@ -72,6 +72,14 @@ config:
     description: Discharge minimal soc at which the evse should shutdown
     type: integer
     default: 20
+  force_payment_type:
+    description: Force the use of the selected payment option
+    type: boolean
+    default: false
+  payment_type:
+    description: Manually select the payment option, must have force_payment_type set to true
+    type: string
+    default: "auto"
   max_current:
     description: Ac max current in Ampere
     type: number
