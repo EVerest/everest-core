@@ -2,17 +2,26 @@
 
 ## 🔧 Next Steps for Customization
 
-This module is now ready for CAN protocol adaptation. To implement your Winline-specific protocol:
+This module is now ready for CAN protocol adaptation. To implement your
+Winline-specific protocol:
 
 ### 1. Update Protocol Implementation (REQUIRED)
-- [ ] **Edit `can_driver_acdc/CanPackets.hpp`**: Replace all WinlineProtocol constants with your actual protocol values
-- [ ] **Edit `can_driver_acdc/CanPackets.cpp`**: Update CAN ID encoding functions and packet implementations
-- [ ] **Edit `can_driver_acdc/WinlineCanDevice.cpp`**: Update rx_handler logic for your specific protocol
-- [ ] **Edit `main/power_supply_DCImpl.cpp`**: Update error mapping function for your error types
+
+- [ ] **Edit `can_driver_acdc/CanPackets.hpp`**: Replace all WinlineProtocol
+  constants with your actual protocol values
+- [ ] **Edit `can_driver_acdc/CanPackets.cpp`**: Update CAN ID encoding
+  functions and packet implementations
+- [ ] **Edit `can_driver_acdc/WinlineCanDevice.cpp`**: Update rx_handler
+  logic for your specific protocol
+- [ ] **Edit `main/power_supply_DCImpl.cpp`**: Update error mapping function
+  for your error types
 
 ### 2. Update Configuration (REQUIRED)
-- [ ] **Edit `manifest.yaml`**: Update description, parameters, and metadata for your hardware
-- [ ] **Test configuration**: Verify all parameters work with your Winline hardware
+
+- [ ] **Edit `manifest.yaml`**: Update description, parameters, and metadata
+  for your hardware
+- [ ] **Test configuration**: Verify all parameters work with your Winline
+  hardware
 
 ### 3. Protocol Customization Areas
 
@@ -28,6 +37,7 @@ This module is now ready for CAN protocol adaptation. To implement your Winline-
 ### 4. Current State
 
 **✅ Completed:**
+
 - Module renamed from InfyPower to Winline
 - All class names updated (WinlineCanDevice, etc.)
 - All logging prefixes changed to "Winline:"
@@ -35,15 +45,18 @@ This module is now ready for CAN protocol adaptation. To implement your Winline-
 - EVerest integration maintained
 
 **🔧 Ready for protocol customization:**
+
 - CAN packet structures (replace with your protocol)
 - Protocol constants (update with your values)
 - Error mapping (adapt to your error types)
 - Discovery mechanism (adapt to your method)
 
 ### 5. Testing Checklist
+
 - [ ] **Build verification**: Ensure module compiles
 - [ ] **Virtual CAN**: Test basic CAN communication with `vcan0`
-- [ ] **Protocol validation**: Verify CAN ID encoding/decoding with your protocol
+- [ ] **Protocol validation**: Verify CAN ID encoding/decoding with your
+  protocol
 - [ ] **Error handling**: Test all error conditions
 - [ ] **Multi-module**: Test with multiple modules if supported
 - [ ] **EVerest integration**: Verify power_supply_DC interface compliance
@@ -71,13 +84,17 @@ controller_address: 240    # Update for your protocol
 ## Original Template
 
 This driver maintains the same proven architecture as the InfyPower driver:
+
 - Robust CAN communication handling
 - Comprehensive error management
 - Multi-module support with current sharing
 - EVerest framework integration
 - Thread-safe operation
 
-**Ready for your Winline protocol implementation!**
+## Ready for Implementation
+
+Ready for your Winline protocol implementation!
 
 ---
+
 *Generated from InfyPower template - customize for your Winline protocol*
