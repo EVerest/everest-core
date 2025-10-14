@@ -19,6 +19,8 @@ target_sources(${MODULE_NAME}
         ErrorHandling.cpp
         backtrace.cpp
         PersistentStore.cpp
+
+        energy_grid/helpers/energy_grid_helpers.cpp
 )
 
 target_link_libraries(${MODULE_NAME}
