@@ -526,12 +526,14 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     struct iso2_SessionSetupResType* res = &conn->exi_out.iso2EXIDocument->V2G_Message.Body.SessionSetupRes;
     enum v2g_event next_event = V2G_EVENT_NO_EVENT;
 
-    /* format EVCC ID */
-    const auto strId = hexify(req->EVCCID.bytes, req->EVCCID.bytesLen);
+    /* [V2G2-879] The EVCC shall transmit an EVCCID with six byte in length,
+     * and it shall fill it with its MAC address.
+     */
+    const auto strId = to_mac_string(req->EVCCID.bytes, req->EVCCID.bytesLen, '?');
 
     conn->ctx->p_charger->publish_evcc_id(strId.c_str()); // publish EVCC ID
 
-    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", strId.size() ? strId.c_str() : "(zero length provided)");
+    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", strId.c_str());
 
     /* [V2G2-756]: If the SECC receives a SessionSetupReq including a SessionID value which is not
      * equal to zero (0) and not equal to the SessionID value stored from the preceding V2G
