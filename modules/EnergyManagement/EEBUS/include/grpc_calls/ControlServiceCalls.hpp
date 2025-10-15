@@ -6,7 +6,8 @@
 #include <control_service/control_service.grpc-ext.pb.h>
 #include <usecases/cs/lpc/service.grpc-ext.pb.h>
 
-#include <UseCaseEventReader.hpp>
+#include <EebusCallbacks.hpp>
+#include <LpcUseCaseEventReader.hpp>
 
 namespace module {
 
@@ -24,17 +25,17 @@ public:
                          std::string serial_number);
     void call_start_setup();
     void call_register_remote_ski(const std::string& remote_ski);
-    std::string call_add_use_case(control_service::UseCase* use_case);
+    std::string call_add_use_case(const control_service::UseCase& use_case);
 
-    void subscribe_use_case_events(module::EEBUS* eebus_module, use_case_stubs stub,
-                                   control_service::UseCase* use_case);
+    void subscribe_use_case_events(eebus::EEBusCallbacks callbacks, use_case_stubs stub);
 
     void call_start_service();
 
 private:
     std::shared_ptr<control_service::ControlService::Stub> control_service_stub;
     common_types::EntityAddress entity_address;
-    std::unique_ptr<UseCaseEventReader> lpc_uc_reader;
+    std::unique_ptr<LpcUseCaseEventReader> lpc_uc_reader;
+    control_service::UseCase lpc_use_case;
 };
 
 } // namespace grpc_calls

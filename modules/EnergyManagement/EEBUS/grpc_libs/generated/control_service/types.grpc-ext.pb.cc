@@ -1,7 +1,7 @@
 #include "control_service/types.grpc-ext.pb.h"
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 namespace control_service {
 

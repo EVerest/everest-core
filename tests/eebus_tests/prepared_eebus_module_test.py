@@ -99,9 +99,13 @@ class PreparedEEBUSModuleTest:
 
         self._control_service_server.start()
         self._cs_lpc_control_server.start()
-        thread_tc_start = threading.Thread(target=self._test_controller.start).start()
+        thread_tc_start = threading.Thread(
+            target=self._test_controller.start).start()
 
-        req = self._control_service_servicer.command_queues["SetConfig"].request_queue.get(timeout=60)
+        self._control_service_servicer.command_queues["SetConfig"].response_queue.put_nowait(
+            control_service_messages_pb2.EmptyResponse()
+        )
+        req = self._control_service_servicer.command_queues["SetConfig"].request_queue.get(timeout=10)
         if self._assertions:
             assert req is not None
             assert req.port == 4715
@@ -114,27 +118,28 @@ class PreparedEEBUSModuleTest:
             assert req.device_type == control_service_types_pb2.DeviceType.CHARGING_STATION
             assert len(req.entity_types) == 1
             assert req.entity_types[0] == control_service_types_pb2.EntityType.EVSE
-            assert req.heartbeat_timeout_seconds == 4
-        self._control_service_servicer.command_queues["SetConfig"].response_queue.put_nowait(
-            control_service_messages_pb2.EmptyResponse()
-        )
+            assert req.heartbeat_timeout_seconds == 120
 
-        req = self._control_service_servicer.command_queues["StartSetup"].request_queue.get(timeout=5)
+        req = self._control_service_servicer.command_queues["StartSetup"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
         self._control_service_servicer.command_queues["StartSetup"].response_queue.put_nowait(
             control_service_messages_pb2.EmptyResponse()
         )
 
-        req = self._control_service_servicer.command_queues["RegisterRemoteSki"].request_queue.get(timeout=5)
+        req = self._control_service_servicer.command_queues["RegisterRemoteSki"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
-            assert req.remote_ski == "this-is-a-ski-42"  # see config-test-eebus-module-001.yaml
+            # see config-test-eebus-module-001.yaml
+            assert req.remote_ski == "this-is-a-ski-42"
         self._control_service_servicer.command_queues["RegisterRemoteSki"].response_queue.put_nowait(
             control_service_messages_pb2.EmptyResponse()
         )
 
-        req = self._control_service_servicer.command_queues["AddUseCase"].request_queue.get(timeout=5)
+        req = self._control_service_servicer.command_queues["AddUseCase"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
             assert len(req.entity_address.entity_address) == 1
@@ -142,20 +147,23 @@ class PreparedEEBUSModuleTest:
             assert req.use_case.actor == control_service_types_pb2.UseCase.ActorType.ControllableSystem
             assert req.use_case.name == control_service_types_pb2.UseCase.NameType.limitationOfPowerConsumption
         res = control_service_messages_pb2.AddUseCaseResponse(
-            endpoint=f"localhost:{ self._cs_lpc_control_server.get_port() }"
+            endpoint=f"localhost:{self._cs_lpc_control_server.get_port()}"
         )
-        self._control_service_servicer.command_queues["AddUseCase"].response_queue.put_nowait(res)
+        self._control_service_servicer.command_queues["AddUseCase"].response_queue.put_nowait(
+            res)
 
-        req = self._cs_lpc_control_servicer.command_queues["SetConsumptionNominalMax"].request_queue.get(timeout=5)
+        req = self._cs_lpc_control_servicer.command_queues["SetConsumptionNominalMax"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
             assert req.value == 32000
-        
+
         self._cs_lpc_control_servicer.command_queues["SetConsumptionNominalMax"].response_queue.put_nowait(
             cs_lpc_messages_pb2.SetConsumptionNominalMaxResponse()
         )
 
-        req = self._cs_lpc_control_servicer.command_queues["SetConsumptionLimit"].request_queue.get(timeout=5)
+        req = self._cs_lpc_control_servicer.command_queues["SetConsumptionLimit"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
             assert req.load_limit.duration_nanoseconds == 0
@@ -167,7 +175,8 @@ class PreparedEEBUSModuleTest:
             cs_lpc_messages_pb2.SetConsumptionLimitResponse()
         )
 
-        req = self._cs_lpc_control_servicer.command_queues["SetFailsafeConsumptionActivePowerLimit"].request_queue.get(timeout=5)
+        req = self._cs_lpc_control_servicer.command_queues["SetFailsafeConsumptionActivePowerLimit"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
             assert req.value == 4200
@@ -176,7 +185,8 @@ class PreparedEEBUSModuleTest:
             cs_lpc_messages_pb2.SetFailsafeConsumptionActivePowerLimitResponse()
         )
 
-        req = self._cs_lpc_control_servicer.command_queues["SetFailsafeDurationMinimum"].request_queue.get(timeout=5)
+        req = self._cs_lpc_control_servicer.command_queues["SetFailsafeDurationMinimum"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
             assert req.duration_nanoseconds == 2 * 60 * 60 * 1000 * 1000 * 1000
@@ -185,7 +195,8 @@ class PreparedEEBUSModuleTest:
             cs_lpc_messages_pb2.SetFailsafeDurationMinimumResponse()
         )
 
-        req = self._control_service_servicer.command_queues["SubscribeUseCaseEvents"].request_queue.get(timeout=5)
+        req = self._control_service_servicer.command_queues["SubscribeUseCaseEvents"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
             assert len(req.entity_address.entity_address) == 1
@@ -196,12 +207,14 @@ class PreparedEEBUSModuleTest:
             thread_tc_start.join(timeout=30)
         except AttributeError:
             logging.debug("Thread already joined")
-        
-        self.probe_module = self.ExtendedProbeModule(self._everest_core.get_runtime_session())
+
+        self.probe_module = self.ExtendedProbeModule(
+            self._everest_core.get_runtime_session())
         self.probe_module.start()
         await self.probe_module.wait_to_be_ready(timeout=30)
 
-        req = self._control_service_servicer.command_queues["StartService"].request_queue.get(timeout=5)
+        req = self._control_service_servicer.command_queues["StartService"].request_queue.get(
+            timeout=5)
         if self._assertions:
             assert req is not None
         self._control_service_servicer.command_queues["StartService"].response_queue.put_nowait(

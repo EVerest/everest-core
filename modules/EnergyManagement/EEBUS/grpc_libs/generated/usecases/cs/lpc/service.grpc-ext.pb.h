@@ -6,69 +6,69 @@
 
 namespace cs_lpc {
 
-bool CallConsumptionLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::ConsumptionLimitRequest& request,
+grpc::Status CallConsumptionLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::ConsumptionLimitRequest& request,
     cs_lpc::ConsumptionLimitResponse* response);
 
-bool CallSetConsumptionLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::SetConsumptionLimitRequest& request,
+grpc::Status CallSetConsumptionLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::SetConsumptionLimitRequest& request,
     cs_lpc::SetConsumptionLimitResponse* response);
 
-bool CallPendingConsumptionLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::PendingConsumptionLimitRequest& request,
+grpc::Status CallPendingConsumptionLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::PendingConsumptionLimitRequest& request,
     cs_lpc::PendingConsumptionLimitResponse* response);
 
-bool CallApproveOrDenyConsumptionLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::ApproveOrDenyConsumptionLimitRequest& request,
+grpc::Status CallApproveOrDenyConsumptionLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::ApproveOrDenyConsumptionLimitRequest& request,
     cs_lpc::ApproveOrDenyConsumptionLimitResponse* response);
 
-bool CallFailsafeConsumptionActivePowerLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::FailsafeConsumptionActivePowerLimitRequest& request,
+grpc::Status CallFailsafeConsumptionActivePowerLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::FailsafeConsumptionActivePowerLimitRequest& request,
     cs_lpc::FailsafeConsumptionActivePowerLimitResponse* response);
 
-bool CallSetFailsafeConsumptionActivePowerLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::SetFailsafeConsumptionActivePowerLimitRequest& request,
+grpc::Status CallSetFailsafeConsumptionActivePowerLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::SetFailsafeConsumptionActivePowerLimitRequest& request,
     cs_lpc::SetFailsafeConsumptionActivePowerLimitResponse* response);
 
-bool CallFailsafeDurationMinimum(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::FailsafeDurationMinimumRequest& request,
+grpc::Status CallFailsafeDurationMinimum(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::FailsafeDurationMinimumRequest& request,
     cs_lpc::FailsafeDurationMinimumResponse* response);
 
-bool CallSetFailsafeDurationMinimum(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::SetFailsafeDurationMinimumRequest& request,
+grpc::Status CallSetFailsafeDurationMinimum(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::SetFailsafeDurationMinimumRequest& request,
     cs_lpc::SetFailsafeDurationMinimumResponse* response);
 
-bool CallStartHeartbeat(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::StartHeartbeatRequest& request,
+grpc::Status CallStartHeartbeat(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::StartHeartbeatRequest& request,
     cs_lpc::StartHeartbeatResponse* response);
 
-bool CallStopHeartbeat(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::StopHeartbeatRequest& request,
+grpc::Status CallStopHeartbeat(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::StopHeartbeatRequest& request,
     cs_lpc::StopHeartbeatResponse* response);
 
-bool CallIsHeartbeatWithinDuration(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::IsHeartbeatWithinDurationRequest& request,
+grpc::Status CallIsHeartbeatWithinDuration(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::IsHeartbeatWithinDurationRequest& request,
     cs_lpc::IsHeartbeatWithinDurationResponse* response);
 
-bool CallConsumptionNominalMax(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::ConsumptionNominalMaxRequest& request,
+grpc::Status CallConsumptionNominalMax(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::ConsumptionNominalMaxRequest& request,
     cs_lpc::ConsumptionNominalMaxResponse* response);
 
-bool CallSetConsumptionNominalMax(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::SetConsumptionNominalMaxRequest& request,
+grpc::Status CallSetConsumptionNominalMax(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::SetConsumptionNominalMaxRequest& request,
     cs_lpc::SetConsumptionNominalMaxResponse* response);
 
 } // namespace cs_lpc

@@ -58,8 +58,8 @@ class ControlServiceServicer(control_service_pb2_grpc.ControlServiceServicer):
     def __del__(self):
         try:
             for command in self._commands:
-                queue_helpers.wait_for_queue_empty(self.command_queues[command].request_queue, 30)
-                queue_helpers.wait_for_queue_empty(self.command_queues[command].response_queue, 30)
+                queue_helpers.wait_for_queue_empty(self.command_queues[command].request_queue, 3)
+                queue_helpers.wait_for_queue_empty(self.command_queues[command].response_queue, 3)
 
         except TimeoutError:
             raise TimeoutError("ControlServiceServicer queues are not empty after 30 seconds")

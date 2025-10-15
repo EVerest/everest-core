@@ -6,44 +6,44 @@
 
 namespace control_service {
 
-bool CallStartService(
-    const std::shared_ptr<control_service::ControlService::Stub> stub,
-    const control_service::EmptyRequest& request,
+grpc::Status CallStartService(
+    const std::shared_ptr<control_service::ControlService::Stub> &stub,
+    control_service::EmptyRequest& request,
     control_service::EmptyResponse* response);
 
-bool CallStopService(
-    const std::shared_ptr<control_service::ControlService::Stub> stub,
-    const control_service::EmptyRequest& request,
+grpc::Status CallStopService(
+    const std::shared_ptr<control_service::ControlService::Stub> &stub,
+    control_service::EmptyRequest& request,
     control_service::EmptyResponse* response);
 
-bool CallSetConfig(
-    const std::shared_ptr<control_service::ControlService::Stub> stub,
-    const control_service::SetConfigRequest& request,
+grpc::Status CallSetConfig(
+    const std::shared_ptr<control_service::ControlService::Stub> &stub,
+    control_service::SetConfigRequest& request,
     control_service::EmptyResponse* response);
 
-bool CallStartSetup(
-    const std::shared_ptr<control_service::ControlService::Stub> stub,
-    const control_service::EmptyRequest& request,
+grpc::Status CallStartSetup(
+    const std::shared_ptr<control_service::ControlService::Stub> &stub,
+    control_service::EmptyRequest& request,
     control_service::EmptyResponse* response);
 
-bool CallAddEntity(
-    const std::shared_ptr<control_service::ControlService::Stub> stub,
-    const control_service::AddEntityRequest& request,
+grpc::Status CallAddEntity(
+    const std::shared_ptr<control_service::ControlService::Stub> &stub,
+    control_service::AddEntityRequest& request,
     control_service::EmptyResponse* response);
 
-bool CallRemoveEntity(
-    const std::shared_ptr<control_service::ControlService::Stub> stub,
-    const control_service::RemoveEntityRequest& request,
+grpc::Status CallRemoveEntity(
+    const std::shared_ptr<control_service::ControlService::Stub> &stub,
+    control_service::RemoveEntityRequest& request,
     control_service::EmptyResponse* response);
 
-bool CallRegisterRemoteSki(
-    const std::shared_ptr<control_service::ControlService::Stub> stub,
-    const control_service::RegisterRemoteSkiRequest& request,
+grpc::Status CallRegisterRemoteSki(
+    const std::shared_ptr<control_service::ControlService::Stub> &stub,
+    control_service::RegisterRemoteSkiRequest& request,
     control_service::EmptyResponse* response);
 
-bool CallAddUseCase(
-    const std::shared_ptr<control_service::ControlService::Stub> stub,
-    const control_service::AddUseCaseRequest& request,
+grpc::Status CallAddUseCase(
+    const std::shared_ptr<control_service::ControlService::Stub> &stub,
+    control_service::AddUseCaseRequest& request,
     control_service::AddUseCaseResponse* response);
 
 } // namespace control_service

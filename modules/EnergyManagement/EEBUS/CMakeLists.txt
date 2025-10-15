@@ -22,10 +22,11 @@ target_sources(${MODULE_NAME}
 target_sources(${MODULE_NAME}
     PRIVATE
         "helper.cpp"
-        "UseCaseEventReader.cpp"
+        "LpcUseCaseEventReader.cpp"
         "grpc_calls/ControllableSystemLPCControlCalls.cpp"
         "grpc_calls/ControlServiceCalls.cpp"
         "ConfigValidator.cpp"
+        "EebusCallbacks.cpp"
 )
 target_link_libraries(${MODULE_NAME}
     PUBLIC

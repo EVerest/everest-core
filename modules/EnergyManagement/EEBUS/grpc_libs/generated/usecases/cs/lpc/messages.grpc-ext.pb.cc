@@ -1,7 +1,7 @@
 #include "usecases/cs/lpc/messages.grpc-ext.pb.h"
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 namespace cs_lpc {
 

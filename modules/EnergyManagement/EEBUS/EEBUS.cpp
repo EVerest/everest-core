@@ -12,7 +12,6 @@
 #include <grpcpp/grpcpp.h>
 
 #include <everest/run_application/run_application.hpp>
-using namespace everest::run_application;
 
 // module internal
 #include <helper.hpp>
@@ -35,7 +34,7 @@ void start_eebus_grpc_api(const std::filesystem::path& binary_path, int port, co
     args.emplace_back(cert_file.string());
     args.emplace_back("-private-key-path");
     args.emplace_back(key_file.string());
-    CmdOutput output = run_application(binary_path.string(), args);
+    everest::run_application::CmdOutput output = everest::run_application::run_application(binary_path.string(), args);
     EVLOG_error << "eebus-grpc output: " << output.output;
     EVLOG_error << "eebus-grpc exit code: " << output.exit_code;
 }
@@ -99,34 +98,34 @@ void EEBUS::init() {
                         this->config_validator->get_private_key_path());
     }
 
+    // Setup callbacks
+    this->callbacks.update_limits_callback = [this](types::energy::ExternalLimits new_limits) {
+        this->r_eebus_energy_sink->call_set_external_limits(std::move(new_limits));
+    };
+
+    // Start control service
     std::string control_service_grpc_channel = "localhost:" + std::to_string(grpc_control_service_channel_port);
-    EVLOG_critical << "ML DEBUG PASSED GRPC BINARY, channel: " << control_service_grpc_channel;
-    std::shared_ptr<grpc::Channel> channel =
+    const std::shared_ptr<grpc::Channel> channel =
         grpc::CreateChannel(control_service_grpc_channel, grpc::InsecureChannelCredentials());
     this->failed = !wait_for_channel_ready(channel, std::chrono::seconds(eebus_one_minute));
     if (this->failed) {
         EVLOG_error << "control service channel is not ready";
         return;
     }
-    EVLOG_critical << "ML DEBUG PASSED CONNECTED TO CHANNEL";
     this->control_service_stub = control_service::ControlService::NewStub(channel);
 
-    EVLOG_critical << "ML DEBUG PASSED CREATED SERVICE STUF";
     this->cs_calls = std::make_unique<grpc_calls::ControlServiceCalls>(this->control_service_stub);
-    EVLOG_critical << "ML DEBUG PASSED INIT CS CALLS";
     this->cs_calls->call_set_config(
         this->config_validator->get_control_service_port(), this->config_validator->get_vendor_code(),
         this->config_validator->get_device_brand(), this->config_validator->get_device_model(),
         this->config_validator->get_serial_number());
-    EVLOG_critical << "ML DEBUG PASSED CALL SET CONFIG";
     this->cs_calls->call_start_setup();
-    EVLOG_critical << "ML DEBUG PASSED CALL START SETUP";
     this->cs_calls->call_register_remote_ski(this->config.eebus_ems_ski);
-    this->lpc_use_case = control_service::CreateUseCase(
+    std::string endpoint = this->cs_calls->call_add_use_case(control_service::CreateUseCase(
         control_service::UseCase_ActorType_Enum::UseCase_ActorType_Enum_ControllableSystem,
-        control_service::UseCase_NameType_Enum::UseCase_NameType_Enum_limitationOfPowerConsumption);
-    std::string endpoint = this->cs_calls->call_add_use_case(&this->lpc_use_case);
+        control_service::UseCase_NameType_Enum::UseCase_NameType_Enum_limitationOfPowerConsumption));
 
+    // Open channel for LPC use case
     std::shared_ptr<grpc::Channel> channel2 = grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
     this->failed = !wait_for_channel_ready(channel2, std::chrono::seconds(eebus_one_minute));
     if (this->failed) {
@@ -135,23 +134,24 @@ void EEBUS::init() {
     }
     this->cs_lpc_stub = cs_lpc::ControllableSystemLPCControl::NewStub(channel2);
 
+    // Setup defaults for LPC use case
     this->cs_lpc_calls = std::make_unique<grpc_calls::ControllableSystemLPCControlCalls>(this->cs_lpc_stub);
-    this->cs_lpc_calls->call_set_consumption_nominal_max();
-    this->cs_lpc_calls->call_set_consumption_limit();
-    this->cs_lpc_calls->call_set_failsafe_consumption_active_power_limit();
+    this->cs_lpc_calls->call_set_consumption_nominal_max(this->config.max_nominal_power);
+    this->cs_lpc_calls->call_set_consumption_limit(this->config.failsafe_control_limit);
+    this->cs_lpc_calls->call_set_failsafe_consumption_active_power_limit(this->config.failsafe_control_limit);
     this->cs_lpc_calls->call_set_failsafe_duration_minimum();
 
-    this->cs_calls->subscribe_use_case_events(this, this->cs_lpc_stub, &this->lpc_use_case);
-}
-
-void EEBUS::ready() {
-    invoke_ready(*p_main);
+    this->cs_calls->subscribe_use_case_events(this->callbacks, this->cs_lpc_stub);
 
     if (this->failed and this->eebus_grpc_api_thread_active.exchange(false)) {
         EVLOG_error << "EEBUS module failed to initialize";
         this->eebus_grpc_api_thread.join();
         return;
     }
+}
+
+void EEBUS::ready() {
+    invoke_ready(*p_main);
 
     this->cs_calls->call_start_service();
 

@@ -26,7 +26,6 @@
 
 // module internal
 #include <ConfigValidator.hpp>
-#include <UseCaseEventReader.hpp>
 #include <grpc_calls/ControlServiceCalls.hpp>
 #include <grpc_calls/ControllableSystemLPCControlCalls.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -44,6 +43,8 @@ struct Conf {
     std::string device_brand;
     std::string device_model;
     std::string serial_number;
+    int failsafe_control_limit;
+    int max_nominal_power;
 };
 
 class EEBUS : public Everest::ModuleBase {
@@ -83,9 +84,9 @@ private:
     std::unique_ptr<grpc_calls::ControlServiceCalls> cs_calls;
     std::unique_ptr<grpc_calls::ControllableSystemLPCControlCalls> cs_lpc_calls;
     std::unique_ptr<ConfigValidator> config_validator;
+    eebus::EEBusCallbacks callbacks{};
 
     bool failed;
-    control_service::UseCase lpc_use_case;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

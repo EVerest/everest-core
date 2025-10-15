@@ -1,7 +1,7 @@
-#ifndef USE_CASE_EVENT_READER_HPP
-#define USE_CASE_EVENT_READER_HPP
+#ifndef LPC_USE_CASE_EVENT_READER_HPP
+#define LPC_USE_CASE_EVENT_READER_HPP
 
-#include <future>
+#include <condition_variable>
 #include <memory>
 
 // everest core deps
@@ -11,16 +11,18 @@
 #include <control_service/control_service.grpc.pb.h>
 #include <usecases/cs/lpc/service.grpc.pb.h>
 
+#include <EebusCallbacks.hpp>
+
 namespace module {
 
 class EEBUS;
 
-class UseCaseEventReader : public grpc::ClientReadReactor<control_service::SubscribeUseCaseEventsResponse> {
+class LpcUseCaseEventReader : public grpc::ClientReadReactor<control_service::SubscribeUseCaseEventsResponse> {
 public:
-    UseCaseEventReader(std::shared_ptr<control_service::ControlService::Stub> control_service_stub,
-                       std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub,
-                       const control_service::SubscribeUseCaseEventsRequest& request, module::EEBUS* ev_module);
-    void OnReadDone(bool ok) override;
+    LpcUseCaseEventReader(std::shared_ptr<control_service::ControlService::Stub> control_service_stub,
+                          std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub,
+                          control_service::SubscribeUseCaseEventsRequest request, eebus::EEBusCallbacks callbacks);
+    void OnReadDone(bool okay) override;
     void OnDone(const grpc::Status& status) override;
     grpc::Status Await();
 
@@ -38,9 +40,10 @@ private:
     std::condition_variable cv;
     std::shared_ptr<control_service::ControlService::Stub> control_service_stub;
     std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub;
-    module::EEBUS* ev_module;
+    control_service::UseCase lpc_use_case;
+    eebus::EEBusCallbacks callbacks;
 };
 
 } // namespace module
 
-#endif // USE_CASE_EVENT_READER_HPP
+#endif // LPC_USE_CASE_EVENT_READER_HPP

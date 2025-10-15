@@ -1,29 +1,24 @@
 #include "usecases/cs/lpc/service.grpc-ext.pb.h"
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 namespace cs_lpc {
 
-bool CallConsumptionLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::ConsumptionLimitRequest& request,
+grpc::Status CallConsumptionLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::ConsumptionLimitRequest& request,
     cs_lpc::ConsumptionLimitResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->ConsumptionLimit(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -32,25 +27,20 @@ bool CallConsumptionLimit(
   return result;
 }
 
-bool CallSetConsumptionLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::SetConsumptionLimitRequest& request,
+grpc::Status CallSetConsumptionLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::SetConsumptionLimitRequest& request,
     cs_lpc::SetConsumptionLimitResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->SetConsumptionLimit(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -59,25 +49,20 @@ bool CallSetConsumptionLimit(
   return result;
 }
 
-bool CallPendingConsumptionLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::PendingConsumptionLimitRequest& request,
+grpc::Status CallPendingConsumptionLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::PendingConsumptionLimitRequest& request,
     cs_lpc::PendingConsumptionLimitResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->PendingConsumptionLimit(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -86,25 +71,20 @@ bool CallPendingConsumptionLimit(
   return result;
 }
 
-bool CallApproveOrDenyConsumptionLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::ApproveOrDenyConsumptionLimitRequest& request,
+grpc::Status CallApproveOrDenyConsumptionLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::ApproveOrDenyConsumptionLimitRequest& request,
     cs_lpc::ApproveOrDenyConsumptionLimitResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->ApproveOrDenyConsumptionLimit(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -113,25 +93,20 @@ bool CallApproveOrDenyConsumptionLimit(
   return result;
 }
 
-bool CallFailsafeConsumptionActivePowerLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::FailsafeConsumptionActivePowerLimitRequest& request,
+grpc::Status CallFailsafeConsumptionActivePowerLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::FailsafeConsumptionActivePowerLimitRequest& request,
     cs_lpc::FailsafeConsumptionActivePowerLimitResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->FailsafeConsumptionActivePowerLimit(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -140,25 +115,20 @@ bool CallFailsafeConsumptionActivePowerLimit(
   return result;
 }
 
-bool CallSetFailsafeConsumptionActivePowerLimit(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::SetFailsafeConsumptionActivePowerLimitRequest& request,
+grpc::Status CallSetFailsafeConsumptionActivePowerLimit(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::SetFailsafeConsumptionActivePowerLimitRequest& request,
     cs_lpc::SetFailsafeConsumptionActivePowerLimitResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->SetFailsafeConsumptionActivePowerLimit(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -167,25 +137,20 @@ bool CallSetFailsafeConsumptionActivePowerLimit(
   return result;
 }
 
-bool CallFailsafeDurationMinimum(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::FailsafeDurationMinimumRequest& request,
+grpc::Status CallFailsafeDurationMinimum(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::FailsafeDurationMinimumRequest& request,
     cs_lpc::FailsafeDurationMinimumResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->FailsafeDurationMinimum(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -194,25 +159,20 @@ bool CallFailsafeDurationMinimum(
   return result;
 }
 
-bool CallSetFailsafeDurationMinimum(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::SetFailsafeDurationMinimumRequest& request,
+grpc::Status CallSetFailsafeDurationMinimum(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::SetFailsafeDurationMinimumRequest& request,
     cs_lpc::SetFailsafeDurationMinimumResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->SetFailsafeDurationMinimum(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -221,25 +181,20 @@ bool CallSetFailsafeDurationMinimum(
   return result;
 }
 
-bool CallStartHeartbeat(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::StartHeartbeatRequest& request,
+grpc::Status CallStartHeartbeat(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::StartHeartbeatRequest& request,
     cs_lpc::StartHeartbeatResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->StartHeartbeat(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -248,25 +203,20 @@ bool CallStartHeartbeat(
   return result;
 }
 
-bool CallStopHeartbeat(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::StopHeartbeatRequest& request,
+grpc::Status CallStopHeartbeat(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::StopHeartbeatRequest& request,
     cs_lpc::StopHeartbeatResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->StopHeartbeat(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -275,25 +225,20 @@ bool CallStopHeartbeat(
   return result;
 }
 
-bool CallIsHeartbeatWithinDuration(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::IsHeartbeatWithinDurationRequest& request,
+grpc::Status CallIsHeartbeatWithinDuration(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::IsHeartbeatWithinDurationRequest& request,
     cs_lpc::IsHeartbeatWithinDurationResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->IsHeartbeatWithinDuration(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -302,25 +247,20 @@ bool CallIsHeartbeatWithinDuration(
   return result;
 }
 
-bool CallConsumptionNominalMax(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::ConsumptionNominalMaxRequest& request,
+grpc::Status CallConsumptionNominalMax(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::ConsumptionNominalMaxRequest& request,
     cs_lpc::ConsumptionNominalMaxResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->ConsumptionNominalMax(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });
@@ -329,25 +269,20 @@ bool CallConsumptionNominalMax(
   return result;
 }
 
-bool CallSetConsumptionNominalMax(
-    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub,
-    const cs_lpc::SetConsumptionNominalMaxRequest& request,
+grpc::Status CallSetConsumptionNominalMax(
+    const std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> &stub,
+    cs_lpc::SetConsumptionNominalMaxRequest& request,
     cs_lpc::SetConsumptionNominalMaxResponse* response) {
   grpc::ClientContext context;
-  bool result;
+  grpc::Status result;
+  bool done = false;
   std::mutex mu;
   std::condition_variable cv;
-  bool done = false;
   stub->async()->SetConsumptionNominalMax(
     &context, &request, response,
     [&result, &mu, &cv, &done, response](grpc::Status status) {
-      bool ret;      if (!status.ok()) {
-        ret = false;
-      } else {
-        ret = true;
-      }
+      result = std::move(status);
       std::lock_guard<std::mutex> lock(mu);
-      result = ret;
       done = true;
       cv.notify_one();
     });

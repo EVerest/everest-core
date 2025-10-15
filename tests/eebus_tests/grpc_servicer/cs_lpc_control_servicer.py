@@ -56,6 +56,13 @@ class CsLpcControlServicer(cs_lpc_service_pb2_grpc.ControllableSystemLPCControlS
                 queue_helpers.wait_for_queue_empty(self.command_queues[command].request_queue, 30)
                 queue_helpers.wait_for_queue_empty(self.command_queues[command].response_queue, 30)
         except TimeoutError:
+            logging.critical(f"One or more queues are not empty: ${self.command_queues}")
+            for x in self._commands:
+                logging.critical(f"QUEUE ${x}")
+                logging.critical(f"REQ ${self.command_queues[x].request_queue}")
+                logging.critical(f"REQ ${self.command_queues[x].request_queue.empty()}")
+                logging.critical(f"REP ${self.command_queues[x].response_queue}")
+                logging.critical(f"REP ${self.command_queues[x].response_queue.empty()}")
             raise TimeoutError("CsLpcControlServicer queues are not empty after 30 seconds")
 
     def _default_command_func(self, request, context, command):

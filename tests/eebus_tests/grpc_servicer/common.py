@@ -19,7 +19,7 @@ def default_command_func(self, request, context, command):
     """
     logging.info(f"Command {command} called")
     try:
-        self.command_queues[command].request_queue.put(request, timeout=30)
+        self.command_queues[command].request_queue.put_nowait(request)
     except queue.Full:
         raise queue.Full(f"{command} request queue is full, not able to put request")
     try:

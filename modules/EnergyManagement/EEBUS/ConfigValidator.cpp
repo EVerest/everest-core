@@ -1,4 +1,3 @@
-
 #include <ConfigValidator.hpp>
 
 #include "EEBUS.hpp"

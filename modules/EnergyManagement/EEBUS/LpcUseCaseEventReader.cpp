@@ -1,28 +1,32 @@
-#include "UseCaseEventReader.hpp"
+#include "LpcUseCaseEventReader.hpp"
 
-#include <chrono>
 #include <date/date.h>
 
 // generated
 #include <usecases/cs/lpc/service.grpc-ext.pb.h>
 
 // module internal
-#include "EEBUS.hpp"
-#include "helper.hpp"
+#include <EebusCallbacks.hpp>
+#include <helper.hpp>
 
 namespace module {
 
-UseCaseEventReader::UseCaseEventReader(std::shared_ptr<control_service::ControlService::Stub> control_service_stub,
-                                       std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub,
-                                       const control_service::SubscribeUseCaseEventsRequest& request,
-                                       module::EEBUS* ev_module) :
-    control_service_stub(control_service_stub), cs_lpc_stub(cs_lpc_stub), request(request), ev_module(ev_module) {
+LpcUseCaseEventReader::LpcUseCaseEventReader(
+    std::shared_ptr<control_service::ControlService::Stub> control_service_stub,
+    std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub,
+    control_service::SubscribeUseCaseEventsRequest request, eebus::EEBusCallbacks callbacks) :
+    control_service_stub(std::move(control_service_stub)),
+    cs_lpc_stub(std::move(cs_lpc_stub)),
+    request(std::move(request)),
+    lpc_use_case(control_service::CreateUseCase(control_service::UseCase_ActorType_Enum_ControllableSystem,
+                                                control_service::UseCase_NameType_Enum_limitationOfPowerConsumption)),
+    callbacks(std::move(callbacks)) {
     this->control_service_stub->async()->SubscribeUseCaseEvents(&this->context, &this->request, this);
     this->StartRead(&this->use_case_event);
     this->StartCall();
 }
 
-void UseCaseEventReader::OnReadDone(bool ok) {
+void LpcUseCaseEventReader::OnReadDone(bool ok) {
     if (ok) {
         this->handle_use_case_event(this->use_case_event);
         this->StartRead(&this->use_case_event);
@@ -32,20 +36,20 @@ void UseCaseEventReader::OnReadDone(bool ok) {
     }
 }
 
-void UseCaseEventReader::OnDone(const grpc::Status& status) {
-    std::unique_lock<std::mutex> l(this->mutex);
+void LpcUseCaseEventReader::OnDone(const grpc::Status& status) {
+    std::unique_lock<std::mutex> lock(this->mutex);
     this->status = status;
     this->done = true;
     this->cv.notify_one();
 }
 
-grpc::Status UseCaseEventReader::Await() {
-    std::unique_lock<std::mutex> l(this->mutex);
-    this->cv.wait(l, [this] { return this->done; });
+grpc::Status LpcUseCaseEventReader::Await() {
+    std::unique_lock<std::mutex> lock(this->mutex);
+    this->cv.wait(lock, [this] { return this->done; });
     return std::move(this->status);
 }
 
-void UseCaseEventReader::callback_write_approval_required() {
+void LpcUseCaseEventReader::callback_write_approval_required() {
     cs_lpc::PendingConsumptionLimitRequest request = cs_lpc::CreatePendingConsumptionLimitRequest();
     cs_lpc::PendingConsumptionLimitResponse response;
     cs_lpc::CallPendingConsumptionLimit(this->cs_lpc_stub, request, &response);
@@ -53,8 +57,6 @@ void UseCaseEventReader::callback_write_approval_required() {
     auto pending_writes = response.load_limits();
     for (const auto& entry : pending_writes) {
         uint64_t msg_counter = entry.first;
-        // TODO(mlitre): Check why the limit is not applied
-
         cs_lpc::ApproveOrDenyConsumptionLimitRequest request_02 =
             cs_lpc::CreateApproveOrDenyConsumptionLimitRequest(msg_counter, true, "");
         cs_lpc::ApproveOrDenyConsumptionLimitResponse response_02;
@@ -62,24 +64,20 @@ void UseCaseEventReader::callback_write_approval_required() {
     }
 }
 
-void UseCaseEventReader::callback_data_update_limit() {
+void LpcUseCaseEventReader::callback_data_update_limit() {
     cs_lpc::ConsumptionLimitRequest request = cs_lpc::CreateConsumptionLimitRequest();
     cs_lpc::ConsumptionLimitResponse response;
     cs_lpc::CallConsumptionLimit(this->cs_lpc_stub, request, &response);
     common_types::LoadLimit load_limit = response.load_limit();
-    EVLOG_debug << "load limit:\n" << load_limit.DebugString();
+    EVLOG_debug << "Data Update Limit, load limit:\n" << load_limit.DebugString();
 
     types::energy::ExternalLimits limits;
     limits = translate_to_external_limits(load_limit);
-    this->ev_module->r_eebus_energy_sink->call_set_external_limits(limits);
+    this->callbacks.update_limits_callback(limits);
 }
 
-void UseCaseEventReader::handle_use_case_event(control_service::SubscribeUseCaseEventsResponse& res) {
-    control_service::UseCase lpc =
-        control_service::CreateUseCase(control_service::UseCase_ActorType_Enum_ControllableSystem,
-                                       control_service::UseCase_NameType_Enum_limitationOfPowerConsumption);
-
-    if (!compare_use_case(lpc, res.use_case_event().use_case())) {
+void LpcUseCaseEventReader::handle_use_case_event(control_service::SubscribeUseCaseEventsResponse& res) {
+    if (!compare_use_case(lpc_use_case, res.use_case_event().use_case())) {
         return;
     }
 
