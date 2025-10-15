@@ -17,7 +17,7 @@
 #include <thread>
 #include <unistd.h>
 
-#include <everest/util/EnumFlags.hpp>
+#include <everest/util/enum/EnumFlags.hpp>
 
 using namespace std::chrono_literals;
 
@@ -36,10 +36,10 @@ struct ClientStatusRequestV2Test : public ClientStatusRequestV2 {
         last = connected,
     };
 
-    everest::util::AtomicEnumFlags<flags_t>& flags;
+    everest::lib::util::AtomicEnumFlags<flags_t>& flags;
 
     ClientStatusRequestV2Test() = delete;
-    explicit ClientStatusRequestV2Test(everest::util::AtomicEnumFlags<flags_t>& flag_ref) : flags(flag_ref) {
+    explicit ClientStatusRequestV2Test(everest::lib::util::AtomicEnumFlags<flags_t>& flag_ref) : flags(flag_ref) {
     }
 
     int status_request_cb(tls::Ssl* ctx) override {
@@ -97,7 +97,7 @@ struct ClientStatusRequestV2Test : public ClientStatusRequestV2 {
 
 struct ClientTest : public tls::Client {
     using flags_t = ClientStatusRequestV2Test::flags_t;
-    everest::util::AtomicEnumFlags<flags_t> flags;
+    everest::lib::util::AtomicEnumFlags<flags_t> flags;
 
     ClientTest() : tls::Client(std::unique_ptr<ClientStatusRequestV2>(new ClientStatusRequestV2Test(flags))) {
     }

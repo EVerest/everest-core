@@ -1,13 +1,14 @@
-add_executable(EnumFlagsTest
-    EnumFlagsTest.cpp
-    EnumFlagsTest_B.cpp
+add_executable(everest_util_tests
+    enum/EnumFlagsTest.cpp
+    enum/EnumFlagsTest_B.cpp
+    async/monitor_tests.cpp
 )
 
-target_link_libraries(EnumFlagsTest
+target_link_libraries(everest_util_tests
     PRIVATE
         GTest::gtest_main
         everest::util
 )
 
 include(GoogleTest)
-gtest_discover_tests(EnumFlagsTest)
+gtest_discover_tests(everest_util_tests)
