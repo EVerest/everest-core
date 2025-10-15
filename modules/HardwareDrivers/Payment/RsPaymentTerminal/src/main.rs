@@ -175,6 +175,7 @@ pub struct PaymentTerminalModule {
 impl From<u8> for RejectionReason {
     fn from(code: u8) -> Self {
         match code {
+            0x33 | // reservation not possible - pin required
             0x41 | // pin_required
             0x13 | // contactless transaction count exceeded
             0xEC | // PIN-processing not possible
