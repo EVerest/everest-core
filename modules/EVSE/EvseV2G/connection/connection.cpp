@@ -446,6 +446,7 @@ static void* connection_handle_tcp(void* data) {
 
 static void* connection_server(void* data) {
     struct v2g_context* ctx = static_cast<v2g_context*>(data);
+    ctx->connection_initiated = false;
     struct v2g_connection* conn = NULL;
     pthread_attr_t attr;
 
@@ -508,6 +509,7 @@ static void* connection_server(void* data) {
 
         if (pthread_create(&conn->thread_id, &attr, connection_handle_tcp, conn) != 0) {
             dlog(DLOG_LEVEL_ERROR, "pthread_create() failed: %s", strerror(errno));
+            ctx->connection_initiated = false;
             continue;
         }
 

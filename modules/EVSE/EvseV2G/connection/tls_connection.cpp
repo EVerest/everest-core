@@ -87,6 +87,7 @@ void handle_new_connection_cb(tls::Server::ConnectionPtr&& con, struct v2g_conte
         // unable to start thread
         dlog(DLOG_LEVEL_ERROR, "pthread_create() failed: %s", strerror(errno));
         con->shutdown();
+        ctx->connection_initiated = false;
     }
 }
 
