@@ -117,13 +117,11 @@ float apply_uk_random_delay(UKRandomDelayStatus& random_delay, float& limit_rand
     return enforced_limit;
 }
 
-types::iso15118::DcEvseMaximumLimits
-prepare_evse_max_limits(types::energy::EnforcedLimits const& value,
-                        energy_grid::LastValues const& last_values) {
+types::iso15118::DcEvseMaximumLimits prepare_evse_max_limits(types::energy::EnforcedLimits const& value,
+                                                             energy_grid::LastValues const& last_values) {
     constexpr float min_on_voltage = 10.;
     types::iso15118::DcEvseMaximumLimits evse_max_limits;
     auto const& powersupply_capabilities = last_values.powersupply_capabilities;
-
 
     if (last_values.target_voltage > min_on_voltage) {
         // we use target_voltage here to calculate current limit.

@@ -25,9 +25,8 @@ float apply_uk_random_delay(UKRandomDelayStatus& random_delay, float& limit_rand
                             const float last_enforced_limit, const bool random_delay_needed,
                             std::function<void(types::uk_random_delay::CountDown const&)> const& publish_countdown);
 
-types::iso15118::DcEvseMaximumLimits
-prepare_evse_max_limits(types::energy::EnforcedLimits const& value,
-                        energy_grid::LastValues const& last_values);
+types::iso15118::DcEvseMaximumLimits prepare_evse_max_limits(types::energy::EnforcedLimits const& value,
+                                                             energy_grid::LastValues const& last_values);
 
 bool prepare_export_to_grid(types::iso15118::DcEvseMaximumLimits& evse_max_limits, bool hack_allow_bpt_with_iso2,
                             bool sae_bidi_active);
