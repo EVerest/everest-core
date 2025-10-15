@@ -1,11 +1,5 @@
-/*
- * Licensor: Pionix GmbH, 2024
- * License: BaseCamp - License Version 1.0
- *
- * Licensed under the terms and conditions of the BaseCamp License contained in the "LICENSE" file, also available
- * under: https://pionix.com/pionix-license-terms
- * You may not use this file/code except in compliance with said License.
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "Winline.hpp"
 

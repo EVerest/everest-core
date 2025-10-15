@@ -86,6 +86,6 @@ provides:
     interface: power_supply_DC
     config: {}
 metadata:
-  license: https://pionix.com/pionix-license-terms
+  license: https://opensource.org/licenses/Apache-2.0
   authors:
   - Florin Mihut
