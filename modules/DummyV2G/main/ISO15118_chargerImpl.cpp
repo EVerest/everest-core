@@ -34,6 +34,10 @@ void ISO15118_chargerImpl::handle_certificate_response(
     // your code for cmd certificate_response goes here
 }
 
+void ISO15118_chargerImpl::handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) {
+    // your code for cmd set_powersupply_capabilities goes here
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {

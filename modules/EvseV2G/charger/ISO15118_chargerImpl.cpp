@@ -257,6 +257,19 @@ void ISO15118_chargerImpl::handle_certificate_response(
     pthread_mutex_unlock(&v2g_ctx->mqtt_lock);
 }
 
+void ISO15118_chargerImpl::handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) {
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.power_capabilities.max_current,
+                                  capabilities.max_export_current_A, 1, iso2_unitSymbolType_A);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.power_capabilities.min_current,
+                                  capabilities.min_export_current_A, 1, iso2_unitSymbolType_A);
+    populate_physical_value(&v2g_ctx->evse_v2g_data.power_capabilities.max_power,
+                            static_cast<uint32_t>(capabilities.max_export_power_W), iso2_unitSymbolType_W);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.power_capabilities.max_voltage,
+                                  capabilities.max_export_voltage_V, 1, iso2_unitSymbolType_V);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.power_capabilities.min_voltage,
+                                  capabilities.min_export_voltage_V, 1, iso2_unitSymbolType_V);
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {

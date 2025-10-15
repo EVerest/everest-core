@@ -541,21 +541,21 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
         conn->ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used;
 
     load_din_physical_value(&res->DC_EVSEChargeParameter.EVSEMaximumCurrentLimit,
-                            &conn->ctx->evse_v2g_data.evse_maximum_current_limit);
+                            &conn->ctx->evse_v2g_data.power_capabilities.max_current);
 
     load_din_physical_value(&res->DC_EVSEChargeParameter.EVSEMaximumPowerLimit,
-                            &conn->ctx->evse_v2g_data.evse_maximum_power_limit);
+                            &conn->ctx->evse_v2g_data.power_capabilities.max_power);
     res->DC_EVSEChargeParameter.EVSEMaximumPowerLimit_isUsed =
         conn->ctx->evse_v2g_data.evse_maximum_power_limit_is_used;
 
     load_din_physical_value(&res->DC_EVSEChargeParameter.EVSEMaximumVoltageLimit,
-                            &conn->ctx->evse_v2g_data.evse_maximum_voltage_limit);
+                            &conn->ctx->evse_v2g_data.power_capabilities.max_voltage);
 
     load_din_physical_value(&res->DC_EVSEChargeParameter.EVSEMinimumCurrentLimit,
-                            &conn->ctx->evse_v2g_data.evse_minimum_current_limit);
+                            &conn->ctx->evse_v2g_data.power_capabilities.min_current);
 
     load_din_physical_value(&res->DC_EVSEChargeParameter.EVSEMinimumVoltageLimit,
-                            &conn->ctx->evse_v2g_data.evse_minimum_voltage_limit);
+                            &conn->ctx->evse_v2g_data.power_capabilities.min_voltage);
 
     load_din_physical_value(&res->DC_EVSEChargeParameter.EVSEPeakCurrentRipple,
                             &conn->ctx->evse_v2g_data.evse_peak_current_ripple);

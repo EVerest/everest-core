@@ -52,6 +52,14 @@ cmds:
           The charger supports the certificate installation/update service and has a
           connection to an SA for this purpose
         type: boolean
+  set_powersupply_capabilities:
+    description: >-
+      At startup, set the min and max limits from the power supply. Can be updated later on.
+    arguments:
+      capabilities:
+        description: The required capabilities from the power supply
+        type: object
+        $ref: /power_supply_DC#/Capabilities
 # Response messages to vars:
   certificate_response:
     description: >-

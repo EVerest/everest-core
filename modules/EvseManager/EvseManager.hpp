@@ -50,6 +50,26 @@
 #include "scoped_lock_timeout.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
+namespace types::power_supply_DC {
+constexpr bool operator==(const Capabilities& k, const Capabilities& l) {
+    const auto& lhs_tuple =
+        std::tie(k.bidirectional, k.current_regulation_tolerance_A, k.peak_current_ripple_A, k.max_export_voltage_V,
+                 k.min_export_voltage_V, k.max_export_current_A, k.min_export_current_A, k.max_export_power_W,
+                 k.max_import_voltage_V, k.min_import_voltage_V, k.max_import_current_A, k.min_import_current_A,
+                 k.max_import_power_W, k.conversion_efficiency_import, k.conversion_efficiency_export);
+    const auto& rhs_tuple =
+        std::tie(l.bidirectional, l.current_regulation_tolerance_A, l.peak_current_ripple_A, l.max_export_voltage_V,
+                 l.min_export_voltage_V, l.max_export_current_A, l.min_export_current_A, l.max_export_power_W,
+                 l.max_import_voltage_V, l.min_import_voltage_V, l.max_import_current_A, l.min_import_current_A,
+                 l.max_import_power_W, l.conversion_efficiency_import, l.conversion_efficiency_export);
+    return lhs_tuple == rhs_tuple;
+}
+
+constexpr bool operator!=(const Capabilities& k, const Capabilities& l) {
+    return not operator==(k, l);
+}
+} // namespace types::power_supply_DC
+
 namespace module {
 
 struct Conf {
@@ -236,6 +256,11 @@ public:
 
     void update_powersupply_capabilities(types::power_supply_DC::Capabilities caps) {
         std::scoped_lock lock(powersupply_capabilities_mutex);
+
+        if (caps != powersupply_capabilities) {
+            r_hlc[0]->call_set_powersupply_capabilities(caps);
+        }
+
         powersupply_capabilities = caps;
 
         // Inform HLC layer about update of physical values

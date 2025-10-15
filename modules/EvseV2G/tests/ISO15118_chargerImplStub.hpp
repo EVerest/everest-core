@@ -40,6 +40,9 @@ public:
                                                types::authorization::CertificateStatus& certificate_status) {
         std::cout << "ISO15118_chargerImplBase::handle_authorization_response called" << std::endl;
     }
+    virtual void handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) {
+        std::cout << "ISO15118_chargerImplBase::handle_set_powersupply_capabilities called" << std::endl;
+    }
     virtual void handle_ac_contactor_closed(bool& status) {
         std::cout << "ISO15118_chargerImplBase::handle_ac_contactor_closed called" << std::endl;
     }
