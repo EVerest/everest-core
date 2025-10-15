@@ -31,6 +31,10 @@ void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_confi
     // your code for cmd bpt_setup goes here
 }
 
+void ISO15118_chargerImpl::handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) {
+    // your code for cmd set_powersupply_capabilities goes here
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {
