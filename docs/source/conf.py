@@ -81,8 +81,13 @@ versionsindex_page = {
         'versions': deployed_versions,
     },
 }
+notfound_page = {
+    'pagename': '404',
+    'urls_prefix': '/latest/',
+}
 
 staticpages_pages = [
     versionsindex_page,
+    notfound_page,
 ]
 staticpages_urls_prefix = '/latest/'

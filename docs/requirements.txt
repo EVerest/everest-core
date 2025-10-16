@@ -10,6 +10,5 @@ sphinx-design
 # Adds a "copy" button to code blocks for a better user experience
 sphinx-copybutton
 
-# Optional but highly recommended for local development.
-# It automatically rebuilds the site when you save a file.
-sphinx-autobuild
+# Required for processing templates
+PyYAML
