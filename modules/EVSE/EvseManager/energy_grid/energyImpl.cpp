@@ -2,11 +2,18 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "energyImpl.hpp"
+#include "Charger.hpp"
+#include "EvseManager.hpp"
+#include "generated/types/energy.hpp"
+#include "generated/types/iso15118.hpp"
+#include "generated/types/uk_random_delay.hpp"
+#include "helpers/energy_grid_helpers.hpp"
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <date/date.h>
 #include <date/tz.h>
+#include <everest/util/comparison.hpp>
 #include <fmt/core.h>
 #include <string>
 #include <utils/date.hpp>
@@ -15,11 +22,7 @@
 namespace module {
 namespace energy_grid {
 
-// helper to find out if voltage changed (more then noise)
-static bool voltage_changed(float a, float b) {
-    constexpr float noise_voltage = 1;
-    return (fabs(a - b) > noise_voltage);
-}
+auto const almost_eq = everest::lib::util::almost_eq<1, float>;
 
 void energyImpl::init() {
 
@@ -112,7 +115,7 @@ void energyImpl::clear_request_schedules() {
 
 void energyImpl::ready() {
     hw_caps = mod->get_hw_capabilities();
-    last_powersupply_capabilities = mod->get_powersupply_capabilities();
+    last_values.powersupply_capabilities = mod->get_powersupply_capabilities();
     clear_request_schedules();
 
     // request energy now
@@ -314,40 +317,6 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
     // EVLOG_info << "Outgoing request " << energy_flow_request;
 }
 
-static bool almost_eq(float a, float b) {
-    return a > b - 0.1 and a < b + 0.1;
-}
-
-static bool almost_eq(std::optional<float> const& a, std::optional<float> const& b) {
-    if (a.has_value() and b.has_value()) {
-        return almost_eq(a.value(), b.value());
-    }
-    if (not a.has_value() and not b.has_value()) {
-        return true;
-    }
-    return false;
-}
-
-static bool almost_eq(types::power_supply_DC::Capabilities const& lhs,
-                      types::power_supply_DC::Capabilities const& rhs) {
-    bool result = lhs.bidirectional == rhs.bidirectional and
-                  almost_eq(lhs.current_regulation_tolerance_A, rhs.current_regulation_tolerance_A) and
-                  almost_eq(lhs.peak_current_ripple_A, rhs.peak_current_ripple_A) and
-                  almost_eq(lhs.max_export_voltage_V, rhs.max_export_voltage_V) and
-                  almost_eq(lhs.min_export_voltage_V, rhs.min_export_voltage_V) and
-                  almost_eq(lhs.max_export_current_A, rhs.max_export_current_A) and
-                  almost_eq(lhs.min_export_current_A, rhs.min_export_current_A) and
-                  almost_eq(lhs.max_export_power_W, rhs.max_export_power_W) and
-                  almost_eq(lhs.max_import_voltage_V, rhs.max_import_voltage_V) and
-                  almost_eq(lhs.min_import_voltage_V, rhs.min_import_voltage_V) and
-                  almost_eq(lhs.max_import_current_A, rhs.max_import_current_A) and
-                  almost_eq(lhs.min_import_current_A, rhs.min_import_current_A) and
-                  almost_eq(lhs.max_import_power_W, rhs.max_import_power_W) and
-                  almost_eq(lhs.conversion_efficiency_import, rhs.conversion_efficiency_import) and
-                  almost_eq(lhs.conversion_efficiency_export, rhs.conversion_efficiency_export);
-    return result;
-}
-
 // This is the decision logic when limits are changing.
 bool energyImpl::random_delay_needed(float last_limit, float limit) {
 
@@ -377,269 +346,91 @@ bool energyImpl::random_delay_needed(float last_limit, float limit) {
 }
 
 void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
-    if (value.uuid == energy_flow_request.uuid) {
-        // EVLOG_info << "Incoming enforce limits" << value;
+    // Check if we are supposed to handle the update
+    if (value.uuid not_eq energy_flow_request.uuid) {
+        return;
+    }
 
-        // publish for e.g. OCPP module
-        mod->p_evse->publish_enforced_limits(value);
+    // Adressing common AC and DC cases
 
-        //   set hardware limit
-        float limit = 0.;
-        int active_phasecount = mod->ac_nr_phases_active;
+    // publish for e.g. OCPP module
+    mod->p_evse->publish_enforced_limits(value);
 
-        // apply enforced limits
+    // apply number of phase limit
+    apply_number_of_phase_limit(mod->ac_nr_phases_active,
+                                mod->get_hw_capabilities().supports_changing_phases_during_charging,
+                                value.limits_root_side.ac_max_phase_count, mod->ac_nr_phases_active,
+                                [this](bool value) { return mod->charger->switch_three_phases_while_charging(value); });
 
-        // set enforced AC current limit
-        if (value.limits_root_side.ac_max_current_A.has_value()) {
-            limit = value.limits_root_side.ac_max_current_A.value().value;
-        }
-
-        // apply number of phase limit
-        if (value.limits_root_side.ac_max_phase_count.has_value() &&
-            value.limits_root_side.ac_max_phase_count.value().value not_eq active_phasecount) {
-            if (mod->get_hw_capabilities().supports_changing_phases_during_charging) {
-                if (mod->charger->switch_three_phases_while_charging(
-                        value.limits_root_side.ac_max_phase_count.value().value == 3)) {
-                    mod->ac_nr_phases_active = value.limits_root_side.ac_max_phase_count.value().value;
-                    EVLOG_info << fmt::format("3ph/1ph: Switching #ph from {} to {}", active_phasecount,
-                                              value.limits_root_side.ac_max_phase_count.value().value);
-                } else {
-                    EVLOG_warning << fmt::format(
-                        "3ph/1ph: Energymanager requests switching #ph from {} to {}, ignored.", active_phasecount,
-                        value.limits_root_side.ac_max_phase_count.value().value);
-                }
-            } else {
-                EVLOG_error << fmt::format(
-                    "Energy manager requests switching #ph from {} to {}, but switching phases during "
-                    "charging is not supported by HW.",
-                    active_phasecount, value.limits_root_side.ac_max_phase_count.value().value);
-            }
-        }
-
-        // apply watt limit
-        if (value.limits_root_side.total_power_W.has_value()) {
+    // set enforced AC current limit and apply watt limit
+    float limit = 0.;
+    auto enforced_limit = limit = apply_AC_limit(
+        value.limits_root_side, mod->ac_nr_phases_active, mod->config.ac_nominal_voltage, [this](float total_power_W) {
             mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
-                              value.limits_root_side.total_power_W.value().value);
-            // watt limit converted to current limit
-            const float current_limit_power = value.limits_root_side.total_power_W.value().value /
-                                              mod->config.ac_nominal_voltage / mod->ac_nr_phases_active;
-            if ((limit >= 0 and limit > current_limit_power) or (limit < 0 and limit < current_limit_power)) {
-                limit = current_limit_power;
-            }
+                              total_power_W);
+        });
+
+    // handle random delay for UK smart charging regs
+    last_enforced_limit =
+        apply_uk_random_delay(mod->random_delay, limit_when_random_delay_started, limit, enforced_limit, charger_state,
+                              last_enforced_limit, random_delay_needed(last_enforced_limit, limit),
+                              [this](auto const& countdown) { mod->p_random_delay->publish_countdown(countdown); });
+
+    // update limit at the charger
+    const auto valid_until = steady_clock::now() + seconds(value.valid_for);
+    if (limit >= 0) {
+        // import
+        mod->charger->set_max_current(limit, valid_until);
+    } else {
+        // export
+        // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
+        // this needs to be fixed in transition to -20 AC bidirectional.
+        mod->charger->set_max_current(0, valid_until);
+    }
+
+    if (std::abs(limit) > 1e-5) {
+        mod->charger->resume_charging_power_available();
+    }
+
+    // AC mode is done. We are handling DC only from here on
+    if (mod->config.charge_mode not_eq "DC") {
+        return;
+    }
+
+    // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
+    // FIXME: multiply by conversion_efficiency here!
+    auto ev_info = mod->get_ev_info();
+    auto powersupply_capabilities = mod->get_powersupply_capabilities();
+
+    if (check_if_enforced_limits_changed_and_update(value, powersupply_capabilities, ev_info, last_values)) {
+
+        // collect the new limits
+        types::iso15118::DcEvseMaximumLimits evse_max_limits = prepare_evse_max_limits(value, last_values);
+
+        // In contrast to the original code, this also sets the variable to false,
+        // when neither hack_allow_bpt_with_iso2 nor sae_bidi_active are set.
+        // Behavior should be the same, since the default for that variable is false
+        // This function call alters evse_max_limits as necessary for export to grid
+        mod->is_actually_exporting_to_grid =
+            prepare_export_to_grid(evse_max_limits, mod->config.hack_allow_bpt_with_iso2, mod->sae_bidi_active);
+
+        // tell car our new limits
+        session_log.evse(true,
+                         fmt::format("Change HLC Limits: {}W/{}A, target_voltage {}, actual_voltage {}, hack_bpt {}",
+                                     evse_max_limits.evse_maximum_power_limit,
+                                     evse_max_limits.evse_maximum_current_limit, last_values.target_voltage,
+                                     last_values.actual_voltage, mod->is_actually_exporting_to_grid));
+        mod->r_hlc[0]->call_update_dc_maximum_limits(evse_max_limits);
+        mod->charger->inform_new_evse_max_hlc_limits(evse_max_limits);
+
+        // This is just neccessary to switch between charging and discharging
+        if (last_values.target_voltage > 0) {
+            mod->apply_new_target_voltage_current();
         }
 
-        auto enforced_limit = limit;
-
-        // check if we need to add a random delay for UK smart charging regs
-        if (mod->random_delay_enabled) {
-
-            // Are we in a state where a random delay makes sense?
-            if (not(charger_state == Charger::EvseState::PrepareCharging or
-                    charger_state == Charger::EvseState::Charging or
-                    charger_state == Charger::EvseState::WaitingForAuthentication or
-                    charger_state == Charger::EvseState::WaitingForEnergy)) {
-                mod->random_delay_running = false;
-            }
-
-            // Do we need to start a new random delay?
-            // Ignore changes of less then 0.1 amps
-            if (not mod->random_delay_running and random_delay_needed(last_enforced_limit, limit)) {
-                mod->random_delay_running = true;
-                mod->random_delay_start_time = date::utc_clock::now();
-                auto random_delay_s = std::rand() % mod->random_delay_max_duration.load().count();
-                mod->random_delay_end_time = std::chrono::steady_clock::now() + std::chrono::seconds(random_delay_s);
-                EVLOG_info << "UK Smart Charging regulations: Starting random delay of " << random_delay_s << "s";
-                limit_when_random_delay_started = last_enforced_limit;
-            }
-
-            // If a delay is running, replace the current limit with the stored value
-            if (mod->random_delay_running) {
-                // use limit from the time point when the random delay started
-                limit = limit_when_random_delay_started;
-                // publish the current random delay timer
-                auto seconds_left = std::chrono::duration_cast<std::chrono::seconds>(mod->random_delay_end_time -
-                                                                                     std::chrono::steady_clock::now())
-                                        .count();
-                types::uk_random_delay::CountDown c;
-                c.current_limit_after_delay_A = enforced_limit;
-                c.current_limit_during_delay_A = limit_when_random_delay_started;
-                if (seconds_left <= 0) {
-                    EVLOG_info << "UK Smart Charging regulations: Random delay elapsed.";
-                    c.countdown_s = 0;
-                    mod->random_delay_running = false;
-                } else {
-                    EVLOG_debug << "Random delay running, " << seconds_left
-                                << "s left. Applying the limit before the random delay ("
-                                << limit_when_random_delay_started << "A) instead of requested limit ("
-                                << enforced_limit << "A)";
-                    c.countdown_s = seconds_left;
-                    c.start_time = Everest::Date::to_rfc3339(mod->random_delay_start_time);
-                }
-                mod->p_random_delay->publish_countdown(c);
-            } else {
-                types::uk_random_delay::CountDown c;
-                c.countdown_s = 0;
-                c.current_limit_after_delay_A = enforced_limit;
-                c.current_limit_during_delay_A = limit_when_random_delay_started;
-                mod->p_random_delay->publish_countdown(c);
-            }
-        }
-
-        last_enforced_limit = enforced_limit;
-
-        // update limit at the charger
-        const auto valid_until = steady_clock::now() + seconds(value.valid_for);
-        if (limit >= 0) {
-            // import
-            mod->charger->set_max_current(limit, valid_until);
-        } else {
-            // export
-            if (mod->session_is_iso_d20_ac_bpt()) {
-                mod->charger->set_max_current(limit, valid_until);
-            } else {
-                // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
-                mod->charger->set_max_current(0, valid_until);
-            }
-        }
-
-        if (limit > 1e-5 || limit < -1e-5)
-            mod->charger->resume_charging_power_available();
-
-        if (mod->config.charge_mode == "DC") {
-            // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
-            // FIXME: multiply by conversion_efficiency here!
-            if (value.limits_root_side.total_power_W.has_value() and
-                value.limits_root_side.ac_max_current_A.has_value()) {
-                float watt_leave_side = value.limits_root_side.total_power_W.value().value;
-                float ampere_root_side = value.limits_root_side.ac_max_current_A.value().value;
-
-                auto ev_info = mod->get_ev_info();
-                float target_voltage = ev_info.target_voltage.value_or(0.);
-                float actual_voltage = ev_info.present_voltage.value_or(0.);
-
-                bool values_changed = true;
-                auto powersupply_capabilities = mod->get_powersupply_capabilities();
-
-                // did the values change since the last call?
-                if (almost_eq(last_enforced_limits_watt, watt_leave_side) and
-                    almost_eq(last_enforced_limits_ampere, ampere_root_side) and
-                    almost_eq(target_voltage, last_target_voltage) and
-                    not voltage_changed(actual_voltage, last_actual_voltage) and
-                    almost_eq(powersupply_capabilities, last_powersupply_capabilities)) {
-                    values_changed = false;
-                }
-
-                if (values_changed) {
-                    last_enforced_limits_ampere = ampere_root_side;
-                    last_enforced_limits_watt = watt_leave_side;
-                    last_target_voltage = target_voltage;
-                    last_actual_voltage = actual_voltage;
-                    last_powersupply_capabilities = powersupply_capabilities;
-
-                    // tell car our new limits
-                    types::iso15118::DcEvseMaximumLimits evse_max_limits;
-
-                    if (target_voltage > 10) {
-                        // we use target_voltage here to calculate current limit.
-                        // If target_voltage is a lot higher then the actual voltage the
-                        // current limit is too low, i.e. charging will not reach the actual watt value.
-                        // FIXME: we could use some magic here that involves actual measured voltage as well.
-                        if (actual_voltage > 10) {
-                            evse_max_limits.evse_maximum_current_limit =
-                                value.limits_root_side.total_power_W.value().value / actual_voltage;
-                        } else {
-                            evse_max_limits.evse_maximum_current_limit =
-                                value.limits_root_side.total_power_W.value().value / target_voltage;
-                        }
-                    } else {
-                        evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
-                    }
-
-                    if (evse_max_limits.evse_maximum_current_limit > powersupply_capabilities.max_export_current_A)
-                        evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
-
-                    if (powersupply_capabilities.max_import_current_A.has_value() &&
-                        evse_max_limits.evse_maximum_current_limit <
-                            -powersupply_capabilities.max_import_current_A.value())
-                        evse_max_limits.evse_maximum_current_limit =
-                            -powersupply_capabilities.max_import_current_A.value();
-
-                    // now evse_max_limits.evse_maximum_current_limit is between
-                    // -max_import_current_A ... +max_export_current_A
-
-                    evse_max_limits.evse_maximum_power_limit = value.limits_root_side.total_power_W.value().value;
-                    if (evse_max_limits.evse_maximum_power_limit > powersupply_capabilities.max_export_power_W)
-                        evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
-
-                    if (powersupply_capabilities.max_import_power_W.has_value() &&
-                        evse_max_limits.evse_maximum_power_limit < -powersupply_capabilities.max_import_power_W.value())
-                        evse_max_limits.evse_maximum_power_limit = -powersupply_capabilities.max_import_power_W.value();
-
-                    // now evse_max_limits.evse_maximum_power_limit is between
-                    // -max_import_power_W ... +max_export_power_W
-
-                    evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_export_voltage_V;
-
-                    // FIXME: we tell the ISO stack positive numbers for DIN spec and ISO-2 here in case of exporting to
-                    // grid. This needs to be fixed in the transition to -20 for BPT.
-                    if (evse_max_limits.evse_maximum_power_limit < 0 ||
-                        evse_max_limits.evse_maximum_current_limit < 0) {
-                        // we are exporting power back to the grid
-                        if (mod->config.hack_allow_bpt_with_iso2) {
-                            if (evse_max_limits.evse_maximum_power_limit < 0) {
-                                evse_max_limits.evse_maximum_power_limit = -evse_max_limits.evse_maximum_power_limit;
-                                mod->is_actually_exporting_to_grid = true;
-                            } else {
-                                mod->is_actually_exporting_to_grid = false;
-                            }
-
-                            if (evse_max_limits.evse_maximum_current_limit < 0) {
-                                evse_max_limits.evse_maximum_current_limit =
-                                    -evse_max_limits.evse_maximum_current_limit;
-                                mod->is_actually_exporting_to_grid = true;
-                            } else {
-                                mod->is_actually_exporting_to_grid = false;
-                            }
-                        } else if (mod->sae_bidi_active) {
-                            if (evse_max_limits.evse_maximum_power_limit < 0) {
-                                mod->is_actually_exporting_to_grid = true;
-                            } else {
-                                mod->is_actually_exporting_to_grid = false;
-                            }
-                            if (evse_max_limits.evse_maximum_current_limit < 0) {
-                                mod->is_actually_exporting_to_grid = true;
-                            } else {
-                                mod->is_actually_exporting_to_grid = false;
-                            }
-                        } else {
-                            EVLOG_error << "Bidirectional export back to grid requested, but not supported. Enable "
-                                           "ISO-20 or set hack_allow_bpt_with_iso2 config option.";
-                            evse_max_limits.evse_maximum_power_limit = 0.;
-                            evse_max_limits.evse_maximum_current_limit = 0.;
-                        }
-                    } else {
-                        mod->is_actually_exporting_to_grid = false;
-                    }
-
-                    session_log.evse(
-                        true, fmt::format(
-                                  "Change HLC Limits: {}W/{}A, target_voltage {}, actual_voltage {}, hack_bpt {}",
-                                  evse_max_limits.evse_maximum_power_limit, evse_max_limits.evse_maximum_current_limit,
-                                  target_voltage, actual_voltage, mod->is_actually_exporting_to_grid));
-                    mod->r_hlc[0]->call_update_dc_maximum_limits(evse_max_limits);
-                    mod->charger->inform_new_evse_max_hlc_limits(evse_max_limits);
-
-                    // This is just neccessary to switch between charging and discharging
-                    if (target_voltage > 0) {
-                        mod->apply_new_target_voltage_current();
-                    }
-
-                    // Note: If the limits are lower then before, we could tell the DC power supply to
-                    // ramp down already here instead of waiting for the car to request less power.
-                    // Some cars may not like it, so we wait for the car to request less for now.
-                }
-            }
-        }
+        // Note: If the limits are lower then before, we could tell the DC power supply to
+        // ramp down already here instead of waiting for the car to request less power.
+        // Some cars may not like it, so we wait for the car to request less for now.
     }
 }
 
