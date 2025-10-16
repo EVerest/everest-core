@@ -697,8 +697,7 @@ impl ReadyState {
         // WM3M4 V2 supports OCMF 1.3.0. There we have a dedicated field `TT`
         // for the tariff text. If we implement support for it add logic here
         // to write it into the right field.
-        let mut identification_data =
-            std::collections::LinkedList::from([&session_id, tariff_text]);
+        let mut identification_data = std::collections::LinkedList::from([tariff_text]);
 
         // Overwrite the `charge_point_identification` if needed. Otherwise drop
         // it into the `identification_data`.
@@ -707,6 +706,10 @@ impl ReadyState {
         } else {
             identification_data.push_front(evse_id);
         }
+
+        // Make sure session id is the first item in the identification data.
+        identification_data.push_front(session_id);
+
         // Remove empty strings. Maybe also sanitize the input.
         ocmf_data.identification_data = identification_data
             .iter()
