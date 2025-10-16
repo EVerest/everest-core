@@ -708,7 +708,7 @@ impl ReadyState {
         }
 
         // Make sure session id is the first item in the identification data.
-        identification_data.push_front(session_id);
+        identification_data.push_front(&session_id);
 
         // Remove empty strings. Maybe also sanitize the input.
         ocmf_data.identification_data = identification_data
