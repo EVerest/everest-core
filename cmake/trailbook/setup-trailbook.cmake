@@ -37,14 +37,9 @@ endmacro()
 # Internal macro to set up the trailbook environment.
 # This macro should only be called once.
 macro(_setup_trailbook)
-    if(_TRAILBOOK_SETUP_DONE)
-        message(FATAL_ERROR 
-            "setup-trailbook.cmake: _setup_trailbook() has already been called.
-            This function should only be called once."
-        )
+    if(NOT _TRAILBOOK_SETUP_DONE)
+        _find_and_fix_sphinx_build()
+
+        set(_TRAILBOOK_SETUP_DONE TRUE)
     endif()
-
-    _find_and_fix_sphinx_build()
-
-    set(_TRAILBOOK_SETUP_DONE TRUE)
 endmacro()
