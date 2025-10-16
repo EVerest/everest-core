@@ -40,6 +40,27 @@ else()
     set(ATOMIC_LIBS "")
 endif()
 
+# test whether we are building on a musl based system.
+# On these we need to increase the stack size as it is very low by default
+find_program(LDD_EXECUTABLE ldd)
+find_program(LS_EXECUTABLE ls)
+if(LDD_EXECUTABLE AND LS_EXECUTABLE)
+    # we use ls as a testing executable as it is very likely to exist on any system. ldd prints the dynamic linked libraries
+    # of the given executable, if musl is used it will print it as a linked object
+    execute_process(COMMAND ${LDD_EXECUTABLE} ${LS_EXECUTABLE} OUTPUT_VARIABLE LDD_LS_OUTPUT ERROR_QUIET)
+    if(LDD_LS_OUTPUT MATCHES "musl")
+        message(STATUS "MUSL detected, increasing stack size to 8MiB")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,stack-size=8388608")
+    endif()
+else()
+    if(NOT LDD_EXECUTABLE)
+        message(WARNING "ldd not found, skipping musl detection")
+    endif()
+    if(NOT LS_EXECUTABLE)
+        message(WARNING "ls not found, skipping musl detection")
+    endif()
+endif()
+
 option(CREATE_SYMLINKS "Create symlinks to javascript modules and auxillary files - for development purposes" OFF)
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(EVEREST_BUILD_API_DOCS "Build EVerest API documentation" OFF)
