@@ -9,6 +9,6 @@ provides:
         description: Absolute path to the database file
 enable_global_errors: true
 metadata:
-  license: https://spdx.org/licenses/Apache-2.0.html
+  license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Andreas Heinrich

@@ -44,6 +44,6 @@ provides:
     interface: evse_security 
 enable_telemetry: false
 metadata:
-  license: https://spdx.org/licenses/Apache-2.0.html
+  license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Piet Gömpel
