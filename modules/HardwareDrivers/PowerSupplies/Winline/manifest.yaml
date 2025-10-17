@@ -1,0 +1,91 @@
+description: Driver for Winline ACDC power supply. Supports multiple Winline modules using CAN protocol either in fixed address mode or group discovery mode.
+config:
+  can_device:
+    description: CAN interface name
+    type: string
+    default: can0
+  module_addresses:
+    description: >-
+     Module Addresses to use.
+     If you have multiple PSUs, use individual addresses and list them comma separated, e.g. "1,2".
+    type: string
+    default: ""
+  group_address:
+    description: >-
+      Group address. Use this if your PSUs are using automatic allocation of the addresses.
+      If you have multiple PSUs, set this number in accordance with the group dial
+      setting of the PSUs you want to use.
+      Can't use module addresses and group addresses at the same time, if both are set, the module addresses will be used.
+    type: integer
+    default: 0
+  device_connection_timeout_s:
+    description: >-
+      Timeout in seconds to wait for a module to respond before considering it offline.
+      CRITICAL SAFETY: Must be greater than module internal timeout to prevent overcurrent risk.
+      Recommended: 15s.
+    type: integer
+    default: 15
+  conversion_efficiency_export:
+    description: Conversion efficiency of the export mode.
+    type: number
+    default: 0.95
+  controller_address:
+    description: Controller address defaults to 0xF0.
+    type: integer
+    default: 240
+  min_export_voltage_V:
+    description: Minimum export voltage limit (V)
+    type: number
+    default: 50.0
+  max_export_voltage_V:
+    description: Maximum export voltage limit (V)
+    type: number
+    default: 1000.0
+  min_export_current_A:
+    description: Minimum export current limit (A)
+    type: number
+    default: 0.0
+  max_export_current_A:
+    description: Maximum export current limit (A) - will be updated by device rated values
+    type: number
+    default: 133.3
+  power_state_grace_period_ms:
+    description: Grace period in milliseconds to wait before verifying power state changes
+    type: integer
+    default: 2000
+  current_regulation_tolerance_A:
+    description: Current regulation tolerance (A)
+    type: number
+    default: 0.5
+  peak_current_ripple_A:
+    description: Peak current ripple (A)
+    type: number
+    default: 2
+  altitude_setting_m:
+    description: >-
+      Working altitude setting in meters. This affects the power derating of the modules
+      at high altitudes. Valid range: 1000-5000m. Default: 1000m (sea level).
+    type: integer
+    default: 1000
+  input_mode:
+    description: >-
+      Input mode for the power supply modules. AC mode for AC input, DC mode for DC input.
+      This setting affects the internal configuration of the modules.
+    type: string
+    default: "AC"
+    enum:
+      - "AC"
+      - "DC"
+  module_current_limit_point:
+    description: Percentage of the rated current that the module will use as the current limit point (0.0-3.3325)
+    type: number
+    default: 3.3325
+provides:
+  main:
+    description: Main interface
+    interface: power_supply_DC
+    config: {}
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - Florin Mihut
