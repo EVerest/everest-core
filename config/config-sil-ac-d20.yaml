@@ -77,7 +77,7 @@ active_modules:
       connector_id: 1
       auto_enable: true
       auto_exec: false
-      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session AC;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;iso_wait_for_stop 20;iso_wait_v2g_session_stopped;unplug
+      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session AC 86400 0;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;iso_wait_for_stop 20;iso_wait_v2g_session_stopped;unplug
     connections:
       ev_board_support:
         - module_id: connector_1_powerpath
