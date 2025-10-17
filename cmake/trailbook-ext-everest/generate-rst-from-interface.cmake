@@ -1,0 +1,133 @@
+include(${CMAKE_CURRENT_LIST_DIR}/common-macros.cmake)
+
+macro(_trailbook_ev_generate_rst_from_interface_check_reference_interfaces_dir_command)
+    get_target_property(
+        _EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED
+        trailbook_${args_TRAILBOOK_NAME}
+        _EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED
+    )
+    set(CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR "${TRAILBOOK_CURRENT_BINARY_DIR}/ext-ev.check-reference-interfaces-dir.check_done")
+    if("${_EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED}" STREQUAL "_EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED-NOTFOUND")
+        add_custom_command(
+            OUTPUT
+                ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
+            DEPENDS
+                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
+                trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+                ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
+            COMMENT
+                "Checking existence of reference interfaces directory: ${TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY}"
+            COMMAND
+                ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
+                --directory "${TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY}"
+                --return-zero-if-not-exists
+            COMMAND
+                ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
+        )
+        set_target_properties(
+            trailbook_${args_TRAILBOOK_NAME}
+            PROPERTIES
+                _EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED TRUE
+        )
+    endif()
+endmacro()
+
+macro(_trailbook_ev_generate_rst_from_interface_generate_command)
+    get_filename_component(INTERFACE_NAME ${args_INTERFACE_FILE} NAME_WE)
+    set(GENERATED_FILE "${TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY}/${INTERFACE_NAME}.rst")
+    set(TEMPLATES_DIRECTORY "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/templates")
+    add_custom_command(
+        OUTPUT
+            ${GENERATED_FILE}
+        DEPENDS
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/process_template.py
+            ${args_INTERFACE_FILE}
+            ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
+            ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
+        COMMENT
+            "Generating RST file ${GENERATED_FILE} from interface definition ${args_INTERFACE_FILE}"
+        COMMAND
+            ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/process_template.py
+            --template-dir "${TEMPLATES_DIRECTORY}"
+            --template-file "${TEMPLATES_DIRECTORY}/interface.rst.jinja"
+            --name "${INTERFACE_NAME}"
+            --data-file "${args_INTERFACE_FILE}"
+            --target-file "${GENERATED_FILE}"
+    )
+endmacro()
+
+function(trailbook_ev_generate_rst_from_interface)
+    set(options)
+    set(one_value_args
+        TRAILBOOK_NAME
+        INTERFACE_FILE
+    )
+    set(multi_value_args)
+    cmake_parse_arguments(
+        "args"
+        "${options}"
+        "${one_value_args}"
+        "${multi_value_args}"
+        ${ARGN}
+    )
+
+    # Parameter TRAILBOOK_NAME
+    #   - is required
+    #   - there should be a target named trailbook_<TRAILBOOK_NAME>
+    if(NOT args_TRAILBOOK_NAME)
+        message(FATAL_ERROR "trailbook_ext_ev_generate_rst_from_interface: TRAILBOOK_NAME argument is required")
+    endif()
+    if(NOT TARGET trailbook_${args_TRAILBOOK_NAME})
+        message(
+            FATAL_ERROR
+            "trailbook_ext_ev_generate_rst_from_interface: No target named trailbook_${args_TRAILBOOK_NAME} found."
+            " Did you forget to call add_trailbook() first?"
+        )
+    endif()
+
+    # Parameter INTERFACE_FILE
+    #   - is required
+    #   - must be a absolute path
+    #   - must exist
+    if(NOT args_INTERFACE_FILE)
+        message(FATAL_ERROR "trailbook_ext_ev_generate_rst_from_interface: INTERFACE_FILE argument is required")
+    endif()
+    if(NOT IS_ABSOLUTE "${args_INTERFACE_FILE}")
+        message(FATAL_ERROR "trailbook_ext_ev_generate_rst_from_interface: INTERFACE_FILE must be an absolute path")
+    endif()
+    if(NOT EXISTS "${args_INTERFACE_FILE}")
+        message(FATAL_ERROR "trailbook_ext_ev_generate_rst_from_interface: INTERFACE_FILE must exist")
+    endif()
+
+    get_target_property(
+        TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
+        trailbook_${args_TRAILBOOK_NAME}
+        TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
+    )
+    get_target_property(
+        TRAILBOOK_CURRENT_BINARY_DIR
+        trailbook_${args_TRAILBOOK_NAME}
+        TRAILBOOK_CURRENT_BINARY_DIR
+    )
+
+    set(TRAILBOOK_EV_REFERENCE_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/reference")
+    set(TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY "${TRAILBOOK_EV_REFERENCE_DIRECTORY}/interfaces")
+
+    _trailbook_ev_check_reference_dir_command()
+    _trailbook_ev_generate_rst_from_interface_check_reference_interfaces_dir_command()
+    _trailbook_ev_generate_rst_from_interface_generate_command()
+
+    add_custom_target(
+        trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_interface_${INTERFACE_NAME}
+        DEPENDS
+            ${GENERATED_FILE}
+        COMMENT
+            "Target to generate RST file ${GENERATED_FILE} from interface definition ${args_INTERFACE_FILE}"
+    )
+    add_dependencies(
+        trailbook_${args_TRAILBOOK_NAME}_stage_build_sphinx_before
+        trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_interface_${INTERFACE_NAME}
+    )
+endfunction()
