@@ -434,8 +434,6 @@ function(add_trailbook)
     set(TRAILBOOK_INSTANCE_IS_RELEASE "${TRAILBOOK_${args_NAME}_IS_RELEASE}")
     set(TRAILBOOK_INSTANCE_DOWNLOAD_ALL_VERSIONS "${TRAILBOOK_${args_NAME}_DOWNLOAD_ALL_VERSIONS}")
 
-    _add_trailbook_check_requirements_txt()
-
     message(STATUS "Adding trailbook:               ${args_NAME}")
     message(STATUS "  Stem directory:               ${args_STEM_DIRECTORY}")
     message(STATUS "  Build directory:              ${TRAILBOOK_BUILD_DIRECTORY}")
@@ -449,6 +447,12 @@ function(add_trailbook)
     message(STATUS "  Deployed docs repo url:       ${args_DEPLOYED_DOCS_REPO_URL}")
     message(STATUS "  Deployed docs repo branch:    ${args_DEPLOYED_DOCS_REPO_BRANCH}")
 
+
+    add_custom_target(
+        trailbook_${args_NAME}_stage_prepare_sphinx_source_before
+    )
+    _add_trailbook_check_requirements_txt()
+
     set(CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS "${CMAKE_CURRENT_BINARY_DIR}/download_all_versions.check_done")
     set(CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT "${CMAKE_CURRENT_BINARY_DIR}/create_empty_skeleton_multiversion_root.check_done")
     if(TRAILBOOK_INSTANCE_DOWNLOAD_ALL_VERSIONS)
@@ -458,17 +462,6 @@ function(add_trailbook)
     endif()
     _add_trailbook_copy_stem_command()
     _add_trailbook_create_metadata_yaml_command()
-    _add_trailbook_sphinx_build_command()
-    if(TRAILBOOK_INSTANCE_IS_RELEASE)
-        _add_trailbook_replace_latest_command()
-        _add_trailbook_copy_404_command()
-        _add_trailbook_render_redirect_template_command()
-    endif()
-    _add_trailbook_copy_versions_index_command()
-
-    add_custom_target(
-        trailbook_${args_NAME}_stage_prepare_sphinx_source_before
-    )
     add_custom_target(
         trailbook_${args_NAME}_stage_prepare_sphinx_source_after
         DEPENDS
@@ -485,6 +478,7 @@ function(add_trailbook)
         DEPENDS
             trailbook_${args_NAME}_stage_prepare_sphinx_source_after
     )
+    _add_trailbook_sphinx_build_command()
     add_custom_target(
         trailbook_${args_NAME}_stage_build_sphinx_after
         DEPENDS
@@ -498,6 +492,13 @@ function(add_trailbook)
         DEPENDS
             trailbook_${args_NAME}_stage_build_sphinx_after
     )
+    if(TRAILBOOK_INSTANCE_IS_RELEASE)
+        _add_trailbook_replace_latest_command()
+        _add_trailbook_copy_404_command()
+        _add_trailbook_render_redirect_template_command()
+    endif()
+    _add_trailbook_copy_versions_index_command()
+
     add_custom_target(
         trailbook_${args_NAME}_stage_postprocess_sphinx_after
         DEPENDS
