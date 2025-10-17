@@ -4,8 +4,12 @@ config:
     description: Whether the module should manage the eebus grpc api binary
     type: boolean
     default: true
-  control_service_rpc_port:
-    description: Port for the control service
+  eebus_service_port:
+    description: Port for the control service, this will be sent in the SetConfig call.
+    type: integer
+    default: 4715
+  grpc_port:
+    description: Port for grpc control service connection. This is the port on which we will create our control service channel and start the grpc binary with.
     type: integer
     default: 50051
   eebus_ems_ski:

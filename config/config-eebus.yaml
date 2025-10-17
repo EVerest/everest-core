@@ -6,7 +6,8 @@ active_modules:
         - module_id: eebus_energy_sink
           implementation_id: external_limits
     config_module:
-      control_service_rpc_port: 4715
+      eebus_service_port: 4715
+      grpc_port: 50051
       vendor_code: "EVerest"
       device_brand: "EVerest"
       device_model: "SIL"

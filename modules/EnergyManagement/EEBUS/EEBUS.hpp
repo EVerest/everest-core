@@ -28,7 +28,8 @@ namespace module {
 
 struct Conf {
     bool manage_eebus_grpc_api_binary;
-    int control_service_rpc_port;
+    int eebus_service_port;
+    int grpc_port;
     std::string eebus_ems_ski;
     std::string certificate_path;
     std::string private_key_path;
@@ -49,7 +50,7 @@ public:
         ModuleBase(info),
         p_main(std::move(p_main)),
         r_eebus_energy_sink(std::move(r_eebus_energy_sink)),
-        config(config) {};
+        config(config){};
 
     const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<external_energy_limitsIntf> r_eebus_energy_sink;

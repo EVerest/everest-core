@@ -20,7 +20,7 @@ EebusConnectionHandler::~EebusConnectionHandler() {
 }
 
 bool EebusConnectionHandler::initialize_connection() {
-    const auto address = "localhost:" + std::to_string(this->config->get_control_service_port());
+    const auto address = "localhost:" + std::to_string(this->config->get_grpc_port());
     this->control_service_channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     if (!EebusConnectionHandler::wait_for_channel_ready(this->control_service_channel, CHANNEL_READY_TIMEOUT)) {
         EVLOG_error << "Connection to EEBUS gRPC server failed.";
@@ -29,7 +29,7 @@ bool EebusConnectionHandler::initialize_connection() {
     this->control_service_stub = control_service::ControlService::NewStub(this->control_service_channel);
 
     control_service::SetConfigRequest set_config_request = control_service::CreateSetConfigRequest(
-        this->config->get_control_service_port(), this->config->get_vendor_code(), this->config->get_device_brand(),
+        this->config->get_eebus_service_port(), this->config->get_vendor_code(), this->config->get_device_brand(),
         this->config->get_device_model(), this->config->get_serial_number(),
         {control_service::DeviceCategory_Enum::DeviceCategory_Enum_E_MOBILITY},
         control_service::DeviceType_Enum::DeviceType_Enum_CHARGING_STATION,
@@ -50,7 +50,6 @@ bool EebusConnectionHandler::initialize_connection() {
         EVLOG_warning << "start_setup failed: " << start_setup_status.error_message();
         return false;
     }
-
     control_service::RegisterRemoteSkiRequest register_ski_request;
     register_ski_request.set_remote_ski(this->config->get_eebus_ems_ski());
     control_service::EmptyResponse register_ski_response;
@@ -92,7 +91,7 @@ bool EebusConnectionHandler::add_lpc_use_case(const eebus::EEBusCallbacks& callb
     }
 
     auto lpc_channel = grpc::CreateChannel(response.endpoint(), grpc::InsecureChannelCredentials());
-    if (EebusConnectionHandler::wait_for_channel_ready(lpc_channel, CHANNEL_READY_TIMEOUT)) {
+    if (!EebusConnectionHandler::wait_for_channel_ready(lpc_channel, CHANNEL_READY_TIMEOUT)) {
         EVLOG_error << "Connection to LPC use case gRPC server failed.";
         return false;
     }

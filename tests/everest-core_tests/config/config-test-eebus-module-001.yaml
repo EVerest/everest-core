@@ -11,7 +11,8 @@ active_modules:
       device_brand: "EVerest"
       device_model: "SIL"
       serial_number: "123456789"
-      control_service_rpc_port: 4715
+      eebus_service_port: 4715
+      grpc_port: 50051
       eebus_ems_ski: "this-is-a-ski-42"
   probe:
     module: ProbeModule

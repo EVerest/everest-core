@@ -7,7 +7,8 @@ namespace module {
 ConfigValidator::ConfigValidator(const Conf& config, std::filesystem::path etc_prefix,
                                  std::filesystem::path libexec_prefix) :
     config(config),
-    control_service_rpc_endpoint(config.control_service_rpc_port),
+    eebus_service_port(config.eebus_service_port),
+    grpc_port(config.grpc_port),
     manage_eebus_grpc_api_binary(config.manage_eebus_grpc_api_binary),
     etc_prefix(std::move(etc_prefix)),
     libexec_prefix(std::move(libexec_prefix)),
@@ -18,7 +19,8 @@ ConfigValidator::ConfigValidator(const Conf& config, std::filesystem::path etc_p
 
 bool ConfigValidator::validate() {
     bool valid = true;
-    valid &= this->validate_control_service_rpc_port();
+    valid &= this->validate_eebus_service_port();
+    valid &= this->validate_grpc_port();
     valid &= this->validate_eebus_ems_ski();
     valid &= this->validate_certificate_path();
     valid &= this->validate_private_key_path();
@@ -45,8 +47,12 @@ std::filesystem::path ConfigValidator::get_eebus_grpc_api_binary_path() const {
     return this->eebus_grpc_api_binary_path;
 }
 
-int ConfigValidator::get_control_service_port() const {
-    return this->control_service_rpc_endpoint;
+int ConfigValidator::get_eebus_service_port() const {
+    return this->eebus_service_port;
+}
+
+int ConfigValidator::get_grpc_port() const {
+    return this->grpc_port;
 }
 
 std::string ConfigValidator::get_vendor_code() const {
@@ -73,9 +79,17 @@ int ConfigValidator::get_max_nominal_power() const {
     return this->config.max_nominal_power;
 }
 
-bool ConfigValidator::validate_control_service_rpc_port() const {
-    if (this->config.control_service_rpc_port < 0) {
-        EVLOG_error << "control service rpc port is negative";
+bool ConfigValidator::validate_eebus_service_port() const {
+    if (this->config.eebus_service_port < 0) {
+        EVLOG_error << "eebus service port is negative";
+        return false;
+    }
+    return true;
+}
+
+bool ConfigValidator::validate_grpc_port() const {
+    if (this->config.grpc_port < 0) {
+        EVLOG_error << "grpc port is negative";
         return false;
     }
     return true;
