@@ -23,6 +23,9 @@ public:
     std::string get_device_brand() const;
     std::string get_device_model() const;
     std::string get_serial_number() const;
+    int get_failsafe_control_limit() const;
+    int get_max_nominal_power() const;
+    std::string get_eebus_ems_ski() const;
 
 private:
     bool validate_control_service_rpc_port() const;
@@ -31,11 +34,12 @@ private:
     bool validate_private_key_path();
     bool validate_eebus_grpc_api_binary_path();
     bool validate_manage_eebus_grpc_api_binary() const;
-    bool validate_rpc_control_service_port() const;
     bool validate_vendor_code() const;
     bool validate_device_brand() const;
     bool validate_device_model() const;
     bool validate_serial_number() const;
+    bool validate_failsafe_control_limit() const;
+    bool validate_max_nominal_power() const;
 
     const Conf& config;
 

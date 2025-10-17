@@ -20,14 +20,8 @@
 
 #include <thread>
 
-// generated
-#include <control_service/control_service.grpc-ext.pb.h>
-#include <usecases/cs/lpc/service.grpc-ext.pb.h>
-
-// module internal
-#include <ConfigValidator.hpp>
-#include <grpc_calls/ControlServiceCalls.hpp>
-#include <grpc_calls/ControllableSystemLPCControlCalls.hpp>
+#include <EebusCallbacks.hpp>
+#include <EebusConnectionHandler.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -55,7 +49,7 @@ public:
         ModuleBase(info),
         p_main(std::move(p_main)),
         r_eebus_energy_sink(std::move(r_eebus_energy_sink)),
-        config(config){};
+        config(config) {};
 
     const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<external_energy_limitsIntf> r_eebus_energy_sink;
@@ -76,17 +70,12 @@ private:
     void ready();
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
-    std::shared_ptr<control_service::ControlService::Stub> control_service_stub;
-    std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> cs_lpc_stub;
     std::thread eebus_grpc_api_thread;
     std::atomic<bool> eebus_grpc_api_thread_active;
 
-    std::unique_ptr<grpc_calls::ControlServiceCalls> cs_calls;
-    std::unique_ptr<grpc_calls::ControllableSystemLPCControlCalls> cs_lpc_calls;
-    std::unique_ptr<ConfigValidator> config_validator;
-    eebus::EEBusCallbacks callbacks{};
+    std::unique_ptr<EebusConnectionHandler> connection_handler;
 
-    bool failed;
+    eebus::EEBusCallbacks callbacks{};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

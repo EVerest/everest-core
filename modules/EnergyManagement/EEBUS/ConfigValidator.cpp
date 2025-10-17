@@ -28,6 +28,8 @@ bool ConfigValidator::validate() {
     valid &= this->validate_device_brand();
     valid &= this->validate_device_model();
     valid &= this->validate_serial_number();
+    valid &= this->validate_failsafe_control_limit();
+    valid &= this->validate_max_nominal_power();
     return valid;
 }
 
@@ -63,12 +65,24 @@ std::string ConfigValidator::get_serial_number() const {
     return this->config.serial_number;
 }
 
+int ConfigValidator::get_failsafe_control_limit() const {
+    return this->config.failsafe_control_limit;
+}
+
+int ConfigValidator::get_max_nominal_power() const {
+    return this->config.max_nominal_power;
+}
+
 bool ConfigValidator::validate_control_service_rpc_port() const {
     if (this->config.control_service_rpc_port < 0) {
         EVLOG_error << "control service rpc port is negative";
         return false;
     }
     return true;
+}
+
+std::string ConfigValidator::get_eebus_ems_ski() const {
+    return this->config.eebus_ems_ski;
 }
 
 bool ConfigValidator::validate_eebus_ems_ski() const {
@@ -149,6 +163,22 @@ bool ConfigValidator::validate_device_model() const {
 
 bool ConfigValidator::validate_serial_number() const {
     return !this->config.serial_number.empty();
+}
+
+bool ConfigValidator::validate_failsafe_control_limit() const {
+    if (this->config.failsafe_control_limit < 0) {
+        EVLOG_error << "failsafe_control_limit is negative";
+        return false;
+    }
+    return true;
+}
+
+bool ConfigValidator::validate_max_nominal_power() const {
+    if (this->config.max_nominal_power < 0) {
+        EVLOG_error << "max_nominal_power is negative";
+        return false;
+    }
+    return true;
 }
 
 } // namespace module
