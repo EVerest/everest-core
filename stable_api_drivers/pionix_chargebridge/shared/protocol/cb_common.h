@@ -21,7 +21,8 @@ typedef union _SafetyErrorFlags {
         uint32_t vdd_refint_out_of_range : 1;
         uint32_t external_allow_power_on : 1;
         uint32_t config_mem_error : 1;
-        uint32_t reserved : 18;
+	uint32_t dc_hv_ov : 1;
+        uint32_t reserved : 17;
     };
     uint32_t raw;
 } SafetyErrorFlags;
