@@ -77,7 +77,7 @@ All EVerest documentation
 We have organized our documentation snippets in the following structure for
 everybody to find their best way of learning:
 
-.. grid:: 1 2 2 2
+.. grid:: 1 2 2 3
    :gutter: 2
 
    .. grid-item-card:: 🎓 Tutorials
@@ -111,6 +111,13 @@ everybody to find their best way of learning:
       :link-type: doc
 
       Technical overviews, API documentation, auto-generated class definitions - go here.
+
+   .. grid-item-card:: 📄 Q & A
+      :link: qa/index
+      :link-type: doc
+
+      There might be some questions open - here is the place to look for answers.
+
 
 ***********************
 Further important links
