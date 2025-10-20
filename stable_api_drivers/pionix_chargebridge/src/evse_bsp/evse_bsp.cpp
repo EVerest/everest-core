@@ -293,6 +293,7 @@ enum class SafetyErrorMask : std::uint32_t {
     vdd_refint_out_of_range = (1 << 11),
     external_allow_power_on = (1 << 12),
     config_mem_error = (1 << 13),
+    dc_hv_ov = (1 << 14),
 };
 
 // Table that maps a mask to our API error + message
@@ -321,6 +322,7 @@ static constexpr FlagSpec error_specs[] = {
     {SafetyErrorMask::vdd_refint_out_of_range, API_BSP::ErrorEnum::VendorError, "VCCREF",
      "Internal supply VREF voltage out of range"},
     {SafetyErrorMask::config_mem_error, API_BSP::ErrorEnum::VendorError, "CONFIGMEM", "Internal config memory error"},
+    {SafetyErrorMask::dc_hv_ov, API_BSP::ErrorEnum::VendorError, "DV_HV", "DC HV OVM. FIXME: This should be on OVM not EVSE interface"},
 };
 
 static constexpr FlagSpec print_warning_specs[] = {
