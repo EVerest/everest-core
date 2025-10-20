@@ -77,6 +77,9 @@ void AuthHandler::initialize() {
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
     std::unique_lock<std::mutex> lk(this->event_mutex);
+    if (!this->publish_token_validation_status_callback) {
+        return TokenHandlingResult::REJECTED;
+    }
 
     TokenHandlingResult result;
     ProvidedIdToken provided_token_copy = provided_token;
