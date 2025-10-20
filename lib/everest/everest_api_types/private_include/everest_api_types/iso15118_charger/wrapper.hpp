@@ -16,6 +16,12 @@ using CertificateActionEnum_External = CertificateActionEnum;
 CertificateActionEnum_Internal to_internal_api(CertificateActionEnum_External const& val);
 CertificateActionEnum_External to_external_api(CertificateActionEnum_Internal const& val);
 
+using EnergyTransferMode_Internal = ::types::iso15118::EnergyTransferMode;
+using EnergyTransferMode_External = EnergyTransferMode;
+
+EnergyTransferMode_Internal to_internal_api(EnergyTransferMode_External const& val);
+EnergyTransferMode_External to_external_api(EnergyTransferMode_Internal const& val);
+
 using Status_Internal = ::types::iso15118::Status;
 using Status_External = Status;
 
@@ -45,5 +51,11 @@ using CertificateHashDataInfo_External = CertificateHashDataInfo;
 
 CertificateHashDataInfo_Internal to_internal_api(CertificateHashDataInfo_External const& val);
 CertificateHashDataInfo_External to_external_api(CertificateHashDataInfo_Internal const& val);
+
+using EnergyTransferModeList_Internal = std::vector<EnergyTransferMode_Internal>;
+using EnergyTransferModeList_External = EnergyTransferModeList;
+
+EnergyTransferModeList_Internal to_internal_api(EnergyTransferModeList_External const& val);
+EnergyTransferModeList_External to_external_api(EnergyTransferModeList_Internal const& val);
 
 } // namespace everest::lib::API::V1_0::types::iso15118_charger

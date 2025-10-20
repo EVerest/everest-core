@@ -175,6 +175,7 @@ pub struct PaymentTerminalModule {
 impl From<u8> for RejectionReason {
     fn from(code: u8) -> Self {
         match code {
+            0x33 | // reservation not possible - pin required
             0x41 | // pin_required
             0x13 | // contactless transaction count exceeded
             0xEC | // PIN-processing not possible
@@ -538,7 +539,7 @@ mod tests {
         everest_mock
             .bank_session_token_slots
             .push(BankSessionTokenProviderClientPublisher::default());
-        let token = Err(::everestrs::Error::InvalidArgument("oh no"));
+        let token = Err(::everestrs::Error::HandlerException("oh no".to_string()));
         everest_mock.bank_session_token_slots[0]
             .expect_get_bank_session_token()
             .times(1)

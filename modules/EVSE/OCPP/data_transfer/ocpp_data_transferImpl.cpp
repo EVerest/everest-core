@@ -29,6 +29,13 @@ types::ocpp::DataTransferStatus to_everest(ocpp::v16::DataTransferStatus status)
 
 types::ocpp::DataTransferResponse
 ocpp_data_transferImpl::handle_data_transfer(types::ocpp::DataTransferRequest& request) {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle data transfer command";
+        types::ocpp::DataTransferResponse response;
+        response.status = types::ocpp::DataTransferStatus::Offline;
+        return response;
+    }
+
     auto ocpp_response = mod->charge_point->data_transfer(request.vendor_id, request.message_id, request.data);
     types::ocpp::DataTransferResponse response;
     if (ocpp_response.has_value()) {

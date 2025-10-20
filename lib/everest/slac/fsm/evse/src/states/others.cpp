@@ -361,9 +361,11 @@ static std::string get_qualcomm_device_info(slac::messages::qualcomm::op_attr_cn
     result += get_string_view(msg.hw_platform);
     result += "\n  SW Platform: ";
     result += get_string_view(msg.sw_platform);
-    result += "\n  Firmware: ";
-    result += ("\n  Build date: " + std::to_string(msg.version_major) + "." + std::to_string(msg.version_minor) + "." +
-               std::to_string(msg.version_pib) + "-" + std::to_string(msg.version_build));
+    result += ("\n  Firmware: " + std::to_string(msg.version_major) + "." + std::to_string(msg.version_minor) + "." +
+               std::to_string(msg.version_pib) + "." + std::to_string(msg.reserved) + "-" +
+               std::to_string(msg.version_build));
+    result += "\n  Build date: ";
+    result += get_string_view(msg.build_date);
 
     result += "\n  ZC signal: ";
 

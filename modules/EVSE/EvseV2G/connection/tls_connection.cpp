@@ -267,7 +267,7 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
 
     bool bResult{false};
 
-    config.cipher_list = "ECDHE-ECDSA-AES128-SHA256:ECDH-ECDSA-AES128-SHA256";
+    config.cipher_list = "ECDHE-ECDSA-AES128-SHA256";
     config.ciphersuites = "";     // disable TLS 1.3
     config.verify_client = false; // contract certificate managed in-band in 15118-2
 

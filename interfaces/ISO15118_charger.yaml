@@ -56,6 +56,14 @@ cmds:
         description: The required parameters for a BPT setup
         type: object
         $ref: /iso15118#/BptSetup
+  set_powersupply_capabilities:
+    description: >-
+      At startup, set the min and max limits from the power supply. Can be updated later on.
+    arguments:
+      capabilities:
+        description: The required capabilities from the power supply
+        type: object
+        $ref: /power_supply_DC#/Capabilities
 # Response messages to vars:
   authorization_response:
     description: >-

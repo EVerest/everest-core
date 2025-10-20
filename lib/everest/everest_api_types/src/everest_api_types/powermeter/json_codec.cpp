@@ -776,8 +776,9 @@ void to_json(json& j, const SignedEnergy& k) noexcept {
 }
 
 void from_json(const json& j, SignedReactivePower& k) {
-    k.total = j.at("total");
-
+    if (j.contains("total")) {
+        k.total = j.at("total");
+    }
     if (j.contains("L1")) {
         k.L1.emplace(j.at("L1"));
     }
@@ -809,6 +810,9 @@ void from_json(const json& j, Temperature& k) {
     if (j.contains("identification")) {
         k.identification.emplace(j.at("identification"));
     }
+    if (j.contains("location")) {
+        k.location.emplace(j.at("location"));
+    }
 }
 void to_json(json& j, const Temperature& k) noexcept {
     j = json{
@@ -816,6 +820,9 @@ void to_json(json& j, const Temperature& k) noexcept {
     };
     if (k.identification) {
         j["identification"] = k.identification.value();
+    }
+    if (k.location) {
+        j["location"] = k.location.value();
     }
 }
 
@@ -971,6 +978,9 @@ void to_json(json& j, const ReplyStartTransaction& k) noexcept {
 void from_json(const json& j, ReplyStopTransaction& k) {
     k.status = j.at("status");
 
+    if (j.contains("start_signed_meter_value")) {
+        k.start_signed_meter_value.emplace(j.at("start_signed_meter_value"));
+    }
     if (j.contains("signed_meter_value")) {
         k.signed_meter_value.emplace(j.at("signed_meter_value"));
     }
@@ -982,6 +992,9 @@ void to_json(json& j, const ReplyStopTransaction& k) noexcept {
     j = json{
         {"status", k.status},
     };
+    if (k.start_signed_meter_value) {
+        j["start_signed_meter_value"] = k.start_signed_meter_value.value();
+    }
     if (k.signed_meter_value) {
         j["signed_meter_value"] = k.signed_meter_value.value();
     }

@@ -1,3 +1,5 @@
+exports_files(["config"])
+
 cc_library(
     name = "websocketpp_utils",
     hdrs = glob([
@@ -48,8 +50,8 @@ cc_library(
         "LIBOCPP_ENABLE_V16=1",
         "LIBOCPP_ENABLE_V2=1",
         "MIGRATION_FILE_VERSION_V16=1",
-        "MIGRATION_FILE_VERSION_V2=1",
-        "MIGRATION_DEVICE_MODEL_FILE_VERSION_V2=1",
+        "MIGRATION_FILE_VERSION_V2=6",
+        "MIGRATION_DEVICE_MODEL_FILE_VERSION_V2=3",
     ],
     # See https://github.com/HowardHinnant/date/issues/324
     local_defines = [

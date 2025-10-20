@@ -397,20 +397,9 @@ pkey_ptr load_private_key(const char* filename, const char* password) {
      * that causes key file to be opened an additional time
      */
 
-    bool custom_key = false;
-
-    if (filename != nullptr) {
-        fs::path keyfile{std::string(filename)};
-        custom_key = evse_security::is_custom_private_key_file(keyfile);
-    }
-
-    OpenSSLProvider provider;
-
-    if (custom_key) {
-        // set global provider to custom settings
-        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
-    } else {
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+    {
+        OpenSSLProvider provider; // ensure providers are loaded
+                                  // minimise holding the mutex
     }
 
     pkey_ptr private_key{nullptr, nullptr};
@@ -423,11 +412,6 @@ pkey_ptr load_private_key(const char* filename, const char* password) {
             private_key = pkey_ptr{pkey, &EVP_PKEY_free};
         }
         BIO_free(bio);
-    }
-
-    if (custom_key) {
-        // reset global provider back to default settings
-        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     }
 
     return private_key;

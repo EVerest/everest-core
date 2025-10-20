@@ -13,7 +13,13 @@ using json = nlohmann::json;
 void from_json(const json& j, ErrorEnum& k);
 void to_json(json& j, const ErrorEnum& k) noexcept;
 
+void from_json(const json& j, ErrorSeverityEnum& k);
+void to_json(json& j, const ErrorSeverityEnum& k) noexcept;
+
 void from_json(const json& j, Error& k);
 void to_json(json& j, const Error& k) noexcept;
+
+void from_json(const json& j, OverVoltageLimits& k);
+void to_json(json& j, const OverVoltageLimits& k) noexcept;
 
 } // namespace everest::lib::API::V1_0::types::over_voltage_monitor

@@ -2,6 +2,8 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 #include <goose/sender.hpp>
 
 class DummyEthernetInterface : public goose_ethernet::EthernetInterfaceIntf {
@@ -183,7 +185,8 @@ TEST(Sender, multiple_frames_go_through_all_delays) {
 
     // sometimes the snapshot_{times,st_nums,sq_nums} are not equal size; thus
     // truncate the longest
-    auto min_size = std::min({snapshot_times.size(), snapshot_st_nums.size(), snapshot_sq_nums.size()});
+    const auto snapshot_sizes = {snapshot_times.size(), snapshot_st_nums.size(), snapshot_sq_nums.size()};
+    const auto min_size = *std::min_element(snapshot_sizes.begin(), snapshot_sizes.end());
     snapshot_times.resize(min_size);
     snapshot_st_nums.resize(min_size);
     snapshot_sq_nums.resize(min_size);

@@ -38,6 +38,125 @@ void to_json(json& j, CertificateActionEnum const& k) noexcept {
     j = "INVALID_VALUE__everest::lib::API::V1_0::types::iso15118_charger::CertificateActionEnum";
 }
 
+void from_json(json const& j, EnergyTransferMode& k) {
+    std::string s = j;
+    if (s == "AC_single_phase_core") {
+        k = EnergyTransferMode::AC_single_phase_core;
+        return;
+    }
+    if (s == "AC_two_phase") {
+        k = EnergyTransferMode::AC_two_phase;
+        return;
+    }
+    if (s == "AC_three_phase_core") {
+        k = EnergyTransferMode::AC_three_phase_core;
+        return;
+    }
+    if (s == "DC_core") {
+        k = EnergyTransferMode::DC_core;
+        return;
+    }
+    if (s == "DC_extended") {
+        k = EnergyTransferMode::DC_extended;
+        return;
+    }
+    if (s == "DC_combo_core") {
+        k = EnergyTransferMode::DC_combo_core;
+        return;
+    }
+    if (s == "DC_unique") {
+        k = EnergyTransferMode::DC_unique;
+        return;
+    }
+    if (s == "DC") {
+        k = EnergyTransferMode::DC;
+        return;
+    }
+    if (s == "AC_BPT") {
+        k = EnergyTransferMode::AC_BPT;
+        return;
+    }
+    if (s == "AC_BPT_DER") {
+        k = EnergyTransferMode::AC_BPT_DER;
+        return;
+    }
+    if (s == "AC_DER") {
+        k = EnergyTransferMode::AC_DER;
+        return;
+    }
+    if (s == "DC_BPT") {
+        k = EnergyTransferMode::DC_BPT;
+        return;
+    }
+    if (s == "DC_ACDP") {
+        k = EnergyTransferMode::DC_ACDP;
+        return;
+    }
+    if (s == "DC_ACDP_BPT") {
+        k = EnergyTransferMode::DC_ACDP_BPT;
+        return;
+    }
+    if (s == "WPT") {
+        k = EnergyTransferMode::WPT;
+        return;
+    }
+
+    throw std::out_of_range(
+        "Provided string " + s +
+        " could not be converted to enum of type API_V1_0_TYPES_ISO15118_CHARGER_EnergyTransferMode");
+}
+
+void to_json(json& j, EnergyTransferMode const& k) noexcept {
+    switch (k) {
+    case EnergyTransferMode::AC_single_phase_core:
+        j = "AC_single_phase_core";
+        return;
+    case EnergyTransferMode::AC_two_phase:
+        j = "AC_two_phase";
+        return;
+    case EnergyTransferMode::AC_three_phase_core:
+        j = "AC_three_phase_core";
+        return;
+    case EnergyTransferMode::DC_core:
+        j = "DC_core";
+        return;
+    case EnergyTransferMode::DC_extended:
+        j = "DC_extended";
+        return;
+    case EnergyTransferMode::DC_combo_core:
+        j = "DC_combo_core";
+        return;
+    case EnergyTransferMode::DC_unique:
+        j = "DC_unique";
+        return;
+    case EnergyTransferMode::DC:
+        j = "DC";
+        return;
+    case EnergyTransferMode::AC_BPT:
+        j = "AC_BPT";
+        return;
+    case EnergyTransferMode::AC_BPT_DER:
+        j = "AC_BPT_DER";
+        return;
+    case EnergyTransferMode::AC_DER:
+        j = "AC_DER";
+        return;
+    case EnergyTransferMode::DC_BPT:
+        j = "DC_BPT";
+        return;
+    case EnergyTransferMode::DC_ACDP:
+        j = "DC_ACDP";
+        return;
+    case EnergyTransferMode::DC_ACDP_BPT:
+        j = "DC_ACDP_BPT";
+        return;
+    case EnergyTransferMode::WPT:
+        j = "WPT";
+        return;
+    }
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::iso15118_charger::EnergyTransferMode";
+}
+
 void from_json(json const& j, Status& k) {
     std::string s = j;
     if (s == "Accepted") {
@@ -144,6 +263,20 @@ void to_json(json& j, CertificateHashDataInfo const& k) noexcept {
         {"hashAlgorithm", k.hashAlgorithm}, {"issuerNameHash", k.issuerNameHash}, {"issuerKeyHash", k.issuerKeyHash},
         {"serialNumber", k.serialNumber},   {"responderURL", k.responderURL},
     };
+}
+
+void to_json(json& j, EnergyTransferModeList const& k) noexcept {
+    j["modes"] = json::array();
+    for (auto val : k.modes) {
+        j["modes"].push_back(val);
+    }
+}
+
+void from_json(const json& j, EnergyTransferModeList& k) {
+    k.modes.clear();
+    for (auto val : j.at("modes")) {
+        k.modes.push_back(val);
+    }
 }
 
 } // namespace everest::lib::API::V1_0::types::iso15118_charger

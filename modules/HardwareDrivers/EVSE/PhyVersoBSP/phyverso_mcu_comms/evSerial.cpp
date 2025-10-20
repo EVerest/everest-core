@@ -71,6 +71,10 @@ bool evSerial::open_device(const char* device, int _baud) {
     return set_serial_attributes();
 }
 
+void evSerial::flush_buffers() {
+    tcflush(fd, TCIOFLUSH);
+}
+
 bool evSerial::set_serial_attributes() {
     struct termios tty;
     if (tcgetattr(fd, &tty) != 0) {
@@ -154,6 +158,7 @@ bool evSerial::handle_McuToEverest_packet(uint8_t* buf, int len) {
 
     case McuToEverest_keep_alive_tag:
         signal_keep_alive(msg_in.payload.keep_alive);
+        last_keep_alive_lo_timestamp = date::utc_clock::now();
         break;
 
     case McuToEverest_cp_state_tag:
@@ -243,6 +248,7 @@ void evSerial::cobs_decode_byte(uint8_t byte) {
 void evSerial::run() {
     read_thread_handle = std::thread(&evSerial::read_thread, this);
     timeout_detection_thread_handle = std::thread(&evSerial::timeout_detection_thread, this);
+    last_keep_alive_lo_timestamp = date::utc_clock::now();
 }
 
 void evSerial::timeout_detection_thread() {
@@ -374,11 +380,11 @@ bool evSerial::reset(const int reset_pin) {
     forced_reset = true;
 
     if (reset_pin > 0) {
-        printf("Hard reset\n");
+        EVLOG_info << "Hard-resetting PhyVerso";
         auto bsl_gpio = BSL_GPIO({.bank = 1, .pin = 12}, // BSL pins are unused here so keep defaults
                                  {.bank = static_cast<uint8_t>(verso_config.conf.reset_gpio_bank),
                                   .pin = static_cast<uint8_t>(verso_config.conf.reset_gpio_pin)});
-        bsl_gpio.hard_reset();
+        bsl_gpio.hard_reset(25);
     } else {
         // Try to soft reset phyVERSO controller to be in a known state
         EverestToMcu msg_out = EverestToMcu_init_default;
@@ -387,22 +393,11 @@ bool evSerial::reset(const int reset_pin) {
         link_write(&msg_out);
     }
 
-    bool success = false;
-
-    // Wait for reset done message from uC
-    for (int i = 0; i < 20; i++) {
-        if (reset_done_flag) {
-            success = true;
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-
-    // Reset flag to detect run time spurious resets of uC from now on
-    reset_done_flag = false;
-    forced_reset = false;
+    bool success = true;
 
     // send some dummy packets to resync COBS etc.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    cobs_decode_reset();
     keep_alive();
     keep_alive();
     keep_alive();

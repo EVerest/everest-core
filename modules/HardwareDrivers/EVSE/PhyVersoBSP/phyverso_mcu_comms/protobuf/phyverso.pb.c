@@ -33,10 +33,15 @@ PB_BIND(BootConfigRequest, BootConfigRequest, AUTO)
 PB_BIND(BootConfigResponse, BootConfigResponse, AUTO)
 
 
+PB_BIND(ChargePortConfig, ChargePortConfig, AUTO)
+
+
 PB_BIND(ConfigMotorLockType, ConfigMotorLockType, AUTO)
 
 
 PB_BIND(RcdCommand, RcdCommand, AUTO)
+
+
 
 
 

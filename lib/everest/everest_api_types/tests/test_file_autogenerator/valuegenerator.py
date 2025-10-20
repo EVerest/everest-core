@@ -52,14 +52,15 @@ class ManualGenerator:
             code += "void " + self.get_tester(i, i + " a",
                                               i + " b") + " {\n//Todo define the comparison of those two objects\n}"
         return code
-    
-class AcrossFileStructGenerator:
+
+
+class AcrossFileGenerator:
     def __init__(self):
-        self.helpers = {"" :{}}
+        self.helpers = {"": {}}
         self.dependencies_between_helpers = []
 
     def add_helper(self, helper):
-        namespace = helper.get_namespace() 
+        namespace = helper.get_namespace()
         type_string = helper.get_type()
         self.generate_if_needed(namespace)
         self.helpers[namespace.__str__()][type_string] = helper
@@ -67,14 +68,14 @@ class AcrossFileStructGenerator:
     def generate_if_needed(self, namespace):
         if namespace.__str__() not in self.helpers.keys():
             self.helpers[namespace.__str__()] = {}
-    
-    def get_value_generation(self, type_string, namespace):
+
+    def get_value_generation(self, type_string, namespace, seed=""):
         helper = self.helpers[namespace.__str__()][type_string]
-        return helper.get_value_generation()
-    
+        return helper.get_value_generation(type_string, seed)
+
     def get_helpers(self):
         return self.helpers
-    
+
     def get_helper(self, type_string, namespace):
         return self.helpers[namespace.__str__()][type_string]
 
@@ -82,8 +83,7 @@ class AcrossFileStructGenerator:
         helpers = self.get_helpers()
         if namespace.__str__() not in helpers.keys():
             return False
-        return type_string in helpers[namespace.__str__()].keys() 
-
+        return type_string in helpers[namespace.__str__()].keys()
 
 
 def get_vector_type(type_string):
@@ -108,8 +108,8 @@ class ValueGenerator:
     base_types = ["int32_t", "float", "std::string", "bool"]
 
     def __init__(self, struct_name, struct_namespace, enum_map, across_file_struct_generator=None):
-        if(across_file_struct_generator is None):
-            across_file_struct_generator = AcrossFileStructGenerator()
+        if (across_file_struct_generator is None):
+            across_file_struct_generator = AcrossFileGenerator()
         self.across_file_struct_generator = across_file_struct_generator
         self.struct_name = struct_name
         self.struct_namespace = struct_namespace
@@ -124,7 +124,8 @@ class ValueGenerator:
         if highest_vector_field_index_used > 0:
             prefix = type_string + " " + prefix
         suffix = ";\n        "
-        random.seed(self.struct_name + name_string)
+        seed = self.struct_name + name_string
+        random.seed(seed)
         no_prior_preparations = preparations.__len__() <= 0
         if "std::vector<" in type_string:
             vector_type = self.namespace_cleanup(get_vector_type(type_string))
@@ -135,7 +136,8 @@ class ValueGenerator:
                 preparations += self.generate_corresponding_value(field_name, vector_type, (name_string + i.__str__()),
                                                                   preparations="",
                                                                   highest_vector_field_index_used=(highest_vector_field_index_used + vector_length), struct_helper=struct_helper)
-                vector_repr += get_vector_variable_name() + ".push_back(" + field_name + ");\n        "
+                vector_repr += get_vector_variable_name() + ".push_back(" + \
+                    field_name + ");\n        "
             if no_prior_preparations:
                 vector_repr = preparations + vector_repr
             return "{" + vector_repr + target_variable_name + "= " + "vector;}\n        "
@@ -150,38 +152,40 @@ class ValueGenerator:
         if namespace_prefix.__len__() <= 0:
             namespace_prefix += type_string_cleaned + "::"
 
-        if type_string_cleaned in self.enum_map.keys():
-            options = self.enum_map[type_string_cleaned]
-            return prefix + namespace_prefix + options[random.randint(0, options.__len__() - 1)] + suffix
-
         if self.across_file_struct_generator.has_helper(type_string_cleaned, self.struct_namespace):
-            generation = self.across_file_struct_generator.get_helper(type_string_cleaned, self.struct_namespace).get_value_generation(type_string_cleaned)
+            generation = self.across_file_struct_generator.get_helper(
+                type_string_cleaned, self.struct_namespace).get_value_generation(type_string_cleaned, seed)
             return self.struct_printout(prefix, generation)
 
-        if self.is_struct_from_different_namespace(type_string_cleaned): 
-            different_namespace, type_in_different_namespace = self.extract_relative_namespace(type_string_cleaned)
+        if self.is_struct_from_different_namespace(type_string_cleaned):
+            different_namespace, type_in_different_namespace = self.extract_relative_namespace(
+                type_string_cleaned)
             if self.across_file_struct_generator.has_helper(type_in_different_namespace, different_namespace):
-                generation = self.across_file_struct_generator.get_helper(type_in_different_namespace, different_namespace).get_value_generation(type_string_cleaned)
+                generation = self.across_file_struct_generator.get_helper(
+                    type_in_different_namespace, different_namespace).get_value_generation(type_string_cleaned, seed)
                 return self.struct_printout(prefix, generation)
 
         match type_string_cleaned:
             case "int32_t":
                 s = ((2 ** 32) - 1) / 2
-                value_string = random.randint(math.floor(-s), math.floor(s)).__str__()
+                value_string = random.randint(
+                    math.floor(-s), math.floor(s)).__str__()
             case "float":
                 value_string = random.random().__str__()
             case "std::string":
-                value_string = "\"" + "".join(random.sample(string.ascii_letters, 30)) + "\""
+                value_string = "\"" + \
+                    "".join(random.sample(string.ascii_letters, 30)) + "\""
             case "bool":
                 value_string = bool(random.getrandbits(1)).__str__().lower()
             case _:
                 # catchall for values that cannot be assigned with the info in this file alone
-                value_string = ValueGenerator.manual_generator.get_variable_name(type_string_cleaned)
+                value_string = ValueGenerator.manual_generator.get_variable_name(
+                    type_string_cleaned)
         return prefix + value_string + suffix
 
     def struct_printout(self, prefix, generation):
         return prefix + generation
-        
+
     def is_struct_from_different_namespace(self, type_string):
         return "::" in type_string and not "std::" in type_string
 
@@ -189,9 +193,10 @@ class ValueGenerator:
         res = type_string.split("::")
         n = res[:-1]
         sub_namespace = Namespace(n)
-        different_namespace = self.struct_namespace.get_absolute_hierarchy_of_sub_namespace(sub_namespace)
+        different_namespace = self.struct_namespace.get_absolute_hierarchy_of_sub_namespace(
+            sub_namespace)
         type_in_different_namespace = res[-1]
-        return different_namespace,type_in_different_namespace
+        return different_namespace, type_in_different_namespace
 
     def namespace_cleanup(self, type_string):
         cleaned = type_string
@@ -207,7 +212,8 @@ class ValueGenerator:
                                                 field_type, namespace, is_optional)
 
     def generate_corresponding_test(self, original_object, result_object, field_type, namespace, is_optional):
-        is_simple = field_type in self.base_types or field_type in self.enum_map.keys() or self.namespace_cleanup(field_type) in self.enum_map.keys()
+        is_simple = field_type in self.base_types or field_type in self.enum_map.keys(
+        ) or self.namespace_cleanup(field_type) in self.enum_map.keys()
         if is_simple:
             method_signature = "EXPECT_EQ"
             if is_optional:
@@ -216,9 +222,12 @@ class ValueGenerator:
         optional_wrapper_front = ""
         optional_wrapper_rear = ""
         if is_optional:
-            optional_wrapper_front = "EXPECT_EQ(" + original_object + ".has_value(), " + result_object + ".has_value());\nif (" + result_object + ".has_value()) {"
+            optional_wrapper_front = "EXPECT_EQ(" + original_object + ".has_value(), " + \
+                result_object + ".has_value());\nif (" + result_object + \
+                ".has_value()) {"
             optional_wrapper_rear = "}\n"
-        wraped = self.generate_corresponding_test_unsafe(original_object, result_object, field_type, namespace, is_optional)
+        wraped = self.generate_corresponding_test_unsafe(
+            original_object, result_object, field_type, namespace, is_optional)
         return optional_wrapper_front + wraped + optional_wrapper_rear
 
     def generate_corresponding_test_unsafe(self, original_object, result_object, field_type, namespace, is_optional):
@@ -230,31 +239,32 @@ class ValueGenerator:
                 assign_a += ".value()"
                 assign_b += ".value()"
             return (
-                    "{"
-                    + get_vector_declaration(vector_type, "_a", assign_a)
-                    + get_vector_declaration(vector_type, "_b", assign_b)
-                    + "ASSERT_EQ(" + get_vector_variable_name("_a") + ".size(), " + get_vector_variable_name(
-                "_b") + ".size()) << \"Vectors are of unequal length\";\n"
-                    + "for (long unsigned int i = 0; i < " + get_vector_variable_name("_a") + ".size(); ++i) {\n"
-                    + self.generate_corresponding_test(get_vector_variable_name("_a") + "[i]",
-                                                       get_vector_variable_name("_b") + "[i]", vector_type, namespace, False)
-                    + "}\n}"
+                "{"
+                + get_vector_declaration(vector_type, "_a", assign_a)
+                + get_vector_declaration(vector_type, "_b", assign_b)
+                + "ASSERT_EQ(" + get_vector_variable_name("_a") + ".size(), " + get_vector_variable_name(
+                    "_b") + ".size()) << \"Vectors are of unequal length\";\n"
+                + "for (long unsigned int i = 0; i < " +
+                get_vector_variable_name("_a") + ".size(); ++i) {\n"
+                + self.generate_corresponding_test(get_vector_variable_name("_a") + "[i]",
+                                                   get_vector_variable_name("_b") + "[i]", vector_type, namespace, False)
+                + "}\n}"
             )
 
         field_type = self.namespace_cleanup(field_type)
 
-
-
         if is_optional:
-                original_object += ".value()"
-                result_object += ".value()"
+            original_object += ".value()"
+            result_object += ".value()"
 
         if self.across_file_struct_generator.has_helper(field_type, namespace):
-            tester = self.across_file_struct_generator.get_helper(field_type, namespace)
+            tester = self.across_file_struct_generator.get_helper(
+                field_type, namespace)
             return tester.get_comparison(original_object, result_object)
-        
+
         if self.is_struct_from_different_namespace(field_type):
-            different_namespace, type_in_different_namespace = self.extract_relative_namespace(field_type)
+            different_namespace, type_in_different_namespace = self.extract_relative_namespace(
+                field_type)
             return self.generate_corresponding_test(original_object, result_object, type_in_different_namespace, different_namespace, False)
 
         return self.manual_generator.get_tester(field_type, original_object, result_object) + ";\n"
@@ -265,9 +275,6 @@ class ValueGenerator:
         san = san[::-1]
         san = re.sub(">", "", san, 1)[::-1]
         return san
-
-    def add_struct_helper(self, struct_helper):
-        self.across_file_struct_generator.add_helper(struct_helper)
 
     def get_manual_helpers(self):
         return ValueGenerator.manual_generator.get_manual_helpers()

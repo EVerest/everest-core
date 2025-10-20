@@ -526,6 +526,11 @@ void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_confi
     }
 }
 
+void ISO15118_chargerImpl::handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) {
+    mod->r_iso20->call_set_powersupply_capabilities(capabilities);
+    mod->r_iso2->call_set_powersupply_capabilities(capabilities);
+}
+
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {

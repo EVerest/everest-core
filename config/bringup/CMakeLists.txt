@@ -1,3 +1,12 @@
+generate_config_tmux_run_script(CONFIG bringup-api-display-message)
+generate_config_tmux_run_script(CONFIG bringup-api-error-history-consumer)
+generate_config_tmux_run_script(CONFIG bringup-api-evse-board-support)
+generate_config_tmux_run_script(CONFIG bringup-api-isolation-monitor)
+generate_config_tmux_run_script(CONFIG bringup-api-over-voltage-monitor)
+generate_config_tmux_run_script(CONFIG bringup-api-powermeter)
+generate_config_tmux_run_script(CONFIG bringup-api-power-supply-DC)
+generate_config_tmux_run_script(CONFIG bringup-api-system)
+
 generate_config_tmux_run_script(CONFIG bringup-DZG)
 generate_config_tmux_run_script(CONFIG bringup-LEM)
 generate_config_tmux_run_script(CONFIG bringup-bender-isocha)
