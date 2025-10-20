@@ -5,6 +5,7 @@ generate_config_tmux_run_script(CONFIG bringup-api-isolation-monitor)
 generate_config_tmux_run_script(CONFIG bringup-api-over-voltage-monitor)
 generate_config_tmux_run_script(CONFIG bringup-api-powermeter)
 generate_config_tmux_run_script(CONFIG bringup-api-power-supply-DC)
+generate_config_tmux_run_script(CONFIG bringup-api-slac)
 generate_config_tmux_run_script(CONFIG bringup-api-system)
 
 generate_config_tmux_run_script(CONFIG bringup-DZG)
