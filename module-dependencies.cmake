@@ -59,8 +59,13 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST PN7160TokenProvider)
 
 ev_define_dependency(
-    DEPENDENCY_NAME websockets_shared
-    DEPENDENT_MODULES_LIST RpcApi)
+    DEPENDENCY_NAME ftxui
+    DEPENDENT_MODULES_LIST BUDisplayMessage BUEvseBoardSupport BUIsolationMonitor BUmMWcar BUNfcReader BUOverVoltageMonitor BUPowermeter BUPowerSupplyDC BUSystem)
+
+ev_define_dependency(
+    DEPENDENCY_NAME sdbus-cpp
+    OUTPUT_VARIABLE_SUFFIX SDBUS_CPP
+    DEPENDENT_MODULES_LIST Linux_Systemd_Rauc)
 
 ev_define_dependency(
     DEPENDENCY_NAME json-rpc-cxx

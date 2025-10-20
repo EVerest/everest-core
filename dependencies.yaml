@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.22.3
+  git_tag: v0.23.1
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -82,13 +82,13 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: 77ccbc1d1cf38a08474e4b8d35d7d679bd9c8416
+  git_tag: fb8f61b4e68c39890025cb64fdcd2ee23a68c217
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
 libcurl:
   git: https://github.com/curl/curl.git
-  git_tag: curl-8_15_0
+  git_tag: curl-8_16_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
   options: [
     "BUILD_EXAMPLES OFF",
@@ -108,29 +108,44 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.7
+  git_tag: v0.9.9
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 098cf786c6776cb2e357b36ccb1418f2ed2235df
+  git_tag: v0.30.2
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2025.7.0
+  git_tag: 2025.9.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: 3636f83e507b1bb5e0c6373a9a9f0028f65a7693
+  git_tag: v0.6.2
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
   git_tag: 2024.11.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBNFC_NCI"
-
+# UI library for BringUp modules
+ftxui:
+  git: https://github.com/ArthurSonzogni/ftxui
+  git_tag: v6.1.9
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_FTXUI"
+# everest/io library
+mqttc:
+  git: https://github.com/LiamBindle/MQTT-C.git
+  git_tag: v1.1.6
+  options: ["MQTT_C_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
+# Linux_Systemd_Rauc module
+sdbus-cpp:
+  git:  https://github.com/Kistler-Group/sdbus-cpp.git
+  git_tag: v2.1.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP"
+  options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
 # unit testing
 gtest:
   # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
@@ -139,7 +154,7 @@ gtest:
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 everest-sqlite:
   git: https://github.com/EVerest/everest-sqlite.git
-  git_tag: v0.1.3
+  git_tag: v0.1.4
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.9.0

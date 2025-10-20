@@ -24,7 +24,7 @@ config:
     - prohibit
     - allow
     - force
-    default: prohibit
+    default: allow
   terminate_connection_on_failed_response:
     description: >-
       Controls how to handle a failed response code of the EVSE. If true the
@@ -89,6 +89,10 @@ provides:
 requires:
   security:
     interface: evse_security
+  iso15118_vas:
+    interface: ISO15118_vas
+    min_connections: 0
+    max_connections: 128
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

@@ -112,6 +112,7 @@ void energyImpl::clear_request_schedules() {
 
 void energyImpl::ready() {
     hw_caps = mod->get_hw_capabilities();
+    last_powersupply_capabilities = mod->get_powersupply_capabilities();
     clear_request_schedules();
 
     // request energy now
@@ -317,6 +318,36 @@ static bool almost_eq(float a, float b) {
     return a > b - 0.1 and a < b + 0.1;
 }
 
+static bool almost_eq(std::optional<float> const& a, std::optional<float> const& b) {
+    if (a.has_value() and b.has_value()) {
+        return almost_eq(a.value(), b.value());
+    }
+    if (not a.has_value() and not b.has_value()) {
+        return true;
+    }
+    return false;
+}
+
+static bool almost_eq(types::power_supply_DC::Capabilities const& lhs,
+                      types::power_supply_DC::Capabilities const& rhs) {
+    bool result = lhs.bidirectional == rhs.bidirectional and
+                  almost_eq(lhs.current_regulation_tolerance_A, rhs.current_regulation_tolerance_A) and
+                  almost_eq(lhs.peak_current_ripple_A, rhs.peak_current_ripple_A) and
+                  almost_eq(lhs.max_export_voltage_V, rhs.max_export_voltage_V) and
+                  almost_eq(lhs.min_export_voltage_V, rhs.min_export_voltage_V) and
+                  almost_eq(lhs.max_export_current_A, rhs.max_export_current_A) and
+                  almost_eq(lhs.min_export_current_A, rhs.min_export_current_A) and
+                  almost_eq(lhs.max_export_power_W, rhs.max_export_power_W) and
+                  almost_eq(lhs.max_import_voltage_V, rhs.max_import_voltage_V) and
+                  almost_eq(lhs.min_import_voltage_V, rhs.min_import_voltage_V) and
+                  almost_eq(lhs.max_import_current_A, rhs.max_import_current_A) and
+                  almost_eq(lhs.min_import_current_A, rhs.min_import_current_A) and
+                  almost_eq(lhs.max_import_power_W, rhs.max_import_power_W) and
+                  almost_eq(lhs.conversion_efficiency_import, rhs.conversion_efficiency_import) and
+                  almost_eq(lhs.conversion_efficiency_export, rhs.conversion_efficiency_export);
+    return result;
+}
+
 // This is the decision logic when limits are changing.
 bool energyImpl::random_delay_needed(float last_limit, float limit) {
 
@@ -389,11 +420,11 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         if (value.limits_root_side.total_power_W.has_value()) {
             mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
                               value.limits_root_side.total_power_W.value().value);
-
-            float a = value.limits_root_side.total_power_W.value().value / mod->config.ac_nominal_voltage /
-                      mod->ac_nr_phases_active;
-            if (a < limit) {
-                limit = a;
+            // watt limit converted to current limit
+            const float current_limit_power = value.limits_root_side.total_power_W.value().value /
+                                              mod->config.ac_nominal_voltage / mod->ac_nr_phases_active;
+            if ((limit >= 0 and limit > current_limit_power) or (limit < 0 and limit < current_limit_power)) {
+                limit = current_limit_power;
             }
         }
 
@@ -463,9 +494,12 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             mod->charger->set_max_current(limit, valid_until);
         } else {
             // export
-            // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
-            // this needs to be fixed in transition to -20 AC bidirectional.
-            mod->charger->set_max_current(0, valid_until);
+            if (mod->session_is_iso_d20_ac_bpt()) {
+                mod->charger->set_max_current(limit, valid_until);
+            } else {
+                // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
+                mod->charger->set_max_current(0, valid_until);
+            }
         }
 
         if (limit > 1e-5 || limit < -1e-5)
@@ -484,12 +518,14 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 float actual_voltage = ev_info.present_voltage.value_or(0.);
 
                 bool values_changed = true;
+                auto powersupply_capabilities = mod->get_powersupply_capabilities();
 
                 // did the values change since the last call?
                 if (almost_eq(last_enforced_limits_watt, watt_leave_side) and
                     almost_eq(last_enforced_limits_ampere, ampere_root_side) and
                     almost_eq(target_voltage, last_target_voltage) and
-                    not voltage_changed(actual_voltage, last_actual_voltage)) {
+                    not voltage_changed(actual_voltage, last_actual_voltage) and
+                    almost_eq(powersupply_capabilities, last_powersupply_capabilities)) {
                     values_changed = false;
                 }
 
@@ -498,8 +534,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                     last_enforced_limits_watt = watt_leave_side;
                     last_target_voltage = target_voltage;
                     last_actual_voltage = actual_voltage;
-
-                    auto powersupply_capabilities = mod->get_powersupply_capabilities();
+                    last_powersupply_capabilities = powersupply_capabilities;
 
                     // tell car our new limits
                     types::iso15118::DcEvseMaximumLimits evse_max_limits;

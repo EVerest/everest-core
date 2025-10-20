@@ -50,7 +50,6 @@ enum class MutexDescription {
     Charger_dlink_error,
     Charger_set_hlc_charging_active,
     Charger_set_hlc_allow_close_contactor,
-    Charger_set_hlc_error,
     Charger_errors_prevent_charging,
     Charger_set_max_current,
     IEC_process_bsp_event,
@@ -69,6 +68,9 @@ enum class MutexDescription {
     EVSE_subscribe_ac_ev_max_voltage,
     EVSE_subscribe_ac_ev_max_current,
     EVSE_subscribe_ac_ev_min_current,
+    EVSE_subscribe_ac_ev_power_limits,
+    EVSE_subscribe_ac_ev_present_powers,
+    EVSE_subscribe_ac_ev_dynamic_control_mode,
     EVSE_subscribe_dc_ev_energy_capacity,
     EVSE_subscribe_dc_ev_energy_request,
     EVSE_subscribe_dc_full_soc,
@@ -155,8 +157,6 @@ static std::string to_string(MutexDescription d) {
         return "Charger.cpp: set_hlc_charging_active";
     case MutexDescription::Charger_set_hlc_allow_close_contactor:
         return "Charger.cpp: set_hlc_allow_close_contactor";
-    case MutexDescription::Charger_set_hlc_error:
-        return "Charger.cpp: set_hlc_error";
     case MutexDescription::Charger_errors_prevent_charging:
         return "Charger.cpp: errors_prevent_charging";
     case MutexDescription::Charger_set_max_current:
@@ -193,6 +193,12 @@ static std::string to_string(MutexDescription d) {
         return "EvseManager.cpp: subscribe_ac_ev_max_current";
     case MutexDescription::EVSE_subscribe_ac_ev_min_current:
         return "EvseManager.cpp: subscribe_ac_ev_min_current";
+    case MutexDescription::EVSE_subscribe_ac_ev_power_limits:
+        return "EvseManager.cpp: subscribe_ac_ev_power_limits";
+    case MutexDescription::EVSE_subscribe_ac_ev_present_powers:
+        return "EvseManager.cpp: subscribe_ac_ev_present_powers";
+    case MutexDescription::EVSE_subscribe_ac_ev_dynamic_control_mode:
+        return "EvseManager.cpp: subscribe_ac_ev_dynamic_control_mode";
     case MutexDescription::EVSE_subscribe_dc_ev_energy_capacity:
         return "EvseManager.cpp: subscribe_dc_ev_energy_capacity";
     case MutexDescription::EVSE_subscribe_dc_ev_energy_request:

@@ -1,0 +1,15 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  ovm:
+    module: over_voltage_monitor_API
+    config_module:
+      cfg_communication_check_to_s: 0
+      cfg_heartbeat_interval_ms: 10000
+  cli:
+    module: BUOverVoltageMonitor
+    standalone: true
+    connections:
+      ovm:
+        - module_id: ovm
+          implementation_id: main

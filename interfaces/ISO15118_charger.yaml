@@ -48,6 +48,22 @@ cmds:
           Indicates if the vehicle contract may be forwarded to and validated by a CSMS in case
           local validation was not successful
         type: boolean
+  bpt_setup:
+    description: >-
+      At startup, set the bpt setup for ISO15118-20 at least once. May be updated later on.
+    arguments:
+      bpt_config:
+        description: The required parameters for a BPT setup
+        type: object
+        $ref: /iso15118#/BptSetup
+  set_powersupply_capabilities:
+    description: >-
+      At startup, set the min and max limits from the power supply. Can be updated later on.
+    arguments:
+      capabilities:
+        description: The required capabilities from the power supply
+        type: object
+        $ref: /power_supply_DC#/Capabilities
 # Response messages to vars:
   authorization_response:
     description: >-
@@ -149,6 +165,42 @@ cmds:
         type: number
         minimum: 0
         maximum: 400
+  update_ac_parameters:
+    description: Update the d20 initial ac parameters. Call at least once during start up
+    arguments:
+      ac_parameters:
+        description: Ac parameters the EVSE is setting
+        type: object
+        $ref: /iso15118#/AcParameters
+  update_ac_maximum_limits:
+    description: Update the ac maximum limits. Call at least once during start up.
+    arguments:
+      maximum_limits:
+        description: Maximum values (charge and discharge) the EVSE can deliver
+        type: object
+        $ref: /iso15118#/AcEvseMaximumPower
+  update_ac_minimum_limits:
+    description: Update the ac minimum limits. Call at least once during start up.
+    arguments:
+      minimum_limits:
+        description: Minimum values (charge and discharge) the EVSE can deliver
+        type: object
+        $ref: /iso15118#/AcEvseMinimumPower
+  update_ac_target_values:
+    description: Update the ac target values. Call at least once before charging begins.
+    arguments:
+      target_values:
+        description: AC target values
+        type: object
+        $ref: /iso15118#/AcTargetValues
+  update_ac_present_power:
+    description: >-
+      Update the present power from the powermeter. Call at least once before charging begins
+    arguments:
+      present_power:
+        description: Present active power
+        type: object
+        $ref: /units#/Power
   update_dc_maximum_limits:
     description: Update the maximum limits. Call at least once during start up.
     arguments:
@@ -284,6 +336,20 @@ vars:
     type: number
     minimum: 0
     maximum: 400
+  ac_ev_power_limits:
+    description: >-
+      Ac charge & discharge power values supported and allowed by the EV
+    type: object
+    $ref: /iso15118#/AcEvPowerLimits
+  ac_ev_present_powers:
+    description: Present active and reactive power measured from the EV
+    type: object
+    $ref: /iso15118#/AcEvPresentPowerValues
+  ac_ev_dynamic_control_mode:
+    description: >-
+      The parameters the EVCC offers and sets for ac dynamic control mode
+    type: object
+    $ref: /iso15118#/AcEvDynamicModeValues
   dc_ev_energy_capacity:
     description: "Optional: [Wh] Energy capacity of the EV"
     type: number
@@ -377,3 +443,7 @@ vars:
   meter_info_requested:
     description: The EV requested meter infos from the EVSE
     type: "null"
+  selected_service_parameters:
+    description: From the EV selected service parameters
+    type: object
+    $ref: /iso15118#/SelectedServiceParameters

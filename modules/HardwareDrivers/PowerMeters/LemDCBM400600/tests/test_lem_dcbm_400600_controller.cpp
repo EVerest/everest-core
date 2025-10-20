@@ -205,7 +205,7 @@ TEST_F(LemDCBM400600ControllerTest, test_start_transaction) {
 
     // Verify
     EXPECT_EQ(transaction_request_status_to_string(res.status), "OK");
-    EXPECT_TRUE(res.error->empty());
+    EXPECT_FALSE(res.error.has_value());
     EXPECT_THAT(res.transaction_min_stop_time.value(),
                 testing::MatchesRegex("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z$"));
     EXPECT_THAT(res.transaction_max_stop_time.value(),
@@ -243,9 +243,10 @@ TEST_P(LemDCBM400600ControllerTestInvalidResponses, test_start_transaction_fail_
 
     // Verify
     EXPECT_EQ(transaction_request_status_to_string(res.status), "UNEXPECTED_ERROR");
+    EXPECT_TRUE(res.error.has_value());
     EXPECT_THAT(res.error.value(), testing::MatchesRegex("Failed to start transaction mock_transaction_id.*"));
-    EXPECT_TRUE(res.transaction_min_stop_time->empty());
-    EXPECT_TRUE(res.transaction_max_stop_time->empty());
+    EXPECT_FALSE(res.transaction_min_stop_time.has_value());
+    EXPECT_FALSE(res.transaction_max_stop_time.has_value());
 }
 
 // Setup parametrized invalid responses
@@ -281,9 +282,10 @@ TEST_F(LemDCBM400600ControllerTest, test_start_transaction_http_fail) {
 
     // Verify
     EXPECT_EQ(transaction_request_status_to_string(res.status), "UNEXPECTED_ERROR");
+    EXPECT_TRUE(res.error.has_value());
     EXPECT_THAT(res.error.value(), testing::MatchesRegex("Failed to start transaction mock_transaction_id.*"));
-    EXPECT_TRUE(res.transaction_min_stop_time->empty());
-    EXPECT_TRUE(res.transaction_max_stop_time->empty());
+    EXPECT_FALSE(res.transaction_min_stop_time.has_value());
+    EXPECT_FALSE(res.transaction_max_stop_time.has_value());
 }
 
 //****************************************************************
@@ -331,6 +333,7 @@ TEST_P(LemDCBM400600ControllerTestInvalidResponses, test_stop_transaction_fail_i
 
     // Verify
     EXPECT_EQ(transaction_request_status_to_string(res.status), "UNEXPECTED_ERROR");
+    EXPECT_TRUE(res.error.has_value());
     EXPECT_THAT(res.error.value(), testing::MatchesRegex("Failed to stop transaction mock_transaction_id:.*"));
     EXPECT_FALSE(res.signed_meter_value.has_value());
 }
@@ -361,6 +364,7 @@ TEST_F(LemDCBM400600ControllerTest, test_stop_transaction_http_fail) {
 
     // Verify
     EXPECT_EQ(transaction_request_status_to_string(res.status), "UNEXPECTED_ERROR");
+    EXPECT_TRUE(res.error.has_value());
     EXPECT_THAT(res.error.value(), testing::MatchesRegex("Failed to stop transaction mock_transaction_id.*"));
     EXPECT_FALSE(res.signed_meter_value.has_value());
 }

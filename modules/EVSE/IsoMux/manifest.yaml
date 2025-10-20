@@ -15,7 +15,7 @@ config:
     - prohibit
     - allow
     - force
-    default: prohibit
+    default: allow
   tls_key_logging:
     description: >-
       Enable/Disable the export of TLS session keys (pre-master-secret)

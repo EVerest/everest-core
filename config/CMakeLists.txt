@@ -6,6 +6,7 @@ generate_config_run_script(CONFIG sil-ocpp)
 generate_config_run_script(CONFIG sil-ocpp201)
 generate_config_run_script(CONFIG sil-dc)
 generate_config_run_script(CONFIG sil-dc-rpcapi)
+generate_config_run_script(CONFIG sil-ac-d20)
 generate_config_run_script(CONFIG sil-dc-d20)
 generate_config_run_script(CONFIG sil-dc-tls)
 generate_config_run_script(CONFIG sil-dc-isomux)
@@ -20,6 +21,8 @@ generate_config_run_script(CONFIG sil-ocpp-custom-extension)
 generate_config_run_script(CONFIG sil-ocpp-pnc)
 generate_config_run_script(CONFIG sil-ocpp201-pnc)
 generate_config_run_script(CONFIG example)
+
+add_subdirectory(bringup)
 
 # install configs
 install(

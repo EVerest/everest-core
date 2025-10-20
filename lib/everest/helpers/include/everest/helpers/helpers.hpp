@@ -21,6 +21,10 @@ std::string redact(const std::string& token);
 
 types::authorization::ProvidedIdToken redact(const types::authorization::ProvidedIdToken& token);
 
+/// \brief Escapes various HTML characters
+/// \returns an escaped version of the provided html
+std::string escape_html(const std::string& html);
+
 /// \brief Compares two strings case-insensitively
 /// \returns true if the strings are equal, false otherwise
 bool is_equal_case_insensitive(const std::string& str1, const std::string& str2);

@@ -45,6 +45,8 @@ protected:
     virtual void handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
                                       bool& supported_certificate_service,
                                       bool& central_contract_validation_allowed) override;
+    virtual void handle_bpt_setup(types::iso15118::BptSetup& bpt_config) override;
+    virtual void handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) override;
     virtual void handle_authorization_response(types::authorization::AuthorizationStatus& authorization_status,
                                                types::authorization::CertificateStatus& certificate_status) override;
     virtual void handle_ac_contactor_closed(bool& status) override;
@@ -57,6 +59,11 @@ protected:
     virtual void handle_update_energy_transfer_modes(
         std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) override;
     virtual void handle_update_ac_max_current(double& max_current) override;
+    virtual void handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) override;
+    virtual void handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) override;
+    virtual void handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) override;
+    virtual void handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) override;
+    virtual void handle_update_ac_present_power(types::units::Power& present_power) override;
     virtual void handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) override;
     virtual void handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) override;
     virtual void handle_update_isolation_status(types::iso15118::IsolationStatus& isolation_status) override;

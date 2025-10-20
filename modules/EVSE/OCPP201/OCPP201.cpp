@@ -358,7 +358,7 @@ bool OCPP201::all_evse_ready() {
             return false;
         }
     }
-    EVLOG_info << "All EVSE ready. Starting OCPP2.0.1 service";
+    EVLOG_info << "All EVSE ready. Starting OCPP2.X service";
     return true;
 }
 
@@ -380,34 +380,75 @@ void OCPP201::init() {
 
     this->init_evse_maps();
 
-    for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
-        this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
-            if (ready) {
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
-            }
-        });
-        this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
-            if (ready) {
-                EVLOG_info << "EVSE " << evse_id << " ready.";
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
-            }
-        });
-        this->r_evse_manager.at(evse_id - 1)
-            ->subscribe_hw_capabilities(
-                [this, evse_id](const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
-                    this->evse_hardware_capabilities_map[evse_id] = hw_capabilities;
-                });
-        this->r_evse_manager.at(evse_id - 1)
-            ->subscribe_supported_energy_transfer_modes(
-                [this,
-                 evse_id](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
-                    this->evse_supported_energy_transfer_modes[evse_id] = supported_energy_transfer_modes;
-                });
+    const auto error_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, false, this->event_id_counter++);
+        if (this->started) {
+            this->charge_point->on_event({event_data});
+        } else {
+            std::scoped_lock lock(this->session_event_mutex);
+            this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{0}).id].push(event_data);
+        }
+    };
+
+    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, true, this->event_id_counter++);
+        if (this->started) {
+            this->charge_point->on_event({event_data});
+        } else {
+            std::scoped_lock lock(this->session_event_mutex);
+            this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{0}).id].push(event_data);
+        }
+    };
+
+    subscribe_global_all_errors(error_handler, error_cleared_handler);
+
+    r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
+        if (this->started) {
+            this->charge_point->on_firmware_update_status_notification(
+                status.request_id, conversions::to_ocpp_firmware_status_enum(status.firmware_update_status));
+        } else {
+            this->event_queue[0].push(status);
+        }
+    });
+
+    r_system->subscribe_log_status([this](types::system::LogStatus status) {
+        if (this->started) {
+            this->charge_point->on_log_status_notification(
+                conversions::to_ocpp_upload_logs_status_enum(status.log_status), status.request_id);
+        } else {
+            this->event_queue[0].push(status);
+        }
+    });
+
+    if (!this->r_reservation.empty() && this->r_reservation.at(0) != nullptr) {
+        r_reservation.at(0)->subscribe_reservation_update(
+            [this](const types::reservation::ReservationUpdateStatus status) {
+                if (status.reservation_status == types::reservation::Reservation_status::Expired ||
+                    status.reservation_status == types::reservation::Reservation_status::Removed) {
+                    EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id
+                                << ": "
+                                << (status.reservation_status == types::reservation::Reservation_status::Expired
+                                        ? "Expired"
+                                        : "Removed");
+                    try {
+                        this->charge_point->on_reservation_status(
+                            status.reservation_id,
+                            conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
+                    } catch (const std::out_of_range& e) {
+                    }
+                }
+            });
     }
+
+    this->init_evse_subscriptions();
 }
 
 void OCPP201::ready() {
@@ -463,7 +504,7 @@ void OCPP201::ready() {
 
     ocpp::v2::Callbacks callbacks;
     callbacks.is_reset_allowed_callback = [this](const std::optional<const int32_t> evse_id,
-                                                 const ocpp::v2::ResetEnum& type) {
+                                                 const ocpp::v2::ResetEnum&) {
         if (evse_id.has_value()) {
             return false; // Reset of EVSE is currently not supported
         }
@@ -887,6 +928,15 @@ void OCPP201::ready() {
         return false;
     };
 
+    // wait for all EVSE to be ready before we can initialize libocpp before being able to trigger enable/disable
+    // connector callbacks
+    std::unique_lock lk(this->evse_ready_mutex);
+    while (!this->all_evse_ready()) {
+        this->evse_ready_cv.wait(lk);
+    }
+    // In case (for some reason) EvseManager ready signals are sent after this point, this will prevent a hang
+    lk.unlock();
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
@@ -912,26 +962,6 @@ void OCPP201::ready() {
         evse_connector_structure, std::move(composed_device_model_storage), this->ocpp_share_path.string(),
         this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
         std::make_shared<EvseSecurity>(*this->r_security), callbacks);
-
-    const auto error_handler = [this](const Everest::error::Error& error) {
-        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
-            // handled by specific evse_manager error handler
-            return;
-        }
-        const auto event_data = get_event_data(error, false, this->event_id_counter++);
-        this->charge_point->on_event({event_data});
-    };
-
-    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
-            // handled by specific evse_manager error handler
-            return;
-        }
-        const auto event_data = get_event_data(error, true, this->event_id_counter++);
-        this->charge_point->on_event({event_data});
-    };
-
-    subscribe_global_all_errors(error_handler, error_cleared_handler);
 
     // publish charging schedules at least once on startup
     charging_schedules_callback();
@@ -987,15 +1017,109 @@ void OCPP201::ready() {
     this->transaction_handler =
         std::make_unique<TransactionHandler>(this->r_evse_manager.size(), tx_start_points, tx_stop_points);
 
+    const auto boot_reason = conversions::to_ocpp_boot_reason(this->r_system->call_get_boot_reason());
+    this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(this->config.MessageQueueResumeDelay));
+    // we can now initialize the charge point's state machine. It reads the connector availability from the internal
+    // database and potentially triggers enable/disable callbacks at the evse.
+    this->charge_point->start(boot_reason, false);
+    this->started = true;
+
+    // Signal to EVSEs to start their internal state machines
+    for (const auto& evse : this->r_evse_manager) {
+        evse->call_external_ready_to_start_charging();
+    }
+
+    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might
+    // be plugged in at startup)
+    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
+    // start OCPP connection
+    this->charge_point->connect_websocket();
+
+    // process event queue
+    for (auto& [evse_id, evse_event_queue] : this->event_queue) {
+        while (!evse_event_queue.empty()) {
+            auto queued_event = evse_event_queue.front();
+            if (std::holds_alternative<types::evse_manager::SessionEvent>(queued_event)) {
+                const auto session_event = std::get<types::evse_manager::SessionEvent>(queued_event);
+                EVLOG_info << "Processing queued event for evse_id: " << evse_id << ", event: " << session_event.event;
+                this->process_session_event(evse_id, session_event);
+            } else if (std::holds_alternative<ocpp::v2::EventData>(queued_event)) {
+                const auto event_data = std::get<ocpp::v2::EventData>(queued_event);
+                EVLOG_info << "Processing queued error event for evse_id: " << evse_id
+                           << ", event id: " << event_data.eventId;
+                this->charge_point->on_event({event_data});
+            } else if (std::holds_alternative<ocpp::v2::MeterValue>(queued_event)) {
+                const auto meter_value = std::get<ocpp::v2::MeterValue>(queued_event);
+                EVLOG_info << "Processing queued meter value for evse_id: " << evse_id;
+                this->charge_point->on_meter_value(evse_id, meter_value);
+            } else if (std::holds_alternative<types::system::FirmwareUpdateStatus>(queued_event)) {
+                const auto fw_update_status = std::get<types::system::FirmwareUpdateStatus>(queued_event);
+                EVLOG_info << "Processing queued firmware update status";
+                this->charge_point->on_firmware_update_status_notification(
+                    fw_update_status.request_id,
+                    conversions::to_ocpp_firmware_status_enum(fw_update_status.firmware_update_status));
+            } else if (std::holds_alternative<types::system::LogStatus>(queued_event)) {
+                const auto log_status = std::get<types::system::LogStatus>(queued_event);
+                EVLOG_info << "Processing queued log status";
+                this->charge_point->on_log_status_notification(
+                    conversions::to_ocpp_upload_logs_status_enum(log_status.log_status), log_status.request_id);
+            } else {
+                EVLOG_warning << "Unknown event type in queue for evse_id: " << evse_id;
+            }
+            evse_event_queue.pop();
+        }
+    }
+}
+
+void OCPP201::init_evse_subscriptions() {
     int evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
+        evse->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
+            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+            if (ready) {
+                this->evse_ready_map[evse_id] = true;
+                this->evse_ready_cv.notify_one();
+            }
+        });
+
+        evse->subscribe_ready([this, evse_id](bool ready) {
+            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+            if (ready) {
+                EVLOG_info << "EVSE " << evse_id << " ready.";
+                this->evse_ready_map[evse_id] = true;
+                this->evse_ready_cv.notify_one();
+            }
+        });
+
+        evse->subscribe_hw_capabilities(
+            [this, evse_id](const types::evse_board_support::HardwareCapabilities& hw_capabilities) {
+                this->evse_hardware_capabilities_map[evse_id] = hw_capabilities;
+            });
+
+        evse->subscribe_supported_energy_transfer_modes(
+            [this, evse_id](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+                this->evse_supported_energy_transfer_modes[evse_id] = supported_energy_transfer_modes;
+            });
+
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
+            if (!this->started) {
+                EVLOG_info << "OCPP not fully initialized, but received a session event on evse_id: " << evse_id
+                           << " that will be queued up: " << session_event.event;
+                std::scoped_lock lock(this->session_event_mutex);
+                this->event_queue[evse_id].push(session_event);
+                return;
+            }
             this->process_session_event(evse_id, session_event);
         });
 
         evse->subscribe_powermeter([this, evse_id](const types::powermeter::Powermeter& power_meter) {
-            auto meter_value = conversions::to_ocpp_meter_value(
+            ocpp::v2::MeterValue meter_value = conversions::to_ocpp_meter_value(
                 power_meter, ocpp::v2::ReadingContextEnum::Sample_Periodic, power_meter.signed_meter_value);
+            if (!this->started) {
+                std::scoped_lock lock(this->session_event_mutex);
+                this->event_queue[evse_id].push(meter_value);
+                return;
+            }
             if (this->evse_soc_map[evse_id].has_value()) {
                 auto sampled_soc_value = conversions::to_ocpp_sampled_value(
                     ocpp::v2::ReadingContextEnum::Sample_Periodic, ocpp::v2::MeasurandEnum::SoC, "Percent",
@@ -1011,6 +1135,11 @@ void OCPP201::ready() {
         });
 
         evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
+            if (!this->started) {
+                EVLOG_info << "EV Info received from evse_manager before DM was instantiated, ignoring...";
+                EVLOG_info << "EV Info will be retrieved later";
+                return;
+            }
             if (ev_info.soc.has_value()) {
                 this->evse_soc_map[evse_id] = ev_info.soc;
             }
@@ -1021,10 +1150,24 @@ void OCPP201::ready() {
         });
 
         auto fault_handler = [this, evse_id](const Everest::error::Error& error) {
+            const auto event_data = get_event_data(error, true, this->event_id_counter++);
+            if (this->started) {
+                this->charge_point->on_event({event_data});
+            } else {
+                std::scoped_lock lock(this->session_event_mutex);
+                this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{1}).id].push(event_data);
+            }
             this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
         };
 
         auto fault_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
+            const auto event_data = get_event_data(error, true, this->event_id_counter++);
+            if (this->started) {
+                this->charge_point->on_event({event_data});
+            } else {
+                std::scoped_lock lock(this->session_event_mutex);
+                this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{1}).id].push(event_data);
+            }
             this->charge_point->on_fault_cleared(evse_id, get_connector_id_from_error(error));
         };
 
@@ -1038,6 +1181,10 @@ void OCPP201::ready() {
     for (const auto& extension : this->r_extensions_15118) {
         extension->subscribe_iso15118_certificate_request(
             [this, extensions_id](const types::iso15118::RequestExiStreamSchema& certificate_request) {
+                if (!this->started) {
+                    EVLOG_info << "ISO15118 certificate_request received before OCPP was initialized, ignoring";
+                    return;
+                }
                 auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
                     conversions::to_ocpp_get_15118_certificate_request(certificate_request));
                 EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
@@ -1055,6 +1202,10 @@ void OCPP201::ready() {
 
         extension->subscribe_charging_needs([this,
                                              extensions_id](const types::iso15118::ChargingNeeds& charging_needs) {
+            if (!this->started) {
+                EVLOG_info << "ISO15118 charging_needs received before OCPP was initialized, ignoring";
+                return;
+            }
             const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
             if (mapping.has_value()) {
                 try {
@@ -1085,62 +1236,6 @@ void OCPP201::ready() {
 
         extensions_id++;
     }
-
-    r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
-        this->charge_point->on_firmware_update_status_notification(
-            status.request_id, conversions::to_ocpp_firmware_status_enum(status.firmware_update_status));
-    });
-
-    r_system->subscribe_log_status([this](types::system::LogStatus status) {
-        this->charge_point->on_log_status_notification(conversions::to_ocpp_upload_logs_status_enum(status.log_status),
-                                                       status.request_id);
-    });
-
-    if (!this->r_reservation.empty() && this->r_reservation.at(0) != nullptr) {
-        r_reservation.at(0)->subscribe_reservation_update(
-            [this](const types::reservation::ReservationUpdateStatus status) {
-                if (status.reservation_status == types::reservation::Reservation_status::Expired ||
-                    status.reservation_status == types::reservation::Reservation_status::Removed) {
-                    EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id
-                                << ": "
-                                << (status.reservation_status == types::reservation::Reservation_status::Expired
-                                        ? "Expired"
-                                        : "Removed");
-                    try {
-                        this->charge_point->on_reservation_status(
-                            status.reservation_id,
-                            conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
-                    } catch (const std::out_of_range& e) {
-                    }
-                }
-            });
-    }
-
-    // wait for all EVSE to be ready before we can initialize libocpp before being able to trigger enable/disable
-    // connector callbacks
-    std::unique_lock lk(this->evse_ready_mutex);
-    while (!this->all_evse_ready()) {
-        this->evse_ready_cv.wait(lk);
-    }
-    // In case (for some reason) EvseManager ready signals are sent after this point, this will prevent a hang
-    lk.unlock();
-
-    const auto boot_reason = conversions::to_ocpp_boot_reason(this->r_system->call_get_boot_reason());
-    this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(this->config.MessageQueueResumeDelay));
-    // we can now initialize the charge point's state machine. It reads the connector availability from the internal
-    // database and potentially triggers enable/disable callbacks at the evse.
-    this->charge_point->start(boot_reason, false);
-
-    // Signal to EVSEs to start their internal state machines
-    for (const auto& evse : this->r_evse_manager) {
-        evse->call_external_ready_to_start_charging();
-    }
-
-    // wait for potential events from the evses in order to start OCPP with the correct initial state (e.g. EV might
-    // be plugged in at startup)
-    std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
-    // start OCPP connection
-    this->charge_point->connect_websocket();
 }
 
 void OCPP201::process_session_event(const int32_t evse_id, const types::evse_manager::SessionEvent& session_event) {

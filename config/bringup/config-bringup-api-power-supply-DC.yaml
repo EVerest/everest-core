@@ -1,0 +1,15 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  ps_dc_1:
+    module: power_supply_DC_API
+    config_module:
+      cfg_communication_check_to_s: 0
+      cfg_heartbeat_interval_ms: 10000
+  cli:
+    module: BUPowerSupplyDC
+    standalone: true
+    connections:
+      psu:
+        - module_id: ps_dc_1
+          implementation_id: main

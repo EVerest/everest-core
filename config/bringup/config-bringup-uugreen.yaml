@@ -1,0 +1,10 @@
+active_modules:
+  cli:
+    connections:
+      psu:
+        - implementation_id: main
+          module_id: powersupply
+    module: BUPowerSupplyDC
+    standalone: true
+  powersupply:
+    module: UUGreenPower_UR1000X0

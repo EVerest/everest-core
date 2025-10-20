@@ -104,6 +104,11 @@ void ocppImpl::ready() {
 }
 
 bool ocppImpl::handle_stop() {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle stop command";
+        return false;
+    }
+
     std::lock_guard<std::mutex> lock(this->chargepoint_state_mutex);
     mod->charging_schedules_timer->stop();
     bool success = mod->charge_point->stop();
@@ -114,6 +119,11 @@ bool ocppImpl::handle_stop() {
 }
 
 bool ocppImpl::handle_restart() {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle restart command";
+        return false;
+    }
+
     std::lock_guard<std::mutex> lock(this->chargepoint_state_mutex);
     mod->charging_schedules_timer->interval(std::chrono::seconds(this->mod->config.PublishChargingScheduleIntervalS));
     bool success = mod->charge_point->restart();
@@ -124,6 +134,11 @@ bool ocppImpl::handle_restart() {
 }
 
 void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle security event command";
+        return;
+    }
+
     std::optional<ocpp::DateTime> timestamp;
     if (event.timestamp.has_value()) {
         timestamp = ocpp_conversions::to_ocpp_datetime_or_now(event.timestamp.value());
@@ -138,6 +153,21 @@ void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
 
 std::vector<types::ocpp::GetVariableResult>
 ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& requests) {
+
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not yet initialized. Cannot handle get variables request.";
+        std::vector<types::ocpp::GetVariableResult> results;
+        for (const auto& req : requests) {
+            types::ocpp::GetVariableResult result;
+            result.status = types::ocpp::GetVariableStatusEnumType::Rejected;
+            result.component_variable.component = req.component_variable.component;
+            result.component_variable.variable = req.component_variable.variable;
+            result.attribute_type = req.attribute_type;
+            results.push_back(result);
+        }
+        return results;
+    }
+
     std::vector<types::ocpp::GetVariableResult> results;
 
     // prepare ocpp_request to request configuration keys from ocpp::v16::ChargePoint
@@ -198,6 +228,20 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
 std::vector<types::ocpp::SetVariableResult>
 ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests, std::string& /*source*/) {
 
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not yet initialized. Cannot handle set variables request.";
+        std::vector<types::ocpp::SetVariableResult> results;
+        for (const auto& req : requests) {
+            types::ocpp::SetVariableResult result;
+            result.status = types::ocpp::SetVariableStatusEnumType ::Rejected;
+            result.component_variable.component = req.component_variable.component;
+            result.component_variable.variable = req.component_variable.variable;
+            result.attribute_type = req.attribute_type;
+            results.push_back(result);
+        }
+        return results;
+    }
+
     std::vector<types::ocpp::SetVariableResult> results;
 
     for (const auto& request : requests) {
@@ -233,6 +277,12 @@ ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& req
 }
 
 void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariable>& component_variables) {
+
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "Could not monitor variables. ChargePoint not initialized";
+        return;
+    }
+
     for (const auto& cv : component_variables) {
         this->mod->charge_point->register_configuration_key_changed_callback(
             cv.variable.name, // we dont care about the component, only about the variable.name in OCPP1.6
@@ -251,6 +301,11 @@ void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariab
 }
 types::ocpp::ChangeAvailabilityResponse
 ocppImpl::handle_change_availability(types::ocpp::ChangeAvailabilityRequest& request) {
+
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle change availability command";
+        return types::ocpp::ChangeAvailabilityResponse{types::ocpp::ChangeAvailabilityStatusEnumType::Rejected};
+    }
 
     ocpp::v16::ChangeAvailabilityRequest ocpp_request{};
     ocpp_request.type = to_ocpp(request.operational_status);

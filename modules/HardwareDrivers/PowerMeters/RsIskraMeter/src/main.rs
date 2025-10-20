@@ -59,8 +59,8 @@ use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use utils::{
-    correct_signature, counter, create_ocmf, create_random_meter_session_id, from_t5_format,
-    from_t6_format, string_to_vec, to_8_string, to_hex_string,
+    counter, create_ocmf, create_random_meter_session_id, from_t5_format, from_t6_format,
+    string_to_vec, to_8_string, to_hex_string, to_signature,
 };
 
 /// Public key prefix for transparency software, defined under 6.5.14.
@@ -697,8 +697,7 @@ impl ReadyState {
         // WM3M4 V2 supports OCMF 1.3.0. There we have a dedicated field `TT`
         // for the tariff text. If we implement support for it add logic here
         // to write it into the right field.
-        let mut identification_data =
-            std::collections::LinkedList::from([&session_id, tariff_text]);
+        let mut identification_data = std::collections::LinkedList::from([tariff_text]);
 
         // Overwrite the `charge_point_identification` if needed. Otherwise drop
         // it into the `identification_data`.
@@ -707,6 +706,10 @@ impl ReadyState {
         } else {
             identification_data.push_front(evse_id);
         }
+
+        // Make sure session id is the first item in the identification data.
+        identification_data.push_front(&session_id);
+
         // Remove empty strings. Maybe also sanitize the input.
         ocmf_data.identification_data = identification_data
             .iter()
@@ -744,8 +747,7 @@ impl ReadyState {
         log::info!("Length of signature: {}", length_of_signature);
         let registers_amount = (length_of_signature + 1) / 2;
         let regs = self.read_holding_registers(8188, registers_amount)?;
-        let regs = correct_signature(regs);
-        let mut signature = to_hex_string(regs);
+        let mut signature = to_signature(regs);
         signature.truncate((length_of_signature * 2) as usize);
         log::info!("Read the signature: {}", signature);
         Ok(signature)
@@ -1055,10 +1057,10 @@ impl generated::PowermeterServiceSubscriber for IskraMeter {
         let lock = self
             .state_machine
             .lock()
-            .map_err(|_| ::everestrs::Error::InvalidArgument("Internal error"))?;
+            .map_err(|_| ::everestrs::Error::HandlerException("Internal error".to_string()))?;
 
         let StateMachine::ReadyState(ready_state) = &*lock else {
-            return Err(::everestrs::Error::InvalidArgument("Not initialized"));
+            return Err(::everestrs::Error::HandlerException("Not initialized".to_string()));
         };
 
         let res = ready_state.start_transaction(value);
@@ -1080,10 +1082,10 @@ impl generated::PowermeterServiceSubscriber for IskraMeter {
         let lock = self
             .state_machine
             .lock()
-            .map_err(|_| ::everestrs::Error::InvalidArgument("Internal error"))?;
+            .map_err(|_| ::everestrs::Error::HandlerException("Internal error".to_string()))?;
 
         let StateMachine::ReadyState(ready_state) = &*lock else {
-            return Err(::everestrs::Error::InvalidArgument("Not initialized"));
+            return Err(::everestrs::Error::HandlerException("Not initialized".to_string()));
         };
 
         let res = ready_state.stop_transaction();

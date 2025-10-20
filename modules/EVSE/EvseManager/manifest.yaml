@@ -65,6 +65,10 @@ config:
       - AC
       - DC
     default: AC
+  supported_iso_ac_bpt:
+    description: Set to true if ISO15118-20 AC BPT is supported and should be offered to the EV
+    type: boolean
+    default: false
   ac_hlc_enabled:
     description: Enable or disable HLC (aka ISO15118) for AC mode
     type: boolean
@@ -352,6 +356,30 @@ config:
       the session. This is not standard compliant!
     type: boolean
     default: false
+  bpt_channel:
+    description: Type of installed/uninstalled power transfer channel
+    type: string
+    enum:
+      - None
+      - Unified
+      - Separated
+    default: None
+  bpt_generator_mode:
+    description: Power converter behavior
+    type: string
+    enum:
+      - None
+      - GridFollowing
+      - GridForming
+    default: None
+  bpt_grid_code_island_method:
+    description: Active/inactive islanding detection method. Only for AC.
+    type: string
+    enum:
+      - None
+      - Active
+      - Passive
+    default: None
 provides:
   evse:
     interface: evse_manager
@@ -365,6 +393,9 @@ provides:
   random_delay:
     description: Provides control over UK smart charging regulation random delay feature
     interface: uk_random_delay
+  dc_external_derate:
+    description: Provides DC external derating capabilities
+    interface: dc_external_derate
 requires:
   bsp:
     interface: evse_board_support

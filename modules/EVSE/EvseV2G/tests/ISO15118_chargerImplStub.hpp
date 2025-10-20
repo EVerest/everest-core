@@ -42,6 +42,12 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
                                                types::authorization::CertificateStatus& certificate_status) {
         std::cout << "ISO15118_chargerImplBase::handle_authorization_response called" << std::endl;
     }
+    virtual void handle_bpt_setup(types::iso15118::BptSetup& config) {
+        std::cout << "ISO15118_chargerImplBase::handle_bpt_setup called" << std::endl;
+    }
+    virtual void handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) {
+        std::cout << "ISO15118_chargerImplBase::handle_set_powersupply_capabilities called" << std::endl;
+    }
     virtual void handle_ac_contactor_closed(bool& status) {
         std::cout << "ISO15118_chargerImplBase::handle_ac_contactor_closed called" << std::endl;
     }
@@ -65,6 +71,21 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
     }
     virtual void handle_update_ac_max_current(double& max_current) {
         std::cout << "ISO15118_chargerImplBase::handle_update_ac_max_current called" << std::endl;
+    }
+    virtual void handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_parameters called" << std::endl;
+    }
+    virtual void handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_maximum_limits called" << std::endl;
+    }
+    virtual void handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_minimum_limits called" << std::endl;
+    }
+    virtual void handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_target_values called" << std::endl;
+    }
+    virtual void handle_update_ac_present_power(types::units::Power& present_power) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_present_power called" << std::endl;
     }
     virtual void handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
         std::cout << "ISO15118_chargerImplBase::handle_update_dc_maximum_limits called" << std::endl;

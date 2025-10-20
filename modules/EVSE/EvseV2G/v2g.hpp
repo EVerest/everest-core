@@ -5,6 +5,7 @@
 #define V2G_H
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
+#include <generated/interfaces/ISO15118_vas/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
@@ -44,12 +45,14 @@
 
 #define ISO_15118_2013_MSG_DEF "urn:iso:15118:2:2013:MsgDef"
 #define ISO_15118_2013_MAJOR   2
+#define ISO_15118_2013_MINOR   0
 
 #define ISO_15118_2010_MSG_DEF "urn:iso:15118:2:2010:MsgDef"
 #define ISO_15118_2010_MAJOR   1
 
 #define DIN_70121_MSG_DEF "urn:din:70121:2012:MsgDef"
 #define DIN_70121_MAJOR   2
+#define DIN_70121_MINOR   0
 
 #define EVSE_LEAF_KEY_FILE_NAME "CPO_EVSE_LEAF.key"
 #define EVSE_PROV_KEY_FILE_NAME "PROV_LEAF.key"
@@ -170,6 +173,14 @@ enum NoEnergyPauseStatus {
     BeforeCableCheck,
 };
 
+struct PowerCapabilities {
+    iso2_PhysicalValueType max_current;
+    iso2_PhysicalValueType min_current;
+    iso2_PhysicalValueType max_power;
+    iso2_PhysicalValueType max_voltage;
+    iso2_PhysicalValueType min_voltage;
+};
+
 /**
  * Abstracts a charging port, i.e. a power outlet in this daemon.
  *
@@ -181,6 +192,7 @@ struct v2g_context {
     std::atomic_bool shutdown;
 
     evse_securityIntf* r_security;
+    std::vector<ISO15118_vasIntf*> r_vas;
     ISO15118_chargerImplBase* p_charger;
     iso15118_extensionsImplBase* p_extensions;
 
@@ -259,8 +271,8 @@ struct v2g_context {
         struct v2g_evse_id evse_id;
         unsigned int date_time_now_is_used;
         struct iso2_ChargeServiceType charge_service;
-        std::vector<iso2_ServiceType> evse_service_list{};
-        struct iso2_ServiceParameterListType service_parameter_list[iso2_ServiceType_8_ARRAY_SIZE];
+        std::vector<iso2_ServiceType> evse_service_list;
+        std::map<uint16_t, iso2_ServiceParameterListType> service_parameter_list;
 
         struct iso2_SAScheduleListType evse_sa_schedule_list;
         bool evse_sa_schedule_list_is_used;
@@ -305,6 +317,9 @@ struct v2g_context {
         // No energy pause IEC61851-23:2023
         NoEnergyPauseStatus no_energy_pause{NoEnergyPauseStatus::None};
 
+        // Min and max limits from the dc powersupply
+        PowerCapabilities power_capabilities{};
+
     } evse_v2g_data;
 
     struct {
@@ -345,6 +360,8 @@ struct v2g_context {
     } ev_v2g_data;
 
     bool hlc_pause_active;
+
+    std::vector<std::vector<uint16_t>> supported_vas_services_per_provider;
 };
 
 enum mqtt_dlink_action {

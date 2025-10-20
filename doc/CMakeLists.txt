@@ -1,0 +1,1 @@
+add_subdirectory(everest_api_specs)
