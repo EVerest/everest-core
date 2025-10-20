@@ -70,6 +70,7 @@ option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as depe
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVEREST_ENABLE_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag" OFF)
 option(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag globally" OFF)
+option(EVEREST_ENABLE_DEBUG_BUILD "Enable debug build" OFF)
 # list of compile options that are passed to modules if EVEREST_ENABLE_COMPILE_WARNINGS=ON
 # generated code has functions often not used
 set(EVEREST_COMPILE_OPTIONS "-Wall;-Wno-unused-function" CACHE STRING "A list of compile options used for building modules")
@@ -95,7 +96,9 @@ ev_setup_python_executable(
 if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
 
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    if(EVEREST_ENABLE_DEBUG_BUILD)
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    endif()
 endif()
 
 include(ev-define-dependency)
