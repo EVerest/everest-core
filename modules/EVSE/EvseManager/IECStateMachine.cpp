@@ -83,8 +83,8 @@ IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& 
                                  bool lock_connector_in_state_b_) :
     r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
     // feed the state machine whenever the timer expires
-    timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
-    timeout_unlock_state_F.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
+    timeout_state_c1.signal_reached.connect([this]() { feed_state_machine(last_cp_state); });
+    timeout_unlock_state_F.signal_reached.connect([this]() { feed_state_machine(last_cp_state); });
 
     // Subscribe to bsp driver to receive BspEvents from the hardware
     r_bsp->subscribe_event([this](const types::board_support_common::BspEvent event) {
@@ -99,14 +99,9 @@ IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& 
 
 void IECStateMachine::process_bsp_event(const types::board_support_common::BspEvent bsp_event) {
     auto event = from_bsp_event(bsp_event.event);
-    std::visit(overloaded{[this](RawCPState& raw_state) {
+    std::visit(overloaded{[this](const RawCPState& raw_state) {
                               // If it is a raw CP state, run it through the state machine
-                              {
-                                  Everest::scoped_lock_timeout lock(state_machine_mutex,
-                                                                    Everest::MutexDescription::IEC_process_bsp_event);
-                                  cp_state = raw_state;
-                              }
-                              feed_state_machine();
+                              feed_state_machine(raw_state);
                           },
                           // If it is another CP event, pass through
                           [this](CPEvent& event) {
@@ -123,13 +118,8 @@ void IECStateMachine::process_bsp_event(const types::board_support_common::BspEv
                event);
 }
 
-void IECStateMachine::feed_state_machine() {
-    std::thread feed([this]() { feed_state_machine_no_thread(); });
-    feed.detach();
-}
-
-void IECStateMachine::feed_state_machine_no_thread() {
-    auto events = state_machine();
+void IECStateMachine::feed_state_machine(RawCPState cp_state) {
+    auto events = state_machine(cp_state);
 
     // Process all events
     while (not events.empty()) {
@@ -142,7 +132,7 @@ void IECStateMachine::feed_state_machine_no_thread() {
 // - CP state changes (both events from hardware as well as duty cycle changes)
 // - Allow power on changes
 // - The C1 6s timer expires
-std::queue<CPEvent> IECStateMachine::state_machine() {
+std::queue<CPEvent> IECStateMachine::state_machine(RawCPState cp_state) {
 
     std::queue<CPEvent> events;
     auto timer_state_C1 = TimerControl::do_nothing;
@@ -150,7 +140,6 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 
     {
         // mutex protected section
-
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_state_machine);
 
         if (cp_state not_eq RawCPState::F and last_cp_state == RawCPState::F) {
@@ -329,7 +318,6 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         last_cp_state = cp_state;
         last_pwm_running = pwm_running;
         last_power_on_allowed = power_on_allowed;
-
         // end of mutex protected section
     }
 
@@ -381,7 +369,7 @@ void IECStateMachine::set_pwm(double value) {
 
     r_bsp->call_pwm_on(value * 100);
 
-    feed_state_machine();
+    feed_state_machine(last_cp_state);
 }
 
 // High level state machine sets state X1
@@ -392,7 +380,7 @@ void IECStateMachine::set_pwm_off() {
     }
     r_bsp->call_pwm_off();
     // Don't run the state machine in the callers context
-    feed_state_machine();
+    feed_state_machine(last_cp_state);
 }
 
 // High level state machine sets state F
@@ -403,7 +391,7 @@ void IECStateMachine::set_pwm_F() {
     }
     r_bsp->call_pwm_F();
     // Don't run the state machine in the callers context
-    feed_state_machine();
+    feed_state_machine(last_cp_state);
 }
 
 // The higher level state machine in Charger.cpp calls this to indicate it allows contactors to be switched on
@@ -420,7 +408,7 @@ void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reas
     }
     // The actual power on will be handled in the state machine to verify it is in the correct CP state etc.
     // Don't run the state machine in the callers context
-    feed_state_machine();
+    feed_state_machine(last_cp_state);
 }
 
 // Private member function used to actually call the BSP driver's allow_power_on
@@ -502,7 +490,7 @@ void IECStateMachine::connector_force_unlock() {
 
     {
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_force_unlock);
-        cp = cp_state;
+        cp = last_cp_state;
     }
 
     if (not relais_on) {
