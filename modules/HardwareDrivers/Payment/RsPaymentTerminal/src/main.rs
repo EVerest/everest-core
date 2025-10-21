@@ -111,9 +111,9 @@ mod sync_feig {
             self.rt.block_on(inner.read_card())
         }
 
-        pub fn begin_transaction(&self, token: &str) -> Result<()> {
+        pub fn begin_transaction(&self, token: &str, amount: usize) -> Result<()> {
             let mut inner = self.inner.lock().unwrap();
-            self.rt.block_on(inner.begin_transaction(token))
+            self.rt.block_on(inner.begin_transaction(token, amount))
         }
 
         pub fn cancel_transaction(&self, token: &str) -> Result<()> {
@@ -170,25 +170,32 @@ pub struct PaymentTerminalModule {
 
     /// Keep track on which connector support which card types
     connector_to_card_type: Mutex<HashMap<i64, Vec<CardType>>>,
+
+    /// The configurable pre-auth.
+    pre_authorization_amount: usize,
 }
 
-impl From<u8> for RejectionReason {
-    fn from(code: u8) -> Self {
+impl From<ErrorMessages> for RejectionReason {
+    fn from(code: ErrorMessages) -> Self {
         match code {
-            0x33 | // reservation not possible - pin required
-            0x41 | // pin_required
-            0x13 | // contactless transaction count exceeded
-            0xEC | // PIN-processing not possible
-            0xFC   // necessary device not present or defective
-               => RejectionReason::PinRequired,
-            0x71 => RejectionReason::InsufficientFunds,
-            0xC5 => RejectionReason::CardNotSupported,
-            0x6C => RejectionReason::Aborted,
-            0x05 | // declined
-            0xA0 | // receiver not ready
-            0xFF | // unknown system error
-            0x61 | // unknown
-            0x9B   // error from dial-up/communication fault
+            #[cfg(feature = "with_lavego_error_codes")]
+            ErrorMessages::ContactlessTransactionCountExceeded => RejectionReason::PinRequired,
+            #[cfg(feature = "with_lavego_error_codes")]
+            ErrorMessages::PinEntryRequiredx33 => RejectionReason::PinRequired,
+            #[cfg(feature = "with_lavego_error_codes")]
+            ErrorMessages::PinEntryRequiredx3d => RejectionReason::PinRequired,
+            #[cfg(feature = "with_lavego_error_codes")]
+            ErrorMessages::PinEntryRequiredx41 => RejectionReason::PinRequired,
+            ErrorMessages::PinProcessingNotPossible
+                | ErrorMessages::NecessaryDeviceNotPresentOrDefective => RejectionReason::PinRequired,
+            ErrorMessages::CreditNotSufficient => RejectionReason::InsufficientFunds,
+            ErrorMessages::PaymentMethodNotSupported => RejectionReason::CardNotSupported,
+            ErrorMessages::AbortViaTimeoutOrAbortKey => RejectionReason::Aborted,
+            #[cfg(feature = "with_lavego_error_codes")]
+            ErrorMessages::Declined => RejectionReason::Timeout,
+            ErrorMessages::ReceiverNotReady
+                | ErrorMessages::SystemError
+                | ErrorMessages::ErrorFromDialUp   // error from dial-up/communication fault
               => RejectionReason::Timeout,
             _ => RejectionReason::Unknown,
         }
@@ -277,7 +284,7 @@ impl PaymentTerminalModule {
 
                                     publishers
                                         .payment_terminal
-                                        .rejection_reason((*rejection_reason as u8).into())?;
+                                        .rejection_reason((*rejection_reason).into())?;
                                 }
                                 None => log::debug!("No error code provided"),
                             };
@@ -300,7 +307,10 @@ impl PaymentTerminalModule {
                 }
 
                 if get_connectors_for_bank_card != NO_CONNECTORS {
-                    if let Err(err) = self.feig.begin_transaction(token.as_ref().unwrap()) {
+                    if let Err(err) = self
+                        .feig
+                        .begin_transaction(token.as_ref().unwrap(), self.pre_authorization_amount)
+                    {
                         log::warn!("Failed to start a transaction: {err:?}");
                         get_connectors_for_bank_card = NO_CONNECTORS;
                     }
@@ -474,7 +484,6 @@ fn main() -> Result<()> {
         ip_address: Ipv4Addr::from_str(&config.ip)?,
         feig_config: FeigConfig {
             currency: config.currency as usize,
-            pre_authorization_amount: config.pre_authorization_amount as usize,
             read_card_timeout: config.read_card_timeout as u8,
             password: config.password as usize,
             end_of_day_max_interval: config.end_of_day_max_interval as u64,
@@ -488,6 +497,7 @@ fn main() -> Result<()> {
         tx,
         feig: SyncFeig::new(pt_config),
         connector_to_card_type: Mutex::new(HashMap::new()),
+        pre_authorization_amount: config.pre_authorization_amount as usize,
     });
 
     let _module = Module::new(
@@ -556,6 +566,7 @@ mod tests {
             tx,
             feig: feig_mock,
             connector_to_card_type: Mutex::new(HashMap::new()),
+            pre_authorization_amount: 11,
         };
 
         assert!(pt_module.begin_transaction(&everest_mock).is_err());
@@ -602,6 +613,7 @@ mod tests {
             tx,
             feig: feig_mock,
             connector_to_card_type: Mutex::new(HashMap::new()),
+            pre_authorization_amount: 20,
         };
 
         assert!(pt_module.begin_transaction(&everest_mock).is_ok());
@@ -653,12 +665,13 @@ mod tests {
                 .times(1)
                 .return_once(|| Ok(card_info));
 
+            let pre_authorization_amount = 42;
             if expected_transaction {
                 feig_mock
                     .expect_begin_transaction()
                     .times(1)
-                    .with(eq("my bank token"))
-                    .return_once(|_| Ok(()));
+                    .with(eq("my bank token"), eq(pre_authorization_amount))
+                    .return_once(|_, _| Ok(()));
             }
 
             feig_mock.expect_configure().times(1).return_once(|| Ok(()));
@@ -672,6 +685,7 @@ mod tests {
                     1 as i64,
                     vec![CardType::BankCard],
                 )])),
+                pre_authorization_amount,
             };
 
             assert!(pt_module.begin_transaction(&everest_mock).is_ok());
@@ -823,12 +837,13 @@ mod tests {
                 .times(1)
                 .return_once(|| Ok(card_info));
 
+            let pre_authorization_amount = 41;
             if expected_transaction {
                 feig_mock
                     .expect_begin_transaction()
                     .times(1)
-                    .with(eq("my bank token"))
-                    .return_once(|_| Ok(()));
+                    .with(eq("my bank token"), eq(pre_authorization_amount))
+                    .return_once(|_, _| Ok(()));
             }
 
             let (tx, _) = channel();
@@ -837,6 +852,7 @@ mod tests {
                 tx,
                 feig: feig_mock,
                 connector_to_card_type: Mutex::new(connector_to_card_type),
+                pre_authorization_amount,
             };
 
             assert!(pt_module.begin_transaction(&everest_mock).is_ok());
@@ -923,6 +939,7 @@ mod tests {
                     1 as i64,
                     vec![CardType::BankCard],
                 )])),
+                pre_authorization_amount: 50,
             };
             assert!(pt_module
                 .on_session_cost_impl(&context, session_cost)
@@ -1084,6 +1101,7 @@ mod tests {
                     1 as i64,
                     vec![CardType::BankCard],
                 )])),
+                pre_authorization_amount: 20,
             };
             assert!(pt_module
                 .on_session_cost_impl(&context, session_cost)
@@ -1146,11 +1164,12 @@ mod tests {
                 .times(3)
                 .returning(|| Ok(CardInfo::Bank));
 
+            let pre_authorization_amount = 50;
             feig_mock
                 .expect_begin_transaction()
                 .times(3)
-                .with(eq("my bank token"))
-                .returning(|_| Ok(()));
+                .with(eq("my bank token"), eq(pre_authorization_amount))
+                .returning(|_, _| Ok(()));
 
             let (tx, _) = channel();
 
@@ -1158,6 +1177,7 @@ mod tests {
                 tx,
                 feig: feig_mock,
                 connector_to_card_type: Mutex::new(HashMap::new()),
+                pre_authorization_amount,
             };
 
             let context = Context {
