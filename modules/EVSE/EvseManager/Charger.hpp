@@ -171,8 +171,6 @@ public:
 
     sigslot::signal<> signal_hlc_no_energy_available;
 
-    void process_event(CPEvent event);
-
     void run();
 
     void request_error_sequence();
@@ -223,6 +221,7 @@ public:
     }
 
     void cleanup_transactions_on_startup();
+    EventQueue<CPEvent> bsp_event_queue;
 
 private:
     utils::Stopwatch stopwatch;
@@ -271,6 +270,8 @@ private:
 
     bool start_transaction();
     void stop_transaction();
+
+    void process_event(CPEvent event);
 
     // This mutex locks all variables related to the state machine
     Everest::timed_mutex_traceable state_machine_mutex;

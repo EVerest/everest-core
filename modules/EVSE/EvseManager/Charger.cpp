@@ -95,12 +95,13 @@ void Charger::main_thread() {
     signal_max_current(get_max_current_internal());
     signal_state(shared_context.current_state);
 
-    while (true) {
-        if (main_thread_handle.shouldExit()) {
-            break;
-        }
+    while (!main_thread_handle.shouldExit()) {
 
-        std::this_thread::sleep_for(MAINLOOP_UPDATE_RATE);
+        const auto events = bsp_event_queue.wait_for(MAINLOOP_UPDATE_RATE);
+
+        for (const auto& event : events) {
+            process_event(event);
+        }
 
         {
             Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_mainloop);
