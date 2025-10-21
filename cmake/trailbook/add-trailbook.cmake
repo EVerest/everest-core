@@ -21,64 +21,101 @@ macro(_add_trailbook_check_requirements_txt)
     endif()
 endmacro()
 
-macro(_add_trailbook_download_all_versions_command)
-    find_program(
-        GIT_EXECUTABLE
-        NAMES git
-        REQUIRED
-    )
+macro(_add_trailbook_setup_build_directory)
+    set(CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/setup_build_directory.check_done")
+    set(SETUP_BUILD_DIRECTORY_FILE_LIST "${CMAKE_CURRENT_BINARY_DIR}/setup_build_directory_filelist.yaml")
+    set(DEPLOYED_DOCS_REPO_DIR "${CMAKE_CURRENT_BINARY_DIR}/deployed_docs_repo/")
 
-    add_custom_command(
-        OUTPUT
-            ${CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS}
-        DEPENDS            
-            trailbook_${args_NAME}_stage_prepare_sphinx_source_before
-        COMMENT
-            "Trailbook: ${args_NAME} - Downloading all versions repo"
-        COMMAND
-            ${CMAKE_COMMAND} -E rm -rf
-            ${CMAKE_CURRENT_BINARY_DIR}/deployed_docs_repo/
-            ${TRAILBOOK_BUILD_DIRECTORY}
-            ${CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT}
-        COMMAND
-            ${GIT_EXECUTABLE} clone 
-            -b ${args_DEPLOYED_DOCS_REPO_BRANCH} 
-            --depth 1
-            ${args_DEPLOYED_DOCS_REPO_URL}
-            ${CMAKE_CURRENT_BINARY_DIR}/deployed_docs_repo/
-        COMMAND
-            ${CMAKE_COMMAND} -E create_symlink
-            ${CMAKE_CURRENT_BINARY_DIR}/deployed_docs_repo/docs/
-            ${TRAILBOOK_BUILD_DIRECTORY}
-        COMMAND
-            ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS}
-    )
-    # Reset variable, so that other commands do not depend on it
-    # if this command is not used
-    set(CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT "")
-endmacro()
+    if(TRAILBOOK_INSTANCE_DOWNLOAD_ALL_VERSIONS)
+        if(_SETUP_BUILD_DIRECTORY_LAST_CONFIGURATION STREQUAL "EMPTY_SKELETON")
+            message(FATAL_ERROR "add_trailbook: Cannot switch between DOWNLOAD_ALL_VERSIONS and EMPTY_SKELETON configurations for trailbook ${args_NAME} without cleaning build directory")
+        endif()
+    else()
+        if(_SETUP_BUILD_DIRECTORY_LAST_CONFIGURATION STREQUAL "DOWNLOAD_ALL_VERSIONS")
+            message(FATAL_ERROR "add_trailbook: Cannot switch between DOWNLOAD_ALL_VERSIONS and EMPTY_SKELETON configurations for trailbook ${args_NAME} without cleaning build directory")
+        endif()
+    endif()
 
-macro(_add_trailbook_create_empty_skeleton_multiversion_root_command)
-    add_custom_command(
-        OUTPUT
-            ${CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT}
-        DEPENDS
-            trailbook_${args_NAME}_stage_prepare_sphinx_source_before
-        COMMENT
-            "Trailbook: ${args_NAME} - Creating empty skeleton multiversion root directory"
-        COMMAND
-            ${CMAKE_COMMAND} -E rm -rf
-            ${TRAILBOOK_BUILD_DIRECTORY}
-            ${CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS}
-        COMMAND
-            ${CMAKE_COMMAND} -E make_directory
-            ${TRAILBOOK_BUILD_DIRECTORY}/
-        COMMAND
-            ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT}
-    )
-    # Reset variable, so that other commands do not depend on it
-    # if this command is not used
-    set(CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS "")
+    if(TRAILBOOK_INSTANCE_DOWNLOAD_ALL_VERSIONS)
+        find_program(
+            GIT_EXECUTABLE
+            NAMES git
+            REQUIRED
+        )
+
+        set(CONDITIONAL_DELETE_LATEST_DIR_COMMAND "")
+        if(TRAILBOOK_INSTANCE_IS_RELEASE)
+            set(CONDITIONAL_DELETE_LATEST_DIR_COMMAND
+                COMMAND
+                    ${CMAKE_COMMAND} -E rm -rf                    
+                    ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download/docs/latest
+            )
+        endif()
+
+        add_custom_command(
+            OUTPUT
+                ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
+            DEPENDS            
+                trailbook_${args_NAME}_stage_prepare_sphinx_source_before
+                $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE>
+                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+            COMMENT
+                "Trailbook: ${args_NAME} - Downloading all versions repo"
+            COMMAND
+                ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+                remove
+                --data-file ${SETUP_BUILD_DIRECTORY_FILE_LIST}
+                --root-directory ${DEPLOYED_DOCS_REPO_DIR}
+            COMMAND
+                ${GIT_EXECUTABLE} clone 
+                -b ${args_DEPLOYED_DOCS_REPO_BRANCH} 
+                --depth 1
+                ${args_DEPLOYED_DOCS_REPO_URL}
+                ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download/
+            ${CONDITIONAL_DELETE_LATEST_DIR_COMMAND}
+            COMMAND
+                ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+                create
+                --data-file ${SETUP_BUILD_DIRECTORY_FILE_LIST}
+                --root-directory ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download
+            COMMAND
+                ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+                move
+                --data-file ${SETUP_BUILD_DIRECTORY_FILE_LIST}
+                --root-directory ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download
+                --target-root-directory ${DEPLOYED_DOCS_REPO_DIR}/
+            COMMAND
+                ${CMAKE_COMMAND} -E rm -rf
+                ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download/
+            COMMAND
+                ${CMAKE_COMMAND} -E create_symlink
+                ${DEPLOYED_DOCS_REPO_DIR}/docs/
+                ${TRAILBOOK_BUILD_DIRECTORY}
+            COMMAND
+                ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
+        )
+        set(_SETUP_BUILD_DIRECTORY_LAST_CONFIGURATION "DOWNLOAD_ALL_VERSIONS")
+    else()
+        set(CONDITIONAL_CLEANUP_COMMAND "")
+        add_custom_command(
+            OUTPUT
+                ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
+            DEPENDS
+                trailbook_${args_NAME}_stage_prepare_sphinx_source_before
+                $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE>
+            COMMENT
+                "Trailbook: ${args_NAME} - Creating empty skeleton multiversion root directory"
+            COMMAND
+                ${CMAKE_COMMAND} -E make_directory
+                ${TRAILBOOK_BUILD_DIRECTORY}/
+            COMMAND
+                ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
+        )
+        set(_SETUP_BUILD_DIRECTORY_LAST_CONFIGURATION "EMPTY_SKELETON")
+    endif()
 endmacro()
 
 macro(_add_trailbook_copy_stem_command)
@@ -100,15 +137,27 @@ macro(_add_trailbook_copy_stem_command)
             ${STEM_FILES_BUILD_DIR}
         DEPENDS
             ${STEM_FILES_SOURCE_DIR}
-            ${CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS}
-            ${CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT}
             trailbook_${args_NAME}_stage_prepare_sphinx_source_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE>
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
         COMMENT
             "Trailbook: ${args_NAME} - Copying stem files to build directory"
         COMMAND
-            ${CMAKE_COMMAND} -E rm -rf ${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}
+            ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+            remove
+            --data-file ${CMAKE_CURRENT_BINARY_DIR}/copy_stem_filelist.yaml
+            --root-directory ${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}
         COMMAND
-            ${CMAKE_COMMAND} -E copy_directory ${args_STEM_DIRECTORY} ${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}
+            ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+            create
+            --data-file ${CMAKE_CURRENT_BINARY_DIR}/copy_stem_filelist.yaml
+            --root-directory ${args_STEM_DIRECTORY}
+        COMMAND
+            ${CMAKE_COMMAND} -E copy_directory
+            ${args_STEM_DIRECTORY}
+            ${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}
     )
 endmacro()
 
@@ -121,9 +170,9 @@ macro(_add_trailbook_create_metadata_yaml_command)
         DEPENDS
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/create_metadata_yaml.py
             ${STEM_FILES_BUILD_DIR}
-            ${CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS}
-            ${CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT}
+            ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
             trailbook_${args_NAME}_stage_prepare_sphinx_source_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE>
         COMMENT
             "Trailbook: ${args_NAME} - Creating metadata YAML file"
         COMMAND
@@ -145,19 +194,37 @@ macro(_add_trailbook_sphinx_build_command)
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
         DEPENDS
             trailbook_${args_NAME}_stage_build_sphinx_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE>
             ${STEM_FILES_BUILD_DIR}
             ${METADATA_YAML_FILE}
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
         COMMENT
             "Trailbook: ${args_NAME} - Building HTML documentation with Sphinx"
         COMMAND
-            ${CMAKE_COMMAND} -E rm -rf
-            ${TRAILBOOK_INSTANCE_BUILD_DIRECTORY}/
+            ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+            remove
+            --data-file ${CMAKE_CURRENT_BINARY_DIR}/sphinx_build_filelist.yaml
+            --root-directory ${TRAILBOOK_INSTANCE_BUILD_DIRECTORY}/
         COMMAND
             EVEREST_METADATA_YAML_PATH=${METADATA_YAML_FILE}
             ${_SPHINX_BUILD_EXECUTABLE}
             -b html
             ${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}
-            ${TRAILBOOK_INSTANCE_BUILD_DIRECTORY}
+            ${CMAKE_CURRENT_BINARY_DIR}/sphinx_build_temp/
+        COMMAND
+            ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+            create
+            --data-file ${CMAKE_CURRENT_BINARY_DIR}/sphinx_build_filelist.yaml
+            --root-directory ${CMAKE_CURRENT_BINARY_DIR}/sphinx_build_temp/
+        COMMAND
+            ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+            move
+            --data-file ${CMAKE_CURRENT_BINARY_DIR}/sphinx_build_filelist.yaml
+            --root-directory ${CMAKE_CURRENT_BINARY_DIR}/sphinx_build_temp/
+            --target-root-directory ${TRAILBOOK_INSTANCE_BUILD_DIRECTORY}/
         COMMAND
             ${CMAKE_COMMAND} -E echo 
             "Trailbook: ${args_NAME} - HTML documentation built at ${TRAILBOOK_INSTANCE_BUILD_DIRECTORY}"
@@ -173,6 +240,7 @@ macro(_add_trailbook_replace_latest_command)
             ${CHECK_DONE_FILE_REPLACE_LATEST}
         DEPENDS
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
         COMMENT
             "Trailbook: ${args_NAME} - Replacing 'latest' copy with copy of current instance"
@@ -196,6 +264,7 @@ macro(_add_trailbook_copy_404_command)
             ${TRAILBOOK_INSTANCE_404_FILE}
         DEPENDS
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_404_file.py
         COMMENT
@@ -210,6 +279,7 @@ macro(_add_trailbook_copy_404_command)
             ${CHECK_DONE_FILE_COPY_404}
         DEPENDS
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
             ${TRAILBOOK_INSTANCE_404_FILE}
         COMMENT
@@ -234,6 +304,7 @@ macro(_add_trailbook_render_redirect_template_command)
             ${CHECK_DONE_FILE_RENDER_REDIRECT_TEMPLATE}
         DEPENDS
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/render_redirect_template.py
         COMMENT
@@ -260,6 +331,7 @@ macro(_add_trailbook_copy_versions_index_command)
             ${TRAILBOOK_INSTANCE_VERSIONS_INDEX_FILE}
         DEPENDS
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_versions_index_file.py
         COMMENT
@@ -274,6 +346,7 @@ macro(_add_trailbook_copy_versions_index_command)
             ${CHECK_DONE_FILE_CHECK_LATEST_INSTANCE}
         DEPENDS
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
             ${CHECK_DONE_FILE_REPLACE_LATEST}
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_latest_instance.py
@@ -291,6 +364,7 @@ macro(_add_trailbook_copy_versions_index_command)
             ${CHECK_DONE_FILE_COPY_VERSIONS_INDEX}
         DEPENDS
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
             ${TRAILBOOK_INSTANCE_VERSIONS_INDEX_FILE}
             ${CHECK_DONE_FILE_CHECK_LATEST_INSTANCE}
@@ -314,12 +388,12 @@ macro(_add_trailbook_preview_target)
             trailbook_${args_NAME}
         COMMENT
             "Trailbook: ${args_NAME} - Serve HTML documentation"
+        USES_TERMINAL
         COMMAND
             ${CMAKE_COMMAND} -E echo 
             "Trailbook: ${args_NAME} - Serving HTML output at http://localhost:8000/"
         COMMAND
             ${Python3_EXECUTABLE} -m http.server --directory ${TRAILBOOK_BUILD_DIRECTORY} 8000
-        USES_TERMINAL
     )
 endmacro()
 
@@ -331,6 +405,7 @@ macro(_add_trailbook_live_preview_target)
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/target_observer.py
         COMMENT
             "Trailbook: ${args_NAME} - Auto-build HTML documentation with Sphinx and serve"
+        USES_TERMINAL
         COMMAND
             ${CMAKE_COMMAND} -E echo 
             "Trailbook: ${args_NAME} - Auto-building HTML output and serving at http://localhost:8000/"
@@ -341,7 +416,6 @@ macro(_add_trailbook_live_preview_target)
             "trailbook_${args_NAME}_preview"
             --build-dir ${CMAKE_BINARY_DIR}
             --interval-ms 2000
-        USES_TERMINAL
     )
 endmacro()
 
@@ -447,49 +521,52 @@ function(add_trailbook)
     message(STATUS "  Deployed docs repo url:       ${args_DEPLOYED_DOCS_REPO_URL}")
     message(STATUS "  Deployed docs repo branch:    ${args_DEPLOYED_DOCS_REPO_BRANCH}")
 
+    _add_trailbook_check_requirements_txt()
 
     add_custom_target(
         trailbook_${args_NAME}_stage_prepare_sphinx_source_before
+        DEPENDS
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE>
     )
-    _add_trailbook_check_requirements_txt()
 
-    set(CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS "${CMAKE_CURRENT_BINARY_DIR}/download_all_versions.check_done")
-    set(CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT "${CMAKE_CURRENT_BINARY_DIR}/create_empty_skeleton_multiversion_root.check_done")
-    if(TRAILBOOK_INSTANCE_DOWNLOAD_ALL_VERSIONS)
-        _add_trailbook_download_all_versions_command()
-    else()
-        _add_trailbook_create_empty_skeleton_multiversion_root_command()
-    endif()
+    _add_trailbook_setup_build_directory()
     _add_trailbook_copy_stem_command()
     _add_trailbook_create_metadata_yaml_command()
+    set(DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+        trailbook_${args_NAME}_stage_prepare_sphinx_source_before
+        ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
+        ${STEM_FILES_BUILD_DIR}
+        ${METADATA_YAML_FILE}
+    )
     add_custom_target(
         trailbook_${args_NAME}_stage_prepare_sphinx_source_after
         DEPENDS
-            trailbook_${args_NAME}_stage_prepare_sphinx_source_before
-            ${CHECK_DONE_FILE_DOWNLOAD_ALL_VERSIONS}
-            ${CHECK_DONE_FILE_CREATE_EMPTY_SKELETON_MULTIVERSION_ROOT}
-            ${STEM_FILES_BUILD_DIR}
-            ${METADATA_YAML_FILE}
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMENT
             "Prepare Sphinx source for trailbook: ${args_NAME}"
     )
     add_custom_target(
         trailbook_${args_NAME}_stage_build_sphinx_before
         DEPENDS
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE>
             trailbook_${args_NAME}_stage_prepare_sphinx_source_after
     )
     _add_trailbook_sphinx_build_command()
+    set(DEPS_STAGE_BUILD_SPHINX_AFTER
+        trailbook_${args_NAME}_stage_build_sphinx_before
+        ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
+    )
     add_custom_target(
         trailbook_${args_NAME}_stage_build_sphinx_after
         DEPENDS
-            trailbook_${args_NAME}_stage_build_sphinx_before
-            ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
+            ${DEPS_STAGE_BUILD_SPHINX_AFTER}
         COMMENT
             "Build Sphinx documentation for trailbook: ${args_NAME}"
     )
     add_custom_target(
         trailbook_${args_NAME}_stage_postprocess_sphinx_before
         DEPENDS
+            $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             trailbook_${args_NAME}_stage_build_sphinx_after
     )
     if(TRAILBOOK_INSTANCE_IS_RELEASE)
@@ -499,14 +576,17 @@ function(add_trailbook)
     endif()
     _add_trailbook_copy_versions_index_command()
 
+    set(DEPS_STAGE_POSTPROCESS_SPHINX_AFTER
+        trailbook_${args_NAME}_stage_postprocess_sphinx_before
+        ${CHECK_DONE_FILE_REPLACE_LATEST}
+        ${CHECK_DONE_FILE_COPY_404}
+        ${CHECK_DONE_FILE_COPY_VERSIONS_INDEX}
+        ${CHECK_DONE_FILE_RENDER_REDIRECT_TEMPLATE}
+    )
     add_custom_target(
         trailbook_${args_NAME}_stage_postprocess_sphinx_after
         DEPENDS
-        trailbook_${args_NAME}_stage_postprocess_sphinx_before
-            ${CHECK_DONE_FILE_REPLACE_LATEST}
-            ${CHECK_DONE_FILE_COPY_404}
-            ${CHECK_DONE_FILE_COPY_VERSIONS_INDEX}
-            ${CHECK_DONE_FILE_RENDER_REDIRECT_TEMPLATE}
+            ${DEPS_STAGE_POSTPROCESS_SPHINX_AFTER}
         COMMENT
             "Post-process Sphinx documentation for trailbook: ${args_NAME}"
     )
@@ -529,5 +609,11 @@ function(add_trailbook)
             TRAILBOOK_INSTANCE_NAME "${args_INSTANCE_NAME}"
             TRAILBOOK_INSTANCE_SOURCE_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}"
             TRAILBOOK_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+            ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE ""
+            ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE ""
+            ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE ""
+            DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER "${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}"
+            DEPS_STAGE_BUILD_SPHINX_AFTER "${DEPS_STAGE_BUILD_SPHINX_AFTER}"
+            DEPS_STAGE_POSTPROCESS_SPHINX_AFTER "${DEPS_STAGE_POSTPROCESS_SPHINX_AFTER}"
     )
 endfunction()

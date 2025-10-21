@@ -70,14 +70,19 @@ function(trailbook_ev_create_snapshot)
         trailbook_${args_TRAILBOOK_NAME}
         TRAILBOOK_CURRENT_BINARY_DIR
     )
-
+    get_target_property(
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+        trailbook_${args_TRAILBOOK_NAME}
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+    )
     set(CREATE_SNAPSHOT_TEMP_DIR "${TRAILBOOK_CURRENT_BINARY_DIR}/create_snapshot_temp")
     add_custom_command(
         OUTPUT
-            "${args_OUTPUT_FILE}"
+            ${args_OUTPUT_FILE}
         DEPENDS
             ${_TRAILBOOK_EXT_EVEREST_CREATE_SNAPSHOT_SCRIPT}
             trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMAND
             ${CMAKE_COMMAND} -E rm -rf
             ${CREATE_SNAPSHOT_TEMP_DIR}
@@ -94,12 +99,19 @@ function(trailbook_ev_create_snapshot)
     add_custom_target(
         trailbook_${args_TRAILBOOK_NAME}_create_snapshot
         DEPENDS
+            trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
             ${args_OUTPUT_FILE}
         COMMENT
             "Target to create snapshot file ${args_OUTPUT_FILE} for trailbook ${args_TRAILBOOK_NAME}"
     )
-    add_dependencies(
-        trailbook_${args_TRAILBOOK_NAME}_stage_build_sphinx_before
-        trailbook_${args_TRAILBOOK_NAME}_create_snapshot
+    set_property(
+        TARGET
+            trailbook_${args_TRAILBOOK_NAME}
+        APPEND
+        PROPERTY
+            ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
+            ${args_OUTPUT_FILE}
+            trailbook_${args_TRAILBOOK_NAME}_create_snapshot
     )
 endfunction()
