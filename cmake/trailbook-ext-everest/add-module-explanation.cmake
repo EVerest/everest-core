@@ -12,6 +12,7 @@ macro(_trailbook_ev_add_module_explanation_check_explanation_dir_command)
             DEPENDS
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
                 trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
             COMMENT
                 "Checking existence of explanation directory: ${TRAILBOOK_EV_EXPLANATION_DIRECTORY}"
             COMMAND
@@ -45,6 +46,7 @@ macro(_trailbook_ev_add_module_explanation_check_explanation_modules_dir_command
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
                 trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
                 ${CHECK_DONE_FILE_CHECK_EXPLANATION_DIR}
+                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
             COMMENT
                 "Checking existence of explanation modules directory: ${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}"
             COMMAND
@@ -85,14 +87,19 @@ macro(_trailbook_ev_add_module_explanation_copy_explanation_command)
             ${MODULE_EXPLANATION_SOURCE_FILES}
             ${CHECK_DONE_FILE_CHECK_EXPLANATION_DIR}
             ${CHECK_DONE_FILE_CHECK_EXPLANATION_MODULES_DIR}
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMENT
             "Copying explanation module ${args_MODULE_NAME} files to: ${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}/${args_MODULE_NAME}"
         COMMAND
-            ${CMAKE_COMMAND} -E rm -rf "${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}/${args_MODULE_NAME}"
+            ${CMAKE_COMMAND} -E rm -rf
+            ${MODULE_EXPLANATION_TARGET_FILES}
         COMMAND
-            ${CMAKE_COMMAND} -E make_directory "${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}/${args_MODULE_NAME}"
+            ${CMAKE_COMMAND} -E make_directory
+            ${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}/${args_MODULE_NAME}
         COMMAND
-            ${CMAKE_COMMAND} -E copy_directory "${args_EXPLANATION_DIR}" "${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}/${args_MODULE_NAME}"
+            ${CMAKE_COMMAND} -E copy_directory
+            ${args_EXPLANATION_DIR}
+            ${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}/${args_MODULE_NAME}
     )
 endmacro()
 
@@ -157,10 +164,14 @@ function(trailbook_ev_add_module_explanation)
         trailbook_${args_TRAILBOOK_NAME}
         TRAILBOOK_CURRENT_BINARY_DIR
     )
+    get_target_property(
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+        trailbook_${args_TRAILBOOK_NAME}
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+    )
 
     set(TRAILBOOK_EV_EXPLANATION_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/explanation")
     set(TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY "${TRAILBOOK_EV_EXPLANATION_DIRECTORY}/modules")
-
 
     _trailbook_ev_add_module_explanation_check_explanation_dir_command()
     _trailbook_ev_add_module_explanation_check_explanation_modules_dir_command()
@@ -173,8 +184,15 @@ function(trailbook_ev_add_module_explanation)
         COMMENT
             "Explanation module ${args_MODULE_NAME} for trailbook ${args_TRAILBOOK_NAME} is available."
     )
-    add_dependencies(
-        trailbook_${args_TRAILBOOK_NAME}_stage_build_sphinx_before
-        trailbook_${args_TRAILBOOK_NAME}_explanation_module_${args_MODULE_NAME}
+    set_property(
+        TARGET
+            trailbook_${args_TRAILBOOK_NAME}
+        APPEND
+        PROPERTY
+            ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
+                ${CHECK_DONE_FILE_CHECK_EXPLANATION_DIR}
+                ${CHECK_DONE_FILE_CHECK_EXPLANATION_MODULES_DIR}
+                ${MODULE_EXPLANATION_TARGET_FILES}
+                trailbook_${args_TRAILBOOK_NAME}_explanation_module_${args_MODULE_NAME}
     )
 endfunction()

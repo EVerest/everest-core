@@ -14,6 +14,7 @@ macro(_trailbook_ev_generate_rst_from_manifest_check_reference_modules_dir_comma
             DEPENDS
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
                 trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
                 ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
             COMMENT
                 "Checking existence of reference modules directory: ${TRAILBOOK_EV_REFERENCE_MODULES_DIRECTORY}"
@@ -47,6 +48,10 @@ macro(_trailbook_ev_generate_rst_from_manifest_generate_command)
             ${args_MANIFEST_FILE}
             ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
             ${CHECK_DONE_FILE_CHECK_REFERENCE_MODULES_DIR}
+            ${TEMPLATES_DIRECTORY}/module.rst.jinja
+            ${TEMPLATES_DIRECTORY}/macros.jinja
+            trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMENT
             "Generating RST file ${GENERATED_FILE} from manifest definition ${args_MANIFEST_FILE}"
         COMMAND
@@ -114,6 +119,11 @@ function(trailbook_ev_generate_rst_from_manifest)
         trailbook_${args_TRAILBOOK_NAME}
         TRAILBOOK_CURRENT_BINARY_DIR
     )
+    get_target_property(
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+        trailbook_${args_TRAILBOOK_NAME}
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+    )
 
     set(TRAILBOOK_EV_REFERENCE_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/reference")
     set(TRAILBOOK_EV_REFERENCE_MODULES_DIRECTORY "${TRAILBOOK_EV_REFERENCE_DIRECTORY}/modules")
@@ -129,11 +139,19 @@ function(trailbook_ev_generate_rst_from_manifest)
         trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_manifest_${MODULE_NAME}
         DEPENDS
             ${GENERATED_FILE}
+            trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMENT
             "Target to generate RST file ${GENERATED_FILE} from manifest definition ${args_MANIFEST_FILE}"
     )
-    add_dependencies(
-        trailbook_${args_TRAILBOOK_NAME}_stage_build_sphinx_before
-        trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_manifest_${MODULE_NAME}
+    set_property(
+        TARGET
+            trailbook_${args_TRAILBOOK_NAME}
+        APPEND
+        PROPERTY
+            ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
+                ${CHECK_DONE_FILE_CHECK_REFERENCE_MODULES_DIR}
+                ${GENERATED_FILE}
+                trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_manifest_${MODULE_NAME}
     )
 endfunction()

@@ -14,6 +14,7 @@ macro(_trailbook_ev_generate_rst_from_interface_check_reference_interfaces_dir_c
             DEPENDS
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
                 trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
                 ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
             COMMENT
                 "Checking existence of reference interfaces directory: ${TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY}"
@@ -41,10 +42,14 @@ macro(_trailbook_ev_generate_rst_from_interface_generate_command)
         OUTPUT
             ${GENERATED_FILE}
         DEPENDS
+            trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/process_template.py
             ${args_INTERFACE_FILE}
             ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
             ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
+            ${TEMPLATES_DIRECTORY}/interface.rst.jinja
+            ${TEMPLATES_DIRECTORY}/macros.jinja
         COMMENT
             "Generating RST file ${GENERATED_FILE} from interface definition ${args_INTERFACE_FILE}"
         COMMAND
@@ -111,6 +116,12 @@ function(trailbook_ev_generate_rst_from_interface)
         trailbook_${args_TRAILBOOK_NAME}
         TRAILBOOK_CURRENT_BINARY_DIR
     )
+    get_target_property(
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+        trailbook_${args_TRAILBOOK_NAME}
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+    )
+
 
     set(TRAILBOOK_EV_REFERENCE_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/reference")
     set(TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY "${TRAILBOOK_EV_REFERENCE_DIRECTORY}/interfaces")
@@ -123,11 +134,19 @@ function(trailbook_ev_generate_rst_from_interface)
         trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_interface_${INTERFACE_NAME}
         DEPENDS
             ${GENERATED_FILE}
+            trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMENT
             "Target to generate RST file ${GENERATED_FILE} from interface definition ${args_INTERFACE_FILE}"
     )
-    add_dependencies(
-        trailbook_${args_TRAILBOOK_NAME}_stage_build_sphinx_before
-        trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_interface_${INTERFACE_NAME}
+    set_property(
+        TARGET
+            trailbook_${args_TRAILBOOK_NAME}
+        APPEND
+        PROPERTY
+            ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
+                ${GENERATED_FILE}
+                ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
+                trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_interface_${INTERFACE_NAME}
     )
 endfunction()

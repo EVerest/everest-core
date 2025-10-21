@@ -14,6 +14,7 @@ macro(_trailbook_ev_generate_rst_from_types_check_reference_types_dir_command)
             DEPENDS
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
                 trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
                 ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
             COMMENT
                 "Checking existence of reference types directory: ${TRAILBOOK_EV_REFERENCE_TYPES_DIRECTORY}"
@@ -45,6 +46,8 @@ macro(_trailbook_ev_generate_rst_from_types_generate_command)
             ${args_TYPES_FILE}
             ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
             ${CHECK_DONE_FILE_CHECK_REFERENCE_TYPES_DIR}
+            ${TEMPLATES_DIRECTORY}/types.rst.jinja
+            ${TEMPLATES_DIRECTORY}/macros.jinja
         COMMENT
             "Generating RST file ${GENERATED_FILE} from types definition ${args_TYPES_FILE}"
         COMMAND
@@ -111,6 +114,11 @@ function(trailbook_ev_generate_rst_from_types)
         trailbook_${args_TRAILBOOK_NAME}
         TRAILBOOK_CURRENT_BINARY_DIR
     )
+    get_target_property(
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+        trailbook_${args_TRAILBOOK_NAME}
+        DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
+    )
 
     set(TRAILBOOK_EV_REFERENCE_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/reference")
     set(TRAILBOOK_EV_REFERENCE_TYPES_DIRECTORY "${TRAILBOOK_EV_REFERENCE_DIRECTORY}/types")
@@ -123,11 +131,19 @@ function(trailbook_ev_generate_rst_from_types)
         trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_types_${TYPES_NAME}
         DEPENDS
             ${GENERATED_FILE}
+            trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
+            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMENT
             "Target to generate RST file ${GENERATED_FILE} from types definition ${args_TYPES_FILE}"
     )
-    add_dependencies(
-        trailbook_${args_TRAILBOOK_NAME}_stage_build_sphinx_before
-        trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_types_${TYPES_NAME}
+    set_property(
+        TARGET
+            trailbook_${args_TRAILBOOK_NAME}
+        APPEND
+        PROPERTY
+            ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
+                ${CHECK_DONE_FILE_CHECK_REFERENCE_TYPES_DIR}
+                ${GENERATED_FILE}
+                trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_types_${TYPES_NAME}
     )
 endfunction()
