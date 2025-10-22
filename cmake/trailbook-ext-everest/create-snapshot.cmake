@@ -11,6 +11,22 @@ if(NOT DEFINED _TRAILBOOK_EXT_EVEREST_CREATE_SNAPSHOT_SETUP)
     set(_TRAILBOOK_EXT_EVEREST_CREATE_SNAPSHOT_SETUP TRUE)
 endif()
 
+
+# This function creates a snapshot file and adds it
+# to the given trailbook
+# Parameters:
+#   EVEREST_WORKSPACE_DIRECTORY (required):     Absolute path to the EVerest workspace
+#                                               directory
+#   TRAILBOOK_NAME (required):                  Name of the trailbook (the
+#                                               target must exist)
+#   OUTPUT_FILE (required):                     Absolute path to the output
+#                                               snapshot file
+# Usage:
+# trailbook_ev_create_snapshot(
+#   EVEREST_WORKSPACE_DIRECTORY <path_to_everest_workspace_directory>
+#   TRAILBOOK_NAME <trailbook_name>
+#   OUTPUT_FILE <absolute_path_to_output_snapshot_file>
+# )
 function(trailbook_ev_create_snapshot)
     set(options)
     set(one_value_args

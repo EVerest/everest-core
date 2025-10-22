@@ -1,5 +1,10 @@
 include(${CMAKE_CURRENT_LIST_DIR}/common-macros.cmake)
 
+
+# This macro if for internal use only
+#
+# It is used in the function trailbook_ev_generate_rst_from_interface().
+# It adds an custom command to check that the reference interfaces directory exists
 macro(_trailbook_ev_generate_rst_from_interface_check_reference_interfaces_dir_command)
     get_target_property(
         _EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED
@@ -34,6 +39,11 @@ macro(_trailbook_ev_generate_rst_from_interface_check_reference_interfaces_dir_c
     endif()
 endmacro()
 
+
+# This macro is for internal use only
+#
+# It is used in the function trailbook_ev_generate_rst_from_interface().
+# It adds an custom command to generate the RST file from the interface definition file
 macro(_trailbook_ev_generate_rst_from_interface_generate_command)
     get_filename_component(INTERFACE_NAME ${args_INTERFACE_FILE} NAME_WE)
     set(GENERATED_FILE "${TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY}/${INTERFACE_NAME}.rst")
@@ -63,6 +73,17 @@ macro(_trailbook_ev_generate_rst_from_interface_generate_command)
     )
 endmacro()
 
+
+# This function generates an RST file from an interface definition file.
+#
+# Arguments:
+#   TRAILBOOK_NAME (required): Name of the trailbook instance.
+#   INTERFACE_FILE (required): Path to the interface definition file
+# Usage:
+# trailbook_ev_generate_rst_from_interface(
+#     TRAILBOOK_NAME <trailbook_name>
+#     INTERFACE_FILE <path_to_interface_definition_file>
+# )
 function(trailbook_ev_generate_rst_from_interface)
     set(options)
     set(one_value_args

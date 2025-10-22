@@ -1,3 +1,4 @@
+# Internal macro to find the sphinx-build executable.
 macro(_find_sphinx_build)
     find_program(
         _SPHINX_BUILD_EXECUTABLE
@@ -11,6 +12,7 @@ macro(_find_sphinx_build)
     )
 endmacro()
 
+# Internal macro to find sphinx-build, and if not found, try to install it in an active python venv.
 macro(_find_and_fix_sphinx_build)
     _find_sphinx_build()
 
@@ -35,7 +37,6 @@ macro(_find_and_fix_sphinx_build)
 endmacro()
 
 # Internal macro to set up the trailbook environment.
-# This macro should only be called once.
 macro(_setup_trailbook)
     if(NOT _TRAILBOOK_SETUP_DONE)
         _find_and_fix_sphinx_build()
