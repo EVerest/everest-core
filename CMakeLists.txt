@@ -157,7 +157,6 @@ include(ev-project-bootstrap)
 
 ev_add_project()
 
-
 # create MF_ROOT_CA if not available
 if (ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES)
     file(TOUCH config/certs/ca/mf/MF_ROOT_CA.pem)
