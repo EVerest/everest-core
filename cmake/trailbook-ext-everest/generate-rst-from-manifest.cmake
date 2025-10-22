@@ -1,5 +1,10 @@
 include(${CMAKE_CURRENT_LIST_DIR}/common-macros.cmake)
 
+
+# This macro is for internal use only
+#
+# It is used in the function trailbook_ev_generate_rst_from_manifest().
+# It adds an custom command to check that the reference modules directory exists
 macro(_trailbook_ev_generate_rst_from_manifest_check_reference_modules_dir_command)
     get_target_property(
         _EXT_EV_CHECK_REFERENCE_MODULES_DIR_COMMAND_ADDED
@@ -34,6 +39,11 @@ macro(_trailbook_ev_generate_rst_from_manifest_check_reference_modules_dir_comma
     endif()
 endmacro()
 
+
+# This macro is for internal use only
+#
+# It is used in the function trailbook_ev_generate_rst_from_manifest().
+# It adds an custom command to generate the RST file from the manifest file
 macro(_trailbook_ev_generate_rst_from_manifest_generate_command)
     set(GENERATED_FILE "${TRAILBOOK_EV_REFERENCE_MODULES_DIRECTORY}/${MODULE_NAME}.rst")
     set(TEMPLATES_DIRECTORY "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/templates")
@@ -53,7 +63,7 @@ macro(_trailbook_ev_generate_rst_from_manifest_generate_command)
             trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
             ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMENT
-            "Generating RST file ${GENERATED_FILE} from manifest definition ${args_MANIFEST_FILE}"
+            "Generating RST file ${GENERATED_FILE} from manifest ${args_MANIFEST_FILE}"
         COMMAND
             ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/process_template.py
@@ -66,6 +76,17 @@ macro(_trailbook_ev_generate_rst_from_manifest_generate_command)
     )
 endmacro()
 
+
+# This function generates an RST file from a manifest definition file.
+# It takes the following arguments:
+# TRAILBOOK_NAME (required):    The name of the trailbook.
+# MANIFEST_FILE (required):     The absolute path to the manifest 
+#                               definition file.
+# Usage:
+# trailbook_ev_generate_rst_from_manifest(
+#     TRAILBOOK_NAME <trailbook_name>
+#     MANIFEST_FILE <path_to_manifest_definition_file>
+# )
 function(trailbook_ev_generate_rst_from_manifest)
     set(options)
     set(one_value_args

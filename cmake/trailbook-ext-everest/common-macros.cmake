@@ -1,5 +1,12 @@
 include_guard(GLOBAL)
 
+# This macro is for internal use only
+#
+# It is used by the following functions:
+# - trailbook_ev_generate_rst_from_interface()
+# - trailbook_ev_generate_rst_from_manifest()
+# - trailbook_ev_generate_rst_from_types()
+# It adds a custom command to check that the reference directory exists
 macro(_trailbook_ev_check_reference_dir_command)
     get_target_property(
         _EXT_EV_CHECK_REFERENCE_DIR_COMMAND_ADDED

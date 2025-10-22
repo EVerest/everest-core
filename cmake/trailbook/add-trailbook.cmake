@@ -1,4 +1,10 @@
 
+# This macro is for internal use only
+#
+# It is used in the function add_trailbook.
+# It checks the requirements defined by the requirements.txt file
+# and installs any missing packages into the current Python virtual environment.
+# It checks during the configuration phase.
 macro(_add_trailbook_check_requirements_txt)
     if(EXISTS ${args_REQUIREMENTS_TXT})
         execute_process(
@@ -21,6 +27,13 @@ macro(_add_trailbook_check_requirements_txt)
     endif()
 endmacro()
 
+# This macro is for internal use only
+#
+# It is used in the function add_trailbook.
+# It sets up the trailbook build directory where the multiversion HTML docs will be located.
+# If TRAILBOOK_INSTANCE_DOWNLOAD_ALL_VERSIONS is ON, it clones the deployed docs repo.
+# Otherwise, it creates an empty skeleton directory.
+# This configuration is checked during the configuration phase and should not be switched
 macro(_add_trailbook_setup_build_directory)
     set(CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/setup_build_directory.check_done")
     set(SETUP_BUILD_DIRECTORY_FILE_LIST "${CMAKE_CURRENT_BINARY_DIR}/setup_build_directory_filelist.yaml")
@@ -118,6 +131,11 @@ macro(_add_trailbook_setup_build_directory)
     endif()
 endmacro()
 
+# This macro is for internal use only
+#
+# It is used in the function add_tailbook.
+# It adds a custom command to copy the trailbook stem files to the build directory.
+# To be used a base for the tailbook instance source directory.
 macro(_add_trailbook_copy_stem_command)
     file(
         GLOB_RECURSE
@@ -161,6 +179,12 @@ macro(_add_trailbook_copy_stem_command)
     )
 endmacro()
 
+# This macro is for internal use only
+#
+# The is used in the function add_tailbook.
+# It adds a custom command to create the metadata YAML file for the trailbook instance.
+# The metadata YAML file is used by Sphinx during the build process.
+# It contains a list of all versions available in the multiversion root directory.
 macro(_add_trailbook_create_metadata_yaml_command)
     set(METADATA_YAML_FILE "${CMAKE_CURRENT_BINARY_DIR}/metadata_${args_NAME}.yaml")
 
@@ -186,6 +210,11 @@ macro(_add_trailbook_create_metadata_yaml_command)
     )
 endmacro()
 
+# This macro is for internal use only
+#
+# The is used in the function add_tailbook.
+# It adds a custom command to build the Sphinx HTML documentation for the trailbook instance.
+# It builds from the trailbook instance source directory to the trailbook instance build directory.
 macro(_add_trailbook_sphinx_build_command)
     set(CHECK_DONE_FILE_SPHINX_BUILD_COMMAND "${CMAKE_CURRENT_BINARY_DIR}/build_html.check_done")
 
@@ -233,6 +262,11 @@ macro(_add_trailbook_sphinx_build_command)
     )
 endmacro()
 
+# This macro is for internal use only
+#
+# The is used in the function add_tailbook.
+# It adds a custom command to replace the 'latest' copy in the multiversion root directory
+# It should be only called if TRAILBOOK_INSTANCE_IS_RELEASE is ON.
 macro(_add_trailbook_replace_latest_command)
     set(CHECK_DONE_FILE_REPLACE_LATEST "${CMAKE_CURRENT_BINARY_DIR}/replace_latest.check_done")
     add_custom_command(
@@ -255,6 +289,12 @@ macro(_add_trailbook_replace_latest_command)
     )
 endmacro()
 
+# This macro is for internal use only
+#
+# The is used in the function add_tailbook.
+# It copies the 404.html file from the trailbook instance build directory
+# to the multiversion root directory.
+# It should only be called if TRAILBOOK_INSTANCE_IS_RELEASE is ON.
 macro(_add_trailbook_copy_404_command)
     set(CHECK_DONE_FILE_COPY_404 "${CMAKE_CURRENT_BINARY_DIR}/copy_404.check_done")
     set(TRAILBOOK_404_FILE "${TRAILBOOK_BUILD_DIRECTORY}/404.html")
@@ -295,6 +335,12 @@ macro(_add_trailbook_copy_404_command)
     )
 endmacro()
 
+# This macro is for internal use only
+#
+# It is used in the function add_tailbook.
+# It adds a custom command to render the redirect template. The rendered file
+# will be used as the index.html in the multiversion root directory.
+# This macro should only be called if TRAILBOOK_INSTANCE_IS_RELEASE is ON.
 macro(_add_trailbook_render_redirect_template_command)
     set(CHECK_DONE_FILE_RENDER_REDIRECT_TEMPLATE "${CMAKE_CURRENT_BINARY_DIR}/render_redirect_template.check_done")
     set(REDIRECT_TEMPLATE_FILE "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/templates/redirect.html.jinja")
@@ -321,6 +367,10 @@ macro(_add_trailbook_render_redirect_template_command)
     )
 endmacro()
 
+# This macro is for internal use only
+#
+# The is used in the function add_trailbook.
+# It adds a custom command to copy the versions_index.html file to the multiversion root directory
 macro(_add_trailbook_copy_versions_index_command)
     set(CHECK_DONE_FILE_COPY_VERSIONS_INDEX "${CMAKE_CURRENT_BINARY_DIR}/copy_versions_index.check_done")
     set(TRAILBOOK_VERSIONS_INDEX_FILE "${TRAILBOOK_BUILD_DIRECTORY}/versions_index.html")
@@ -381,6 +431,10 @@ macro(_add_trailbook_copy_versions_index_command)
     )
 endmacro()
 
+# This macro is for internal use only
+#
+# It is used in the function add_tailbook.
+# It adds a custom target to serve the built HTML documentation via a simple HTTP server.
 macro(_add_trailbook_preview_target)
     add_custom_target(
         trailbook_${args_NAME}_preview
@@ -397,6 +451,11 @@ macro(_add_trailbook_preview_target)
     )
 endmacro()
 
+# This macro is for internal use only
+#
+# It is used in the function add_tailbook.
+# It adds a custom target to watch the trailbook instance target for changes
+# and automatically rebuild the HTML documentation with Sphinx and serve it.
 macro(_add_trailbook_live_preview_target)
     add_custom_target(
         trailbook_${args_NAME}_live_preview
@@ -419,6 +478,30 @@ macro(_add_trailbook_live_preview_target)
     )
 endmacro()
 
+# This is the main function to add a trailbook to the build system.
+# It sets up the necessary build commands and targets
+# to build the trailbook documentation.
+# It takes the following parameters:
+#   NAME (required):                        The name of the trailbook.
+#   STEM_DIRECTORY (optional):              The directory containing the trailbook stem files.
+#                                           Defaults to CMAKE_CURRENT_SOURCE_DIR.
+#   REQUIREMENTS_TXT (optional):            The path to the requirements.txt file.
+#                                           Defaults to CMAKE_CURRENT_SOURCE_DIR/requirements.txt if exists.
+#   INSTANCE_NAME (required):               The instance name for the trailbook.
+#                                           Needs to be lowercase alphanumeric and underscores only.
+#   DEPLOYED_DOCS_REPO_URL (optional):      The URL of the deployed docs repository.
+#                                           Required if TRAILBOOK_<NAME>_DOWNLOAD_ALL_VERSIONS is ON.
+#   DEPLOYED_DOCS_REPO_BRANCH (optional):   The branch of the deployed docs repository.
+#                                           Defaults to 'main'.
+# Usage:
+#   add_trailbook(
+#       NAME <trailbook_name>
+#       [STEM_DIRECTORY <stem_directory>]
+#       [REQUIREMENTS_TXT <requirements_txt_path>]
+#       INSTANCE_NAME <instance_name>
+#       [DEPLOYED_DOCS_REPO_URL <deployed_docs_repo_url>]
+#       [DEPLOYED_DOCS_REPO_BRANCH <deployed_docs_repo_branch>]
+#   )
 function(add_trailbook)
     set(options)
     set(one_value_args

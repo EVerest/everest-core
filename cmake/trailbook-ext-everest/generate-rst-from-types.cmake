@@ -1,5 +1,10 @@
 include(${CMAKE_CURRENT_LIST_DIR}/common-macros.cmake)
 
+
+# This macro is for internal use only
+#
+# It is used in the function trailbook_ev_generate_rst_from_types().
+# It adds an custom command to check that the reference types directory exists
 macro(_trailbook_ev_generate_rst_from_types_check_reference_types_dir_command)
     get_target_property(
         _EXT_EV_CHECK_REFERENCE_TYPES_DIR_COMMAND_ADDED
@@ -34,6 +39,11 @@ macro(_trailbook_ev_generate_rst_from_types_check_reference_types_dir_command)
     endif()
 endmacro()
 
+
+# This macro is for internal use only
+#
+# It is used in the function trailbook_ev_generate_rst_from_types().
+# It adds an custom command to generate the RST file from the types definition file
 macro(_trailbook_ev_generate_rst_from_types_generate_command)
     get_filename_component(TYPES_NAME ${args_TYPES_FILE} NAME_WE)
     set(GENERATED_FILE "${TRAILBOOK_EV_REFERENCE_TYPES_DIRECTORY}/${TYPES_NAME}.rst")
@@ -61,6 +71,16 @@ macro(_trailbook_ev_generate_rst_from_types_generate_command)
     )
 endmacro()
 
+
+# This function generates an RST file from a types definition file.
+# It takes the following arguments:
+# TRAILBOOK_NAME (required):    The name of the trailbook.
+# TYPES_FILE (required):        The absolute path to the types definition file.
+# Usage:
+# trailbook_ev_generate_rst_from_types(
+#   TRAILBOOK_NAME <trailbook_name>
+#   TYPES_FILE <absolute_path_to_types_definition_file>
+# )
 function(trailbook_ev_generate_rst_from_types)
     set(options)
     set(one_value_args

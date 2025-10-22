@@ -1,3 +1,7 @@
+# This macro is for internal use only
+#
+# It is used in the function trailbook_ev_add_module_explanation().
+# It adds an custom command to check that the explanation directory exists
 macro(_trailbook_ev_add_module_explanation_check_explanation_dir_command)
     get_target_property(
         _EXT_EV_CHECK_EXPLANATION_DIR_COMMAND_ADDED
@@ -31,6 +35,11 @@ macro(_trailbook_ev_add_module_explanation_check_explanation_dir_command)
     endif()
 endmacro()
 
+
+# This macro is for internal use only
+#
+# It is used in the function trailbook_ev_add_module_explanation().
+# It adds an custom command to check that the explanation modules directory exists
 macro(_trailbook_ev_add_module_explanation_check_explanation_modules_dir_command)
     get_target_property(
         _EXT_EV_CHECK_EXPLANATION_MODULES_DIR_COMMAND_ADDED
@@ -65,6 +74,11 @@ macro(_trailbook_ev_add_module_explanation_check_explanation_modules_dir_command
     endif()
 endmacro()
 
+
+# This macro is for internal use only
+#
+# It used in the function trailbook_ev_add_module_explanation().
+# It adds a custom command to copy the explanation module files to the explanation modules directory.
 macro(_trailbook_ev_add_module_explanation_copy_explanation_command)
     file(
         GLOB_RECURSE
@@ -103,6 +117,20 @@ macro(_trailbook_ev_add_module_explanation_copy_explanation_command)
     )
 endmacro()
 
+# This function adds a module explanation to a trailbook.
+# It takes the following parameters:
+#   TRAILBOOK_NAME (required):      The name of the trailbook to add the
+#                                   module explanation to.
+#   MODULE_NAME (required):         The name of the module explanation.
+#   EXPLANATION_DIR (required):     The absolute path to the directory
+#                                   containing the module explanation files.
+#
+# Usage:
+# trailbook_ev_add_module_explanation(
+#   TRAILBOOK_NAME <trailbook_name>
+#   MODULE_NAME <module_name>
+#   EXPLANATION_DIR <absolute_path_to_explanation_directory>
+# )
 function(trailbook_ev_add_module_explanation)
     set(options)
     set(one_value_args
