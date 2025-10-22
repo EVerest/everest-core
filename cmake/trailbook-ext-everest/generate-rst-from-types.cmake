@@ -1,45 +1,3 @@
-include(${CMAKE_CURRENT_LIST_DIR}/common-macros.cmake)
-
-
-# This macro is for internal use only
-#
-# It is used in the function trailbook_ev_generate_rst_from_types().
-# It adds an custom command to check that the reference types directory exists
-macro(_trailbook_ev_generate_rst_from_types_check_reference_types_dir_command)
-    get_target_property(
-        _EXT_EV_CHECK_REFERENCE_TYPES_DIR_COMMAND_ADDED
-        trailbook_${args_TRAILBOOK_NAME}
-        _EXT_EV_CHECK_REFERENCE_TYPES_DIR_COMMAND_ADDED
-    )
-    set(CHECK_DONE_FILE_CHECK_REFERENCE_TYPES_DIR "${TRAILBOOK_CURRENT_BINARY_DIR}/ext-ev.check-reference-types-dir.check_done")
-    if("${_EXT_EV_CHECK_REFERENCE_TYPES_DIR_COMMAND_ADDED}" STREQUAL "_EXT_EV_CHECK_REFERENCE_TYPES_DIR_COMMAND_ADDED-NOTFOUND")
-        add_custom_command(
-            OUTPUT
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_TYPES_DIR}
-            DEPENDS
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
-                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
-            COMMENT
-                "Checking existence of reference types directory: ${TRAILBOOK_EV_REFERENCE_TYPES_DIRECTORY}"
-            COMMAND
-                ${Python3_EXECUTABLE}
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                --directory "${TRAILBOOK_EV_REFERENCE_TYPES_DIRECTORY}"
-                --return-zero-if-not-exists
-            COMMAND
-                ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_CHECK_REFERENCE_TYPES_DIR}
-        )
-        set_target_properties(
-            trailbook_${args_TRAILBOOK_NAME}
-            PROPERTIES
-                _EXT_EV_CHECK_REFERENCE_TYPES_DIR_COMMAND_ADDED TRUE
-        )
-    endif()
-endmacro()
-
-
 # This macro is for internal use only
 #
 # It is used in the function trailbook_ev_generate_rst_from_types().
@@ -54,8 +12,6 @@ macro(_trailbook_ev_generate_rst_from_types_generate_command)
         DEPENDS
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/process_template.py
             ${args_TYPES_FILE}
-            ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
-            ${CHECK_DONE_FILE_CHECK_REFERENCE_TYPES_DIR}
             ${TEMPLATES_DIRECTORY}/types.rst.jinja
             ${TEMPLATES_DIRECTORY}/macros.jinja
         COMMENT
@@ -130,11 +86,6 @@ function(trailbook_ev_generate_rst_from_types)
         TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
     )
     get_target_property(
-        TRAILBOOK_CURRENT_BINARY_DIR
-        trailbook_${args_TRAILBOOK_NAME}
-        TRAILBOOK_CURRENT_BINARY_DIR
-    )
-    get_target_property(
         DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
         trailbook_${args_TRAILBOOK_NAME}
         DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
@@ -143,8 +94,6 @@ function(trailbook_ev_generate_rst_from_types)
     set(TRAILBOOK_EV_REFERENCE_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/reference")
     set(TRAILBOOK_EV_REFERENCE_TYPES_DIRECTORY "${TRAILBOOK_EV_REFERENCE_DIRECTORY}/types")
 
-    _trailbook_ev_check_reference_dir_command()
-    _trailbook_ev_generate_rst_from_types_check_reference_types_dir_command()
     _trailbook_ev_generate_rst_from_types_generate_command()
 
     add_custom_target(
@@ -162,7 +111,6 @@ function(trailbook_ev_generate_rst_from_types)
         APPEND
         PROPERTY
             ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_TYPES_DIR}
                 ${GENERATED_FILE}
                 trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_types_${TYPES_NAME}
     )

@@ -1,82 +1,5 @@
 # This macro is for internal use only
 #
-# It is used in the function trailbook_ev_add_module_explanation().
-# It adds an custom command to check that the explanation directory exists
-macro(_trailbook_ev_add_module_explanation_check_explanation_dir_command)
-    get_target_property(
-        _EXT_EV_CHECK_EXPLANATION_DIR_COMMAND_ADDED
-        trailbook_${args_TRAILBOOK_NAME}
-        _EXT_EV_CHECK_EXPLANATION_DIR_COMMAND_ADDED
-    )
-    set(CHECK_DONE_FILE_CHECK_EXPLANATION_DIR "${TRAILBOOK_CURRENT_BINARY_DIR}/ext-ev.check-explanation-dir.check_done")
-    if("${_EXT_EV_CHECK_EXPLANATION_DIR_COMMAND_ADDED}" STREQUAL "_EXT_EV_CHECK_EXPLANATION_DIR_COMMAND_ADDED-NOTFOUND")
-        add_custom_command(
-            OUTPUT
-                ${CHECK_DONE_FILE_CHECK_EXPLANATION_DIR}
-            DEPENDS
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
-                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
-            COMMENT
-                "Checking existence of explanation directory: ${TRAILBOOK_EV_EXPLANATION_DIRECTORY}"
-            COMMAND
-                ${Python3_EXECUTABLE}
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                --directory "${TRAILBOOK_EV_EXPLANATION_DIRECTORY}"
-                --return-zero-if-exists
-            COMMAND
-                ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_CHECK_EXPLANATION_DIR}
-        )
-        set_target_properties(
-            trailbook_${args_TRAILBOOK_NAME}
-            PROPERTIES
-                _EXT_EV_CHECK_EXPLANATION_DIR_COMMAND_ADDED TRUE
-        )
-    endif()
-endmacro()
-
-
-# This macro is for internal use only
-#
-# It is used in the function trailbook_ev_add_module_explanation().
-# It adds an custom command to check that the explanation modules directory exists
-macro(_trailbook_ev_add_module_explanation_check_explanation_modules_dir_command)
-    get_target_property(
-        _EXT_EV_CHECK_EXPLANATION_MODULES_DIR_COMMAND_ADDED
-        trailbook_${args_TRAILBOOK_NAME}
-        _EXT_EV_CHECK_EXPLANATION_MODULES_DIR_COMMAND_ADDED
-    )
-    set(CHECK_DONE_FILE_CHECK_EXPLANATION_MODULES_DIR "${TRAILBOOK_CURRENT_BINARY_DIR}/ext-ev.check-explanation-modules-dir.check_done")
-    if("${_EXT_EV_CHECK_EXPLANATION_MODULES_DIR_COMMAND_ADDED}" STREQUAL "_EXT_EV_CHECK_EXPLANATION_MODULES_DIR_COMMAND_ADDED-NOTFOUND")
-        add_custom_command(
-            OUTPUT
-                ${CHECK_DONE_FILE_CHECK_EXPLANATION_MODULES_DIR}
-            DEPENDS
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
-                ${CHECK_DONE_FILE_CHECK_EXPLANATION_DIR}
-                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
-            COMMENT
-                "Checking existence of explanation modules directory: ${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}"
-            COMMAND
-                ${Python3_EXECUTABLE}
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                --directory "${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}"
-                --return-zero-if-not-exists
-            COMMAND
-                ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_CHECK_EXPLANATION_MODULES_DIR}
-        )
-        set_target_properties(
-            trailbook_${args_TRAILBOOK_NAME}
-            PROPERTIES
-                _EXT_EV_CHECK_EXPLANATION_MODULES_DIR_COMMAND_ADDED TRUE
-        )
-    endif()
-endmacro()
-
-
-# This macro is for internal use only
-#
 # It used in the function trailbook_ev_add_module_explanation().
 # It adds a custom command to copy the explanation module files to the explanation modules directory.
 macro(_trailbook_ev_add_module_explanation_copy_explanation_command)
@@ -99,8 +22,6 @@ macro(_trailbook_ev_add_module_explanation_copy_explanation_command)
             ${MODULE_EXPLANATION_TARGET_FILES}
         DEPENDS
             ${MODULE_EXPLANATION_SOURCE_FILES}
-            ${CHECK_DONE_FILE_CHECK_EXPLANATION_DIR}
-            ${CHECK_DONE_FILE_CHECK_EXPLANATION_MODULES_DIR}
             ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
         COMMENT
             "Copying explanation module ${args_MODULE_NAME} files to: ${TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY}/${args_MODULE_NAME}"
@@ -188,11 +109,6 @@ function(trailbook_ev_add_module_explanation)
         TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
     )
     get_target_property(
-        TRAILBOOK_CURRENT_BINARY_DIR
-        trailbook_${args_TRAILBOOK_NAME}
-        TRAILBOOK_CURRENT_BINARY_DIR
-    )
-    get_target_property(
         DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
         trailbook_${args_TRAILBOOK_NAME}
         DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
@@ -201,8 +117,6 @@ function(trailbook_ev_add_module_explanation)
     set(TRAILBOOK_EV_EXPLANATION_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/explanation")
     set(TRAILBOOK_EV_EXPLANATION_MODULES_DIRECTORY "${TRAILBOOK_EV_EXPLANATION_DIRECTORY}/modules")
 
-    _trailbook_ev_add_module_explanation_check_explanation_dir_command()
-    _trailbook_ev_add_module_explanation_check_explanation_modules_dir_command()
     _trailbook_ev_add_module_explanation_copy_explanation_command()
 
     add_custom_target(
@@ -218,8 +132,6 @@ function(trailbook_ev_add_module_explanation)
         APPEND
         PROPERTY
             ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
-                ${CHECK_DONE_FILE_CHECK_EXPLANATION_DIR}
-                ${CHECK_DONE_FILE_CHECK_EXPLANATION_MODULES_DIR}
                 ${MODULE_EXPLANATION_TARGET_FILES}
                 trailbook_${args_TRAILBOOK_NAME}_explanation_module_${args_MODULE_NAME}
     )
