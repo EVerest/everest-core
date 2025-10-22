@@ -1,45 +1,3 @@
-include(${CMAKE_CURRENT_LIST_DIR}/common-macros.cmake)
-
-
-# This macro is for internal use only
-#
-# It is used in the function trailbook_ev_generate_rst_from_manifest().
-# It adds an custom command to check that the reference modules directory exists
-macro(_trailbook_ev_generate_rst_from_manifest_check_reference_modules_dir_command)
-    get_target_property(
-        _EXT_EV_CHECK_REFERENCE_MODULES_DIR_COMMAND_ADDED
-        trailbook_${args_TRAILBOOK_NAME}
-        _EXT_EV_CHECK_REFERENCE_MODULES_DIR_COMMAND_ADDED
-    )
-    set(CHECK_DONE_FILE_CHECK_REFERENCE_MODULES_DIR "${TRAILBOOK_CURRENT_BINARY_DIR}/ext-ev.check-reference-modules-dir.check_done")
-    if("${_EXT_EV_CHECK_REFERENCE_MODULES_DIR_COMMAND_ADDED}" STREQUAL "_EXT_EV_CHECK_REFERENCE_MODULES_DIR_COMMAND_ADDED-NOTFOUND")
-        add_custom_command(
-            OUTPUT
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_MODULES_DIR}
-            DEPENDS
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
-                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
-            COMMENT
-                "Checking existence of reference modules directory: ${TRAILBOOK_EV_REFERENCE_MODULES_DIRECTORY}"
-            COMMAND
-                ${Python3_EXECUTABLE}
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                --directory "${TRAILBOOK_EV_REFERENCE_MODULES_DIRECTORY}"
-                --return-zero-if-not-exists
-            COMMAND
-                ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_CHECK_REFERENCE_MODULES_DIR}
-        )
-        set_target_properties(
-            trailbook_${args_TRAILBOOK_NAME}
-            PROPERTIES
-                _EXT_EV_CHECK_REFERENCE_MODULES_DIR_COMMAND_ADDED TRUE
-        )
-    endif()
-endmacro()
-
-
 # This macro is for internal use only
 #
 # It is used in the function trailbook_ev_generate_rst_from_manifest().
@@ -56,8 +14,6 @@ macro(_trailbook_ev_generate_rst_from_manifest_generate_command)
         DEPENDS
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/process_template.py
             ${args_MANIFEST_FILE}
-            ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
-            ${CHECK_DONE_FILE_CHECK_REFERENCE_MODULES_DIR}
             ${TEMPLATES_DIRECTORY}/module.rst.jinja
             ${TEMPLATES_DIRECTORY}/macros.jinja
             trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
@@ -136,11 +92,6 @@ function(trailbook_ev_generate_rst_from_manifest)
         TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
     )
     get_target_property(
-        TRAILBOOK_CURRENT_BINARY_DIR
-        trailbook_${args_TRAILBOOK_NAME}
-        TRAILBOOK_CURRENT_BINARY_DIR
-    )
-    get_target_property(
         DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
         trailbook_${args_TRAILBOOK_NAME}
         DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
@@ -152,8 +103,6 @@ function(trailbook_ev_generate_rst_from_manifest)
     get_filename_component(MODULE_NAME ${MODULE_DIR} NAME_WE)
 
 
-    _trailbook_ev_check_reference_dir_command()
-    _trailbook_ev_generate_rst_from_manifest_check_reference_modules_dir_command()
     _trailbook_ev_generate_rst_from_manifest_generate_command()
 
     add_custom_target(
@@ -171,7 +120,6 @@ function(trailbook_ev_generate_rst_from_manifest)
         APPEND
         PROPERTY
             ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_MODULES_DIR}
                 ${GENERATED_FILE}
                 trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_manifest_${MODULE_NAME}
     )

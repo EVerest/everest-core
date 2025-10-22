@@ -99,8 +99,9 @@ def main():
         raise ValueError("Target file path must be absolute")
     if args.target_file.suffix != '.rst':
         raise ValueError("Target file must have a .rst extension")
+
     if not args.target_file.parent.exists():
-        raise ValueError("Target file directory does not exist")
+        args.target_file.parent.mkdir(parents=True, exist_ok=True)
 
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(args.template_dir),

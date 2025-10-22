@@ -1,45 +1,3 @@
-include(${CMAKE_CURRENT_LIST_DIR}/common-macros.cmake)
-
-
-# This macro if for internal use only
-#
-# It is used in the function trailbook_ev_generate_rst_from_interface().
-# It adds an custom command to check that the reference interfaces directory exists
-macro(_trailbook_ev_generate_rst_from_interface_check_reference_interfaces_dir_command)
-    get_target_property(
-        _EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED
-        trailbook_${args_TRAILBOOK_NAME}
-        _EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED
-    )
-    set(CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR "${TRAILBOOK_CURRENT_BINARY_DIR}/ext-ev.check-reference-interfaces-dir.check_done")
-    if("${_EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED}" STREQUAL "_EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED-NOTFOUND")
-        add_custom_command(
-            OUTPUT
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
-            DEPENDS
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
-                ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
-            COMMENT
-                "Checking existence of reference interfaces directory: ${TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY}"
-            COMMAND
-                ${Python3_EXECUTABLE}
-                ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_dir_exists.py
-                --directory "${TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY}"
-                --return-zero-if-not-exists
-            COMMAND
-                ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
-        )
-        set_target_properties(
-            trailbook_${args_TRAILBOOK_NAME}
-            PROPERTIES
-                _EXT_EV_CHECK_REFERENCE_INTERFACES_DIR_COMMAND_ADDED TRUE
-        )
-    endif()
-endmacro()
-
-
 # This macro is for internal use only
 #
 # It is used in the function trailbook_ev_generate_rst_from_interface().
@@ -56,8 +14,6 @@ macro(_trailbook_ev_generate_rst_from_interface_generate_command)
             ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/process_template.py
             ${args_INTERFACE_FILE}
-            ${CHECK_DONE_FILE_CHECK_REFERENCE_DIR}
-            ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
             ${TEMPLATES_DIRECTORY}/interface.rst.jinja
             ${TEMPLATES_DIRECTORY}/macros.jinja
         COMMENT
@@ -147,8 +103,7 @@ function(trailbook_ev_generate_rst_from_interface)
     set(TRAILBOOK_EV_REFERENCE_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/reference")
     set(TRAILBOOK_EV_REFERENCE_INTERFACES_DIRECTORY "${TRAILBOOK_EV_REFERENCE_DIRECTORY}/interfaces")
 
-    _trailbook_ev_check_reference_dir_command()
-    _trailbook_ev_generate_rst_from_interface_check_reference_interfaces_dir_command()
+
     _trailbook_ev_generate_rst_from_interface_generate_command()
 
     add_custom_target(
@@ -167,7 +122,6 @@ function(trailbook_ev_generate_rst_from_interface)
         PROPERTY
             ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
                 ${GENERATED_FILE}
-                ${CHECK_DONE_FILE_CHECK_REFERENCE_INTERFACES_DIR}
                 trailbook_${args_TRAILBOOK_NAME}_generate_rst_from_interface_${INTERFACE_NAME}
     )
 endfunction()
