@@ -272,25 +272,21 @@ impl PaymentTerminalModule {
 
                 match self.feig.read_card() {
                     Ok(card_info) => return Ok(card_info),
-                    Err(e) => match e.downcast_ref::<Error>() {
-                        Some(Error::NoCardPresented) => {
+                    Err(e) => {
+                        if let Some(Error::NoCardPresented) = e.downcast_ref::<Error>() {
                             log::debug!("No card presented");
                             continue;
-                        }
-                        _ => {
-                            match e.downcast_ref::<ErrorMessages>() {
-                                Some(rejection_reason) => {
-                                    log::info!("Recieved rejection reason {}", rejection_reason);
+                        } else {
+                            if let Some(rejection_reason) = e.downcast_ref::<ErrorMessages>() {
+                                log::info!("Recieved rejection reason {}", rejection_reason);
 
-                                    publishers
-                                        .payment_terminal
-                                        .rejection_reason((*rejection_reason).into())?;
-                                }
-                                None => log::debug!("No error code provided"),
-                            };
+                                publishers
+                                    .payment_terminal
+                                    .rejection_reason((*rejection_reason).into())?;
+                            }
                             return Err(anyhow::anyhow!("Failed to read card: {e:?}"));
                         }
-                    },
+                    }
                 };
             }
         };
@@ -312,6 +308,16 @@ impl PaymentTerminalModule {
                         .begin_transaction(token.as_ref().unwrap(), self.pre_authorization_amount)
                     {
                         log::warn!("Failed to start a transaction: {err:?}");
+                        match err.downcast_ref::<ErrorMessages>() {
+                            Some(rejection_reason) => {
+                                log::info!("Recieved rejection reason {}", rejection_reason);
+
+                                publishers
+                                    .payment_terminal
+                                    .rejection_reason((*rejection_reason).into())?;
+                            }
+                            None => log::info!("No error code provided"),
+                        };
                         get_connectors_for_bank_card = NO_CONNECTORS;
                     }
                 }

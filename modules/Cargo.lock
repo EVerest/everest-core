@@ -492,7 +492,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1385,7 +1385,16 @@ version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 1.0.69",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f63587ca0f12b72a0600bcba1d40081f830876000bb46dd2337a3051618f4fc8"
+dependencies = [
+ "thiserror-impl 2.0.17",
 ]
 
 [[package]]
@@ -1393,6 +1402,17 @@ name = "thiserror-impl"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ff15c8ecd7de3849db632e14d18d2571fa09dfc5ed93479bc4485c7a517c913"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1898,7 +1918,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f58c7ce1b7faa85a5c5a8b45b428c89cabdcd097bb472b7668037b291a8a20b"
 dependencies = [
- "thiserror",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1925,7 +1945,7 @@ dependencies = [
 [[package]]
 name = "zvt"
 version = "0.1.1"
-source = "git+https://github.com/Everest/zvt.git?rev=d178e828b623c479a9d54643dc61c4ecf33a417b#d178e828b623c479a9d54643dc61c4ecf33a417b"
+source = "git+https://github.com/Everest/zvt.git?rev=25b39fc344336a6b0da35b81ea89f476652339c9#25b39fc344336a6b0da35b81ea89f476652339c9"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -1935,6 +1955,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "pretty-hex",
+ "thiserror 2.0.17",
  "tokio",
  "tokio-stream",
  "zvt_builder",
@@ -1944,12 +1965,12 @@ dependencies = [
 [[package]]
 name = "zvt_builder"
 version = "0.1.1"
-source = "git+https://github.com/Everest/zvt.git?rev=d178e828b623c479a9d54643dc61c4ecf33a417b#d178e828b623c479a9d54643dc61c4ecf33a417b"
+source = "git+https://github.com/Everest/zvt.git?rev=25b39fc344336a6b0da35b81ea89f476652339c9#25b39fc344336a6b0da35b81ea89f476652339c9"
 dependencies = [
  "chrono",
  "hex",
  "log",
- "thiserror",
+ "thiserror 2.0.17",
  "yore",
  "zvt_derive",
 ]
@@ -1957,7 +1978,7 @@ dependencies = [
 [[package]]
 name = "zvt_derive"
 version = "0.1.1"
-source = "git+https://github.com/Everest/zvt.git?rev=d178e828b623c479a9d54643dc61c4ecf33a417b#d178e828b623c479a9d54643dc61c4ecf33a417b"
+source = "git+https://github.com/Everest/zvt.git?rev=25b39fc344336a6b0da35b81ea89f476652339c9#25b39fc344336a6b0da35b81ea89f476652339c9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1967,7 +1988,7 @@ dependencies = [
 [[package]]
 name = "zvt_feig_terminal"
 version = "0.1.0"
-source = "git+https://github.com/Everest/zvt.git?rev=d178e828b623c479a9d54643dc61c4ecf33a417b#d178e828b623c479a9d54643dc61c4ecf33a417b"
+source = "git+https://github.com/Everest/zvt.git?rev=25b39fc344336a6b0da35b81ea89f476652339c9#25b39fc344336a6b0da35b81ea89f476652339c9"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -1981,7 +2002,7 @@ dependencies = [
  "pin-project",
  "serde",
  "serde_json",
- "thiserror",
+ "thiserror 2.0.17",
  "time",
  "time-macros",
  "tokio",

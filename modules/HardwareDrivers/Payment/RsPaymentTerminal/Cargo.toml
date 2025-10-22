@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 everestrs = { workspace=true }
 anyhow = "1.0.82"
-zvt = { git = "https://github.com/Everest/zvt.git", rev = "d178e828b623c479a9d54643dc61c4ecf33a417b" }
-zvt_feig_terminal = { git = "https://github.com/Everest/zvt.git", rev = "d178e828b623c479a9d54643dc61c4ecf33a417b", features = ["with_lavego_error_codes"] }
+zvt = { git = "https://github.com/Everest/zvt.git", rev = "60574939d2cbe35b5d4fc9b03af7e8c3e098706c" }
+zvt_feig_terminal = { git = "https://github.com/Everest/zvt.git", rev = "60574939d2cbe35b5d4fc9b03af7e8c3e098706c", features = ["with_lavego_error_codes"] }
 tokio = { version = "1.47.0", features = ["macros", "rt-multi-thread", "net", "sync"] }
 log = "0.4.20"
 mockall = { version = "0.12.1", optional = true }
