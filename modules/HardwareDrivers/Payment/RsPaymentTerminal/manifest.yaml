@@ -59,9 +59,12 @@ provides:
   token_provider:
     interface: auth_token_provider
     description: Provides an authentication token from the Feig terminal.
+  token_validator:
+    interface: auth_token_validator
+    description: Reserves the `pre_authorization_amount` from a bank card.  
   payment_terminal:
     interface: payment_terminal
-    description: Provides all the commands specific for bank cards handling
+    description: The interface
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

@@ -32,27 +32,32 @@ include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 use anyhow::Result;
 use generated::errors::payment_terminal::{Error as PTError, PaymentTerminalError};
 use generated::types::{
-    authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
+    authorization::{
+        AuthorizationStatus, AuthorizationType, IdToken, IdTokenType, ProvidedIdToken,
+        ValidationResult,
+    },
     money::MoneyAmount,
-    payment_terminal::{BankSessionToken, BankTransactionSummary, CardType, RejectionReason},
+    payment_terminal::{BankSessionToken, BankTransactionSummary},
     session_cost::{SessionCost, SessionStatus, TariffMessage},
 };
 use generated::{
-    get_config, AuthTokenProviderServiceSubscriber, BankSessionTokenProviderClientSubscriber,
-    Context, Module, ModulePublisher, OnReadySubscriber, PaymentTerminalServiceSubscriber,
-    SessionCostClientSubscriber,
+    get_config, AuthTokenProviderServiceSubscriber, AuthTokenValidatorServiceSubscriber,
+    BankSessionTokenProviderClientSubscriber, Context, Module, ModulePublisher, OnReadySubscriber,
+    PaymentTerminalServiceSubscriber, SessionCostClientSubscriber,
 };
 use std::cmp::min;
-use std::collections::HashMap;
-use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
+use std::sync::{mpsc::channel, mpsc::Sender, Arc};
 use std::time::Duration;
 use std::{net::Ipv4Addr, str::FromStr};
 use zvt::constants::ErrorMessages;
 use zvt_feig_terminal::config::{Config, FeigConfig};
 use zvt_feig_terminal::feig::{CardInfo, Error};
 
+const INVALID_BANK_TOKEN: &str = "PAYMENT_TERMINAL_INVALID";
+
 mod sync_feig {
     use anyhow::Result;
+    use std::sync::Mutex;
     use zvt_feig_terminal::{
         config::Config,
         feig::{CardInfo, Feig, TransactionSummary},
@@ -63,7 +68,7 @@ mod sync_feig {
         rt: tokio::runtime::Runtime,
 
         /// The async impl of the Feig.
-        inner: std::sync::Mutex<Feig>,
+        inner: Mutex<Feig>,
     }
 
     /// Sync interface for the Feig.
@@ -102,7 +107,7 @@ mod sync_feig {
 
             Self {
                 rt,
-                inner: std::sync::Mutex::new(feig),
+                inner: Mutex::new(feig),
             }
         }
 
@@ -137,11 +142,7 @@ mod sync_feig {
 use sync_feig::SyncFeig;
 
 impl ProvidedIdToken {
-    fn new(
-        id_token: String,
-        authorization_type: AuthorizationType,
-        connectors: Option<Vec<i64>>,
-    ) -> Self {
+    fn new(id_token: String, authorization_type: AuthorizationType) -> Self {
         Self {
             parent_id_token: None,
             id_token: IdToken {
@@ -151,7 +152,7 @@ impl ProvidedIdToken {
             },
             authorization_type,
             certificate: None,
-            connectors,
+            connectors: None,
             iso_15118_certificate_hash_data: None,
             prevalidated: None,
             request_id: None,
@@ -168,92 +169,65 @@ pub struct PaymentTerminalModule {
     /// The Feig interface.
     feig: SyncFeig,
 
-    /// Keep track on which connector support which card types
-    connector_to_card_type: Mutex<HashMap<i64, Vec<CardType>>>,
-
     /// The configurable pre-auth.
     pre_authorization_amount: usize,
 }
 
-impl From<ErrorMessages> for RejectionReason {
+impl From<ErrorMessages> for AuthorizationStatus {
     fn from(code: ErrorMessages) -> Self {
         match code {
             #[cfg(feature = "with_lavego_error_codes")]
-            ErrorMessages::ContactlessTransactionCountExceeded => RejectionReason::PinRequired,
+            ErrorMessages::ContactlessTransactionCountExceeded => AuthorizationStatus::PinRequired,
             #[cfg(feature = "with_lavego_error_codes")]
-            ErrorMessages::PinEntryRequiredx33 => RejectionReason::PinRequired,
+            ErrorMessages::PinEntryRequiredx33 => AuthorizationStatus::PinRequired,
             #[cfg(feature = "with_lavego_error_codes")]
-            ErrorMessages::PinEntryRequiredx3d => RejectionReason::PinRequired,
+            ErrorMessages::PinEntryRequiredx3d => AuthorizationStatus::PinRequired,
             #[cfg(feature = "with_lavego_error_codes")]
-            ErrorMessages::PinEntryRequiredx41 => RejectionReason::PinRequired,
+            ErrorMessages::PinEntryRequiredx41 => AuthorizationStatus::PinRequired,
             ErrorMessages::PinProcessingNotPossible
-                | ErrorMessages::NecessaryDeviceNotPresentOrDefective => RejectionReason::PinRequired,
-            ErrorMessages::CreditNotSufficient => RejectionReason::InsufficientFunds,
-            ErrorMessages::PaymentMethodNotSupported => RejectionReason::CardNotSupported,
-            ErrorMessages::AbortViaTimeoutOrAbortKey => RejectionReason::Aborted,
+                | ErrorMessages::NecessaryDeviceNotPresentOrDefective => AuthorizationStatus::PinRequired,
+            ErrorMessages::CreditNotSufficient => AuthorizationStatus::NoCredit,
+            ErrorMessages::PaymentMethodNotSupported => AuthorizationStatus::Blocked,
+            ErrorMessages::AbortViaTimeoutOrAbortKey => AuthorizationStatus::Invalid,
             #[cfg(feature = "with_lavego_error_codes")]
-            ErrorMessages::Declined => RejectionReason::Timeout,
+            ErrorMessages::Declined => AuthorizationStatus::Blocked,
             ErrorMessages::ReceiverNotReady
                 | ErrorMessages::SystemError
                 | ErrorMessages::ErrorFromDialUp   // error from dial-up/communication fault
-              => RejectionReason::Timeout,
-            _ => RejectionReason::Unknown,
+              => AuthorizationStatus::Timeout,
+            _ => AuthorizationStatus::Unknown,
         }
     }
 }
 
 impl PaymentTerminalModule {
-    /// Waits for a card and begins a transaction (sends an auth token).
+    /// Waits for a card and generates an auth token.
     ///
-    /// In case of a bank card we start the transaction on the payment terminal.
-    /// In case of membership cards we just issue the token. In both cases we
-    /// don't flag the token as pre-validated to allow the consumers to add
-    /// custom validation steps on top.
-    fn begin_transaction(&self, publishers: &ModulePublisher) -> Result<()> {
-        const NO_CONNECTORS: Option<Vec<i64>> = Some(Vec::new());
+    /// Regardless of the card type we don't flag the token as pre-validated to
+    /// allow the consumers to add custom validation steps on top. For bank
+    /// cards use the auth_token_validation to pre-authorize money.
+    fn read_card(&self, publishers: &ModulePublisher) -> Result<()> {
         let mut token: Option<String> = None;
 
         // Wait for the card.
-        let mut read_card_loop = || -> Result<CardInfo> {
+        let mut read_card_loop = || -> CardInfo {
             let mut timeout = std::time::Instant::now();
             let mut backoff_seconds = 1;
 
             loop {
                 if let Err(inner) = self.feig.configure() {
                     log::warn!("Failed to configure: {inner:?}");
-                    let inner: PTError = inner.into();
-                    publishers.payment_terminal.raise_error(inner.into())
-                } else {
-                    // TODO: use the clear all interface when it is implemented in the framework
-                    const ALL_PAYMENT_TERMINAL_ERRORS: [PaymentTerminalError; 3] = [
-                        PaymentTerminalError::TerminalIdNotSet,
-                        PaymentTerminalError::IncorrectDeviceId,
-                        PaymentTerminalError::GenericPaymentTerminalError,
-                    ];
-
-                    for error in ALL_PAYMENT_TERMINAL_ERRORS {
-                        publishers
-                            .payment_terminal
-                            .clear_error(PTError::PaymentTerminal(error));
-                    }
-                }
-
-                let get_connectors_for_rfid_card = self.get_connectors_for(CardType::RfidCard);
-                let get_connectors_for_bank_card = self.get_connectors_for(CardType::BankCard);
-
-                if get_connectors_for_rfid_card == NO_CONNECTORS
-                    && get_connectors_for_bank_card == NO_CONNECTORS
-                {
-                    log::debug!("Reading is disabled, waiting...");
-                    std::thread::sleep(Duration::from_secs(1));
+                    publishers.payment_terminal.raise_error(inner.into());
                     continue;
+                } else {
+                    publishers.payment_terminal.clear_all_errors();
                 }
 
                 // Attempting to get an invoice token
-                if token.is_none() && get_connectors_for_bank_card != NO_CONNECTORS {
+                if token.is_none() {
                     if let Some(publisher) = publishers.bank_session_token_slots.get(0) {
                         if timeout.elapsed() > Duration::from_secs(0) {
-                            token = publisher.get_bank_session_token()?.token;
+                            token = publisher.get_bank_session_token().map_or(None, |v| v.token);
 
                             // Poor man's backoff to avoid a busy loop
                             const MAX_BACKOFF_SECONDS: u64 = 60;
@@ -272,75 +246,31 @@ impl PaymentTerminalModule {
                 }
 
                 match self.feig.read_card() {
-                    Ok(card_info) => return Ok(card_info),
+                    Ok(card_info) => return card_info,
                     Err(e) => {
                         if let Some(Error::NoCardPresented) = e.downcast_ref::<Error>() {
                             log::debug!("No card presented");
-                            continue;
                         } else {
-                            if let Some(rejection_reason) = e.downcast_ref::<ErrorMessages>() {
-                                log::info!("Recieved rejection reason {}", rejection_reason);
-
-                                publishers
-                                    .payment_terminal
-                                    .rejection_reason((*rejection_reason).into())?;
-                            }
-                            return Err(anyhow::anyhow!("Failed to read card: {e:?}"));
+                            log::warn!("Failed to read a card {e:?}");
+                            // Cleared in the next loop if we can configure the
+                            // feig.
+                            publishers.payment_terminal.raise_error(e.into());
                         }
                     }
                 };
             }
         };
-        let card_info = read_card_loop()?;
+        let card_info = read_card_loop();
 
         let provided_token = match card_info {
-            CardInfo::Bank => {
-                let mut get_connectors_for_bank_card = self.get_connectors_for(CardType::BankCard);
-                if get_connectors_for_bank_card == NO_CONNECTORS {
-                    log::info!("Bank cards disabled, ignoring");
-                } else if token.is_none() {
-                    log::info!("No invoice token provided, ignoring bank card");
-                    get_connectors_for_bank_card = NO_CONNECTORS;
-                }
-
-                if get_connectors_for_bank_card != NO_CONNECTORS {
-                    if let Err(err) = self
-                        .feig
-                        .begin_transaction(token.as_ref().unwrap(), self.pre_authorization_amount)
-                    {
-                        log::warn!("Failed to start a transaction: {err:?}");
-                        match err.downcast_ref::<ErrorMessages>() {
-                            Some(rejection_reason) => {
-                                log::info!("Recieved rejection reason {}", rejection_reason);
-
-                                publishers
-                                    .payment_terminal
-                                    .rejection_reason((*rejection_reason).into())?;
-                            }
-                            None => log::info!("No error code provided"),
-                        };
-                        get_connectors_for_bank_card = NO_CONNECTORS;
-                    }
-                }
-
-                // Reuse the bank token as invoice token so we can use the
-                // invoice token later on to commit our transactions.
-                ProvidedIdToken::new(
-                    token.unwrap_or("INVALID".to_string()),
-                    AuthorizationType::BankCard,
-                    get_connectors_for_bank_card,
-                )
-            }
+            CardInfo::Bank => ProvidedIdToken::new(
+                // If we don't have a valid token, still issue the token but
+                // reject it in the validation.
+                token.unwrap_or(INVALID_BANK_TOKEN.to_string()),
+                AuthorizationType::BankCard,
+            ),
             CardInfo::MembershipCard(id_token) => {
-                let get_connectors_for_rfid_card = self.get_connectors_for(CardType::RfidCard);
-                if get_connectors_for_rfid_card == NO_CONNECTORS {
-                    log::info!("Rfid cards disabled, ignoring");
-                }
-                ProvidedIdToken::new(
-                    id_token,
-                    AuthorizationType::RFID,
-                    get_connectors_for_rfid_card,
-                )
+                ProvidedIdToken::new(id_token, AuthorizationType::RFID)
             }
         };
         publishers.token_provider.provided_token(provided_token)?;
@@ -388,32 +318,6 @@ impl PaymentTerminalModule {
             })?;
         Ok(())
     }
-
-    /// Returns the connectors enabled for the given `CardType`.
-    ///
-    /// Following the token convention Some(Vec::new()) means disabled and
-    /// `None` means enabled for all. A non-empty list enabled the card-type
-    /// only for specific connectors.
-    fn get_connectors_for(&self, card_type: CardType) -> Option<Vec<i64>> {
-        let map_guard = self.connector_to_card_type.lock().unwrap();
-        let mut v: Vec<i64> = map_guard
-            .iter()
-            .filter_map(|(&key, vec)| {
-                if vec.contains(&card_type) {
-                    Some(key)
-                } else {
-                    None
-                }
-            })
-            .collect();
-        v.sort();
-
-        if !map_guard.is_empty() {
-            Some(v)
-        } else {
-            None
-        }
-    }
 }
 
 impl AuthTokenProviderServiceSubscriber for PaymentTerminalModule {}
@@ -460,26 +364,63 @@ impl SessionCostClientSubscriber for PaymentTerminalModule {
     }
 }
 
-impl PaymentTerminalServiceSubscriber for PaymentTerminalModule {
-    fn enable_card_reading(
-        &self,
-        _context: &Context,
-        connector_id: i64,
-        supported_cards: Vec<CardType>,
-    ) -> ::everestrs::Result<()> {
-        let mut map_guard = self.connector_to_card_type.lock().unwrap();
-        map_guard.insert(connector_id, supported_cards);
-        Ok(())
-    }
-
-    fn allow_all_cards_for_every_connector(&self, _context: &Context) -> ::everestrs::Result<()> {
-        let mut map_guard = self.connector_to_card_type.lock().unwrap();
-        map_guard.clear();
-        Ok(())
+impl From<AuthorizationStatus> for ValidationResult {
+    fn from(value: AuthorizationStatus) -> Self {
+        ValidationResult {
+            authorization_status: value,
+            tariff_messages: Vec::new(),
+            allowed_energy_transfer_modes: None,
+            certificate_status: None,
+            evse_ids: None,
+            expiry_time: None,
+            parent_id_token: None,
+            reservation_id: None,
+        }
     }
 }
 
-impl PaymentTerminalModule {}
+impl AuthTokenValidatorServiceSubscriber for PaymentTerminalModule {
+    fn validate_token(
+        &self,
+        _context: &Context,
+        provided_token: ProvidedIdToken,
+    ) -> ::everestrs::Result<ValidationResult> {
+        if provided_token.authorization_type != AuthorizationType::BankCard {
+            log::warn!(
+                "{:?} not supported: can only validate `AuthorizationType::BankCard`",
+                provided_token.authorization_type
+            );
+            return Ok(AuthorizationStatus::Invalid.into());
+        }
+
+        if &provided_token.id_token.value == INVALID_BANK_TOKEN {
+            log::warn!("Received an {INVALID_BANK_TOKEN}");
+            return Ok(AuthorizationStatus::Invalid.into());
+        }
+
+        if let Err(err) = self.feig.begin_transaction(
+            &provided_token.id_token.value,
+            self.pre_authorization_amount,
+        ) {
+            log::warn!("Failed to start a transaction: {err:?}");
+            match err.downcast_ref::<ErrorMessages>() {
+                Some(rejection_reason) => {
+                    log::info!("Recieved rejection reason {}", rejection_reason);
+                    let status: AuthorizationStatus = (*rejection_reason).into();
+                    return Ok(status.into());
+                }
+                None => {
+                    log::info!("No error code provided");
+                    return Ok(AuthorizationStatus::Invalid.into());
+                }
+            };
+        }
+
+        Ok(AuthorizationStatus::Accepted.into())
+    }
+}
+
+impl PaymentTerminalServiceSubscriber for PaymentTerminalModule {}
 
 fn main() -> Result<()> {
     let config = get_config();
@@ -503,11 +444,11 @@ fn main() -> Result<()> {
     let pt_module = Arc::new(PaymentTerminalModule {
         tx,
         feig: SyncFeig::new(pt_config),
-        connector_to_card_type: Mutex::new(HashMap::new()),
         pre_authorization_amount: config.pre_authorization_amount as usize,
     });
 
     let _module = Module::new(
+        pt_module.clone(),
         pt_module.clone(),
         pt_module.clone(),
         pt_module.clone(),
@@ -519,7 +460,7 @@ fn main() -> Result<()> {
     let publishers = rx.recv()?;
     loop {
         log::debug!("Waiting for transactions...");
-        let res = pt_module.begin_transaction(&publishers);
+        let res = pt_module.read_card(&publishers);
         match res {
             Ok(()) => {
                 log::info!("Started a transaction");
@@ -572,7 +513,6 @@ mod tests {
         let pt_module = PaymentTerminalModule {
             tx,
             feig: feig_mock,
-            connector_to_card_type: Mutex::new(HashMap::new()),
             pre_authorization_amount: 11,
         };
 
@@ -619,7 +559,6 @@ mod tests {
         let pt_module = PaymentTerminalModule {
             tx,
             feig: feig_mock,
-            connector_to_card_type: Mutex::new(HashMap::new()),
             pre_authorization_amount: 20,
         };
 
@@ -688,10 +627,6 @@ mod tests {
             let pt_module = PaymentTerminalModule {
                 tx,
                 feig: feig_mock,
-                connector_to_card_type: Mutex::new(HashMap::from([(
-                    1 as i64,
-                    vec![CardType::BankCard],
-                )])),
                 pre_authorization_amount,
             };
 
@@ -721,7 +656,6 @@ mod tests {
                     token_id: BANK_TOKEN.to_string(),
                     connectors: None,
                 },
-                HashMap::new(),
             ),
             // The case where we allow only bank cards and receive a bank card.
             // We expect that we can issue a bank token.
@@ -733,10 +667,6 @@ mod tests {
                     token_id: BANK_TOKEN.to_string(),
                     connectors: Some(vec![1, 2]),
                 },
-                HashMap::from([
-                    (1 as i64, vec![CardType::BankCard]),
-                    (2 as i64, vec![CardType::BankCard]),
-                ]),
             ),
             // The case where we only allow Rfid cards but receive a bank card.
             // We issue an invalid token.
@@ -748,10 +678,6 @@ mod tests {
                     token_id: "INVALID".to_string(),
                     connectors: Some(Vec::new()),
                 },
-                HashMap::from([
-                    (1 as i64, vec![CardType::RfidCard]),
-                    (2 as i64, vec![CardType::RfidCard]),
-                ]),
             ),
             // The case where we contraint the bank card to only one connector.
             (
@@ -762,10 +688,6 @@ mod tests {
                     token_id: BANK_TOKEN.to_string(),
                     connectors: Some(vec![1]),
                 },
-                HashMap::from([
-                    (1 as i64, vec![CardType::BankCard]),
-                    (2 as i64, vec![CardType::RfidCard]),
-                ]),
             ),
             // The case where we allow only bank cards and receive a rfid card.
             // We issue an invalid token.
@@ -777,10 +699,6 @@ mod tests {
                     token_id: RIFD_TOKEN.to_string(),
                     connectors: Some(Vec::new()),
                 },
-                HashMap::from([
-                    (1 as i64, vec![CardType::BankCard]),
-                    (2 as i64, vec![CardType::BankCard]),
-                ]),
             ),
             // The case where we contraint the rfid card to only one connector.
             (
@@ -791,20 +709,10 @@ mod tests {
                     token_id: RIFD_TOKEN.to_string(),
                     connectors: Some(vec![2]),
                 },
-                HashMap::from([
-                    (1 as i64, vec![CardType::BankCard]),
-                    (2 as i64, vec![CardType::RfidCard]),
-                ]),
             ),
         ];
 
-        for (
-            card_info,
-            expected_invoice_token,
-            expected_transaction,
-            expected_token,
-            connector_to_card_type,
-        ) in parameters
+        for (card_info, expected_invoice_token, expected_transaction, expected_token) in parameters
         {
             let mut everest_mock = ModulePublisher::default();
             let mut feig_mock = SyncFeig::default();
@@ -858,7 +766,6 @@ mod tests {
             let pt_module = PaymentTerminalModule {
                 tx,
                 feig: feig_mock,
-                connector_to_card_type: Mutex::new(connector_to_card_type),
                 pre_authorization_amount,
             };
 
@@ -942,10 +849,6 @@ mod tests {
             let pt_module = PaymentTerminalModule {
                 tx,
                 feig,
-                connector_to_card_type: Mutex::new(HashMap::from([(
-                    1 as i64,
-                    vec![CardType::BankCard],
-                )])),
                 pre_authorization_amount: 50,
             };
             assert!(pt_module
@@ -1104,10 +1007,6 @@ mod tests {
             let pt_module = PaymentTerminalModule {
                 tx,
                 feig,
-                connector_to_card_type: Mutex::new(HashMap::from([(
-                    1 as i64,
-                    vec![CardType::BankCard],
-                )])),
                 pre_authorization_amount: 20,
             };
             assert!(pt_module
@@ -1183,7 +1082,6 @@ mod tests {
             let pt_module = PaymentTerminalModule {
                 tx,
                 feig: feig_mock,
-                connector_to_card_type: Mutex::new(HashMap::new()),
                 pre_authorization_amount,
             };
 
