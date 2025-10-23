@@ -418,12 +418,12 @@ Sources for externally managed configuration variables like the EVerest config s
 Sequence of variable access for internally and externally managed variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: doc/sequence_config_service_and_ocpp.png
+.. image:: images/sequence_config_service_and_ocpp.png
 
 Class diagram for device model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: doc/device_model_class_diagram.png
+.. image:: images/device_model_class_diagram.png
 
 Clarification of the device model classes of this diagram:
 
