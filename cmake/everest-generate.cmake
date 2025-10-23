@@ -466,7 +466,7 @@ function (ev_add_module)
         endif()
         if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc.rst")
             message(
-                WARNING
+                FATAL_ERROR
                 "Module ${MODULE_NAME} contains a doc.rst file"
                 " this is not supported anymore, please move to"
                 " docs/index.rst, then it will be picked up automatically."
