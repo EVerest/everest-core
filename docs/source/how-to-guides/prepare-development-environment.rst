@@ -6,18 +6,21 @@ Prepare Your Development Environment
 
 This guide will help you to set up a development environment for EVerest on your local machine.
 
-For a native build, EVerest requires a Linux based system. One reason for that
-is for example Linux socket header files we use for networking.
+For a native build, EVerest requires a Linux based system.
 
-To get building done on a Windows or Mac system, you can use WSL2 (Windows) or
+To build on a Windows or Mac system, you can use WSL2 (Windows) or
 Docker / Podman (Mac).
 
-For Mac, see the :ref:`TODO How-to for MAC setup <tutorial_mac_main>`.
+For Mac, see the :doc:`How-to for MAC setup </how-to-guides/how-to-mac-setup>`.
 
-Requirements
-============
+System Requirements and Dependencies
+====================================
 
-To get EVerest running properly, you will mainly need the following packages:
+This section lists all dependencies and supported environments required to set up 
+your development environment and build EVerest.
+
+General Requirements
+--------------------
 
 * Python (greater than 3.6)
 * Jinja2
@@ -49,17 +52,16 @@ A complete list of libraries to be installed is given by the following best
 practices which setup a development environment on a number of operating
 systems.
 
-Tested Environments
-===================
+Tested Linux Distributions
+--------------------------
 
-Ubuntu
-------
+**Ubuntu**:
 
 .. warning::
 
   Ubuntu 20.04 is not supported anymore. Please use Ubuntu 22.04 or newer.
 
-Tested with Ubuntu 22.04.
+Tested with Ubuntu 22.04 or newer.
 
 Use `apt` to get your needed libraries installed:
 
@@ -68,8 +70,8 @@ Use `apt` to get your needed libraries installed:
   sudo apt update
   sudo apt install -y python3-pip git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck openjdk-17-jdk npm docker.io docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format curl rfkill libpcap-dev libevent-dev pkg-config libcap-dev
 
-OpenSUSE
---------
+**OpenSUSE**:
+
 Use `zypper` to get your needed libraries installed:
 
 .. code-block:: bash
@@ -78,8 +80,8 @@ Use `zypper` to get your needed libraries installed:
   zypper install -y --type pattern devel_basis
   zypper install -y git rsync wget cmake doxygen graphviz clang-tools cppcheck boost-devel libboost_filesystem-devel libboost_log-devel libboost_program_options-devel libboost_system-devel libboost_thread-devel java-17-openjdk java-17-openjdk-devel nodejs nodejs-devel npm python3-devel python3-pip gcc-c++ libopenssl-devel sqlite3-devel libpcap-devel libevent-devel libcap-devel
 
-Fedora
-------
+**Fedora**:
+
 Tested with Fedora 40, 41 and 42. Here is how to get your needed libraries with
 `dnf`.
 
@@ -89,7 +91,7 @@ Tested with Fedora 40, 41 and 42. Here is how to get your needed libraries with
   sudo dnf install make automake gcc gcc-c++ kernel-devel python3-pip python3-devel git rsync wget cmake doxygen graphviz clang-tools-extra cppcheck java-21-openjdk java-21-openjdk-devel boost-devel nodejs nodejs-devel npm openssl openssl-devel libsqlite3x-devel curl rfkill libpcap-devel libevent-devel libcap-devel
 
 Now, it's time to continue with the
-:ref:`TODO Quick Start Guide to install EVerest <quickstartguide_main>`.
+:doc:`Quick Start Guide to install EVerest <explanation/getting-started/get-started-sw>`.
 
 Troubleshooting
 ===============
