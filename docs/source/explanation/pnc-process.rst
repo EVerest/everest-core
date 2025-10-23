@@ -1,4 +1,4 @@
-.. _howto-pnc-process:
+.. _exp-pnc-process:
 
 ##################################
 The Plug&Charge Process in EVerest
@@ -6,8 +6,9 @@ The Plug&Charge Process in EVerest
 
 This is an explaination how Plug&Charge is technically implemented in EVerest.
 
-For a tutorial on how to do Plug&Charge in the EVerest software-in-the-loop, please refer to :doc:`TODO: Plug&Charge tutorial </tutorials/pnc>`.
-For a goal oriented how-to-guide, pleaser refer to :doc:`TODO </how-to-guides/configure-pnc>`.
+For a tutorial on how to do Plug&Charge in the EVerest software-in-the-loop, please refer to 
+the :doc:`Plug&Charge tutorial </tutorials/plug-and-charge>`.
+For a goal oriented how-to-guide, pleaser refer to :doc:`/how-to-guides/configure-pnc`.
 
 *************************
 Plug&Charge Authorization
@@ -25,7 +26,7 @@ The Authorization process in EVerest
 
 In essence, the Plug&Charge Authorization runs like any other authorization in EVerest,
 like local RFID authorization or remote authorization. Have a look at how the authorization
-process in EVerest in designed within the `TODO: Documentation of the Auth module <https://everest.github.io/nightly/_included/modules_doc/EvseSecurity.html#everest-modules-handwritten-auth>`_.
+process in EVerest in designed within the :ref:`Documentation of the Auth module <everest_modules_handwritten_Auth>`.
 
 ************************
 Involved EVerest modules
@@ -59,13 +60,13 @@ the charger:
 
 These certificates and keys can be installed during provisioning of the charger, or they can be 
 installed using OCPP1.6 or OCPP2.x. The paths to store these files can be configured in the 
-EvseSecurity module. Please see `TODO: Documentation of the EvseSecurity <https://github.com/EVerest/everest-core/blob/main/modules/EvseSecurity/doc.rst>`_
+EvseSecurity module. Please see the :doc:`Documentation of the EvseSecurity </reference/modules/EvseSecurity>`
 for further information on how to do the configuration for this module.
 
 In the visualization, step (0) shows the process that represents the previously described process of
 provisioning the charger with the correct certificates, before there is a physical
 connection to the EV. The OCPP/OCPP201 and EvseV2G module require a module that implements
-the `TODO evse_security interface <https://everest.github.io/nightly/_generated/interfaces/evse_security.html>`_,
+the :doc:`evse_security interface </reference/interfaces/evse_security>`,
 in order to execute the following commands:
 
 * install_ca_certificate (Used by OCPP to install root certificates. This process is initiated by the OCPP CSMS)
@@ -74,7 +75,7 @@ in order to execute the following commands:
 * verify_certificate (Used by EvseV2G to verify the contract certificate and by OCPP to verify new leaf certificates)
 * get_mo_ocsp_request_data (Used by EvseV2G and OCPP to get the OCSP request data of the contract certificate (chain))
 
-There are more commands provided by the `TODO evse_security interface <https://everest.github.io/nightly/_generated/interfaces/evse_security.html>`_,
+There are more commands provided by the :doc:`evse_security interface </reference/interfaces/evse_security>`,
 which are not included in the Plug&Charge process.
 
 For a successful Plug&Charge authorization process, the following certificates need to be installed on the charger:
@@ -83,7 +84,7 @@ For a successful Plug&Charge authorization process, the following certificates n
 * V2G Root Certificate(s)
 * MO Root Certificates(s) (only if the EV contract shall be verified locally).
   This can be controlled by the OCPP configuration keys described in the section
-  :ref:`TODO: ocpp-configuration` for more information.
+  :ref:`how-to-configure-pnc-ocpp-configuration` for more information.
 
 As mentioned above, these certificates can be installed manually or by the CSMS. In case Plug&Charge is enabled 
 and no (valid) SECC leaf certificate is installed or it expires within the next 30 days, the charging station
@@ -104,7 +105,7 @@ Step 2
 When charger and EV have agreed on Contract being the selected payment option, we have something going on
 that we can call a Plug&Charge process. The EV sends its contract certificate chain and requests authorization
 from the charger. The EvseV2G module generates a
-`TODO ProvidedIdToken <https://everest.github.io/nightly/_generated/types/authorization.html#authorization-providedidtoken>`_,
+:ref:`ProvidedIdToken <authorization-ProvidedIdToken>`,
 which is the EVerest type that contains data about the authorization request, including the contract
 certificate and OCSP request data. 
 
@@ -114,7 +115,7 @@ Step 3
 ======
 
 The EvseManager module implements the *token_provider* interface and can therefore publish the 
-`TODO ProvidedIdToken <https://everest.github.io/nightly/_generated/types/authorization.html#authorization-providedidtoken>`_
+:ref:`ProvidedIdToken <authorization-ProvidedIdToken>`
 containing the contract certificate and OCSP data within EVerest to the central authorization module
 in EVerest: Auth.
 
@@ -122,7 +123,7 @@ Step 4
 ======
 
 The Auth module sends commands containing the *ProvidedIdToken* to its registered
-`TODO token_validator(s) <https://everest.github.io/nightly/_generated/interfaces/auth_token_validator.html>`_,
+:doc:`token_validator(s) <reference/interfaces/auth_token_validator>`,
 which are OCPP/OCPP201 in the case of Plug&Charge. The OCPP module(s) validate the token based on the requirements
 specified in the OCPP protocol (either validating locally or by the CSMS).
 
