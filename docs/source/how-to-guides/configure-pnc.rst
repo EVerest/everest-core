@@ -15,7 +15,7 @@ The following two configuration files are relevant and require a correct setup a
 * OCPP configuration file(s) (json) for OCPP 1.6 or OCPP 2.x
 
 Let's start with the EVerest configuration file. If you haven't read
-:ref:`Explaining the YAML files <exp-yaml-files>`_,
+:ref:`Explaining the YAML files <exp-yaml-files>`,
 now it's the right time to do it before you go on!
 
 It's a good idea to start with a base of a configuration file and talk about the changes required to enable
@@ -51,7 +51,7 @@ in this case the authorization request including the contract certificate is act
 EvseSecurity
 ============
 
-Please refer to :ref:`Documentation of the EvseSecurity module <everest_modules_handwritten_EvseSecurity>`_ 
+Please refer to :ref:`Documentation of the EvseSecurity module <everest_modules_handwritten_EvseSecurity>` 
 for information on the ISO15118 configuration. It describes how to configure the paths to the required certificates and keys.
 
 .. _ocpp-configuration:
