@@ -14,7 +14,6 @@ macro(_add_trailbook_check_requirements_txt)
                 ${args_REQUIREMENTS_TXT}
                 --fix-in-venv
             RESULT_VARIABLE _CHECK_REQUIREMENTS_TXT_RESULT
-            COMMAND_ERROR_IS_FATAL NONE
         )
 
         if(NOT ${_CHECK_REQUIREMENTS_TXT_RESULT} EQUAL 0)
