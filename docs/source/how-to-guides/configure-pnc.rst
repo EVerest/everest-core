@@ -106,4 +106,5 @@ from the charging station or does not return a certificate after the specified t
 of these configuration keys do not match the expectations of the CSMS. Contact your CSMS partner in this case.
 
 ----------------------------------------
+
 **Authors**: Piet Gömpel
