@@ -169,6 +169,8 @@ The run configuration defines the module instances to start:
     * The instance ID of the module instance which provides the interface;
     * The interface implementation ID within the providing module which will be used.
 
+.. _exp-yaml-files:
+
 *************************
 Explaining the YAML files
 *************************
