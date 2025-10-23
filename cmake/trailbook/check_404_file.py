@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This script checks whether the 404.html file exists at the specified location.
+"""
+
+
 import argparse
 from pathlib import Path
 

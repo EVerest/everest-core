@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This script checks whether a directory exists or not and returns zero based on the flags provided.
+"""
+
+
 import argparse
 from pathlib import Path
 
@@ -52,6 +63,7 @@ def main():
         exit(0)
     else:
         raise ValueError("Either --return-zero-if-exists or --return-zero-if-not-exists must be specified")
+
 
 if __name__ == "__main__":
     main()

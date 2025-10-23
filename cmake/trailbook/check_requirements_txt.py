@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This script checks whether the packages in a requirements.txt are satisfied.
+If run inside a virtual environment, it can optionally fix unmet requirements by running pip install -r.
+"""
+
+
 import argparse
 import sys
 from importlib.metadata import version, PackageNotFoundError
 import re
 import subprocess
+
 
 def parse_requirement(req_line: str):
     req_line = req_line.strip()
@@ -13,6 +26,7 @@ def parse_requirement(req_line: str):
     if match:
         return match.groups()
     return (req_line, None)
+
 
 def check_requirements(file_path: str, fix_in_venv: bool = False):
     errors = []
@@ -45,12 +59,14 @@ def check_requirements(file_path: str, fix_in_venv: bool = False):
             print("   ", e)
         sys.exit(1)
 
+
 def main():
     parser = argparse.ArgumentParser(description="Checks if the packages in a requirements.txt are satisfied.")
     parser.add_argument("requirements_file", type=str, help="Path to the requirements.txt")
     parser.add_argument("--fix-in-venv", action="store_true", help="Run pip install -r in the current venv if there are unmet requirements")
     args = parser.parse_args()
     check_requirements(args.requirements_file, args.fix_in_venv)
+
 
 if __name__ == "__main__":
     main()

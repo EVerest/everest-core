@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This script creates a trailbook_metadata.yaml file 
+based on the versions found in the multiversion root directory.
+"""
+
+
 import argparse
 from pathlib import Path
 import yaml
+
 
 def main():
     parser = argparse.ArgumentParser(description='Creates a trailbook_metadata.yaml file')
@@ -62,6 +75,7 @@ def main():
     # render yaml content
     with args.output_path.open('w') as f:
         yaml.dump(data, f, default_flow_style=False)
+
 
 if __name__ == "__main__":
     main()

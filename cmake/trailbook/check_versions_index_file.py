@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This script checks whether the versions_index.html file exists at the specified location.
+"""
+
+
 import argparse
 from pathlib import Path
+
 
 def main():
     parser = argparse.ArgumentParser(description='Checks whether the versions_index.html file exists in the multiversion root directory')
@@ -23,6 +35,7 @@ def main():
         print(f"❌ versions_index.html does not exist at {args.versions_index_file}")
         print("   Please make sure that your sphinx stem includes the generation of some versions_index.html file.")
         exit(1)
+
 
 if __name__ == "__main__":
     main()

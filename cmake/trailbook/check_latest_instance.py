@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This scripts checks whether the multiversion root directory contains latest/
+"""
+
+
 import argparse
 from pathlib import Path
+
 
 def main():
     parser = argparse.ArgumentParser(description='Checks whether the multiversion root directory contains latest/')
@@ -25,6 +37,7 @@ def main():
             "  - make sure that you have a pre existing latest/ or mark the build as release"
         )
         exit(1)
+
 
 if __name__ == "__main__":
     main()

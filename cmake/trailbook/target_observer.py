@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This script starts a CMake target http server and triggers
+regular rebuilds of a specified CMake target upon changes.
+"""
+
+
 import subprocess
 import sys
 import time
@@ -11,7 +23,9 @@ from rich.panel import Panel
 from rich.layout import Layout
 from threading import Thread
 
+
 console = Console()
+
 
 def run_target(build_dir: Path, target: str, live_panel, panel_size: int) -> None:    
     process = subprocess.Popen(
@@ -32,6 +46,7 @@ def run_target(build_dir: Path, target: str, live_panel, panel_size: int) -> Non
         output_lines = output_lines[-panel_size:]
         live_panel.update(Panel("\n".join(output_lines), title=f"{target} output"))
     process.wait()
+
 
 def start_server(build_dir: Path, server_target: str, server_lines: list, live_panel, panel_size: int) -> subprocess.Popen:
     print(f"Starting server target {server_target}...")
@@ -57,6 +72,7 @@ def start_server(build_dir: Path, server_target: str, server_lines: list, live_p
     t.start()
     return process
 
+
 def stop_server(proc: subprocess.Popen) -> None:
     if proc and proc.poll() is None:
         print("Stopping server...")
@@ -65,6 +81,7 @@ def stop_server(proc: subprocess.Popen) -> None:
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
+
 
 def main():
     parser = argparse.ArgumentParser(description="Watch CMake target and manage server target")
@@ -100,6 +117,7 @@ def main():
         except KeyboardInterrupt:
             stop_server(server_proc)
             print("\n Exiting.")
+
 
 if __name__ == "__main__":
     main()

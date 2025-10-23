@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This script provides command to manage a list of file paths
+It can be used for custom cmake commands to track created files and directories
+and later remove or move them.
+"""
+
 
 import argparse
 from pathlib import Path
