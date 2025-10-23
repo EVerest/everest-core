@@ -1,4 +1,4 @@
-.. _tutorial_ocpp16:
+.. _tutorial-ocpp16:
 
 ##########################
 How To: OCPP 1.6 in EVerest
