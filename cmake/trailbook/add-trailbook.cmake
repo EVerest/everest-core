@@ -306,13 +306,14 @@ macro(_add_trailbook_copy_404_command)
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
             $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_404_file.py
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_path_exists.py
         COMMENT
             "Trailbook: ${args_NAME} - Checking for 404.html in built documentation"
         COMMAND
             ${Python3_EXECUTABLE}
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_404_file.py
-            --404-file "${TRAILBOOK_INSTANCE_404_FILE}"
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_path_exists.py
+            --file "${TRAILBOOK_INSTANCE_404_FILE}"
+            --return-zero-if-exists
     )    
     add_custom_command(
         OUTPUT
@@ -383,13 +384,14 @@ macro(_add_trailbook_copy_versions_index_command)
             trailbook_${args_NAME}_stage_postprocess_sphinx_before
             $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_versions_index_file.py
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_path_exists.py
         COMMENT
             "Trailbook: ${args_NAME} - Checking for versions_index.html in built documentation"
         COMMAND
             ${Python3_EXECUTABLE}
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_versions_index_file.py
-            --versions-index-file "${TRAILBOOK_INSTANCE_VERSIONS_INDEX_FILE}"
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_path_exists.py
+            --file "${TRAILBOOK_INSTANCE_VERSIONS_INDEX_FILE}"
+            --return-zero-if-exists
     )
     add_custom_command(
         OUTPUT
@@ -399,13 +401,14 @@ macro(_add_trailbook_copy_versions_index_command)
             $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_POSTPROCESS_SPHINX_BEFORE>
             ${CHECK_DONE_FILE_SPHINX_BUILD_COMMAND}
             ${CHECK_DONE_FILE_REPLACE_LATEST}
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_latest_instance.py
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_path_exists.py
         COMMENT
             "Trailbook: ${args_NAME} - Checking for latest/ in multiversion root directory"
         COMMAND
             ${Python3_EXECUTABLE}
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_latest_instance.py
-            --multiversion-root-directory "${TRAILBOOK_BUILD_DIRECTORY}"
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_path_exists.py
+            --directory ${TRAILBOOK_BUILD_DIRECTORY}/latest
+            --return-zero-if-exists
         COMMAND
             ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_CHECK_LATEST_INSTANCE}
     )
