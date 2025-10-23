@@ -54,7 +54,7 @@ EvseSecurity
 Please refer to :ref:`Documentation of the EvseSecurity module <everest_modules_handwritten_EvseSecurity>` 
 for information on the ISO15118 configuration. It describes how to configure the paths to the required certificates and keys.
 
-.. _ocpp-configuration:
+.. _how-to-configure-pnc-ocpp-configuration:
 
 *************************************
 OCPP 1.6 and OCPP 2.x configuration
