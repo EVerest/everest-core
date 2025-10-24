@@ -2,8 +2,6 @@
 Experimental Bazel Support in Everest
 =======================================
 
-.. note::
-  This feature is currently experimental and subject to change.
 
 Introduction
 ------------
