@@ -46,6 +46,8 @@ struct Conf {
     int dc_discharge_max_power_limit;
     int dc_discharge_target_current;
     int dc_discharge_v2g_minimal_soc;
+    bool force_payment_type;
+    std::string payment_type;
     double max_current;
     bool three_phases;
     int soc;
