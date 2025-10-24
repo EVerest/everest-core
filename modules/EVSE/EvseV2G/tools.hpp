@@ -67,4 +67,30 @@ types::iso15118::HashAlgorithm convert_to_hash_algorithm(const types::evse_secur
  */
 std::vector<types::iso15118::CertificateHashDataInfo>
 convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPRequestDataList& ocsp_request_data_list);
+/**
+ * \brief Convert a buffer of bytes into a MAC-style string.
+ *
+ * Produces a colon-separated, uppercase hexadecimal string (e.g. "01:23:45:67:89:AB").
+ *
+ * Formatting rules:
+ *  - Each byte in \p data (up to \p datalen) is printed as two uppercase hex digits.
+ *  - If \p datalen >= 6, all bytes are printed (output may exceed 6 groups).
+ *  - If \p datalen < 6 and \p fillch != '\0', the output is padded with
+ *    two \p fillch characters per missing byte until 6 groups are produced,
+ *    guaranteeing a minimum length of 17 characters (HH:HH:HH:HH:HH:HH).
+ *  - If \p datalen < 6 and \p fillch == '\0', no padding is added; the output
+ *    contains only the provided bytes (resulting in fewer than 6 groups).
+ *  - If \p data is nullptr, it is treated as zero-length input.
+ *
+ * \param data     Pointer to the input byte array.
+ * \param datalen  Number of valid bytes in \p data.
+ * \param fillch   Padding character for missing bytes when \p datalen < 6.
+ *                 If '\0', no padding is applied.
+ *
+ * \return Formatted MAC-style string. Marked [[nodiscard]] because ignoring
+ *         the returned string is typically unintended.
+ */
+[[nodiscard]]
+std::string to_mac_string(const uint8_t* data, size_t datalen, char fillch = '?');
+
 #endif /* TOOLS_H */
