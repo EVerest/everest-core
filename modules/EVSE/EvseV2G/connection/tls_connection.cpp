@@ -267,7 +267,38 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
 
     bool bResult{false};
 
-    config.cipher_list = "ECDHE-ECDSA-AES128-SHA256";
+    /**
+     * ISO 15118-2 supports following TLS 1.2 ciphers:
+     *   - TLS_ECDH_WITH_AES_128_CBC_SHA256
+     *       - Does not provide forward secrecy.
+     *       - Deprecated and removed from modern TLS libraries (e.g., OpenSSL).
+     *   - TLS_ECDHE_WITH_AES_128_CBC_SHA256
+     *       - Provides forward secrecy, but still uses CBC mode.
+     *       - Retained mainly for backward compatibility.
+     *
+     * While these suites satisfy ISO 15118-2 requirements, CBC-mode ciphers are no
+     * longer aligned with modern cryptographic best practices. To improve both
+     * security and interoperability:
+     *
+     *   - Enable OpenSSL’s `DEFAULT` cipher list at `@SECLEVEL=2` to allow modern,
+     *     secure cipher suites. This furter disables compression.
+     *
+     *   - Follow RFC 9325 `Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport
+     *     Layer Security (DTLS)` guidance by supporting AEAD cipher suites:
+     *       - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+     *       - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+     *
+     *   - Add TLS_ECDHE_ECDSA_WITH_ASES_128_CBC_SHA256 for ISO 15118-2 compatibility.
+     *
+     * This approach meets ISO 15118-2 conformance:
+     *   [V2G2-602] The SECC shall support all cipher suites defined in Table 7, if TLS is used.
+     *   [V2G2-603] The EVCC shall support at least one cipher suite from Table 7, if TLS is used.
+     *   Additional cipher suites may be supported by any V2G entity.
+     */
+    config.cipher_list = "DEFAULT:@SECLEVEL=2"
+                         ":ECDHE-ECDSA-AES256-GCM-SHA384"
+                         ":ECDHE-ECDSA-AES128-GCM-SHA256"
+                         ":ECDHE-ECDSA-AES128-SHA256";
     config.ciphersuites = "";     // disable TLS 1.3
     config.verify_client = false; // contract certificate managed in-band in 15118-2
 
