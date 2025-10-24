@@ -254,26 +254,26 @@ TEST(openssl, base64EncodeNl) {
 }
 
 TEST(openssl, base64Decode) {
-    auto res = openssl::base64_decode(&iso_exi_a_hash_b64[0], sizeof(iso_exi_a_hash_b64));
+    auto res = openssl::base64_decode(iso_exi_a_hash_b64, std::strlen(iso_exi_a_hash_b64));
     ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
     EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
-    res = openssl::base64_decode(&iso_exi_sig_b64[0], sizeof(iso_exi_sig_b64));
+    res = openssl::base64_decode(iso_exi_sig_b64, std::strlen(iso_exi_sig_b64));
     ASSERT_EQ(res.size(), sizeof(iso_exi_sig));
     EXPECT_EQ(std::memcmp(res.data(), &iso_exi_sig[0], res.size()), 0);
 
     std::array<std::uint8_t, 512> buffer{};
     std::size_t buffer_len = buffer.size();
 
-    EXPECT_TRUE(openssl::base64_decode(&iso_exi_a_hash_b64[0], sizeof(iso_exi_a_hash_b64), buffer.data(), buffer_len));
+    EXPECT_TRUE(openssl::base64_decode(iso_exi_a_hash_b64, std::strlen(iso_exi_a_hash_b64), buffer.data(), buffer_len));
     ASSERT_EQ(buffer_len, sizeof(iso_exi_a_hash));
     EXPECT_EQ(std::memcmp(buffer.data(), &iso_exi_a_hash[0], buffer_len), 0);
 }
 
 TEST(openssl, base64DecodeNl) {
-    auto res = openssl::base64_decode(&iso_exi_a_hash_b64_nl[0], sizeof(iso_exi_a_hash_b64_nl));
+    auto res = openssl::base64_decode(iso_exi_a_hash_b64_nl, std::strlen(iso_exi_a_hash_b64_nl));
     ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
     EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
-    res = openssl::base64_decode(&iso_exi_sig_b64_nl[0], sizeof(iso_exi_sig_b64_nl));
+    res = openssl::base64_decode(iso_exi_sig_b64_nl, std::strlen(iso_exi_sig_b64_nl));
     ASSERT_EQ(res.size(), sizeof(iso_exi_sig));
     EXPECT_EQ(std::memcmp(res.data(), &iso_exi_sig[0], res.size()), 0);
 
@@ -281,7 +281,7 @@ TEST(openssl, base64DecodeNl) {
     std::size_t buffer_len = buffer.size();
 
     EXPECT_TRUE(
-        openssl::base64_decode(&iso_exi_a_hash_b64_nl[0], sizeof(iso_exi_a_hash_b64_nl), buffer.data(), buffer_len));
+        openssl::base64_decode(iso_exi_a_hash_b64_nl, std::strlen(iso_exi_a_hash_b64_nl), buffer.data(), buffer_len));
     ASSERT_EQ(buffer_len, sizeof(iso_exi_a_hash));
     EXPECT_EQ(std::memcmp(buffer.data(), &iso_exi_a_hash[0], buffer_len), 0);
 }
