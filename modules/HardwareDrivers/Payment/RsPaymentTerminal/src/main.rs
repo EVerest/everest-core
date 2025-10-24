@@ -220,7 +220,7 @@ impl PaymentTerminalModule {
                     publishers.payment_terminal.raise_error(inner.into());
                     continue;
                 } else {
-                    publishers.payment_terminal.clear_all_errors();
+                    // publishers.payment_terminal.clear_all_errors();
                 }
 
                 // Attempting to get an invoice token
@@ -482,258 +482,141 @@ mod tests {
     use mockall::predicate::eq;
     use zvt_feig_terminal::feig::TransactionSummary;
 
-    #[test]
-    fn payment_terminal_module__begin_transaction_failure_when_token_is_err() {
-        // Test first the case where we receive an error from the bank session token provider.
-        let mut feig_mock = SyncFeig::default();
-        feig_mock.expect_configure().times(1).return_once(|| Ok(()));
+    impl From<SyncFeig> for PaymentTerminalModule {
+        fn from(feig_mock: SyncFeig) -> Self {
+            let (tx, _) = channel();
 
-        let mut everest_mock = ModulePublisher::default();
-        everest_mock
-            .payment_terminal
-            .expect_clear_error()
-            .times(3)
-            .return_const(());
-        everest_mock
-            .bank_session_token_slots
-            .push(BankSessionTokenProviderClientPublisher::default());
-        let token = Err(::everestrs::Error::HandlerException("oh no".to_string()));
-        everest_mock.bank_session_token_slots[0]
-            .expect_get_bank_session_token()
-            .times(1)
-            .return_once(|| token);
-        everest_mock
-            .payment_terminal
-            .expect_clear_error()
-            .times(0)
-            .return_const(());
-
-        let (tx, _) = channel();
-
-        let pt_module = PaymentTerminalModule {
-            tx,
-            feig: feig_mock,
-            pre_authorization_amount: 11,
-        };
-
-        assert!(pt_module.begin_transaction(&everest_mock).is_err());
+            PaymentTerminalModule {
+                tx,
+                feig: feig_mock,
+                pre_authorization_amount: 11,
+            }
+        }
     }
 
     #[test]
-    fn payment_terminal_module__begin_transaction_test() {
-        // When the token is None, we still expect membership card to work
-        let card_info = CardInfo::MembershipCard("my membership token".to_string());
-        let expected_token = "my membership token";
-        let mut everest_mock = ModulePublisher::default();
-        let mut feig_mock = SyncFeig::default();
-
-        feig_mock
-            .expect_read_card()
-            .times(1)
-            .return_once(|| Ok(card_info));
-
-        everest_mock
-            .payment_terminal
-            .expect_clear_error()
-            .times(3)
-            .return_const(());
-        everest_mock
-            .bank_session_token_slots
-            .push(BankSessionTokenProviderClientPublisher::default());
-        everest_mock.bank_session_token_slots[0]
-            .expect_get_bank_session_token()
-            .times(1)
-            .return_once(|| Ok(BankSessionToken { token: None }));
-
-        everest_mock
-            .token_provider
-            .expect_provided_token()
-            .times(1)
-            .withf(|arg| arg.id_token.value == expected_token.to_string())
-            .return_once(|_| Ok(()));
-
-        feig_mock.expect_configure().times(1).return_once(|| Ok(()));
-
-        let (tx, _) = channel();
-
-        let pt_module = PaymentTerminalModule {
-            tx,
-            feig: feig_mock,
-            pre_authorization_amount: 20,
-        };
-
-        assert!(pt_module.begin_transaction(&everest_mock).is_ok());
-    }
-
-    #[test]
-    /// Unit tests for the `PaymentTerminalModule::begin_transaction`.
-    fn payment_terminal_module__begin_transaction_success() {
-        // Test the successful execution with BankCard.
-        let parameters = [
-            (CardInfo::Bank, "my bank token", true),
+    fn payment_terminal_module__read_card__get_bank_session_token_failed() {
+        let PARAMETERS = [
             (
-                CardInfo::MembershipCard("my membership token".to_string()),
-                "my membership token",
-                false,
+                CardInfo::Bank,
+                AuthorizationType::BankCard,
+                INVALID_BANK_TOKEN,
+            ),
+            (
+                CardInfo::MembershipCard("some id".to_string()),
+                AuthorizationType::RFID,
+                "some id",
             ),
         ];
 
-        for (card_info, expected_token, expected_transaction) in parameters {
-            let mut everest_mock = ModulePublisher::default();
+        for (card_info, authorization_type, id_token) in PARAMETERS {
             let mut feig_mock = SyncFeig::default();
+            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
+            feig_mock
+                .expect_read_card()
+                .times(1)
+                .return_once(|| Ok(card_info));
 
-            everest_mock
-                .payment_terminal
-                .expect_clear_error()
-                .times(3)
-                .return_const(());
+            let mut everest_mock = ModulePublisher::default();
             everest_mock
                 .bank_session_token_slots
                 .push(BankSessionTokenProviderClientPublisher::default());
+
             everest_mock.bank_session_token_slots[0]
                 .expect_get_bank_session_token()
                 .times(1)
-                .return_once(|| {
-                    Ok(BankSessionToken {
-                        token: Some("my bank token".to_string()),
-                    })
-                });
+                .return_once(|| Err(::everestrs::Error::HandlerException("oh no".to_string())));
 
             everest_mock
                 .token_provider
                 .expect_provided_token()
                 .times(1)
-                .withf(|arg| arg.id_token.value == expected_token.to_string())
+                .withf(move |arg| {
+                    &arg.id_token.value == id_token && arg.authorization_type == authorization_type
+                })
                 .return_once(|_| Ok(()));
+
+            let pt_module: PaymentTerminalModule = feig_mock.into();
+            assert!(pt_module.read_card(&everest_mock).is_ok());
+        }
+    }
+
+    #[test]
+    fn payment_terminal_module__read_card__no_bank_session_token() {
+        let PARAMETERS = [
+            (
+                CardInfo::Bank,
+                AuthorizationType::BankCard,
+                INVALID_BANK_TOKEN,
+            ),
+            (
+                CardInfo::MembershipCard("some id".to_string()),
+                AuthorizationType::RFID,
+                "some id",
+            ),
+        ];
+        // Here we don't have a bank session provider defined.
+        for (card_info, authorization_type, id_token) in PARAMETERS {
+            let mut feig_mock = SyncFeig::default();
+            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
+            feig_mock
+                .expect_read_card()
+                .times(1)
+                .return_once(|| Ok(card_info));
+
+            let mut everest_mock = ModulePublisher::default();
+
+            everest_mock
+                .token_provider
+                .expect_provided_token()
+                .times(1)
+                .withf(move |arg| {
+                    &arg.id_token.value == id_token && arg.authorization_type == authorization_type
+                })
+                .return_once(|_| Ok(()));
+
+            let pt_module: PaymentTerminalModule = feig_mock.into();
+            assert!(pt_module.read_card(&everest_mock).is_ok());
+        }
+    }
+
+    #[test]
+    fn payment_terminal_module__read_card__success() {
+        let PARAMETERS = [
+            (
+                CardInfo::Bank,
+                AuthorizationType::BankCard,
+                "some bank token",
+                "some bank token",
+            ),
+            (
+                CardInfo::MembershipCard("some id".to_string()),
+                AuthorizationType::RFID,
+                "some bank token",
+                "some id",
+            ),
+        ];
+
+        for (card_info, authorization_type, bank_token, id_token) in PARAMETERS {
+            // When the token is None, we still expect membership card to work
+            let mut feig_mock = SyncFeig::default();
 
             feig_mock
                 .expect_read_card()
                 .times(1)
                 .return_once(|| Ok(card_info));
 
-            let pre_authorization_amount = 42;
-            if expected_transaction {
-                feig_mock
-                    .expect_begin_transaction()
-                    .times(1)
-                    .with(eq("my bank token"), eq(pre_authorization_amount))
-                    .return_once(|_, _| Ok(()));
-            }
-
-            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
-
-            let (tx, _) = channel();
-
-            let pt_module = PaymentTerminalModule {
-                tx,
-                feig: feig_mock,
-                pre_authorization_amount,
-            };
-
-            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
-        }
-    }
-
-    #[test]
-    /// Unit tests for the `PaymentTerminalModule::begin_transaction` with credit card acceptance.
-    fn payment_terminal_module__begin_transaction_credit_cards_accepted() {
-        struct ExpectedToken {
-            token_id: String,
-            connectors: Option<Vec<i64>>,
-        }
-
-        const BANK_TOKEN: &str = "my bank token";
-        const RIFD_TOKEN: &str = "my rfid token";
-
-        // Now test the successful execution.
-        let parameters = [
-            // The case where we don't have any constraints.
-            (
-                CardInfo::Bank,
-                true,
-                true,
-                ExpectedToken {
-                    token_id: BANK_TOKEN.to_string(),
-                    connectors: None,
-                },
-            ),
-            // The case where we allow only bank cards and receive a bank card.
-            // We expect that we can issue a bank token.
-            (
-                CardInfo::Bank,
-                true,
-                true,
-                ExpectedToken {
-                    token_id: BANK_TOKEN.to_string(),
-                    connectors: Some(vec![1, 2]),
-                },
-            ),
-            // The case where we only allow Rfid cards but receive a bank card.
-            // We issue an invalid token.
-            (
-                CardInfo::Bank,
-                false,
-                false,
-                ExpectedToken {
-                    token_id: "INVALID".to_string(),
-                    connectors: Some(Vec::new()),
-                },
-            ),
-            // The case where we contraint the bank card to only one connector.
-            (
-                CardInfo::Bank,
-                true,
-                true,
-                ExpectedToken {
-                    token_id: BANK_TOKEN.to_string(),
-                    connectors: Some(vec![1]),
-                },
-            ),
-            // The case where we allow only bank cards and receive a rfid card.
-            // We issue an invalid token.
-            (
-                CardInfo::MembershipCard(RIFD_TOKEN.to_string()),
-                true,
-                false,
-                ExpectedToken {
-                    token_id: RIFD_TOKEN.to_string(),
-                    connectors: Some(Vec::new()),
-                },
-            ),
-            // The case where we contraint the rfid card to only one connector.
-            (
-                CardInfo::MembershipCard(RIFD_TOKEN.to_string()),
-                true,
-                false,
-                ExpectedToken {
-                    token_id: RIFD_TOKEN.to_string(),
-                    connectors: Some(vec![2]),
-                },
-            ),
-        ];
-
-        for (card_info, expected_invoice_token, expected_transaction, expected_token) in parameters
-        {
             let mut everest_mock = ModulePublisher::default();
-            let mut feig_mock = SyncFeig::default();
-            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
-            everest_mock
-                .payment_terminal
-                .expect_clear_error()
-                .times(3)
-                .return_const(());
-
             everest_mock
                 .bank_session_token_slots
                 .push(BankSessionTokenProviderClientPublisher::default());
 
-            // let expected_token_clone = expected_token.clone();
             everest_mock.bank_session_token_slots[0]
                 .expect_get_bank_session_token()
-                .times(if expected_invoice_token { 1 } else { 0 })
+                .times(1)
                 .return_once(|| {
                     Ok(BankSessionToken {
-                        token: Some(BANK_TOKEN.to_string()),
+                        token: Some(bank_token.to_owned()),
                     })
                 });
 
@@ -742,34 +625,15 @@ mod tests {
                 .expect_provided_token()
                 .times(1)
                 .withf(move |arg| {
-                    arg.id_token.value == expected_token.token_id
-                        && arg.connectors == expected_token.connectors
+                    &arg.id_token.value == id_token && arg.authorization_type == authorization_type
                 })
                 .return_once(|_| Ok(()));
 
-            feig_mock
-                .expect_read_card()
-                .times(1)
-                .return_once(|| Ok(card_info));
+            feig_mock.expect_configure().times(1).return_once(|| Ok(()));
 
-            let pre_authorization_amount = 41;
-            if expected_transaction {
-                feig_mock
-                    .expect_begin_transaction()
-                    .times(1)
-                    .with(eq("my bank token"), eq(pre_authorization_amount))
-                    .return_once(|_, _| Ok(()));
-            }
+            let pt_module: PaymentTerminalModule = feig_mock.into();
 
-            let (tx, _) = channel();
-
-            let pt_module = PaymentTerminalModule {
-                tx,
-                feig: feig_mock,
-                pre_authorization_amount,
-            };
-
-            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
+            assert!(pt_module.read_card(&everest_mock).is_ok());
         }
     }
 
@@ -783,11 +647,7 @@ mod tests {
                     code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: Some(ProvidedIdToken::new(
-                    String::new(),
-                    AuthorizationType::OCPP,
-                    None,
-                )),
+                id_tag: Some(ProvidedIdToken::new(String::new(), AuthorizationType::OCPP)),
                 status: SessionStatus::Finished,
                 session_id: String::new(),
                 idle_price: None,
@@ -802,11 +662,7 @@ mod tests {
                     code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: Some(ProvidedIdToken::new(
-                    String::new(),
-                    AuthorizationType::RFID,
-                    None,
-                )),
+                id_tag: Some(ProvidedIdToken::new(String::new(), AuthorizationType::RFID)),
                 status: SessionStatus::Finished,
                 session_id: String::new(),
                 idle_price: None,
@@ -824,7 +680,6 @@ mod tests {
                 id_tag: Some(ProvidedIdToken::new(
                     String::new(),
                     AuthorizationType::BankCard,
-                    None,
                 )),
                 status: SessionStatus::Running,
                 session_id: String::new(),
@@ -872,7 +727,6 @@ mod tests {
                     id_tag: Some(ProvidedIdToken::new(
                         "token".to_string(),
                         AuthorizationType::BankCard,
-                        None,
                     )),
                     status: SessionStatus::Finished,
                     session_id: String::new(),
@@ -894,7 +748,6 @@ mod tests {
                     id_tag: Some(ProvidedIdToken::new(
                         "token".to_string(),
                         AuthorizationType::BankCard,
-                        None,
                     )),
                     status: SessionStatus::Finished,
                     session_id: String::new(),
@@ -923,7 +776,6 @@ mod tests {
                     id_tag: Some(ProvidedIdToken::new(
                         "token".to_string(),
                         AuthorizationType::BankCard,
-                        None,
                     )),
                     status: SessionStatus::Finished,
                     session_id: String::new(),
@@ -962,7 +814,6 @@ mod tests {
                     id_tag: Some(ProvidedIdToken::new(
                         "token".to_string(),
                         AuthorizationType::BankCard,
-                        None,
                     )),
                     status: SessionStatus::Finished,
                     session_id: String::new(),
@@ -1012,94 +863,6 @@ mod tests {
             assert!(pt_module
                 .on_session_cost_impl(&context, session_cost)
                 .is_ok());
-        }
-    }
-
-    #[test]
-    /// Unit tests for the `PaymentTerminalModule::begin_transaction` with credit card acceptance.
-    fn payment_terminal_module__begin_transaction_with_configuration() {
-        {
-            let expected_token = "my bank token";
-
-            let mut everest_mock = ModulePublisher::default();
-            let mut feig_mock = SyncFeig::default();
-            feig_mock.expect_configure().times(3).returning(|| Ok(()));
-            everest_mock
-                .payment_terminal
-                .expect_clear_error()
-                .times(9)
-                .return_const(());
-
-            everest_mock
-                .bank_session_token_slots
-                .push(BankSessionTokenProviderClientPublisher::default());
-            everest_mock
-                .bank_session_token_slots
-                .push(BankSessionTokenProviderClientPublisher::default());
-
-            everest_mock.bank_session_token_slots[0]
-                .expect_get_bank_session_token()
-                .times(3)
-                .returning(|| {
-                    Ok(BankSessionToken {
-                        token: Some(expected_token.to_string()),
-                    })
-                });
-
-            everest_mock
-                .token_provider
-                .expect_provided_token()
-                .times(2)
-                .withf(move |arg| {
-                    arg.id_token.value == expected_token.to_string() && arg.connectors == None
-                })
-                .returning(|_| Ok(()));
-
-            everest_mock
-                .token_provider
-                .expect_provided_token()
-                .times(1)
-                .withf(move |arg| {
-                    arg.id_token.value == expected_token.to_string()
-                        && arg.connectors == Some(vec![1])
-                })
-                .return_once(|_| Ok(()));
-
-            feig_mock
-                .expect_read_card()
-                .times(3)
-                .returning(|| Ok(CardInfo::Bank));
-
-            let pre_authorization_amount = 50;
-            feig_mock
-                .expect_begin_transaction()
-                .times(3)
-                .with(eq("my bank token"), eq(pre_authorization_amount))
-                .returning(|_, _| Ok(()));
-
-            let (tx, _) = channel();
-
-            let pt_module = PaymentTerminalModule {
-                tx,
-                feig: feig_mock,
-                pre_authorization_amount,
-            };
-
-            let context = Context {
-                name: "foo",
-                publisher: &everest_mock,
-                index: 0,
-            };
-
-            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
-
-            let _ = pt_module.enable_card_reading(&context, 1, vec![CardType::BankCard]);
-
-            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
-
-            let _ = pt_module.allow_all_cards_for_every_connector(&context);
-
-            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
         }
     }
 }
