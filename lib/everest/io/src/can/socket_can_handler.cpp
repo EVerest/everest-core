@@ -78,7 +78,8 @@ bool socket_can_handler::tx(can_dataset const& data) {
 bool socket_can_handler::rx(can_dataset& data) {
     uint32_t can_id = 0;
     auto status = rx(can_id, data.len8_dlc, data.payload);
-    if (status == 0) data.set_can_id_with_flags(can_id);
+    if (status == 0)
+        data.set_can_id_with_flags(can_id);
     return status == 0;
 }
 
