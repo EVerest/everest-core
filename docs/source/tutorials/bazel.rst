@@ -6,7 +6,7 @@ Experimental Bazel Support in Everest
 Introduction
 ------------
 
-EVerest now offers experimental support for `Bazel <https://bazel.build/>`.
+EVerest offers support for `Bazel <https://bazel.build/>`.
 With Bazel, you can efficiently build, test and deploy software projects of any
 size.
 
