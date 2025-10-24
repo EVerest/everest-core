@@ -39,8 +39,8 @@ electrification of the mobility sector.
       architecture of EVerest. Best for everyone who enjoys some theory before
       the development work.
 
-   .. grid-item-card:: Quick Start Guides
-      :link: explanation/quick-start-guides
+   .. grid-item-card:: Getting Started
+      :link: explanation/getting-started/index
       :link-type: doc
 
       We provide several entry points for a fast first experience with the
