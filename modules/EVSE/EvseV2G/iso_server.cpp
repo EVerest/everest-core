@@ -1412,9 +1412,10 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         if ((unsigned int)1 == req->AC_EVChargeParameter_isUsed) {
             res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
         }
-        if (req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value < 0 ||
-            req->DC_EVChargeParameter.EVMaximumPowerLimit.Value < 0 ||
-            req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value < 0) {
+        if (not conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h and
+            (req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value < 0 or
+             req->DC_EVChargeParameter.EVMaximumPowerLimit.Value < 0 or
+             req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value < 0)) {
             res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
         }
 

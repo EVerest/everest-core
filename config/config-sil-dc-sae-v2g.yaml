@@ -136,11 +136,23 @@ active_modules:
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager
+        - module_id: api_sink
           implementation_id: energy_grid
       powermeter:
         - module_id: yeti_driver
           implementation_id: powermeter
+  api_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager
+          implementation_id: energy_grid
   api:
     module: API
     connections:
@@ -150,6 +162,9 @@ active_modules:
       error_history:
         - module_id: error_history
           implementation_id: error_history
+      evse_energy_sink:
+        - module_id: api_sink
+          implementation_id: external_limits
   ev_api:
     module: EvAPI
     connections:
