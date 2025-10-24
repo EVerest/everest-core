@@ -29,6 +29,8 @@ rust_binary(
         "@everest-framework//everestrs/everestrs:everestrs_sys",
         "@everest-framework//everestrs/everestrs:everestrs_bridge",
     ],
+    crate_features = ["with_lavego_error_codes"],
+
 )
 
 rust_test(
