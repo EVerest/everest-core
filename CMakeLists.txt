@@ -123,7 +123,7 @@ if(NOT DISABLE_EDM)
     # FIXME (aw): we need to set this by hand due to edm
     set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
 
-    if(NOT TARGET SDBusCpp::sdbus-c++)
+    if(EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP AND NOT TARGET SDBusCpp::sdbus-c++)
         add_library(SDBusCpp::sdbus-c++ ALIAS sdbus-c++)
     endif()
 else()
