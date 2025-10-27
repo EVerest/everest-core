@@ -49,23 +49,23 @@ cmake -D EVEREST_BUILD_DOCS=ON -D TRAILBOOK_everest_DOWNLOAD_ALL_VERSIONS=ON -D 
 
 ## Build
 
-There are three targets available to work with the everest documentation:
+There are three targets available to work with the EVerest documentation:
 
 ```bash
 cmake --build <build_directory> --target trailbook_everest
 ```
-Builds the everest documentation.
+Builds the EVerest documentation.
 
 ```bash
 cmake --build <build_directory> --target trailbook_everest_preview
 ```
-Builds the everest documentation and serves it with a local web server
+Builds the EVerest documentation and serves it with a local web server
 for previewing.
 
 ```bash
 cmake --build <build_directory> --target trailbook_everest_live_preview
 ```
-Builds the everest documentation and serves it with a local web server
+Builds the EVerest documentation and serves it with a local web server
 for previewing. Additionally it watches for changes in the source files
 and automatically rebuilds the documentation and refreshes the preview
 in the browser.

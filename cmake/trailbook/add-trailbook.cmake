@@ -180,7 +180,7 @@ endmacro()
 
 # This macro is for internal use only
 #
-# The is used in the function add_tailbook.
+# It is used in the function add_tailbook.
 # It adds a custom command to create the metadata YAML file for the trailbook instance.
 # The metadata YAML file is used by Sphinx during the build process.
 # It contains a list of all versions available in the multiversion root directory.
