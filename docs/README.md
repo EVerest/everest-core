@@ -20,7 +20,7 @@ cmake -D EVEREST_BUILD_DOCS=ON <path_to_source>
 ### `TRAILBOOK_everest_DOWNLOAD_ALL_VERSIONS`
 
 The CMake variable `TRAILBOOK_everest_DOWNLOAD_ALL_VERSIONS` controls whether
-all available versions of the everest documentation are downloaded during the build process.
+all available versions of the EVerest documentation are downloaded during the build process.
 By default, this variable is set to `OFF`, meaning an empty multiversion skeleton is created
 during the build.
 
