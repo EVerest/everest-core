@@ -1,6 +1,6 @@
 # This macro is for internal use only
 #
-# It used in the function trailbook_ev_add_module_explanation().
+# It is used in the function trailbook_ev_add_module_explanation().
 # It adds a custom command to copy the explanation module files to the explanation modules directory.
 macro(_trailbook_ev_add_module_explanation_copy_explanation_command)
     file(
