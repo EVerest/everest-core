@@ -24,7 +24,7 @@ using ev_API::deserialize;
 void powermeter_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "powermeter");
+    topics.setup(info.id, "powermeter", 1);
 }
 
 void powermeter_API::ready() {

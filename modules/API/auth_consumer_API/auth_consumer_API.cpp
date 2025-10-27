@@ -21,7 +21,7 @@ using ev_API::deserialize;
 void auth_consumer_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "auth_consumer");
+    topics.setup(info.id, "auth_consumer", 1);
 }
 
 void auth_consumer_API::ready() {

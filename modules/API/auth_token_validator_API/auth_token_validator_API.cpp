@@ -20,7 +20,7 @@ using ev_API::deserialize;
 void auth_token_validator_API::init() {
     invoke_init(*p_auth_token_validator);
 
-    topics.setTargetApiModuleID(info.id, "auth_token_validator");
+    topics.setup(info.id, "auth_token_validator", 1);
 }
 
 void auth_token_validator_API::ready() {

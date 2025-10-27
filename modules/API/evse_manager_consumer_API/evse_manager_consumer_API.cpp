@@ -57,7 +57,7 @@ using ev_API::deserialize;
 void evse_manager_consumer_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "evse_manager_consumer");
+    topics.setup(info.id, "evse_manager_consumer", 1);
 }
 
 void evse_manager_consumer_API::ready() {

@@ -21,7 +21,7 @@ using ev_API::deserialize;
 void system_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "system");
+    topics.setup(info.id, "system", 1);
 }
 
 void system_API::ready() {

@@ -23,7 +23,7 @@ using ev_API::deserialize;
 void error_history_consumer_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "error_history_consumer");
+    topics.setup(info.id, "error_history_consumer", 1);
 }
 
 void error_history_consumer_API::ready() {

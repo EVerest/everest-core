@@ -22,7 +22,7 @@ using ev_API::deserialize;
 void power_supply_DC_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "power_supply_DC");
+    topics.setup(info.id, "power_supply_DC", 1);
 }
 
 void power_supply_DC_API::ready() {

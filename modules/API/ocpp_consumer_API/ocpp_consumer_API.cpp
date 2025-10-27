@@ -27,7 +27,7 @@ void ocpp_consumer_API::init() {
     invoke_init(*p_main);
     invoke_init(*p_generic_error);
 
-    topics.setTargetApiModuleID(info.id, "ocpp_consumer");
+    topics.setup(info.id, "ocpp_consumer", 1);
 }
 
 void ocpp_consumer_API::ready() {

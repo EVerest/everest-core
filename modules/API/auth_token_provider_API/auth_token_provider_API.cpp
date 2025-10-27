@@ -19,7 +19,7 @@ using ev_API::deserialize;
 void auth_token_provider_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "auth_token_provider");
+    topics.setup(info.id, "auth_token_provider", 1);
 }
 
 void auth_token_provider_API::ready() {

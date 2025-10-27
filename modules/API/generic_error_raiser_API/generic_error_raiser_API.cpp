@@ -15,7 +15,7 @@ using ev_API::deserialize;
 void generic_error_raiser_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "generic_error_raiser");
+    topics.setup(info.id, "generic_error_raiser", 1);
 }
 
 void generic_error_raiser_API::ready() {

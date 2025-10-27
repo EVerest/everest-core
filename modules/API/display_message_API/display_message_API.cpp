@@ -19,7 +19,7 @@ void display_message_API::init() {
     invoke_init(*p_main);
     invoke_init(*p_generic_error);
 
-    topics.setTargetApiModuleID(info.id, "display_message");
+    topics.setup(info.id, "display_message", 1);
 }
 
 void display_message_API::ready() {

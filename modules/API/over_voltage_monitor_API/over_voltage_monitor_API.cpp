@@ -33,7 +33,7 @@ Everest::error::Severity toInternalSeverity(API_ovm::ErrorSeverityEnum severity)
 void over_voltage_monitor_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "over_voltage_monitor");
+    topics.setup(info.id, "over_voltage_monitor", 1);
 }
 
 void over_voltage_monitor_API::ready() {
