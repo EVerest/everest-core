@@ -6,5 +6,4 @@ EVerest Modules
     :maxdepth: 1
     :glob:
 
-    modules/*/index.rst
-    modules/*
+    */*
