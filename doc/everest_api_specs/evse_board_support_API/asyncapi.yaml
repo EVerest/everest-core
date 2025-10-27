@@ -17,7 +17,7 @@ info:
     - name: connector_lock
 servers:
   default:
-    pathname: 'everest_api/1.0/evse_board_support/{module_id}'
+    pathname: 'everest_api/1/evse_board_support/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt

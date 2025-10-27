@@ -15,7 +15,7 @@ info:
     - name: powermeter
 servers:
   default:
-    pathname: 'everest_api/1.0/powermeter/{module_id}'
+    pathname: 'everest_api/1/powermeter/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
