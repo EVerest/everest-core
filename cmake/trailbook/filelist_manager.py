@@ -216,7 +216,7 @@ def main():
         raise ValueError("No action specified")
 
     args.action_handler(args)
-    exit(1)    
+    exit(0)
 
 
 if __name__ == "__main__":
