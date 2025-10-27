@@ -11,7 +11,7 @@ There are three CMake variables you need to know about.
 ### `EVEREST_BUILD_DOCS`
 
 The CMake variable `EVEREST_BUILD_DOCS` enables or disables the building of the
-everest documentation. It is disabled by default. To enable it, set the variable to `ON` when configuring CMake:
+EVerest documentation. It is disabled by default. To enable it, set the variable to `ON` when configuring CMake:
 
 ```bash
 cmake -D EVEREST_BUILD_DOCS=ON <path_to_source>
