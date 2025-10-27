@@ -1,6 +1,6 @@
 # trailbook: EVerest
 
-The everest documentation uses the CMake package `trailbook`
+The EVerest documentation uses the CMake package `trailbook`
 to build and manage its documentation.
 Additional it uses the extension package `trailbook-ext-everest`
 
