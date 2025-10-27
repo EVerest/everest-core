@@ -180,7 +180,7 @@ endmacro()
 
 # This macro is for internal use only
 #
-# It is used in the function add_tailbook.
+# It is used in the function add_trailbook.
 # It adds a custom command to create the metadata YAML file for the trailbook instance.
 # The metadata YAML file is used by Sphinx during the build process.
 # It contains a list of all versions available in the multiversion root directory.
@@ -211,7 +211,7 @@ endmacro()
 
 # This macro is for internal use only
 #
-# It is used in the function add_tailbook.
+# It is used in the function add_trailbook.
 # It adds a custom command to build the Sphinx HTML documentation for the trailbook instance.
 # It builds from the trailbook instance source directory to the trailbook instance build directory.
 macro(_add_trailbook_sphinx_build_command)
@@ -264,7 +264,7 @@ endmacro()
 
 # This macro is for internal use only
 #
-# It is used in the function add_tailbook.
+# It is used in the function add_trailbook.
 # It adds a custom command to replace the 'latest' copy in the multiversion root directory
 # It should be only called if TRAILBOOK_INSTANCE_IS_RELEASE is ON.
 macro(_add_trailbook_replace_latest_command)
@@ -291,7 +291,7 @@ endmacro()
 
 # This macro is for internal use only
 #
-# It is used in the function add_tailbook.
+# It is used in the function add_trailbook.
 # It copies the 404.html file from the trailbook instance build directory
 # to the multiversion root directory.
 # It should only be called if TRAILBOOK_INSTANCE_IS_RELEASE is ON.
