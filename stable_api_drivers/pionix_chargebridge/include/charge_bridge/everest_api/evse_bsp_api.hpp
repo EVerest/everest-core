@@ -24,26 +24,29 @@ namespace API_EVM = everest::lib::API::V1_0::types::evse_manager;
 struct evse_bsp_config {
     std::string module_id;
     API_BSP::HardwareCapabilities capabilities;
-    std::string mqtt_remote;
-    uint16_t mqtt_port;
-    uint32_t mqtt_ping_interval_ms;
 };
 
-class evse_bsp : public everest::lib::io::event::fd_event_register_interface {
+
+
+class evse_bsp_api : public everest::lib::io::event::fd_event_register_interface {
     using tx_ftor = std::function<void(evse_bsp_host_to_cb const&)>;
     using rx_ftor = std::function<void(evse_bsp_cb_to_host const&)>;
-
+    using mqtt_ftor = std::function<void(everest::lib::io::mqtt::Dataset&)>;
 public:
-    evse_bsp(evse_bsp_config const& config, std::string const& cb_identifier);
+    evse_bsp_api(evse_bsp_config const& config, std::string const& cb_identifier, evse_bsp_host_to_cb& host_status);
     void set_cb_tx(tx_ftor const& handler);
     void set_cb_message(evse_bsp_cb_to_host const& msg);
+    void set_mqtt_tx(mqtt_ftor const& tx);
 
     bool register_events(everest::lib::io::event::fd_event_handler& handler) override;
     bool unregister_events(everest::lib::io::event::fd_event_handler& handler) override;
+    void dispatch(std::string const& operation, std::string const& payload);
 
+    void raise_comm_fault();
+    void clear_comm_fault();
+    void sync(bool cb_connected);
 private:
     void tx(evse_bsp_host_to_cb const& msg);
-    void dispatch(everest::lib::io::mqtt::Dataset const& data);
 
     void handle_event_cp(uint8_t cp);
     void handle_event_relay(uint8_t relay);
@@ -61,7 +64,6 @@ private:
     void send_raise_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg);
     void send_clear_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg);
     void send_communication_check();
-    void send_reply_ac_pp_ampacity(std::string const& replyTo);
     void send_reply_reset(std::string const& replyTo);
 
     void send_mqtt(std::string const& topic, std::string const& message);
@@ -77,35 +79,26 @@ private:
     void receive_lock();
     void receive_unlock();
     void receive_self_test(std::string const& payload);
-    void receive_request_ac_pp_ampacity(std::string const& payload);
     void receive_request_reset(std::string const& payload);
     void receive_heartbeat();
 
     bool check_everest_heartbeat();
     void handle_everest_connection_state();
-    bool check_cb_heartbeat();
-    void handle_cb_connection_state();
 
-    evse_bsp_host_to_cb host_status;
+    evse_bsp_host_to_cb& host_status;
     evse_bsp_cb_to_host cb_status;
-    std::string receive_topic;
-    std::string send_topic;
+
     tx_ftor m_tx;
-    everest::lib::io::mqtt::mqtt_client mqtt;
-    everest::lib::io::event::timer_fd sync_timer;
-    everest::lib::io::event::timer_fd capabilities_timer;
-    everest::lib::io::event::timer_fd mqtt_timer;
-    API_BSP::HardwareCapabilities capabilities;
-    bool enabled{false};
+    everest::lib::io::event::timer_fd m_capabilities_timer;
+    API_BSP::HardwareCapabilities m_capabilities;
+    bool m_enabled{false};
     bool everest_connected{false};
-    bool cb_connected{false};
-    bool m_mqtt_on_error{false};
-    bool m_cb_initial_comm_check{true};
+    bool m_cb_connected{false};
     bool m_bc_initial_comm_check{true};
     std::string m_cb_identifier;
     std::chrono::steady_clock::time_point last_everest_heartbeat;
-    std::chrono::steady_clock::time_point last_cb_heartbeat;
-    everest::lib::API::Topics api_topics;
+
+    mqtt_ftor m_mqtt_tx;
 };
 
 } // namespace charge_bridge::evse_bsp

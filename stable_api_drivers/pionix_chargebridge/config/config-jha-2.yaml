@@ -77,7 +77,9 @@ evse_bsp:
     max_phase_count_export: 3
     min_phase_count_export: 3
     supports_changing_phases_during_charging: false
-    connector_type: IEC62196Type2Cable
+    connector_type: "IEC62196Type2Cable"
+  ovm_enabled: true
+  ovm_module_id: "ovm_1"
 
 gpio:
   enable: false

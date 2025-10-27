@@ -25,7 +25,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_executable(pionix_chargebridge_tool
   src/crypto/openssl_crypto_supplier.cpp
 
-  src/evse_bsp/evse_bsp.cpp
+  src/everest_api/api_connector.cpp
+  src/everest_api/evse_bsp_api.cpp
+  src/everest_api/ovm_api.cpp
 
   src/firmware_update/sync_fw_updater.cpp
 

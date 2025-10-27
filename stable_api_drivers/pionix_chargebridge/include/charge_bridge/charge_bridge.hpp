@@ -4,7 +4,6 @@
 
 #include <charge_bridge/can_bridge.hpp>
 #include <charge_bridge/evse_bridge.hpp>
-#include <charge_bridge/evse_bsp/evse_bsp.hpp>
 #include <charge_bridge/firmware_update/sync_fw_updater.hpp>
 #include <charge_bridge/gpio_bridge.hpp>
 #include <charge_bridge/heartbeat_service.hpp>

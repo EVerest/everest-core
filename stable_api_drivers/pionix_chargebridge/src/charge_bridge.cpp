@@ -44,7 +44,7 @@ charge_bridge::~charge_bridge() {
 
 bool charge_bridge::update_firmware(bool force) {
     firmware_update::sync_fw_updater updater(m_config.firmware);
-    auto do_update = force or (m_config.firmware.fw_update_on_start and not updater.check_if_correct_fw_installed() );
+    auto do_update = force or (m_config.firmware.fw_update_on_start and not updater.check_if_correct_fw_installed());
     updater.print_fw_version();
     auto result = not do_update;
     if (do_update) {
@@ -162,9 +162,13 @@ void print_charge_bridge_config(charge_bridge_config const& c) {
     }
     if (c.evse) {
         std::cout << " * evse_bsp:  " << c.evse->cb_remote << ":" << c.evse->cb_port;
-        std::cout << " module " << c.evse->bsp.module_id;
-        std::cout << " MQTT " << c.evse->bsp.mqtt_remote << ":" << c.evse->bsp.mqtt_port;
-        std::cout << " ping " << c.evse->bsp.mqtt_ping_interval_ms << "ms" << std::endl;
+        std::cout << " module " << c.evse->api.bsp.module_id;
+        std::cout << " MQTT " << c.evse->api.mqtt_remote << ":" << c.evse->api.mqtt_port;
+        std::cout << " ping " << c.evse->api.mqtt_ping_interval_ms << "ms";
+        if(c.evse->api.ovm.enabled){
+            std::cout << " OVM module " << c.evse->api.ovm.module_id;
+        }
+        std::cout << std::endl;
     }
     if (c.heartbeat) {
         std::cout << " * heartbeat: " << c.cb_remote << ":" << c.cb_port;

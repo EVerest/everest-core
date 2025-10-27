@@ -33,18 +33,18 @@ evse_bsp:
   mqtt_port: 1883
   mqtt_ping_interval_ms: 1000
   capabilities:
-    {
-          "max_current_A_import": 16,
-          "min_current_A_import": 6,
-          "max_phase_count_import": 3,
-          "min_phase_count_import": 3,
-          "max_current_A_export": 16,
-          "min_current_A_export": 6,
-          "max_phase_count_export": 3,
-          "min_phase_count_export": 3,
-          "supports_changing_phases_during_charging": false,
-          "connector_type": "IEC62196Type2Cable"
-      }
+    max_current_A_import: 16
+    min_current_A_import: 6
+    max_phase_count_import: 3
+    min_phase_count_import: 3
+    max_current_A_export: 16
+    min_current_A_export: 6
+    max_phase_count_export: 3
+    min_phase_count_export: 3
+    supports_changing_phases_during_charging: false
+    connector_type: "IEC62196Type2Cable"
+  ovm_enabled: true
+  ovm_module_id: "ovm_1"
 
 gpio:
   enable: true
