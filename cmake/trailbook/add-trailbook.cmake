@@ -228,6 +228,7 @@ macro(_add_trailbook_sphinx_build_command)
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
         COMMENT
             "Trailbook: ${args_NAME} - Building HTML documentation with Sphinx"
+        USES_TERMINAL
         COMMAND
             ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py

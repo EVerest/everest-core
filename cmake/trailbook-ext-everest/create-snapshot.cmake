@@ -99,6 +99,7 @@ function(trailbook_ev_create_snapshot)
             ${_TRAILBOOK_EXT_EVEREST_CREATE_SNAPSHOT_SCRIPT}
             trailbook_${args_TRAILBOOK_NAME}_stage_prepare_sphinx_source_after
             ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
+        USES_TERMINAL
         COMMAND
             ${CMAKE_COMMAND} -E rm -rf
             ${CREATE_SNAPSHOT_TEMP_DIR}
