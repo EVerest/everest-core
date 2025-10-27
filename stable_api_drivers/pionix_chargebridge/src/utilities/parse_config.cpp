@@ -17,6 +17,15 @@
 
 using namespace everest::lib::API::V1_0::types;
 
+namespace {
+static const int g_cb_port_management = 6000;
+static const int g_cb_port_evse_bsp = 6001;
+static const int g_cb_port_plc = 6002;
+static const int g_cb_port_can0 = 6003;
+static const int g_cb_port_serial_1 = 6004;
+static const int g_cb_port_serial_2 = 6005;
+} // namespace
+
 namespace charge_bridge::utilities {
 
 void parse_config_impl(YAML::Node& config, charge_bridge_config& c) {
@@ -70,23 +79,23 @@ void parse_config_impl(YAML::Node& config, charge_bridge_config& c) {
 
     get_node("charge_bridge", "ip", c.cb_remote);
 
-    get_node("charge_bridge", "port", c.cb_port);
+    c.cb_port = g_cb_port_management;
 
     get_block("can_0", c.can0, [&](auto& cfg, auto const& main) {
         get_node(main, "local", cfg.can_device);
-        get_node(main, "port", cfg.cb_port);
+        cfg.cb_port = g_cb_port_can0;
         cfg.cb_remote = c.cb_remote;
     });
 
     get_block("serial_1", c.serial1, [&](auto& cfg, auto const& main) {
         get_node(main, "local", cfg.serial_device);
-        get_node(main, "port", cfg.cb_port);
+        cfg.cb_port = g_cb_port_serial_1;
         cfg.cb_remote = c.cb_remote;
     });
 
     get_block("serial_2", c.serial2, [&](auto& cfg, auto const& main) {
         get_node(main, "local", cfg.serial_device);
-        get_node(main, "port", cfg.cb_port);
+        cfg.cb_port = g_cb_port_serial_2;
         cfg.cb_remote = c.cb_remote;
     });
 
@@ -102,12 +111,12 @@ void parse_config_impl(YAML::Node& config, charge_bridge_config& c) {
         get_node(main, "ip", cfg.plc_ip);
         get_node(main, "netmask", cfg.plc_netmaks);
         get_node(main, "mtu", cfg.plc_mtu);
-        get_node(main, "port", cfg.cb_port);
+        cfg.cb_port = g_cb_port_plc;
         cfg.cb_remote = c.cb_remote;
     });
 
     get_block("evse_bsp", c.evse, [&](auto& cfg, auto const& main) {
-        get_node(main, "port", cfg.cb_port);
+        cfg.cb_port = g_cb_port_evse_bsp;
         get_node(main, "module_id", cfg.bsp.module_id);
         get_node(main, "mqtt_remote", cfg.bsp.mqtt_remote);
         get_node(main, "mqtt_port", cfg.bsp.mqtt_port);
