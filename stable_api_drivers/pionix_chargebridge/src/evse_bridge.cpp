@@ -11,7 +11,7 @@
 namespace charge_bridge {
 
 evse_bridge::evse_bridge(evse_bridge_config const& config) :
-    m_bsp(config.bsp, config.cb + "/" + config.item), m_udp(config.cb_remote, config.cb_port) {
+    m_bsp(config.api, config.cb + "/" + config.item), m_udp(config.cb_remote, config.cb_port) {
     using namespace std::chrono_literals;
     m_timer.set_timeout(5s);
 

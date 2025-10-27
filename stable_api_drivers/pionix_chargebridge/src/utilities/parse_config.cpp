@@ -117,12 +117,14 @@ void parse_config_impl(YAML::Node& config, charge_bridge_config& c) {
 
     get_block("evse_bsp", c.evse, [&](auto& cfg, auto const& main) {
         cfg.cb_port = g_cb_port_evse_bsp;
-        get_node(main, "module_id", cfg.bsp.module_id);
-        get_node(main, "mqtt_remote", cfg.bsp.mqtt_remote);
-        get_node(main, "mqtt_port", cfg.bsp.mqtt_port);
-        get_node(main, "mqtt_ping_interval_ms", cfg.bsp.mqtt_ping_interval_ms);
+        get_node(main, "module_id", cfg.api.bsp.module_id);
+        get_node(main, "mqtt_remote", cfg.api.mqtt_remote);
+        get_node(main, "mqtt_port", cfg.api.mqtt_port);
+        get_node(main, "mqtt_ping_interval_ms", cfg.api.mqtt_ping_interval_ms);
         cfg.cb_remote = c.cb_remote;
-        get_node(main, "capabilities", cfg.bsp.capabilities);
+        get_node(main, "capabilities", cfg.api.bsp.capabilities);
+        get_node(main, "ovm_enabled", cfg.api.ovm.enabled);
+        get_node(main, "ovm_module_id", cfg.api.ovm.module_id);
     });
 
     get_block("gpio", c.gpio, [&](auto& cfg, auto const& main) {
@@ -210,7 +212,7 @@ charge_bridge_config set_config_placeholders(charge_bridge_config const& src, ch
     if (result.evse.has_value()) {
         result.evse->cb_remote = ip;
         result.evse->cb = result.cb_name;
-        replace(result.evse->bsp.module_id);
+        replace(result.evse->api.bsp.module_id);
     }
     if (result.heartbeat.has_value()) {
         result.heartbeat->cb = result.cb_name;

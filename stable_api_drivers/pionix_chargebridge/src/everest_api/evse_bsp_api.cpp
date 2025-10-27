@@ -3,7 +3,7 @@
 
 #include "everest/io/mqtt/dataset.hpp"
 #include "protocol/evse_bsp_cb_to_host.h"
-#include <charge_bridge/evse_bsp/evse_bsp.hpp>
+#include <charge_bridge/everest_api/evse_bsp_api.hpp>
 #include <charge_bridge/utilities/logging.hpp>
 #include <charge_bridge/utilities/string.hpp>
 #include <chrono>
@@ -14,6 +14,7 @@
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -23,81 +24,52 @@ using namespace everest::lib::API::V1_0::types::generic;
 
 namespace charge_bridge::evse_bsp {
 
-evse_bsp::evse_bsp(evse_bsp_config const& config, std::string const& cb_identifier) :
-    mqtt(config.mqtt_remote, config.mqtt_port, config.mqtt_ping_interval_ms),
-    capabilities(config.capabilities),
-    m_cb_identifier(cb_identifier) {
-
-    api_topics.setTargetApiModuleID(config.module_id, "evse_board_support");
-    receive_topic = api_topics.everest_to_extern("");
-    send_topic = api_topics.extern_to_everest("");
+evse_bsp_api::evse_bsp_api(evse_bsp_config const& config, std::string const& cb_identifier,
+                           evse_bsp_host_to_cb& host_status) :
+    host_status(host_status), m_capabilities(config.capabilities), m_cb_identifier(cb_identifier) {
 
     last_everest_heartbeat = std::chrono::steady_clock::time_point::max();
-    last_cb_heartbeat = std::chrono::steady_clock::time_point::max();
-    mqtt.subscribe(receive_topic + "#");
-    mqtt.set_message_handler([this](auto& data, auto&) { dispatch(data); });
-    mqtt.set_error_handler([this, config](int id, std::string const& msg) {
-        m_mqtt_on_error = id not_eq 0;
-        utilities::print_error(m_cb_identifier, "MQTT/EVSE", id) << msg << std::endl;
-    });
 
-    sync_timer.set_timeout(1s);
-    capabilities_timer.set_timeout(10s);
-    mqtt_timer.set_timeout(5s);
+    m_capabilities_timer.set_timeout(10s);
 
-    host_status.connector_lock = 0;
-    host_status.pwm_duty_cycle = 0;
-    host_status.allow_power_on = 0;
-    host_status.reset = 0;
+    std::memset(&cb_status, 0, sizeof(cb_status));
 
-    cb_status.reset_reason = 0;
-    cb_status.cp_state = 0;
-    cb_status.relay_state = 0;
-    cb_status.error_flags = {0};
-    cb_status.pp_state_type1 = 0;
-    cb_status.pp_state_type2 = 0;
-    cb_status.lock_state = 0;
-    cb_status.stop_charging = 0;
-    enabled = true;
+    m_enabled = true;
 }
 
-bool evse_bsp::register_events(everest::lib::io::event::fd_event_handler& handler) {
+void evse_bsp_api::sync(bool cb_connected) {
+    m_cb_connected = cb_connected;
+    handle_everest_connection_state();
+}
+
+bool evse_bsp_api::register_events(everest::lib::io::event::fd_event_handler& handler) {
     // clang-format off
     return
-        handler.register_event_handler(&mqtt) &&
-        handler.register_event_handler(&sync_timer, [this](auto&) {
-            handle_everest_connection_state();
-            handle_cb_connection_state();
-        }) &&
-        handler.register_event_handler(&capabilities_timer, [this](auto&) {
+        handler.register_event_handler(&m_capabilities_timer, [this](auto&) {
             send_capabilities();
-        }) &&
-        handler.register_event_handler(&mqtt_timer, [this](auto&) {
-            if(m_mqtt_on_error){
-                mqtt.reset();
-            }
         });
     // clang-format on
 }
 
-bool evse_bsp::unregister_events(everest::lib::io::event::fd_event_handler& handler) {
+bool evse_bsp_api::unregister_events(everest::lib::io::event::fd_event_handler& handler) {
     // clang-format off
     return
-        handler.unregister_event_handler(&mqtt) &&
-        handler.unregister_event_handler(&sync_timer) &&
-        handler.unregister_event_handler(&capabilities_timer) &&
-        handler.unregister_event_handler(&mqtt_timer);
+        handler.unregister_event_handler(&m_capabilities_timer);
     // clang-format on
 }
 
-void evse_bsp::set_cb_tx(tx_ftor const& handler) {
+void evse_bsp_api::set_cb_tx(tx_ftor const& handler) {
     m_tx = handler;
 }
 
-void evse_bsp::tx(evse_bsp_host_to_cb const& msg) {
+void evse_bsp_api::tx(evse_bsp_host_to_cb const& msg) {
     if (m_tx) {
         m_tx(msg);
     }
+}
+
+void evse_bsp_api::set_mqtt_tx(mqtt_ftor const& handler) {
+    m_mqtt_tx = handler;
 }
 
 inline static bool operator==(const SafetyErrorFlags& a, const SafetyErrorFlags& b) {
@@ -107,8 +79,7 @@ inline static bool operator!=(const SafetyErrorFlags& a, const SafetyErrorFlags&
     return a.raw != b.raw;
 }
 
-void evse_bsp::set_cb_message(evse_bsp_cb_to_host const& msg) {
-    last_cb_heartbeat = std::chrono::steady_clock::now();
+void evse_bsp_api::set_cb_message(evse_bsp_cb_to_host const& msg) {
     if (cb_status.reset_reason not_eq msg.reset_reason) {
     }
     if (cb_status.cp_state not_eq msg.cp_state) {
@@ -136,11 +107,7 @@ void evse_bsp::set_cb_message(evse_bsp_cb_to_host const& msg) {
     cb_status = msg;
 }
 
-void evse_bsp::dispatch(everest::lib::io::mqtt::Dataset const& data) {
-    auto& topic = data.topic;
-    auto& payload = data.message;
-
-    auto operation = utilities::string_after_pattern(topic, receive_topic);
+void evse_bsp_api::dispatch(std::string const& operation, std::string const& payload) {
     if (operation == "enable") {
         receive_enable(payload);
     } else if (operation == "pwm_on") {
@@ -163,18 +130,24 @@ void evse_bsp::dispatch(everest::lib::io::mqtt::Dataset const& data) {
         receive_unlock();
     } else if (operation == "self_test") {
         receive_self_test(payload);
-    } else if (operation == "ac_pp_ampacity") {
-        receive_request_ac_pp_ampacity(payload);
     } else if (operation == "reset") {
         receive_request_reset(payload);
     } else if (operation == "heartbeat") {
         receive_heartbeat();
     } else {
-        std::cerr << "evse_bsp: RECEIVE invalid topic: " << topic << std::endl;
+        std::cerr << "evse_bsp: RECEIVE invalid operation: " << operation << std::endl;
     }
 }
 
-void evse_bsp::handle_event_cp(uint8_t cp) {
+void evse_bsp_api::raise_comm_fault() {
+    send_raise_error(API_BSP::ErrorEnum::CommunicationFault, "ChargeBridge not available", "");
+}
+
+void evse_bsp_api::clear_comm_fault() {
+    send_clear_error(API_BSP::ErrorEnum::CommunicationFault, "ChargeBridge not available", "");
+}
+
+void evse_bsp_api::handle_event_cp(uint8_t cp) {
     using bc_event = API_BSP::Event;
     bc_event cp_event;
     bool cp_state_valid = true;
@@ -210,12 +183,12 @@ void evse_bsp::handle_event_cp(uint8_t cp) {
     default:
         cp_state_valid = false;
     }
-    if (cp_state_valid and enabled) {
+    if (cp_state_valid and m_enabled) {
         send_event(cp_event);
     }
 }
 
-void evse_bsp::handle_event_relay(uint8_t relay) {
+void evse_bsp_api::handle_event_relay(uint8_t relay) {
     using bc_event = API_BSP::Event;
     bc_event relaise_event;
     bool relaise_state_valid = true;
@@ -234,7 +207,7 @@ void evse_bsp::handle_event_relay(uint8_t relay) {
     }
 }
 
-void evse_bsp::handle_pp_type2(uint8_t data) {
+void evse_bsp_api::handle_pp_type2(uint8_t data) {
     API_BSP::Ampacity bc_ampacity;
     bool bc_ampacity_valid = true;
     switch (data) {
@@ -266,7 +239,7 @@ void evse_bsp::handle_pp_type2(uint8_t data) {
     }
 }
 
-void evse_bsp::handle_pp_type1(uint8_t data) {
+void evse_bsp_api::handle_pp_type1(uint8_t data) {
     // EVerest does not really have support for type 1 PP.
     // We just send a stop charging if some one presses the button,
     // for everything else the PP state does not really matter.
@@ -322,7 +295,8 @@ static constexpr FlagSpec error_specs[] = {
     {SafetyErrorMask::vdd_refint_out_of_range, API_BSP::ErrorEnum::VendorError, "VCCREF",
      "Internal supply VREF voltage out of range"},
     {SafetyErrorMask::config_mem_error, API_BSP::ErrorEnum::VendorError, "CONFIGMEM", "Internal config memory error"},
-    {SafetyErrorMask::dc_hv_ov, API_BSP::ErrorEnum::VendorError, "DV_HV", "DC HV OVM. FIXME: This should be on OVM not EVSE interface"},
+    {SafetyErrorMask::dc_hv_ov, API_BSP::ErrorEnum::VendorError, "DV_HV",
+     "DC HV OVM. FIXME: This should be on OVM not EVSE interface"},
 };
 
 static constexpr FlagSpec print_warning_specs[] = {
@@ -333,7 +307,7 @@ static constexpr FlagSpec print_warning_specs[] = {
 };
 
 // 4) Edge-driven handler
-void evse_bsp::handle_error(const SafetyErrorFlags& data) {
+void evse_bsp_api::handle_error(const SafetyErrorFlags& data) {
     uint32_t prev = cb_status.error_flags.raw; // cached raw value from before
     uint32_t next = data.raw;                  // current raw value
 
@@ -363,7 +337,7 @@ void evse_bsp::handle_error(const SafetyErrorFlags& data) {
         }
     }
 
-    if (everest_connected && cb_connected) {
+    if (everest_connected && m_cb_connected) {
         if (log.str().empty()) {
             utilities::print_error(m_cb_identifier, "EVSE/EVEREST", 0) << "Relays can be switched on." << std::endl;
         } else {
@@ -373,125 +347,116 @@ void evse_bsp::handle_error(const SafetyErrorFlags& data) {
     }
 }
 
-void evse_bsp::handle_stop_button([[maybe_unused]] uint8_t data) {
+void evse_bsp_api::handle_stop_button([[maybe_unused]] uint8_t data) {
     auto reason = API_EVM::StopTransactionReason::Local;
     send_request_stop_transaction(reason);
 }
 
-void evse_bsp::receive_enable(std::string const& payload) {
-    if (everest::lib::API::deserialize(payload, enabled)) {
+void evse_bsp_api::receive_enable(std::string const& payload) {
+    if (everest::lib::API::deserialize(payload, m_enabled)) {
         handle_event_cp(cb_status.cp_state);
         handle_event_relay(cb_status.relay_state);
     } else {
-        std::cerr << "evse_bsp::receive_enabled: payload invalid -> " << payload << std::endl;
+        std::cerr << "evse_bsp_api::receive_enabled: payload invalid -> " << payload << std::endl;
     }
 }
 
-void evse_bsp::receive_pwm_on(std::string const& payload) {
+void evse_bsp_api::receive_pwm_on(std::string const& payload) {
     double pwm = 0;
     if (everest::lib::API::deserialize(payload, pwm)) {
         host_status.pwm_duty_cycle = pwm * 100;
         tx(host_status);
     } else {
-        std::cerr << "evse_bsp::receive_pwm_on: payload invalid -> " << payload << std::endl;
+        std::cerr << "evse_bsp_api::receive_pwm_on: payload invalid -> " << payload << std::endl;
     }
 }
 
-void evse_bsp::receive_pwm_off([[maybe_unused]] std::string const& payload) {
+void evse_bsp_api::receive_pwm_off([[maybe_unused]] std::string const& payload) {
     host_status.pwm_duty_cycle = 10001;
     tx(host_status);
 }
 
-void evse_bsp::receive_pwm_F([[maybe_unused]] std::string const& payload) {
+void evse_bsp_api::receive_pwm_F([[maybe_unused]] std::string const& payload) {
     host_status.pwm_duty_cycle = 0;
     tx(host_status);
 }
 
-void evse_bsp::receive_allow_power_on(std::string const& payload) {
+void evse_bsp_api::receive_allow_power_on(std::string const& payload) {
     API_BSP::PowerOnOff obj;
     if (everest::lib::API::deserialize(payload, obj)) {
         host_status.allow_power_on = obj.allow_power_on;
         tx(host_status);
     } else {
-        std::cerr << "evse_bsp::receive_allow_power_on: payload invalid -> " << payload << std::endl;
+        std::cerr << "evse_bsp_api::receive_allow_power_on: payload invalid -> " << payload << std::endl;
     }
 }
 
-void evse_bsp::receive_ac_switch_three_phases_while_charging(std::string const&) {
-    std::cerr << "evse_bsp::receive_ac_switch_three_phases_while_charging: not implemented" << std::endl;
+void evse_bsp_api::receive_ac_switch_three_phases_while_charging(std::string const&) {
+    std::cerr << "evse_bsp_api::receive_ac_switch_three_phases_while_charging: not implemented" << std::endl;
 }
 
-void evse_bsp::receive_evse_replug(std::string const&) {
-    std::cerr << "evse_bsp::receive_evse_replug: not implemented" << std::endl;
+void evse_bsp_api::receive_evse_replug(std::string const&) {
+    std::cerr << "evse_bsp_api::receive_evse_replug: not implemented" << std::endl;
 }
 
-void evse_bsp::receive_ac_overcurrent_limit(std::string const&) {
-    std::cerr << "evse_bsp::receive_ac_overcurrent_limit: not implemented" << std::endl;
+void evse_bsp_api::receive_ac_overcurrent_limit(std::string const&) {
+    std::cerr << "evse_bsp_api::receive_ac_overcurrent_limit: not implemented" << std::endl;
 }
 
-void evse_bsp::receive_lock() {
+void evse_bsp_api::receive_lock() {
     host_status.connector_lock = 1;
     tx(host_status);
 }
 
-void evse_bsp::receive_unlock() {
+void evse_bsp_api::receive_unlock() {
     host_status.connector_lock = 0;
     tx(host_status);
 }
 
-void evse_bsp::receive_self_test([[maybe_unused]] std::string const& payload) {
-    std::cerr << "evse_bsp::receive_self_test: not implemented" << std::endl;
+void evse_bsp_api::receive_self_test([[maybe_unused]] std::string const& payload) {
+    std::cerr << "evse_bsp_api::receive_self_test: not implemented" << std::endl;
 }
 
-void evse_bsp::receive_request_ac_pp_ampacity(std::string const& payload) {
-    everest::lib::API::V1_0::types::generic::RequestReply reqrpl;
-    if (everest::lib::API::deserialize(payload, reqrpl)) {
-        send_reply_ac_pp_ampacity(reqrpl.replyTo);
-    } else {
-        std::cerr << "evse_bsp::receive_request_ac_pp_amapacity: payload invalid -> " << payload << std::endl;
-    }
+void evse_bsp_api::receive_request_reset(std::string const&) {
+    std::cerr << "evse_bsp_api::receive_request_reset: not implemented" << std::endl;
 }
 
-void evse_bsp::receive_request_reset(std::string const&) {
-    std::cerr << "evse_bsp::receive_request_reset: not implemented" << std::endl;
-}
-
-void evse_bsp::receive_heartbeat() {
+void evse_bsp_api::receive_heartbeat() {
     last_everest_heartbeat = std::chrono::steady_clock::now();
 }
 
-void evse_bsp::send_event(API_BSP::Event data) {
+void evse_bsp_api::send_event(API_BSP::Event data) {
     API_BSP::BspEvent event{data};
     send_mqtt("event", serialize(event));
 }
 
-void evse_bsp::send_ac_nr_of_phases(uint8_t data) {
+void evse_bsp_api::send_ac_nr_of_phases(uint8_t data) {
     auto phases = static_cast<int>(data);
     if (phases > 0 && phases <= 3) {
         send_mqtt("ac_nr_of_phases", serialize(phases));
     }
 }
 
-void evse_bsp::send_capabilities() {
-    send_mqtt("capabilities", serialize(capabilities));
+void evse_bsp_api::send_capabilities() {
+    send_mqtt("capabilities", serialize(m_capabilities));
 }
 
-void evse_bsp::send_ac_pp_amapcity(API_BSP::Ampacity data) {
+void evse_bsp_api::send_ac_pp_amapcity(API_BSP::Ampacity data) {
     API_BSP::ProximityPilot msg{data};
     send_mqtt("ac_pp_ampacity", serialize(msg));
 }
 
-void evse_bsp::send_request_stop_transaction(API_EVM::StopTransactionReason data) {
+void evse_bsp_api::send_request_stop_transaction(API_EVM::StopTransactionReason data) {
     API_EVM::StopTransactionRequest request;
     request.reason = data;
     send_mqtt("request_stop_transaction", serialize(request));
 }
 
-void evse_bsp::send_rcd_current(uint8_t) {
-    std::cerr << "evse_bsp::send_rcd_current: not implemented" << std::endl;
+void evse_bsp_api::send_rcd_current(uint8_t) {
+    std::cerr << "evse_bsp_api::send_rcd_current: not implemented" << std::endl;
 }
 
-void evse_bsp::send_raise_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg) {
+void evse_bsp_api::send_raise_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg) {
     API_BSP::Error error_msg;
     error_msg.type = error;
     error_msg.sub_type = subtype;
@@ -499,7 +464,7 @@ void evse_bsp::send_raise_error(API_BSP::ErrorEnum error, std::string const& sub
     send_mqtt("raise_error", serialize(error_msg));
 }
 
-void evse_bsp::send_clear_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg) {
+void evse_bsp_api::send_clear_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg) {
     API_BSP::Error error_msg;
     error_msg.type = error;
     error_msg.sub_type = subtype;
@@ -507,36 +472,29 @@ void evse_bsp::send_clear_error(API_BSP::ErrorEnum error, std::string const& sub
     send_mqtt("clear_error", serialize(error_msg));
 }
 
-void evse_bsp::send_communication_check() {
+void evse_bsp_api::send_communication_check() {
     send_mqtt("communication_check", serialize(true));
 }
 
-void evse_bsp::send_reply_ac_pp_ampacity(std::string const& replyTo) {
-    everest::lib::io::mqtt::Dataset payload;
-    payload.topic = replyTo;
-    payload.message = serialize(capabilities);
-    mqtt.tx(payload);
+void evse_bsp_api::send_reply_reset([[maybe_unused]] std::string const& replyTo) {
+    std::cerr << "evse_bsp_api::send_reply_reset: not implemented" << std::endl;
 }
 
-void evse_bsp::send_reply_reset([[maybe_unused]] std::string const& replyTo) {
-    std::cerr << "evse_bsp::send_reply_reset: not implemented" << std::endl;
-}
-
-void evse_bsp::send_mqtt(std::string const& topic, std::string const& message) {
+void evse_bsp_api::send_mqtt(std::string const& topic, std::string const& message) {
     everest::lib::io::mqtt::Dataset payload;
-    payload.topic = send_topic + topic;
+    payload.topic = topic;
     payload.message = message;
-    mqtt.tx(payload);
+    m_mqtt_tx(payload);
 }
 
-bool evse_bsp::check_everest_heartbeat() {
+bool evse_bsp_api::check_everest_heartbeat() {
     if (last_everest_heartbeat == std::chrono::steady_clock::time_point::max()) {
         return false;
     }
     return std::chrono::steady_clock::now() - last_everest_heartbeat < 2s;
 }
 
-void evse_bsp::handle_everest_connection_state() {
+void evse_bsp_api::handle_everest_connection_state() {
     send_communication_check();
     auto current = check_everest_heartbeat();
     auto handle_status = [this](bool status) {
@@ -558,36 +516,6 @@ void evse_bsp::handle_everest_connection_state() {
         handle_status(not everest_connected);
     }
     everest_connected = current;
-}
-
-bool evse_bsp::check_cb_heartbeat() {
-    if (last_cb_heartbeat == std::chrono::steady_clock::time_point::max()) {
-        return false;
-    }
-    return std::chrono::steady_clock::now() - last_cb_heartbeat < 2s;
-}
-
-void evse_bsp::handle_cb_connection_state() {
-    tx(host_status);
-    auto current = check_cb_heartbeat();
-    auto handle_status = [this](bool status) {
-        if (status) {
-            utilities::print_error(m_cb_identifier, "EVSE/CB", 0) << "ChargeBridge connected." << std::endl;
-            send_clear_error(API_BSP::ErrorEnum::CommunicationFault, "ChargeBridge not available", "");
-
-        } else {
-            send_raise_error(API_BSP::ErrorEnum::CommunicationFault, "ChargeBridge not available", "");
-            utilities::print_error(m_cb_identifier, "EVSE/CB", 1) << "Waiting for ChargeBridge...." << std::endl;
-        }
-    };
-    if (m_cb_initial_comm_check) {
-        handle_status(current);
-        m_cb_initial_comm_check = false;
-    }
-    if (cb_connected != current) {
-        handle_status(not cb_connected);
-    }
-    cb_connected = current;
 }
 
 } // namespace charge_bridge::evse_bsp
