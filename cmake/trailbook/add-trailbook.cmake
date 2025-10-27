@@ -132,7 +132,7 @@ endmacro()
 
 # This macro is for internal use only
 #
-# It is used in the function add_tailbook.
+# It is used in the function add_trailbook.
 # It adds a custom command to copy the trailbook stem files to the build directory.
 # To be used a base for the tailbook instance source directory.
 macro(_add_trailbook_copy_stem_command)
