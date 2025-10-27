@@ -15,6 +15,7 @@ find_package(
     PATHS "${CMAKE_SOURCE_DIR}/<path-to-the-package>"
 )
 ```
+
 * Specify the version to make sure you are using 
 a compatible version of the package.
 * If the package is not found, CMake will 
