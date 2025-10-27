@@ -713,6 +713,161 @@ mod tests {
     }
 
     #[test]
+    /// Test validate_token with non-BankCard authorization type
+    fn payment_terminal__validate_token__invalid_authorization_type() {
+        let parameters = [
+            AuthorizationType::OCPP,
+            AuthorizationType::RFID,
+        ];
+
+        for auth_type in parameters {
+            let feig_mock = SyncFeig::default();
+            let pt_module: PaymentTerminalModule = feig_mock.into();
+
+            let provided_token = ProvidedIdToken::new("some_token".to_string(), auth_type);
+            let everest_mock = ModulePublisher::default();
+            let context = Context {
+                name: "test",
+                publisher: &everest_mock,
+                index: 0,
+            };
+
+            let result = pt_module.validate_token(&context, provided_token);
+            assert!(result.is_ok());
+            let validation_result = result.unwrap();
+            assert_eq!(validation_result.authorization_status, AuthorizationStatus::Invalid);
+        }
+    }
+
+    #[test]
+    /// Test validate_token with INVALID_BANK_TOKEN
+    fn payment_terminal__validate_token__invalid_bank_token() {
+        let feig_mock = SyncFeig::default();
+        let pt_module: PaymentTerminalModule = feig_mock.into();
+
+        let provided_token = ProvidedIdToken::new(
+            INVALID_BANK_TOKEN.to_string(),
+            AuthorizationType::BankCard,
+        );
+        let everest_mock = ModulePublisher::default();
+        let context = Context {
+            name: "test",
+            publisher: &everest_mock,
+            index: 0,
+        };
+
+        let result = pt_module.validate_token(&context, provided_token);
+        assert!(result.is_ok());
+        let validation_result = result.unwrap();
+        assert_eq!(validation_result.authorization_status, AuthorizationStatus::Invalid);
+    }
+
+    #[test]
+    /// Test validate_token with successful transaction
+    fn payment_terminal__validate_token__success() {
+        let mut feig_mock = SyncFeig::default();
+        feig_mock
+            .expect_begin_transaction()
+            .times(1)
+            .with(eq("valid_token"), eq(11))
+            .returning(|_, _| Ok(()));
+
+        let pt_module: PaymentTerminalModule = feig_mock.into();
+
+        let provided_token = ProvidedIdToken::new(
+            "valid_token".to_string(),
+            AuthorizationType::BankCard,
+        );
+        let everest_mock = ModulePublisher::default();
+        let context = Context {
+            name: "test",
+            publisher: &everest_mock,
+            index: 0,
+        };
+
+        let result = pt_module.validate_token(&context, provided_token);
+        assert!(result.is_ok());
+        let validation_result = result.unwrap();
+        assert_eq!(validation_result.authorization_status, AuthorizationStatus::Accepted);
+    }
+
+    #[test]
+    /// Test validate_token with transaction failures
+    fn payment_terminal__validate_token__transaction_failures() {
+        let parameters = [
+            (ErrorMessages::CreditNotSufficient, AuthorizationStatus::NoCredit),
+            (ErrorMessages::PaymentMethodNotSupported, AuthorizationStatus::Blocked),
+            (ErrorMessages::AbortViaTimeoutOrAbortKey, AuthorizationStatus::Invalid),
+            (ErrorMessages::ReceiverNotReady, AuthorizationStatus::Timeout),
+            (ErrorMessages::SystemError, AuthorizationStatus::Timeout),
+            (ErrorMessages::ErrorFromDialUp, AuthorizationStatus::Timeout),
+            (ErrorMessages::PinProcessingNotPossible, AuthorizationStatus::PinRequired),
+            (ErrorMessages::NecessaryDeviceNotPresentOrDefective, AuthorizationStatus::PinRequired),
+        ];
+
+        for (error_code, expected_status) in parameters {
+            let mut feig_mock = SyncFeig::default();
+            feig_mock
+                .expect_begin_transaction()
+                .times(1)
+                .with(eq("valid_token"), eq(11))
+                .returning(move |_, _| Err(anyhow::Error::new(error_code)));
+
+            let pt_module: PaymentTerminalModule = feig_mock.into();
+
+            let provided_token = ProvidedIdToken::new(
+                "valid_token".to_string(),
+                AuthorizationType::BankCard,
+            );
+            let everest_mock = ModulePublisher::default();
+            let context = Context {
+                name: "test",
+                publisher: &everest_mock,
+                index: 0,
+            };
+
+            let result = pt_module.validate_token(&context, provided_token);
+            assert!(result.is_ok());
+            let validation_result = result.unwrap();
+            assert_eq!(
+                validation_result.authorization_status,
+                expected_status,
+                "Failed for error code {:?}",
+                error_code
+            );
+        }
+    }
+
+    #[test]
+    /// Test validate_token with unknown error (no error code provided)
+    fn payment_terminal__validate_token__unknown_error() {
+        let mut feig_mock = SyncFeig::default();
+        feig_mock
+            .expect_begin_transaction()
+            .times(1)
+            .with(eq("valid_token"), eq(11))
+            .returning(|_, _| Err(anyhow::anyhow!("Some unknown error")));
+
+        let pt_module: PaymentTerminalModule = feig_mock.into();
+
+        let provided_token = ProvidedIdToken::new(
+            "valid_token".to_string(),
+            AuthorizationType::BankCard,
+        );
+        let everest_mock = ModulePublisher::default();
+        let context = Context {
+            name: "test",
+            publisher: &everest_mock,
+            index: 0,
+        };
+
+        let result = pt_module.validate_token(&context, provided_token);
+        assert!(result.is_ok());
+        let validation_result = result.unwrap();
+        assert_eq!(validation_result.authorization_status, AuthorizationStatus::Invalid);
+    }
+
+    #[test]
     /// We test that we commit the right amount for transactions which are for
     /// us.
     fn payment_terminal__on_session_cost_impl() {
