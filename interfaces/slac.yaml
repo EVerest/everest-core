@@ -8,33 +8,14 @@ cmds:
         type: boolean
   enter_bcd:
     description: Signal pilot state change to B/C/D from A/E/F.
-    result:
-      type: boolean
-      description: >-
-        True on success, returns False if transition was unexpected and
-        cannot be handled by SLAC state machine.
   leave_bcd:
     description: Signal pilot state change to A/E/F from B/C/D.
-    result:
-      type: boolean
-      description: >-
-        True on success, returns False if transition was unexpected and
-        cannot be handled by SLAC state machine.
   dlink_terminate:
     description: Terminate the data link and become UNMATCHED.
-    result:
-      type: boolean
-      description: True on success.
   dlink_error:
     description: Terminate the data link and restart the matching process.
-    result:
-      type: boolean
-      description: True on success.
   dlink_pause:
     description: Request power saving mode, while staying MATCHED.
-    result:
-      type: boolean
-      description: True on success.
 vars:
   state:
     description: Provides the state enum.
