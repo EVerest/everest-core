@@ -6,7 +6,7 @@ and extend it with custom functionality.
 
 ## Important Note
 
-Since the trailbook packages works a lot with custom CMake targets and
+Since the trailbook packages work a lot with custom CMake targets and
 custom CMake commands, it is important to set dependencies correctly
 when extending the trailbook package.
 

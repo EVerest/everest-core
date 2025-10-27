@@ -16,7 +16,7 @@ macro(_add_trailbook_check_requirements_txt)
             RESULT_VARIABLE _CHECK_REQUIREMENTS_TXT_RESULT
         )
 
-        if(NOT ${_CHECK_REQUIREMENTS_TXT_RESULT} EQUAL 0)
+        if(NOT _CHECK_REQUIREMENTS_TXT_RESULT EQUAL 0)
             message(FATAL_ERROR "Trailbook: ${args_NAME} - ${args_REQUIREMENTS_TXT} not satisfied.")
         else()
             message(STATUS "Trailbook: ${args_NAME} - ${args_REQUIREMENTS_TXT} satisfied.")
