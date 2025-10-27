@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_display_message_API:
 
 *******************************************

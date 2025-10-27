@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_BUDCExternalDerate:
 
 ..  This file is a placeholder for an optional single file

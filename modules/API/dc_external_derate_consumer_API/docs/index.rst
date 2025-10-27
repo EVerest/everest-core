@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_dc_external_derate_consumer_API:
 
 *******************************************
