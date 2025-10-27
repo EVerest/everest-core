@@ -2,7 +2,6 @@ charge_bridge:
   name: cb_hall
   #ip: 10.10.10.109
   ip: 10.10.10.145
-  port: 6000
   fw_file: ../../firmware/build-encrypted-fw-image/charge-bridge-fw_complete.cbfw
   fw_update_on_start: false
   mdns_name: ""
@@ -47,13 +46,11 @@ safety:
 
 can_0:
   enable: true
-  port: 6003
   local: "cb_can"
   baudrate: 250000
 
 serial_1:
   enable: true
-  port: 6004
   local: "/dev/cb_uart"
   baudrate: 4000000
   stopbits: OneStopBit
@@ -61,7 +58,6 @@ serial_1:
 
 serial_2:
   enable: true
-  port: 6005
   local: "/dev/cb_rs485"
   baudrate: 115200
   stopbits: OneStopBit
@@ -69,7 +65,6 @@ serial_2:
 
 plc:
   enable: true
-  port: 6002
   tap: "cb_plc"
   ip: 172.25.6.1
   netmask: 255.255.255.0
@@ -78,7 +73,6 @@ plc:
 
 evse_bsp:
   enable: true
-  port: 6001
   module_id: "cb_bsp"
   mqtt_remote: "localhost"
   mqtt_port: 1883

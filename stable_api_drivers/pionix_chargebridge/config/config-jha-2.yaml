@@ -1,7 +1,6 @@
 charge_bridge:
   name: cb_2
   ip: 192.168.188.65
-  port: 6000
   fw_file: ../../../firmware/build-encrypted-fw-image/charge-bridge-fw_complete.cbfw
   fw_update_on_start: false
   mdns_name: "pionix_cb"
@@ -37,13 +36,11 @@ safety:
 
 can_0:
   enable: false
-  port: 6003
   local: "cb_can0_cb_2"
   baudrate: 250000
 
 serial_1:
   enable: false
-  port: 6004
   local: "/dev/cb_serial_1_cb_2"
   baudrate: 19200
   stopbits: OneStopBit
@@ -51,7 +48,6 @@ serial_1:
 
 serial_2:
   enable: true
-  port: 6005
   local: "/dev/cb_serial_2_cb_2"
   baudrate: 19200
   stopbits: OneStopBit
@@ -59,7 +55,6 @@ serial_2:
 
 plc:
   enable: false
-  port: 6002
   tap: "cb_tap0_cb_2"
   ip: 172.25.6.1
   netmask: 255.255.255.0
@@ -68,7 +63,6 @@ plc:
 
 evse_bsp:
   enable: false
-  port: 6001
   module_id: "bsp_1"
   mqtt_remote: "localhost"
   mqtt_port: 1883
