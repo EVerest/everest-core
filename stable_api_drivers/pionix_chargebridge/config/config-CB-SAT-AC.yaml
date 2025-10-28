@@ -1,8 +1,8 @@
 charge_bridge:
   name: cb_sat_ac
   ip: chargebridge-44b7d0c9d285.local
-  fw_file: charge-bridge-fw_complete.cbfw
-  fw_update_on_start: false
+  fw_file: ../firmware/charge-bridge-fw_complete.cbfw
+  fw_update_on_start: true
   mdns_name: ""
 
 heartbeat:
