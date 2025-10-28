@@ -103,6 +103,11 @@ provides:
           Always publish measurement even if stopped by EVerest
         type: boolean
         default: false
+      voltage_to_earth_monitoring_alarm_enable:
+        description: >-
+          3000 Enable over voltage to earth monitoring alarm
+        type: boolean
+        default: false
 requires:
   serial_comm_hub:
     interface: serial_communication_hub

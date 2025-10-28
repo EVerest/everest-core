@@ -248,6 +248,12 @@ components:
         voltage_V:
           description: DC voltage between positive and negative terminal in Volt
           type: number
+        voltage_to_earth_l1e_V:
+          description: DC voltage to earth on L1 in Volt
+          type: number
+        voltage_to_earth_l2e_V:
+          description: DC voltage to earth on L2 in Volt
+          type: number
     SelfTestResult:
       description: >-
         Indicates the self test is done and publishes the result.
