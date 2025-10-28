@@ -1,8 +1,7 @@
 charge_bridge:
-  name: cb_hall
-  ip: 10.10.10.109
-  #ip: 10.10.10.145
-  fw_file: ../../firmware/build-encrypted-fw-image/charge-bridge-fw_complete.cbfw
+  name: cb_sat_ac
+  ip: chargebridge-44b7d0c9d285.local
+  fw_file: charge-bridge-fw_complete.cbfw
   fw_update_on_start: false
   mdns_name: ""
 
@@ -52,7 +51,7 @@ can_0:
 serial_1:
   enable: true
   local: "/dev/cb_uart"
-  baudrate: 4000000
+  baudrate: 115200
   stopbits: OneStopBit
   parity: None
 
