@@ -58,7 +58,7 @@ serial_1:
 serial_2:
   enable: true
   local: "/dev/cb_rs485"
-  baudrate: 115200
+  baudrate: 9600
   stopbits: OneStopBit
   parity: None
 

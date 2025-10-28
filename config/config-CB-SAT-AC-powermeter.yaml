@@ -60,9 +60,9 @@ active_modules:
       hlc:
         - implementation_id: charger
           module_id: iso15118_charger
-#      powermeter_grid_side:
-#        - implementation_id: powermeter
-#          module_id: connector_1_powerpath
+      powermeter_grid_side:
+        - implementation_id: main
+          module_id: powermeter
       slac:
         - implementation_id: main
           module_id: slac
@@ -130,3 +130,19 @@ active_modules:
   cb_bsp:
     connections: {}
     module: evse_board_support_API
+  powermeter:
+    module: GenericPowermeter
+    config_implementation:
+      main:
+        model: Eastron_SDM72DM
+        powermeter_device_id: 1
+    connections:
+      serial_comm_hub:
+        - module_id: commhub
+          implementation_id: main
+  commhub:
+    module: SerialCommHub
+    config_implementation:
+      main:
+        serial_port: /dev/cb_rs485
+    
