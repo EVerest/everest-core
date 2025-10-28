@@ -15,7 +15,7 @@ info:
     - name: DC power supply
 servers:
   default:
-    pathname: 'everest_api/1.0/power_supply_DC/{module_id}'
+    pathname: 'everest_api/1/power_supply_DC/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt

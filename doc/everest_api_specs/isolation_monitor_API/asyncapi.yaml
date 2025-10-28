@@ -15,7 +15,7 @@ info:
     - name: isolation monitor
 servers:
   default:
-    pathname: 'everest_api/1.0/isolation_monitor/{module_id}'
+    pathname: 'everest_api/1/isolation_monitor/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt

@@ -23,7 +23,7 @@ double to_external_api(double val) {
 void dc_external_derate_consumer_API::init() {
     invoke_init(*p_generic_error);
 
-    topics.setTargetApiModuleID(info.id, "dc_external_derate_consumer");
+    topics.setup(info.id, "dc_external_derate_consumer", 1);
 }
 
 void dc_external_derate_consumer_API::ready() {

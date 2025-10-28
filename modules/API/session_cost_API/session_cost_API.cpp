@@ -20,7 +20,7 @@ void session_cost_API::init() {
     invoke_init(*p_main);
     invoke_init(*p_generic_error);
 
-    topics.setTargetApiModuleID(info.id, "session_cost");
+    topics.setup(info.id, "session_cost", 1);
 }
 
 void session_cost_API::ready() {

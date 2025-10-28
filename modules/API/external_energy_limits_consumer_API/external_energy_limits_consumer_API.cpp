@@ -15,7 +15,7 @@ using ev_API::deserialize;
 void external_energy_limits_consumer_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "external_energy_limits_consumer");
+    topics.setup(info.id, "external_energy_limits_consumer", 1);
 }
 
 void external_energy_limits_consumer_API::ready() {

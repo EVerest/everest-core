@@ -26,7 +26,7 @@ void evse_board_support_API::init() {
     invoke_init(*p_rcd);
     invoke_init(*p_connector_lock);
 
-    topics.setTargetApiModuleID(info.id, "evse_board_support");
+    topics.setup(info.id, "evse_board_support", 1);
 }
 
 void evse_board_support_API::ready() {

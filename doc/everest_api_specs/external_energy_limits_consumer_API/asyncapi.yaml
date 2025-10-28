@@ -15,7 +15,7 @@ info:
     - name: external energy limits
 servers:
   default:
-    pathname: 'everest_api/1.0/external_energy_limits_consumer/{module_id}'
+    pathname: 'everest_api/1/external_energy_limits_consumer/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt

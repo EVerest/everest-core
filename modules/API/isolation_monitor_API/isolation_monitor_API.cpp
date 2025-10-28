@@ -18,7 +18,7 @@ using ev_API::deserialize;
 void isolation_monitor_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "isolation_monitor");
+    topics.setup(info.id, "isolation_monitor", 1);
 }
 
 void isolation_monitor_API::ready() {
