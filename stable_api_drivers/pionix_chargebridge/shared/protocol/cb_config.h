@@ -86,7 +86,7 @@ typedef struct CB_COMPILER_ATTR_PACK _safety_config {
 	uint8_t cp_avg_ms;     // default is 10ms / pulses
 	RelayConfig relays[3]; // Config for the 3 relay I/Os
 	uint8_t inverted_emergency_input; // 0: normal operation, 1: emergency input is inverted
-	uint8_t temperature_limit_pt1000_C; // Temperature limit for the PT1000 inputs. Relays will switch off if temperature is above the limit.
+	uint8_t temperature_limit_pt1000_C; // Temperature limit for the PT1000 inputs. Relays will switch off if temperature is above the limit. Setting this to 0 will disable the feature.
 } SafetyConfig;
 
 typedef struct CB_COMPILER_ATTR_PACK _CbGpioConfig {
