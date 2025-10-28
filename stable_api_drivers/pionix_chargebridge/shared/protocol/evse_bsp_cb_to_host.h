@@ -15,6 +15,7 @@ struct CB_COMPILER_ATTR_PACK evse_bsp_cb_to_host {
     uint8_t pp_state_type1;
     uint8_t pp_state_type2;
     uint8_t lock_state;
+    uint32_t hv_mV;
     // still define handling set for
     uint8_t stop_charging;
 };
