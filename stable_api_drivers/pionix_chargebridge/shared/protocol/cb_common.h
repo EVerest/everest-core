@@ -6,7 +6,7 @@
 // Structs
 
 typedef union _SafetyErrorFlags {
-    struct _nested{
+    struct {
         uint32_t cp_not_state_c : 1;
         uint32_t pwm_not_enabled : 1;
         uint32_t pp_invalid : 1;
@@ -21,7 +21,7 @@ typedef union _SafetyErrorFlags {
         uint32_t vdd_refint_out_of_range : 1;
         uint32_t external_allow_power_on : 1;
         uint32_t config_mem_error : 1;
-	uint32_t dc_hv_ov : 1;
+        uint32_t dc_hv_ov : 1;
         uint32_t reserved : 17;
     };
     uint32_t raw;
