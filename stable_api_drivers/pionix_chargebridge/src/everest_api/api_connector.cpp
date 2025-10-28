@@ -15,7 +15,7 @@ api_connector::api_connector(everest_api_config const& config, std::string const
     m_ovm(config.ovm, cb_identifier, m_host_status) {
 
     everest::lib::API::Topics api_topics;
-    api_topics.setTargetApiModuleID(config.bsp.module_id, "evse_board_support");
+    api_topics.setup(config.bsp.module_id, "evse_board_support", 1);
     m_bsp_receive_topic = api_topics.everest_to_extern("");
     m_bsp_send_topic = api_topics.extern_to_everest("");
     m_bsp.set_mqtt_tx([this](auto& val) {
@@ -26,7 +26,7 @@ api_connector::api_connector(everest_api_config const& config, std::string const
 
     m_ovm_enabled = config.ovm.enabled;
     if (m_ovm_enabled) {
-        api_topics.setTargetApiModuleID(config.ovm.module_id, "over_voltage_monitor");
+        api_topics.setup(config.ovm.module_id, "over_voltage_monitor", 1);
         m_ovm_receive_topic = api_topics.everest_to_extern("");
         m_ovm_send_topic = api_topics.extern_to_everest("");
         m_ovm.set_mqtt_tx([this](auto& val) {
