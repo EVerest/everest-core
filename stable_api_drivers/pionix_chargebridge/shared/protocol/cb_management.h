@@ -67,17 +67,6 @@ enum class CbStructType : uint16_t {
  This container message is used for all generic module management packets
  */
 
-/*
- struct CB_COMPILER_ATTR_PACK HostToCb_Management {
- uint32_t sequence_number;
- CbConfiguration config;
- };
-
- struct CB_COMPILER_ATTR_PACK CbToHost_Management {
- uint32_t sequence_number;
- cb_string(sw_version_string);
- CbType type;
- };*/
 
 template<typename T>
 struct CB_COMPILER_ATTR_PACK CbManagementPacket {
@@ -89,10 +78,6 @@ template<> struct CB_COMPILER_ATTR_PACK CbManagementPacket<void> {
 	CbStructType type;
 };
 
-/*
- struct CB_COMPILER_ATTR_PACK CbBoardCommandPacket {
- CbBoardCommand command;
- };*/
 
 struct CB_COMPILER_ATTR_PACK CbGpioPacket {
 	uint8_t number_of_gpios; // Just to check compatibility
@@ -101,6 +86,24 @@ struct CB_COMPILER_ATTR_PACK CbGpioPacket {
 
 struct CB_COMPILER_ATTR_PACK CbHeartbeatPacket {
     CbConfig module_config;
+};
+
+struct CB_COMPILER_ATTR_PACK CbHeartbeatReplyPacket {
+	int32_t cp_hi_mV;
+	int32_t cp_lo_mV;
+	int32_t vdd_core;
+	int32_t vdd_3v3;
+	int32_t vdd_refint;
+	int32_t vdd_12V;
+	int32_t vdd_N12V;
+	int32_t pp_mOhm;
+	int32_t pp_voltage_mV;
+	uint8_t relay_state_feedback[3];
+	int16_t temperature_mcu_C;
+	int16_t temperature_pcb_C;
+	int16_t temperature_modem_C;
+	int16_t temperature_PT1000_C[2];
+	int32_t uptime_ms;
 };
 
 struct CB_COMPILER_ATTR_PACK CbFirmwareStart {
