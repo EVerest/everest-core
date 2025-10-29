@@ -80,6 +80,14 @@ config:
     description: Support three phase
     type: boolean
     default: true
+  departure_time:
+    description: Departure time in seconds after the session starts
+    type: integer
+    default: 86400
+  e_amount:
+    description: Energy amount in Wh that should be charged during the session
+    type: integer
+    default: 0
   soc:
     description: SoC at start of a simulated charging process
     type: integer
