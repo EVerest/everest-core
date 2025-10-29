@@ -34,6 +34,8 @@ types:
       - Rejected
       # Occurs when the token has been authorized but no connector is selected within connection_timeout seconds
       - TimedOut
+      - UsedToStart
+      - UsedToStop
       - Withdrawn
   CustomIdToken:
     description: Type for a custom id token with a free-form type
