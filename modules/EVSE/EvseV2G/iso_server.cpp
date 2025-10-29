@@ -1284,7 +1284,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                 .PMaxSchedule.PMaxScheduleEntry.array[0]
                 .RelativeTimeInterval.duration = conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::None
-                                                     ? departure_time_duration
+                                                     ? SA_SCHEDULE_DURATION
                                                      : PAUSE_DURATION;
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                 .PMaxSchedule.PMaxScheduleEntry.arrayLen = 1;
