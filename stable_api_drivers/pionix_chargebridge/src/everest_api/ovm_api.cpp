@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "everest/io/mqtt/dataset.hpp"
+#include "protocol/cb_common.h"
 #include "protocol/evse_bsp_cb_to_host.h"
 #include <charge_bridge/everest_api/ovm_api.hpp>
 #include <charge_bridge/utilities/logging.hpp>
@@ -61,6 +62,16 @@ void ovm_api::set_mqtt_tx(mqtt_ftor const& handler) {
 }
 
 void ovm_api::set_cb_message(evse_bsp_cb_to_host const& msg) {
+    const double voltage_V = msg.hv_mV * 0.001;
+    send_voltage_measurement_V(voltage_V);
+
+    if (msg.error_flags.dc_hv_ov not_eq m_cb_status.error_flags.dc_hv_ov) {
+        handle_dc_hv_ov(msg.error_flags.dc_hv_ov not_eq 0, voltage_V);
+    }
+    if (msg.cp_state not_eq m_cb_status.cp_state) {
+        handle_cp_state(static_cast<CpState>(msg.cp_state));
+    }
+
     m_cb_status = msg;
 }
 
@@ -89,24 +100,40 @@ void ovm_api::clear_comm_fault() {
     send_clear_error(API_OVM::ErrorEnum::CommunicationFault, "ChargeBridge not available");
 }
 
-void ovm_api::receive_set_limits([[maybe_unused]] std::string const& payload) {
-    API_OVM::OverVoltageLimits value;
-    if (everest::lib::API::deserialize(payload, value)) {
-        // TODO Do something
-        std::cout << "set_limits: \n" << value << std::endl;
+void ovm_api::handle_dc_hv_ov(bool high, double voltage_V) {
+    if (high) {
+        auto severity = (voltage_V > m_limits.emergency_limit_V) ? API_OVM::ErrorSeverityEnum::High
+                                                                 : API_OVM::ErrorSeverityEnum::Medium;
+        send_raise_error(API_OVM::ErrorEnum::MREC5OverVoltage, "", "", severity);
+        std::cout << "OVM: status high" << std::endl;
+    } else {
+        send_clear_error(API_OVM::ErrorEnum::MREC5OverVoltage, "");
+        std::cout << "OVM: status low" << std::endl;
+    }
+}
+
+void ovm_api::handle_cp_state(CpState state) {
+    if (state == CpState_A) {
+        send_clear_error(API_OVM::ErrorEnum::MREC5OverVoltage, "");
+    }
+}
+
+void ovm_api::receive_set_limits(std::string const& payload) {
+    static auto const V_to_mV_factor = 1000;
+    if (everest::lib::API::deserialize(payload, m_limits)) {
+        host_status.ovm_limit_9ms_mV = static_cast<uint32_t>(m_limits.emergency_limit_V * V_to_mV_factor);
+        host_status.ovm_limit_400ms_mV = static_cast<uint32_t>(m_limits.error_limit_V * V_to_mV_factor);
     } else {
         std::cerr << "ovm_api::receive_set_limits: payload invalid -> " << payload << std::endl;
     }
 }
 
 void ovm_api::receive_start() {
-    std::cout << "start()" << std::endl;
-    // TODO Do something
+    host_status.ovm_enable = 1;
 }
 
 void ovm_api::receive_stop() {
-    std::cout << "stop()" << std::endl;
-    // TODO Do something
+    host_status.ovm_enable = 0;
 }
 
 void ovm_api::receive_reset_over_voltage_error() {
@@ -118,7 +145,7 @@ void ovm_api::receive_heartbeat() {
     last_everest_heartbeat = std::chrono::steady_clock::now();
 }
 
-void ovm_api::send_voltage_measurement_V(API_OVM::OverVoltageLimits const& data) {
+void ovm_api::send_voltage_measurement_V(double data) {
     send_mqtt("voltage_measurement_V", serialize(data));
 }
 
