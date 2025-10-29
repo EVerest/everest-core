@@ -46,13 +46,16 @@ public:
 private:
     void tx(evse_bsp_host_to_cb const& msg);
 
-    void send_voltage_measurement_V(API_OVM::OverVoltageLimits const& data);
+    void send_voltage_measurement_V(double data);
     void send_raise_error(API_OVM::ErrorEnum error, std::string const& subtype, std::string const& msg,
                           API_OVM::ErrorSeverityEnum severity);
     void send_clear_error(API_OVM::ErrorEnum error, std::string const& subtype);
     void send_communication_check();
 
     void send_mqtt(std::string const& topic, std::string const& message);
+
+    void handle_dc_hv_ov(bool high, double voltage);
+    void handle_cp_state(CpState state);
 
     void receive_set_limits(std::string const& payload);
     void receive_start();
@@ -74,6 +77,7 @@ private:
     std::string m_cb_identifier;
     std::chrono::steady_clock::time_point last_everest_heartbeat;
 
+    API_OVM::OverVoltageLimits m_limits{0,0};
     mqtt_ftor m_mqtt_tx;
 };
 
