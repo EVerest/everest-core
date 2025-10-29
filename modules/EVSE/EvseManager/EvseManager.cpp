@@ -15,13 +15,12 @@
 
 using namespace std::literals::chrono_literals;
 
-namespace {
-static const std::vector<std::unique_ptr<powermeterIntf>> EMPTY_POWERMETER_VECTOR;
-}
-
 namespace module {
 
-static const types::power_supply_DC::Capabilities get_sane_default_power_supply_capabilities() {
+namespace {
+const std::vector<std::unique_ptr<powermeterIntf>> EMPTY_POWERMETER_VECTOR;
+
+types::power_supply_DC::Capabilities get_sane_default_power_supply_capabilities() {
     // Init power supply capabilities with safe defaults
     types::power_supply_DC::Capabilities psu_caps;
     psu_caps.bidirectional = false;
@@ -35,11 +34,11 @@ static const types::power_supply_DC::Capabilities get_sane_default_power_supply_
     return psu_caps;
 }
 
-inline static void trim_colons_from_string(std::string& text) {
+void trim_colons_from_string(std::string& text) {
     text.erase(remove(text.begin(), text.end(), ':'), text.end());
 }
 
-inline static types::authorization::ProvidedIdToken create_autocharge_token(std::string token, int connector_id) {
+types::authorization::ProvidedIdToken create_autocharge_token(std::string token, int connector_id) {
     types::authorization::ProvidedIdToken autocharge_token;
     autocharge_token.authorization_type = types::authorization::AuthorizationType::Autocharge;
     trim_colons_from_string(token);
@@ -47,6 +46,13 @@ inline static types::authorization::ProvidedIdToken create_autocharge_token(std:
     autocharge_token.connectors.emplace({connector_id});
     return autocharge_token;
 }
+
+bool almost_eq(double a, double b) {
+    constexpr auto eps = 1e-6;
+    return std::fabs(a - b) <= eps;
+}
+
+} // namespace
 
 void EvseManager::init() {
 
@@ -638,9 +644,11 @@ void EvseManager::ready() {
                 // Setting  power to actual voltage on the powermeter
                 const auto actual_voltage = ev_info.present_voltage.value_or(latest_target_voltage);
 
-                target_current = std::min((max_charge_power / actual_voltage), max_charge_current);
-
-                if (target_voltage != latest_target_voltage or target_current != latest_target_current) {
+                target_current = (actual_voltage <= 0.0)
+                                     ? max_charge_current
+                                     : std::min((max_charge_power / actual_voltage), max_charge_current);
+                if (not(almost_eq(target_voltage, latest_target_voltage) and
+                        almost_eq(target_current, latest_target_current))) {
                     latest_target_current = target_current;
                     latest_target_voltage = target_voltage;
                     target_changed = true;
