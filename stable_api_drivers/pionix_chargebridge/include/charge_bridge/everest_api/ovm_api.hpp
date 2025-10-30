@@ -54,7 +54,8 @@ private:
 
     void send_mqtt(std::string const& topic, std::string const& message);
 
-    void handle_dc_hv_ov(bool high, double voltage);
+    void handle_dc_hv_ov_emergency(bool high);
+    void handle_dc_hv_ov_error(bool high);
     void handle_cp_state(CpState state);
 
     void receive_set_limits(std::string const& payload);
