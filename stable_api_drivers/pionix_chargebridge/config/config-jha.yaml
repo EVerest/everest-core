@@ -80,6 +80,7 @@ evse_bsp:
     min_phase_count_export: 3
     supports_changing_phases_during_charging: false
     connector_type: "IEC62196Type2Cable"
+    max_plug_temperature_C: 250
   ovm_enabled: true
   ovm_module_id: "ovm_1"
 
