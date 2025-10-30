@@ -1,21 +1,21 @@
 module(
     name = "everest-core",
-    version = "2025.10.0",
+    version = "2025.9.0",
 )
 
 ###############################################################################
 # B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
 ###############################################################################
 
-bazel_dep(name = "everest-framework", version = "0.24.0")
+bazel_dep(name = "everest-framework", version = "0.23.1")
 git_override(
     module_name="everest-framework",
-    commit="059e95ca6cdd23f318259a87480c0b1f48d0cf72",
+    commit="5cb52c3c3f9a2c8a54219900307c5c86218de3d1",
     remote="https://github.com/EVerest/everest-framework",
 )
 
-bazel_dep(name = "everest-utils", version = "0.7.2")
-git_override(module_name="everest-utils", commit="0b917bfea879549fd7b793d172c06f99625f0788", remote="https://github.com/EVerest/everest-utils")
+bazel_dep(name = "everest-utils", version = "0.6.2")
+git_override(module_name="everest-utils", commit="4d6b213e74a57bc3b690b753e64decf2a487b6b7", remote="https://github.com/EVerest/everest-utils")
 
 bazel_dep(name = "bazel_features", version = "1.21.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
@@ -23,7 +23,7 @@ BOOST_VERSION = "1.87.0"
 bazel_dep(name = "boost.asio", version = BOOST_VERSION)
 bazel_dep(name = "boost.process", version = BOOST_VERSION)
 bazel_dep(name = "boost.uuid", version = BOOST_VERSION)
-bazel_dep(name = "fmt", version = "12.1.0", repo_name = "com_github_fmtlib_fmt")
+bazel_dep(name = "fmt", version = "11.1.4", repo_name = "com_github_fmtlib_fmt")
 bazel_dep(name = "nlohmann_json", version = "3.12.0", repo_name = "com_github_nlohmann_json")
 bazel_dep(name = "libcap", version = "2.27")
 bazel_dep(name = "openssl", version = "3.3.1.bcr.1")
