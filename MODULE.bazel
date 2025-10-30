@@ -10,7 +10,7 @@ module(
 bazel_dep(name = "everest-framework", version = "0.23.1")
 git_override(
     module_name="everest-framework",
-    commit="c3ac19ec156283888256824881c7725d05a418e5",
+    commit="5cb52c3c3f9a2c8a54219900307c5c86218de3d1",
     remote="https://github.com/EVerest/everest-framework",
 )
 

@@ -160,17 +160,21 @@ impl ProvidedIdToken {
     }
 }
 
-/// Main struct for this module.
-pub struct PaymentTerminalModule {
-    /// Sender for the `ModulePublisher` -> to get the publisher from `on_ready`
-    /// into the main thread.
-    tx: Sender<ModulePublisher>,
-
-    /// The Feig interface.
-    feig: SyncFeig,
-
-    /// The configurable pre-auth.
-    pre_authorization_amount: usize,
+impl From<anyhow::Error> for PTError {
+    fn from(value: anyhow::Error) -> Self {
+        match value.downcast_ref::<Error>() {
+            Some(inner) => match inner {
+                Error::TidMismatch => {
+                    PTError::PaymentTerminal(PaymentTerminalError::TerminalIdNotSet)
+                }
+                Error::IncorrectDeviceId { .. } => {
+                    PTError::PaymentTerminal(PaymentTerminalError::IncorrectDeviceId)
+                }
+                _ => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
+            },
+            None => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
+        }
+    }
 }
 
 impl From<ErrorMessages> for AuthorizationStatus {
@@ -200,6 +204,19 @@ impl From<ErrorMessages> for AuthorizationStatus {
     }
 }
 
+/// Main struct for this module.
+pub struct PaymentTerminalModule {
+    /// Sender for the `ModulePublisher` -> to get the publisher from `on_ready`
+    /// into the main thread.
+    tx: Sender<ModulePublisher>,
+
+    /// The Feig interface.
+    feig: SyncFeig,
+
+    /// The configurable pre-auth.
+    pre_authorization_amount: usize,
+}
+
 impl PaymentTerminalModule {
     /// Waits for a card and generates an auth token.
     ///
@@ -217,10 +234,11 @@ impl PaymentTerminalModule {
             loop {
                 if let Err(inner) = self.feig.configure() {
                     log::warn!("Failed to configure: {inner:?}");
+                    let inner: PTError = inner.into();
                     publishers.payment_terminal.raise_error(inner.into());
                     continue;
                 } else {
-                    // publishers.payment_terminal.clear_all_errors();
+                    publishers.payment_terminal.clear_all_errors();
                 }
 
                 // Attempting to get an invoice token
@@ -254,7 +272,8 @@ impl PaymentTerminalModule {
                             log::warn!("Failed to read a card {e:?}");
                             // Cleared in the next loop if we can configure the
                             // feig.
-                            publishers.payment_terminal.raise_error(e.into());
+                            let inner: PTError = e.into();
+                            publishers.payment_terminal.raise_error(inner.into());
                         }
                     }
                 };
@@ -324,22 +343,7 @@ impl AuthTokenProviderServiceSubscriber for PaymentTerminalModule {}
 
 impl BankSessionTokenProviderClientSubscriber for PaymentTerminalModule {}
 
-impl From<anyhow::Error> for PTError {
-    fn from(value: anyhow::Error) -> Self {
-        match value.downcast_ref::<Error>() {
-            Some(inner) => match inner {
-                Error::TidMismatch => {
-                    PTError::PaymentTerminal(PaymentTerminalError::TerminalIdNotSet)
-                }
-                Error::IncorrectDeviceId { .. } => {
-                    PTError::PaymentTerminal(PaymentTerminalError::IncorrectDeviceId)
-                }
-                _ => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
-            },
-            None => PTError::PaymentTerminal(PaymentTerminalError::GenericPaymentTerminalError),
-        }
-    }
-}
+
 
 impl OnReadySubscriber for PaymentTerminalModule {
     fn on_ready(&self, publishers: &ModulePublisher) {
