@@ -7,8 +7,8 @@
 #include <everest/io/event/fd_event_register_interface.hpp>
 #include <everest/io/event/timer_fd.hpp>
 #include <everest/io/udp/udp_client.hpp>
-#include <protocol/cb_config.h>
 #include <memory>
+#include <protocol/cb_config.h>
 
 namespace charge_bridge {
 
@@ -32,11 +32,16 @@ public:
 private:
     void handle_error_timer();
     void handle_heartbeat_timer();
+    void handle_udp_rx(everest::lib::io::udp::udp_payload const& payload);
+
     everest::lib::io::udp::udp_client m_udp;
     bool m_udp_on_error{false};
     everest::lib::io::event::timer_fd m_heartbeat_timer;
     std::string m_identifier;
     CbManagementPacket<CbConfig> m_config_message;
+    std::chrono::steady_clock::time_point m_last_heartbeat_reply;
+    bool m_cb_connected{false};
+    bool m_inital_cb_commcheck{true};
 };
 
 } // namespace charge_bridge
