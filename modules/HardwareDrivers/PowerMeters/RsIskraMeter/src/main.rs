@@ -1018,7 +1018,7 @@ impl generated::OnReadySubscriber for IskraMeter {
                 Err(e) => {
                     log::error!("Failed to read meter value {:?}", e);
                     power_meter_clone
-                        .raise_error(Error::Powermeter(PowermeterError::CommunicationFault));
+                        .raise_error(Error::Powermeter(PowermeterError::CommunicationFault).into());
                 }
             };
             // Check the time status. In case of failure we just carry on.
@@ -1060,7 +1060,9 @@ impl generated::PowermeterServiceSubscriber for IskraMeter {
             .map_err(|_| ::everestrs::Error::HandlerException("Internal error".to_string()))?;
 
         let StateMachine::ReadyState(ready_state) = &*lock else {
-            return Err(::everestrs::Error::HandlerException("Not initialized".to_string()));
+            return Err(::everestrs::Error::HandlerException(
+                "Not initialized".to_string(),
+            ));
         };
 
         let res = ready_state.start_transaction(value);
@@ -1085,7 +1087,9 @@ impl generated::PowermeterServiceSubscriber for IskraMeter {
             .map_err(|_| ::everestrs::Error::HandlerException("Internal error".to_string()))?;
 
         let StateMachine::ReadyState(ready_state) = &*lock else {
-            return Err(::everestrs::Error::HandlerException("Not initialized".to_string()));
+            return Err(::everestrs::Error::HandlerException(
+                "Not initialized".to_string(),
+            ));
         };
 
         let res = ready_state.stop_transaction();
