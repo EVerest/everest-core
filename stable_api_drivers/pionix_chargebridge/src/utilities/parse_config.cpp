@@ -11,6 +11,7 @@
 #include <exception>
 #include <iostream>
 
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <yaml-cpp/yaml.h>
@@ -28,7 +29,7 @@ static const int g_cb_port_serial_2 = 6005;
 
 namespace charge_bridge::utilities {
 
-void parse_config_impl(YAML::Node& config, charge_bridge_config& c) {
+void parse_config_impl(YAML::Node& config, charge_bridge_config& c, std::filesystem::path const& config_path) {
     auto get_node = [&config](std::string const& main, std::string const& sub, auto& data) {
         if (config[main][sub]) {
             try {
@@ -169,6 +170,12 @@ void parse_config_impl(YAML::Node& config, charge_bridge_config& c) {
     get_node("charge_bridge", "fw_file", c.firmware.fw_path);
     get_node("charge_bridge", "fw_update_on_start", c.firmware.fw_update_on_start);
 
+    // If the path to the firmware file is relative, make it relative to the config file
+    std::filesystem::path fw_path = c.firmware.fw_path;
+    if (fw_path.is_relative()) {
+        c.firmware.fw_path = config_path.parent_path().append(c.firmware.fw_path);
+    }
+
     c.firmware.cb_remote = c.cb_remote;
     c.firmware.cb_port = c.cb_port;
     c.firmware.cb = c.cb_name;
@@ -250,7 +257,7 @@ std::vector<charge_bridge_config> parse_config_multi(std::string const& config_f
             return {};
         }
         charge_bridge_config base_config;
-        parse_config_impl(config, base_config);
+        parse_config_impl(config, base_config, config_file);
 
         if (not config["charge_bridge_ip_list"]) {
             return {base_config};
@@ -277,7 +284,7 @@ bool parse_config(std::string const& config_file, charge_bridge_config& c) {
             return false;
         }
 
-        parse_config_impl(config, c);
+        parse_config_impl(config, c, config_file);
         return true;
     } catch (...) {
         std::cerr << "FAILED to parse configuration!" << std::endl;
