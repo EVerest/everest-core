@@ -8,5 +8,5 @@ active_modules:
     standalone: true
   powersupply:
     config_module:
-      module_addresses: ""
-    module: Huawei_R100040Gx
+      can_device: cb_can
+    module: InfyPower_BEG1K075G

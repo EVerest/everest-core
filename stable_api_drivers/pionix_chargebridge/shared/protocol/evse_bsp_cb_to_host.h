@@ -9,7 +9,7 @@ struct CB_COMPILER_ATTR_PACK evse_bsp_cb_to_host {
     // add version number as first uint16 ???? 
     // potentially unused, ignore for  now
     uint8_t reset_reason;
-    uint8_t cp_state;
+    CpState cp_state;
     uint8_t relay_state;
     SafetyErrorFlags error_flags;
     uint8_t pp_state_type1;
