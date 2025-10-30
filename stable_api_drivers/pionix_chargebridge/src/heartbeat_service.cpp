@@ -19,11 +19,16 @@ heartbeat_service::heartbeat_service(heartbeat_config const& config) : m_udp(con
     std::memcpy(&m_config_message.data, &config.cb_config, sizeof(CbConfig));
     m_config_message.type = CbStructType::CST_HostToCb_Heartbeat;
     m_heartbeat_timer.set_timeout(std::chrono::seconds(config.interval_s));
+    m_last_heartbeat_reply = std::chrono::steady_clock::time_point::max();
 
-    m_udp.set_rx_handler([this](auto const& , auto&) { std::cout << "HEARTBEAT reply" << std::endl; });
+    m_udp.set_rx_handler([this](auto const& data, auto&) { handle_udp_rx(data); });
 
     m_udp.set_error_handler([this](auto id, auto const& msg) {
-        utilities::print_error(m_identifier, "HEARTBEAT/UDP", id) << msg << std::endl;
+        if (m_inital_cb_commcheck and id == 0) {
+            utilities::print_error(m_identifier, "HEARTBEAT/UDP", 1) << "Waiting for ChargeBridge" << std::endl;
+        } else {
+            utilities::print_error(m_identifier, "HEARTBEAT/UDP", id) << msg << std::endl;
+        }
         m_udp_on_error = id not_eq 0;
     });
 }
@@ -58,6 +63,30 @@ void heartbeat_service::handle_heartbeat_timer() {
         everest::lib::io::udp::udp_payload payload;
         utilities::struct_to_vector(m_config_message, payload.buffer);
         m_udp.tx(payload);
+    }
+    auto timeout = std::chrono::steady_clock::now() - m_last_heartbeat_reply > 2s ||
+                   m_last_heartbeat_reply == std::chrono::steady_clock::time_point::max();
+    if (timeout and m_cb_connected) {
+        utilities::print_error(m_identifier, "HEARTBEAT/UDP", 1) << "ChargeBridge connection lost" << std::endl;
+        m_cb_connected = false;
+    }
+
+    else if (not timeout and not m_cb_connected) {
+        utilities::print_error(m_identifier, "HEARTBEAT/UDP", 0) << "ChargeBridge connected" << std::endl;
+        m_cb_connected = true;
+    }
+}
+
+void heartbeat_service::handle_udp_rx(everest::lib::io::udp::udp_payload const& payload) {
+    CbManagementPacket<CbHeartbeatReplyPacket> data;
+    if (payload.size() == sizeof(data)) {
+        std::memcpy(&data, payload.buffer.data(), sizeof(data));
+        m_last_heartbeat_reply = std::chrono::steady_clock::now();
+
+        // TODO: do something with this data;
+    } else {
+        std::cout << "INVALID DATA SIZE in UDP RX of HEARTBEAT: " << payload.size() << " vs " << sizeof(data)
+                  << std::endl;
     }
 }
 
